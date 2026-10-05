@@ -95,9 +95,17 @@ output{display:block;width:100%;text-align:center}
 /* segmented buttons */
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1px;background:var(--edge);border:1px solid var(--edge-2);border-radius:6px;overflow:hidden}
 .seg.grid4{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}
+.seg.grid5{grid-auto-flow:row;grid-template-columns:repeat(5,1fr)}
 .seg button{border:0;border-radius:0;background:var(--track);color:var(--muted);font:500 11px var(--mono);letter-spacing:0;text-transform:none;padding:0 2px;height:26px}
 .seg button:hover{color:#fff;background:#34343c}
 .seg button.on{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));color:#1a1200;font-weight:700}
+.seg button{position:relative}
+/* "in use" marker (automated target, fade mode…): a dot in the corner, so the label never moves */
+.seg button.act::after{content:"";position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--amber);box-shadow:0 0 4px rgba(var(--acc-rgb),.8)}
+.seg button.on.act::after{background:#1a1200;box-shadow:none}
+.dimmed{opacity:.35;pointer-events:none}
+output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb),.4)}
+.scope{display:block;width:100%;height:52px;background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);border-radius:4px;margin-top:2px}
 /* rows: label | control | readout */
 .field{display:grid;grid-template-columns:78px minmax(0,1fr) 58px;align-items:center;gap:8px;margin-bottom:9px;min-height:26px}
 .field>.span{grid-column:2/4}
@@ -112,7 +120,7 @@ output{display:block;width:100%;text-align:center}
 #gPanes>[data-pane]{display:flow-root}
 /* tabs */
 .tabs{margin-bottom:12px}
-.tabs button{height:28px;font:800 10px var(--sans);letter-spacing:.12em;text-transform:uppercase}
+.tabs button{height:28px;font:800 10px var(--sans);letter-spacing:.06em;text-transform:uppercase}
 
 /* ---------- header ---------- */
 #top{grid-area:top;display:flex;align-items:center;gap:10px 14px;padding:8px 14px;background:linear-gradient(180deg,rgba(28,28,33,.96),rgba(22,22,26,.9));border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap}
@@ -146,6 +154,7 @@ output{display:block;width:100%;text-align:center}
 .pad.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 10px rgba(var(--acc-rgb),.35)}
 .pad.drop{outline:2px dashed var(--amber);outline-offset:-2px}
 .pad.hit{animation:hit .2s}@keyframes hit{from{filter:brightness(2.2)}}
+.pad.wait{border-color:var(--amber);animation:wait .25s steps(1) infinite}@keyframes wait{50%{border-color:var(--edge)}}
 .pad .dots{position:absolute;right:4px;top:4px;display:flex;gap:2px}
 .pad .dots b{width:15px;height:15px;font:700 9px/15px var(--mono);border-radius:3px;color:#000;text-align:center}
 .pad.loading::after{content:'decoding…';position:absolute;inset:0;display:grid;place-items:center;background:#000b;font:500 10px var(--mono);color:var(--amber)}
@@ -251,7 +260,7 @@ output{display:block;width:100%;text-align:center}
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
   <div id="gifSettings" class="disabled">
-    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Playback</button><button data-v="frames">Frames</button><button data-v="colour">Colour</button></div>
+    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="frames">Frames</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
     <div class="stack" id="gPanes">
       <div data-pane="play">
         <div class="field"><label>Timing</label><div class="seg span" id="gSync">
@@ -289,6 +298,32 @@ output{display:block;width:100%;text-align:center}
         <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" min="0" max="3" step="0.01"><output></output></div>
         <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" min="0" max="3" step="0.01"><output></output></div>
       </div>
+      <div data-pane="trig" class="off">
+        <div class="field"><label>Mode</label><div class="seg span" id="tMode">
+          <button data-v="stay" title="A hit restarts the GIF and it stays on">Stay</button>
+          <button data-v="fade" title="Hidden until hit: each hit fades it in, holds, then fades it out">Fade one-shot</button></div></div>
+        <div id="tEnv">
+          <div class="field"><label for="tA">Fade in</label><input id="tA" type="range" min="0" step="1"><output></output></div>
+          <div class="field" id="tHoldRow"><label for="tH" title="Time at full opacity (Gate: until the pad is released)">Hold</label><input id="tH" type="range" min="0" step="1"><output></output></div>
+          <div class="field"><label for="tR">Fade out</label><input id="tR" type="range" min="0" step="1"><output></output></div>
+          <div class="field"><label>Curve</label><div class="seg span" id="tCurve"><button data-v="lin" title="Constant rate">Linear</button><button data-v="smooth" title="Eases in and out of each ramp">Smooth</button></div></div>
+          <div class="field"><label for="tGate">Gate</label><label class="tog span"><input type="checkbox" id="tGate"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">hold while the pad is held</span></label></div>
+          <canvas id="tScope" class="scope" title="Envelope: fade in, hold, fade out — the dot follows the last hit"></canvas>
+        </div>
+        <p class="note">Fade one-shot: the GIF stays on its layer but is hidden (a dotted ghost in the preview, nothing in the output) until a hit fades it in. Lengths follow the tempo.</p>
+      </div>
+      <div data-pane="auto" class="off">
+        <div class="seg grid5" id="aTgt"></div>
+        <div class="sub"><span id="aTitle">X position</span><span class="line"></span><button id="aReset" title="This LFO back to defaults (off)">Reset</button><label class="tog" title="LFO on / off"><input type="checkbox" id="aOn"></label></div>
+        <div class="field"><label>Shape</label><div class="seg span grid4" id="aShape"></div></div>
+        <div class="field"><label for="aMin">Min</label><input id="aMin" type="range"><output></output></div>
+        <div class="field"><label for="aMax">Max</label><input id="aMax" type="range"><output></output></div>
+        <div class="field"><label for="aPer">Cycle</label><input id="aPer" type="range" min="0" step="1"><output></output></div>
+        <div class="field"><label for="aPh">Phase</label><input id="aPh" type="range" min="0" max="1" step="0.03125"><output></output></div>
+        <div class="field"><label>Count from</label><div class="seg span" id="aSync"><button data-v="clock" title="Cycles line up with the bar (and with other GIFs)">Bar</button><button data-v="trig" title="Each pad hit restarts the cycle">Trigger</button></div></div>
+        <canvas id="aScope" class="scope" title="Two cycles of the LFO — the dot is now"></canvas>
+        <p class="note">X, Y and Rotate are added to the placement; Zoom, Width, Height, Saturation and Brightness multiply it; Opacity multiplies the sprite's opacity; Hue is added. Touching a setting switches its LFO on.</p>
+      </div>
     </div>
     <div class="lcd one" id="gInfo"></div>
   </div>
@@ -313,6 +348,7 @@ output{display:block;width:100%;text-align:center}
     <div class="field"><label for="xSX">Scale X</label><input id="xSX" type="range" min="0.05" max="8" step="0.01"><output></output></div>
     <div class="field"><label for="xSY">Scale Y</label><input id="xSY" type="range" min="0.05" max="8" step="0.01"><output></output></div>
     <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" min="-180" max="180" step="1"><output></output></div>
+    <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" min="0" max="1" step="0.01"><output></output></div>
     <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
     <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
     <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
@@ -324,7 +360,7 @@ output{display:block;width:100%;text-align:center}
     <h2>Keys &amp; mouse<span class="line"></span><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <dl class="keys">
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to browse; drop a .vjif anywhere to import a set</dd>
-      <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack) or swaps it in (Replace)</dd>
+      <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Shift+Q…C</dt><dd>Remove that GIF from the edited layer</dd>
       <dt>1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>Shift+1–4</dt><dd>Choose the layer to edit / trigger into (or click its bar)</dd>
@@ -372,6 +408,18 @@ const FRAME_OPTS   = [[1/8,'1/32'],[1/6,'1/16T'],[1/4,'1/16'],[1/3,'1/8T'],[1/2,
 const RESTART_OPTS = [[0,'off'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];
 const BEAT_OPTS = LEN_OPTS.map(o => o[0]);
 const lenLabel = b => { const o = LEN_OPTS.find(o => Math.abs(o[0] - b) < 1e-6); return o ? o[1] : b % 4 === 0 ? `${b/4} bars` : `${+b.toFixed(2)} beats`; };
+// fade one-shot lengths and LFO cycles, in beats
+const ENV_OPTS = [[0,'0'],[0.125,'1/32'],[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars']];
+const PER_OPTS = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars'],[64,'16 bars']];
+const optIdx = (opts, v) => opts.reduce((bi, o, i) => Math.abs(o[0] - v) < Math.abs(opts[bi][0] - v) ? i : bi, 0);
+// LFO targets: [key, button, title, slider min, max, step, default min, default max, unit]
+const LFO_T = [
+  ['x', 'X', 'X position', -1920, 1920, 1, -200, 200, 'px'], ['y', 'Y', 'Y position', -1080, 1080, 1, -100, 100, 'px'],
+  ['zoom', 'Zoom', 'Zoom', 0, 4, 0.01, 0.8, 1.2, '×'], ['sx', 'Width', 'Width (scale X)', 0, 4, 0.01, 0.8, 1.2, '×'],
+  ['sy', 'Height', 'Height (scale Y)', 0, 4, 0.01, 0.8, 1.2, '×'], ['rot', 'Rotate', 'Rotation', -360, 360, 1, -15, 15, '°'],
+  ['op', 'Opac', 'Opacity', 0, 1, 0.01, 0, 1, '%'], ['h', 'Hue', 'Hue shift', -180, 180, 1, -180, 180, '°'],
+  ['s', 'Sat', 'Saturation', 0, 3, 0.01, 0.5, 1.5, '×'], ['v', 'Bright', 'Brightness', 0, 3, 0.01, 0.5, 1.5, '×']];
+const SHAPES = [['sine','Sine'],['tri','Tri'],['up','Ramp ↑'],['down','Ramp ↓'],['square','Square'],['pulse','Pulse'],['sh','Random'],['drift','Drift']];
 const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
 const KEY_MAX = 441.67;        // max RGB distance
 
@@ -386,7 +434,8 @@ const rgb2hex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 const pads = PAD_KEYS.map((code, i) => ({ i, code, label: PAD_LABELS[i], gif: null, loading: false, el: null }));
 const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: false, flipY: false, tile: false, cl: 0, ct: 0, cr: 0, cb: 0 });
 let clipSeq = 0, gifSeq = 0;
-const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, ...newXf() });
+// alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)
+const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, alpha: 1, env: null, ...newXf() });
 const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, row: null }));
 let target = 0, selPad = 0, snapMode = 'off', picking = false;
 const clock = { bpm: 120, beat: 0, last: performance.now(), src: 'internal', taps: [],
@@ -432,7 +481,8 @@ async function decodeAnim(blob, name){
   const srcBytes = frames.reduce((a, f) => a + f.width * f.height * 4, 0);
   const g = { uid: ++gifSeq, fxWaits: [], name: name || 'untitled', blob, type, src: frames, frames, durs, w, h, srcBytes, bytes: srcBytes,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
-           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08 }, hsv: { h: 0, s: 1, v: 1 }, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '' };
+           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08 }, hsv: { h: 0, s: 1, v: 1 }, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false }, lfo: {} };
   g.fullTotal = durs.reduce((a, d) => a + d, 0);
   rebuildSeq(g);
   return g;
@@ -459,9 +509,10 @@ function autoFit(g){                               // new imports: Fit, with the
   g.beats = BEAT_OPTS.reduce((a, b) => Math.abs(Math.log2(b / natBeats)) < Math.abs(Math.log2(a / natBeats)) ? b : a);
 }
 function applyGifSettings(g, saved){
-  const { key, hsv, hash, name, file, ...rest } = saved;
+  const { key, hsv, env, lfo, hash, name, file, ...rest } = saved;
   Object.assign(g, Object.fromEntries(Object.entries(rest).filter(([k]) => GIF_KEYS.includes(k))));
-  if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv);
+  if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv); if (env) Object.assign(g.env, env);
+  if (lfo) g.lfo = JSON.parse(JSON.stringify(lfo));
   if (g.sync === 'restart'){ g.sync = 'free'; g.restart = g.beats; }   // pre-v0.9 sets
   if (g.restart === undefined) g.restart = 0;
   rebuildSeq(g);
@@ -592,9 +643,13 @@ const fxGL = (() => {
 })();
 const liveFx = () => fxGL && fxGL.ok;
 const fxActive = g => g.key.on || hsvOn(g);
-// the image to draw for frame `img` of GIF `g`: run through the colour shader when live colour is on
-function fxImage(g, img){
-  if (!liveFx() || !fxActive(g) || g.frames !== g.src) return img;
+// the image to draw for frame `img` of GIF `g`: run through the colour shader when live colour is on.
+// e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
+function fxImage(g, img, e){
+  if (!liveFx() || g.frames !== g.src) return img;
+  if (e && (e.H !== undefined || e.S !== undefined || e.V !== undefined))
+    return fxGL.render(img, fxParams(g, { h: g.hsv.h + (e.H ?? 0), s: g.hsv.s * (e.S ?? 1), v: g.hsv.v * (e.V ?? 1) }));
+  if (!fxActive(g)) return img;
   if (!g.fxP) g.fxP = fxParams(g);
   return fxGL.render(img, g.fxP);
 }
@@ -638,10 +693,10 @@ function fxPixels(u, p, cache){
     u[i] = (na << 24) | (lastV & 0xffffff);
   }
 }
-function fxParams(g){
+function fxParams(g, hsv = g.hsv){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
-  return { doKey: g.key.on, doHsv: hsvOn(g), kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
-           t0, t1sq: t1 * t1, span: t1 - t0, H: g.hsv.h, S: g.hsv.s, V: g.hsv.v };
+  return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v };
 }
 // The worker gets the same functions as source text, so both paths run identical code.
 const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, fxPixels].map(f => f.toString()).join('\n') + `
@@ -766,7 +821,6 @@ function updateClock(now){
   } else clock.beat += dt * clock.bpm / 60000;
 }
 
-function snapBeat(b){ return snapMode === 'beat' ? Math.floor(b) : snapMode === 'bar' ? Math.floor(b / 4) * 4 : b; }
 
 // ---------- MIDI clock ----------
 let midiAccess = null, midiInput = null;
@@ -843,19 +897,103 @@ function cycleBeats(g){
   return null;
 }
 
+// Snap quantizes forward: a hit waits for the next beat / bar. A hit up to SNAP_GRACE of the unit late counts as on it
+// (it starts that far in, so it stays in time).
+const SNAP_GRACE = 0.125;
+const pending = new Map();                           // pad → { beat, released }
 function trigger(p){
   if (!pads[p].gif) return;
+  const el = pads[p].el; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0, b = clock.beat;
+  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return fire(p, b);
+  const prev = Math.floor(b / unit + 1e-9) * unit;
+  if (b - prev <= unit * SNAP_GRACE) return fire(p, prev);
+  pending.set(p, { beat: prev + unit, released: false });
+  el.classList.add('wait');
+}
+function firePending(){
+  for (const [p, q] of pending) if (clock.beat >= q.beat - 1e-9 || !pads[p].gif){
+    pending.delete(p); pads[p].el.classList.remove('wait'); fire(p, q.beat, q.released);
+  }
+}
+function fire(p, beat, released = false){
+  const g = pads[p].gif; if (!g) return;
   // a GIF lives on one layer at most: if it's on any layer, restart it there; otherwise add it to the edited layer
   let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[target];
   let c = L.clips.find(c => c.pad === p);
   if (!c){
-    if (L.mode === 'replace'){ c = L.clips[0] || newClip(p); c.pad = p; L.clips = [c]; }   // keeps placement
+    if (L.mode === 'replace'){ c = L.clips[0] || newClip(p); c.pad = p; c.env = null; L.clips = [c]; }   // keeps placement
     else { c = newClip(p); L.clips.push(c); while (L.clips.length > MAX_CLIPS) L.clips.shift(); }
   }
-  c.startTime = performance.now(); c.startBeat = snapBeat(clock.beat);
+  c.startBeat = beat; c.startTime = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
+  // fade one-shot: start from wherever the last fade is now, so a fast retrigger doesn't flicker
+  if (g.trig === 'fade') c.env = { t0: beat, from: envLevel(c, g, clock.beat), rel: null, noGate: released };
   L.sel = c; L.on = true;
   selectPad(p); syncLayerUI(); syncXfUI();
-  const el = pads[p].el; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+}
+// pad / key released: ends a gated fade (a release before a snapped hit fires turns that hit into a plain one-shot)
+function release(p){
+  const q = pending.get(p); if (q){ q.released = true; return; }
+  const g = pads[p].gif; if (!g || g.trig !== 'fade' || !g.env.gate) return;
+  for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
+}
+window.addEventListener('blur', () => pads.forEach((_, i) => release(i)));
+
+// ---------- fade one-shot envelope ----------
+const ease = (g, t) => g.env.curve === 'smooth' ? t * t * (3 - 2 * t) : t;
+// opacity factor 0..1 of a fade one-shot clip at `beat`. Fade in starts from E.from; fade out from wherever it is then.
+function envLevel(c, g, beat){
+  const E = c.env; if (!E) return 0;
+  const S = g.env, gate = S.gate && !E.noGate, aDur = S.a * (1 - E.from);
+  const att = x => x < 0 ? E.from : (aDur > 0 && x < aDur) ? E.from + (1 - E.from) * ease(g, x / aDur) : 1;
+  const x = beat - E.t0;
+  let rs;                                            // release start, beats after t0
+  if (gate){ if (E.rel === null) return att(x); rs = E.rel - E.t0; }
+  else rs = aDur + S.h;
+  if (x < rs) return att(x);
+  const top = att(rs), rDur = S.r * top;
+  if (rDur <= 0) return 0;
+  const q = (x - rs) / rDur;
+  return q >= 1 ? 0 : top * (1 - ease(g, q));
+}
+
+// ---------- automation (LFOs) ----------
+const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, shape: 'sine', min: t[6], max: t[7], per: 4, ph: 0, sync: 'clock' }; };
+function rnd(seed, n){ let h = Math.imul(seed ^ Math.imul(n | 0, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+// position in cycles (whole part = cycle number)
+function lfoPos(A, c){ return (A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat) / A.per + A.ph; }
+function lfoShape(A, pos, seed){
+  const n = Math.floor(pos), f = pos - n;
+  switch (A.shape){
+    case 'tri': return f < 0.5 ? 2 * f : 2 - 2 * f;
+    case 'up': return f;
+    case 'down': return 1 - f;
+    case 'square': return f < 0.5 ? 1 : 0;
+    case 'pulse': return f < 0.25 ? 1 : 0;
+    case 'sh': return rnd(seed, n);
+    case 'drift': { const a = rnd(seed, n), b = rnd(seed, n + 1); return a + (b - a) * (1 - Math.cos(Math.PI * f)) / 2; }
+    default: return 0.5 - 0.5 * Math.cos(2 * Math.PI * f);        // sine, starting at Min
+  }
+}
+const lfoSeed = (g, i) => g.uid * 16 + i;
+const lfoAny = g => LFO_T.some(t => g.lfo[t[0]] && g.lfo[t[0]].on);
+// the clip as drawn right now: automation and the fade envelope applied on a copy (the clip itself keeps its settings)
+function effClip(c, g){
+  let e = null;
+  for (let i = 0; i < LFO_T.length; i++){
+    const k = LFO_T[i][0], A = g.lfo[k]; if (!A || !A.on) continue;
+    if (!e) e = Object.assign({}, c);
+    const v = A.min + (A.max - A.min) * lfoShape(A, lfoPos(A, c), lfoSeed(g, i));
+    switch (k){
+      case 'x': e.x += v; break;          case 'y': e.y += v; break;
+      case 'zoom': e.sx *= v; e.sy *= v; break;
+      case 'sx': e.sx *= v; break;        case 'sy': e.sy *= v; break;
+      case 'rot': e.rot += v; break;      case 'op': e.alpha *= v; break;
+      case 'h': e.H = v; break;           case 's': e.S = v; break;         case 'v': e.V = v; break;
+    }
+  }
+  if (g.trig === 'fade'){ if (!e) e = Object.assign({}, c); e.alpha *= envLevel(c, g, clock.beat); }
+  return e || c;
 }
 function removeClip(li, c){
   const L = layers[li]; if (!c) return;
@@ -948,15 +1086,15 @@ function hitHandle(c, px, py){
 
 // ---------- rendering ----------
 function drawClip(ctx, c, g, img){
-  const [bw, bh] = baseSize(g, c.fit);
-  ctx.save(); applyXf(ctx, c);
+  const [bw, bh] = baseSize(g, c.fit), base = c.tile ? ctx.getTransform() : null;
+  ctx.save(); ctx.globalAlpha *= (c.alpha ?? 1); applyXf(ctx, c);
   ctx.imageSmoothingEnabled = !g.crisp;
   if (c.tile){
     // fill exactly the frame, with the clip's whole transform folded into the pattern
     const pat = ctx.createPattern(img, 'repeat');
     pat.setTransform(new DOMMatrix().translate(W/2 + c.x, H/2 + c.y).rotate(c.rot)
       .scale(c.sx * (c.flipX ? -1 : 1), c.sy * (c.flipY ? -1 : 1)).translate(-bw/2, -bh/2).scale(bw / img.width, bh / img.height));
-    ctx.fillStyle = pat; ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = pat; ctx.setTransform(base);
     ctx.fillRect(0, 0, W, H);
   } else if (c.cl || c.ct || c.cr || c.cb){
     const sw = 1 - c.cl - c.cr, sh = 1 - c.ct - c.cb;
@@ -970,37 +1108,66 @@ function onScreen(c){
   const G = clipGeom(c), r = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), q = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
   return G.cx + r > 0 && G.cx - r < W && G.cy + q > 0 && G.cy - q < H;
 }
-// everything that changes the picture this frame, as one string; equal to last frame's → nothing to redraw
-function sceneSig(now){
-  let s = '';
+// what each visible layer draws this frame: clips as drawn (automation + fade applied), invisible ones dropped
+function frameList(now){
+  const out = [];
   for (const L of layers){
     if (!L.on || L.opacity <= 0) continue;
-    s += `|${L.i},${L.opacity},${L.blend}`;
+    const items = [];
     for (const c of L.clips){
       const g = pads[c.pad].gif; if (!g) continue;
-      s += `;${c.id},${frameIndex(c, g, now)},${g.fxVer},${g.crisp},${c.x},${c.y},${c.sx},${c.sy},${c.rot},${c.fit},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb}`;
+      const e = effClip(c, g); if (!(e.alpha > 0)) continue;
+      items.push({ g, e, fi: frameIndex(c, g, now) });
     }
+    out.push({ L, items });
+  }
+  return out;
+}
+// everything that changes the picture this frame, as one string; equal to last frame's → nothing to redraw
+function sceneSig(list){
+  let s = '';
+  for (const { L, items } of list){
+    s += `|${L.i},${L.opacity},${L.blend}`;
+    for (const { g, e, fi } of items)
+      s += `;${e.id},${fi},${g.fxVer},${g.crisp},${e.x},${e.y},${e.sx},${e.sy},${e.rot},${e.fit},${e.flipX},${e.flipY},${e.tile},${e.cl},${e.ct},${e.cr},${e.cb},${e.alpha},${e.H},${e.S},${e.V}`;
   }
   return s;
 }
-function render(now){
+function render(list){
   mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = 1;
   mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H);
-  for (const L of layers){
-    if (!L.on || L.opacity <= 0) continue;
-    const vis = L.clips.filter(c => pads[c.pad].gif && onScreen(c));
+  for (const { L, items } of list){
+    const vis = items.filter(it => onScreen(it.e));
     if (!vis.length) continue;
     mctx.save(); mctx.globalAlpha = L.opacity; mctx.globalCompositeOperation = L.blend;
     if (vis.length === 1 || (L.blend === 'source-over' && L.opacity >= 1)){
       // one GIF, or Normal at full opacity: identical result drawn straight onto the master (no buffer clear + composite)
-      for (const c of vis){ const g = pads[c.pad].gif; drawClip(mctx, c, g, fxImage(g, g.frames[frameIndex(c, g, now)])); }
+      for (const { g, e, fi } of vis) drawClip(mctx, e, g, fxImage(g, g.frames[fi], e));
     } else {                                       // several: flatten into the layer buffer, then blend once
       const b = lbufs[L.i]; b.clearRect(0, 0, W, H);
-      for (const c of vis){ const g = pads[c.pad].gif; drawClip(b, c, g, fxImage(g, g.frames[frameIndex(c, g, now)])); }
+      for (const { g, e, fi } of vis) drawClip(b, e, g, fxImage(g, g.frames[fi], e));
       mctx.drawImage(b.canvas, 0, 0);
     }
     mctx.restore();
   }
+}
+// fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
+function ghostList(){
+  const out = [];
+  for (const L of layers){ if (!L.on) continue; for (const c of L.clips){ const g = pads[c.pad].gif; if (g && g.trig === 'fade' && !(envLevel(c, g, clock.beat) > 0)) out.push([c, g]); } }
+  return out;
+}
+const ghostCv = document.createElement('canvas'), gctx = ghostCv.getContext('2d');
+const dither = (() => { const c = new OffscreenCanvas(2, 2), x = c.getContext('2d'); x.fillRect(0, 0, 1, 1); x.fillRect(1, 1, 1, 1); return gctx.createPattern(c, 'repeat'); })();
+function drawGhosts(gh, k, dpr){
+  if (ghostCv.width !== pv.width || ghostCv.height !== pv.height){ ghostCv.width = pv.width; ghostCv.height = pv.height; }
+  gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.globalCompositeOperation = 'source-over'; gctx.globalAlpha = 1;
+  gctx.clearRect(0, 0, ghostCv.width, ghostCv.height);
+  gctx.setTransform(k, 0, 0, k, view.x * dpr, view.y * dpr);
+  for (const [c, g] of gh) drawClip(gctx, Object.assign({}, c, { alpha: 1 }), g, fxImage(g, g.frames[g.startF]));
+  gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.globalCompositeOperation = 'destination-in';
+  gctx.fillStyle = dither; gctx.fillRect(0, 0, ghostCv.width, ghostCv.height);
+  pctx.globalAlpha = 0.75; pctx.drawImage(ghostCv, 0, 0); pctx.globalAlpha = 1;
 }
 function outline(G, k){
   pctx.beginPath();
@@ -1012,23 +1179,25 @@ function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all;
   if (!outCtx && hidden) return;                   // nobody is looking
-  const sig = sceneSig(now);
+  const list = frameList(now), sig = sceneSig(list);
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++;
-    render(now);
+    render(list);
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
   }
   if (hidden) return;
-  const L = layers[target], sel = selClip();
-  const osig = `${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';');
-  if (force || osig !== redraw.overlay){ redraw.overlay = osig; drawOverlay(); }
+  const L = layers[target], sel = selClip(), gh = ghostList();
+  const osig = `${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
+    + '|' + gh.map(([c, g]) => { const G = clipGeom(c); return `${c.id},${G.cx},${G.cy},${G.hw},${G.hh},${G.a},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb},${g.fxVer},${g.startF},${g.crisp}`; }).join(';');
+  if (force || osig !== redraw.overlay){ redraw.overlay = osig; drawOverlay(gh); }
   redraw.all = false;
 }
-function drawOverlay(){
+function drawOverlay(gh = ghostList()){
   const dpr = devicePixelRatio || 1;
   pctx.clearRect(0, 0, pv.width, pv.height);
   const k = view.w * dpr / W, L = layers[target], sel = selClip();
+  if (gh.length) drawGhosts(gh, k, dpr);
   pctx.save(); pctx.translate(view.x * dpr, view.y * dpr); pctx.strokeStyle = LCOL[target];
   for (const c of L.clips){
     const G = clipGeom(c); if (!G) continue;
@@ -1117,7 +1286,11 @@ function onKey(e){
   const m = /^Digit([1-4])$/.exec(e.code);
   if (m){ e.preventDefault(); const li = +m[1] - 1; e.shiftKey ? setTarget(li) : toggleLayer(li); }
 }
-function onKeyUp(e){ if (e.code === 'Space' && !isTyping(e)) e.preventDefault(); }
+function onKeyUp(e){
+  if (isTyping(e)) return;
+  if (e.code === 'Space') e.preventDefault();
+  const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0) release(pi);
+}
 window.addEventListener('keydown', onKey);
 window.addEventListener('keyup', onKeyUp);
 // keep focus off controls so keys always reach the pads
@@ -1130,10 +1303,11 @@ function buildPads(){
     const el = document.createElement('div');
     el.className = 'pad empty'; el.dataset.i = i;
     el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
-    el.addEventListener('click', () => {
-      if (p.gif) trigger(i);
-      else { selectPad(i); fileTarget = i; $('#fileIn').click(); }
-    });
+    // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
+    el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return; el.setPointerCapture(e.pointerId); trigger(i); });
+    el.addEventListener('pointerup', () => release(i));
+    el.addEventListener('pointercancel', () => release(i));
+    el.addEventListener('click', () => { if (!p.gif && !p.loading){ selectPad(i); fileTarget = i; $('#fileIn').click(); } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
     p.el = el;
   });
@@ -1207,6 +1381,10 @@ function syncGifUI(){
   $('#kSoft').value = g.key.soft; $('#kSoft').nextElementSibling.textContent = (g.key.soft * 100).toFixed(0) + '%';
   syncRangeUI(g); drawPrev(g, g.startF);
   HSV_UI.forEach(([id, k, fmt]) => { $(id).value = g.hsv[k]; $(id).nextElementSibling.textContent = fmt(g.hsv[k]); });
+  segSet('#tMode', g.trig); segSet('#tCurve', g.env.curve); $('#tGate').checked = g.env.gate;
+  ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
+  $('#tEnv').classList.toggle('dimmed', g.trig !== 'fade'); $('#tHoldRow').classList.toggle('dimmed', g.env.gate);
+  syncAutoUI(g);
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
   $('#gInfo').textContent = g.keyMsg || `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
 }
@@ -1221,6 +1399,92 @@ HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
   scheduleFx(g, 150);
 }));
 $('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.hsv, { h: 0, s: 1, v: 1 }); scheduleFx(g, 0); syncGifUI(); });
+
+// ---- trigger tab: Stay / Fade one-shot ----
+const ENV_UI = [['#tA', 'a'], ['#tH', 'h'], ['#tR', 'r']];
+ENV_UI.forEach(([id, k]) => { const el = $(id); el.max = ENV_OPTS.length - 1;
+  el.addEventListener('input', e => { const g = curGif(); if (!g) return; const o = ENV_OPTS[+e.target.value]; g.env[k] = o[0]; e.target.nextElementSibling.textContent = o[1]; }); });
+$('#tMode').addEventListener('click', e => {
+  const b = e.target.closest('button'), g = curGif(); if (!b || !g) return;
+  g.trig = b.dataset.v; layers.forEach(L => L.clips.forEach(c => { if (c.pad === selPad) c.env = null; }));   // switching hides / shows it at once
+  syncGifUI(); redraw.all = true;
+});
+$('#tCurve').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (b && g){ g.env.curve = b.dataset.v; syncGifUI(); } });
+$('#tGate').addEventListener('change', e => { const g = curGif(); if (g){ g.env.gate = e.target.checked; syncGifUI(); } });
+
+// ---- auto tab: one LFO per target ----
+let aSel = 'x';
+$('#aTgt').innerHTML = LFO_T.map(t => `<button data-v="${t[0]}" title="${t[2]}">${t[1]}</button>`).join('');
+$('#aShape').innerHTML = segHTML(SHAPES);
+$('#aPer').max = PER_OPTS.length - 1;
+const lfoFmt = (t, v) => t[8] === '%' ? Math.round(v * 100) + '%' : t[8] === '×' ? (+v).toFixed(2) + '×' : (v > 0 ? '+' : '') + Math.round(v) + (t[8] === '°' ? '°' : '');
+function syncAutoUI(g){
+  const t = LFO_T.find(t => t[0] === aSel), A = g.lfo[aSel] || lfoDef(aSel);
+  $('#aTgt').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.v === aSel); b.classList.toggle('act', !!(g.lfo[b.dataset.v] && g.lfo[b.dataset.v].on)); });
+  $('#aTitle').textContent = t[2] + (['h', 's', 'v'].includes(aSel) && !liveFx() ? ' — needs WebGL' : '');
+  $('#aOn').checked = A.on; segSet('#aShape', A.shape); segSet('#aSync', A.sync);
+  [['#aMin', 'min'], ['#aMax', 'max']].forEach(([id, k]) => { const el = $(id); el.min = t[3]; el.max = t[4]; el.step = t[5]; el.value = A[k]; el.nextElementSibling.textContent = lfoFmt(t, A[k]); });
+  const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
+  $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
+  $('#gTabs [data-v=trig]').classList.toggle('act', g.trig === 'fade');
+  $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
+}
+// change the edited LFO; touching any setting switches it on
+function editLfo(fn, turnOn = true){
+  const g = curGif(); if (!g) return;
+  const A = g.lfo[aSel] || (g.lfo[aSel] = lfoDef(aSel));
+  fn(A); if (turnOn) A.on = true;
+  syncAutoUI(g); syncXfUI();
+}
+$('#aTgt').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (!b) return; aSel = b.dataset.v; if (g) syncAutoUI(g); });
+$('#aOn').addEventListener('change', e => editLfo(A => A.on = e.target.checked, false));
+$('#aShape').addEventListener('click', e => { const b = e.target.closest('button'); if (b) editLfo(A => A.shape = b.dataset.v); });
+$('#aSync').addEventListener('click', e => { const b = e.target.closest('button'); if (b) editLfo(A => A.sync = b.dataset.v); });
+$('#aMin').addEventListener('input', e => editLfo(A => A.min = +e.target.value));
+$('#aMax').addEventListener('input', e => editLfo(A => A.max = +e.target.value));
+$('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0]));
+$('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value));
+$('#aReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.lfo[aSel]; syncAutoUI(g); syncXfUI(); });
+
+// ---- scopes (drawn by the main loop while their tab is showing) ----
+let gTab = 'play';
+function scopeCtx(cv){
+  const d = devicePixelRatio || 1, w = Math.round(cv.clientWidth * d), h = Math.round(cv.clientHeight * d);
+  if (!w || !h) return null;
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const x = cv.getContext('2d'); x.clearRect(0, 0, w, h); return [x, w, h, d];
+}
+const clipOf = p => { for (const L of layers){ const c = L.clips.find(c => c.pad === p); if (c) return c; } return null; };
+function drawScopes(){
+  const g = curGif(); if (!g) return;
+  if (gTab === 'auto') drawLfoScope(g); else if (gTab === 'trig') drawEnvScope(g);
+}
+function scopeTrace(x, w, h, d, fn, on){                 // fn: 0..1 across → 0..1 up
+  const pad = 5 * d, y = v => h - pad - v * (h - 2 * pad);
+  x.strokeStyle = 'rgba(90,169,230,.18)'; x.lineWidth = d; x.beginPath(); x.moveTo(0, y(0.5)); x.lineTo(w, y(0.5)); x.stroke();
+  x.strokeStyle = on ? '#ffb000' : '#5a5a63'; x.lineWidth = 1.5 * d; x.beginPath();
+  for (let px = 0; px <= w; px += d){ const v = fn(px / w); px ? x.lineTo(px, y(v)) : x.moveTo(px, y(v)); }
+  x.stroke(); return y;
+}
+function scopeDot(x, px, py, d){ x.fillStyle = '#fff'; x.beginPath(); x.arc(px, py, 3 * d, 0, Math.PI * 2); x.fill(); }
+function drawLfoScope(g){
+  const S = scopeCtx($('#aScope')); if (!S) return; const [x, w, h, d] = S;
+  const A = g.lfo[aSel] || lfoDef(aSel), i = LFO_T.findIndex(t => t[0] === aSel), c = clipOf(selPad) || { startBeat: 0 };
+  const pos = lfoPos(A, c), seed = lfoSeed(g, i);
+  const y = scopeTrace(x, w, h, d, u => lfoShape(A, pos + (u - 0.75) * 2, seed), A.on);   // two cycles, now at 3/4
+  scopeDot(x, w * 0.75, y(lfoShape(A, pos, seed)), d);
+}
+function drawEnvScope(g){
+  const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
+  const E = g.env, hold = E.gate ? Math.max(E.h, 1) : E.h, span = Math.max(E.a + hold + E.r, 0.5) * 1.1;
+  const shape = { env: { t0: 0, from: 0, rel: E.gate ? E.a + hold : null, noGate: false } };
+  const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
+  const c = clipOf(selPad);
+  if (g.trig === 'fade' && c && c.env){
+    const lv = envLevel(c, g, clock.beat), t = clock.beat - c.env.t0;
+    if (lv > 0) scopeDot(x, Math.min(w - 3 * d, t / span * w), y(lv), d);
+  }
+}
 function syncRangeUI(g){
   const F = g.src.length;
   [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => { const el = $(id); el.max = F - 1; el.value = g[k]; el.nextElementSibling.textContent = g[k]; });
@@ -1262,6 +1526,7 @@ function pickAt(px, py){
 $('#gClear').addEventListener('click', () => {
   const p = pads[selPad]; if (!p.gif) return;
   freeGif(p.gif); p.gif = null;
+  pending.delete(selPad); p.el.classList.remove('wait');
   layers.forEach(L => { L.clips = L.clips.filter(c => c.pad !== selPad); });
   renderPad(selPad); syncGifUI(); syncLayerUI(); syncXfUI(); updateMem();
 });
@@ -1347,7 +1612,8 @@ function syncLayerUI(){
 }
 
 // ---------- UI: transform (selected GIF in the edited layer) ----------
-const XF = [['#xX','x',v => v.toFixed(0)],['#xY','y',v => v.toFixed(0)],['#xSX','sx',v => v.toFixed(2)+'×'],['#xSY','sy',v => v.toFixed(2)+'×'],['#xR','rot',v => v.toFixed(0)+'°']];
+const XF = [['#xX','x',v => v.toFixed(0)],['#xY','y',v => v.toFixed(0)],['#xSX','sx',v => v.toFixed(2)+'×'],['#xSY','sy',v => v.toFixed(2)+'×'],['#xR','rot',v => v.toFixed(0)+'°'],['#xO','alpha',v => Math.round(v*100)+'%']];
+const XF_LFO = { '#xX': ['x'], '#xY': ['y'], '#xSX': ['zoom', 'sx'], '#xSY': ['zoom', 'sy'], '#xR': ['rot'], '#xO': ['op'] };
 XF.forEach(([id, key, fmt]) => $(id).addEventListener('input', e => { const c = selClip(); if (!c) return; c[key] = +e.target.value; e.target.nextElementSibling.textContent = fmt(+e.target.value); }));
 $('#xFit').addEventListener('change', e => { const c = selClip(); if (c) c.fit = e.target.value; });
 $('#xFx').addEventListener('change', e => { const c = selClip(); if (c) c.flipX = e.target.checked; });
@@ -1366,6 +1632,9 @@ function syncXfUI(){
   $('#xfTitle').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label} · ${pads[c.pad].gif ? pads[c.pad].gif.name : ''}` : `${LNAMES[target]} · no GIF selected`;
   if (!c) return;
   XF.forEach(([id, key, fmt]) => { $(id).value = c[key]; $(id).nextElementSibling.textContent = fmt(c[key]); });
+  const g = pads[c.pad].gif;                         // automated values: readout tinted blue (it shows the base value)
+  Object.entries(XF_LFO).forEach(([id, ks]) => { const o = $(id).nextElementSibling, m = !!g && ks.some(k => g.lfo[k] && g.lfo[k].on);
+    o.classList.toggle('mod', m); o.title = m ? 'Automated (GIF › Auto) — this is the base value' : ''; });
   $('#gSmooth').checked = !!(pads[c.pad].gif && !pads[c.pad].gif.crisp);
   $('#xFit').value = c.fit; $('#xFx').checked = c.flipX; $('#xFy').checked = c.flipY; $('#xT').checked = c.tile;
   const pc = v => Math.round(v * 100);
@@ -1522,7 +1791,7 @@ $('#helpPanel').addEventListener('pointerdown', e => { if (e.target.id === 'help
 // GIF tabs: all panes share one grid cell (rule 3), so switching never moves anything below
 $('#gTabs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  segSet('#gTabs', b.dataset.v);
+  segSet('#gTabs', b.dataset.v); gTab = b.dataset.v;
   document.querySelectorAll('#gPanes > [data-pane]').forEach(p => p.classList.toggle('off', p.dataset.pane !== b.dataset.v));
 });
 // key reset
@@ -1537,7 +1806,7 @@ const dots = [...document.querySelectorAll('#beats i')];
 // The loop runs on the output window's requestAnimationFrame while it's open, so the output keeps
 // playing when this control window is minimized or hidden (a hidden window's own rAF stops).
 // A watchdog restarts the loop on this window if the output closes mid-frame.
-let loopGen = 0, lastFrame = 0, driver = 'control', drawn = 0;
+let loopGen = 0, lastFrame = 0, driver = 'control', drawn = 0, scopeT = 0;
 function schedule(){
   const g = loopGen, w = (outWin && !outWin.closed) ? outWin : window;
   driver = w === window ? 'control' : 'output';
@@ -1550,7 +1819,9 @@ function frame(gen){
   const now = performance.now();                     // own clock (the output window's rAF time has another origin)
   lastFrame = now;
   updateClock(now);
+  if (pending.size) firePending();
   drawFrame(now);
+  if (!document.hidden && now - scopeT > 33){ scopeT = now; drawScopes(); }
   const bi = Math.floor(clock.beat);
   if (bi !== lastBeatIdx){
     lastBeatIdx = bi; const k = mod(bi, 4);
@@ -1570,8 +1841,8 @@ function frame(gen){
 }
 
 // ---------- persistence: GIF files + settings in IndexedDB (cookies cap at ~4 KB) ----------
-const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv'];
-const XF_KEYS = Object.keys(newXf());
+const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'trig', 'env', 'lfo'];
+const XF_KEYS = [...Object.keys(newXf()), 'alpha'];
 // IndexedDB 'kv' store:
 //   'gif:<hash>' → { name, blob }               original files, stored once (content hash), shared by sets
 //   'set:<id>'   → { id, name, updated, count, snap }   a saved set; snap = snapshot() JSON
