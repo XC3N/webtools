@@ -412,13 +412,19 @@ const lenLabel = b => { const o = LEN_OPTS.find(o => Math.abs(o[0] - b) < 1e-6);
 const ENV_OPTS = [[0,'0'],[0.125,'1/32'],[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars']];
 const PER_OPTS = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars'],[64,'16 bars']];
 const optIdx = (opts, v) => opts.reduce((bi, o, i) => Math.abs(o[0] - v) < Math.abs(opts[bi][0] - v) ? i : bi, 0);
-// LFO targets: [key, button, title, slider min, max, step, default min, default max, unit]
+// LFO targets: [key, button, title, slider min, max, step, unit, default min, max, shape, cycle (beats)]
+// Defaults are a usable starting move, not a neutral one: a gentle sway, a zoom punch on the beat, a hue cycle…
 const LFO_T = [
-  ['x', 'X', 'X position', -1920, 1920, 1, -200, 200, 'px'], ['y', 'Y', 'Y position', -1080, 1080, 1, -100, 100, 'px'],
-  ['zoom', 'Zoom', 'Zoom', 0, 4, 0.01, 0.8, 1.2, '×'], ['sx', 'Width', 'Width (scale X)', 0, 4, 0.01, 0.8, 1.2, '×'],
-  ['sy', 'Height', 'Height (scale Y)', 0, 4, 0.01, 0.8, 1.2, '×'], ['rot', 'Rotate', 'Rotation', -360, 360, 1, -15, 15, '°'],
-  ['op', 'Opac', 'Opacity', 0, 1, 0.01, 0, 1, '%'], ['h', 'Hue', 'Hue shift', -180, 180, 1, -180, 180, '°'],
-  ['s', 'Sat', 'Saturation', 0, 3, 0.01, 0.5, 1.5, '×'], ['v', 'Bright', 'Brightness', 0, 3, 0.01, 0.5, 1.5, '×']];
+  ['x', 'X', 'X position', -1920, 1920, 1, 'px', -100, 100, 'sine', 8],
+  ['y', 'Y', 'Y position', -1080, 1080, 1, 'px', -40, 40, 'sine', 4],
+  ['zoom', 'Zoom', 'Zoom', 0, 4, 0.01, '×', 1, 1.15, 'down', 1],
+  ['sx', 'Width', 'Width (scale X)', 0, 4, 0.01, '×', 0.9, 1.1, 'sine', 2],
+  ['sy', 'Height', 'Height (scale Y)', 0, 4, 0.01, '×', 0.9, 1.1, 'sine', 2],
+  ['rot', 'Rotate', 'Rotation', -360, 360, 1, '°', -10, 10, 'sine', 8],
+  ['op', 'Opac', 'Opacity', 0, 1, 0.01, '%', 0, 1, 'square', 1],
+  ['h', 'Hue', 'Hue shift', -180, 180, 1, '°', -180, 180, 'up', 16],
+  ['s', 'Sat', 'Saturation', 0, 3, 0.01, '×', 0, 1, 'sine', 4],
+  ['v', 'Bright', 'Brightness', 0, 3, 0.01, '×', 1, 1.6, 'down', 1]];
 const SHAPES = [['sine','Sine'],['tri','Tri'],['up','Ramp ↑'],['down','Ramp ↓'],['square','Square'],['pulse','Pulse'],['sh','Random'],['drift','Drift']];
 const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
 const KEY_MAX = 441.67;        // max RGB distance
@@ -958,7 +964,7 @@ function envLevel(c, g, beat){
 }
 
 // ---------- automation (LFOs) ----------
-const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, shape: 'sine', min: t[6], max: t[7], per: 4, ph: 0, sync: 'clock' }; };
+const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, min: t[7], max: t[8], shape: t[9], per: t[10], ph: 0, sync: 'clock' }; };
 function rnd(seed, n){ let h = Math.imul(seed ^ Math.imul(n | 0, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
 // position in cycles (whole part = cycle number)
 function lfoPos(A, c){ return (A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat) / A.per + A.ph; }
@@ -1417,7 +1423,7 @@ let aSel = 'x';
 $('#aTgt').innerHTML = LFO_T.map(t => `<button data-v="${t[0]}" title="${t[2]}">${t[1]}</button>`).join('');
 $('#aShape').innerHTML = segHTML(SHAPES);
 $('#aPer').max = PER_OPTS.length - 1;
-const lfoFmt = (t, v) => t[8] === '%' ? Math.round(v * 100) + '%' : t[8] === '×' ? (+v).toFixed(2) + '×' : (v > 0 ? '+' : '') + Math.round(v) + (t[8] === '°' ? '°' : '');
+const lfoFmt = (t, v) => t[6] === '%' ? Math.round(v * 100) + '%' : t[6] === '×' ? (+v).toFixed(2) + '×' : (v > 0 ? '+' : '') + Math.round(v) + (t[6] === '°' ? '°' : '');
 function syncAutoUI(g){
   const t = LFO_T.find(t => t[0] === aSel), A = g.lfo[aSel] || lfoDef(aSel);
   $('#aTgt').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.v === aSel); b.classList.toggle('act', !!(g.lfo[b.dataset.v] && g.lfo[b.dataset.v].on)); });
