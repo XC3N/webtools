@@ -209,6 +209,12 @@ output{display:block;width:100%;text-align:center}
 .setRow.cur{border-color:var(--amber-dim);box-shadow:0 0 0 1px rgba(var(--acc-rgb),.3) inset}
 .setRow .sname{display:block;font:700 13px var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.setRow .meta{display:block;font:500 10px var(--mono);color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .setRow button{width:76px}
+/* inline confirm: covers the row (or footer) it belongs to, so nothing below moves */
+.asking{position:relative}
+.asking>*:not(.ask){visibility:hidden}
+.ask{position:absolute;inset:0;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:8px;background:#241616;border:1px solid #7a3030;z-index:1}
+.ask span{flex:1;min-width:0;font:600 12px var(--sans);color:#ffd0d0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ask button{width:auto}
 #setList:empty::before{content:'No saved sets yet.';font:italic 12px var(--mono);color:var(--faint)}
 .keys{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:12px}
 .keys dt{font:700 11px var(--mono);color:var(--amber);white-space:nowrap}.keys dd{margin:0;color:var(--ink);line-height:1.45}
@@ -341,7 +347,7 @@ output{display:block;width:100%;text-align:center}
     <h2>Sets<span class="line"></span><button id="setsClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <div class="row"><input id="setNameIn" type="text" placeholder="Name for the current set"><button id="saveAsBtn" class="accent">Save as new</button></div>
     <div id="setList"></div>
-    <div class="row"><button id="importBtn">Import .vjif…</button><input id="importIn" type="file" accept=".vjif,.zip" hidden>
+    <div class="row" id="setsFoot"><button id="importBtn">Import .vjif…</button><input id="importIn" type="file" accept=".vjif,.zip" hidden>
       <button id="exportCur">Export current…</button><span style="flex:1"></span><button id="newEmpty">New empty set</button></div>
     <p class="note">Sets are kept in this browser; GIF files are stored once and shared between sets. A .vjif file holds a set plus its GIFs (it's a ZIP) — use it to back up or move a set. Drop a .vjif anywhere on VJif to import it. Loading keeps the current set playing until the new one is decoded, then swaps on the next beat or bar if Snap is set.</p>
   </div>
@@ -1078,7 +1084,8 @@ function isTyping(e){
 function onKey(e){
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setsPanel').hidden){                      // the sets panel is modal
-    if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
+    if (e.key === 'Escape' && askBox){ e.preventDefault(); closeAsk(); }
+    else if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
     return;
   }
   if (e.key === '?' && !isTyping(e)){ e.preventDefault(); $('#helpPanel').hidden = false; return; }
@@ -1808,15 +1815,26 @@ async function importVjif(file){
 
 // ---- sets panel ----
 function openSets(){ renderSets(); $('#setsPanel').hidden = false; $('#setNameIn').value = curSet() ? '' : ''; }
-function closeSets(){ $('#setsPanel').hidden = true; document.activeElement && document.activeElement.blur && document.activeElement.blur(); }
+function closeSets(){ closeAsk(); $('#setsPanel').hidden = true; document.activeElement && document.activeElement.blur && document.activeElement.blur(); }
 // two-click confirm for anything destructive
-function armed(btn, label){
-  if (btn.dataset.armed) return true;
-  const t = btn.textContent; btn.dataset.armed = 1; btn.textContent = label; btn.classList.add('armed');
-  setTimeout(() => { delete btn.dataset.armed; btn.textContent = t; btn.classList.remove('armed'); }, 2500);
-  return false;
+// Inline confirm over `box`: a message plus explicit choices, always including Cancel. No timeout.
+function ask(box, msg, actions){
+  closeAsk();
+  const el = document.createElement('div'); el.className = 'ask';
+  el.innerHTML = `<span title="${esc(msg)}">${esc(msg)}</span>`;
+  [...actions, { label: 'Cancel', fn: () => {} }].forEach(a => {
+    const b = document.createElement('button'); b.textContent = a.label; if (a.cls) b.className = a.cls;
+    b.addEventListener('click', e => { e.stopPropagation(); closeAsk(); a.fn(); });
+    el.appendChild(b);
+  });
+  box.classList.add('asking'); box.appendChild(el); askBox = box;
+  el.querySelector('button').focus();
 }
+let askBox = null;
+function closeAsk(){ if (!askBox) return; askBox.classList.remove('asking'); const a = askBox.querySelector(':scope > .ask'); if (a) a.remove(); askBox = null; }
+const unsavedMsg = () => curSet() ? `Unsaved changes to "${curSet().name}" will be lost.` : 'The current (unsaved) set will be lost.';
 function renderSets(){
+  askBox = null;
   const list = [...sets.values()].sort((a, b) => b.updated - a.updated), fmt = t => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   $('#setList').innerHTML = list.map(r => `<div class="setRow${r.id === session.setId ? ' cur' : ''}" data-id="${r.id}">
     <div><span class="sname">${esc(r.name)}</span><span class="meta">${r.count} GIF${r.count === 1 ? '' : 's'} · ${fmt(r.updated)}${r.id === session.setId ? ' · current' + (dirty ? ', unsaved changes' : '') : ''}</span></div>
@@ -1825,8 +1843,13 @@ function renderSets(){
 $('#setList').addEventListener('click', async e => {
   const b = e.target.closest('button'), row = e.target.closest('.setRow'); if (!b || !row) return;
   const id = row.dataset.id, rec = sets.get(id);
-  if (b.dataset.act === 'load'){ if ((!dirty || !hasContent()) || armed(b, 'Discard changes?')) loadSet(id); }
-  else if (b.dataset.act === 'del'){ if (armed(b, 'Delete?')) deleteSet(id); }
+  if (b.dataset.act === 'load'){
+    if (!dirty || !hasContent()) return loadSet(id);
+    const acts = [{ label: 'Discard & load', cls: 'danger', fn: () => loadSet(id) }];
+    if (curSet()) acts.unshift({ label: 'Save & load', cls: 'accent', fn: async () => { await saveSet(false); loadSet(id); } });
+    ask(row, unsavedMsg(), acts);
+  }
+  else if (b.dataset.act === 'del') ask(row, `Delete "${rec.name}"? This can't be undone.`, [{ label: 'Delete', cls: 'danger', fn: () => deleteSet(id) }]);
   else if (b.dataset.act === 'export') exportSet(rec.name, rec.snap);
   else if (b.dataset.act === 'rename'){
     const span = row.querySelector('.sname'), inp = document.createElement('input');
@@ -1845,7 +1868,10 @@ $('#setNameIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#sa
 $('#exportCur').addEventListener('click', () => exportSet(curSet() ? curSet().name : 'Untitled set', snapshot()));
 $('#importBtn').addEventListener('click', () => $('#importIn').click());
 $('#importIn').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importVjif(f); });
-$('#newEmpty').addEventListener('click', e => { if (!dirty || !hasContent() || armed(e.currentTarget, 'Discard changes?')) newEmptySet(); });
+$('#newEmpty').addEventListener('click', () => {
+  if (!dirty || !hasContent()) return newEmptySet();
+  ask($('#setsFoot'), unsavedMsg(), [{ label: 'Discard & clear', cls: 'danger', fn: newEmptySet }]);
+});
 let toast2T = 0;
 function toast2(msg){ const t = $('#toast'); t.classList.add('ok'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast2T); clearTimeout(toastT); toast2T = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); }, 2500); }
 
