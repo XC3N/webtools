@@ -69,6 +69,11 @@ output{display:block;font:500 11px/1 var(--mono);font-variant-numeric:tabular-nu
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .spec{font:500 12px/1.6 var(--mono);color:var(--muted);background:#101013;border:1px solid var(--edge);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
 .marks{display:flex;flex-direction:column;gap:6px}
+.layers{display:flex;flex-direction:column;gap:6px}
+.layers .lrow{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;align-items:center}
+.layers .lrow>span{font:700 9px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.layers .seg button{height:28px;font-size:11px}
+.layers .lrow.dim{opacity:.35;pointer-events:none}
 .mk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr) 30px;gap:6px}
 .mk input{height:30px;font-size:12px}
 .mk button{height:30px;background:none;border:1px solid var(--edge-2);border-radius:6px;color:var(--faint);cursor:pointer;font:16px/1 var(--mono)}
@@ -93,26 +98,18 @@ output{display:block;font:500 11px/1 var(--mono);font-variant-numeric:tabular-nu
 /* ---- the wordmark ---- */
 .lg{--hi:#fff;--lo:#bdbdc6;--ink2:var(--ink);display:inline-block;white-space:nowrap;line-height:1.05;font-family:var(--f);font-weight:var(--w);font-stretch:var(--st);letter-spacing:var(--tr);text-transform:var(--case);transform:skewX(var(--sk));padding:.06em .02em}
 .on-paper .lg{--hi:#2a2a31;--lo:#000;--ink2:#111}
-.lg span{display:inline-block}
-.t-chrome .m{background:linear-gradient(180deg,var(--hi),var(--lo));-webkit-background-clip:text;background-clip:text;color:transparent}
-.t-chrome .a{background:linear-gradient(180deg,var(--a2),var(--a));-webkit-background-clip:text;background-clip:text;color:transparent}
-.t-flat .m{color:var(--ink2)} .t-flat .a{color:var(--a)}
-.t-glow .m{color:var(--ink2);text-shadow:0 0 .18em color-mix(in srgb,var(--ink2) 35%,transparent)}
-.t-glow .a{color:var(--a2);text-shadow:0 0 .08em var(--a),0 0 .3em var(--a),0 0 .7em color-mix(in srgb,var(--a) 55%,transparent)}
-.t-outline .m{color:transparent;-webkit-text-stroke:.035em var(--ink2)} .t-outline .a{color:var(--a)}
-.t-shadow .m{color:var(--ink2);text-shadow:.07em .07em 0 var(--a)} .t-shadow .a{color:var(--a);text-shadow:.07em .07em 0 color-mix(in srgb,var(--ink2) 30%,#000)}
-.t-stripe .m{background:repeating-linear-gradient(180deg,var(--ink2) 0 .085em,transparent .085em .13em);-webkit-background-clip:text;background-clip:text;color:transparent}
-.t-stripe .a{background:repeating-linear-gradient(180deg,var(--a) 0 .085em,transparent .085em .13em);-webkit-background-clip:text;background-clip:text;color:transparent}
-.t-grad .m,.t-grad .a{color:transparent;-webkit-background-clip:text;background-clip:text}
-.t-grad .m{background-image:linear-gradient(90deg,var(--ink2),var(--a2))} .t-grad .a{background-image:linear-gradient(90deg,var(--a2),var(--a))}
-.t-badge{background:var(--a);border-radius:.16em;padding:.12em .32em .1em}
-.t-badge .m{color:var(--on-a)} .t-badge .a{color:var(--on-a);opacity:.72}
-.t-split .m{background:#1a1a1f;color:var(--ink2);padding:.12em .2em .1em .3em;border-radius:.16em 0 0 .16em;box-shadow:0 0 0 .03em var(--a) inset}
-.t-split .a{background:var(--a);color:var(--on-a);padding:.12em .3em .1em .2em;border-radius:0 .16em .16em 0}
-.on-paper .t-split .m{background:#fff}
-.t-lcd{background:color-mix(in srgb,var(--a) 9%,#000);border:.03em solid color-mix(in srgb,var(--a) 40%,transparent);border-radius:.12em;padding:.1em .28em}
-.t-lcd .m{color:color-mix(in srgb,var(--a) 55%,#000)} .t-lcd .a{color:var(--a);text-shadow:0 0 .25em color-mix(in srgb,var(--a) 70%,transparent)}
-.noacc .a{all:unset} .noacc .a{display:inline-block}
+.lg{--split-bg:#1a1a1f}
+.on-paper .lg{--split-bg:#fff}
+/* each part is padded so glyphs that overhang their box (tight tracking, italics) keep their fill; the margin cancels it */
+.lg span{display:inline-block;padding:0 .15em;margin:0 -.15em}
+.lg span:last-child{margin-right:calc(-.15em - var(--tr))}          /* no trailing tracking: stays centred */
+.bx-badge{background:var(--a);border-radius:.16em;padding:.12em .32em .1em}
+.bx-lcd{background:color-mix(in srgb,var(--a) 9%,#000);border:.03em solid color-mix(in srgb,var(--a) 40%,transparent);border-radius:.12em;padding:.1em .28em}
+.bx-frame{border:.06em solid var(--a);border-radius:.14em;padding:.08em .28em}
+.bx-split span{margin:0;padding:.12em .2em .1em}
+.bx-split span.m{background:var(--split-bg);box-shadow:0 0 0 .03em var(--a) inset;border-radius:.16em 0 0 .16em;padding-left:.3em}
+.bx-split span.a{background:var(--a);border-radius:0 .16em .16em 0;padding-right:.3em}
+.bx-split span:only-child{border-radius:.16em}
 /* ---- galleries ---- */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .mini{position:relative;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:14px 14px 10px;cursor:pointer;display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .15s}
@@ -155,7 +152,8 @@ output{display:block;font:500 11px/1 var(--mono);font-variant-numeric:tabular-nu
       <section class="panel ctl" aria-label="Controls">
         <div class="row"><span class="lbl">Editing</span><div class="seg wrap" id="target"></div></div>
         <div class="row"><label class="lbl" for="font">Typeface <span id="fontCount" class="hex"></span></label><select id="font"></select></div>
-        <div class="row"><span class="lbl">Treatment</span><div class="seg g3" id="treat"></div></div>
+        <div class="row"><span class="lbl">Treatment <span class="hex">stack one of each</span></span>
+          <div class="layers" id="layersUI"></div></div>
         <div class="row"><span class="lbl">Accent colour</span><div class="sw" id="col"></div></div>
         <div class="row"><span class="lbl">Family <span class="hex" id="famHint">tints and shades</span></span><div class="fam" id="fam"></div>
           <div class="pick"><input type="color" id="colPick" title="Any colour"><span class="hex" id="colHex"></span></div></div>
@@ -255,10 +253,27 @@ async function bestWeight(family){ for (const w of [900, 800, 700, 400]) if (awa
 const saveFonts = () => store.set('logolab-fonts', fonts);
 
 // ---------------- wordmarks + design state ----------------
-const TREATS = [['chrome', 'Chrome'], ['flat', 'Flat'], ['glow', 'Neon'], ['outline', 'Outline'], ['shadow', 'Drop'], ['stripe', 'Stripes'], ['grad', 'Gradient'], ['badge', 'Badge'], ['split', 'Split'], ['lcd', 'LCD']];
-const base = { font: 'Archivo 900', treat: 'chrome', col: '#ffb000', acc: 2, cs: 'none', tr: 0.01, sk: 0 };
+// a treatment is a stack: one choice per layer
+const LAYERS = [
+  ['fill', 'Fill', [['solid', 'Solid'], ['chrome', 'Chrome'], ['gradient', 'Gradient'], ['stripes', 'Stripes'], ['hollow', 'Hollow']]],
+  ['line', 'Outline', [['none', 'None'], ['thin', 'Thin'], ['thick', 'Thick']]],
+  ['shadow', 'Shadow', [['none', 'None'], ['drop', 'Drop'], ['long', 'Long'], ['lift', 'Lift']]],
+  ['glow', 'Glow', [['none', 'None'], ['soft', 'Soft'], ['neon', 'Neon']]],
+  ['box', 'Container', [['none', 'None'], ['badge', 'Badge'], ['split', 'Split'], ['lcd', 'LCD'], ['frame', 'Frame']]],
+];
+const STACK0 = { fill: 'solid', line: 'none', shadow: 'none', glow: 'none', box: 'none' };
+// older saves had one named treatment: spread it over the layers
+const OLD = { chrome: { fill: 'chrome' }, flat: {}, glow: { glow: 'neon' }, outline: { fill: 'hollow' }, shadow: { shadow: 'drop' },
+  stripe: { fill: 'stripes' }, grad: { fill: 'gradient' }, badge: { box: 'badge' }, split: { box: 'split' }, lcd: { box: 'lcd' } };
+function norm(c){
+  if (c.treat !== undefined){ Object.assign(c, STACK0, OLD[c.treat] || {}); delete c.treat; }
+  for (const k in STACK0) if (c[k] === undefined) c[k] = STACK0[k];
+  return c;
+}
+const base = { font: 'Archivo 900', ...STACK0, fill: 'chrome', col: '#ffb000', acc: 2, cs: 'none', tr: 0.01, sk: 0 };
 const DEFAULT_MARKS = [{ id: 'vj', text: 'VJ|if', sub: '', cfg: { ...base } }, { id: 'mo', text: 'Bad |MOPHO', sub: 'Programmer', cfg: { ...base, acc: 0 } }];
 let marks = store.get('logolab-marks', null) || clone(DEFAULT_MARKS), edit = 'all', kept = store.get('logolab-kept2', []);
+marks.forEach(m => norm(m.cfg));
 const saveMarks = () => store.set('logolab-marks', marks);
 const parts = m => { const i = m.text.indexOf('|'); return i < 0 ? [m.text, ''] : [m.text.slice(0, i), m.text.slice(i + 1)]; };
 const plain = m => m.text.replace('|', '');
@@ -266,6 +281,10 @@ const fontOf = cfg => fonts.find(f => fontKey(f) === cfg.font) || fonts[0] || DE
 // presets: cfg for every wordmark (byName overrides one)
 const PRESETS = [
   ['Current', { ...base }, { 'Bad MOPHO': { ...base, acc: 0 } }],
+  ['Chrome + neon', { ...base, font: 'Orbitron 900', fill: 'chrome', line: 'thin', glow: 'soft', col: '#3ad1ff', tr: 0.03 }],
+  ['Retro stack', { ...base, font: 'Righteous', fill: 'stripes', shadow: 'long', col: '#ff7a1a', sk: -8 }],
+  ['Framed', { ...base, font: 'Michroma', fill: 'solid', box: 'frame', cs: 'uppercase', tr: 0.08, col: '#b6ff3d' }],
+  ['Lifted badge', { ...base, font: 'Rubik Mono One', box: 'badge', shadow: 'lift', fill: 'solid', col: '#ff5bb0', tr: 0 }],
   ['Rack panel', { ...base, font: 'Michroma', treat: 'flat', cs: 'uppercase', tr: 0.06 }],
   ['Neon sign', { ...base, font: 'Tilt Neon', treat: 'glow', col: '#ff5bb0', tr: 0.02 }],
   ['LCD', { ...base, font: 'VT323', treat: 'lcd', tr: 0.04 }],
@@ -281,14 +300,45 @@ const PRESETS = [
   ['Poster', { ...base, font: 'Big Shoulders Display 900', treat: 'flat', cs: 'uppercase', tr: 0.01 }],
 ];
 // a preset or kept entry as { markText: cfg } for the current wordmarks
-function cfgFor(p, m){ if (p.byText) return p.byText[m.text] || p.byText[Object.keys(p.byText)[0]]; return (p.over && p.over[plain(m)]) || p.cfg; }
+function cfgFor(p, m){ return norm(clone(p.byText ? p.byText[m.text] || p.byText[Object.keys(p.byText)[0]] : (p.over && p.over[plain(m)]) || p.cfg)); }
 
+// the CSS for one part of the word (acc = the accent part): fill, outline, then shadow + glow as drop-shadow filters
+// (filters work on the drawn glyphs, so they stack with gradient fills, which text-shadow would paint over)
+function partCSS(c, acc){
+  const css = [], box = c.box, fill = box === 'split' || box === 'lcd' ? 'solid' : c.fill;   // those blocks set the colours
+  let col = acc ? 'var(--a)' : 'var(--ink2)';
+  if (box === 'badge') col = acc ? 'color-mix(in srgb,var(--on-a) 70%,var(--a))' : 'var(--on-a)';
+  if (box === 'split') col = acc ? 'var(--on-a)' : 'var(--ink2)';
+  if (box === 'lcd') col = acc ? 'var(--a)' : 'color-mix(in srgb,var(--a) 55%,#000)';
+  const clip = bg => css.push(`background-image:${bg}`, '-webkit-background-clip:text', 'background-clip:text', 'color:transparent');
+  if (fill === 'chrome') clip(acc ? 'linear-gradient(180deg,var(--a2),var(--a))' : box === 'badge' ? `linear-gradient(180deg,${col},color-mix(in srgb,${col} 60%,var(--a)))` : 'linear-gradient(180deg,var(--hi),var(--lo))');
+  else if (fill === 'gradient') clip(acc ? 'linear-gradient(90deg,var(--a2),var(--a))' : `linear-gradient(90deg,${col},var(--a2))`);
+  else if (fill === 'stripes') clip(`repeating-linear-gradient(180deg,${col} 0 .085em,transparent .085em .13em)`);
+  else if (fill === 'hollow' && !acc) css.push('color:transparent');
+  else css.push(`color:${col}`);
+  const lw = c.line === 'thick' ? 0.055 : c.line === 'thin' ? 0.028 : fill === 'hollow' && !acc ? 0.035 : 0;
+  if (lw) css.push(`-webkit-text-stroke:${lw}em ${fill === 'hollow' && !acc ? col : acc ? 'var(--ink2)' : 'var(--a)'}`, 'paint-order:stroke fill');
+  const sc = acc ? 'color-mix(in srgb,var(--ink2) 30%,#000)' : 'var(--a)', f = [];
+  if (c.shadow === 'drop') f.push(`drop-shadow(.07em .07em 0 ${sc})`);
+  if (c.shadow === 'long') for (let k = 0; k < 6; k++) f.push(`drop-shadow(.02em .02em 0 ${sc})`);
+  if (c.shadow === 'lift') f.push('drop-shadow(0 .08em .1em rgba(0,0,0,.55))');
+  const gc = acc || box === 'badge' ? 'var(--a)' : col;
+  if (c.glow === 'soft') f.push(`drop-shadow(0 0 .12em color-mix(in srgb,${gc} 55%,transparent))`);
+  if (c.glow === 'neon') f.push(`drop-shadow(0 0 .04em ${gc}) drop-shadow(0 0 .22em ${gc})`);
+  if (f.length) css.push('filter:' + f.join(' '));
+  return css.join(';');
+}
 function logoHTML(m, c){
+  c = norm(c);
   const F = fontOf(c), [a, b] = parts(m), accIdx = c.acc && b ? c.acc - 1 : -1, col = c.col || '#ffb000';
   const style = `--f:${cssFamily(F)};--w:${F.w};--st:${F.st || '100%'};--tr:${c.tr}em;--sk:${c.sk}deg;--case:${c.cs};--a:${col};--a2:${lighter(col)};--on-a:${onColor(col)}`;
-  return `<span class="lg t-${c.treat}${accIdx < 0 ? ' noacc' : ''}" style="${esc(style)}">` +
-    [a, b].filter(s => s !== '').map((p, i) => `<span class="${i === accIdx ? 'a' : 'm'}">${esc(p).replace(/ $/, '&nbsp;').replace(/^ /, '&nbsp;')}</span>`).join('') + '</span>';
+  return `<span class="lg${c.box !== 'none' ? ' bx-' + c.box : ''}" style="${esc(style)}">` +
+    [a, b].filter(s => s !== '').map((p, i) => `<span class="${i === accIdx ? 'a' : 'm'}" style="${esc(partCSS(c, i === accIdx))}">${esc(p).replace(/ $/, '&nbsp;').replace(/^ /, '&nbsp;')}</span>`).join('') + '</span>';
 }
+const stackText = c => { const L = (k, v) => LAYERS.find(l => l[0] === k)[2].find(o => o[0] === v)[1];
+  const bits = [`${L('fill', c.fill)} fill`]; if (c.line !== 'none') bits.push(`${L('line', c.line).toLowerCase()} outline`);
+  if (c.shadow !== 'none') bits.push(`${L('shadow', c.shadow).toLowerCase()} shadow`); if (c.glow !== 'none') bits.push(`${L('glow', c.glow).toLowerCase()} glow`);
+  return bits.join(' + ') + (c.box !== 'none' ? `, in a ${L('box', c.box).toLowerCase()}` : ''); };
 function fit(box, size){
   const lg = box.querySelector('.lg'); if (!lg) return;
   lg.style.fontSize = size + 'px';
@@ -301,7 +351,7 @@ const colName = hex => { const b = BASES.find(x => x[1].toLowerCase() === hex.to
 function spec(m){
   const c = m.cfg, F = fontOf(c), [a, b] = parts(m);
   const accTxt = c.acc && b ? `accent ${colName(c.col)} on "${(c.acc === 1 ? a : b).trim()}"` : `no accent (colour ${colName(c.col)})`;
-  return `${plain(m)}: ${F.family} ${F.w}${F.st && F.st !== '100%' ? ' width ' + F.st : ''} · ${TREATS.find(t => t[0] === c.treat)[1]} · ${accTxt} · ${c.cs === 'none' ? 'as written' : c.cs} · tracking ${c.tr}em · slant ${c.sk}°`;
+  return `${plain(m)}: ${F.family} ${F.w}${F.st && F.st !== '100%' ? ' width ' + F.st : ''} · ${stackText(c)} · ${accTxt} · ${c.cs === 'none' ? 'as written' : c.cs} · tracking ${c.tr}em · slant ${c.sk}°`;
 }
 const editing = m => edit === 'all' || edit === m.id;
 function renderStage(){
@@ -334,7 +384,9 @@ function syncControls(){
   const c = cur();
   $('#target').innerHTML = marks.map(m => `<button data-v="${m.id}">${esc(plain(m))}</button>`).join('') + (marks.length > 1 ? '<button data-v="all" title="Changes apply to every wordmark">All</button>' : '');
   if (marks.length < 2 && edit === 'all') edit = marks[0] ? marks[0].id : 'all';
-  segOn('#target', edit); segOn('#treat', c.treat); segOn('#accOn', c.acc); segOn('#case', c.cs);
+  segOn('#target', edit); segOn('#accOn', c.acc); segOn('#case', c.cs);
+  LAYERS.forEach(([k]) => segOn('#ly-' + k, c[k]));
+  $('#ly-fill').closest('.lrow').classList.toggle('dim', c.box === 'split' || c.box === 'lcd');
   $('#font').innerHTML = fonts.map(f => `<option value="${esc(fontKey(f))}">${esc(fontKey(f))}</option>`).join('');
   $('#font').value = fontKey(fontOf(c)); $('#fontCount').textContent = `${fonts.length} in the lab`;
   document.querySelectorAll('#col button').forEach(b => b.classList.toggle('on', b.dataset.v.toLowerCase() === c.col.toLowerCase()));
@@ -354,10 +406,10 @@ function change(fn){
 function applyPreset(p){ marks.forEach(m => { m.cfg = clone(cfgFor(p, m)); }); saveMarks(); syncControls(); renderStage(); }
 
 // ---------------- design view: wiring ----------------
-$('#treat').innerHTML = TREATS.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('');
+$('#layersUI').innerHTML = LAYERS.map(([k, l, opts]) => `<div class="lrow" title="${k === 'fill' ? 'Split and LCD containers set the colours themselves' : ''}"><span>${l}</span><div class="seg" id="ly-${k}" data-k="${k}">${opts.map(([v, t]) => `<button data-v="${v}">${t}</button>`).join('')}</div></div>`).join('');
 $('#col').innerHTML = BASES.map(([l, c]) => `<button data-v="${c}" title="${l}" style="--c:${c}"></button>`).join('');
 $('#target').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; edit = b.dataset.v; syncControls(); renderStage(); });
-$('#treat').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.treat = b.dataset.v); });
+$('#layersUI').addEventListener('click', e => { const b = e.target.closest('button'), g = b && b.closest('.seg'); if (g) change(c => c[g.dataset.k] = b.dataset.v); });
 $('#col').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.col = b.dataset.v); });
 $('#fam').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.col = b.dataset.v); });
 $('#colPick').addEventListener('input', e => change(c => c.col = e.target.value));
@@ -369,7 +421,7 @@ $('#sk').addEventListener('input', e => change(c => c.sk = +e.target.value));
 $('#stage').addEventListener('click', e => { const card = e.target.closest('.card'); if (!card || edit === card.dataset.id) return; edit = card.dataset.id; syncControls(); renderStage(); });
 $('#shuffle').addEventListener('click', () => {
   const pick = a => a[Math.floor(Math.random() * a.length)];
-  change(c => Object.assign(c, { font: fontKey(pick(fonts)), treat: pick(TREATS)[0], col: Math.random() < 0.7 ? pick(BASES)[1] : pick(family(pick(BASES)[1]).slice(3, 8)),
+  change(c => Object.assign(c, { font: fontKey(pick(fonts)), ...Object.fromEntries(LAYERS.map(([k, , o]) => [k, k === 'fill' || Math.random() < 0.4 ? pick(o)[0] : 'none'])), col: Math.random() < 0.7 ? pick(BASES)[1] : pick(family(pick(BASES)[1]).slice(3, 8)),
     acc: Math.random() < 0.75 ? 2 : pick([0, 1]), cs: pick(['none', 'none', 'uppercase', 'lowercase']), tr: +(Math.random() * 0.12 - 0.02).toFixed(2), sk: Math.random() < 0.25 ? -10 : 0 }));
 });
 $('#keep').addEventListener('click', () => {
