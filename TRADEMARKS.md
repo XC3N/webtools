@@ -1,0 +1,7 @@
+# Names and logos
+
+"VJif", "Mopho Programmer" and their logos identify XC3N's tools. They are not covered by the CC BY-NC 4.0 licence that applies to the rest of this repository.
+
+If you share a modified version, give it a different name and don't present it as the original or as endorsed by XC3N. Saying it's "based on VJif" (or "based on Mopho Programmer") with a link back is welcome.
+
+Mopho, Dave Smith Instruments and Sequential are trademarks of their respective owners. The Mopho Programmer is an independent project, not affiliated with or endorsed by them.

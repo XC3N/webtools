@@ -1,0 +1,1933 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VJif — Control</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Theme and control styles follow the Mopho Programmer's design language.
+   Layout-stability rules (from the same project):
+   1. A value readout never changes size when its value changes: fixed width (sized for the widest value it can show),
+      no wrapping, tabular digits, ellipsis as a last resort.
+   2. Text that depends on context (names, status, cycle length…) lives in a fixed box — it never pushes neighbours.
+   3. Controls that swap with the context (tabs, Timing-dependent rows) are stacked in one cell; the cell is as tall as
+      the tallest option, so switching never moves what's below.
+   4. Unavailable controls are dimmed in place, never removed.
+   5. Scroll areas reserve their scrollbar gutter, so a scrollbar appearing doesn't reflow the panel. */
+:root{
+  --bg:#0c0c0e;--panel:#16161a;--panel-2:#1c1c21;--edge:#2a2a31;--edge-2:#34343c;
+  --ink:#e9e7e0;--muted:#888892;--faint:#5a5a63;
+  --amber:#ffb000;--amber-dim:#a6731a;--track:#2c2c33;
+  --acc-hi:#ffc23d;--acc-lo:#e89400;--acc-dk:#b85f00;--acc-rgb:255,176,0;
+  --meter-rgb:90,169,230;--lcd-bg:#171200;--lcd-ink:#ffb000;
+  --danger:#ff9a9a;--ok:#4ee37a;
+  --shadow:0 1px 0 rgba(255,255,255,.03),0 6px 18px rgba(0,0,0,.5);--radius:10px;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;--sans:"Archivo",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+/* scrollbars blend with the panels */
+*{scrollbar-width:thin;scrollbar-color:var(--edge-2) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--edge-2);border-radius:6px;border:2px solid var(--panel)}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 700px at 70% -10%,var(--panel-2) 0%,transparent 60%),radial-gradient(900px 600px at -10% 110%,var(--panel) 0%,transparent 55%),var(--bg);
+  color:var(--ink);font:12px/1.4 var(--sans);-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;
+  display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:320px minmax(0,1fr) 370px;
+  grid-template-areas:"top top top" "bank stage side";gap:10px;padding:10px;height:100vh;overflow:hidden}
+input,textarea{-webkit-user-select:text;user-select:text}
+#bank{grid-area:bank}#stage{grid-area:stage}#side{grid-area:side}
+
+/* ---------- panels and headings ---------- */
+.panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:14px;overflow:auto;min-height:0;scrollbar-gutter:stable}
+h2{display:flex;align-items:center;gap:8px;margin:0 0 12px;font:700 10px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:rgba(var(--acc-rgb),.75);white-space:nowrap}
+h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--amber);box-shadow:0 0 8px rgba(var(--acc-rgb),.5);flex:none}
+h2 .line{flex:1;height:1px;background:linear-gradient(90deg,var(--edge),transparent);min-width:10px}
+h2 .tag{font:500 10px var(--mono);letter-spacing:.02em;text-transform:none;color:var(--faint);overflow:hidden;text-overflow:ellipsis}
+h2:not(:first-child){margin-top:20px}
+.sub{display:flex;align-items:center;gap:8px;margin:14px 0 10px;font:700 9px/1 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.sub .line{flex:1;height:1px;background:var(--edge)}
+.dim{color:var(--muted)}.small{font-size:11px}
+.note{font-size:11px;line-height:1.5;color:var(--muted);margin:8px 0 0}
+
+/* ---------- controls ---------- */
+label{font:700 9px/1.2 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+button{font:800 10px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;background:var(--panel-2);color:var(--ink);border:1px solid var(--edge-2);
+  border-radius:6px;padding:7px 10px;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap}
+button:hover{border-color:var(--amber-dim);color:#fff}
+button:disabled{opacity:.35;cursor:default;border-color:var(--edge-2);color:var(--ink)}
+button.accent{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));color:#1a1200;border-color:var(--acc-lo)}
+button.accent:hover{color:#000}
+button.danger{border-color:#6e2f2f;color:var(--danger)}button.danger:hover{border-color:#a33;color:#fff;background:#3a1c1c}
+button.armed{background:#7a1f1f;border-color:#c0392b;color:#fff}
+button.flash{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));color:#1a1200}
+select,input[type=number],input[type=url],input[type=text]{font:500 12px var(--mono);color:var(--ink);background:var(--track);border:1px solid var(--edge-2);border-radius:6px;height:28px;padding:0 9px;outline:none}
+select{appearance:none;padding-right:26px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888892'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+select:focus,input:focus{border-color:var(--amber-dim)}
+input::placeholder{color:var(--faint)}
+/* range: thin track, amber thumb */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;height:4px;border-radius:3px;background:var(--track);outline:none;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px rgba(var(--acc-rgb),.6);cursor:pointer}
+/* checkbox drawn as a small switch */
+input[type=checkbox]{-webkit-appearance:none;appearance:none;flex:none;width:34px;height:18px;margin:0;border-radius:10px;background:#16161a;border:1px solid var(--edge-2);box-shadow:inset 0 1px 3px rgba(0,0,0,.55);position:relative;cursor:pointer;transition:.15s;vertical-align:middle}
+input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#58585f;transition:.15s}
+input[type=checkbox]:checked{background:linear-gradient(180deg,rgba(var(--acc-rgb),.30),rgba(var(--acc-rgb),.13));border-color:var(--amber-dim)}
+input[type=checkbox]:checked::before{left:18px;background:var(--amber);box-shadow:0 0 8px rgba(var(--acc-rgb),.6)}
+.tog{display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+input[type=color]{-webkit-appearance:none;appearance:none;width:44px;height:28px;padding:3px;border:1px solid var(--edge-2);border-radius:6px;background:var(--track);cursor:pointer}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:3px}
+/* LCD-style readouts: fixed size, never reflow */
+.lcd,output{font:500 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber);background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);
+  border-radius:4px;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 6px rgba(var(--acc-rgb),.3)}
+output{display:block;width:100%;text-align:center}
+.lcd.two{display:flex;flex-direction:column;justify-content:center;gap:4px;height:40px;padding:0 8px}
+.lcd.two span{display:block;height:13px;line-height:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lcd.two .l2{color:var(--amber-dim);text-shadow:none}
+.lcd.one{height:24px;line-height:14px}
+/* segmented buttons */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1px;background:var(--edge);border:1px solid var(--edge-2);border-radius:6px;overflow:hidden}
+.seg.grid4{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}
+.seg button{border:0;border-radius:0;background:var(--track);color:var(--muted);font:500 11px var(--mono);letter-spacing:0;text-transform:none;padding:0 2px;height:26px}
+.seg button:hover{color:#fff;background:#34343c}
+.seg button.on{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));color:#1a1200;font-weight:700}
+/* rows: label | control | readout */
+.field{display:grid;grid-template-columns:78px minmax(0,1fr) 58px;align-items:center;gap:8px;margin-bottom:9px;min-height:26px}
+.field>.span{grid-column:2/4}
+.keyrow{display:flex;align-items:center;gap:6px}
+.keyrow.end{justify-content:flex-end}
+#gifSettings.disabled,#xfPanel.disabled{opacity:.35;pointer-events:none}
+/* rule 3: swapped controls share one grid cell, sized to the tallest */
+.stack{display:grid}
+.stack>*{grid-area:1/1}
+.stack>.off{visibility:hidden}                         /* hidden panes keep their exact layout, so the cell height never changes */
+.stack>.field[hidden]{display:grid!important;visibility:hidden}
+#gPanes>[data-pane]{display:flow-root}
+/* tabs */
+.tabs{margin-bottom:12px}
+.tabs button{height:28px;font:800 10px var(--sans);letter-spacing:.12em;text-transform:uppercase}
+
+/* ---------- header ---------- */
+#top{grid-area:top;display:flex;align-items:center;gap:10px 14px;padding:8px 14px;background:linear-gradient(180deg,rgba(28,28,33,.96),rgba(22,22,26,.9));border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap}
+.brand{font:900 22px/1 var(--sans);letter-spacing:.01em;background:linear-gradient(180deg,#fff,#bdbdc6);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:default}
+.brand span{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));-webkit-background-clip:text;background-clip:text}
+.grp{display:flex;align-items:center;gap:7px}.grp.right{margin-left:auto}
+.vsep{width:1px;height:26px;background:var(--edge);flex:none}
+#bpm{width:74px;text-align:center;color:var(--amber);background:var(--lcd-bg);border-color:rgba(var(--meter-rgb),.35);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+#bpm::-webkit-outer-spin-button,#bpm::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+#bpm.pending{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+#beats{display:flex;gap:4px}#beats i{width:9px;height:9px;border-radius:50%;background:#23232a;border:1px solid var(--edge-2)}
+#beats i.on{background:var(--amber);border-color:var(--amber);box-shadow:0 0 7px rgba(var(--acc-rgb),.8)}
+#beats i:first-child.on{background:#ff6a3d;border-color:#ff6a3d;box-shadow:0 0 7px #ff6a3d}
+#barpos{width:6ch;text-align:center}
+#saveStat{flex:none;margin-left:auto;width:13ch;height:14px;line-height:14px;text-align:right;font:500 10px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
+#setLabel{width:150px;height:28px;line-height:18px}
+#setLabel.dirty::after{content:" •"}
+#fps{flex:none;width:11ch;height:14px;line-height:14px;text-align:center;font:500 10px var(--mono);color:var(--faint);white-space:nowrap}
+.led{display:inline-block;width:8px;height:8px;border-radius:50%;background:#23232a;border:1px solid var(--edge-2);margin-right:7px;vertical-align:-1px;transition:.1s}
+.led.on{background:var(--ok);border-color:var(--ok);box-shadow:0 0 7px var(--ok)}
+.iconbtn{width:30px;padding:7px 0;text-align:center;font:800 12px/1 var(--sans)}
+
+/* ---------- pads ---------- */
+.padgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:6px}
+.pad{position:relative;aspect-ratio:16/10;background:var(--track);border:1px solid var(--edge);border-radius:6px;cursor:pointer;overflow:hidden;user-select:none;transition:border-color .12s}
+.pad:hover{border-color:var(--edge-2)}
+.pad canvas{width:100%;height:100%;display:block}
+.pad .key{position:absolute;left:4px;top:4px;font:700 11px/1 var(--mono);color:var(--acc-hi);background:#000;border:1px solid #000;border-radius:4px;padding:3px 5px}
+.pad .nm{position:absolute;left:0;right:0;bottom:0;padding:2px 5px;font:500 10px var(--mono);background:linear-gradient(transparent,#000d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pad.empty .nm::before{content:'empty';color:var(--faint)}
+.pad.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 10px rgba(var(--acc-rgb),.35)}
+.pad.drop{outline:2px dashed var(--amber);outline-offset:-2px}
+.pad.hit{animation:hit .2s}@keyframes hit{from{filter:brightness(2.2)}}
+.pad .dots{position:absolute;right:4px;top:4px;display:flex;gap:2px}
+.pad .dots b{width:15px;height:15px;font:700 9px/15px var(--mono);border-radius:3px;color:#000;text-align:center}
+.pad.loading::after{content:'decoding…';position:absolute;inset:0;display:grid;place-items:center;background:#000b;font:500 10px var(--mono);color:var(--amber)}
+.import{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.import .row{display:flex;gap:6px}.import input[type=url]{flex:1;min-width:0}
+#mem{width:7ch;text-align:right}
+#gifName{width:9ch}
+#gInfo{margin-top:12px}
+
+/* ---------- frames tab ---------- */
+.frames{display:grid;grid-template-columns:minmax(0,1fr) 76px;gap:10px;align-items:start}
+.frames .field{grid-template-columns:40px minmax(0,1fr) 46px}
+#gPrev{width:76px;height:76px;background:var(--track);border:1px solid var(--edge-2);border-radius:6px;image-rendering:pixelated}
+
+/* ---------- stage ---------- */
+#stage{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px;overflow:hidden}
+#pvWrap{min-height:0;position:relative;overflow:hidden;background:#0f0f12;border:1px solid var(--edge);border-radius:8px}
+#pvScene{position:absolute;display:block;background:#000;outline:1px solid var(--edge-2)}
+#pv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
+.hint{display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;font-size:11px;color:var(--muted)}
+.hint .t{overflow:hidden;text-overflow:ellipsis}
+#pvLayer{width:13.5ch;flex:none;text-align:center}
+
+/* ---------- layers ---------- */
+.layer{background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--lc);border-radius:8px;padding:9px 10px;margin-bottom:8px;cursor:pointer;transition:border-color .12s}
+.layer:not(.tgt):hover{border-color:var(--edge-2);border-left-color:var(--lc)}
+.layer.tgt{background:linear-gradient(180deg,#222228,#1a1a1f);box-shadow:0 0 0 1px var(--lc) inset}
+.lhead{display:flex;align-items:center;gap:9px}
+.lhead .sp{flex:1}
+.lon{width:26px;height:26px;padding:0;font:700 12px var(--mono);letter-spacing:0;color:var(--lc);background:#000;border-color:#000}
+.layer.on .lon{background:var(--lc);border-color:var(--lc);color:#000;box-shadow:0 0 10px var(--lc)}
+.lname{width:96px;font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layer.on .lname{color:var(--ink)}
+.layer.tgt .lname{color:var(--lc)}
+.lmode{width:84px;height:26px}
+.lclr{padding:0 8px;height:26px}
+.lctl{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:10px;margin-top:9px;align-items:center}
+.lbl{height:26px}
+.clips{display:flex;flex-wrap:nowrap;gap:4px;margin-top:9px;height:24px;overflow:hidden}
+.clips .chip{flex:0 1 auto;min-width:44px}                /* chips share one fixed row (up to 6), names shorten instead of wrapping */
+.chip span{min-width:0}
+.clips:empty::before{content:'no GIFs';font:italic 11px var(--mono);color:var(--faint);line-height:24px}
+.layer.dropzone{outline:2px dashed var(--lc);outline-offset:1px}
+.chip{display:inline-flex;align-items:center;gap:2px;max-width:100%;height:24px;padding:0 2px 0 8px;border:1px solid var(--edge-2);border-radius:5px;cursor:grab;background:var(--track);font:500 11px var(--mono)}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.chip.sel{border-color:var(--lc);color:var(--lc);background:#1a1a1f}
+.chip.dragging{opacity:.35}
+.chip b{font-weight:400;color:var(--faint);padding:0 5px}.chip b:hover{color:var(--danger)}
+
+/* ---------- transform ---------- */
+#xfTitle{width:100%}
+#xCrop{flex:1;min-width:0}
+.btnrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+
+/* ---------- modals, toast ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:8}
+.modalBox{width:min(660px,92vw);max-height:86vh;overflow:auto;background:var(--panel-2);border:1px solid var(--edge-2);border-radius:13px;padding:22px 24px;box-shadow:0 18px 50px rgba(0,0,0,.6);scrollbar-gutter:stable}
+.modalBox h2 button{margin-left:auto}
+.modalBox .row{display:flex;gap:7px;margin:10px 0;align-items:center}.modalBox input[type=text]{flex:1;min-width:0}
+.setRow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto;gap:6px;align-items:center;padding:9px 10px;border:1px solid var(--edge);border-radius:8px;margin-bottom:6px;background:var(--panel)}
+.setRow.cur{border-color:var(--amber-dim);box-shadow:0 0 0 1px rgba(var(--acc-rgb),.3) inset}
+.setRow .sname{display:block;font:700 13px var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.setRow .meta{display:block;font:500 10px var(--mono);color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.setRow button{width:76px}
+#setList:empty::before{content:'No saved sets yet.';font:italic 12px var(--mono);color:var(--faint)}
+.keys{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:12px}
+.keys dt{font:700 11px var(--mono);color:var(--amber);white-space:nowrap}.keys dd{margin:0;color:var(--ink);line-height:1.45}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2a1616;border:1px solid #7a3030;color:#ffd0d0;padding:9px 16px;border-radius:8px;display:none;max-width:70vw;z-index:9;font:500 12px var(--mono);box-shadow:0 12px 32px rgba(0,0,0,.55)}
+#toast.ok{background:#14201a;border-color:#2f7a4f;color:#c8f5d8}
+</style>
+</head>
+<body>
+<header id="top">
+  <div class="brand" title="Actually, it's pronounced vjif">VJ<span>if</span></div>
+  <div class="grp"><label for="bpm">BPM</label><input id="bpm" type="number" min="20" max="300" step="0.1" value="120.0">
+    <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
+    <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span></div>
+  <div class="grp"><label for="snap">Snap</label>
+    <select id="snap" style="width:72px" title="Snap triggers and set swaps to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
+  <div class="grp"><label for="clockSrc">Clock</label>
+    <select id="clockSrc" style="width:140px"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
+    <select id="midiIn" hidden style="width:160px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span></div>
+  <div class="grp right"><button id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button><button id="redoBtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>Redo</button></div>
+  <div class="vsep"></div>
+  <div class="grp"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
+  <div class="vsep"></div>
+  <div class="grp"><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button><span id="outStat" hidden>no output</span></div>
+</header>
+
+<section id="bank" class="panel">
+  <h2>Pads<span class="line"></span><span class="tag">QWE / ASD / ZXC</span><span id="mem" class="tag"></span></h2>
+  <div class="padgrid" id="gridA"></div>
+  <h2>Numpad<span class="line"></span></h2>
+  <div class="padgrid" id="gridB"></div>
+  <div class="import">
+    <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
+    <div class="row"><button id="addFiles" title="Or drop files / links onto a pad or anywhere in this panel">Add…</button><input id="urlIn" type="url" placeholder="https://…/loop.gif"><button id="urlBtn">Load</button></div>
+  </div>
+  <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
+  <div id="gifSettings" class="disabled">
+    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Playback</button><button data-v="frames">Frames</button><button data-v="colour">Colour</button></div>
+    <div class="stack" id="gPanes">
+      <div data-pane="play">
+        <div class="field"><label>Timing</label><div class="seg span" id="gSync">
+          <button data-v="free" title="The GIF's own frame timing × speed — ignores the tempo">Free</button>
+          <button data-v="stretch" title="The whole loop fits exactly the length below, at any tempo">Fit</button>
+          <button data-v="step" title="Every frame lasts the same musical length">Step</button></div></div>
+        <div class="stack">
+          <div class="field" data-for="stretch"><label>Loop length</label><div class="seg span grid4" id="gBeats"></div></div>
+          <div class="field" data-for="step"><label>Each frame</label><div class="seg span grid4" id="gSub"></div></div>
+          <div class="field" data-for="free" style="align-self:start"><label for="gSpeed">Speed</label><input id="gSpeed" type="range" min="0.1" max="4" step="0.05"><output></output></div>
+        </div>
+        <div class="field"><label>Loop</label><div class="seg span" id="gLoop">
+          <button data-v="loop" title="Wrap back to the start">Loop</button>
+          <button data-v="pingpong" title="Forward then backward (in Fit, the round trip fills the loop length)">Ping-pong</button>
+          <button data-v="once" title="Play through, then hold the last frame until triggered again">Once</button></div></div>
+        <div class="field"><label title="Jump back to the start every …">Restart</label><div class="seg span grid4" id="gRestart"></div></div>
+        <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
+      </div>
+      <div data-pane="frames" class="off">
+        <div class="frames">
+          <div><div class="field"><label for="gIn">In</label><input id="gIn" type="range" min="0" step="1"><output></output></div>
+          <div class="field"><label for="gOut">Out</label><input id="gOut" type="range" min="0" step="1"><output></output></div>
+          <div class="field"><label for="gStart">Start</label><input id="gStart" type="range" min="0" step="1"><output></output></div></div>
+          <canvas id="gPrev" width="96" height="96" title="Frame under the slider you last touched"></canvas>
+        </div>
+        <p class="note">In / Out trim the animation. Start sets which frame the loop begins on; it wraps around within In–Out.</p>
+      </div>
+      <div data-pane="colour" class="off">
+        <div class="sub" style="margin-top:0"><span>Key</span><span class="line"></span><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
+        <div class="field"><label>Colour</label><div class="keyrow span"><input type="color" id="kCol" value="#00ff00"><button id="kPick" title="Then click the GIF in the preview" style="flex:1">Pick</button><button id="kReset" title="Key back to defaults">Reset</button></div></div>
+        <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" min="0" max="0.6" step="0.005"><output></output></div>
+        <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" min="0" max="0.4" step="0.005"><output></output></div>
+        <div class="sub"><span>Adjust</span><span class="line"></span><button id="hReset" title="Hue, saturation and brightness back to normal">Reset</button></div>
+        <div class="field"><label for="hH">Hue</label><input id="hH" type="range" min="-180" max="180" step="1"><output></output></div>
+        <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" min="0" max="3" step="0.01"><output></output></div>
+        <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" min="0" max="3" step="0.01"><output></output></div>
+      </div>
+    </div>
+    <div class="lcd one" id="gInfo"></div>
+  </div>
+</section>
+
+<main id="stage" class="panel">
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
+  <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
+</main>
+
+<aside id="side" class="panel">
+  <h2>Layers<span class="line"></span><span class="tag">top to bottom</span></h2>
+  <div id="layers"></div>
+  <h2>Transform<span class="line"></span></h2>
+  <div class="lcd one" id="xfTitle" style="margin-bottom:12px">—</div>
+  <div id="xfPanel">
+    <div class="field"><label for="xFit">Fit</label><select id="xFit" class="span">
+      <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select></div>
+    <div class="field"><label for="gSmooth">Smoothing</label><label class="tog span" title="Off = crisp pixels when the GIF is scaled. Applies to this GIF everywhere it's used."><input type="checkbox" id="gSmooth"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">smooth when scaled</span></label></div>
+    <div class="field"><label for="xX">X</label><input id="xX" type="range" min="-1920" max="1920" step="1"><output></output></div>
+    <div class="field"><label for="xY">Y</label><input id="xY" type="range" min="-1080" max="1080" step="1"><output></output></div>
+    <div class="field"><label for="xSX">Scale X</label><input id="xSX" type="range" min="0.05" max="8" step="0.01"><output></output></div>
+    <div class="field"><label for="xSY">Scale Y</label><input id="xSY" type="range" min="0.05" max="8" step="0.01"><output></output></div>
+    <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" min="-180" max="180" step="1"><output></output></div>
+    <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
+    <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
+    <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
+  </div>
+</aside>
+<div id="toast"></div>
+<div id="helpPanel" class="modal" hidden>
+  <div class="modalBox">
+    <h2>Keys &amp; mouse<span class="line"></span><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <dl class="keys">
+      <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to browse; drop a .vjif anywhere to import a set</dd>
+      <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack) or swaps it in (Replace)</dd>
+      <dt>Shift+Q…C</dt><dd>Remove that GIF from the edited layer</dd>
+      <dt>1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
+      <dt>Shift+1–4</dt><dd>Choose the layer to edit / trigger into (or click its bar)</dd>
+      <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
+      <dt>Shift+Space</dt><dd>Resync: now is beat 1, every GIF restarts</dd>
+      <dt>Arrows</dt><dd>Nudge the selected GIF 1 px (Shift = 10 px)</dd>
+      <dt>Delete / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
+      <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
+      <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
+      <dt>Esc</dt><dd>Cancel a colour pick · close a panel</dd>
+      <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
+      <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from center) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
+      <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
+      <dt>Drag a chip</dt><dd>Move a GIF to another layer; within a layer, reorder (right is on top)</dd>
+    </dl>
+  </div>
+</div>
+<div id="setsPanel" class="modal" hidden>
+  <div class="modalBox">
+    <h2>Sets<span class="line"></span><button id="setsClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <div class="row"><input id="setNameIn" type="text" placeholder="Name for the current set"><button id="saveAsBtn" class="accent">Save as new</button></div>
+    <div id="setList"></div>
+    <div class="row"><button id="importBtn">Import .vjif…</button><input id="importIn" type="file" accept=".vjif,.zip" hidden>
+      <button id="exportCur">Export current…</button><span style="flex:1"></span><button id="newEmpty">New empty set</button></div>
+    <p class="note">Sets are kept in this browser; GIF files are stored once and shared between sets. A .vjif file holds a set plus its GIFs (it's a ZIP) — use it to back up or move a set. Drop a .vjif anywhere on VJif to import it. Loading keeps the current set playing until the new one is decoded, then swaps on the next beat or bar if Snap is set.</p>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ---------- constants ----------
+const W = 1920, H = 1080;
+const MAX_DIM = 1920;          // larger frames are downscaled on decode
+const MAX_FRAMES = 1500;       // per GIF
+const MAX_CLIPS = 6;           // GIFs per layer; oldest is dropped beyond this
+const MEM_WARN_MB = 1500;      // whole bank
+const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','Numpad7','Numpad8','Numpad9','Numpad4','Numpad5','Numpad6','Numpad1','Numpad2','Numpad3'];
+const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','7','8','9','4','5','6','1','2','3'];
+const BLENDS = [['source-over','Normal'],['lighter','Add'],['screen','Screen'],['multiply','Multiply'],['difference','Difference'],['exclusion','Exclusion'],['lighten','Lighten'],['darken','Darken'],['overlay','Overlay']];
+const LCOL = ['#ffb000','#3ad1c4','#ff5bb0','#8fa8ff'];
+const LNAMES = ['Background', 'Midground', 'Foreground', 'Overlay'];
+// musical lengths in beats (4/4): [beats, label]
+const LEN_OPTS     = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];
+const FRAME_OPTS   = [[1/8,'1/32'],[1/6,'1/16T'],[1/4,'1/16'],[1/3,'1/8T'],[1/2,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar']];
+const RESTART_OPTS = [[0,'off'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];
+const BEAT_OPTS = LEN_OPTS.map(o => o[0]);
+const lenLabel = b => { const o = LEN_OPTS.find(o => Math.abs(o[0] - b) < 1e-6); return o ? o[1] : b % 4 === 0 ? `${b/4} bars` : `${+b.toFixed(2)} beats`; };
+const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
+const KEY_MAX = 441.67;        // max RGB distance
+
+const $ = s => document.querySelector(s);
+const mod = (a, n) => ((a % n) + n) % n;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hex2rgb = h => [1,3,5].map(i => parseInt(h.substr(i, 2), 16));
+const rgb2hex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+
+// ---------- state ----------
+const pads = PAD_KEYS.map((code, i) => ({ i, code, label: PAD_LABELS[i], gif: null, loading: false, el: null }));
+const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: false, flipY: false, tile: false, cl: 0, ct: 0, cr: 0, cb: 0 });
+let clipSeq = 0, gifSeq = 0;
+const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, ...newXf() });
+const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, row: null }));
+let target = 0, selPad = 0, snapMode = 'off', picking = false;
+const clock = { bpm: 120, beat: 0, last: performance.now(), src: 'internal', taps: [],
+                midiTicks: 0, midiRunning: false, midiTickTimes: [], lastTick: 0 };
+
+function selClip(li = target){
+  const L = layers[li];
+  if (L.sel && L.clips.includes(L.sel)) return L.sel;
+  return L.sel = L.clips[L.clips.length - 1] || null;
+}
+
+// ---------- canvases ----------
+const mkCanvas = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+const master = mkCanvas(), mctx = master.getContext('2d', { alpha: false });
+const lbufs = layers.map(() => mkCanvas().getContext('2d'));   // per-layer group buffers
+const pv = $('#pv'), pctx = pv.getContext('2d');                       // overlay: handles and outlines only
+const pvScene = $('#pvScene'), sctx = pvScene.getContext('2d', { alpha: false });
+const view = { x: 0, y: 0, w: 1, h: 1 };   // output frame inside the preview, CSS px (margin = pasteboard)
+let outWin = null, outCtx = null;
+
+// ---------- decoding (WebCodecs ImageDecoder, Chrome) ----------
+function guessType(name){ const m = /\.(gif|webp|png|apng)$/i.exec(name||''); if (!m) return 'image/gif'; const e = m[1].toLowerCase(); return e === 'gif' ? 'image/gif' : e === 'webp' ? 'image/webp' : 'image/png'; }
+
+async function decodeAnim(blob, name){
+  if (!('ImageDecoder' in window)) throw new Error('this browser has no ImageDecoder (use Chrome)');
+  const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : guessType(name);
+  if (!(await ImageDecoder.isTypeSupported(type))) throw new Error('unsupported type ' + type);
+  const dec = new ImageDecoder({ data: await blob.arrayBuffer(), type });
+  await dec.tracks.ready; await dec.completed;
+  const n = Math.min(dec.tracks.selectedTrack.frameCount || 1, MAX_FRAMES);
+  const frames = [], durs = []; let w = 0, h = 0;
+  for (let i = 0; i < n; i++){
+    const { image } = await dec.decode({ frameIndex: i });
+    w = image.displayWidth; h = image.displayHeight;
+    const sc = Math.min(1, MAX_DIM / Math.max(w, h));
+    const opts = sc < 1 ? { resizeWidth: Math.round(w*sc), resizeHeight: Math.round(h*sc), resizeQuality: 'high' } : {};
+    frames.push(await createImageBitmap(image, opts));
+    let d = (image.duration ?? 100000) / 1000;      // µs → ms
+    if (!(d > 10)) d = 100;                          // browsers treat 0–10 ms GIF delays as 100 ms
+    durs.push(d); image.close();
+  }
+  dec.close();
+  const srcBytes = frames.reduce((a, f) => a + f.width * f.height * 4, 0);
+  const g = { uid: ++gifSeq, fxWaits: [], name: name || 'untitled', blob, type, src: frames, frames, durs, w, h, srcBytes, bytes: srcBytes,
+           sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
+           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08 }, hsv: { h: 0, s: 1, v: 1 }, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '' };
+  g.fullTotal = durs.reduce((a, d) => a + d, 0);
+  rebuildSeq(g);
+  return g;
+}
+// playback order: frames in..out, rotated so the loop begins at startF
+function rebuildSeq(g){
+  const F = g.src.length;
+  g.inF = clamp(g.inF | 0, 0, F - 1); g.outF = clamp(g.outF | 0, g.inF, F - 1); g.startF = clamp(g.startF | 0, g.inF, g.outF);
+  const n = g.outF - g.inF + 1; g.seq = []; g.cum = []; let t = 0;
+  for (let k = 0; k < n; k++){ const f = g.inF + mod(g.startF - g.inF + k, n); g.seq.push(f); g.cum.push(t); t += g.durs[f]; }
+  g.total = t;
+}
+
+function freeGif(g){
+  g.keyGen++; clearTimeout(g.keyT);
+  if (fxWorker) fxWorker.postMessage({ id: g.uid, gen: g.keyGen });   // stop any work on it
+  if (g.frames !== g.src) g.frames.forEach(f => f.close());
+  g.src.forEach(f => f.close());
+}
+
+function autoFit(g){                               // new imports: Fit, with the loop length nearest the GIF's natural length
+  const natBeats = g.total / (60000 / clock.bpm);
+  g.sync = 'stretch';
+  g.beats = BEAT_OPTS.reduce((a, b) => Math.abs(Math.log2(b / natBeats)) < Math.abs(Math.log2(a / natBeats)) ? b : a);
+}
+function applyGifSettings(g, saved){
+  const { key, hsv, hash, name, file, ...rest } = saved;
+  Object.assign(g, Object.fromEntries(Object.entries(rest).filter(([k]) => GIF_KEYS.includes(k))));
+  if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv);
+  if (g.sync === 'restart'){ g.sync = 'free'; g.restart = g.beats; }   // pre-v0.9 sets
+  if (g.restart === undefined) g.restart = 0;
+  rebuildSeq(g);
+}
+// content hash of a file: the same GIF is stored once however many sets use it
+async function hashBlob(blob){
+  const buf = await blob.arrayBuffer();
+  if (window.crypto && crypto.subtle){
+    const d = new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
+    return [...d.slice(0, 16)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  const u = new Uint8Array(buf); let a = 0x811c9dc5, b = 0x01000193;            // fallback: two FNV-1a variants + length
+  for (let i = 0; i < u.length; i++){ a = Math.imul(a ^ u[i], 0x01000193) >>> 0; b = Math.imul(b ^ u[i], 0x811c9dc5) >>> 0; }
+  return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0') + u.length.toString(16);
+}
+async function loadInto(p, blob, name, saved = null){
+  const pad = pads[p]; pad.loading = true; pad.el.classList.add('loading');
+  try {
+    const g = await decodeAnim(blob, name);
+    if (pad.gif) freeGif(pad.gif);
+    if (saved){ applyGifSettings(g, saved); g.hash = saved.hash || await hashBlob(blob); }
+    else {
+      autoFit(g);
+      g.hash = await hashBlob(blob);
+      store.put('gif:' + g.hash, { name: g.name, blob });   // stored once, shared by every set that uses it
+    }
+    pad.gif = g; renderPad(p); selectPad(p); updateMem(); syncLayerUI();
+    if (hist.ready){                                 // fold the new GIF's settings into undo's current state (loading isn't an undo step)
+      const st = JSON.parse(hist.cur); st.gifs[p] = Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])); hist.cur = JSON.stringify(st);
+    }
+    if (g.key.on || hsvOn(g)) applyFx(g);
+  } catch (err) { toast(`Couldn't load ${name}: ${err.message}`); }
+  finally { pad.loading = false; pad.el.classList.remove('loading'); }
+}
+
+async function loadUrlInto(url, p){
+  if (p < 0) return toast('All 18 pads are full — clear one first');
+  const name = decodeURIComponent(url.split(/[?#]/)[0].split('/').pop() || 'url.gif');
+  let blob;
+  try {
+    const r = await fetch(url, { mode: 'cors' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    blob = await r.blob();
+  } catch (err) {
+    return toast(`Can't fetch that URL (${err.message}). The site probably blocks cross-origin access — download the file and drag it in instead.`);
+  }
+  await loadInto(p, blob, name);
+}
+
+function nextEmpty(from = 0, exclude = new Set()){
+  for (let k = 0; k < pads.length; k++){
+    const i = (from + k) % pads.length;
+    if (!pads[i].gif && !pads[i].loading && !exclude.has(i)) return i;
+  }
+  return -1;
+}
+
+function loadFiles(files, start = -1){
+  const used = new Set(), jobs = [];
+  for (let k = 0; k < files.length; k++){
+    const p = (k === 0 && start >= 0) ? start : nextEmpty(start >= 0 ? start : 0, used);
+    if (p < 0){ toast(`All 18 pads are full — ${files.length - k} file(s) skipped`); break; }
+    used.add(p); jobs.push(loadInto(p, files[k], files[k].name));
+  }
+  return Promise.all(jobs);
+}
+
+// ---------- color key (pre-processed into a second frame set) ----------
+// Live colour (key + HSV): each frame goes through a small WebGL shader right when it's drawn, so changes
+// show instantly and no second set of frames is kept. Same maths as fxColor/hsvShift below. Falls back to
+// pre-processing in the worker when WebGL isn't available.
+const fxGL = (() => {
+  try {
+    const cv = new OffscreenCanvas(1, 1);
+    const gl = cv.getContext('webgl', { premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: false, alpha: true, depth: false });
+    if (!gl) return null;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
+      uniform sampler2D tex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv; varying vec2 uv;
+      void main(){
+        vec4 px = texture2D(tex, uv);
+        if (px.a == 0.0){ gl_FragColor = vec4(0.0); return; }
+        vec3 c = floor(px.rgb * 255.0 + 0.5); float f = 1.0;
+        if (doKey){ vec3 d = c - key; float dsq = dot(d, d);
+          if (dsq < t1sq){ float dist = sqrt(dsq); f = dist <= t0 ? 0.0 : floor((dist - t0) / span * 255.0 + 0.5) / 255.0; } }
+        vec3 o = c / 255.0;
+        if (doHsv){
+          float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), d = mx - mn, h = 0.0;
+          if (d > 0.0){ h = mx == c.r ? mod((c.g - c.b) / d, 6.0) : mx == c.g ? (c.b - c.r) / d + 2.0 : (c.r - c.g) / d + 4.0; h *= 60.0; }
+          h = mod(h + H, 360.0);
+          float s = min(1.0, (mx > 0.0 ? d / mx : 0.0) * S), v = min(1.0, mx / 255.0 * V);
+          float C = v * s, X = C * (1.0 - abs(mod(h / 60.0, 2.0) - 1.0)), m = v - C;
+          vec3 r = h < 60.0 ? vec3(C, X, 0.0) : h < 120.0 ? vec3(X, C, 0.0) : h < 180.0 ? vec3(0.0, C, X) : h < 240.0 ? vec3(0.0, X, C) : h < 300.0 ? vec3(X, 0.0, C) : vec3(C, 0.0, X);
+          o = floor((r + m) * 255.0 + 0.5) / 255.0;
+        }
+        float a = px.a * f;
+        gl_FragColor = vec4(o * a, a);
+      }`));
+    gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    let lost = false;
+    cv.addEventListener('webglcontextlost', () => { lost = true; });
+    return {
+      get ok(){ return !lost; },
+      // returns a canvas holding the processed frame (valid until the next call)
+      render(img, p){
+        if (cv.width !== img.width || cv.height !== img.height){ cv.width = img.width; cv.height = img.height; }
+        gl.viewport(0, 0, cv.width, cv.height);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.uniform3f(U.key, p.kr, p.kg, p.kb); gl.uniform1f(U.t0, p.t0); gl.uniform1f(U.t1sq, p.t1sq); gl.uniform1f(U.span, p.span);
+        gl.uniform1f(U.H, p.H); gl.uniform1f(U.S, p.S); gl.uniform1f(U.V, p.V); gl.uniform1i(U.doKey, p.doKey); gl.uniform1i(U.doHsv, p.doHsv);
+        gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        return cv;
+      },
+    };
+  } catch (e) { console.warn('live colour (WebGL) unavailable, using pre-processing:', e.message); return null; }
+})();
+const liveFx = () => fxGL && fxGL.ok;
+const fxActive = g => g.key.on || hsvOn(g);
+// the image to draw for frame `img` of GIF `g`: run through the colour shader when live colour is on
+function fxImage(g, img){
+  if (!liveFx() || !fxActive(g) || g.frames !== g.src) return img;
+  if (!g.fxP) g.fxP = fxParams(g);
+  return fxGL.render(img, g.fxP);
+}
+function scheduleFx(g, ms){
+  if (liveFx()){ applyFx(g); return; }               // live: nothing to wait for
+  clearTimeout(g.keyT); g.keyT = setTimeout(() => applyFx(g), ms);
+}
+
+const hsvOn = g => g.hsv.h !== 0 || g.hsv.s !== 1 || g.hsv.v !== 1;
+// shift a color in HSV space; returns packed 0xRRGGBB
+function hsvShift(r, gr, b, H, S, V){
+  const mx = Math.max(r, gr, b), mn = Math.min(r, gr, b), d = mx - mn;
+  let h = 0;
+  if (d){ h = mx === r ? ((gr - b) / d) % 6 : mx === gr ? (b - r) / d + 2 : (r - gr) / d + 4; h *= 60; }
+  h = mod(h + H, 360);
+  const s = Math.min(1, (mx ? d / mx : 0) * S), v = Math.min(1, mx / 255 * V);
+  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
+  const [rr, gg, bb] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return (Math.round((rr + m) * 255) << 16) | (Math.round((gg + m) * 255) << 8) | Math.round((bb + m) * 255);
+}
+const yieldNow = () => (window.scheduler && scheduler.yield) ? scheduler.yield() : new Promise(r => setTimeout(r, 0));
+// result for one source color (0xBBGGRR): alpha factor 0..255 in the top byte, new color below (same byte order)
+function fxColor(c, p){
+  const r = c & 255, gr = (c >> 8) & 255, b = c >> 16;
+  let f = 255;
+  if (p.doKey){ const dr = r - p.kr, dg = gr - p.kg, db = b - p.kb, dsq = dr*dr + dg*dg + db*db;
+    if (dsq < p.t1sq){ const dist = Math.sqrt(dsq); f = dist <= p.t0 ? 0 : Math.round(255 * (dist - p.t0) / p.span); } }
+  let rgb = c;
+  if (p.doHsv){ const o = hsvShift(r, gr, b, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
+  return f * 16777216 + rgb;
+}
+// one frame in place: u = Uint32 view of RGBA pixels (0xAABBGGRR). GIFs have few distinct colors and long runs
+// of the same one, so each color is worked out once (cache) and repeats are copied.
+function fxPixels(u, p, cache){
+  let lastC = -1, lastV = 0;
+  for (let i = 0; i < u.length; i++){
+    const px = u[i], al = px >>> 24; if (!al) continue;
+    const c = px & 0xffffff;
+    if (c !== lastC){ lastC = c; lastV = cache.get(c); if (lastV === undefined){ lastV = fxColor(c, p); cache.set(c, lastV); } }
+    const f = (lastV / 16777216) | 0, na = f === 255 ? al : (al * f / 255) | 0;
+    u[i] = (na << 24) | (lastV & 0xffffff);
+  }
+}
+function fxParams(g){
+  const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
+  return { doKey: g.key.on, doHsv: hsvOn(g), kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
+           t0, t1sq: t1 * t1, span: t1 - t0, H: g.hsv.h, S: g.hsv.s, V: g.hsv.v };
+}
+// The worker gets the same functions as source text, so both paths run identical code.
+const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, fxPixels].map(f => f.toString()).join('\n') + `
+const latest = new Map(), pause = () => new Promise(r => setTimeout(r, 0));
+// The worker decodes its own copy from the original file, so the main thread never copies frames across.
+onmessage = async e => {
+  const m = e.data; latest.set(m.id, m.gen);
+  if (!m.blob) return;                                     // a cancel
+  const { id, gen, blob, type, n, w, h, p } = m;
+  let dec = null; const out = [];
+  try {
+    dec = new ImageDecoder({ data: await blob.arrayBuffer(), type });
+    await dec.tracks.ready;
+    const x = new OffscreenCanvas(w, h).getContext('2d', { willReadFrequently: true });
+    const cache = new Map(); let t = performance.now();
+    for (let i = 0; i < n; i++){
+      if (latest.get(id) !== gen){ out.forEach(b => b.close()); dec.close(); return; }   // superseded
+      const { image } = await dec.decode({ frameIndex: i });
+      const resize = image.displayWidth !== w ? { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' } : {};
+      const bm = await createImageBitmap(image, resize); image.close();   // same scaling as the main decode
+      x.clearRect(0, 0, w, h); x.drawImage(bm, 0, 0); bm.close();
+      const img = x.getImageData(0, 0, w, h);
+      fxPixels(new Uint32Array(img.data.buffer), p, cache);
+      out.push(await createImageBitmap(img));
+      if (performance.now() - t > 50){ postMessage({ id, gen, progress: i + 1, total: n }); await pause(); t = performance.now(); }
+    }
+    dec.close();
+    postMessage({ id, gen, frames: out }, out);
+  } catch (err) {
+    out.forEach(b => b.close()); if (dec) dec.close();
+    postMessage({ id, gen, error: String(err && err.message || err) });
+  }
+};`;
+let fxWorker = null;
+try {
+  fxWorker = new Worker(URL.createObjectURL(new Blob([FX_WORKER_SRC], { type: 'text/javascript' })));
+  fxWorker.onmessage = e => {
+    const m = e.data, pad = pads.find(p => p.gif && p.gif.uid === m.id), g = pad && pad.gif;
+    if (!g || m.gen !== g.keyGen){ if (m.frames) m.frames.forEach(f => f.close()); return; }   // stale or cleared
+    if (m.frames) fxDone(g, m.frames);
+    else if (m.error){ console.warn('color worker:', m.error, '— using main thread'); fxMain(g, m.gen, fxParams(g)); }
+    else { g.keyMsg = `processing ${m.progress}/${m.total}…`; if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg; }
+  };
+  fxWorker.onerror = e => {                          // worker unusable: redo pending work on this thread
+    console.warn('color worker failed, using main thread', e.message); fxWorker = null;
+    pads.forEach(p => p.gif && p.gif.fxWaits.length && applyFx(p.gif));
+  };
+} catch (e) { fxWorker = null; }
+
+function fxDone(g, frames){
+  const old = g.frames; g.frames = frames; g.fxP = null;
+  if (old !== g.src && old !== frames) old.forEach(f => f.close());
+  g.bytes = g.srcBytes * (frames === g.src ? 1 : 2); g.keyMsg = ''; g.fxVer++;
+  const pi = pads.findIndex(p => p.gif === g); if (pi >= 0) renderPad(pi);
+  updateMem(); if (pads[selPad].gif === g) syncGifUI();
+  g.fxWaits.splice(0).forEach(r => r());
+}
+// returns a promise that settles when this (or a newer) setting has been applied
+function applyFx(g){
+  const gen = ++g.keyGen, p = fxParams(g);
+  const wait = new Promise(r => g.fxWaits.push(r));
+  if (liveFx()){                                     // live: just new parameters (drop any pre-processed frames)
+    if (fxWorker) fxWorker.postMessage({ id: g.uid, gen });
+    g.fxP = null; fxDone(g, g.src); return wait;
+  }
+  if (!p.doKey && !p.doHsv){ if (fxWorker) fxWorker.postMessage({ id: g.uid, gen }); fxDone(g, g.src); }
+  else if (fxWorker) fxWorker.postMessage({ id: g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w: g.src[0].width, h: g.src[0].height, p });
+  else fxMain(g, gen, p);
+  return wait;
+}
+async function fxMain(g, gen, p){                    // fallback when workers aren't available
+  const w = g.src[0].width, h = g.src[0].height;
+  const x = new OffscreenCanvas(w, h).getContext('2d', { willReadFrequently: true });
+  const cache = new Map(), out = []; let slice = performance.now();
+  for (let i = 0; i < g.src.length; i++){
+    if (gen !== g.keyGen){ out.forEach(f => f.close()); return; }
+    x.clearRect(0, 0, w, h); x.drawImage(g.src[i], 0, 0);
+    const img = x.getImageData(0, 0, w, h);
+    fxPixels(new Uint32Array(img.data.buffer), p, cache);
+    out.push(await createImageBitmap(img));
+    if (performance.now() - slice > 12){
+      g.keyMsg = `processing ${i+1}/${g.src.length}…`;
+      if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg;
+      await yieldNow(); slice = performance.now();
+    }
+  }
+  if (gen !== g.keyGen){ out.forEach(f => f.close()); return; }
+  fxDone(g, out);
+}
+
+// ---------- clock ----------
+function setBpm(v){
+  clock.bpm = clamp(+v || 120, 20, 300);
+  if (document.activeElement !== $('#bpm')) $('#bpm').value = clock.bpm.toFixed(1);
+}
+
+function tap(){
+  if (clock.src !== 'internal') return;
+  const t = performance.now(), T = clock.taps;
+  if (T.length && t - T[T.length-1] > 2000) T.length = 0;
+  T.push(t); if (T.length > 8) T.shift();
+  if (T.length === 1) clock.beat = Math.ceil(clock.beat / 4) * 4;            // first tap = downbeat
+  else { setBpm(60000 / ((T[T.length-1] - T[0]) / (T.length - 1))); clock.beat = Math.round(clock.beat); }
+  const b = $('#tapBtn'); b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 90);
+}
+
+// global reset: now is beat 1 of bar 1 (internal clock), and every GIF on every layer restarts from its start frame
+function resync(){
+  const now = performance.now();
+  if (clock.src === 'internal'){ clock.beat = 0; clock.taps.length = 0; }
+  layers.forEach(L => L.clips.forEach(c => { c.startTime = now; c.startBeat = clock.beat; }));
+  const b = $('#syncBtn'); b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 120);
+}
+function updateClock(now){
+  const dt = now - clock.last; clock.last = now;
+  if (clock.src === 'midi'){
+    if (clock.midiRunning && now - clock.lastTick > 500) clock.midiRunning = false;
+    if (!clock.midiRunning) return;
+    clock.beat += dt * clock.bpm / 60000;
+    const err = clock.midiTicks / 24 - clock.beat;
+    clock.beat = Math.abs(err) > 1 ? clock.midiTicks / 24 : clock.beat + err * 0.15;
+  } else clock.beat += dt * clock.bpm / 60000;
+}
+
+function snapBeat(b){ return snapMode === 'beat' ? Math.floor(b) : snapMode === 'bar' ? Math.floor(b / 4) * 4 : b; }
+
+// ---------- MIDI clock ----------
+let midiAccess = null, midiInput = null;
+async function enableMidi(){
+  if (!navigator.requestMIDIAccess){ toast('Web MIDI is not available in this browser'); return setClockSrc('internal'); }
+  try { midiAccess = midiAccess || await navigator.requestMIDIAccess(); }
+  catch { toast('MIDI access was denied'); return setClockSrc('internal'); }
+  midiAccess.onstatechange = fillMidi; fillMidi();
+}
+function fillMidi(){
+  const sel = $('#midiIn'), prev = sel.value, ins = [...midiAccess.inputs.values()];
+  sel.innerHTML = ins.length ? ins.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('') : '<option value="">no MIDI inputs</option>';
+  if (ins.some(i => i.id === prev)) sel.value = prev;
+  sel.hidden = false; bindMidiInput();
+}
+function bindMidiInput(){
+  if (midiInput) midiInput.onmidimessage = null;
+  midiInput = midiAccess && $('#midiIn').value ? midiAccess.inputs.get($('#midiIn').value) : null;
+  if (midiInput && clock.src === 'midi') midiInput.onmidimessage = onMidi;
+}
+function onMidi(e){
+  const s = e.data[0];
+  if (s === 0xF8){
+    const t = performance.now(), TT = clock.midiTickTimes;
+    clock.midiTicks++; clock.lastTick = t; clock.midiRunning = true;
+    TT.push(t); if (TT.length > 49) TT.shift();
+    if (TT.length >= 13) setBpm(60000 / ((TT[TT.length-1] - TT[0]) / (TT.length - 1) * 24));
+  } else if (s === 0xFA){ clock.midiTicks = 0; clock.beat = 0; clock.midiTickTimes = []; clock.lastTick = performance.now(); clock.midiRunning = true; }
+  else if (s === 0xFB){ clock.lastTick = performance.now(); clock.midiRunning = true; }
+  else if (s === 0xFC){ clock.midiRunning = false; }
+}
+function setClockSrc(v){
+  clock.src = v; $('#clockSrc').value = v;
+  $('#bpm').disabled = v === 'midi'; $('#tapBtn').disabled = v === 'midi';
+  if (v === 'midi'){ clock.midiTicks = Math.round(clock.beat * 24); enableMidi(); }
+  else { if (midiInput) midiInput.onmidimessage = null; $('#midiIn').hidden = true; $('#midiStat').textContent = ''; }
+}
+
+// ---------- playback ----------
+function idxAt(g, t){ const c = g.cum; let lo = 0, hi = c.length - 1; while (lo < hi){ const m = (lo + hi + 1) >> 1; if (c[m] <= t) lo = m; else hi = m - 1; } return lo; }
+function timeToIdx(g, t){
+  const D = g.total; let tt;
+  if (g.loop === 'loop') tt = mod(t, D);
+  else if (g.loop === 'pingpong'){ const c = mod(t, 2*D); tt = c < D ? c : Math.max(0, 2*D - c - 1e-6); }
+  else tt = clamp(t, 0, D - 1e-6);
+  return idxAt(g, tt);
+}
+function stepToIdx(g, s){
+  const F = g.seq.length;
+  if (g.loop === 'loop') return mod(s, F);
+  if (g.loop === 'pingpong'){ const P = Math.max(1, 2*F - 2), c = mod(s, P); return c < F ? c : P - c; }
+  return clamp(s, 0, F - 1);
+}
+function frameIndex(c, g, now){ return g.seq[seqIndex(c, g, now)]; }
+// Timing maps time since trigger to a position; Loop (inside timeToIdx/stepToIdx) handles the end;
+// Restart (any timing) jumps back to the start every N beats.
+function seqIndex(c, g, now){
+  let b = clock.beat - c.startBeat;
+  if (g.restart) b = mod(b, g.restart);
+  switch (g.sync){
+    case 'stretch':                                  // Fit: one cycle = loop length (ping-pong: the round trip)
+      return timeToIdx(g, b / g.beats * g.total * (g.loop === 'pingpong' ? 2 : 1));
+    case 'step':                                     // Step: every frame lasts `subdiv` frames per beat
+      return stepToIdx(g, Math.floor(b * g.subdiv + 1e-6));
+    default:                                         // Free: own timing × speed (beat-based while restarting)
+      return timeToIdx(g, (g.restart ? b * 60000 / clock.bpm : now - c.startTime) * g.speed);
+  }
+}
+// one cycle in beats (null = free-running, tempo-independent)
+function cycleBeats(g){
+  const pp = g.loop === 'pingpong';
+  if (g.sync === 'stretch') return g.beats;
+  if (g.sync === 'step'){ const F = g.seq.length; return (pp ? Math.max(1, 2*F - 2) : F) / g.subdiv; }
+  return null;
+}
+
+function trigger(p){
+  if (!pads[p].gif) return;
+  // a GIF lives on one layer at most: if it's on any layer, restart it there; otherwise add it to the edited layer
+  let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[target];
+  let c = L.clips.find(c => c.pad === p);
+  if (!c){
+    if (L.mode === 'replace'){ c = L.clips[0] || newClip(p); c.pad = p; L.clips = [c]; }   // keeps placement
+    else { c = newClip(p); L.clips.push(c); while (L.clips.length > MAX_CLIPS) L.clips.shift(); }
+  }
+  c.startTime = performance.now(); c.startBeat = snapBeat(clock.beat);
+  L.sel = c; L.on = true;
+  selectPad(p); syncLayerUI(); syncXfUI();
+  const el = pads[p].el; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+}
+function removeClip(li, c){
+  const L = layers[li]; if (!c) return;
+  L.clips = L.clips.filter(x => x !== c); if (L.sel === c) L.sel = null;
+  syncLayerUI(); syncXfUI();
+}
+function toggleLayer(li){ layers[li].on = !layers[li].on; syncLayerUI(); }
+function setTarget(li){ target = li; syncLayerUI(); syncXfUI(); }
+document.addEventListener('visibilitychange', () => { redraw.all = true; });
+
+// ---------- geometry ----------
+function baseSize(g, fit){
+  if (fit === 'auto'){
+    // native pixels; big GIFs shrink to fit the frame, small sprites grow by a whole factor up to ~1/3 frame height
+    if (g.w > W || g.h > H){ const s = Math.min(W / g.w, H / g.h); return [g.w * s, g.h * s]; }
+    const s = Math.max(1, Math.min(Math.floor(H / 3 / g.h), Math.floor(W / 2 / g.w)));
+    return [g.w * s, g.h * s];
+  }
+  if (fit === 'stretch') return [W, H];
+  if (fit === 'native')  return [g.w, g.h];
+  const s = (fit === 'cover' ? Math.max : Math.min)(W / g.w, H / g.h);
+  return [g.w * s, g.h * s];
+}
+function applyXf(ctx, c, k = 1){
+  ctx.translate((W/2 + c.x) * k, (H/2 + c.y) * k);
+  ctx.rotate(c.rot * Math.PI / 180);
+  ctx.scale(c.sx * k * (c.flipX ? -1 : 1), c.sy * k * (c.flipY ? -1 : 1));
+}
+// visible (cropped) box in output pixels: center, half extents, angle; bw/bh = visible base size,
+// fbw/fbh = uncropped base size, ox/oy = offset of the visible center from the clip origin (local, scaled)
+function clipGeom(c){
+  const g = pads[c.pad] && pads[c.pad].gif; if (!g) return null;
+  const [fbw, fbh] = baseSize(g, c.fit);
+  const a = c.rot * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+  const bw = fbw * (1 - c.cl - c.cr), bh = fbh * (1 - c.ct - c.cb);
+  const ox = (c.cl - c.cr) / 2 * fbw * c.sx * (c.flipX ? -1 : 1), oy = (c.ct - c.cb) / 2 * fbh * c.sy * (c.flipY ? -1 : 1);
+  return { cx: W/2 + c.x + ox*co - oy*si, cy: H/2 + c.y + ox*si + oy*co, hw: bw * c.sx / 2, hh: bh * c.sy / 2, a, bw, bh, fbw, fbh, ox, oy };
+}
+// move the clip so its visible (cropped) center lands on world point (wx, wy)
+function placeVisible(c, wx, wy){
+  const G = clipGeom(c), co = Math.cos(G.a), si = Math.sin(G.a);
+  c.x = wx - W/2 - (G.ox*co - G.oy*si); c.y = wy - H/2 - (G.ox*si + G.oy*co);
+}
+function fitScreen(c, fit){
+  Object.assign(c, { fit, rot: 0, flipX: false, flipY: false, tile: false, sx: 1, sy: 1 });
+  const G = clipGeom(c); if (!G) return;
+  if (fit === 'stretch'){ c.sx = W / G.bw; c.sy = H / G.bh; }
+  else c.sx = c.sy = (fit === 'cover' ? Math.max : Math.min)(W / G.bw, H / G.bh);
+  placeVisible(c, W/2, H/2);
+}
+function toLocal(G, px, py){ const dx = px - G.cx, dy = py - G.cy, co = Math.cos(G.a), si = Math.sin(G.a); return [dx*co + dy*si, -dx*si + dy*co]; }
+function toWorld(G, lx, ly){ const co = Math.cos(G.a), si = Math.sin(G.a); return [G.cx + lx*co - ly*si, G.cy + lx*si + ly*co]; }
+function inClip(c, px, py){ const G = clipGeom(c); if (!G) return false; const [lx, ly] = toLocal(G, px, py); return Math.abs(lx) <= G.hw && Math.abs(ly) <= G.hh; }
+// RGBA of the clip's current frame under an output-space point (src = before color key)
+const probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
+function sampleClip(c, px, py, src = false){
+  const g = pads[c.pad].gif, G = clipGeom(c), [lx, ly] = toLocal(G, px, py);
+  const u = (lx + G.ox) / (c.sx * (c.flipX ? -1 : 1) * G.fbw) + 0.5, v = (ly + G.oy) / (c.sy * (c.flipY ? -1 : 1) * G.fbh) + 0.5;
+  const img = (src ? g.src : g.frames)[frameIndex(c, g, performance.now())];
+  probe.clearRect(0, 0, 1, 1);
+  probe.drawImage(img, -clamp(Math.floor(u * img.width), 0, img.width - 1), -clamp(Math.floor(v * img.height), 0, img.height - 1));
+  const d = probe.getImageData(0, 0, 1, 1).data;
+  if (!src && liveFx() && g.frames === g.src && g.key.on && d[3]){   // apply the key to this one pixel
+    const r = fxColor(d[0] | (d[1] << 8) | (d[2] << 16), fxParams(g)); d[3] = (d[3] * ((r / 16777216) | 0) / 255) | 0;
+  }
+  return d;
+}
+// everything under the point, in visual order (topmost first); transparent pixels don't count
+function hitsAt(px, py, opaqueOnly = true){
+  const out = [];
+  for (let li = 3; li >= 0; li--){
+    const L = layers[li]; if (!L.on || L.opacity <= 0) continue;
+    for (let k = L.clips.length - 1; k >= 0; k--){
+      const c = L.clips[k];
+      if (inClip(c, px, py) && (!opaqueOnly || sampleClip(c, px, py)[3] > 16)) out.push([li, c]);
+    }
+  }
+  return out;
+}
+function hitAny(px, py){ return hitsAt(px, py)[0] || null; }
+const KNOB = 26;    // rotate knob distance above the box, preview px
+function knobPos(G){ return toWorld(G, 0, -G.hh - KNOB * W / view.w); }
+function hitHandle(c, px, py){
+  const G = c && clipGeom(c); if (!G) return null;
+  const tol = 9 * W / view.w, [kx, ky] = knobPos(G);
+  if (Math.hypot(kx - px, ky - py) < tol) return 'rot';
+  for (const h of HANDLES){ const [wx, wy] = toWorld(G, h[0]*G.hw, h[1]*G.hh); if (Math.abs(wx - px) < tol && Math.abs(wy - py) < tol) return h; }
+  return null;
+}
+
+// ---------- rendering ----------
+function drawClip(ctx, c, g, img){
+  const [bw, bh] = baseSize(g, c.fit);
+  ctx.save(); applyXf(ctx, c);
+  ctx.imageSmoothingEnabled = !g.crisp;
+  if (c.tile){
+    // fill exactly the frame, with the clip's whole transform folded into the pattern
+    const pat = ctx.createPattern(img, 'repeat');
+    pat.setTransform(new DOMMatrix().translate(W/2 + c.x, H/2 + c.y).rotate(c.rot)
+      .scale(c.sx * (c.flipX ? -1 : 1), c.sy * (c.flipY ? -1 : 1)).translate(-bw/2, -bh/2).scale(bw / img.width, bh / img.height));
+    ctx.fillStyle = pat; ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillRect(0, 0, W, H);
+  } else if (c.cl || c.ct || c.cr || c.cb){
+    const sw = 1 - c.cl - c.cr, sh = 1 - c.ct - c.cb;
+    ctx.drawImage(img, c.cl * img.width, c.ct * img.height, sw * img.width, sh * img.height, -bw/2 + c.cl*bw, -bh/2 + c.ct*bh, sw*bw, sh*bh);
+  } else ctx.drawImage(img, -bw/2, -bh/2, bw, bh);
+  ctx.restore();
+}
+// false only when the clip's (rotated) box is certainly outside the frame; tiled clips always draw
+function onScreen(c){
+  if (c.tile) return true;
+  const G = clipGeom(c), r = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), q = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
+  return G.cx + r > 0 && G.cx - r < W && G.cy + q > 0 && G.cy - q < H;
+}
+// everything that changes the picture this frame, as one string; equal to last frame's → nothing to redraw
+function sceneSig(now){
+  let s = '';
+  for (const L of layers){
+    if (!L.on || L.opacity <= 0) continue;
+    s += `|${L.i},${L.opacity},${L.blend}`;
+    for (const c of L.clips){
+      const g = pads[c.pad].gif; if (!g) continue;
+      s += `;${c.id},${frameIndex(c, g, now)},${g.fxVer},${g.crisp},${c.x},${c.y},${c.sx},${c.sy},${c.rot},${c.fit},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb}`;
+    }
+  }
+  return s;
+}
+function render(now){
+  mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = 1;
+  mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H);
+  for (const L of layers){
+    if (!L.on || L.opacity <= 0) continue;
+    const vis = L.clips.filter(c => pads[c.pad].gif && onScreen(c));
+    if (!vis.length) continue;
+    mctx.save(); mctx.globalAlpha = L.opacity; mctx.globalCompositeOperation = L.blend;
+    if (vis.length === 1 || (L.blend === 'source-over' && L.opacity >= 1)){
+      // one GIF, or Normal at full opacity: identical result drawn straight onto the master (no buffer clear + composite)
+      for (const c of vis){ const g = pads[c.pad].gif; drawClip(mctx, c, g, fxImage(g, g.frames[frameIndex(c, g, now)])); }
+    } else {                                       // several: flatten into the layer buffer, then blend once
+      const b = lbufs[L.i]; b.clearRect(0, 0, W, H);
+      for (const c of vis){ const g = pads[c.pad].gif; drawClip(b, c, g, fxImage(g, g.frames[frameIndex(c, g, now)])); }
+      mctx.drawImage(b.canvas, 0, 0);
+    }
+    mctx.restore();
+  }
+}
+function outline(G, k){
+  pctx.beginPath();
+  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a, b], j) => { const [x, y] = toWorld(G, a*G.hw, b*G.hh); j ? pctx.lineTo(x*k, y*k) : pctx.moveTo(x*k, y*k); });
+  pctx.closePath(); pctx.stroke();
+}
+const redraw = { all: true, scene: '', overlay: '' };
+function drawFrame(now){
+  if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
+  const hidden = document.hidden, force = redraw.all;
+  if (!outCtx && hidden) return;                   // nobody is looking
+  const sig = sceneSig(now);
+  if (force || sig !== redraw.scene){
+    redraw.scene = sig; drawn++;
+    render(now);
+    if (outCtx) outCtx.drawImage(master, 0, 0);
+    if (!hidden) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
+  }
+  if (hidden) return;
+  const L = layers[target], sel = selClip();
+  const osig = `${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';');
+  if (force || osig !== redraw.overlay){ redraw.overlay = osig; drawOverlay(); }
+  redraw.all = false;
+}
+function drawOverlay(){
+  const dpr = devicePixelRatio || 1;
+  pctx.clearRect(0, 0, pv.width, pv.height);
+  const k = view.w * dpr / W, L = layers[target], sel = selClip();
+  pctx.save(); pctx.translate(view.x * dpr, view.y * dpr); pctx.strokeStyle = LCOL[target];
+  for (const c of L.clips){
+    const G = clipGeom(c); if (!G) continue;
+    pctx.lineWidth = (c === sel ? 1.5 : 1) * dpr; pctx.setLineDash(c === sel ? [] : [5*dpr, 4*dpr]);
+    pctx.globalAlpha = c === sel ? 1 : 0.6; outline(G, k);
+    if (c === sel){
+      pctx.fillStyle = '#000'; const s = 4 * dpr;
+      for (const h of HANDLES){ const [x, y] = toWorld(G, h[0]*G.hw, h[1]*G.hh); pctx.fillRect(x*k - s, y*k - s, 2*s, 2*s); pctx.strokeRect(x*k - s, y*k - s, 2*s, 2*s); }
+      const [tx, ty] = toWorld(G, 0, -G.hh), [kx, ky] = knobPos(G);
+      pctx.beginPath(); pctx.moveTo(tx*k, ty*k); pctx.lineTo(kx*k, ky*k); pctx.stroke();
+      pctx.beginPath(); pctx.arc(kx*k, ky*k, 5*dpr, 0, Math.PI*2); pctx.fillStyle = LCOL[target]; pctx.fill();
+    }
+  }
+  pctx.restore();
+}
+
+// ---------- output window ----------
+function openOutput(){
+  if (outWin && !outWin.closed){ outWin.focus(); return; }
+  outWin = window.open('', 'gifvj_output', 'popup,width=960,height=540');
+  if (!outWin){ toast('Popup blocked — allow popups for this page, then click Open output again'); return; }
+  const d = outWin.document;
+  d.open();
+  d.write(`<!doctype html><meta charset="utf-8"><title>VJif — Output</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}
+canvas{width:100vw;height:100vh;object-fit:contain;display:block}
+html:fullscreen,html:fullscreen *{cursor:none}
+#h{position:fixed;left:8px;top:6px;font:12px monospace;color:#888;transition:opacity 1s}</style>
+<canvas width="${W}" height="${H}"></canvas><div id="h">double-click for fullscreen</div>`);
+  d.close();
+  outCtx = d.querySelector('canvas').getContext('2d', { alpha: false });
+  setTimeout(() => { const h = d.getElementById('h'); if (h) h.style.opacity = 0; }, 2500);
+  d.addEventListener('dblclick', () => d.fullscreenElement ? d.exitFullscreen() : d.documentElement.requestFullscreen());
+  outWin.addEventListener('keydown', onKey);
+  outWin.addEventListener('keyup', e => { onKeyUp(e); commit(); });
+  outWin.addEventListener('pagehide', () => setTimeout(restartLoop, 0));
+  redraw.all = true; restartLoop();
+  updateOutStat();
+}
+function updateOutStat(){
+  $('#outStat').textContent = outCtx ? 'output live · 1920×1080' : 'no output';
+  $('#outLed').classList.toggle('on', !!outCtx);
+  $('#outBtn').title = outCtx ? 'Output window is live (1920×1080) — click to bring it to the front' : 'Open the output window';
+}
+
+// ---------- keyboard ----------
+function isTyping(e){
+  const t = e.target;
+  if (!t || !t.tagName) return false;
+  if (t.isContentEditable || t.tagName === 'TEXTAREA') return true;
+  return t.tagName === 'INPUT' && ['text','number','url','search'].includes(t.type);
+}
+function onKey(e){
+  if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
+  if (!$('#setsPanel').hidden){                      // the sets panel is modal
+    if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
+    return;
+  }
+  if (e.key === '?' && !isTyping(e)){ e.preventDefault(); $('#helpPanel').hidden = false; return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); quickSave(); return; }
+  if ((e.ctrlKey || e.metaKey) && !isTyping(e) && /^[zy]$/i.test(e.key)){
+    e.preventDefault(); (e.key.toLowerCase() === 'y' || e.shiftKey) ? redo() : undo(); return;
+  }
+  if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.code === 'Space') e.preventDefault();
+  if (/^Arrow/.test(e.key)){                         // nudge the selected GIF: 1 px, Shift = 10 px (holding repeats; one undo step)
+    const c = selClip(); if (!c) return;
+    e.preventDefault();
+    const st = e.shiftKey ? 10 : 1;
+    c.x = clamp(c.x + (e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0), -W, W);
+    c.y = clamp(c.y + (e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0), -H, H);
+    syncXfUI(); return;
+  }
+  if (e.repeat) return;
+  const pi = PAD_KEYS.indexOf(e.code);
+  if (pi >= 0){
+    e.preventDefault();
+    if (e.shiftKey) removeClip(target, layers[target].clips.find(c => c.pad === pi));
+    else trigger(pi);
+    return;
+  }
+  if (e.code === 'Space'){ e.shiftKey ? resync() : tap(); return; }
+  if (e.code === 'Escape'){ stopPick(); return; }
+  if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
+  const m = /^Digit([1-4])$/.exec(e.code);
+  if (m){ e.preventDefault(); const li = +m[1] - 1; e.shiftKey ? setTarget(li) : toggleLayer(li); }
+}
+function onKeyUp(e){ if (e.code === 'Space' && !isTyping(e)) e.preventDefault(); }
+window.addEventListener('keydown', onKey);
+window.addEventListener('keyup', onKeyUp);
+// keep focus off controls so keys always reach the pads
+document.addEventListener('change', e => { if (e.target.matches('select, input[type=range], input[type=checkbox], input[type=radio], input[type=color]')) e.target.blur(); });
+document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
+
+// ---------- UI: pads ----------
+function buildPads(){
+  pads.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'pad empty'; el.dataset.i = i;
+    el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
+    el.addEventListener('click', () => {
+      if (p.gif) trigger(i);
+      else { selectPad(i); fileTarget = i; $('#fileIn').click(); }
+    });
+    (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
+    p.el = el;
+  });
+}
+function renderPad(i){
+  const p = pads[i], el = p.el, c = el.querySelector('canvas'), x = c.getContext('2d');
+  x.fillStyle = '#1c1f25'; x.fillRect(0, 0, c.width, c.height);
+  el.classList.toggle('empty', !p.gif);
+  el.querySelector('.nm').textContent = p.gif ? p.gif.name : '';
+  if (!p.gif) return;
+  if (p.gif.key.on){                                // checkerboard shows keyed transparency
+    x.fillStyle = '#2a2e36';
+    for (let yy = 0; yy < c.height; yy += 8) for (let xx = (yy / 8) % 2 * 8; xx < c.width; xx += 16) x.fillRect(xx, yy, 8, 8);
+  }
+  x.imageSmoothingEnabled = !p.gif.crisp;
+  const f = fxImage(p.gif, p.gif.frames[p.gif.startF]), s = Math.min(c.width / f.width, c.height / f.height);
+  x.drawImage(f, (c.width - f.width*s)/2, (c.height - f.height*s)/2, f.width*s, f.height*s);
+}
+function selectPad(i){ selPad = i; pads.forEach(p => p.el.classList.toggle('sel', p.i === i)); syncGifUI(); }
+function updateMem(){
+  const mb = pads.reduce((a, p) => a + (p.gif ? p.gif.bytes : 0), 0) / 1048576;
+  const el = $('#mem'); el.textContent = `~${mb.toFixed(0)} MB`;
+  el.style.color = mb > MEM_WARN_MB ? 'var(--danger)' : 'var(--dim)';
+  if (mb > MEM_WARN_MB) toast(`Bank is using ~${mb.toFixed(0)} MB of decoded frames — clear some pads if playback stutters`);
+}
+let padSig = '';
+function updatePadDots(){
+  const sig = layers.map(L => (L.on ? 1 : 0) + ':' + L.clips.map(c => c.pad).join('.')).join(',');
+  if (sig === padSig) return; padSig = sig;
+  pads.forEach((p, i) => {
+    p.el.querySelector('.dots').innerHTML = layers.filter(L => L.on && L.clips.some(c => c.pad === i))
+      .map(L => `<b style="background:${LCOL[L.i]}">${L.i+1}</b>`).join('');
+  });
+}
+
+// ---------- UI: gif settings ----------
+const segHTML = opts => opts.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('');
+$('#gBeats').innerHTML = segHTML(LEN_OPTS);
+$('#gSub').innerHTML = segHTML(FRAME_OPTS.map(([b, l]) => [1 / b, l]));   // stored as frames per beat
+$('#gRestart').innerHTML = segHTML(RESTART_OPTS);
+const segSet = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - v) < 1e-6 || b.dataset.v === v));
+// one handler per button group: sets the GIF's field from the clicked button
+[['#gSync', 'sync', false], ['#gLoop', 'loop', false], ['#gBeats', 'beats', true], ['#gSub', 'subdiv', true], ['#gRestart', 'restart', true]].forEach(([id, key, num]) =>
+  $(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); const g = curGif(); if (!b || !g) return;
+    g[key] = num ? +b.dataset.v : b.dataset.v; syncGifUI();
+  }));
+// two fixed lines: what one cycle is, and what to watch out for (blank when nothing)
+function cycleText(g){
+  const cb = cycleBeats(g), sec = g.total / 1000 / g.speed;
+  const beatsTxt = b => { const l = lenLabel(b); return /beats$/.test(l) ? l : `${l} · ${+b.toFixed(2)} beat${b === 1 ? '' : 's'}`; };
+  const l1 = cb === null ? `CYCLE ${sec.toFixed(2)} s · own timing` : `CYCLE ${beatsTxt(cb)}`;
+  const warn = [];
+  if (g.sync === 'step' && Math.abs(cb / 4 - Math.round(cb / 4)) > 1e-6 && Math.abs(4 / cb - Math.round(4 / cb)) > 1e-6) warn.push('drifts against the bar');
+  if (g.restart) warn.push(`restart ${lenLabel(g.restart)}` + (cb !== null && cb > g.restart + 1e-6 ? ', end never plays' : ''));
+  return [l1, warn.join(' · ') || (cb === null ? 'not tied to tempo' : 'on the grid')];
+}
+function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.querySelector('.l1').textContent = a; el.querySelector('.l2').textContent = b; el.title = a + ' — ' + b; }
+function syncGifUI(){
+  const p = pads[selPad], g = p.gif;
+  $('#gifSettings').classList.toggle('disabled', !g);
+  $('#gifName').textContent = `${p.label}${g ? '' : ' · empty'}`;
+  if (!g){ $('#gInfo').textContent = ''; return; }
+  segSet('#gSync', g.sync); segSet('#gLoop', g.loop);
+  $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
+  segSet('#gBeats', g.beats); segSet('#gSub', g.subdiv); segSet('#gRestart', g.restart);
+  showCycle(g);
+  document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = !f.dataset.for.split(' ').includes(g.sync));
+  $('#kOn').checked = g.key.on; $('#kCol').value = rgb2hex(g.key.color);
+  $('#kTol').value = g.key.tol; $('#kTol').nextElementSibling.textContent = (g.key.tol * 100).toFixed(0) + '%';
+  $('#kSoft').value = g.key.soft; $('#kSoft').nextElementSibling.textContent = (g.key.soft * 100).toFixed(0) + '%';
+  syncRangeUI(g); drawPrev(g, g.startF);
+  HSV_UI.forEach(([id, k, fmt]) => { $(id).value = g.hsv[k]; $(id).nextElementSibling.textContent = fmt(g.hsv[k]); });
+  const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
+  $('#gInfo').textContent = g.keyMsg || `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
+}
+const curGif = () => pads[selPad].gif;
+
+$('#gSmooth').addEventListener('change', e => { const c = selClip(), g = c && pads[c.pad].gif; if (g){ g.crisp = !e.target.checked; renderPad(c.pad); } });
+$('#gSpeed').addEventListener('input', e => { const g = curGif(); if (g){ g.speed = +e.target.value; e.target.nextElementSibling.textContent = g.speed.toFixed(2) + '×'; showCycle(g); } });
+const HSV_UI = [['#hH', 'h', v => (v > 0 ? '+' : '') + v + '°'], ['#hS', 's', v => (+v).toFixed(2) + '×'], ['#hV', 'v', v => (+v).toFixed(2) + '×']];
+HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
+  const g = curGif(); if (!g) return;
+  g.hsv[k] = +e.target.value; e.target.nextElementSibling.textContent = fmt(g.hsv[k]);
+  scheduleFx(g, 150);
+}));
+$('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.hsv, { h: 0, s: 1, v: 1 }); scheduleFx(g, 0); syncGifUI(); });
+function syncRangeUI(g){
+  const F = g.src.length;
+  [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => { const el = $(id); el.max = F - 1; el.value = g[k]; el.nextElementSibling.textContent = g[k]; });
+}
+function drawPrev(g, f){
+  const c = $('#gPrev'), x = c.getContext('2d'), img = fxImage(g, g.frames[f]);
+  x.clearRect(0, 0, c.width, c.height);
+  const s = Math.min(c.width / img.width, c.height / img.height);
+  x.drawImage(img, (c.width - img.width*s)/2, (c.height - img.height*s)/2, img.width*s, img.height*s);
+}
+[['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => {
+  $(id).addEventListener('input', e => {
+    const g = curGif(); if (!g) return;
+    const v = +e.target.value; g[k] = v;
+    if (k === 'inF' && g.outF < v) g.outF = v;          // dragging in past out pushes out along (and vice versa)
+    if (k === 'outF' && g.inF > v) g.inF = v;
+    rebuildSeq(g); syncRangeUI(g); drawPrev(g, g[k]); showCycle(g);
+  });
+  $(id).addEventListener('change', () => { const g = curGif(); if (g){ syncGifUI(); renderPad(selPad); } });
+});
+$('#kOn').addEventListener('change', e => { const g = curGif(); if (g){ g.key.on = e.target.checked; scheduleFx(g, 0); } });
+$('#kCol').addEventListener('input', e => { const g = curGif(); if (g){ g.key.color = hex2rgb(e.target.value); if (g.key.on) scheduleFx(g, 200); } });
+['kTol', 'kSoft'].forEach(id => $('#' + id).addEventListener('input', e => {
+  const g = curGif(); if (!g) return;
+  g.key[id === 'kTol' ? 'tol' : 'soft'] = +e.target.value;
+  e.target.nextElementSibling.textContent = (+e.target.value * 100).toFixed(0) + '%';
+  if (g.key.on) scheduleFx(g, 250);
+}));
+$('#kPick').addEventListener('click', () => picking ? stopPick() : startPick());
+function startPick(){ picking = true; $('#kPick').classList.add('armed'); $('#kPick').textContent = 'Click GIF…'; pv.style.cursor = 'crosshair'; }
+function stopPick(){ picking = false; $('#kPick').classList.remove('armed'); $('#kPick').textContent = 'Pick'; pv.style.cursor = ''; }
+function pickAt(px, py){
+  stopPick();
+  const hit = hitAny(px, py) || hitsAt(px, py, false)[0]; if (!hit) return toast('No GIF under the cursor');
+  const c = hit[1], g = pads[c.pad].gif, d = sampleClip(c, px, py, true);
+  g.key.color = [d[0], d[1], d[2]]; g.key.on = true;
+  selectPad(c.pad); scheduleFx(g, 0);
+}
+$('#gClear').addEventListener('click', () => {
+  const p = pads[selPad]; if (!p.gif) return;
+  freeGif(p.gif); p.gif = null;
+  layers.forEach(L => { L.clips = L.clips.filter(c => c.pad !== selPad); });
+  renderPad(selPad); syncGifUI(); syncLayerUI(); syncXfUI(); updateMem();
+});
+
+// ---------- UI: layers ----------
+function buildLayers(){
+  const box = $('#layers');
+  for (let li = 3; li >= 0; li--){
+    const L = layers[li], row = document.createElement('div');
+    row.className = 'layer'; row.style.setProperty('--lc', LCOL[li]);
+    row.innerHTML = `<div class="lhead"><button class="lon" title="Key ${li+1}">${li+1}</button>
+      <span class="lname" title="Click the bar or press Shift+${li+1} to edit this layer">${LNAMES[li]}</span><span class="sp"></span>
+      <select class="lmode" title="Stack: pads add GIFs to this layer · Replace: pads swap the GIF"><option value="stack">Stack</option><option value="replace">Replace</option></select>
+      <button class="lclr" title="Remove all GIFs from this layer">clear</button></div>
+      <div class="lctl"><input class="lop" type="range" min="0" max="1" step="0.01" title="Layer opacity">
+      <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
+      <div class="clips"></div>`;
+    row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
+    row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
+    row.querySelector('.lmode').addEventListener('change', e => { L.mode = e.target.value; if (L.mode === 'replace' && L.clips.length > 1){ L.clips = [selClip(li)]; syncLayerUI(); syncXfUI(); } });
+    row.querySelector('.lclr').addEventListener('click', () => { L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });
+    row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });
+    row.querySelector('.lctl').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
+    row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
+    row.querySelector('.clips').addEventListener('click', e => {
+      const chip = e.target.closest('.chip'); if (!chip) return;
+      const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
+      if (e.target.tagName === 'B') removeClip(li, c);
+      else { L.sel = c; selectPad(c.pad); setTarget(li); }
+    });
+    const clipsEl = row.querySelector('.clips');
+    clipsEl.addEventListener('dragstart', e => {
+      const chip = e.target.closest('.chip'); if (!chip) return;
+      e.dataTransfer.setData(CLIP_MIME, `${li}:${chip.dataset.id}`); e.dataTransfer.effectAllowed = 'copyMove';
+      chip.classList.add('dragging');
+    });
+    clipsEl.addEventListener('dragend', e => { const chip = e.target.closest('.chip'); if (chip) chip.classList.remove('dragging'); layers.forEach(l => l.row.classList.remove('dropzone')); });
+    row.addEventListener('dragover', e => {
+      if (!e.dataTransfer.types.includes(CLIP_MIME)) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      layers.forEach(l => l.row.classList.toggle('dropzone', l === L));
+    });
+    row.addEventListener('dragleave', e => { if (!row.contains(e.relatedTarget)) row.classList.remove('dropzone'); });
+    row.addEventListener('drop', e => {
+      if (!e.dataTransfer.types.includes(CLIP_MIME)) return;
+      e.preventDefault(); row.classList.remove('dropzone');
+      const [sli, sid] = e.dataTransfer.getData(CLIP_MIME).split(':').map(Number);
+      const chip = e.target.closest('.chip');
+      let at = L.clips.length;
+      if (chip){ const r = chip.getBoundingClientRect(); at = L.clips.findIndex(c => c.id === +chip.dataset.id) + (e.clientX > r.left + r.width/2 ? 1 : 0); }
+      moveClip(sli, sid, li, at);
+    });
+    box.appendChild(row); L.row = row;
+  }
+}
+const CLIP_MIME = 'application/x-gifvj-clip';
+function moveClip(sli, sid, dli, at){
+  const S = layers[sli], D = layers[dli], clip = S.clips.find(c => c.id === sid); if (!clip) return;
+  const i = S.clips.indexOf(clip);
+  if (S === D && i < at) at--;                           // index shifts after removing from the same list
+  S.clips.splice(i, 1); if (S.sel === clip) S.sel = null;
+  if (D.mode === 'replace') D.clips = [clip];
+  else {
+    D.clips.splice(clamp(at, 0, D.clips.length), 0, clip);
+    while (D.clips.length > MAX_CLIPS) D.clips.splice(D.clips[0] === clip ? 1 : 0, 1);
+  }
+  D.sel = clip; selectPad(clip.pad);
+  setTarget(dli);
+}
+function syncLayerUI(){
+  for (const L of layers){
+    const r = L.row, sel = selClip(L.i);
+    r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target);
+    r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the bar or press Shift+${L.i+1} to edit this layer`;
+    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.lmode').value = L.mode;
+    r.querySelector('.clips').innerHTML = L.clips.map(c => {
+      const p = pads[c.pad];
+      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" title="${esc(p.gif ? p.gif.name : '')}"><span>${p.label} · ${esc(p.gif ? p.gif.name : '?')}</span><b title="Remove">×</b></span>`;
+    }).join('');
+  }
+  $('#pvLayer').textContent = LNAMES[target];
+  updatePadDots();
+}
+
+// ---------- UI: transform (selected GIF in the edited layer) ----------
+const XF = [['#xX','x',v => v.toFixed(0)],['#xY','y',v => v.toFixed(0)],['#xSX','sx',v => v.toFixed(2)+'×'],['#xSY','sy',v => v.toFixed(2)+'×'],['#xR','rot',v => v.toFixed(0)+'°']];
+XF.forEach(([id, key, fmt]) => $(id).addEventListener('input', e => { const c = selClip(); if (!c) return; c[key] = +e.target.value; e.target.nextElementSibling.textContent = fmt(+e.target.value); }));
+$('#xFit').addEventListener('change', e => { const c = selClip(); if (c) c.fit = e.target.value; });
+$('#xFx').addEventListener('change', e => { const c = selClip(); if (c) c.flipX = e.target.checked; });
+$('#xFy').addEventListener('change', e => { const c = selClip(); if (c) c.flipY = e.target.checked; });
+$('#xT').addEventListener('change', e => { const c = selClip(); if (c) c.tile = e.target.checked; });
+$('#xReset').addEventListener('click', () => { const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); } });
+[['#xFitS', 'contain'], ['#xFill', 'cover'], ['#xStr', 'stretch']].forEach(([id, fit]) =>
+  $(id).addEventListener('click', () => { const c = selClip(); if (c){ fitScreen(c, fit); syncXfUI(); } }));   // fits the cropped part
+$('#xCropReset').addEventListener('click', () => {
+  const c = selClip(); if (!c) return;
+  const G = clipGeom(c); Object.assign(c, { cl: 0, ct: 0, cr: 0, cb: 0 }); placeVisible(c, G.cx, G.cy); syncXfUI();
+});
+function syncXfUI(){
+  const c = selClip();
+  $('#xfPanel').classList.toggle('disabled', !c);
+  $('#xfTitle').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label} · ${pads[c.pad].gif ? pads[c.pad].gif.name : ''}` : `${LNAMES[target]} · no GIF selected`;
+  if (!c) return;
+  XF.forEach(([id, key, fmt]) => { $(id).value = c[key]; $(id).nextElementSibling.textContent = fmt(c[key]); });
+  $('#gSmooth').checked = !!(pads[c.pad].gif && !pads[c.pad].gif.crisp);
+  $('#xFit').value = c.fit; $('#xFx').checked = c.flipX; $('#xFy').checked = c.flipY; $('#xT').checked = c.tile;
+  const pc = v => Math.round(v * 100);
+  $('#xCrop').textContent = (c.cl || c.ct || c.cr || c.cb) ? `L${pc(c.cl)} T${pc(c.ct)} R${pc(c.cr)} B${pc(c.cb)}%${c.tile ? ' (ignored when tiled)' : ''}` : 'none';
+}
+
+// ---------- preview mouse: select, move, resize handles ----------
+let drag = null, wheelT = 0;
+function evtToOut(e){ const r = pv.getBoundingClientRect(); return [(e.clientX - r.left - view.x) * W / view.w, (e.clientY - r.top - view.y) * H / view.h]; }
+function cursorFor(h, shift){ if (!h) return ''; if (h === 'rot') return 'grab'; if (shift) return 'crosshair'; if (h[0] && h[1]) return h[0] * h[1] > 0 ? 'nwse-resize' : 'nesw-resize'; return h[0] ? 'ew-resize' : 'ns-resize'; }
+
+pv.addEventListener('pointerdown', e => {
+  const [px, py] = evtToOut(e);
+  if (picking){ pickAt(px, py); return; }
+  pv.setPointerCapture(e.pointerId);
+  let c = selClip(); const h = hitHandle(c, px, py);
+  if (h === 'rot'){ const G = clipGeom(c); drag = { type: 'rot', c, cx: G.cx, cy: G.cy, a0: Math.atan2(py - G.cy, px - G.cx), r0: c.rot }; pv.style.cursor = 'grabbing'; return; }
+  if (h){ drag = { type: e.shiftKey ? 'crop' : 'resize', h, c, G0: clipGeom(c), sx0: c.sx, sy0: c.sy }; return; }
+  let hit;
+  if (e.altKey){                                         // Alt+click: cycle down through what's under the cursor
+    const all = hitsAt(px, py, false), i = all.findIndex(h => h[1] === c);
+    hit = all.length ? all[(i + 1) % all.length] : null;
+  } else hit = hitAny(px, py);
+  if (hit){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); c = hit[1]; }
+  if (c) drag = { type: 'move', c, px, py, x0: c.x, y0: c.y };
+});
+pv.addEventListener('pointermove', e => {
+  const [px, py] = evtToOut(e);
+  if (!drag){ if (!picking) pv.style.cursor = cursorFor(hitHandle(selClip(), px, py), e.shiftKey) || (hitsAt(px, py, false).length ? 'move' : 'default'); return; }
+  const c = drag.c;
+  if (drag.type === 'rot'){
+    let r = drag.r0 + (Math.atan2(py - drag.cy, px - drag.cx) - drag.a0) * 180 / Math.PI;
+    if (e.shiftKey) r = Math.round(r / 15) * 15;
+    c.rot = mod(r + 180, 360) - 180;
+    placeVisible(c, drag.cx, drag.cy);                   // spin around the visible center
+  } else if (drag.type === 'crop'){
+    // pointer → position across the uncropped image, in screen orientation (0 = screen-left / top edge)
+    const { G0, h } = drag, [lx, ly] = toLocal(G0, px, py), MIN = 0.02;
+    if (h[0]){
+      const us = clamp((lx + G0.ox) / (c.sx * G0.fbw) + 0.5, 0, 1);
+      const [L, R] = c.flipX ? ['cr', 'cl'] : ['cl', 'cr'];   // which source edge sits on screen-left / right
+      if (h[0] > 0) c[R] = clamp(1 - us, 0, 1 - c[L] - MIN); else c[L] = clamp(us, 0, 1 - c[R] - MIN);
+    }
+    if (h[1]){
+      const vs = clamp((ly + G0.oy) / (c.sy * G0.fbh) + 0.5, 0, 1);
+      const [T, B] = c.flipY ? ['cb', 'ct'] : ['ct', 'cb'];
+      if (h[1] > 0) c[B] = clamp(1 - vs, 0, 1 - c[T] - MIN); else c[T] = clamp(vs, 0, 1 - c[B] - MIN);
+    }
+  } else if (drag.type === 'move'){
+    c.x = clamp(drag.x0 + px - drag.px, -W, W); c.y = clamp(drag.y0 + py - drag.py, -H, H);
+  } else {
+    const { G0, h } = drag, [lx, ly] = toLocal(G0, px, py), center = e.altKey;
+    let ncx = 0, ncy = 0;
+    if (h[0] && h[1]){                                   // corner: uniform zoom, opposite corner anchored
+      const ax = center ? 0 : -h[0]*G0.hw, ay = center ? 0 : -h[1]*G0.hh;
+      const dx = h[0]*G0.hw - ax, dy = h[1]*G0.hh - ay;
+      const k = Math.max(0.02 / Math.min(drag.sx0, drag.sy0), ((lx - ax)*dx + (ly - ay)*dy) / (dx*dx + dy*dy));
+      c.sx = clamp(drag.sx0 * k, 0.02, 20); c.sy = clamp(drag.sy0 * k, 0.02, 20);
+      if (!center){ ncx = ax + dx * k / 2; ncy = ay + dy * k / 2; }
+    } else if (h[0]){                                    // left/right side: stretch X
+      const ax = center ? 0 : -h[0]*G0.hw;
+      const w = Math.max(4, center ? 2 * h[0] * lx : h[0] * (lx - ax));
+      c.sx = clamp(w / G0.bw, 0.02, 20);
+      if (!center) ncx = ax + h[0] * c.sx * G0.bw / 2;
+    } else {                                             // top/bottom side: stretch Y
+      const ay = center ? 0 : -h[1]*G0.hh;
+      const hh = Math.max(4, center ? 2 * h[1] * ly : h[1] * (ly - ay));
+      c.sy = clamp(hh / G0.bh, 0.02, 20);
+      if (!center) ncy = ay + h[1] * c.sy * G0.bh / 2;
+    }
+    const [wx, wy] = toWorld(G0, ncx, ncy);
+    placeVisible(c, wx, wy);
+  }
+  syncXfUI();
+});
+pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.style.cursor = 'grab'; drag = null; commit(); });
+pv.addEventListener('pointercancel', () => drag = null);
+pv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const c = selClip(); if (!c) return;
+  const d = e.deltaY || e.deltaX;
+  if (e.shiftKey || e.altKey) c.rot = mod(c.rot + Math.sign(d) * 5 + 180, 360) - 180;
+  else { const f = Math.exp(-d * 0.0015); c.sx = clamp(c.sx * f, 0.02, 20); c.sy = clamp(c.sy * f, 0.02, 20); }
+  syncXfUI(); clearTimeout(wheelT); wheelT = setTimeout(commit, 400);   // one undo step per wheel gesture
+}, { passive: false });
+pv.addEventListener('dblclick', e => {
+  const [px, py] = evtToOut(e), c = selClip();
+  if (c && inClip(c, px, py)){ Object.assign(c, newXf()); syncXfUI(); }
+});
+function sizePreview(){
+  const wrap = $('#pvWrap'), aw = wrap.clientWidth, ah = wrap.clientHeight, dpr = devicePixelRatio || 1, M = 40;
+  pv.width = Math.round(aw * dpr); pv.height = Math.round(ah * dpr);
+  view.w = Math.max(160, Math.min(aw - 2*M, (ah - 2*M) * 16/9)); view.h = view.w * 9/16;
+  view.x = (aw - view.w) / 2; view.y = (ah - view.h) / 2;
+  Object.assign(pvScene.style, { left: view.x + 'px', top: view.y + 'px', width: view.w + 'px', height: view.h + 'px' });
+  pvScene.width = Math.round(view.w * dpr); pvScene.height = Math.round(view.h * dpr);
+  redraw.all = true;
+}
+new ResizeObserver(sizePreview).observe($('#pvWrap'));
+
+// ---------- import UI ----------
+let fileTarget = -1;
+$('#addFiles').addEventListener('click', () => { fileTarget = -1; $('#fileIn').click(); });
+$('#fileIn').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) loadFiles(f, fileTarget); });
+$('#urlBtn').addEventListener('click', () => {
+  const u = $('#urlIn').value.trim(); if (!/^https?:\/\//.test(u)) return toast('Enter an http(s) URL');
+  loadUrlInto(u, pads[selPad].gif ? nextEmpty(selPad) : selPad); $('#urlIn').value = '';
+});
+$('#urlIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#urlBtn').click(); });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = [...(e.dataTransfer ? e.dataTransfer.files : [])].find(f => /\.vjif$/i.test(f.name));
+  if (f) importVjif(f);
+});
+const bank = $('#bank');
+bank.addEventListener('dragover', e => {
+  e.preventDefault();
+  const el = e.target.closest('.pad'); pads.forEach(p => p.el.classList.toggle('drop', p.el === el));
+});
+bank.addEventListener('dragleave', e => { if (!bank.contains(e.relatedTarget)) pads.forEach(p => p.el.classList.remove('drop')); });
+bank.addEventListener('drop', e => {
+  e.preventDefault(); pads.forEach(p => p.el.classList.remove('drop'));
+  const padEl = e.target.closest('.pad'), start = padEl ? +padEl.dataset.i : -1;
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
+  if (files.length) return loadFiles(files, start);
+  const uri = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '')
+    .split(/\r?\n/).map(s => s.trim()).find(s => /^https?:\/\//.test(s));
+  if (uri) loadUrlInto(uri, start >= 0 ? start : nextEmpty());
+});
+
+// ---------- header UI ----------
+const bpmEl = $('#bpm');
+function commitBpm(){
+  const v = parseFloat(bpmEl.value);
+  if (clock.src === 'internal' && isFinite(v)) clock.bpm = clamp(v, 20, 300);
+  bpmEl.value = clock.bpm.toFixed(1); bpmEl.classList.remove('pending');
+}
+bpmEl.addEventListener('input', () => bpmEl.classList.toggle('pending', parseFloat(bpmEl.value) !== +clock.bpm.toFixed(1)));
+bpmEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); commitBpm(); bpmEl.blur(); }
+  else if (e.key === 'Escape'){ bpmEl.value = clock.bpm.toFixed(1); bpmEl.classList.remove('pending'); bpmEl.blur(); }
+});
+bpmEl.addEventListener('blur', commitBpm);
+$('#tapBtn').addEventListener('click', tap);
+$('#syncBtn').addEventListener('click', resync);
+$('#clockSrc').addEventListener('change', e => setClockSrc(e.target.value));
+$('#midiIn').addEventListener('change', bindMidiInput);
+$('#snap').addEventListener('change', e => snapMode = e.target.value);
+$('#outBtn').addEventListener('click', openOutput);
+$('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
+$('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
+$('#helpPanel').addEventListener('pointerdown', e => { if (e.target.id === 'helpPanel') $('#helpPanel').hidden = true; });
+// GIF tabs: all panes share one grid cell (rule 3), so switching never moves anything below
+$('#gTabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  segSet('#gTabs', b.dataset.v);
+  document.querySelectorAll('#gPanes > [data-pane]').forEach(p => p.classList.toggle('off', p.dataset.pane !== b.dataset.v));
+});
+// key reset
+$('#kReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.key, { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08 }); scheduleFx(g, 0); syncGifUI(); });
+
+let toastT = 0;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 5000); }
+
+// ---------- main loop ----------
+let lastBeatIdx = -1, fpsN = 0, fpsT = performance.now();
+const dots = [...document.querySelectorAll('#beats i')];
+// The loop runs on the output window's requestAnimationFrame while it's open, so the output keeps
+// playing when this control window is minimized or hidden (a hidden window's own rAF stops).
+// A watchdog restarts the loop on this window if the output closes mid-frame.
+let loopGen = 0, lastFrame = 0, driver = 'control', drawn = 0;
+function schedule(){
+  const g = loopGen, w = (outWin && !outWin.closed) ? outWin : window;
+  driver = w === window ? 'control' : 'output';
+  w.requestAnimationFrame(() => frame(g));
+}
+function restartLoop(){ loopGen++; schedule(); }
+setInterval(() => { if (performance.now() - lastFrame > 400) restartLoop(); }, 250);
+function frame(gen){
+  if (gen !== loopGen) return;                       // a stale loop: drop it
+  const now = performance.now();                     // own clock (the output window's rAF time has another origin)
+  lastFrame = now;
+  updateClock(now);
+  drawFrame(now);
+  const bi = Math.floor(clock.beat);
+  if (bi !== lastBeatIdx){
+    lastBeatIdx = bi; const k = mod(bi, 4);
+    dots.forEach((d, j) => d.classList.toggle('on', j === k));
+    $('#barpos').textContent = `${Math.floor(bi / 4) + 1}.${k + 1}`;
+    if (clock.src === 'midi'){ setBpm(clock.bpm); $('#midiStat').textContent = clock.midiRunning ? 'running' : 'waiting'; }
+  }
+  if (clock.src === 'midi' && !clock.midiRunning){ const t = midiInput ? 'waiting for clock' : 'no input'; if ($('#midiStat').textContent !== t) $('#midiStat').textContent = t; }
+  fpsN++;
+  if (now - fpsT > 1000){
+    const s = (now - fpsT) / 1000;
+    $('#fps').textContent = `${Math.round(drawn / s)}/${Math.round(fpsN / s)} fps`;
+    $('#fps').title = `frames actually redrawn / screen refreshes (timed by the ${driver} window) — unchanged frames are skipped`;
+    fpsN = 0; drawn = 0; fpsT = now;
+  }
+  schedule();
+}
+
+// ---------- persistence: GIF files + settings in IndexedDB (cookies cap at ~4 KB) ----------
+const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv'];
+const XF_KEYS = Object.keys(newXf());
+// IndexedDB 'kv' store:
+//   'gif:<hash>' → { name, blob }               original files, stored once (content hash), shared by sets
+//   'set:<id>'   → { id, name, updated, count, snap }   a saved set; snap = snapshot() JSON
+//   'state'      → snapshot JSON of the working session (autosaved every second)
+//   'session'    → { setId }                     which saved set the session started from
+const store = {
+  db: null, ready: false, last: '',
+  open(){ return new Promise((res, rej) => { const r = indexedDB.open('gif-vj', 1) /* storage keeps its old name so saved sets carry over */; r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(this.db = r.result); r.onerror = () => rej(r.error); }); },
+  req(mode, fn){ return new Promise((res, rej) => { if (!this.db) return res(null); const t = this.db.transaction('kv', mode), r = fn(t.objectStore('kv')); t.oncomplete = () => res(r.result); t.onerror = t.onabort = () => rej(t.error); }); },
+  get(k){ return this.req('readonly', s => s.get(k)); },
+  put(k, v){ return this.req('readwrite', s => s.put(v, k)).catch(e => toast('Saving failed: ' + e.message)); },
+  del(k){ return this.req('readwrite', s => s.delete(k)); },
+  keys(prefix){ return this.req('readonly', s => s.getAllKeys(IDBKeyRange.bound(prefix, prefix + '￿'))); },
+  all(prefix){ return this.req('readonly', s => s.getAll(IDBKeyRange.bound(prefix, prefix + '￿'))); },
+};
+function snapshot(){
+  return JSON.stringify({
+    v: 2, bpm: clock.bpm, snap: snapMode, target,
+    pads: pads.map(p => p.gif ? { hash: p.gif.hash, name: p.gif.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) } : null),
+    layers: layers.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, sel: L.clips.indexOf(selClip(L.i)),
+      clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
+  });
+}
+// what counts as "changed" for the unsaved-changes dot: everything except which layer / GIF is selected
+function contentSig(snap){ if (!snap) return ''; const o = JSON.parse(snap); delete o.target; o.layers.forEach(l => delete l.sel); return JSON.stringify(o); }
+
+const sets = new Map();                              // id → set record
+const session = { setId: null, savedSig: '' };
+const curSet = () => session.setId && sets.get(session.setId);
+const hasContent = () => pads.some(p => p.gif) || layers.some(L => L.clips.length);
+let dirty = false;
+function updSetLabel(){
+  const rec = curSet(), el = $('#setLabel');
+  dirty = rec ? contentSig(snapshot()) !== session.savedSig : hasContent();
+  el.textContent = rec ? rec.name : 'Untitled'; el.classList.toggle('dirty', dirty);
+}
+
+async function autosave(){
+  if (!store.ready || setsBusy) return;
+  const snap = snapshot(); if (snap === store.last) return;
+  store.last = snap; await store.put('state', snap); updSetLabel();
+}
+
+// ---- turning a snapshot into the running state ----
+// Decodes what's missing while the current set keeps playing, reuses GIFs that are already decoded
+// (same file), waits for the swap point, then swaps everything in one go.
+let setsBusy = false;
+async function applySnapshot(st, { wait = true } = {}){
+  const have = [], used = new Set();
+  pads.forEach(p => { if (p.gif) have.push(p.gif); });
+  const plan = st.pads.map(sp => sp ? { sp, g: null, fresh: false } : null);
+  const todo = plan.filter(pl => pl && !(pl.g = have.find(g => g.hash === pl.sp.hash && !used.has(g) && used.add(g))));
+  let done = 0, missing = 0;
+  const stat = () => { $('#saveStat').textContent = todo.length ? `loading ${done}/${todo.length}` : ''; };
+  stat();
+  await Promise.all(todo.map(async pl => {
+    try {
+      const rec = await store.get('gif:' + pl.sp.hash);
+      if (!rec){ missing++; return; }
+      pl.g = await decodeAnim(rec.blob, rec.name); pl.g.hash = pl.sp.hash; pl.fresh = true;
+    } catch (e) { missing++; }
+    done++; stat();
+  }));
+  if (wait) await swapPoint();
+  // swap
+  pads.forEach((p, i) => { if (p.gif && !used.has(p.gif)) freeGif(p.gif); p.gif = null; });
+  plan.forEach((pl, i) => {
+    if (!pl || !pl.g) return;
+    const g = pl.g, fx0 = pl.fresh ? '' : JSON.stringify([g.key, g.hsv]);
+    applyGifSettings(g, pl.sp); pads[i].gif = g;
+    if (pl.fresh ? (g.key.on || hsvOn(g)) : JSON.stringify([g.key, g.hsv]) !== fx0) applyFx(g);
+  });
+  setBpm(st.bpm); snapMode = st.snap || 'off'; $('#snap').value = snapMode;
+  const now = performance.now();
+  st.layers.forEach((sl, li) => {
+    const L = layers[li]; Object.assign(L, { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode });
+    L.clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
+    L.sel = L.clips[sl.sel] || null;
+  });
+  const seen = new Set();                            // a GIF lives on one layer: keep the topmost if an older set has duplicates
+  for (let li = 3; li >= 0; li--){ const L = layers[li]; L.clips = L.clips.filter(c => !seen.has(c.pad) && seen.add(c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; }
+  target = st.target || 0;
+  pads.forEach((_, i) => renderPad(i));
+  selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem();
+  hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI();   // undo doesn't reach across sets
+  redraw.all = true;
+  $('#saveStat').textContent = '';
+  if (missing) toast(`${missing} GIF file(s) of this set are missing from storage`);
+}
+// swap on the next beat or bar when Snap triggers says so and something is playing (max 1 bar + slack)
+function swapPoint(){
+  const playing = layers.some(L => L.on && L.clips.length);
+  if (!playing || snapMode === 'off') return Promise.resolve();
+  const unit = snapMode === 'bar' ? 4 : 1, start = Math.floor(clock.beat / unit), t0 = performance.now();
+  const limit = 4 * 60000 / clock.bpm + 300;
+  return new Promise(res => { const id = setInterval(() => {
+    if (Math.floor(clock.beat / unit) !== start || performance.now() - t0 > limit){ clearInterval(id); res(); }
+  }, 4); });
+}
+
+// ---- set operations ----
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function uniqueName(name){ const names = new Set([...sets.values()].map(r => r.name)); let n = name, k = 2; while (names.has(n)) n = `${name} (${k++})`; return n; }
+async function saveSet(asNew, name){
+  const snap = snapshot();
+  let rec = !asNew && curSet();
+  if (!rec) rec = { id: newId(), name: uniqueName((name || '').trim() || 'Untitled set') };
+  Object.assign(rec, { snap, updated: Date.now(), count: pads.filter(p => p.gif).length });
+  await store.put('set:' + rec.id, rec); sets.set(rec.id, rec);
+  session.setId = rec.id; session.savedSig = contentSig(snap); await store.put('session', { setId: rec.id });
+  updSetLabel(); renderSets(); toast2(`Saved "${rec.name}"`);
+  return rec;
+}
+function quickSave(){ if (curSet()) saveSet(false); else { openSets(); $('#setNameIn').focus(); } }
+async function loadSet(id){
+  const rec = sets.get(id); if (!rec || setsBusy) return;
+  setsBusy = true; closeSets();
+  try {
+    await applySnapshot(JSON.parse(rec.snap));
+    session.setId = id; session.savedSig = contentSig(rec.snap);
+    store.last = snapshot(); await store.put('state', store.last); await store.put('session', { setId: id });
+  } finally { setsBusy = false; updSetLabel(); renderSets(); }
+}
+async function newEmptySet(){
+  if (setsBusy) return;
+  pads.forEach((p, i) => { if (p.gif){ freeGif(p.gif); p.gif = null; renderPad(i); } });
+  layers.forEach(L => Object.assign(L, { on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null }));
+  session.setId = null; session.savedSig = '';
+  hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI();
+  selectPad(0); syncLayerUI(); syncXfUI(); updateMem(); redraw.all = true;
+  store.last = snapshot(); await store.put('state', store.last); await store.put('session', { setId: null });
+  updSetLabel(); renderSets(); gcGifs();
+}
+async function deleteSet(id){
+  await store.del('set:' + id); sets.delete(id);
+  if (session.setId === id){ session.setId = null; await store.put('session', { setId: null }); }
+  updSetLabel(); renderSets(); gcGifs();
+}
+async function renameSet(id, name){
+  const rec = sets.get(id); name = (name || '').trim(); if (!rec || !name || name === rec.name) return renderSets();
+  rec.name = uniqueName(name); await store.put('set:' + id, rec); updSetLabel(); renderSets();
+}
+// remove stored GIF files that no set and not the working session refers to
+async function gcGifs(){
+  const used = new Set();
+  const add = snap => { try { JSON.parse(snap).pads.forEach(p => p && used.add(p.hash)); } catch {} };
+  sets.forEach(r => add(r.snap)); add(snapshot());
+  for (const k of await store.keys('gif:')) if (!used.has(k.slice(4))) await store.del(k);
+}
+
+// ---- .vjif files: a plain ZIP (stored, no compression — GIFs are already compressed) ----
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u){ let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function buildZip(files){                            // files: [{ name, data: Uint8Array }]
+  const enc = new TextEncoder(), parts = [], cent = []; let off = 0;
+  const d = new Date(), dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)), dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate());
+  for (const f of files){
+    const nm = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dt, true); lh.setUint16(12, dd, true); lh.setUint32(14, crc, true); lh.setUint32(18, sz, true); lh.setUint32(22, sz, true);
+    lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    parts.push(lh, nm, f.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dt, true); ch.setUint16(14, dd, true); ch.setUint32(16, crc, true); ch.setUint32(20, sz, true); ch.setUint32(24, sz, true);
+    ch.setUint16(28, nm.length, true); ch.setUint32(42, off, true);
+    cent.push(ch, nm);
+    off += 30 + nm.length + sz;
+  }
+  const csize = cent.reduce((a, p) => a + p.byteLength, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, csize, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cent, end], { type: 'application/zip' });
+}
+async function readZip(blob){                        // → Map(name → Uint8Array); handles stored and deflated entries
+  const buf = new Uint8Array(await blob.arrayBuffer()), dv = new DataView(buf.buffer), dec = new TextDecoder(), out = new Map();
+  let e = buf.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('not a .vjif / zip file');
+  let p = dv.getUint32(e + 16, true); const n = dv.getUint16(e + 10, true);
+  for (let i = 0; i < n; i++){
+    const method = dv.getUint16(p + 10, true), csz = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true);
+    const name = dec.decode(buf.subarray(p + 46, p + 46 + nl));
+    const ds = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true), raw = buf.subarray(ds, ds + csz);
+    if (method === 0) out.set(name, raw);
+    else if (method === 8) out.set(name, new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()));
+    p += 46 + nl + xl + cl;
+  }
+  return out;
+}
+const EXT = { 'image/gif': 'gif', 'image/webp': 'webp', 'image/png': 'png', 'image/apng': 'png' };
+async function exportSet(name, snap){
+  const st = JSON.parse(snap), files = [], byHash = new Map(), enc = new TextEncoder();
+  for (const sp of st.pads){
+    if (!sp) continue;
+    if (!byHash.has(sp.hash)){
+      const rec = await store.get('gif:' + sp.hash); if (!rec) continue;
+      const base = (rec.name || 'gif').replace(/\.[a-z0-9]+$/i, '').replace(/[^\w.-]+/g, '_').slice(0, 60);
+      const path = `gifs/${sp.hash.slice(0, 8)}-${base}.${EXT[rec.blob.type] || (rec.name.match(/\.(\w+)$/) || [, 'gif'])[1]}`;
+      files.push({ name: path, data: new Uint8Array(await rec.blob.arrayBuffer()) }); byHash.set(sp.hash, path);
+    }
+    sp.file = byHash.get(sp.hash);
+  }
+  files.unshift({ name: 'set.json', data: enc.encode(JSON.stringify({ app: 'VJif', format: 1, name, exported: new Date().toISOString(), set: st }, null, 1)) });
+  await saveFile(buildZip(files), (name || 'set').replace(/[^\w .-]+/g, '_').trim() + '.vjif');
+}
+async function saveFile(blob, filename){
+  if (window.showSaveFilePicker){
+    try {
+      const h = await showSaveFilePicker({ suggestedName: filename, types: [{ description: 'VJif set', accept: { 'application/zip': ['.vjif'] } }] });
+      const w = await h.createWritable(); await w.write(blob); await w.close(); toast2(`Exported ${h.name}`); return;
+    } catch (e) { if (e.name === 'AbortError') return; }   // other errors: fall back to a download
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  toast2(`Exported ${filename} (downloads folder)`);
+}
+async function importVjif(file){
+  if (setsBusy) return;
+  try {
+    const files = await readZip(file), meta = files.get('set.json');
+    if (!meta) throw new Error('no set.json inside');
+    const info = JSON.parse(new TextDecoder().decode(meta)), st = info.set;
+    let missing = 0;
+    for (const sp of st.pads){
+      if (!sp) continue;
+      const data = files.get(sp.file);
+      if (!data){ missing++; continue; }
+      const ext = (sp.file.match(/\.(\w+)$/) || [, 'gif'])[1].toLowerCase();
+      const blob = new Blob([data], { type: ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : 'image/gif' });
+      sp.hash = await hashBlob(blob); delete sp.file;
+      await store.put('gif:' + sp.hash, { name: sp.name, blob });
+    }
+    const rec = { id: newId(), name: uniqueName(info.name || file.name.replace(/\.(vjif|zip)$/i, '')), snap: JSON.stringify(st), updated: Date.now(), count: st.pads.filter(Boolean).length };
+    await store.put('set:' + rec.id, rec); sets.set(rec.id, rec); renderSets();
+    if (missing) toast(`Imported "${rec.name}", but ${missing} GIF file(s) were missing from the .vjif`);
+    if (!dirty) await loadSet(rec.id);
+    else { openSets(); toast2(`Imported "${rec.name}" — load it from the list (the current set has unsaved changes)`); }
+  } catch (e) { toast(`Couldn't import ${file.name}: ${e.message}`); }
+}
+
+// ---- sets panel ----
+function openSets(){ renderSets(); $('#setsPanel').hidden = false; $('#setNameIn').value = curSet() ? '' : ''; }
+function closeSets(){ $('#setsPanel').hidden = true; document.activeElement && document.activeElement.blur && document.activeElement.blur(); }
+// two-click confirm for anything destructive
+function armed(btn, label){
+  if (btn.dataset.armed) return true;
+  const t = btn.textContent; btn.dataset.armed = 1; btn.textContent = label; btn.classList.add('armed');
+  setTimeout(() => { delete btn.dataset.armed; btn.textContent = t; btn.classList.remove('armed'); }, 2500);
+  return false;
+}
+function renderSets(){
+  const list = [...sets.values()].sort((a, b) => b.updated - a.updated), fmt = t => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  $('#setList').innerHTML = list.map(r => `<div class="setRow${r.id === session.setId ? ' cur' : ''}" data-id="${r.id}">
+    <div><span class="sname">${esc(r.name)}</span><span class="meta">${r.count} GIF${r.count === 1 ? '' : 's'} · ${fmt(r.updated)}${r.id === session.setId ? ' · current' + (dirty ? ', unsaved changes' : '') : ''}</span></div>
+    <button data-act="load">Load</button><button data-act="rename">Rename</button><button data-act="export">Export</button><button data-act="del" class="danger">Delete</button></div>`).join('');
+}
+$('#setList').addEventListener('click', async e => {
+  const b = e.target.closest('button'), row = e.target.closest('.setRow'); if (!b || !row) return;
+  const id = row.dataset.id, rec = sets.get(id);
+  if (b.dataset.act === 'load'){ if ((!dirty || !hasContent()) || armed(b, 'Discard changes?')) loadSet(id); }
+  else if (b.dataset.act === 'del'){ if (armed(b, 'Delete?')) deleteSet(id); }
+  else if (b.dataset.act === 'export') exportSet(rec.name, rec.snap);
+  else if (b.dataset.act === 'rename'){
+    const span = row.querySelector('.sname'), inp = document.createElement('input');
+    inp.type = 'text'; inp.value = rec.name; span.replaceWith(inp); inp.focus(); inp.select();
+    let done = false; const fin = ok => { if (done) return; done = true; ok ? renameSet(id, inp.value) : renderSets(); };
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') fin(true); if (ev.key === 'Escape'){ ev.stopPropagation(); fin(false); } });
+    inp.addEventListener('blur', () => fin(true));
+  }
+});
+$('#setsBtn').addEventListener('click', openSets);
+$('#setsClose').addEventListener('click', closeSets);
+$('#setsPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setsPanel') closeSets(); });
+$('#saveBtn').addEventListener('click', quickSave);
+$('#saveAsBtn').addEventListener('click', () => { saveSet(true, $('#setNameIn').value); $('#setNameIn').value = ''; });
+$('#setNameIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#saveAsBtn').click(); if (e.key === 'Escape') closeSets(); });
+$('#exportCur').addEventListener('click', () => exportSet(curSet() ? curSet().name : 'Untitled set', snapshot()));
+$('#importBtn').addEventListener('click', () => $('#importIn').click());
+$('#importIn').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importVjif(f); });
+$('#newEmpty').addEventListener('click', e => { if (!dirty || !hasContent() || armed(e.currentTarget, 'Discard changes?')) newEmptySet(); });
+let toast2T = 0;
+function toast2(msg){ const t = $('#toast'); t.classList.add('ok'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast2T); clearTimeout(toastT); toast2T = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); }, 2500); }
+
+// ---- startup: reopen the working session (migrating the pre-sets storage layout) ----
+async function restore(){
+  try {
+    await store.open();
+    (await store.all('set:')).forEach(r => sets.set(r.id, r));
+    session.setId = ((await store.get('session')) || {}).setId || null;
+    if (!sets.has(session.setId)) session.setId = null;
+    const st = JSON.parse(await store.get('state') || 'null');
+    if (st && st.v !== 2){                           // pre-sets layout: files under 'pad:<i>'
+      for (let i = 0; i < pads.length; i++){
+        const rec = await store.get('pad:' + i);
+        if (!rec){ st.pads[i] = null; continue; }
+        const hash = await hashBlob(rec.blob);
+        await store.put('gif:' + hash, rec); await store.del('pad:' + i);
+        st.pads[i] = { ...(st.pads[i] || {}), hash, name: rec.name };
+      }
+      st.v = 2;
+    }
+    if (st){ $('#saveStat').textContent = 'restoring…'; await applySnapshot(st, { wait: false }); }
+    session.savedSig = curSet() ? contentSig(curSet().snap) : '';
+  } catch (e) { toast('Saved session could not be loaded: ' + e.message); }
+  finally {
+    syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot();
+    hist.cur = histState(); hist.ready = true;
+    $('#saveStat').textContent = '';
+    updSetLabel(); gcGifs();
+  }
+}
+setInterval(autosave, 1000);
+
+// ---------- undo / redo: layer contents, placement, crop and per-GIF settings (not on/off or triggers) ----------
+const hist = { ready: false, cur: '', undo: [], redo: [] };
+function histState(){
+  return JSON.stringify({
+    layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, mode: L.mode,
+      clips: L.clips.map(c => ({ id: c.id, pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
+    gifs: pads.map(p => p.gif ? Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) : null),
+  });
+}
+function commit(){
+  if (!hist.ready || drag) return;
+  const s = histState(); if (s === hist.cur) return;
+  hist.undo.push(hist.cur); if (hist.undo.length > 100) hist.undo.shift();
+  hist.redo.length = 0; hist.cur = s; updHistUI();
+}
+// after applying, re-read the live state: GIFs loaded/cleared since a step was recorded aren't part of history
+function undo(){ if (!hist.ready || drag) return; commit(); if (!hist.undo.length) return; hist.redo.push(hist.cur); applyHist(hist.undo.pop()); hist.cur = histState(); }
+function redo(){ if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return; hist.undo.push(hist.cur); applyHist(hist.redo.pop()); hist.cur = histState(); }
+function applyHist(s){
+  const st = JSON.parse(s), byId = new Map(), now = performance.now();
+  layers.forEach(L => L.clips.forEach(c => byId.set(c.id, c)));      // reuse live clips so playback doesn't restart
+  st.layers.forEach((sl, li) => {
+    const L = layers[li], prevSel = L.sel;
+    Object.assign(L, { opacity: sl.opacity, blend: sl.blend, mode: sl.mode });
+    L.clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif)
+      .map(c => Object.assign(byId.get(c.id) || Object.assign(newClip(c.pad), { startTime: now, startBeat: clock.beat }), c));
+    L.sel = L.clips.includes(prevSel) ? prevSel : null;
+  });
+  st.gifs.forEach((sg, i) => {
+    const g = pads[i].gif; if (!g || !sg) return;
+    const fx0 = JSON.stringify([g.key, g.hsv]), { key, hsv, ...rest } = sg;
+    Object.assign(g, rest); Object.assign(g.key, key); Object.assign(g.hsv, hsv); rebuildSeq(g);
+    if (JSON.stringify([g.key, g.hsv]) !== fx0) scheduleFx(g, 0);
+  });
+  syncLayerUI(); syncXfUI(); syncGifUI(); pads.forEach((p, i) => p.gif && renderPad(i)); updHistUI();
+}
+function updHistUI(){ $('#undoBtn').disabled = !hist.undo.length; $('#redoBtn').disabled = !hist.redo.length; }
+// a gesture is finished on these events: record it as one undo step
+// window, bubbling phase: runs right after the element's own handlers, so the change is already applied
+['pointerup', 'click', 'change', 'keyup', 'drop', 'dragend'].forEach(t => window.addEventListener(t, commit));
+$('#undoBtn').addEventListener('click', undo);
+$('#redoBtn').addEventListener('click', redo);
+window.addEventListener('pagehide', autosave);
+
+buildPads(); pads.forEach((_, i) => renderPad(i));
+buildLayers(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
+restore();
+if (!('ImageDecoder' in window)) toast('This browser has no ImageDecoder — use desktop Chrome');
+restartLoop();
+</script>
+</body>
+</html>
