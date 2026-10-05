@@ -22,7 +22,7 @@
   --ink:#e9e7e0;--muted:#888892;--faint:#5a5a63;
   --amber:#ffb000;--amber-dim:#a6731a;--track:#2c2c33;
   --acc-hi:#ffc23d;--acc-lo:#e89400;--acc-dk:#b85f00;--acc-rgb:255,176,0;
-  --meter-rgb:90,169,230;--lcd-bg:#171200;--lcd-ink:#ffb000;
+  --meter-rgb:90,169,230;--lcd-bg:#171200;--lcd-ink:#ffb000;--env:#38d6ff;--env-rgb:56,214,255;
   --danger:#ff9a9a;--ok:#4ee37a;
   --shadow:0 1px 0 rgba(255,255,255,.03),0 6px 18px rgba(0,0,0,.5);--radius:10px;
   --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;--sans:"Archivo",system-ui,sans-serif;
@@ -85,7 +85,7 @@ input[type=checkbox]:checked::before{left:18px;background:var(--amber);box-shado
 input[type=color]{-webkit-appearance:none;appearance:none;width:44px;height:28px;padding:3px;border:1px solid var(--edge-2);border-radius:6px;background:var(--track);cursor:pointer}
 input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:3px}
 /* LCD-style readouts: fixed size, never reflow */
-.lcd,output{font:500 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber);background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);
+.lcd,output{font:500 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--lcd-ink);background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);
   border-radius:4px;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 6px rgba(var(--acc-rgb),.3)}
 output{display:block;width:100%;text-align:center}
 .lcd.two{display:flex;flex-direction:column;justify-content:center;gap:4px;height:40px;padding:0 8px}
@@ -125,14 +125,14 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .tabs button{height:28px;font:800 10px var(--sans);letter-spacing:.06em;text-transform:uppercase}
 
 /* ---------- header ---------- */
-#top{grid-area:top;display:flex;align-items:center;gap:10px 14px;padding:8px 14px;background:linear-gradient(180deg,rgba(28,28,33,.96),rgba(22,22,26,.9));border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap}
+#top{grid-area:top;display:flex;align-items:center;gap:10px 11px;padding:8px 14px;background:linear-gradient(180deg,rgba(28,28,33,.96),rgba(22,22,26,.9));border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap}
 .brand{font:900 22px/1 var(--sans);letter-spacing:.01em;background:linear-gradient(180deg,#fff,#bdbdc6);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:default}
 .brand span{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));-webkit-background-clip:text;background-clip:text}
 .grp{display:flex;align-items:center;gap:7px}.grp.right{margin-left:auto}
 .vsep{width:1px;height:26px;background:var(--edge);flex:none}
 .bpmwrap{position:relative;display:inline-block}
 #bpmMark{position:absolute;bottom:4px;height:2px;border-radius:1px;background:var(--amber);box-shadow:0 0 5px rgba(var(--acc-rgb),.8);pointer-events:none;display:none}
-#bpm{width:84px;text-align:center;color:var(--amber);background:var(--lcd-bg);border-color:rgba(var(--meter-rgb),.35);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+#bpm{width:84px;text-align:center;color:var(--lcd-ink);background:var(--lcd-bg);border-color:rgba(var(--meter-rgb),.35);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 #bpm::-webkit-outer-spin-button,#bpm::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #bpm.pending{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
 #beats{display:flex;gap:4px}#beats i{width:9px;height:9px;border-radius:50%;background:#23232a;border:1px solid var(--edge-2)}
@@ -140,7 +140,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 #beats i:first-child.on{background:#ff6a3d;border-color:#ff6a3d;box-shadow:0 0 7px #ff6a3d}
 #barpos{width:6ch;text-align:center}
 #saveStat{flex:none;margin-left:auto;width:13ch;height:14px;line-height:14px;text-align:right;font:500 10px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
-#setLabel{width:150px;height:28px;line-height:18px}
+#setLabel{width:clamp(110px,9vw,150px);height:28px;line-height:18px}
 #setLabel.dirty::after{content:" •"}
 #fps{flex:none;width:11ch;height:14px;line-height:14px;text-align:center;font:500 10px var(--mono);color:var(--faint);white-space:nowrap}
 .led{display:inline-block;width:8px;height:8px;border-radius:50%;background:#23232a;border:1px solid var(--edge-2);margin-right:7px;vertical-align:-1px;transition:.1s}
@@ -250,6 +250,8 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2a1616;border:1px solid #7a3030;color:#ffd0d0;padding:9px 16px;border-radius:8px;display:none;max-width:70vw;z-index:9;font:500 12px var(--mono);box-shadow:0 12px 32px rgba(0,0,0,.55)}
 #toast.ok{background:#14201a;border-color:#2f7a4f;color:#c8f5d8}
 /* @include common/controls.css */
+/* @include common/theme.css */
+#themeBox .thm-row label{text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -267,7 +269,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
   <div class="vsep"></div>
   <div class="grp"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
   <div class="vsep"></div>
-  <div class="grp"><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button><span id="outStat" hidden>no output</span></div>
+  <div class="grp"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button><span id="outStat" hidden>no output</span></div>
 </header>
 
 <section id="bank" class="panel">
@@ -380,6 +382,14 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
   </div>
 </aside>
 <div id="toast"></div>
+<div id="setPanel" class="modal" hidden>
+  <div class="modalBox" style="width:min(520px,92vw)">
+    <h2>Settings<span class="line"></span><button id="setClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <div class="sub" style="margin-top:0"><span>Theme</span><span class="line"></span></div>
+    <div id="themeBox"></div>
+    <p class="note">Controls colours buttons and sliders; LCD the readouts; Curves the fade and automation graphs; Meters the readout frames and automated values. Theme files are the same as Bad MOPHO's, so a theme exported there loads here. The output window always stays black.</p>
+  </div>
+</div>
 <div id="helpPanel" class="modal" hidden>
   <div class="modalBox">
     <h2>Keys &amp; mouse<span class="line"></span><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
@@ -419,6 +429,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 <script>
 'use strict';
 /* @include common/controls.js */
+/* @include common/theme.js */
 // ---------- constants ----------
 const W = 1920, H = 1080;
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
@@ -1380,6 +1391,7 @@ function isTyping(e){
 }
 function onKey(e){
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
+  if (!$('#setPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; } return; }
   if (!$('#setsPanel').hidden){                      // the sets panel is modal
     if (e.key === 'Escape' && askBox){ e.preventDefault(); closeAsk(); }
     else if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
@@ -1442,12 +1454,12 @@ function buildPads(){
 }
 function renderPad(i){
   const p = pads[i], el = p.el, c = el.querySelector('canvas'), x = c.getContext('2d');
-  x.fillStyle = '#1c1f25'; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = TC.track; x.fillRect(0, 0, c.width, c.height);
   el.classList.toggle('empty', !p.gif);
   el.querySelector('.nm').textContent = p.gif ? p.gif.name : '';
   if (!p.gif) return;
   if (p.gif.key.on){                                // checkerboard shows keyed transparency
-    x.fillStyle = '#2a2e36';
+    x.fillStyle = TC.edge2;
     for (let yy = 0; yy < c.height; yy += 8) for (let xx = (yy / 8) % 2 * 8; xx < c.width; xx += 16) x.fillRect(xx, yy, 8, 8);
   }
   x.imageSmoothingEnabled = !p.gif.crisp;
@@ -1600,8 +1612,8 @@ function drawScopes(){
 }
 function scopeTrace(x, w, h, d, fn, on){                 // fn: 0..1 across → 0..1 up
   const pad = 5 * d, y = v => h - pad - v * (h - 2 * pad);
-  x.strokeStyle = 'rgba(90,169,230,.18)'; x.lineWidth = d; x.beginPath(); x.moveTo(0, y(0.5)); x.lineTo(w, y(0.5)); x.stroke();
-  x.strokeStyle = on ? '#ffb000' : '#5a5a63'; x.lineWidth = 1.5 * d; x.beginPath();
+  x.strokeStyle = `rgba(${TC.meterRgb},.18)`; x.lineWidth = d; x.beginPath(); x.moveTo(0, y(0.5)); x.lineTo(w, y(0.5)); x.stroke();
+  x.strokeStyle = on ? TC.env : TC.faint; x.lineWidth = 1.5 * d; x.beginPath();
   for (let px = 0; px <= w; px += d){ const v = fn(px / w); px ? x.lineTo(px, y(v)) : x.moveTo(px, y(v)); }
   x.stroke(); return y;
 }
@@ -1963,6 +1975,9 @@ $('#midiIn').addEventListener('change', bindMidiInput);
 $('#snap').addEventListener('change', e => snapMode = e.target.value);
 $('#outBtn').addEventListener('click', openOutput);
 $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
+$('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = false; });
+$('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
+$('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
 $('#helpPanel').addEventListener('pointerdown', e => { if (e.target.id === 'helpPanel') $('#helpPanel').hidden = true; });
 // GIF tabs: all panes share one grid cell (rule 3), so switching never moves anything below
@@ -2397,6 +2412,15 @@ $('#undoBtn').addEventListener('click', undo);
 $('#redoBtn').addEventListener('click', redo);
 window.addEventListener('pagehide', autosave);
 
+// theme: saved per browser (not part of sets); canvases read the colours from TC
+const TC = {};
+Theme.onApply(() => {
+  Object.assign(TC, { track: Theme.color('--track'), edge2: Theme.color('--edge-2'), env: Theme.color('--env'), faint: Theme.color('--faint'), meterRgb: Theme.color('--meter-rgb') });
+  if (pads[0].el) pads.forEach((_, i) => renderPad(i));
+  redraw.all = true;
+});
+{ let saved = null; try { saved = Theme.parse(JSON.parse(localStorage.getItem('vjif-theme'))); } catch (e) {}
+  Theme.apply(saved || Theme.DEFAULT); }
 buildPads(); pads.forEach((_, i) => renderPad(i));
 buildLayers(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
 // typing into readouts: musical lengths accept a label ("1/8", "2 bars") or a number of beats; phase is in degrees
@@ -2405,6 +2429,9 @@ const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), 
 ['#tA', '#tH', '#tR'].forEach(id => $(id).ctlParse = lenParse(ENV_OPTS));
 $('#aPer').ctlParse = lenParse(PER_OPTS);
 $('#aPh').ctlParse = t => { const n = parseFloat(t); return isFinite(n) ? mod(n, 360) / 360 : null; };
+Theme.mount($('#themeBox'), { app: 'vjif', toast: toast2,
+  roles: [['hCtrl', 'Controls', 'Buttons, sliders, highlights'], ['hLcd', 'LCD', 'Readouts and the tempo'], ['hEnv', 'Curves', 'Fade and automation graphs'], ['hMeter', 'Meters', 'Readout frames, automated values']],
+  onChange: t => { try { localStorage.setItem('vjif-theme', JSON.stringify(t)); } catch (e) {} } });
 Controls.init();
 restore();
 if (!('ImageDecoder' in window)) toast('This browser has no ImageDecoder — use desktop Chrome');

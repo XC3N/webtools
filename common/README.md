@@ -15,10 +15,14 @@ In use:
   double-click resets to default (`data-def`), mouse wheel (dwell-gated) and hover + arrow keys adjust,
   click the readout to type a value. Used by VJif; Bad MOPHO still has its own version (knobs) and can
   move onto this later.
+- `theme.js` + `theme.css` — Bad MOPHO's theming engine: seven numbers (four role hues — Controls, LCD,
+  Curves, Meters — and a background hue / saturation / brightness) turned into the CSS colour tokens, the
+  three presets, JSON import / export (same file as Bad MOPHO, so themes move between tools) and an editor
+  (`Theme.mount`). Used by VJif (Settings); Bad MOPHO still has its own copy of the same engine and can
+  switch to this one later.
 
 Planned (currently living inside Bad MOPHO and VJif):
 
-- `theme/` — Bad MOPHO's theming engine (theme JSON, palette tokens), to be shared with VJif
 - `ui-kit.css` — theme tokens and base controls (panels, LCD readouts, segmented buttons, switches, sliders, scrollbars, modals, toast) plus the layout-stability rules
 - `dropdown.js` — themed dropdown that can't hijack keyboard typing
 - `midi.js` — Web MIDI device pickers, clock in, controller input
