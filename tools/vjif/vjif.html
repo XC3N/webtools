@@ -40,7 +40,7 @@
 html,body{margin:0;height:100%}
 body{background:radial-gradient(1200px 700px at 70% -10%,var(--panel-2) 0%,transparent 60%),radial-gradient(900px 600px at -10% 110%,var(--panel) 0%,transparent 55%),var(--bg);
   color:var(--ink);font:12px/1.4 var(--sans);-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;
-  display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:320px minmax(0,1fr) 370px;
+  display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:340px minmax(0,1fr) 370px;
   grid-template-areas:"top top top" "bank stage side";gap:10px;padding:10px;height:100vh;overflow:hidden}
 input,textarea{-webkit-user-select:text;user-select:text}
 #bank{grid-area:bank}#stage{grid-area:stage}#side{grid-area:side}
@@ -118,6 +118,8 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .stack>.off{visibility:hidden}                         /* hidden panes keep their exact layout, so the cell height never changes */
 .stack>.field[hidden]{display:grid!important;visibility:hidden}
 #gPanes>[data-pane]{display:flow-root}
+/* rule 3 exception: the GIF tab panes are the last block of their panel, nothing sits below them, so each keeps its own height */
+#gPanes>[data-pane].off{display:none}
 /* tabs */
 .tabs{margin-bottom:12px}
 .tabs button{height:28px;font:800 10px var(--sans);letter-spacing:.06em;text-transform:uppercase}
@@ -162,7 +164,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .import .row{display:flex;gap:6px}.import input[type=url]{flex:1;min-width:0}
 #mem{width:7ch;text-align:right}
 #gifName{width:9ch}
-#gInfo{margin-top:12px}
+#gInfo{margin-bottom:10px}
 
 /* ---------- frames tab ---------- */
 .frames{display:grid;grid-template-columns:minmax(0,1fr) 76px;gap:10px;align-items:start}
@@ -179,31 +181,34 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 #pvLayer{width:13.5ch;flex:none;text-align:center}
 
 /* ---------- layers ---------- */
-.layer{background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--lc);border-radius:8px;padding:9px 10px;margin-bottom:8px;cursor:pointer;transition:border-color .12s}
+.layer{background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--lc);border-radius:8px;padding:8px 9px;margin-bottom:7px;cursor:pointer;transition:border-color .12s}
 .layer:not(.tgt):hover{border-color:var(--edge-2);border-left-color:var(--lc)}
 .layer.tgt{background:linear-gradient(180deg,#222228,#1a1a1f);box-shadow:0 0 0 1px var(--lc) inset}
-.lhead{display:flex;align-items:center;gap:9px}
-.lhead .sp{flex:1}
+.lhead{display:flex;align-items:center;gap:8px}
+.lhead .lop{flex:1;min-width:40px}
+.lrow2{display:flex;align-items:center;gap:6px;margin-top:8px}
+.lrow2 .clips{flex:1;min-width:0;margin-top:0}
 .lon{width:26px;height:26px;padding:0;font:700 12px var(--mono);letter-spacing:0;color:var(--lc);background:#000;border-color:#000}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#000;box-shadow:0 0 10px var(--lc)}
-.lname{width:96px;font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lname{width:84px;flex:none;font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer.on .lname{color:var(--ink)}
 .layer.tgt .lname{color:var(--lc)}
-.lmode{width:84px;height:26px}
-.lclr{padding:0 8px;height:26px}
-.lctl{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:10px;margin-top:9px;align-items:center}
-.lbl{height:26px}
-.clips{display:flex;flex-wrap:nowrap;gap:4px;margin-top:9px;height:24px;overflow:hidden}
-.clips .chip{flex:0 1 auto;min-width:44px}                /* chips share one fixed row (up to 6), names shorten instead of wrapping */
-.chip span{min-width:0}
+.lmode{width:76px;height:24px;flex:none;padding:0 18px 0 7px;background-position:right 7px center}
+.lclr{width:24px;height:24px;padding:0;flex:none;font:400 14px/1 var(--mono);color:var(--muted)}
+.lclr:hover{color:var(--danger);border-color:#6e2f2f}
+.lbl{width:92px;height:26px;flex:none}
+.clips{display:flex;flex-wrap:nowrap;gap:2px;margin-top:9px;height:24px;overflow:hidden}
+/* chips: the pad key in a fixed square (6 always fit); the name is in the tooltip; × shows on hover */
+.layer:last-child{margin-bottom:0}
 .clips:empty::before{content:'no GIFs';font:italic 11px var(--mono);color:var(--faint);line-height:24px}
 .layer.dropzone{outline:2px dashed var(--lc);outline-offset:1px}
 .layer.refused{animation:refused .45s ease-out}@keyframes refused{0%,40%{background:#5a1717;border-color:#ff4d4d;box-shadow:0 0 0 1px #ff4d4d inset,0 0 14px rgba(255,60,60,.5)}}
-.chip{display:inline-flex;align-items:center;gap:2px;max-width:100%;height:24px;padding:0 2px 0 8px;border:1px solid var(--edge-2);border-radius:5px;cursor:grab;background:var(--track);font:500 11px var(--mono)}
-.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.chip{position:relative;flex:none;display:grid;place-items:center;width:26px;height:24px;border:1px solid var(--edge-2);border-radius:5px;cursor:grab;background:var(--track);font:700 11px var(--mono)}
 .chip.sel{border-color:var(--lc);color:var(--lc);background:#1a1a1f}
 .chip.dragging{opacity:.35}
-.chip b{font-weight:400;color:var(--faint);padding:0 5px}.chip b:hover{color:var(--danger)}
+.chip b{position:absolute;right:-5px;top:-6px;width:14px;height:14px;border-radius:50%;background:#000;border:1px solid var(--edge-2);font:400 10px/12px var(--mono);text-align:center;color:var(--muted);visibility:hidden;cursor:pointer}
+.chip:hover b{visibility:visible}.chip b:hover{color:var(--danger);border-color:var(--danger)}
+.clips{overflow:visible}
 
 /* ---------- transform ---------- */
 #xfTitle{width:100%}
@@ -230,6 +235,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .keys dt{font:700 11px var(--mono);color:var(--amber);white-space:nowrap}.keys dd{margin:0;color:var(--ink);line-height:1.45}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2a1616;border:1px solid #7a3030;color:#ffd0d0;padding:9px 16px;border-radius:8px;display:none;max-width:70vw;z-index:9;font:500 12px var(--mono);box-shadow:0 12px 32px rgba(0,0,0,.55)}
 #toast.ok{background:#14201a;border-color:#2f7a4f;color:#c8f5d8}
+/* @include common/controls.css */
 </style>
 </head>
 <body>
@@ -259,10 +265,37 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
     <div class="row"><button id="addFiles" title="Or drop files / links onto a pad or anywhere in this panel">Add…</button><input id="urlIn" type="url" placeholder="https://…/loop.gif"><button id="urlBtn">Load</button></div>
   </div>
+  <h2>Layers<span class="line"></span><span class="tag">top to bottom</span></h2>
+  <div id="layers"></div>
+</section>
+
+<main id="stage" class="panel">
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
+  <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
+</main>
+
+<aside id="side" class="panel">
+  <h2>Transform<span class="line"></span></h2>
+  <div class="lcd one" id="xfTitle" style="margin-bottom:12px">—</div>
+  <div id="xfPanel">
+    <div class="field"><label for="xFit">Fit</label><select id="xFit" class="span">
+      <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select></div>
+    <div class="field"><label for="gSmooth">Smoothing</label><label class="tog span" title="Off = crisp pixels when the GIF is scaled. Applies to this GIF everywhere it's used."><input type="checkbox" id="gSmooth"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">smooth when scaled</span></label></div>
+    <div class="field"><label for="xX">X</label><input id="xX" type="range" data-def="0" min="-1920" max="1920" step="1"><output></output></div>
+    <div class="field"><label for="xY">Y</label><input id="xY" type="range" data-def="0" min="-1080" max="1080" step="1"><output></output></div>
+    <div class="field"><label for="xSX">Scale X</label><input id="xSX" type="range" data-def="1" min="0.05" max="8" step="0.01"><output></output></div>
+    <div class="field"><label for="xSY">Scale Y</label><input id="xSY" type="range" data-def="1" min="0.05" max="8" step="0.01"><output></output></div>
+    <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
+    <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
+    <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
+    <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
+    <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
+  </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
   <div id="gifSettings" class="disabled">
+    <div class="lcd one" id="gInfo"></div>
     <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="frames">Frames</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
-    <div class="stack" id="gPanes">
+    <div id="gPanes">
       <div data-pane="play">
         <div class="field"><label>Timing</label><div class="seg span" id="gSync">
           <button data-v="free" title="The GIF's own frame timing × speed — ignores the tempo">Free</button>
@@ -271,7 +304,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
         <div class="stack">
           <div class="field" data-for="stretch"><label>Loop length</label><div class="seg span grid4" id="gBeats"></div></div>
           <div class="field" data-for="step"><label>Each frame</label><div class="seg span grid4" id="gSub"></div></div>
-          <div class="field" data-for="free" style="align-self:start"><label for="gSpeed">Speed</label><input id="gSpeed" type="range" min="0.1" max="4" step="0.05"><output></output></div>
+          <div class="field" data-for="free" style="align-self:start"><label for="gSpeed">Speed</label><input id="gSpeed" type="range" data-def="1" min="0.1" max="4" step="0.05"><output></output></div>
         </div>
         <div class="field"><label>Loop</label><div class="seg span" id="gLoop">
           <button data-v="loop" title="Wrap back to the start">Loop</button>
@@ -282,9 +315,9 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       </div>
       <div data-pane="frames" class="off">
         <div class="frames">
-          <div><div class="field"><label for="gIn">In</label><input id="gIn" type="range" min="0" step="1"><output></output></div>
-          <div class="field"><label for="gOut">Out</label><input id="gOut" type="range" min="0" step="1"><output></output></div>
-          <div class="field"><label for="gStart">Start</label><input id="gStart" type="range" min="0" step="1"><output></output></div></div>
+          <div><div class="field"><label for="gIn">In</label><input id="gIn" type="range" data-def="min" min="0" step="1"><output></output></div>
+          <div class="field"><label for="gOut">Out</label><input id="gOut" type="range" data-def="max" min="0" step="1"><output></output></div>
+          <div class="field"><label for="gStart">Start</label><input id="gStart" type="range" data-def="min" min="0" step="1"><output></output></div></div>
           <canvas id="gPrev" width="96" height="96" title="Frame under the slider you last touched"></canvas>
         </div>
         <p class="note">In / Out trim the animation. Start sets which frame the loop begins on; it wraps around within In–Out.</p>
@@ -292,21 +325,21 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       <div data-pane="colour" class="off">
         <div class="sub" style="margin-top:0"><span>Key</span><span class="line"></span><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
         <div class="field"><label>Colour</label><div class="keyrow span"><input type="color" id="kCol" value="#00ff00"><button id="kPick" title="Then click the GIF in the preview" style="flex:1">Pick</button><button id="kReset" title="Key back to defaults">Reset</button></div></div>
-        <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" min="0" max="0.6" step="0.005"><output></output></div>
-        <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" min="0" max="0.4" step="0.005"><output></output></div>
+        <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" data-def="0.15" data-pct min="0" max="0.6" step="0.005"><output></output></div>
+        <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" data-def="0.08" data-pct min="0" max="0.4" step="0.005"><output></output></div>
         <div class="sub"><span>Adjust</span><span class="line"></span><button id="hReset" title="Hue, saturation and brightness back to normal">Reset</button></div>
-        <div class="field"><label for="hH">Hue</label><input id="hH" type="range" min="-180" max="180" step="1"><output></output></div>
-        <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" min="0" max="3" step="0.01"><output></output></div>
-        <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" min="0" max="3" step="0.01"><output></output></div>
+        <div class="field"><label for="hH">Hue</label><input id="hH" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
+        <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
+        <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
       </div>
       <div data-pane="trig" class="off">
         <div class="field"><label>Mode</label><div class="seg span" id="tMode">
           <button data-v="stay" title="A hit restarts the GIF and it stays on">Stay</button>
           <button data-v="fade" title="Hidden until hit: each hit fades it in, holds, then fades it out">Fade one-shot</button></div></div>
         <div id="tEnv">
-          <div class="field"><label for="tA">Fade in</label><input id="tA" type="range" min="0" step="1"><output></output></div>
-          <div class="field" id="tHoldRow"><label for="tH" title="Time at full opacity (Gate: until the pad is released)">Hold</label><input id="tH" type="range" min="0" step="1"><output></output></div>
-          <div class="field"><label for="tR">Fade out</label><input id="tR" type="range" min="0" step="1"><output></output></div>
+          <div class="field"><label for="tA">Fade in</label><input id="tA" type="range" data-def="3" min="0" step="1"><output></output></div>
+          <div class="field" id="tHoldRow"><label for="tH" title="Time at full opacity (Gate: until the pad is released)">Hold</label><input id="tH" type="range" data-def="4" min="0" step="1"><output></output></div>
+          <div class="field"><label for="tR">Fade out</label><input id="tR" type="range" data-def="5" min="0" step="1"><output></output></div>
           <div class="field"><label>Curve</label><div class="seg span" id="tCurve"><button data-v="lin" title="Constant rate">Linear</button><button data-v="smooth" title="Eases in and out of each ramp">Smooth</button></div></div>
           <div class="field"><label for="tGate">Gate</label><label class="tog span"><input type="checkbox" id="tGate"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">hold while the pad is held</span></label></div>
           <canvas id="tScope" class="scope" title="Envelope: fade in, hold, fade out — the dot follows the last hit"></canvas>
@@ -320,39 +353,12 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
         <div class="field"><label for="aMin">Min</label><input id="aMin" type="range"><output></output></div>
         <div class="field"><label for="aMax">Max</label><input id="aMax" type="range"><output></output></div>
         <div class="field"><label for="aPer">Cycle</label><input id="aPer" type="range" min="0" step="1"><output></output></div>
-        <div class="field"><label for="aPh">Phase</label><input id="aPh" type="range" min="0" max="1" step="0.03125"><output></output></div>
+        <div class="field"><label for="aPh">Phase</label><input id="aPh" type="range" data-def="0" min="0" max="1" step="0.03125"><output></output></div>
         <div class="field"><label>Count from</label><div class="seg span" id="aSync"><button data-v="clock" title="Cycles line up with the bar (and with other GIFs)">Bar</button><button data-v="trig" title="Each pad hit restarts the cycle">Trigger</button></div></div>
         <canvas id="aScope" class="scope" title="Two cycles of the LFO — the dot is now"></canvas>
         <p class="note">X, Y and Rotate are added to the placement; Zoom, Width, Height, Saturation and Brightness multiply it; Opacity multiplies the sprite's opacity; Hue is added. Touching a setting switches its LFO on.</p>
       </div>
     </div>
-    <div class="lcd one" id="gInfo"></div>
-  </div>
-</section>
-
-<main id="stage" class="panel">
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
-  <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
-</main>
-
-<aside id="side" class="panel">
-  <h2>Layers<span class="line"></span><span class="tag">top to bottom</span></h2>
-  <div id="layers"></div>
-  <h2>Transform<span class="line"></span></h2>
-  <div class="lcd one" id="xfTitle" style="margin-bottom:12px">—</div>
-  <div id="xfPanel">
-    <div class="field"><label for="xFit">Fit</label><select id="xFit" class="span">
-      <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select></div>
-    <div class="field"><label for="gSmooth">Smoothing</label><label class="tog span" title="Off = crisp pixels when the GIF is scaled. Applies to this GIF everywhere it's used."><input type="checkbox" id="gSmooth"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">smooth when scaled</span></label></div>
-    <div class="field"><label for="xX">X</label><input id="xX" type="range" min="-1920" max="1920" step="1"><output></output></div>
-    <div class="field"><label for="xY">Y</label><input id="xY" type="range" min="-1080" max="1080" step="1"><output></output></div>
-    <div class="field"><label for="xSX">Scale X</label><input id="xSX" type="range" min="0.05" max="8" step="0.01"><output></output></div>
-    <div class="field"><label for="xSY">Scale Y</label><input id="xSY" type="range" min="0.05" max="8" step="0.01"><output></output></div>
-    <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" min="-180" max="180" step="1"><output></output></div>
-    <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" min="0" max="1" step="0.01"><output></output></div>
-    <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
-    <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
-    <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
   </div>
 </aside>
 <div id="toast"></div>
@@ -367,7 +373,8 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       <dt>Shift+1–4</dt><dd>Choose the layer to edit / trigger into (or click its bar)</dd>
       <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
       <dt>Shift+Space</dt><dd>Resync: now is beat 1, every GIF restarts</dd>
-      <dt>Arrows</dt><dd>Nudge the selected GIF 1 px (Shift = 10 px)</dd>
+      <dt>Arrows</dt><dd>Nudge the selected GIF 1 px (Shift = 10 px) — with the mouse over a slider, the arrows adjust that slider instead</dd>
+      <dt>Sliders</dt><dd>Double-click resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · click the value to type one (Enter applies, Esc cancels)</dd>
       <dt>Delete / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
@@ -375,7 +382,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
       <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from center) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
-      <dt>Drag a chip</dt><dd>Move a GIF to another layer; within a layer, reorder (right is on top)</dd>
+      <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder (right is on top) · × on hover removes it</dd>
     </dl>
   </div>
 </div>
@@ -392,6 +399,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 
 <script>
 'use strict';
+/* @include common/controls.js */
 // ---------- constants ----------
 const W = 1920, H = 1080;
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
@@ -1432,8 +1440,10 @@ function syncAutoUI(g){
   $('#aTgt').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.v === aSel); b.classList.toggle('act', !!(g.lfo[b.dataset.v] && g.lfo[b.dataset.v].on)); });
   $('#aTitle').textContent = t[2] + (['h', 's', 'v'].includes(aSel) && !liveFx() ? ' — needs WebGL' : '');
   $('#aOn').checked = A.on; segSet('#aShape', A.shape); segSet('#aSync', A.sync);
-  [['#aMin', 'min'], ['#aMax', 'max']].forEach(([id, k]) => { const el = $(id); el.min = t[3]; el.max = t[4]; el.step = t[5]; el.value = A[k]; el.nextElementSibling.textContent = lfoFmt(t, A[k]); });
-  const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
+  const D = lfoDef(aSel);                            // double-click resets to this target's defaults
+  [['#aMin', 'min'], ['#aMax', 'max']].forEach(([id, k]) => { const el = $(id); el.min = t[3]; el.max = t[4]; el.step = t[5]; el.value = A[k]; el.dataset.def = D[k];
+    el.nextElementSibling.textContent = lfoFmt(t, A[k]); if (t[6] === '%') el.dataset.pct = ''; else delete el.dataset.pct; });
+  const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(PER_OPTS, D.per); $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
   $('#gTabs [data-v=trig]').classList.toggle('act', g.trig === 'fade');
   $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
@@ -1546,19 +1556,19 @@ function buildLayers(){
   for (let li = 3; li >= 0; li--){
     const L = layers[li], row = document.createElement('div');
     row.className = 'layer'; row.style.setProperty('--lc', LCOL[li]);
+    // two rows: on / name / opacity / blend — then mode / GIF chips / clear
     row.innerHTML = `<div class="lhead"><button class="lon" title="Key ${li+1}">${li+1}</button>
-      <span class="lname" title="Click the bar or press Shift+${li+1} to edit this layer">${LNAMES[li]}</span><span class="sp"></span>
-      <select class="lmode" title="Stack: pads add GIFs to this layer · Replace: pads swap the GIF"><option value="stack">Stack</option><option value="replace">Replace</option></select>
-      <button class="lclr" title="Remove all GIFs from this layer">clear</button></div>
-      <div class="lctl"><input class="lop" type="range" min="0" max="1" step="0.01" title="Layer opacity">
+      <span class="lname" title="Click the bar or press Shift+${li+1} to edit this layer">${LNAMES[li]}</span>
+      <input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity">
       <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
-      <div class="clips"></div>`;
+      <div class="lrow2"><select class="lmode" title="Stack: pads add GIFs to this layer (up to 6) · Replace: pads swap the GIF"><option value="stack">Stack</option><option value="replace">Replace</option></select>
+      <div class="clips"></div><button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>`;
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
     row.querySelector('.lmode').addEventListener('change', e => { L.mode = e.target.value; if (L.mode === 'replace' && L.clips.length > 1){ L.clips = [selClip(li)]; syncLayerUI(); syncXfUI(); } });
     row.querySelector('.lclr').addEventListener('click', () => { L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });
     row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });
-    row.querySelector('.lctl').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
+    row.querySelector('.lop').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
     row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
     row.querySelector('.clips').addEventListener('click', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
@@ -1613,7 +1623,7 @@ function syncLayerUI(){
     r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.lmode').value = L.mode;
     r.querySelector('.clips').innerHTML = L.clips.map(c => {
       const p = pads[c.pad];
-      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" title="${esc(p.gif ? p.gif.name : '')}"><span>${p.label} · ${esc(p.gif ? p.gif.name : '?')}</span><b title="Remove">×</b></span>`;
+      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
     }).join('');
   }
   $('#pvLayer').textContent = LNAMES[target];
@@ -2231,6 +2241,13 @@ window.addEventListener('pagehide', autosave);
 
 buildPads(); pads.forEach((_, i) => renderPad(i));
 buildLayers(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
+// typing into readouts: musical lengths accept a label ("1/8", "2 bars") or a number of beats; phase is in degrees
+const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), i = opts.findIndex(o => o[1].toLowerCase() === l || o[1].toLowerCase() === l + 's');
+  if (i >= 0) return i; const n = parseFloat(t); return isFinite(n) ? optIdx(opts, n) : null; };
+['#tA', '#tH', '#tR'].forEach(id => $(id).ctlParse = lenParse(ENV_OPTS));
+$('#aPer').ctlParse = lenParse(PER_OPTS);
+$('#aPh').ctlParse = t => { const n = parseFloat(t); return isFinite(n) ? mod(n, 360) / 360 : null; };
+Controls.init();
 restore();
 if (!('ImageDecoder' in window)) toast('This browser has no ImageDecoder — use desktop Chrome');
 restartLoop();
