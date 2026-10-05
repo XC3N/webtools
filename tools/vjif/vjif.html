@@ -130,7 +130,9 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .brand span{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));-webkit-background-clip:text;background-clip:text}
 .grp{display:flex;align-items:center;gap:7px}.grp.right{margin-left:auto}
 .vsep{width:1px;height:26px;background:var(--edge);flex:none}
-#bpm{width:74px;text-align:center;color:var(--amber);background:var(--lcd-bg);border-color:rgba(var(--meter-rgb),.35);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.bpmwrap{position:relative;display:inline-block}
+#bpmMark{position:absolute;bottom:4px;height:2px;border-radius:1px;background:var(--amber);box-shadow:0 0 5px rgba(var(--acc-rgb),.8);pointer-events:none;display:none}
+#bpm{width:84px;text-align:center;color:var(--amber);background:var(--lcd-bg);border-color:rgba(var(--meter-rgb),.35);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 #bpm::-webkit-outer-spin-button,#bpm::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #bpm.pending{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
 #beats{display:flex;gap:4px}#beats i{width:9px;height:9px;border-radius:50%;background:#23232a;border:1px solid var(--edge-2)}
@@ -203,7 +205,9 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .clips:empty::before{content:'no GIFs';font:italic 11px var(--mono);color:var(--faint);line-height:24px}
 .layer.dropzone{outline:2px dashed var(--lc);outline-offset:1px}
 .layer.refused{animation:refused .45s ease-out}@keyframes refused{0%,40%{background:#5a1717;border-color:#ff4d4d;box-shadow:0 0 0 1px #ff4d4d inset,0 0 14px rgba(255,60,60,.5)}}
-.chip{position:relative;flex:none;display:grid;place-items:center;width:26px;height:24px;border:1px solid var(--edge-2);border-radius:5px;cursor:grab;background:var(--track);font:700 11px var(--mono)}
+.chip{position:relative;flex:none;width:26px;height:24px;border:1px solid var(--edge-2);border-radius:5px;cursor:grab;background:var(--track) center/cover no-repeat;image-rendering:pixelated}
+.chip>span{position:absolute;left:1px;bottom:1px;padding:1px 2px;border-radius:3px;background:rgba(0,0,0,.78);font:700 9px/1 var(--mono);color:var(--ink)}
+.chip.sel>span{color:var(--lc)}
 .chip.sel{border-color:var(--lc);color:var(--lc);background:#1a1a1f}
 .chip.dragging{opacity:.35}
 /* drop position: a bar in the gap (box-shadow, so nothing moves) */
@@ -244,7 +248,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 <body>
 <header id="top">
   <div class="brand" title="Actually, it's pronounced vjif">VJ<span>if</span></div>
-  <div class="grp"><label for="bpm">BPM</label><input id="bpm" type="number" min="20" max="300" step="0.1" value="120.0">
+  <div class="grp"><label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Type a tempo and press Enter · mouse wheel over a digit changes that digit"><i id="bpmMark"></i></span>
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
     <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span></div>
   <div class="grp"><label for="snap">Snap</label>
@@ -328,6 +332,10 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       <div data-pane="colour" class="off">
         <div class="sub" style="margin-top:0"><span>Key</span><span class="line"></span><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
         <div class="field"><label>Colour</label><div class="keyrow span"><input type="color" id="kCol" value="#00ff00"><button id="kPick" title="Then click the GIF in the preview" style="flex:1">Pick</button><button id="kReset" title="Key back to defaults">Reset</button></div></div>
+        <div class="field"><label title="Which matching pixels are removed">Region</label><div class="seg span" id="kRegion">
+          <button data-v="all" title="Every pixel of the key colour, anywhere">Everywhere</button>
+          <button data-v="edges" title="Only key-coloured areas that touch the frame edges — the colour inside the subject stays">From edges</button>
+          <button data-v="point" title="Magic wand: only the key-coloured area joined to the point you picked">From pick</button></div></div>
         <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" data-def="0.15" data-pct min="0" max="0.6" step="0.005"><output></output></div>
         <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" data-def="0.08" data-pct min="0" max="0.4" step="0.005"><output></output></div>
         <div class="sub"><span>Adjust</span><span class="line"></span><button id="hReset" title="Hue, saturation and brightness back to normal">Reset</button></div>
@@ -376,6 +384,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       <dt>1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>Shift+1–4</dt><dd>Choose the layer to edit / trigger into (or click its bar)</dd>
       <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
+      <dt>Wheel on BPM</dt><dd>Steps the digit under the cursor (hundreds … hundredths, it's underlined)</dd>
       <dt>Shift+Space</dt><dd>Resync: now is beat 1, every GIF restarts</dd>
       <dt>Arrows</dt><dd>Nudge the selected GIF 1 px (Shift = 10 px) — with the mouse over a slider, the arrows adjust that slider instead</dd>
       <dt>Sliders</dt><dd>Double-click resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · click the value to type one (Enter applies, Esc cancels)</dd>
@@ -500,7 +509,8 @@ async function decodeAnim(blob, name){
   const srcBytes = frames.reduce((a, f) => a + f.width * f.height * 4, 0);
   const g = { uid: ++gifSeq, fxWaits: [], name: name || 'untitled', blob, type, src: frames, frames, durs, w, h, srcBytes, bytes: srcBytes,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
-           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08 }, hsv: { h: 0, s: 1, v: 1 }, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free' }, lfo: {} };
   g.fullTotal = durs.reduce((a, d) => a + d, 0);
   rebuildSeq(g);
@@ -516,8 +526,8 @@ function rebuildSeq(g){
 }
 
 function freeGif(g){
-  g.keyGen++; clearTimeout(g.keyT);
-  if (fxWorker) fxWorker.postMessage({ id: g.uid, gen: g.keyGen });   // stop any work on it
+  g.keyGen++; g.maskGen++; clearTimeout(g.keyT); clearTimeout(g.maskT);
+  if (fxWorker){ fxWorker.postMessage({ id: g.uid, gen: g.keyGen }); fxWorker.postMessage({ id: 'm' + g.uid, gen: g.maskGen }); }   // stop any work on it
   if (g.frames !== g.src) g.frames.forEach(f => f.close());
   g.src.forEach(f => f.close());
 }
@@ -612,12 +622,13 @@ const fxGL = (() => {
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D tex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv; varying vec2 uv;
+      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; varying vec2 uv;
       void main(){
         vec4 px = texture2D(tex, uv);
         if (px.a == 0.0){ gl_FragColor = vec4(0.0); return; }
         vec3 c = floor(px.rgb * 255.0 + 0.5); float f = 1.0;
-        if (doKey){ vec3 d = c - key; float dsq = dot(d, d);
+        if (doKey && useMask) f = texture2D(mtex, uv).a;          // connected key: per-frame mask from the flood fill
+        else if (doKey){ vec3 d = c - key; float dsq = dot(d, d);
           if (dsq < t1sq){ float dist = sqrt(dsq); f = dist <= t0 ? 0.0 : floor((dist - t0) / span * 255.0 + 0.5) / 255.0; } }
         vec3 o = c / 255.0;
         if (doHsv){
@@ -637,19 +648,25 @@ const fxGL = (() => {
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-    [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
+    const mkTex = unit => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+      [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v)); };
+    mkTex(1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, 1, 1, 0, gl.ALPHA, gl.UNSIGNED_BYTE, new Uint8Array([255]));
+    mkTex(0);                                          // unit 0 (frames) stays active
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);            // mask rows are 1 byte per pixel, any width
+    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    gl.uniform1i(U.tex, 0); gl.uniform1i(U.mtex, 1);
     let lost = false;
     cv.addEventListener('webglcontextlost', () => { lost = true; });
     return {
       get ok(){ return !lost; },
       // returns a canvas holding the processed frame (valid until the next call)
-      render(img, p){
+      render(img, p, mask = null){
         if (cv.width !== img.width || cv.height !== img.height){ cv.width = img.width; cv.height = img.height; }
         gl.viewport(0, 0, cv.width, cv.height);
+        if (mask){ gl.activeTexture(gl.TEXTURE1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, img.width, img.height, 0, gl.ALPHA, gl.UNSIGNED_BYTE, mask); gl.activeTexture(gl.TEXTURE0); }
+        gl.uniform1i(U.useMask, !!mask);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
         gl.uniform3f(U.key, p.kr, p.kg, p.kb); gl.uniform1f(U.t0, p.t0); gl.uniform1f(U.t1sq, p.t1sq); gl.uniform1f(U.span, p.span);
         gl.uniform1f(U.H, p.H); gl.uniform1f(U.S, p.S); gl.uniform1f(U.V, p.V); gl.uniform1i(U.doKey, p.doKey); gl.uniform1i(U.doHsv, p.doHsv);
@@ -662,15 +679,18 @@ const fxGL = (() => {
 })();
 const liveFx = () => fxGL && fxGL.ok;
 const fxActive = g => g.key.on || hsvOn(g);
-// the image to draw for frame `img` of GIF `g`: run through the colour shader when live colour is on.
+// the image to draw for frame `fi` of GIF `g`: run through the colour shader when live colour is on.
 // e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
-function fxImage(g, img, e){
+// Connected key: the frame's mask (from the flood fill) replaces the per-pixel colour test.
+function fxImage(g, fi, e){
+  const img = g.frames[fi];
   if (!liveFx() || g.frames !== g.src) return img;
+  const mask = g.key.on && g.key.region !== 'all' && g.masks ? g.masks[fi] : null;
   if (e && (e.H !== undefined || e.S !== undefined || e.V !== undefined))
-    return fxGL.render(img, fxParams(g, { h: g.hsv.h + (e.H ?? 0), s: g.hsv.s * (e.S ?? 1), v: g.hsv.v * (e.V ?? 1) }));
+    return fxGL.render(img, fxParams(g, { h: g.hsv.h + (e.H ?? 0), s: g.hsv.s * (e.S ?? 1), v: g.hsv.v * (e.V ?? 1) }), mask);
   if (!fxActive(g)) return img;
   if (!g.fxP) g.fxP = fxParams(g);
-  return fxGL.render(img, g.fxP);
+  return fxGL.render(img, g.fxP, mask);
 }
 function scheduleFx(g, ms){
   if (liveFx()){ applyFx(g); return; }               // live: nothing to wait for
@@ -702,29 +722,56 @@ function fxColor(c, p){
 }
 // one frame in place: u = Uint32 view of RGBA pixels (0xAABBGGRR). GIFs have few distinct colors and long runs
 // of the same one, so each color is worked out once (cache) and repeats are copied.
-function fxPixels(u, p, cache){
+// Connected key ("magic wand"): only key-coloured pixels joined to the seed are removed — the frame edges
+// (region 'edges') or the picked point (region 'point'). 4-way flood fill through pixels within tolerance + softness
+// (and through already-transparent ones). Returns one byte per pixel: 0 = removed … 255 = kept.
+function keyMask(u, w, h, p){
+  const n = w * h, m = new Uint8Array(n).fill(255), seen = new Uint8Array(n), st = new Int32Array(n);
+  const { kr, kg, kb, t0, t1sq, span } = p; let sp = 0;
+  const dsq = i => { const px = u[i], r = (px & 255) - kr, g = ((px >> 8) & 255) - kg, b = ((px >> 16) & 255) - kb; return r*r + g*g + b*b; };
+  const pass = i => (u[i] >>> 24) === 0 || dsq(i) < t1sq;
+  const push = i => { if (!seen[i]){ seen[i] = 1; if (pass(i)) st[sp++] = i; } };
+  if (p.region === 'point' && p.seed){
+    // the picked point, or the nearest matching pixel within a few px (the subject moves between frames)
+    const sx = Math.min(w - 1, Math.max(0, Math.floor(p.seed[0] * w))), sy = Math.min(h - 1, Math.max(0, Math.floor(p.seed[1] * h)));
+    for (let r = 0; r <= 6 && !sp; r++) for (let y = Math.max(0, sy - r); y <= Math.min(h - 1, sy + r) && !sp; y++)
+      for (let x = Math.max(0, sx - r); x <= Math.min(w - 1, sx + r) && !sp; x++){ const i = y * w + x; if (pass(i)){ seen[i] = 1; st[sp++] = i; } }
+  } else {
+    for (let x = 0; x < w; x++){ push(x); push((h - 1) * w + x); }
+    for (let y = 0; y < h; y++){ push(y * w); push(y * w + w - 1); }
+  }
+  while (sp){
+    const i = st[--sp], x = i % w;
+    if (u[i] >>> 24){ const d = Math.sqrt(dsq(i)); m[i] = d <= t0 ? 0 : Math.round(255 * (d - t0) / span); }
+    if (x > 0) push(i - 1); if (x < w - 1) push(i + 1); if (i >= w) push(i - w); if (i < n - w) push(i + w);
+  }
+  return m;
+}
+function fxPixels(u, p, cache, mask = null){
+  if (mask) p = Object.assign({}, p, { doKey: false });   // the mask decides alpha; colours still go through HSV
   let lastC = -1, lastV = 0;
   for (let i = 0; i < u.length; i++){
     const px = u[i], al = px >>> 24; if (!al) continue;
     const c = px & 0xffffff;
     if (c !== lastC){ lastC = c; lastV = cache.get(c); if (lastV === undefined){ lastV = fxColor(c, p); cache.set(c, lastV); } }
-    const f = (lastV / 16777216) | 0, na = f === 255 ? al : (al * f / 255) | 0;
+    const f = mask ? mask[i] : (lastV / 16777216) | 0, na = f === 255 ? al : (al * f / 255) | 0;
     u[i] = (na << 24) | (lastV & 0xffffff);
   }
 }
 function fxParams(g, hsv = g.hsv){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
+           region: g.key.region || 'all', seed: g.key.seed || null,
            t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v };
 }
 // The worker gets the same functions as source text, so both paths run identical code.
-const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, fxPixels].map(f => f.toString()).join('\n') + `
+const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels].map(f => f.toString()).join('\n') + `
 const latest = new Map(), pause = () => new Promise(r => setTimeout(r, 0));
 // The worker decodes its own copy from the original file, so the main thread never copies frames across.
 onmessage = async e => {
   const m = e.data; latest.set(m.id, m.gen);
   if (!m.blob) return;                                     // a cancel
-  const { id, gen, blob, type, n, w, h, p } = m;
+  const { id, gen, blob, type, n, w, h, p } = m, maskOnly = m.kind === 'mask';
   let dec = null; const out = [];
   try {
     dec = new ImageDecoder({ data: await blob.arrayBuffer(), type });
@@ -732,27 +779,30 @@ onmessage = async e => {
     const x = new OffscreenCanvas(w, h).getContext('2d', { willReadFrequently: true });
     const cache = new Map(); let t = performance.now();
     for (let i = 0; i < n; i++){
-      if (latest.get(id) !== gen){ out.forEach(b => b.close()); dec.close(); return; }   // superseded
+      if (latest.get(id) !== gen){ if (!maskOnly) out.forEach(b => b.close()); dec.close(); return; }   // superseded
       const { image } = await dec.decode({ frameIndex: i });
       const resize = image.displayWidth !== w ? { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' } : {};
       const bm = await createImageBitmap(image, resize); image.close();   // same scaling as the main decode
       x.clearRect(0, 0, w, h); x.drawImage(bm, 0, 0); bm.close();
-      const img = x.getImageData(0, 0, w, h);
-      fxPixels(new Uint32Array(img.data.buffer), p, cache);
-      out.push(await createImageBitmap(img));
-      if (performance.now() - t > 50){ postMessage({ id, gen, progress: i + 1, total: n }); await pause(); t = performance.now(); }
+      const img = x.getImageData(0, 0, w, h), u = new Uint32Array(img.data.buffer);
+      const mask = p.doKey && p.region !== 'all' ? keyMask(u, w, h, p) : null;
+      if (maskOnly) out.push(mask.buffer);
+      else { fxPixels(u, p, cache, mask); out.push(await createImageBitmap(img)); }
+      if (performance.now() - t > 50){ postMessage({ id, gen, kind: m.kind, progress: i + 1, total: n }); await pause(); t = performance.now(); }
     }
     dec.close();
-    postMessage({ id, gen, frames: out }, out);
+    if (maskOnly) postMessage({ id, gen, kind: 'mask', masks: out }, out);
+    else postMessage({ id, gen, frames: out }, out);
   } catch (err) {
-    out.forEach(b => b.close()); if (dec) dec.close();
-    postMessage({ id, gen, error: String(err && err.message || err) });
+    if (!maskOnly) out.forEach(b => b.close()); if (dec) dec.close();
+    postMessage({ id, gen, kind: m.kind, error: String(err && err.message || err) });
   }
 };`;
 let fxWorker = null;
 try {
   fxWorker = new Worker(URL.createObjectURL(new Blob([FX_WORKER_SRC], { type: 'text/javascript' })));
   fxWorker.onmessage = e => {
+    if (e.data.kind === 'mask') return maskMsg(e.data);
     const m = e.data, pad = pads.find(p => p.gif && p.gif.uid === m.id), g = pad && pad.gif;
     if (!g || m.gen !== g.keyGen){ if (m.frames) m.frames.forEach(f => f.close()); return; }   // stale or cleared
     if (m.frames) fxDone(g, m.frames);
@@ -779,12 +829,47 @@ function applyFx(g){
   const wait = new Promise(r => g.fxWaits.push(r));
   if (liveFx()){                                     // live: just new parameters (drop any pre-processed frames)
     if (fxWorker) fxWorker.postMessage({ id: g.uid, gen });
+    if (p.doKey && p.region !== 'all') requestMasks(g); else dropMasks(g);
     g.fxP = null; fxDone(g, g.src); return wait;
   }
   if (!p.doKey && !p.doHsv){ if (fxWorker) fxWorker.postMessage({ id: g.uid, gen }); fxDone(g, g.src); }
   else if (fxWorker) fxWorker.postMessage({ id: g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w: g.src[0].width, h: g.src[0].height, p });
   else fxMain(g, gen, p);
   return wait;
+}
+// ---- connected key masks (live colour path): worked out in the worker, one byte per pixel per frame ----
+// The previous masks stay in use until the new ones are ready, so dragging Tolerance never flashes.
+function dropMasks(g){ g.maskGen++; clearTimeout(g.maskT); if (g.masks){ g.masks = null; g.maskBytes = 0; g.fxVer++; updateMem(); } }
+function requestMasks(g){
+  clearTimeout(g.maskT);
+  g.maskT = setTimeout(() => {
+    const gen = ++g.maskGen, p = fxParams(g), w = g.src[0].width, h = g.src[0].height;
+    if (p.region === 'point' && !p.seed){ g.keyMsg = 'Region "From pick": click Pick, then the GIF'; if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg; return; }
+    if (fxWorker) fxWorker.postMessage({ kind: 'mask', id: 'm' + g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w, h, p });
+    else masksMain(g, gen, p, w, h);
+  }, 120);
+}
+function maskMsg(m){
+  const pad = pads.find(p => p.gif && 'm' + p.gif.uid === m.id), g = pad && pad.gif;
+  if (!g || m.gen !== g.maskGen) return;
+  if (m.masks) masksDone(g, m.masks.map(b => new Uint8Array(b)));
+  else if (m.error){ console.warn('mask worker:', m.error); masksMain(g, m.gen, fxParams(g), g.src[0].width, g.src[0].height); }
+  else { g.keyMsg = `finding edges ${m.progress}/${m.total}…`; if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg; }
+}
+function masksDone(g, masks){
+  g.masks = masks; g.maskBytes = masks.reduce((a, m) => a + m.length, 0); g.keyMsg = ''; g.fxVer++;
+  const pi = pads.findIndex(p => p.gif === g); if (pi >= 0) renderPad(pi);
+  updateMem(); if (pads[selPad].gif === g) syncGifUI();
+}
+async function masksMain(g, gen, p, w, h){            // no worker: same work on this thread, in slices
+  const x = new OffscreenCanvas(w, h).getContext('2d', { willReadFrequently: true }), out = []; let slice = performance.now();
+  for (let i = 0; i < g.src.length; i++){
+    if (gen !== g.maskGen) return;
+    x.clearRect(0, 0, w, h); x.drawImage(g.src[i], 0, 0);
+    out.push(keyMask(new Uint32Array(x.getImageData(0, 0, w, h).data.buffer), w, h, p));
+    if (performance.now() - slice > 12){ await yieldNow(); slice = performance.now(); }
+  }
+  if (gen === g.maskGen) masksDone(g, out);
 }
 async function fxMain(g, gen, p){                    // fallback when workers aren't available
   const w = g.src[0].width, h = g.src[0].height;
@@ -793,8 +878,8 @@ async function fxMain(g, gen, p){                    // fallback when workers ar
   for (let i = 0; i < g.src.length; i++){
     if (gen !== g.keyGen){ out.forEach(f => f.close()); return; }
     x.clearRect(0, 0, w, h); x.drawImage(g.src[i], 0, 0);
-    const img = x.getImageData(0, 0, w, h);
-    fxPixels(new Uint32Array(img.data.buffer), p, cache);
+    const img = x.getImageData(0, 0, w, h), u = new Uint32Array(img.data.buffer);
+    fxPixels(u, p, cache, p.doKey && p.region !== 'all' ? keyMask(u, w, h, p) : null);
     out.push(await createImageBitmap(img));
     if (performance.now() - slice > 12){
       g.keyMsg = `processing ${i+1}/${g.src.length}…`;
@@ -808,8 +893,8 @@ async function fxMain(g, gen, p){                    // fallback when workers ar
 
 // ---------- clock ----------
 function setBpm(v){
-  clock.bpm = clamp(+v || 120, 20, 300);
-  if (document.activeElement !== $('#bpm')) $('#bpm').value = clock.bpm.toFixed(1);
+  clock.bpm = Math.round(clamp(+v || 120, 20, 300) * 100) / 100;
+  if (document.activeElement !== $('#bpm')) $('#bpm').value = clock.bpm.toFixed(2);
 }
 
 function tap(){
@@ -1086,13 +1171,16 @@ const probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: t
 function sampleClip(c, px, py, src = false){
   const g = pads[c.pad].gif, G = clipGeom(c), [lx, ly] = toLocal(G, px, py);
   const u = (lx + G.ox) / (c.sx * (c.flipX ? -1 : 1) * G.fbw) + 0.5, v = (ly + G.oy) / (c.sy * (c.flipY ? -1 : 1) * G.fbh) + 0.5;
-  const img = (src ? g.src : g.frames)[frameIndex(c, g, performance.now())];
+  const fi = frameIndex(c, g, performance.now()), img = (src ? g.src : g.frames)[fi];
+  const ix = clamp(Math.floor(u * img.width), 0, img.width - 1), iy = clamp(Math.floor(v * img.height), 0, img.height - 1);
   probe.clearRect(0, 0, 1, 1);
-  probe.drawImage(img, -clamp(Math.floor(u * img.width), 0, img.width - 1), -clamp(Math.floor(v * img.height), 0, img.height - 1));
+  probe.drawImage(img, -ix, -iy);
   const d = probe.getImageData(0, 0, 1, 1).data;
   if (!src && liveFx() && g.frames === g.src && g.key.on && d[3]){   // apply the key to this one pixel
-    const r = fxColor(d[0] | (d[1] << 8) | (d[2] << 16), fxParams(g)); d[3] = (d[3] * ((r / 16777216) | 0) / 255) | 0;
+    const f = g.key.region !== 'all' ? (g.masks ? g.masks[fi][iy * img.width + ix] : 255) : (fxColor(d[0] | (d[1] << 8) | (d[2] << 16), fxParams(g)) / 16777216) | 0;
+    d[3] = (d[3] * f / 255) | 0;
   }
+  d.u = clamp(u, 0, 1); d.v = clamp(v, 0, 1);         // where in the frame (0..1), for the key's seed point
   return d;
 }
 // everything under the point, in visual order (topmost first); transparent pixels don't count
@@ -1176,10 +1264,10 @@ function render(list){
     mctx.save(); mctx.globalAlpha = L.opacity; mctx.globalCompositeOperation = L.blend;
     if (vis.length === 1 || (L.blend === 'source-over' && L.opacity >= 1)){
       // one GIF, or Normal at full opacity: identical result drawn straight onto the master (no buffer clear + composite)
-      for (const { g, e, fi } of vis) drawClip(mctx, e, g, fxImage(g, g.frames[fi], e));
+      for (const { g, e, fi } of vis) drawClip(mctx, e, g, fxImage(g, fi, e));
     } else {                                       // several: flatten into the layer buffer, then blend once
       const b = lbufs[L.i]; b.clearRect(0, 0, W, H);
-      for (const { g, e, fi } of vis) drawClip(b, e, g, fxImage(g, g.frames[fi], e));
+      for (const { g, e, fi } of vis) drawClip(b, e, g, fxImage(g, fi, e));
       mctx.drawImage(b.canvas, 0, 0);
     }
     mctx.restore();
@@ -1198,7 +1286,7 @@ function drawGhosts(gh, k, dpr){
   gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.globalCompositeOperation = 'source-over'; gctx.globalAlpha = 1;
   gctx.clearRect(0, 0, ghostCv.width, ghostCv.height);
   gctx.setTransform(k, 0, 0, k, view.x * dpr, view.y * dpr);
-  for (const [c, g] of gh) drawClip(gctx, Object.assign({}, c, { alpha: 1 }), g, fxImage(g, g.frames[g.startF]));
+  for (const [c, g] of gh) drawClip(gctx, Object.assign({}, c, { alpha: 1 }), g, fxImage(g, g.startF));
   gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.globalCompositeOperation = 'destination-in';
   gctx.fillStyle = dither; gctx.fillRect(0, 0, ghostCv.width, ghostCv.height);
   pctx.globalAlpha = 0.75; pctx.drawImage(ghostCv, 0, 0); pctx.globalAlpha = 1;
@@ -1357,12 +1445,18 @@ function renderPad(i){
     for (let yy = 0; yy < c.height; yy += 8) for (let xx = (yy / 8) % 2 * 8; xx < c.width; xx += 16) x.fillRect(xx, yy, 8, 8);
   }
   x.imageSmoothingEnabled = !p.gif.crisp;
-  const f = fxImage(p.gif, p.gif.frames[p.gif.startF]), s = Math.min(c.width / f.width, c.height / f.height);
+  const f = fxImage(p.gif, p.gif.startF), s = Math.min(c.width / f.width, c.height / f.height);
   x.drawImage(f, (c.width - f.width*s)/2, (c.height - f.height*s)/2, f.width*s, f.height*s);
+  // small cover-cropped copy for the layer chips
+  const t = document.createElement('canvas'); t.width = 52; t.height = 48;
+  const tx = t.getContext('2d'), k = Math.max(t.width / f.width, t.height / f.height);
+  tx.imageSmoothingEnabled = !p.gif.crisp; tx.drawImage(f, (t.width - f.width*k)/2, (t.height - f.height*k)/2, f.width*k, f.height*k);
+  p.gif.thumb = t.toDataURL();
+  document.querySelectorAll(`.chip[data-pad="${i}"]`).forEach(ch => ch.style.backgroundImage = `url(${p.gif.thumb})`);
 }
 function selectPad(i){ selPad = i; pads.forEach(p => p.el.classList.toggle('sel', p.i === i)); syncGifUI(); }
 function updateMem(){
-  const mb = pads.reduce((a, p) => a + (p.gif ? p.gif.bytes : 0), 0) / 1048576;
+  const mb = pads.reduce((a, p) => a + (p.gif ? p.gif.bytes + (p.gif.maskBytes || 0) : 0), 0) / 1048576;
   const el = $('#mem'); el.textContent = `~${mb.toFixed(0)} MB`;
   el.style.color = mb > MEM_WARN_MB ? 'var(--danger)' : 'var(--dim)';
   if (mb > MEM_WARN_MB) toast(`Bank is using ~${mb.toFixed(0)} MB of decoded frames — clear some pads if playback stutters`);
@@ -1410,7 +1504,7 @@ function syncGifUI(){
   segSet('#gBeats', g.beats); segSet('#gSub', g.subdiv); segSet('#gRestart', g.restart);
   showCycle(g);
   document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = !f.dataset.for.split(' ').includes(g.sync));
-  $('#kOn').checked = g.key.on; $('#kCol').value = rgb2hex(g.key.color);
+  $('#kOn').checked = g.key.on; $('#kCol').value = rgb2hex(g.key.color); segSet('#kRegion', g.key.region || 'all');
   $('#kTol').value = g.key.tol; $('#kTol').nextElementSibling.textContent = (g.key.tol * 100).toFixed(0) + '%';
   $('#kSoft').value = g.key.soft; $('#kSoft').nextElementSibling.textContent = (g.key.soft * 100).toFixed(0) + '%';
   syncRangeUI(g); drawPrev(g, g.startF);
@@ -1529,7 +1623,7 @@ function syncRangeUI(g){
   [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => { const el = $(id); el.max = F - 1; el.value = g[k]; el.nextElementSibling.textContent = g[k]; });
 }
 function drawPrev(g, f){
-  const c = $('#gPrev'), x = c.getContext('2d'), img = fxImage(g, g.frames[f]);
+  const c = $('#gPrev'), x = c.getContext('2d'), img = fxImage(g, f);
   x.clearRect(0, 0, c.width, c.height);
   const s = Math.min(c.width / img.width, c.height / img.height);
   x.drawImage(img, (c.width - img.width*s)/2, (c.height - img.height*s)/2, img.width*s, img.height*s);
@@ -1544,6 +1638,8 @@ function drawPrev(g, f){
   });
   $(id).addEventListener('change', () => { const g = curGif(); if (g){ syncGifUI(); renderPad(selPad); } });
 });
+$('#kRegion').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (!b || !g) return;
+  g.key.region = b.dataset.v; if (g.key.region !== 'all') g.key.on = true; syncGifUI(); scheduleFx(g, 0); });
 $('#kOn').addEventListener('change', e => { const g = curGif(); if (g){ g.key.on = e.target.checked; scheduleFx(g, 0); } });
 $('#kCol').addEventListener('input', e => { const g = curGif(); if (g){ g.key.color = hex2rgb(e.target.value); if (g.key.on) scheduleFx(g, 200); } });
 ['kTol', 'kSoft'].forEach(id => $('#' + id).addEventListener('input', e => {
@@ -1559,7 +1655,7 @@ function pickAt(px, py){
   stopPick();
   const hit = hitAny(px, py) || hitsAt(px, py, false)[0]; if (!hit) return toast('No GIF under the cursor');
   const c = hit[1], g = pads[c.pad].gif, d = sampleClip(c, px, py, true);
-  g.key.color = [d[0], d[1], d[2]]; g.key.on = true;
+  g.key.color = [d[0], d[1], d[2]]; g.key.seed = [d.u, d.v]; g.key.on = true;
   selectPad(c.pad); scheduleFx(g, 0);
 }
 $('#gClear').addEventListener('click', () => {
@@ -1654,7 +1750,7 @@ function syncLayerUI(){
     r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.lmode').value = L.mode;
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
-      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
+      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
     }).join('');
   }
   $('#pvLayer').textContent = LNAMES[target];
@@ -1820,15 +1916,39 @@ bank.addEventListener('drop', e => {
 const bpmEl = $('#bpm');
 function commitBpm(){
   const v = parseFloat(bpmEl.value);
-  if (clock.src === 'internal' && isFinite(v)) clock.bpm = clamp(v, 20, 300);
-  bpmEl.value = clock.bpm.toFixed(1); bpmEl.classList.remove('pending');
+  if (clock.src === 'internal' && isFinite(v)) setBpm(v);
+  bpmEl.value = clock.bpm.toFixed(2); bpmEl.classList.remove('pending');
 }
-bpmEl.addEventListener('input', () => bpmEl.classList.toggle('pending', parseFloat(bpmEl.value) !== +clock.bpm.toFixed(1)));
+bpmEl.addEventListener('input', () => bpmEl.classList.toggle('pending', parseFloat(bpmEl.value) !== +clock.bpm.toFixed(2)));
 bpmEl.addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); commitBpm(); bpmEl.blur(); }
-  else if (e.key === 'Escape'){ bpmEl.value = clock.bpm.toFixed(1); bpmEl.classList.remove('pending'); bpmEl.blur(); }
+  else if (e.key === 'Escape'){ bpmEl.value = clock.bpm.toFixed(2); bpmEl.classList.remove('pending'); bpmEl.blur(); }
 });
 bpmEl.addEventListener('blur', commitBpm);
+// mouse wheel over a digit of the tempo steps that digit: hundreds … hundredths (the digit is underlined)
+const bpmCtx = document.createElement('canvas').getContext('2d');
+function bpmDigit(e){
+  const cs = getComputedStyle(bpmEl), r = bpmEl.getBoundingClientRect(), txt = bpmEl.value;
+  bpmCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; const cw = bpmCtx.measureText('0').width;   // (computed 'font' can be empty)
+  const bl = parseFloat(cs.borderLeftWidth), pl = parseFloat(cs.paddingLeft), pr = parseFloat(cs.paddingRight);
+  const inner = r.width - bl * 2 - pl - pr, start = bl + pl + (inner - cw * txt.length) / 2;
+  let i = clamp(Math.floor((e.clientX - r.left - start) / cw), 0, txt.length - 1);
+  const dot = txt.indexOf('.') < 0 ? txt.length : txt.indexOf('.');
+  if (i === dot) i = dot - 1;
+  return { place: i < dot ? 10 ** (dot - 1 - i) : 10 ** -(i - dot), x: start + i * cw, w: cw };
+}
+const bpmMark = $('#bpmMark');
+bpmEl.addEventListener('mousemove', e => {
+  if (bpmEl.disabled || document.activeElement === bpmEl){ bpmMark.style.display = 'none'; return; }
+  const d = bpmDigit(e); Object.assign(bpmMark.style, { display: 'block', left: d.x + 'px', width: d.w + 'px' });
+});
+bpmEl.addEventListener('mouseleave', () => { bpmMark.style.display = 'none'; });
+bpmEl.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (clock.src !== 'internal' || document.activeElement === bpmEl) return;
+  const d = e.deltaY || e.deltaX; if (!d) return;
+  setBpm(clock.bpm + (d < 0 ? 1 : -1) * bpmDigit(e).place);
+}, { passive: false });
 $('#tapBtn').addEventListener('click', tap);
 $('#syncBtn').addEventListener('click', resync);
 $('#clockSrc').addEventListener('change', e => setClockSrc(e.target.value));
@@ -1845,7 +1965,7 @@ $('#gTabs').addEventListener('click', e => {
   document.querySelectorAll('#gPanes > [data-pane]').forEach(p => p.classList.toggle('off', p.dataset.pane !== b.dataset.v));
 });
 // key reset
-$('#kReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.key, { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08 }); scheduleFx(g, 0); syncGifUI(); });
+$('#kReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.key, { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }); scheduleFx(g, 0); syncGifUI(); });
 
 let toastT = 0;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 5000); }
