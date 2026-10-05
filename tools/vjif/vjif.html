@@ -198,6 +198,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .chip span{min-width:0}
 .clips:empty::before{content:'no GIFs';font:italic 11px var(--mono);color:var(--faint);line-height:24px}
 .layer.dropzone{outline:2px dashed var(--lc);outline-offset:1px}
+.layer.refused{animation:refused .45s ease-out}@keyframes refused{0%,40%{background:#5a1717;border-color:#ff4d4d;box-shadow:0 0 0 1px #ff4d4d inset,0 0 14px rgba(255,60,60,.5)}}
 .chip{display:inline-flex;align-items:center;gap:2px;max-width:100%;height:24px;padding:0 2px 0 8px;border:1px solid var(--edge-2);border-radius:5px;cursor:grab;background:var(--track);font:500 11px var(--mono)}
 .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
 .chip.sel{border-color:var(--lc);color:var(--lc);background:#1a1a1f}
@@ -360,7 +361,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
     <h2>Keys &amp; mouse<span class="line"></span><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <dl class="keys">
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to browse; drop a .vjif anywhere to import a set</dd>
-      <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
+      <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Shift+Q…C</dt><dd>Remove that GIF from the edited layer</dd>
       <dt>1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>Shift+1–4</dt><dd>Choose the layer to edit / trigger into (or click its bar)</dd>
@@ -395,7 +396,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 const W = 1920, H = 1080;
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
-const MAX_CLIPS = 6;           // GIFs per layer; oldest is dropped beyond this
+const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it flashes red)
 const MEM_WARN_MB = 1500;      // whole bank
 const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','Numpad7','Numpad8','Numpad9','Numpad4','Numpad5','Numpad6','Numpad1','Numpad2','Numpad3'];
 const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','7','8','9','4','5','6','1','2','3'];
@@ -929,7 +930,8 @@ function fire(p, beat, released = false){
   let c = L.clips.find(c => c.pad === p);
   if (!c){
     if (L.mode === 'replace'){ c = L.clips[0] || newClip(p); c.pad = p; c.env = null; L.clips = [c]; }   // keeps placement
-    else { c = newClip(p); L.clips.push(c); while (L.clips.length > MAX_CLIPS) L.clips.shift(); }
+    else if (L.clips.length >= MAX_CLIPS) return refuse(L);
+    else { c = newClip(p); L.clips.push(c); }
   }
   c.startBeat = beat; c.startTime = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   // fade one-shot: start from wherever the last fade is now, so a fast retrigger doesn't flicker
@@ -1001,6 +1003,7 @@ function effClip(c, g){
   if (g.trig === 'fade'){ if (!e) e = Object.assign({}, c); e.alpha *= envLevel(c, g, clock.beat); }
   return e || c;
 }
+function refuse(L){ const r = L.row; r.classList.remove('refused'); void r.offsetWidth; r.classList.add('refused'); }
 function removeClip(li, c){
   const L = layers[li]; if (!c) return;
   L.clips = L.clips.filter(x => x !== c); if (L.sel === c) L.sel = null;
@@ -1592,12 +1595,12 @@ const CLIP_MIME = 'application/x-gifvj-clip';
 function moveClip(sli, sid, dli, at){
   const S = layers[sli], D = layers[dli], clip = S.clips.find(c => c.id === sid); if (!clip) return;
   const i = S.clips.indexOf(clip);
+  if (S !== D && D.mode !== 'replace' && D.clips.length >= MAX_CLIPS) return refuse(D);
   if (S === D && i < at) at--;                           // index shifts after removing from the same list
   S.clips.splice(i, 1); if (S.sel === clip) S.sel = null;
   if (D.mode === 'replace') D.clips = [clip];
   else {
     D.clips.splice(clamp(at, 0, D.clips.length), 0, clip);
-    while (D.clips.length > MAX_CLIPS) D.clips.splice(D.clips[0] === clip ? 1 : 0, 1);
   }
   D.sel = clip; selectPad(clip.pad);
   setTarget(dli);
