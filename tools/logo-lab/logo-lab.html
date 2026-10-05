@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Logo Lab</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Logo Lab — design wordmarks for the XC3N tools. Two views: Design (mix font, treatment, colour; preview in context)
+   and Fonts (the typefaces available in the lab: add / remove Google Fonts, download one for offline use).
+   Everything is kept in this browser (localStorage). */
+:root{
+  color-scheme:dark;
+  --bg:#0c0c0e;--panel:#16161a;--panel-2:#1c1c21;--edge:#2a2a31;--edge-2:#34343c;
+  --ink:#e9e7e0;--muted:#888892;--faint:#5a5a63;--track:#2c2c33;
+  --amber:#ffb000;--amber-dim:#a6731a;--acc-hi:#ffc23d;--acc-lo:#e89400;--acc-rgb:255,176,0;--lcd-bg:#171200;--lcd-ink:#ffb000;--meter-rgb:90,169,230;
+  --danger:#ff9a9a;
+  --sans:"Archivo",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scrollbar-gutter:stable}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);padding-block:28px 64px;padding-inline:max(16px,4vw)}
+main{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font:900 clamp(28px,4vw,40px)/1.05 var(--sans);margin:0;letter-spacing:-.01em}
+h1 span{color:var(--amber)}
+.lede{margin:8px 0 0;color:var(--muted);max-width:72ch}
+h2{display:flex;align-items:center;gap:10px;margin:0 0 14px;font:700 11px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:rgba(var(--acc-rgb),.8)}
+h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--amber);box-shadow:0 0 8px rgba(var(--acc-rgb),.5)}
+h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--edge),transparent)}
+.panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--edge);border-radius:12px;padding:18px}
+.work{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:920px){.work{grid-template-columns:1fr}}
+.ctl{position:sticky;top:16px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 32px);overflow:auto}
+@media (max-width:920px){.ctl{position:static;max-height:none}}
+.row{display:flex;flex-direction:column;gap:6px}
+.lbl{display:flex;justify-content:space-between;align-items:center;font:700 10px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+select,input[type=text]{font:500 13px var(--mono);color:var(--ink);background:var(--track);border:1px solid var(--edge-2);border-radius:6px;height:34px;padding:0 10px;width:100%;outline:none}
+select:focus,input[type=text]:focus{border-color:var(--amber-dim)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1px;background:var(--edge);border:1px solid var(--edge-2);border-radius:6px;overflow:hidden}
+.seg.g3{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+.seg.wrap{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+.seg button{border:0;background:var(--track);color:var(--muted);font:500 12px var(--mono);height:32px;cursor:pointer;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg button:hover{color:#fff;background:#34343c}
+.seg button.on{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));color:#1a1200;font-weight:700}
+.sw{display:grid;grid-template-columns:repeat(9,1fr);gap:5px}
+.sw button{height:26px;border-radius:5px;border:2px solid transparent;cursor:pointer;background:var(--c);padding:0}
+.sw button.on{border-color:#fff;box-shadow:0 0 0 2px var(--bg) inset}
+.fam{display:grid;grid-template-columns:repeat(9,1fr);gap:0;border-radius:6px;overflow:hidden;border:1px solid var(--edge-2)}
+.fam button{height:24px;border:0;cursor:pointer;background:var(--c);position:relative;padding:0}
+.fam button.on::after{content:"";position:absolute;inset:3px;border:2px solid #fff;border-radius:3px;box-shadow:0 0 0 1px #000}
+.pick{display:flex;gap:8px;align-items:center}
+input[type=color]{-webkit-appearance:none;appearance:none;width:44px;height:30px;padding:3px;border:1px solid var(--edge-2);border-radius:6px;background:var(--track);cursor:pointer;flex:none}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:3px}
+.hex{font:500 12px var(--mono);color:var(--muted)}
+.slrow{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:10px;align-items:center}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:var(--track);margin:8px 0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px rgba(var(--acc-rgb),.6);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--amber)}
+output{display:block;font:500 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--lcd-ink);background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);border-radius:4px;padding:5px 6px;text-align:center;white-space:nowrap;overflow:hidden}
+.btn{font:800 11px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;background:var(--panel-2);color:var(--ink);border:1px solid var(--edge-2);border-radius:6px;padding:10px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--amber-dim);color:#fff}
+.btn.accent{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));color:#1a1200;border-color:var(--acc-lo)}
+.btn.sm{padding:7px 9px;font-size:10px}
+.btn.danger{border-color:#6e2f2f;color:var(--danger)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.spec{font:500 12px/1.6 var(--mono);color:var(--muted);background:#101013;border:1px solid var(--edge);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
+.marks{display:flex;flex-direction:column;gap:6px}
+.mk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr) 30px;gap:6px}
+.mk input{height:30px;font-size:12px}
+.mk button{height:30px;background:none;border:1px solid var(--edge-2);border-radius:6px;color:var(--faint);cursor:pointer;font:16px/1 var(--mono)}
+.mk button:hover{color:var(--danger);border-color:#6e2f2f}
+.note{font-size:12px;line-height:1.5;color:var(--muted);margin:0}
+.stage{display:flex;flex-direction:column;gap:20px;min-width:0}
+.card{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--edge);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.card.edit{border-color:var(--amber-dim);box-shadow:0 0 0 1px rgba(var(--acc-rgb),.35)}
+.card .tag{display:flex;justify-content:space-between;gap:10px;padding:10px 16px;font:700 10px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--edge)}
+.card.edit .tag span:first-child{color:var(--amber)}
+.hero{display:grid;place-items:center;height:180px;padding:0 24px;background:radial-gradient(600px 220px at 50% 0%,#1d1d23,transparent 70%),#0c0c0e;overflow:hidden}
+.ctx{display:grid;grid-template-columns:minmax(0,1fr) 96px minmax(0,.8fr);gap:1px;background:var(--edge)}
+@media (max-width:640px){.ctx{grid-template-columns:1fr 96px}.ctx .paper{grid-column:1/-1}}
+.ctx>div{background:var(--panel);padding:14px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.ctx small{font:700 9px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.bar{display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;background:linear-gradient(180deg,rgba(28,28,33,.96),rgba(22,22,26,.9));border:1px solid var(--edge);border-radius:10px;overflow:hidden}
+.bar .fake{font:800 9px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--edge-2);border-radius:5px;padding:6px 8px;color:var(--ink);white-space:nowrap}
+.bar .lcdf{font:500 11px/1 var(--mono);color:var(--lcd-ink);background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);border-radius:4px;padding:5px 7px}
+.bar .sub{font:700 9px/1 var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.tile{width:68px;height:68px;border-radius:16px;background:linear-gradient(160deg,#202027,#0d0d10);border:1px solid var(--edge-2);display:grid;place-items:center;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.paper .pp{background:#fafaf7;border-radius:8px;height:68px;display:flex;align-items:center;padding:0 14px;overflow:hidden}
+/* ---- the wordmark ---- */
+.lg{--hi:#fff;--lo:#bdbdc6;--ink2:var(--ink);display:inline-block;white-space:nowrap;line-height:1.05;font-family:var(--f);font-weight:var(--w);font-stretch:var(--st);letter-spacing:var(--tr);text-transform:var(--case);transform:skewX(var(--sk));padding:.06em .02em}
+.on-paper .lg{--hi:#2a2a31;--lo:#000;--ink2:#111}
+.lg span{display:inline-block}
+.t-chrome .m{background:linear-gradient(180deg,var(--hi),var(--lo));-webkit-background-clip:text;background-clip:text;color:transparent}
+.t-chrome .a{background:linear-gradient(180deg,var(--a2),var(--a));-webkit-background-clip:text;background-clip:text;color:transparent}
+.t-flat .m{color:var(--ink2)} .t-flat .a{color:var(--a)}
+.t-glow .m{color:var(--ink2);text-shadow:0 0 .18em color-mix(in srgb,var(--ink2) 35%,transparent)}
+.t-glow .a{color:var(--a2);text-shadow:0 0 .08em var(--a),0 0 .3em var(--a),0 0 .7em color-mix(in srgb,var(--a) 55%,transparent)}
+.t-outline .m{color:transparent;-webkit-text-stroke:.035em var(--ink2)} .t-outline .a{color:var(--a)}
+.t-shadow .m{color:var(--ink2);text-shadow:.07em .07em 0 var(--a)} .t-shadow .a{color:var(--a);text-shadow:.07em .07em 0 color-mix(in srgb,var(--ink2) 30%,#000)}
+.t-stripe .m{background:repeating-linear-gradient(180deg,var(--ink2) 0 .085em,transparent .085em .13em);-webkit-background-clip:text;background-clip:text;color:transparent}
+.t-stripe .a{background:repeating-linear-gradient(180deg,var(--a) 0 .085em,transparent .085em .13em);-webkit-background-clip:text;background-clip:text;color:transparent}
+.t-grad .m,.t-grad .a{color:transparent;-webkit-background-clip:text;background-clip:text}
+.t-grad .m{background-image:linear-gradient(90deg,var(--ink2),var(--a2))} .t-grad .a{background-image:linear-gradient(90deg,var(--a2),var(--a))}
+.t-badge{background:var(--a);border-radius:.16em;padding:.12em .32em .1em}
+.t-badge .m{color:var(--on-a)} .t-badge .a{color:var(--on-a);opacity:.72}
+.t-split .m{background:#1a1a1f;color:var(--ink2);padding:.12em .2em .1em .3em;border-radius:.16em 0 0 .16em;box-shadow:0 0 0 .03em var(--a) inset}
+.t-split .a{background:var(--a);color:var(--on-a);padding:.12em .3em .1em .2em;border-radius:0 .16em .16em 0}
+.on-paper .t-split .m{background:#fff}
+.t-lcd{background:color-mix(in srgb,var(--a) 9%,#000);border:.03em solid color-mix(in srgb,var(--a) 40%,transparent);border-radius:.12em;padding:.1em .28em}
+.t-lcd .m{color:color-mix(in srgb,var(--a) 55%,#000)} .t-lcd .a{color:var(--a);text-shadow:0 0 .25em color-mix(in srgb,var(--a) 70%,transparent)}
+.noacc .a{all:unset} .noacc .a{display:inline-block}
+/* ---- galleries ---- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.mini{position:relative;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:14px 14px 10px;cursor:pointer;display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .15s}
+.mini:hover{border-color:var(--amber-dim)}
+.mini .lgbox{height:40px;display:flex;align-items:center;overflow:hidden}
+.mini .nm{font:700 10px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.mini .x{position:absolute;right:8px;top:6px;background:none;border:0;color:var(--faint);font:16px/1 var(--mono);cursor:pointer}
+.mini .x:hover{color:var(--danger)}
+.empty{color:var(--faint);font:italic 13px var(--mono);margin:0}
+/* ---- fonts view ---- */
+.fontgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.fc{position:relative;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.fc .sample{font-size:30px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:36px}
+.fc .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font:500 11px var(--mono);color:var(--muted)}
+.fc .meta b{color:var(--ink);font-weight:700;flex:1 0 100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc .meta .rm{margin-left:auto}
+.fc select{height:26px;width:auto;font-size:11px;padding:0 6px}
+.fc.bad{opacity:.5}
+.fc.bad .sample{font:italic 13px var(--mono);color:var(--danger)}
+.addrow{display:flex;gap:8px;max-width:560px}
+.addrow input{flex:1;min-width:0}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#14201a;border:1px solid #2f7a4f;color:#c8f5d8;padding:9px 16px;border-radius:8px;font:500 12px var(--mono);opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;max-width:90vw}
+.toast.show{opacity:1}
+.toast.err{background:#2a1616;border-color:#7a3030;color:#ffd0d0}
+/* @include common/controls.css */
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <header>
+      <h1>Logo <span>Lab</span></h1>
+      <p class="lede">Design wordmarks for the XC3N tools: a typeface, a treatment and an accent colour, previewed big, in an app header, as an icon and on a white README. Keep the ones you like and copy the spec.</p>
+    </header>
+    <div class="seg" id="view" style="width:220px"><button data-v="design" class="on">Design</button><button data-v="fonts">Fonts</button></div>
+  </div>
+
+  <section id="designView">
+    <div class="work">
+      <section class="panel ctl" aria-label="Controls">
+        <div class="row"><span class="lbl">Editing</span><div class="seg wrap" id="target"></div></div>
+        <div class="row"><label class="lbl" for="font">Typeface <span id="fontCount" class="hex"></span></label><select id="font"></select></div>
+        <div class="row"><span class="lbl">Treatment</span><div class="seg g3" id="treat"></div></div>
+        <div class="row"><span class="lbl">Accent colour</span><div class="sw" id="col"></div></div>
+        <div class="row"><span class="lbl">Family <span class="hex" id="famHint">tints and shades</span></span><div class="fam" id="fam"></div>
+          <div class="pick"><input type="color" id="colPick" title="Any colour"><span class="hex" id="colHex"></span></div></div>
+        <div class="row"><span class="lbl">Accent on</span><div class="seg" id="accOn"><button data-v="2">Second part</button><button data-v="1">First part</button><button data-v="0">None</button></div></div>
+        <div class="row"><span class="lbl">Case</span><div class="seg" id="case"><button data-v="none">As written</button><button data-v="uppercase">UPPER</button><button data-v="lowercase">lower</button></div></div>
+        <div class="row"><span class="lbl">Tracking</span><div class="slrow"><input id="tr" type="range" min="-0.08" max="0.4" step="0.01" data-def="0.01"><output></output></div></div>
+        <div class="row"><span class="lbl">Slant</span><div class="slrow"><input id="sk" type="range" min="-16" max="0" step="1" data-def="0"><output></output></div></div>
+        <div class="btns"><button class="btn" id="shuffle">Shuffle</button><button class="btn accent" id="keep">Keep this</button><button class="btn" id="copy">Copy spec</button></div>
+        <div class="spec" id="spec"></div>
+        <div class="row"><span class="lbl">Wordmarks <button class="btn sm" id="addMark" title="Add a wordmark">+ Add</button></span>
+          <div class="marks" id="marks"></div>
+          <p class="note">A <b>|</b> splits the name into two parts for the accent (VJ|if). The second field is the subtitle shown in the header bar.</p></div>
+      </section>
+      <section class="stage" id="stage" aria-label="Previews"></section>
+    </div>
+    <section style="margin-top:24px"><h2>Kept</h2><div class="grid" id="kept"></div></section>
+    <section style="margin-top:24px"><h2>Starting points</h2><div class="grid" id="presets"></div></section>
+  </section>
+
+  <section id="fontsView" hidden>
+    <h2>Fonts in the lab</h2>
+    <p class="note" style="margin:-4px 0 14px">These are Google Fonts: free and open-licensed (mostly SIL Open Font License), loaded from Google's servers. "Offline" downloads a font as a self-contained .css file (the font data inside), so a tool can carry it and work without internet.</p>
+    <div class="btns" style="margin-bottom:14px"><div class="addrow"><input type="text" id="addName" placeholder="Add a Google Font by name, e.g. Space Mono"><button class="btn accent" id="addBtn">Add</button></div><button class="btn" id="resetFonts">Back to defaults</button></div>
+    <div class="fontgrid" id="mine"></div>
+    <h2 style="margin-top:28px">Suggestions</h2>
+    <p class="note" style="margin:-4px 0 14px">Display faces that suit a wordmark. They load as they scroll into view; + adds one to the lab.</p>
+    <div class="fontgrid" id="sugg"></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* @include common/controls.js */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const store = { get(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+function toast(m, err){ const t = $('#toast'); t.textContent = m; t.classList.toggle('err', !!err); t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200); }
+
+// ---------------- colour ----------------
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+const rgb2hex = c => '#' + c.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+function rgb2hsl([r, g, b]){ r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  let h = 0, s = 0; if (d){ s = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; }
+  return [h, s * 100, l * 100]; }
+function hsl2hex(h, s, l){ s /= 100; l /= 100; const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return rgb2hex([(r + m) * 255, (g + m) * 255, (b + m) * 255]); }
+const lum = hex => { const [r, g, b] = hex2rgb(hex).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const onColor = hex => lum(hex) > 0.35 ? '#111' : '#fff';           // readable text on the accent (badge, split)
+// base hues: 12 around the wheel at full saturation, plus white and two greys
+const BASES = [['Red', '#ff3b30'], ['Orange', '#ff7a1a'], ['Amber', '#ffb000'], ['Yellow', '#ffe14d'], ['Lime', '#b6ff3d'], ['Green', '#3ddc6a'],
+  ['Teal', '#2ee6c4'], ['Cyan', '#3ad1ff'], ['Blue', '#4a7dff'], ['Violet', '#8f7bff'], ['Purple', '#c15bff'], ['Pink', '#ff5bb0'], ['Rose', '#ff6b8a'],
+  ['White', '#f2f0ea'], ['Silver', '#a9a9b2'], ['Graphite', '#55555e'], ['Gold', '#d4a531'], ['Copper', '#c8743a']];
+// the family of a colour: same hue and saturation, lightness from dark to pale
+const FAM_L = [18, 28, 38, 48, 58, 68, 78, 87, 94];
+function family(hex){ const [h, s] = rgb2hsl(hex2rgb(hex)); return FAM_L.map(l => hsl2hex(h, Math.min(s, l > 80 ? 70 : 100), l)); }
+const lighter = hex => { const [h, s, l] = rgb2hsl(hex2rgb(hex)); return hsl2hex(h, s, Math.min(92, l + (100 - l) * 0.45)); };
+
+// ---------------- fonts (managed in the Fonts view) ----------------
+// { family, w: weight, st: stretch (Archivo widths), axis: true when the family is a variable font with a width axis }
+const DEFAULT_FONTS = [
+  { family: 'Archivo', w: 900, st: '100%' }, { family: 'Archivo', w: 900, st: '125%', label: 'Archivo Expanded' }, { family: 'Archivo', w: 900, st: '62%', label: 'Archivo Condensed' },
+  { family: 'Michroma', w: 400 }, { family: 'Orbitron', w: 900 }, { family: 'Unbounded', w: 900 }, { family: 'Syne', w: 800 }, { family: 'Bungee', w: 400 },
+  { family: 'Rubik Mono One', w: 400 }, { family: 'Righteous', w: 400 }, { family: 'Audiowide', w: 400 }, { family: 'Russo One', w: 400 },
+  { family: 'Black Ops One', w: 400 }, { family: 'Zen Dots', w: 400 }, { family: 'Tilt Neon', w: 400 }, { family: 'Monoton', w: 400 },
+  { family: 'Krona One', w: 400 }, { family: 'Big Shoulders Display', w: 900 }, { family: 'Bebas Neue', w: 400 }, { family: 'Space Grotesk', w: 700 },
+  { family: 'Major Mono Display', w: 400 }, { family: 'VT323', w: 400 }, { family: 'Silkscreen', w: 700 }, { family: 'Press Start 2P', w: 400 },
+];
+const SUGGEST = ['Anton', 'Oswald', 'Teko', 'Saira Stencil One', 'Sora', 'Lexend Zetta', 'Exo 2', 'Chakra Petch', 'Oxanium', 'Rajdhani', 'Turret Road',
+  'Quantico', 'Goldman', 'Wallpoet', 'Nova Square', 'Share Tech', 'Iceland', 'Faster One', 'Bowlby One SC', 'Alfa Slab One', 'Shrikhand', 'Codystar',
+  'Train One', 'Rampart One', 'Dela Gothic One', 'Rubik Glitch', 'Rubik Beastly', 'Rubik Moonrocks', 'Bungee Shade', 'Bungee Inline', 'Bungee Outline',
+  'Bungee Hairline', 'Tilt Warp', 'Climate Crisis', 'Sixtyfour', 'Pixelify Sans', 'Tiny5', 'Doto', 'Kode Mono', 'Bricolage Grotesque', 'Unica One', 'Gruppo',
+  'Megrim', 'Syncopate', 'Poiret One', 'Aldrich', 'Electrolize', 'Bai Jamjuree', 'Saira Condensed', 'Fjalla One', 'Staatliches', 'Squada One',
+  'Black Han Sans', 'Monofett', 'Fascinate', 'Ewert', 'Plaster', 'Vast Shadow', 'Nosifer', 'Creepster', 'Archivo Black', 'Lexend Giga', 'Orbit',
+  'Space Mono', 'Nova Mono', 'Share Tech Mono', 'Bowlby One', 'Mochiy Pop One', 'Turret Road', 'Workbench', 'Jersey 10', 'Micro 5'];
+let fonts = store.get('logolab-fonts', null) || clone(DEFAULT_FONTS);
+const fontKey = f => f.label || f.family + (f.w !== 400 ? ' ' + f.w : '');
+const cssFamily = f => `'${f.family.replace(/'/g, '')}', system-ui, sans-serif`;
+// load a family from Google Fonts at a weight; resolves true when it exists (link onerror = unknown family or weight)
+const loaded = new Map();
+function loadFont(family, w){
+  const k = family + ':' + w; if (loaded.has(k)) return loaded.get(k);
+  if (family === 'Archivo') return Promise.resolve(true);           // in the page's own stylesheet (all widths and weights)
+  const p = new Promise(res => {
+    const l = document.createElement('link'); l.rel = 'stylesheet';
+    l.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family).replace(/%20/g, '+')}${w !== 400 ? ':wght@' + w : ''}&display=swap`;
+    l.onload = () => document.fonts.load(`${w} 30px '${family}'`).then(() => res(true), () => res(true));
+    l.onerror = () => { l.remove(); res(false); };
+    document.head.appendChild(l);
+  });
+  loaded.set(k, p); return p;
+}
+// the heaviest of these weights a family has
+async function bestWeight(family){ for (const w of [900, 800, 700, 400]) if (await loadFont(family, w)) return w; return 0; }
+const saveFonts = () => store.set('logolab-fonts', fonts);
+
+// ---------------- wordmarks + design state ----------------
+const TREATS = [['chrome', 'Chrome'], ['flat', 'Flat'], ['glow', 'Neon'], ['outline', 'Outline'], ['shadow', 'Drop'], ['stripe', 'Stripes'], ['grad', 'Gradient'], ['badge', 'Badge'], ['split', 'Split'], ['lcd', 'LCD']];
+const base = { font: 'Archivo 900', treat: 'chrome', col: '#ffb000', acc: 2, cs: 'none', tr: 0.01, sk: 0 };
+const DEFAULT_MARKS = [{ id: 'vj', text: 'VJ|if', sub: '', cfg: { ...base } }, { id: 'mo', text: 'Bad |MOPHO', sub: 'Programmer', cfg: { ...base, acc: 0 } }];
+let marks = store.get('logolab-marks', null) || clone(DEFAULT_MARKS), edit = 'all', kept = store.get('logolab-kept2', []);
+const saveMarks = () => store.set('logolab-marks', marks);
+const parts = m => { const i = m.text.indexOf('|'); return i < 0 ? [m.text, ''] : [m.text.slice(0, i), m.text.slice(i + 1)]; };
+const plain = m => m.text.replace('|', '');
+const fontOf = cfg => fonts.find(f => fontKey(f) === cfg.font) || fonts[0] || DEFAULT_FONTS[0];
+// presets: cfg for every wordmark (byName overrides one)
+const PRESETS = [
+  ['Current', { ...base }, { 'Bad MOPHO': { ...base, acc: 0 } }],
+  ['Rack panel', { ...base, font: 'Michroma', treat: 'flat', cs: 'uppercase', tr: 0.06 }],
+  ['Neon sign', { ...base, font: 'Tilt Neon', treat: 'glow', col: '#ff5bb0', tr: 0.02 }],
+  ['LCD', { ...base, font: 'VT323', treat: 'lcd', tr: 0.04 }],
+  ['Synthwave', { ...base, font: 'Orbitron 900', treat: 'stripe', col: '#ff5bb0', cs: 'uppercase', tr: 0.04, sk: -10 }],
+  ['Badge', { ...base, font: 'Rubik Mono One', treat: 'badge', tr: 0 }],
+  ['Split block', { ...base, font: 'Archivo Expanded', treat: 'split', col: '#2ee6c4', tr: -0.01 }],
+  ['Drop shadow', { ...base, font: 'Righteous', treat: 'shadow', col: '#ff3b30', tr: 0.01 }],
+  ['Stencil', { ...base, font: 'Black Ops One', treat: 'flat', col: '#b6ff3d', tr: 0.03 }],
+  ['Outline', { ...base, font: 'Unbounded 900', treat: 'outline', tr: 0 }],
+  ['Arcade', { ...base, font: 'Press Start 2P', treat: 'flat', col: '#3ad1ff', tr: 0 }],
+  ['Condensed italic', { ...base, font: 'Archivo Condensed', treat: 'chrome', cs: 'uppercase', tr: 0.02, sk: -12 }],
+  ['Gradient', { ...base, font: 'Zen Dots', treat: 'grad', col: '#8f7bff', tr: 0 }],
+  ['Poster', { ...base, font: 'Big Shoulders Display 900', treat: 'flat', cs: 'uppercase', tr: 0.01 }],
+];
+// a preset or kept entry as { markText: cfg } for the current wordmarks
+function cfgFor(p, m){ if (p.byText) return p.byText[m.text] || p.byText[Object.keys(p.byText)[0]]; return (p.over && p.over[plain(m)]) || p.cfg; }
+
+function logoHTML(m, c){
+  const F = fontOf(c), [a, b] = parts(m), accIdx = c.acc && b ? c.acc - 1 : -1, col = c.col || '#ffb000';
+  const style = `--f:${cssFamily(F)};--w:${F.w};--st:${F.st || '100%'};--tr:${c.tr}em;--sk:${c.sk}deg;--case:${c.cs};--a:${col};--a2:${lighter(col)};--on-a:${onColor(col)}`;
+  return `<span class="lg t-${c.treat}${accIdx < 0 ? ' noacc' : ''}" style="${esc(style)}">` +
+    [a, b].filter(s => s !== '').map((p, i) => `<span class="${i === accIdx ? 'a' : 'm'}">${esc(p).replace(/ $/, '&nbsp;').replace(/^ /, '&nbsp;')}</span>`).join('') + '</span>';
+}
+function fit(box, size){
+  const lg = box.querySelector('.lg'); if (!lg) return;
+  lg.style.fontSize = size + 'px';
+  const w = box.clientWidth - 8, h = box.clientHeight - 6, r = lg.getBoundingClientRect();
+  const k = Math.min(1, w / r.width, h / r.height);
+  if (k < 1) lg.style.fontSize = Math.floor(size * k * 0.98) + 'px';
+}
+const fitAll = root => root.querySelectorAll('[data-fit]').forEach(b => fit(b, +b.dataset.fit));
+const colName = hex => { const b = BASES.find(x => x[1].toLowerCase() === hex.toLowerCase()); return b ? `${b[0]} ${hex}` : hex; };
+function spec(m){
+  const c = m.cfg, F = fontOf(c), [a, b] = parts(m);
+  const accTxt = c.acc && b ? `accent ${colName(c.col)} on "${(c.acc === 1 ? a : b).trim()}"` : `no accent (colour ${colName(c.col)})`;
+  return `${plain(m)}: ${F.family} ${F.w}${F.st && F.st !== '100%' ? ' width ' + F.st : ''} · ${TREATS.find(t => t[0] === c.treat)[1]} · ${accTxt} · ${c.cs === 'none' ? 'as written' : c.cs} · tracking ${c.tr}em · slant ${c.sk}°`;
+}
+const editing = m => edit === 'all' || edit === m.id;
+function renderStage(){
+  $('#stage').innerHTML = marks.map(m => {
+    const on = editing(m);
+    const bar = m.sub ? `<span class="sub">${esc(m.sub)}</span><span class="fake">v1.0</span>` : `<span class="fake">BPM</span><span class="lcdf">120.00</span><span class="fake">Tap</span>`;
+    return `<article class="card${on ? ' edit' : ''}" data-id="${m.id}">
+      <div class="tag"><span>${esc(plain(m))}</span><span>${on ? 'editing' : 'click to edit'}</span></div>
+      <div class="hero" data-fit="96">${logoHTML(m, m.cfg)}</div>
+      <div class="ctx">
+        <div><small>Header bar</small><div class="bar"><span data-fit="26" style="display:flex;align-items:center;height:32px;max-width:55%;flex:none">${logoHTML(m, m.cfg)}</span>${bar}</div></div>
+        <div><small>Icon</small><div class="tile" data-fit="40">${logoHTML(m, m.cfg)}</div></div>
+        <div class="paper"><small>README (light)</small><div class="pp on-paper" data-fit="38">${logoHTML(m, m.cfg)}</div></div>
+      </div></article>`;
+  }).join('');
+  fitAll($('#stage'));
+}
+function renderGrid(el, items, removable){
+  el.innerHTML = items.length ? items.map(([name, p], i) =>
+    `<div class="mini" data-i="${i}">${removable ? '<button class="x" title="Remove">×</button>' : ''}
+      ${marks.map(m => `<div class="lgbox" data-fit="32">${logoHTML(m, cfgFor(p, m))}</div>`).join('')}
+      <span class="nm">${esc(name)}</span></div>`).join('')
+    : '<p class="empty">Nothing kept yet — press Keep this.</p>';
+  fitAll(el);
+}
+const presetItems = () => PRESETS.map(([n, cfg, over]) => [n, { cfg, over }]);
+const cur = () => (marks.find(m => m.id === edit) || marks[0]).cfg;
+const segOn = (id, v) => document.querySelectorAll(id + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === String(v)));
+function syncControls(){
+  const c = cur();
+  $('#target').innerHTML = marks.map(m => `<button data-v="${m.id}">${esc(plain(m))}</button>`).join('') + (marks.length > 1 ? '<button data-v="all" title="Changes apply to every wordmark">All</button>' : '');
+  if (marks.length < 2 && edit === 'all') edit = marks[0] ? marks[0].id : 'all';
+  segOn('#target', edit); segOn('#treat', c.treat); segOn('#accOn', c.acc); segOn('#case', c.cs);
+  $('#font').innerHTML = fonts.map(f => `<option value="${esc(fontKey(f))}">${esc(fontKey(f))}</option>`).join('');
+  $('#font').value = fontKey(fontOf(c)); $('#fontCount').textContent = `${fonts.length} in the lab`;
+  document.querySelectorAll('#col button').forEach(b => b.classList.toggle('on', b.dataset.v.toLowerCase() === c.col.toLowerCase()));
+  const fam = family(c.col), near = fam.reduce((bi, h, i) => Math.abs(rgb2hsl(hex2rgb(h))[2] - rgb2hsl(hex2rgb(c.col))[2]) < Math.abs(rgb2hsl(hex2rgb(fam[bi]))[2] - rgb2hsl(hex2rgb(c.col))[2]) ? i : bi, 0);
+  $('#fam').innerHTML = fam.map((h, i) => `<button data-v="${h}" style="--c:${h}" title="${h}" class="${h.toLowerCase() === c.col.toLowerCase() || (i === near && !fam.includes(c.col.toLowerCase())) ? 'on' : ''}"></button>`).join('');
+  $('#colPick').value = c.col; $('#colHex').textContent = colName(c.col);
+  $('#tr').value = c.tr; $('#tr').nextElementSibling.textContent = c.tr.toFixed(2) + 'em';
+  $('#sk').value = c.sk; $('#sk').nextElementSibling.textContent = c.sk + '°';
+  $('#spec').textContent = marks.map(spec).join('\n');
+  $('#marks').innerHTML = marks.map(m => `<div class="mk" data-id="${m.id}"><input type="text" class="mt" value="${esc(m.text)}" title="Name — | splits it for the accent"><input type="text" class="ms" value="${esc(m.sub)}" placeholder="subtitle"><button title="Remove this wordmark">×</button></div>`).join('');
+}
+function change(fn){
+  marks.forEach(m => { if (editing(m)) fn(m.cfg); });
+  saveMarks(); syncControls(); renderStage();
+  const F = fontOf(cur()); loadFont(F.family, F.w).then(() => renderStage());
+}
+function applyPreset(p){ marks.forEach(m => { m.cfg = clone(cfgFor(p, m)); }); saveMarks(); syncControls(); renderStage(); }
+
+// ---------------- design view: wiring ----------------
+$('#treat').innerHTML = TREATS.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('');
+$('#col').innerHTML = BASES.map(([l, c]) => `<button data-v="${c}" title="${l}" style="--c:${c}"></button>`).join('');
+$('#target').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; edit = b.dataset.v; syncControls(); renderStage(); });
+$('#treat').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.treat = b.dataset.v); });
+$('#col').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.col = b.dataset.v); });
+$('#fam').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.col = b.dataset.v); });
+$('#colPick').addEventListener('input', e => change(c => c.col = e.target.value));
+$('#accOn').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.acc = +b.dataset.v); });
+$('#case').addEventListener('click', e => { const b = e.target.closest('button'); if (b) change(c => c.cs = b.dataset.v); });
+$('#font').addEventListener('change', e => change(c => c.font = e.target.value));
+$('#tr').addEventListener('input', e => change(c => c.tr = +e.target.value));
+$('#sk').addEventListener('input', e => change(c => c.sk = +e.target.value));
+$('#stage').addEventListener('click', e => { const card = e.target.closest('.card'); if (!card || edit === card.dataset.id) return; edit = card.dataset.id; syncControls(); renderStage(); });
+$('#shuffle').addEventListener('click', () => {
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  change(c => Object.assign(c, { font: fontKey(pick(fonts)), treat: pick(TREATS)[0], col: Math.random() < 0.7 ? pick(BASES)[1] : pick(family(pick(BASES)[1]).slice(3, 8)),
+    acc: Math.random() < 0.75 ? 2 : pick([0, 1]), cs: pick(['none', 'none', 'uppercase', 'lowercase']), tr: +(Math.random() * 0.12 - 0.02).toFixed(2), sk: Math.random() < 0.25 ? -10 : 0 }));
+});
+$('#keep').addEventListener('click', () => {
+  kept.unshift([`Kept ${new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, { byText: Object.fromEntries(marks.map(m => [m.text, clone(m.cfg)])) }]);
+  store.set('logolab-kept2', kept); renderGrid($('#kept'), kept, true); toast('Kept — it is in the list below');
+});
+$('#copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#spec').textContent); toast('Spec copied'); } catch (e) { toast('Select the spec text and copy it', true); } });
+$('#kept').addEventListener('click', e => {
+  const m = e.target.closest('.mini'); if (!m) return; const i = +m.dataset.i;
+  if (e.target.classList.contains('x')){ kept.splice(i, 1); store.set('logolab-kept2', kept); renderGrid($('#kept'), kept, true); } else applyPreset(kept[i][1]);
+});
+$('#presets').addEventListener('click', e => { const m = e.target.closest('.mini'); if (m) applyPreset(presetItems()[+m.dataset.i][1]); });
+// wordmark list
+$('#marks').addEventListener('change', e => {
+  const row = e.target.closest('.mk'), m = row && marks.find(m => m.id === row.dataset.id); if (!m) return;
+  if (e.target.classList.contains('mt')) m.text = e.target.value.trim() || m.text; else m.sub = e.target.value.trim();
+  saveMarks(); syncControls(); renderStage(); renderGrid($('#kept'), kept, true); renderGrid($('#presets'), presetItems(), false);
+});
+$('#marks').addEventListener('click', e => {
+  if (e.target.tagName !== 'BUTTON') return; const row = e.target.closest('.mk');
+  if (marks.length < 2) return toast('Keep at least one wordmark', true);
+  marks = marks.filter(m => m.id !== row.dataset.id); if (edit === row.dataset.id) edit = 'all';
+  saveMarks(); syncControls(); renderStage(); renderGrid($('#kept'), kept, true); renderGrid($('#presets'), presetItems(), false);
+});
+$('#addMark').addEventListener('click', () => {
+  const m = { id: 'm' + Date.now().toString(36), text: 'New|Tool', sub: '', cfg: clone(cur()) }; marks.push(m); edit = m.id;
+  saveMarks(); syncControls(); renderStage(); renderGrid($('#kept'), kept, true); renderGrid($('#presets'), presetItems(), false);
+  const inp = document.querySelector(`.mk[data-id="${m.id}"] .mt`); inp.focus(); inp.select();
+});
+
+// ---------------- fonts view ----------------
+const SAMPLE = f => `<div class="sample" style="font-family:${esc(cssFamily(f))};font-weight:${f.w};font-stretch:${f.st || '100%'}">VJif · Bad MOPHO</div>`;
+function renderMine(){
+  $('#mine').innerHTML = fonts.map((f, i) => `<div class="fc" data-i="${i}">${SAMPLE(f)}
+    <div class="meta"><b>${esc(fontKey(f))}</b>
+      ${f.label ? '' : `<select title="Weight">${[400, 500, 600, 700, 800, 900].map(w => `<option${w === f.w ? ' selected' : ''}>${w}</option>`).join('')}</select>`}
+      <button class="btn sm off" title="Download as a self-contained .css file (works offline)">Offline</button>
+      <button class="btn sm danger rm" title="Remove from the lab">Remove</button></div></div>`).join('');
+  fonts.forEach(f => loadFont(f.family, f.w));
+}
+function renderSugg(){
+  const have = new Set(fonts.map(f => f.family));
+  $('#sugg').innerHTML = [...new Set(SUGGEST)].filter(n => !have.has(n)).map(n => `<div class="fc" data-name="${esc(n)}">
+    <div class="sample" style="font-family:'${esc(n)}',system-ui">VJif · Bad MOPHO</div>
+    <div class="meta"><b>${esc(n)}</b><button class="btn sm add">+ Add</button></div></div>`).join('');
+  const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; io.unobserve(e.target);
+    const n = e.target.dataset.name; bestWeight(n).then(w => { if (!w){ e.target.classList.add('bad'); e.target.querySelector('.sample').textContent = 'not found on Google Fonts'; return; }
+      e.target.dataset.w = w; e.target.querySelector('.sample').style.fontWeight = w; }); }), { rootMargin: '200px' });
+  document.querySelectorAll('#sugg .fc').forEach(el => io.observe(el));
+}
+async function addFont(name, w){
+  name = name.trim().replace(/\s+/g, ' '); if (!name) return;
+  if (fonts.some(f => f.family.toLowerCase() === name.toLowerCase() && !f.label)) return toast(`${name} is already in the lab`);
+  w = w || await bestWeight(name);
+  if (!w) return toast(`"${name}" isn't on Google Fonts (check the spelling and capitals)`, true);
+  fonts.push({ family: name, w }); saveFonts(); renderMine(); renderSugg(); syncControls();
+  toast(`Added ${name} (${w})`);
+}
+$('#addBtn').addEventListener('click', () => { addFont($('#addName').value); $('#addName').value = ''; });
+$('#addName').addEventListener('keydown', e => { if (e.key === 'Enter') $('#addBtn').click(); });
+$('#sugg').addEventListener('click', e => { const b = e.target.closest('.add'); if (!b) return; const c = b.closest('.fc'); addFont(c.dataset.name, +c.dataset.w || 0); });
+$('#mine').addEventListener('change', async e => {
+  if (e.target.tagName !== 'SELECT') return; const i = +e.target.closest('.fc').dataset.i, f = fonts[i], old = fontKey(f), w = +e.target.value;
+  if (!(await loadFont(f.family, w))){ e.target.value = f.w; return toast(`${f.family} has no ${w} weight`, true); }
+  f.w = w; marks.forEach(m => { if (m.cfg.font === old) m.cfg.font = fontKey(f); }); saveFonts(); saveMarks(); renderMine(); syncControls(); renderStage();
+});
+$('#mine').addEventListener('click', async e => {
+  const c = e.target.closest('.fc'); if (!c) return; const f = fonts[+c.dataset.i];
+  if (e.target.classList.contains('rm')){
+    if (fonts.length < 2) return toast('Keep at least one font', true);
+    fonts.splice(+c.dataset.i, 1); saveFonts(); renderMine(); renderSugg(); syncControls(); renderStage(); toast(`Removed ${fontKey(f)}`);
+  } else if (e.target.classList.contains('off')) offline(f);
+});
+// one font as a .css file with the font data inline (base64): drop it into a tool to work without internet
+async function offline(f){
+  try {
+    const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(f.family).replace(/%20/g, '+')}:${f.family === 'Archivo' ? 'wdth,wght@62..125,' + f.w : 'wght@' + f.w}&display=swap`;
+    let css = await (await fetch(url)).text();
+    const urls = [...new Set([...css.matchAll(/url\((https:[^)]+)\)/g)].map(m => m[1]))];
+    toast(`Downloading ${f.family} (${urls.length} file${urls.length === 1 ? '' : 's'})…`);
+    for (const u of urls){
+      const buf = new Uint8Array(await (await fetch(u)).arrayBuffer()); let bin = '';
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+      css = css.split(u).join(`data:font/woff2;base64,${btoa(bin)}`);
+    }
+    css = `/* ${f.family} ${f.w} — from Google Fonts, embedded for offline use. Check the font's licence (most are SIL OFL 1.1). */\n` + css;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([css], { type: 'text/css' }));
+    a.download = `${f.family.replace(/\s+/g, '-').toLowerCase()}-${f.w}.css`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast(`Saved ${a.download}`);
+  } catch (e) { toast(`Couldn't download ${f.family}: ${e.message}`, true); }
+}
+$('#resetFonts').addEventListener('click', () => { fonts = clone(DEFAULT_FONTS); saveFonts(); renderMine(); renderSugg(); syncControls(); renderStage(); toast('Fonts back to defaults'); });
+// views
+$('#view').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; segOn('#view', b.dataset.v);
+  $('#designView').hidden = b.dataset.v !== 'design'; $('#fontsView').hidden = b.dataset.v !== 'fonts';
+  if (b.dataset.v === 'fonts' && !$('#mine').children.length){ renderMine(); renderSugg(); }
+  if (b.dataset.v === 'design'){ syncControls(); renderStage(); fitAll(document); }
+});
+let rT = 0; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => fitAll(document), 120); });
+
+// ---------------- start ----------------
+syncControls(); renderStage(); renderGrid($('#kept'), kept, true); renderGrid($('#presets'), presetItems(), false);
+Promise.all(fonts.map(f => loadFont(f.family, f.w))).then(() => { renderStage(); renderGrid($('#kept'), kept, true); renderGrid($('#presets'), presetItems(), false); });
+Controls.init();
+</script>
+</body>
+</html>
