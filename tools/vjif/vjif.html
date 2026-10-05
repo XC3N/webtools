@@ -49,7 +49,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow);
   padding:14px;overflow:auto;min-height:0;scrollbar-gutter:stable}
 h2{display:flex;align-items:center;gap:8px;margin:0 0 12px;font:700 10px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:rgba(var(--acc-rgb),.75);white-space:nowrap}
-h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--amber);box-shadow:0 0 8px rgba(var(--acc-rgb),.5);flex:none}
+h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--amber);flex:none}
 h2 .line{flex:1;height:1px;background:linear-gradient(90deg,var(--edge),transparent);min-width:10px}
 h2 .tag{font:500 10px var(--mono);letter-spacing:.02em;text-transform:none;color:var(--faint);overflow:hidden;text-overflow:ellipsis}
 h2:not(:first-child){margin-top:20px}
@@ -75,18 +75,18 @@ select:focus,input:focus{border-color:var(--amber-dim)}
 input::placeholder{color:var(--faint)}
 /* range: thin track, amber thumb */
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;height:4px;border-radius:3px;background:var(--track);outline:none;cursor:pointer;margin:0}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px rgba(var(--acc-rgb),.6);cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--amber);cursor:pointer}
 /* checkbox drawn as a small switch */
 input[type=checkbox]{-webkit-appearance:none;appearance:none;flex:none;width:34px;height:18px;margin:0;border-radius:10px;background:#16161a;border:1px solid var(--edge-2);box-shadow:inset 0 1px 3px rgba(0,0,0,.55);position:relative;cursor:pointer;transition:.15s;vertical-align:middle}
 input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#58585f;transition:.15s}
 input[type=checkbox]:checked{background:linear-gradient(180deg,rgba(var(--acc-rgb),.30),rgba(var(--acc-rgb),.13));border-color:var(--amber-dim)}
-input[type=checkbox]:checked::before{left:18px;background:var(--amber);box-shadow:0 0 8px rgba(var(--acc-rgb),.6)}
+input[type=checkbox]:checked::before{left:18px;background:var(--amber)}
 .tog{display:inline-flex;align-items:center;gap:7px;cursor:pointer}
 input[type=color]{-webkit-appearance:none;appearance:none;width:44px;height:28px;padding:3px;border:1px solid var(--edge-2);border-radius:6px;background:var(--track);cursor:pointer}
 input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:3px}
 /* LCD-style readouts: fixed size, never reflow */
 .lcd,output{font:500 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--lcd-ink);background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);
-  border-radius:4px;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 6px rgba(var(--acc-rgb),.3)}
+  border-radius:4px;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 output{display:block;width:100%;text-align:center}
 .lcd.two{display:flex;flex-direction:column;justify-content:center;gap:4px;height:40px;padding:0 8px}
 .lcd.two span{display:block;height:13px;line-height:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -101,10 +101,10 @@ output{display:block;width:100%;text-align:center}
 .seg button.on{background:linear-gradient(180deg,var(--acc-hi),var(--acc-lo));color:#1a1200;font-weight:700}
 .seg button{position:relative}
 /* "in use" marker (automated target, fade mode…): a dot in the corner, so the label never moves */
-.seg button.act::after{content:"";position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--amber);box-shadow:0 0 4px rgba(var(--acc-rgb),.8)}
+.seg button.act::after{content:"";position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--amber)}
 .seg button.on.act::after{background:#1a1200;box-shadow:none}
 .dimmed{opacity:.35;pointer-events:none}
-output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb),.4)}
+output.mod{color:rgb(var(--meter-rgb))}
 .scope{display:block;width:100%;height:52px;background:var(--lcd-bg);border:1px solid rgba(var(--meter-rgb),.35);border-radius:4px;margin-top:2px}
 /* rows: label | control | readout */
 .field{display:grid;grid-template-columns:78px minmax(0,1fr) 58px;align-items:center;gap:8px;margin-bottom:9px;min-height:26px}
@@ -131,20 +131,20 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .grp{display:flex;align-items:center;gap:7px}.grp.right{margin-left:auto}
 .vsep{width:1px;height:26px;background:var(--edge);flex:none}
 .bpmwrap{position:relative;display:inline-block}
-#bpmMark{position:absolute;bottom:4px;height:2px;border-radius:1px;background:var(--amber);box-shadow:0 0 5px rgba(var(--acc-rgb),.8);pointer-events:none;display:none}
+#bpmMark{position:absolute;bottom:4px;height:2px;border-radius:1px;background:var(--amber);pointer-events:none;display:none}
 #bpm{width:84px;text-align:center;color:var(--lcd-ink);background:var(--lcd-bg);border-color:rgba(var(--meter-rgb),.35);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 #bpm::-webkit-outer-spin-button,#bpm::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #bpm.pending{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
 #beats{display:flex;gap:4px}#beats i{width:9px;height:9px;border-radius:50%;background:#23232a;border:1px solid var(--edge-2)}
-#beats i.on{background:var(--amber);border-color:var(--amber);box-shadow:0 0 7px rgba(var(--acc-rgb),.8)}
-#beats i:first-child.on{background:#ff6a3d;border-color:#ff6a3d;box-shadow:0 0 7px #ff6a3d}
+#beats i.on{background:var(--amber);border-color:var(--amber)}
+#beats i:first-child.on{background:#ff6a3d;border-color:#ff6a3d}
 #barpos{width:6ch;text-align:center}
 #saveStat{flex:none;margin-left:auto;width:13ch;height:14px;line-height:14px;text-align:right;font:500 10px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
 #setLabel{width:clamp(110px,9vw,150px);height:28px;line-height:18px}
 #setLabel.dirty::after{content:" •"}
 #fps{flex:none;width:11ch;height:14px;line-height:14px;text-align:center;font:500 10px var(--mono);color:var(--faint);white-space:nowrap}
 .led{display:inline-block;width:8px;height:8px;border-radius:50%;background:#23232a;border:1px solid var(--edge-2);margin-right:7px;vertical-align:-1px;transition:.1s}
-.led.on{background:var(--ok);border-color:var(--ok);box-shadow:0 0 7px var(--ok)}
+.led.on{background:var(--ok);border-color:var(--ok)}
 .iconbtn{width:30px;padding:7px 0;text-align:center;font:800 12px/1 var(--sans)}
 
 /* ---------- pads ---------- */
@@ -155,9 +155,16 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .pad .key{position:absolute;left:4px;top:4px;font:700 11px/1 var(--mono);color:var(--acc-hi);background:#000;border:1px solid #000;border-radius:4px;padding:3px 5px}
 .pad .nm{position:absolute;left:0;right:0;bottom:0;padding:2px 5px;font:500 10px var(--mono);background:linear-gradient(transparent,#000d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pad.empty .nm::before{content:'empty';color:var(--faint)}
-.pad.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 0 10px rgba(var(--acc-rgb),.35)}
+.pad.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
 .pad.drop{outline:2px dashed var(--amber);outline-offset:-2px}
 .pad.hit{animation:hit .2s}@keyframes hit{from{filter:brightness(2.2)}}
+.scgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.scene{position:relative;height:42px;padding:0;border:1px solid var(--edge);border-radius:6px;background:var(--track) center/cover no-repeat;cursor:pointer}
+.scene .k{position:absolute;left:4px;top:4px;font:700 11px/1 var(--mono);letter-spacing:0;color:var(--acc-hi);background:#000;border-radius:4px;padding:3px 5px}
+.scene .n{position:absolute;right:4px;bottom:4px;font:500 10px/1 var(--mono);letter-spacing:0;text-transform:none;color:var(--ink);background:rgba(0,0,0,.65);border-radius:3px;padding:2px 4px}
+.scene.empty .n{color:var(--faint);background:none}
+.scene.cur{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.scene.wait{animation:wait .25s steps(1) infinite}
 .pad.wait{border-color:var(--amber);animation:wait .25s steps(1) infinite}@keyframes wait{50%{border-color:var(--edge)}}
 .pad .dots{position:absolute;right:4px;top:4px;display:flex;gap:2px}
 .pad .dots b{width:15px;height:15px;font:700 9px/15px var(--mono);border-radius:3px;color:#000;text-align:center}
@@ -198,7 +205,7 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .lrow .lmode{height:26px}
 .layer .lop{display:block;margin:13px 0 4px}
 .lon{width:26px;height:26px;padding:0;font:700 12px var(--mono);letter-spacing:0;color:var(--lc);background:#000;border-color:#000}
-.layer.on .lon{background:var(--lc);border-color:var(--lc);color:#000;box-shadow:0 0 10px var(--lc)}
+.layer.on .lon{background:var(--lc);border-color:var(--lc);color:#000}
 .lname{font:800 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer.on .lname{color:var(--ink)}
 .layer.tgt .lname{color:var(--lc)}
@@ -230,7 +237,10 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
 .btnrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 
 /* ---------- modals, toast ---------- */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:8}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;z-index:8}
+/* Settings: a drawer on the right with nothing over the app, so theme changes are seen as they're made */
+#setPanel{background:none;place-items:start end;pointer-events:none}
+#setPanel .modalBox{pointer-events:auto;margin:64px 14px 0 0;max-height:calc(100vh - 80px)}
 .modalBox{width:min(660px,92vw);max-height:86vh;overflow:auto;background:var(--panel-2);border:1px solid var(--edge-2);border-radius:13px;padding:22px 24px;box-shadow:0 18px 50px rgba(0,0,0,.6);scrollbar-gutter:stable}
 .modalBox h2 button{margin-left:auto}
 .modalBox .row{display:flex;gap:7px;margin:10px 0;align-items:center}.modalBox input[type=text]{flex:1;min-width:0}
@@ -280,6 +290,33 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
   <div class="import">
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
     <div class="row"><button id="addFiles" title="Or drop files / links onto a pad or anywhere in this panel">Add…</button><input id="urlIn" type="url" placeholder="https://…/loop.gif"><button id="urlBtn">Load</button></div>
+  </div>
+  <h2>Scenes<span class="line"></span><span class="tag">1 – 9</span><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
+  <div class="scgrid" id="scenes"></div>
+</section>
+
+<main id="stage" class="panel">
+  <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
+  <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
+</main>
+
+<aside id="side" class="panel">
+  <h2>Transform<span class="line"></span></h2>
+  <div class="lcd one" id="xfTitle" style="margin-bottom:12px">—</div>
+  <div id="xfPanel">
+    <div class="field"><label for="xFit">Fit</label><select id="xFit" class="span">
+      <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select></div>
+    <div class="field"><label for="gSmooth">Smoothing</label><label class="tog span" title="Off = crisp pixels when the GIF is scaled. Applies to this GIF everywhere it's used."><input type="checkbox" id="gSmooth"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">smooth when scaled</span></label></div>
+    <div class="field"><label for="xX">X</label><input id="xX" type="range" data-def="0" min="-1920" max="1920" step="1"><output></output></div>
+    <div class="field"><label for="xY">Y</label><input id="xY" type="range" data-def="0" min="-1080" max="1080" step="1"><output></output></div>
+    <div class="field"><label for="xSX">Scale X</label><input id="xSX" type="range" data-def="1" min="0.05" max="8" step="0.01"><output></output></div>
+    <div class="field"><label for="xSY">Scale Y</label><input id="xSY" type="range" data-def="1" min="0.05" max="8" step="0.01"><output></output></div>
+    <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
+    <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
+    <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
+    <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
+    <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
   <div id="gifSettings" class="disabled">
@@ -355,31 +392,6 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       </div>
     </div>
   </div>
-</section>
-
-<main id="stage" class="panel">
-  <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
-  <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
-</main>
-
-<aside id="side" class="panel">
-  <h2>Transform<span class="line"></span></h2>
-  <div class="lcd one" id="xfTitle" style="margin-bottom:12px">—</div>
-  <div id="xfPanel">
-    <div class="field"><label for="xFit">Fit</label><select id="xFit" class="span">
-      <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select></div>
-    <div class="field"><label for="gSmooth">Smoothing</label><label class="tog span" title="Off = crisp pixels when the GIF is scaled. Applies to this GIF everywhere it's used."><input type="checkbox" id="gSmooth"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">smooth when scaled</span></label></div>
-    <div class="field"><label for="xX">X</label><input id="xX" type="range" data-def="0" min="-1920" max="1920" step="1"><output></output></div>
-    <div class="field"><label for="xY">Y</label><input id="xY" type="range" data-def="0" min="-1080" max="1080" step="1"><output></output></div>
-    <div class="field"><label for="xSX">Scale X</label><input id="xSX" type="range" data-def="1" min="0.05" max="8" step="0.01"><output></output></div>
-    <div class="field"><label for="xSY">Scale Y</label><input id="xSY" type="range" data-def="1" min="0.05" max="8" step="0.01"><output></output></div>
-    <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
-    <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
-    <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
-    <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
-    <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
-  </div>
 </aside>
 <div id="toast"></div>
 <div id="setPanel" class="modal" hidden>
@@ -397,8 +409,9 @@ output.mod{color:rgb(var(--meter-rgb));text-shadow:0 0 6px rgba(var(--meter-rgb)
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to browse; drop a .vjif anywhere to import a set</dd>
       <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Shift+Q…C</dt><dd>Remove that GIF from the edited layer</dd>
-      <dt>1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
-      <dt>Shift+1–4</dt><dd>Choose the layer to edit / trigger into (or click its bar)</dd>
+      <dt>1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar). A scene is what the four layers hold; a set has nine</dd>
+      <dt>F1–F4 · Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
+      <dt>Alt+1–4</dt><dd>Choose the layer to edit / trigger into (or click its card)</dd>
       <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
       <dt>Wheel on BPM</dt><dd>Steps the digit under the cursor (hundreds … hundredths, it's underlined)</dd>
       <dt>Shift+Space</dt><dd>Resync: now is beat 1, every GIF restarts</dd>
@@ -1033,6 +1046,7 @@ function trigger(p){
   el.classList.add('wait');
 }
 function firePending(){
+  if (pendingScene && clock.beat >= pendingScene.beat - 1e-9){ const q = pendingScene; pendingScene = null; gotoScene(q.i, q.beat); }
   for (const [p, q] of pending) if (clock.beat >= q.beat - 1e-9 || !pads[p].gif){
     pending.delete(p); pads[p].el.classList.remove('wait'); fire(p, q.beat, q.released);
   }
@@ -1136,6 +1150,63 @@ function removeClip(li, c){
   L.clips = L.clips.filter(x => x !== c); if (L.sel === c) L.sel = null;
   syncLayerUI(); syncXfUI();
 }
+// ---------- scenes ----------
+// A set holds N_SCENES scenes; a scene is what the 4 layers hold (on / opacity / blend / mode, GIFs and their placement).
+// The live `layers` are the current scene; the others wait in `scenes` (null = empty). Pads and GIF settings belong to the set.
+const N_SCENES = 9;
+const scenes = Array(N_SCENES).fill(null);
+let sceneIdx = 0, pendingScene = null, liveThumb = null;
+const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null });
+function sceneThumb(){
+  if (!layers.some(L => L.clips.length)) return null;
+  const c = document.createElement('canvas'); c.width = 96; c.height = 54; c.getContext('2d').drawImage(master, 0, 0, 96, 54);
+  return c.toDataURL('image/jpeg', 0.7);
+}
+const captureScene = () => ({ layers: layers.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel })), thumb: sceneThumb() });
+function gotoScene(i, beat = clock.beat){
+  if (i === sceneIdx) return;
+  scenes[sceneIdx] = captureScene(); sceneIdx = i;
+  const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
+  layers.forEach((L, li) => {
+    const s = sc ? sc.layers[li] : emptyLayer();
+    Object.assign(L, { on: s.on, opacity: s.opacity, blend: s.blend, mode: s.mode, clips: s.clips.slice(), sel: s.sel });
+    L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; });   // the scene starts from the top
+  });
+  scenes[i] = null; liveThumb = sc && sc.thumb;
+  pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
+  syncLayerUI(); syncXfUI(); renderScenes(); redraw.all = true;
+  if (hist.ready) hist.cur = histState();             // switching isn't an undo step
+}
+// key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
+function sceneKey(i){
+  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0, b = clock.beat;
+  if (i === sceneIdx){ pendingScene = null; renderScenes(); return; }
+  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return gotoScene(i);
+  const prev = Math.floor(b / unit + 1e-9) * unit;
+  if (b - prev <= unit * SNAP_GRACE) return gotoScene(i, prev);
+  pendingScene = { i, beat: prev + unit }; renderScenes();
+}
+const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers : []).reduce((a, l) => a + l.clips.length, 0);
+function renderScenes(){
+  const box = $('#scenes');
+  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" title="Scene ${i + 1} (key ${i + 1})"><span class="k">${i + 1}</span><span class="n"></span></button>`).join('');
+  [...box.children].forEach((b, i) => {
+    const n = sceneCount(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
+    b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
+    const bg = n && th ? `url(${th})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
+    b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : 'empty';
+  });
+}
+$('#scenes').addEventListener('click', e => { const b = e.target.closest('.scene'); if (b) sceneKey(+b.dataset.i); });
+// copy the current scene into the next empty one (new clip ids, same placement) and go there
+$('#scDup').addEventListener('click', () => {
+  let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i)) t = i; }
+  if (t < 0) return toast('No empty scene to copy into — clear one first');
+  scenes[t] = { thumb: sceneThumb(), layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
+    return { on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null }; }) };
+  gotoScene(t); toast2(`Copied to scene ${t + 1}`);
+});
+setInterval(() => { if (!document.hidden){ liveThumb = sceneThumb(); renderScenes(); } }, 1000);
 function toggleLayer(li){ layers[li].on = !layers[li].on; syncLayerUI(); }
 function setTarget(li){ target = li; syncLayerUI(); syncXfUI(); }
 document.addEventListener('visibilitychange', () => { redraw.all = true; });
@@ -1391,7 +1462,7 @@ function isTyping(e){
 }
 function onKey(e){
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
-  if (!$('#setPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; } return; }
+  if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
   if (!$('#setsPanel').hidden){                      // the sets panel is modal
     if (e.key === 'Escape' && askBox){ e.preventDefault(); closeAsk(); }
     else if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
@@ -1401,6 +1472,9 @@ function onKey(e){
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); quickSave(); return; }
   if ((e.ctrlKey || e.metaKey) && !isTyping(e) && /^[zy]$/i.test(e.key)){
     e.preventDefault(); (e.key.toLowerCase() === 'y' || e.shiftKey) ? redo() : undo(); return;
+  }
+  if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+1–4: the layer to edit / trigger into
+    const a = /^Digit([1-4])$/.exec(e.code); if (a){ e.preventDefault(); setTarget(+a[1] - 1); } return;
   }
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === 'Space') e.preventDefault();
@@ -1423,8 +1497,10 @@ function onKey(e){
   if (e.code === 'Space'){ e.shiftKey ? resync() : tap(); return; }
   if (e.code === 'Escape'){ stopPick(); return; }
   if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
-  const m = /^Digit([1-4])$/.exec(e.code);
-  if (m){ e.preventDefault(); const li = +m[1] - 1; e.shiftKey ? setTarget(li) : toggleLayer(li); }
+  const fk = /^F([1-4])$/.exec(e.code);              // F1–F4 or Shift+1–4: layer on / off; 1–9: scenes
+  if (fk){ e.preventDefault(); toggleLayer(+fk[1] - 1); return; }
+  const m = /^Digit([1-9])$/.exec(e.code);
+  if (m){ e.preventDefault(); const n = +m[1]; if (e.shiftKey){ if (n <= 4) toggleLayer(n - 1); } else sceneKey(n - 1); }
 }
 function onKeyUp(e){
   if (isTyping(e)) return;
@@ -1681,7 +1757,8 @@ $('#gClear').addEventListener('click', () => {
   freeGif(p.gif); p.gif = null;
   pending.delete(selPad); p.el.classList.remove('wait');
   layers.forEach(L => { L.clips = L.clips.filter(c => c.pad !== selPad); });
-  renderPad(selPad); syncGifUI(); syncLayerUI(); syncXfUI(); updateMem();
+  scenes.forEach(sc => sc && sc.layers.forEach(l => { l.clips = l.clips.filter(c => c.pad !== selPad); if (!l.clips.includes(l.sel)) l.sel = null; }));
+  renderScenes(); renderPad(selPad); syncGifUI(); syncLayerUI(); syncXfUI(); updateMem();
 });
 
 // ---------- UI: layers ----------
@@ -1691,8 +1768,8 @@ function buildLayers(){
     const L = layers[li], row = document.createElement('div');
     row.className = 'layer'; row.style.setProperty('--lc', LCOL[li]);
     // a narrow card: on / name / clear — mode / blend — opacity — GIF chips
-    row.innerHTML = `<div class="lhead"><button class="lon" title="Key ${li+1}">${li+1}</button>
-      <span class="lname" title="Click the card or press Shift+${li+1} to edit this layer">${LNAMES[li]}</span>
+    row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: F${li+1} or Shift+${li+1}">${li+1}</button>
+      <span class="lname" title="Click the card or press Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow"><select class="lmode" title="Stack: pads add GIFs to this layer (up to 6) · Replace: pads swap the GIF"><option value="stack">Stack</option><option value="replace">Replace</option></select>
       <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
@@ -1765,7 +1842,7 @@ function syncLayerUI(){
   for (const L of layers){
     const r = L.row, sel = selClip(L.i);
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target);
-    r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Shift+${L.i+1} to edit this layer`;
+    r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
     r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.lmode').value = L.mode;
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
@@ -1975,7 +2052,7 @@ $('#midiIn').addEventListener('change', bindMidiInput);
 $('#snap').addEventListener('change', e => snapMode = e.target.value);
 $('#outBtn').addEventListener('click', openOutput);
 $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
-$('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = false; });
+$('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = !$('#setPanel').hidden; });
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
@@ -2011,7 +2088,7 @@ function frame(gen){
   const now = performance.now();                     // own clock (the output window's rAF time has another origin)
   lastFrame = now;
   updateClock(now);
-  if (pending.size) firePending();
+  if (pending.size || pendingScene) firePending();
   drawFrame(now);
   if (!document.hidden && now - scopeT > 33){ scopeT = now; drawScopes(); }
   const bi = Math.floor(clock.beat);
@@ -2050,21 +2127,38 @@ const store = {
   keys(prefix){ return this.req('readonly', s => s.getAllKeys(IDBKeyRange.bound(prefix, prefix + '￿'))); },
   all(prefix){ return this.req('readonly', s => s.getAll(IDBKeyRange.bound(prefix, prefix + '￿'))); },
 };
+// v3: `layers` = the current scene (what v2 readers expect), `scenes` = all nine (the current one null), `scene` = which is current
+const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, sel: L.clips.indexOf(L.sel),
+  clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
 function snapshot(){
   return JSON.stringify({
-    v: 2, bpm: clock.bpm, snap: snapMode, target,
+    v: 3, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx,
     pads: pads.map(p => p.gif ? { hash: p.gif.hash, name: p.gif.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) } : null),
-    layers: layers.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, sel: L.clips.indexOf(selClip(L.i)),
-      clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
+    layers: serLayers(layers),
+    scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : serLayers(sc.layers)),
   });
 }
-// what counts as "changed" for the unsaved-changes dot: everything except which layer / GIF is selected
-function contentSig(snap){ if (!snap) return ''; const o = JSON.parse(snap); delete o.target; o.layers.forEach(l => delete l.sel); return JSON.stringify(o); }
+// what counts as "changed" for the unsaved-changes dot: everything except which layer / GIF / scene is selected
+function contentSig(snap){
+  if (!snap) return ''; const o = JSON.parse(snap);
+  const all = o.scenes ? o.scenes.slice() : []; all[o.scene || 0] = o.layers;
+  all.forEach(ls => ls && ls.forEach(l => delete l.sel));
+  delete o.target; delete o.scene; delete o.layers; o.scenes = all;
+  return JSON.stringify(o);
+}
+// saved layers → live layer states (only GIFs that loaded; a GIF lives on one layer: the topmost wins)
+function deserLayers(sls, now){
+  const out = sls.map(sl => { const clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
+    return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null }; });
+  const seen = new Set();
+  for (let li = out.length - 1; li >= 0; li--){ const L = out[li]; L.clips = L.clips.filter(c => !seen.has(c.pad) && seen.add(c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; }
+  return out;
+}
 
 const sets = new Map();                              // id → set record
 const session = { setId: null, savedSig: '' };
 const curSet = () => session.setId && sets.get(session.setId);
-const hasContent = () => pads.some(p => p.gif) || layers.some(L => L.clips.length);
+const hasContent = () => pads.some(p => p.gif) || layers.some(L => L.clips.length) || scenes.some(sc => sc && sc.layers.some(l => l.clips.length));
 let dirty = false;
 function updSetLabel(){
   const rec = curSet(), el = $('#setLabel');
@@ -2108,14 +2202,10 @@ async function applySnapshot(st, { wait = true } = {}){
     if (pl.fresh ? (g.key.on || hsvOn(g)) : JSON.stringify([g.key, g.hsv]) !== fx0) applyFx(g);
   });
   setBpm(st.bpm); snapMode = st.snap || 'off'; $('#snap').value = snapMode;
-  const now = performance.now();
-  st.layers.forEach((sl, li) => {
-    const L = layers[li]; Object.assign(L, { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode });
-    L.clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
-    L.sel = L.clips[sl.sel] || null;
-  });
-  const seen = new Set();                            // a GIF lives on one layer: keep the topmost if an older set has duplicates
-  for (let li = 3; li >= 0; li--){ const L = layers[li]; L.clips = L.clips.filter(c => !seen.has(c.pad) && seen.add(c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; }
+  const now = performance.now(), idx = st.scene || 0;
+  deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s));
+  for (let i = 0; i < N_SCENES; i++) scenes[i] = i !== idx && st.scenes && st.scenes[i] ? { layers: deserLayers(st.scenes[i], now), thumb: null } : null;
+  sceneIdx = idx; pendingScene = null; liveThumb = null; renderScenes();
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
   selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem();
@@ -2161,7 +2251,8 @@ async function loadSet(id){
 async function newEmptySet(){
   if (setsBusy) return;
   pads.forEach((p, i) => { if (p.gif){ freeGif(p.gif); p.gif = null; renderPad(i); } });
-  layers.forEach(L => Object.assign(L, { on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null }));
+  layers.forEach(L => Object.assign(L, emptyLayer()));
+  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; renderScenes();
   session.setId = null; session.savedSig = '';
   hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI();
   selectPad(0); syncLayerUI(); syncXfUI(); updateMem(); redraw.all = true;
@@ -2346,7 +2437,7 @@ async function restore(){
     session.setId = ((await store.get('session')) || {}).setId || null;
     if (!sets.has(session.setId)) session.setId = null;
     const st = JSON.parse(await store.get('state') || 'null');
-    if (st && st.v !== 2){                           // pre-sets layout: files under 'pad:<i>'
+    if (st && (st.v || 1) < 2){                       // pre-sets layout: files under 'pad:<i>'
       for (let i = 0; i < pads.length; i++){
         const rec = await store.get('pad:' + i);
         if (!rec){ st.pads[i] = null; continue; }
@@ -2372,6 +2463,7 @@ setInterval(autosave, 1000);
 const hist = { ready: false, cur: '', undo: [], redo: [] };
 function histState(){
   return JSON.stringify({
+    scene: sceneIdx,
     layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, mode: L.mode,
       clips: L.clips.map(c => ({ id: c.id, pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
     gifs: pads.map(p => p.gif ? Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) : null),
@@ -2387,7 +2479,9 @@ function commit(){
 function undo(){ if (!hist.ready || drag) return; commit(); if (!hist.undo.length) return; hist.redo.push(hist.cur); applyHist(hist.undo.pop()); hist.cur = histState(); }
 function redo(){ if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return; hist.undo.push(hist.cur); applyHist(hist.redo.pop()); hist.cur = histState(); }
 function applyHist(s){
-  const st = JSON.parse(s), byId = new Map(), now = performance.now();
+  const st = JSON.parse(s);
+  if (st.scene !== undefined && st.scene !== sceneIdx) gotoScene(st.scene);   // a step from another scene: go there first
+  const byId = new Map(), now = performance.now();
   layers.forEach(L => L.clips.forEach(c => byId.set(c.id, c)));      // reuse live clips so playback doesn't restart
   st.layers.forEach((sl, li) => {
     const L = layers[li], prevSel = L.sel;
@@ -2422,7 +2516,7 @@ Theme.onApply(() => {
 { let saved = null; try { saved = Theme.parse(JSON.parse(localStorage.getItem('vjif-theme'))); } catch (e) {}
   Theme.apply(saved || Theme.DEFAULT); }
 buildPads(); pads.forEach((_, i) => renderPad(i));
-buildLayers(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
+buildLayers(); renderScenes(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
 // typing into readouts: musical lengths accept a label ("1/8", "2 bars") or a number of beats; phase is in degrees
 const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), i = opts.findIndex(o => o[1].toLowerCase() === l || o[1].toLowerCase() === l + 's');
   if (i >= 0) return i; const n = parseFloat(t); return isFinite(n) ? optIdx(opts, n) : null; };
