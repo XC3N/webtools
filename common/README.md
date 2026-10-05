@@ -5,7 +5,7 @@ Code shared between tools, inlined into each tool's single HTML file by `build.j
 
 Rule of thumb: move something here when a **second** tool needs it, not before.
 
-Planned candidates (currently living inside the Mopho Programmer and VJif):
+Planned candidates (currently living inside Bad MOPHO and VJif):
 
 - `ui-kit.css` — theme tokens and base controls (panels, LCD readouts, segmented buttons, switches, sliders, scrollbars, modals, toast) plus the layout-stability rules
 - `dropdown.js` — themed dropdown that can't hijack keyboard typing

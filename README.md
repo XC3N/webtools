@@ -6,7 +6,7 @@ the website or from your disk, and it works — no install, no server, offline o
 | Tool | What it does |
 |---|---|
 | **[VJif](tools/vjif/)** | GIF VJ tool: 18 keyboard pads, 4 blended layers, BPM / tap / MIDI-clock sync, live colour key and HSV, mouse transform handles, sets saved in the browser and exported as `.vjif` files. *Actually, it's pronounced vjif.* |
-| **[Mopho Programmer](tools/mopho/)** | Web MIDI editor and librarian for the Dave Smith Instruments Mopho. |
+| **[Bad MOPHO](tools/bad-mopho/)** | Web MIDI editor and librarian for the Dave Smith Instruments Mopho. |
 
 **Use them online:** https://xc3n.github.io/webtools/ (after the first deploy)
 **Use them offline:** download the file from the site (or build it, below) and open it in Chrome.
@@ -47,4 +47,4 @@ If these tools are useful to you, consider supporting the music at [xc3n.bandcam
 Licensed by XC3N under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): free to use, share and adapt, with credit, for non-commercial purposes.
 Using the tools in your own work is fine, **including paid gigs, streams, videos and commissions** — what's excluded is selling, sublicensing or bundling the tools or their code (or modified versions) for money. Details in [LICENSE](LICENSE).
 
-The names "VJif" and "Mopho Programmer" and their logos aren't covered — forks need their own name. See [TRADEMARKS.md](TRADEMARKS.md).
+The names "VJif" and "Bad MOPHO" and their logos aren't covered — forks need their own name. See [TRADEMARKS.md](TRADEMARKS.md).

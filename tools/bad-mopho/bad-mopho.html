@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mopho Programmer</title>
+<title>Bad MOPHO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -716,7 +716,7 @@
 <body>
 <header>
   <div class="bar">
-    <div class="brand"><span class="logo">mopho</span><span class="sub">Programmer</span><span class="ver" id="appVer"></span></div>
+    <div class="brand"><span class="logo" style="text-transform:none">Bad MOPHO</span><span class="sub">Programmer</span><span class="ver" id="appVer"></span></div>
     <div class="lcd"><div class="l1" id="lcd1">— SELECT MIDI OUTPUT —</div><div class="l2" id="lcd2">ready</div><div class="sync" id="lcdSync"><span class="spin">↻</span><span id="lcdSyncTxt">SYNC</span></div></div>
     <div class="ctrls">
       <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">no MIDI</span></div>
@@ -3835,7 +3835,7 @@ applyTheme();
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b)b.blur();});
 
 document.getElementById('appVer').textContent='v'+APP_VERSION;
-document.title='mopho Programmer v'+APP_VERSION;
+document.title='Bad MOPHO v'+APP_VERSION;
 snapOrig();   // initial baseline = the default buffer, so everything starts dim
 /* Kill native <select> letter-search globally (capture phase covers every dropdown, current or future) so a held note key can't jump a dropdown's value. preventDefault only -> our own note handler still runs. */
 /* About / credits — click the version number. Changelog stays empty until the v1.0 release. */
@@ -3846,7 +3846,7 @@ snapOrig();   // initial baseline = the default buffer, so everything starts dim
   ver.style.cursor='pointer'; ver.title='About this editor';
   const ov=el('div','about-ov hidden');
   ov.innerHTML=`<div class="about-card">
-    <h2>mopho Programmer</h2>
+    <h2>Bad MOPHO</h2>
     <div class="ab-sub">v${APP_VERSION} · build ${APP_BUILD}</div>
     <div class="ab-credit">UX &amp; features design by XC3N · implementation &amp; coding by Claude</div>
     <div class="ab-h">Acknowledgements</div>
@@ -3857,7 +3857,7 @@ snapOrig();   // initial baseline = the default buffer, so everything starts dim
       <li>Built on the W3C Web MIDI API — no third-party JavaScript libraries.</li>
     </ul>
     <div class="ab-h">Support the project</div>
-    <p>This editor is free and open source. If it's useful to you, consider <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">donating via XC3N's Bandcamp</a> — pay what you want for the music, and it directly supports continued work on this tool.</p>
+    <p>This editor is free, and its source is available on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a> under CC BY-NC 4.0. If it's useful to you, consider <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">donating via XC3N's Bandcamp</a> — pay what you want for the music, and it directly supports continued work on this tool.</p>
     <div class="ab-h">Feedback</div>
     <p>Found a bug or have an idea? <a id="fbLink" href="#">Get in touch</a>.</p>
     <div class="ab-h">Changelog</div>
