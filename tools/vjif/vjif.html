@@ -1344,11 +1344,9 @@ const pending = new Map();                           // pad → { beat, released
 function trigger(p, swap = false){
   if (!pads[p].gif) return;
   const el = pads[p].el; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
-  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0, b = clock.beat;
-  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return fire(p, b, false, swap);
-  const prev = Math.floor(b / unit + 1e-9) * unit;
-  if (b - prev <= unit * SNAP_GRACE) return fire(p, prev, false, swap);
-  pending.set(p, { beat: prev + unit, released: false, swap });
+  const at = snapBeat(clock.beat);
+  if (at <= clock.beat) return fire(p, at, false, swap);
+  pending.set(p, { beat: at, released: false, swap });
   el.classList.add('wait');
 }
 function firePending(){
@@ -1476,7 +1474,9 @@ function sceneThumb(){
   const c = document.createElement('canvas'); c.width = 96; c.height = 54; c.getContext('2d').drawImage(master, 0, 0, 96, 54);
   return c.toDataURL('image/jpeg', 0.7);
 }
-const layerState = L => ({ i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
+// a layer's settings and clip list (the clips themselves are shared, not copied)
+const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
+const layerState = L => ({ i: L.i, ...layerProps(L) });
 const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: sceneThumb(), name: liveName });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
@@ -1487,7 +1487,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
   const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   layers.forEach((L, li) => {
     const s = sc ? sc.layers[li] : emptyLayer();
-    Object.assign(L, { on: s.on, opacity: s.opacity, blend: s.blend, mode: s.mode, clips: s.clips.slice(), sel: s.sel, fillOn: !!s.fillOn, fill: s.fill || '#1e2a3a' });
+    Object.assign(L, layerProps(s));
     L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; });   // the scene starts from the top
   });
   pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
@@ -1498,12 +1498,10 @@ function gotoScene(i, beat = clock.beat, instant = false){
 }
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
 function sceneKey(i){
-  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0, b = clock.beat;
   if (i === sceneIdx){ pendingScene = null; renderScenes(); return; }
-  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return gotoScene(i);
-  const prev = Math.floor(b / unit + 1e-9) * unit;
-  if (b - prev <= unit * SNAP_GRACE) return gotoScene(i, prev);
-  pendingScene = { i, beat: prev + unit }; renderScenes();
+  const at = snapBeat(clock.beat);
+  if (at <= clock.beat) return gotoScene(i, at);
+  pendingScene = { i, beat: at }; renderScenes();
 }
 const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers : []).reduce((a, l) => a + l.clips.length, 0);
 const scenePads = i => (i === sceneIdx ? pads.map(p => p.gif) : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
@@ -2091,9 +2089,12 @@ function fxLevel(i, b){
   const x = (b - S.rel) / FX_REL; return x >= 0 && x < 1 ? 1 - x : 0;
 }
 // with Snap on, a Hit waits for the next beat / bar (a hit just after one counts as on it); Hold and Latch are instant
+// beats per snap step; 0 when Snap is off or a MIDI clock is stopped (nothing to wait for)
+const snapUnit = () => (clock.src === 'midi' && !clock.midiRunning) ? 0 : snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0;
+// where a hit at beat b lands: on the step just passed (within the grace), else on the next one
 function snapBeat(b){
-  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0;
-  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return b;
+  const unit = snapUnit();
+  if (!unit) return b;
   const prev = Math.floor(b / unit + 1e-9) * unit;
   return b - prev <= unit * SNAP_GRACE ? prev : prev + unit;
 }
@@ -3472,8 +3473,7 @@ async function recToggle(){
       rec.writer = await h.createWritable(); rec.name = h.name; }
     catch (e) { if (e.name === 'AbortError') return; rec.writer = null; }
   }
-  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0;
-  if (unit && !(clock.src === 'midi' && !clock.midiRunning)){ rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; recUI(); }
+  if (snapUnit()){ rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; recUI(); }
   else recStart(mime);
 }
 function recStart(mime){
@@ -3665,7 +3665,7 @@ function applySwap(E){
 function applyScn(E){
   if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true);
   const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif) };
-  layers.forEach((L, li) => { const d = E.data.layers[li]; Object.assign(L, { on: d.on, opacity: d.opacity, blend: d.blend, mode: d.mode, clips: d.clips.slice(), sel: d.sel, fillOn: !!d.fillOn, fill: d.fill || '#1e2a3a' }); });
+  layers.forEach((L, li) => { const d = E.data.layers[li]; Object.assign(L, layerProps(d)); });
   pads.forEach((p, k) => { p.gif = E.data.pads[k]; renderPad(k); });
   E.data = cur; pending.clear();
   selectPad(selPad); syncLayerUI(); syncXfUI(); renderScenes(); updateMem(); renderPool(); redraw.all = true;
