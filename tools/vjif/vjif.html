@@ -194,6 +194,8 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip b{position:absolute;right:1px;top:1px;width:18px;height:18px;border-radius:2px;background:#000d;font:400 14px/17px var(--mono);text-align:center;color:#ddd;visibility:hidden;cursor:pointer}
 .chip:hover b{visibility:visible}.chip b:hover{color:#fff;background:var(--danger)}
 /* Shift held: a click (or right-click any time) removes — the chips say so */
+body.shift .pad:not(.empty),body.shift .scene:not(.empty),body.shift .scene.padsOnly,body.shift #fxStrip .fxp:not(.empty),body.shift #trPre button,body.shift .ptile{box-shadow:0 0 0 2px var(--danger)}
+body.shift .pad:not(.empty)::after,body.shift .scene:not(.empty)::after,body.shift .scene.padsOnly::after,body.shift #fxPre .fxp:not(.empty)::after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,70,70,.22);pointer-events:none}
 body.shift .chip{box-shadow:0 0 0 2px var(--danger);cursor:pointer}
 body.shift .chip::after{content:"";position:absolute;inset:0;border-radius:2px;background:rgba(255,70,70,.28);pointer-events:none}
 
@@ -474,6 +476,7 @@ output.mod{color:var(--env)}
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
       <dt>Scene tiles</dt><dd>Click to go there · right-click to name it · drag one onto another to swap them</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, right-click, or Shift+click (with Shift held the chips turn red)</dd>
+      <dt>Shift+click</dt><dd>Clears what you click (everything turns red while Shift is held): a pad, a scene (its name stays), a layer chip, an effect (back to defaults), an effect preset, a transition preset (back to its default), a GIF in the pool (when no pad uses it). Pads and scenes come back with Ctrl+Z</dd>
     </dl>
   </div>
 </div>
@@ -772,7 +775,7 @@ function renderPool(){
     t.querySelector('.use').textContent = (u.here.length ? `pad ${u.here.join(' ')} here` + (u.sc.length > 1 ? ` · scenes ${u.sc.join(' ')}` : '') : u.sc.length ? `scene${u.sc.length > 1 ? 's' : ''} ${u.sc.join(' ')}` : 'unused');
     const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);
     x.imageSmoothingEnabled = false; x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
-    t.addEventListener('click', e => { if (e.target.closest('.px')) return removeMedia(m); pickPool(m); });
+    t.addEventListener('click', e => { if (e.target.closest('.px') || e.shiftKey) return poolUse(m).sc.length ? toast('Still on a pad — clear it there first') : removeMedia(m); pickPool(m); });   // Shift+click: remove
     grid.appendChild(t);
   });
 }
@@ -1536,7 +1539,7 @@ function renderScenes(){
     b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
   });
 }
-$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (b) sceneKey(+b.dataset.i); });
+$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; e.shiftKey ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Shift+click: empty it
 // scene names: right-click a tile to type one (a click would go to the scene) (Enter or clicking away keeps it, Esc cancels, empty = no name)
 const sceneName = i => i === sceneIdx ? liveName : scenes[i] && scenes[i].name || '';
 function setSceneName(i, name){
@@ -1602,7 +1605,8 @@ function syncTransUI(){
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || T.type === 'melt');   // the melt keeps Doom's own timing
   $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
-$('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (b) armTrans(+b.dataset.v); });
+$('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = +b.dataset.v;
+  if (e.shiftKey){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Shift+click: reset it
 $('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); } });
 $('#trStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
   transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
@@ -1637,6 +1641,10 @@ function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
     if (e.button) return;
+    if (e.shiftKey && heldPre < 0){ el._edit = true;                                      // Shift+click: reset an effect / empty a preset
+      if (i < NFX){ fxUp(i); fxCfg[i] = fxDefaults()[i]; toast2(`${FX_DEFS[i].name} back to its defaults`); }
+      else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
+      selFx = i; syncFxUI(); return; }
     if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); el._edit = true; return; }     // a preset is held: this click edits it
     el.setPointerCapture(e.pointerId); fxDown(i);
     if (i < NFX) fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; else heldPre = i - NFX;   // holding a preset tile: F keys edit it
@@ -1746,14 +1754,19 @@ $('#fxStore').addEventListener('click', () => { if (selFx >= NFX) storeFxPre(sel
 $('#fxClear').addEventListener('click', () => { if (selFx >= NFX){ fxPre[selFx - NFX].fx = {}; syncFxUI(); } });
 
 
-$('#scEmpty').addEventListener('click', () => {
-  if (!sceneCount(sceneIdx) && !scenePads(sceneIdx)) return;
+// empty a scene (its name stays) — undoable; another scene is emptied where it is, without going there
+function emptySceneAt(i){
+  if (!sceneCount(i) && !scenePads(i)) return;
   commit();
-  const E = { scene: sceneIdx, data: { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null) } };
-  applyScn(E); liveThumb = null;
+  const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null) };
+  let E;
+  if (i === sceneIdx){ E = { scene: i, data: blank }; applyScn(E); liveThumb = null; }
+  else { const sc = scenes[i]; E = { scene: i, data: { layers: sc.layers, pads: sc.pads } };   // undo swaps these back in (and goes there)
+    scenes[i] = Object.assign(emptyScene(), { name: sc.name || '' }); if (pendingScene && pendingScene.i === i) pendingScene = null; renderScenes(); renderPool(); updateMem(); }
   hist.undo.push({ scn: E }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; hist.cur = histState(); updHistUI();
-  toast2(`Scene ${sceneIdx + 1} emptied — Ctrl+Z brings it back`);
-});
+  toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);
+}
+$('#scEmpty').addEventListener('click', () => emptySceneAt(sceneIdx));
 setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); } }, 1000);
 function toggleLayer(li){ layers[li].on = !layers[li].on; syncLayerUI(); }
 function setTarget(li){ target = li; syncLayerUI(); syncXfUI(); }
@@ -2525,11 +2538,13 @@ function buildPads(){
     el.className = 'pad empty'; el.dataset.i = i;
     el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
-    el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return; el.setPointerCapture(e.pointerId); trigger(i, e.altKey); });   // Alt+click: swap
+    el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return;
+      if (e.shiftKey){ clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); el._shift = true; return; }   // Shift+click: clear
+      el.setPointerCapture(e.pointerId); trigger(i, e.altKey); });   // Alt+click: swap
     el.addEventListener('contextmenu', e => { e.preventDefault(); focusPad(i); });   // right-click: select without playing
     el.addEventListener('pointerup', () => release(i));
     el.addEventListener('pointercancel', () => release(i));
-    el.addEventListener('click', () => { if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
+    el.addEventListener('click', e => { if (el._shift || e.shiftKey){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
     p.el = el;
   });
