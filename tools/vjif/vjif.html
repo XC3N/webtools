@@ -168,7 +168,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#111}
 .lname{font:600 13px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer.on .lname,.layer.tgt .lname{color:var(--ink)}
-.lmode{width:76px;flex:none}
+body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: a hit swaps */
 .lclr{width:var(--ch);padding:0;flex:none;font:400 14px/1 var(--mono);color:var(--muted)}
 .lclr:hover{color:var(--danger);border-color:var(--danger)}
 .lbl{width:92px;flex:none}
@@ -422,7 +422,8 @@ output.mod{color:var(--env)}
     <h2>Keys &amp; mouse<span class="line"></span><button id="helpAbout" title="About VJif and getting started">About &amp; getting started</button><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <dl class="keys">
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to pick from the GIF pool (or browse, while the pool is empty); <b>Pool</b> lists every GIF of the set; drop a .vjif anywhere to import a set</dd>
-      <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
+      <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (up to 6 — a full layer flashes red and refuses). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
+      <dt>Alt+pad key · Alt+click</dt><dd>Swap: the GIF takes its layer for itself — the others there go, and it takes over the selected one's placement (pads get a frame while Alt is held)</dd>
       <dt>Shift+pad key</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Del or the × on its chip</dd>
       <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (plays once, fades over Length; with Snap it waits for the beat / bar) or Latch (on / off); Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
@@ -1172,31 +1173,34 @@ function cycleBeats(g){
 // (it starts that far in, so it stays in time).
 const SNAP_GRACE = 0.125;
 const pending = new Map();                           // pad → { beat, released }
-function trigger(p){
+// swap (Alt held): the GIF takes the layer for itself — the others on it go (it takes over the placement of the selected one)
+function trigger(p, swap = false){
   if (!pads[p].gif) return;
   const el = pads[p].el; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
   const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0, b = clock.beat;
-  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return fire(p, b);
+  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return fire(p, b, false, swap);
   const prev = Math.floor(b / unit + 1e-9) * unit;
-  if (b - prev <= unit * SNAP_GRACE) return fire(p, prev);
-  pending.set(p, { beat: prev + unit, released: false });
+  if (b - prev <= unit * SNAP_GRACE) return fire(p, prev, false, swap);
+  pending.set(p, { beat: prev + unit, released: false, swap });
   el.classList.add('wait');
 }
 function firePending(){
   if (pendingScene && clock.beat >= pendingScene.beat - 1e-9){ const q = pendingScene; pendingScene = null; gotoScene(q.i, q.beat); }
   for (const [p, q] of pending) if (clock.beat >= q.beat - 1e-9 || !pads[p].gif){
-    pending.delete(p); pads[p].el.classList.remove('wait'); fire(p, q.beat, q.released);
+    pending.delete(p); pads[p].el.classList.remove('wait'); fire(p, q.beat, q.released, q.swap);
   }
 }
-function fire(p, beat, released = false){
+function fire(p, beat, released = false, swap = false){
   const g = pads[p].gif; if (!g) return;
   // a GIF lives on one layer at most: if it's on any layer, restart it there; otherwise add it to the edited layer
   let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[target];
   let c = L.clips.find(c => c.pad === p);
-  if (!c){
-    if (L.mode === 'replace'){ c = L.clips[0] || newClip(p); c.pad = p; c.env = null; L.clips = [c]; }   // keeps placement
-    else if (L.clips.length >= MAX_CLIPS) return refuse(L);
-    else { c = newClip(p); L.clips.push(c); }
+  if (swap){                                         // alone on the layer, where the selected GIF was
+    if (!c){ c = selClip(L.i) || L.clips[0] || newClip(p); c.pad = p; c.env = null; }
+    L.clips = [c];
+  } else if (!c){
+    if (L.clips.length >= MAX_CLIPS) return refuse(L);
+    c = newClip(p); L.clips.push(c);
   }
   c.startBeat = beat; c.startTime = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   // fade one-shot: start from wherever the last fade is now, so a fast retrigger doesn't flicker
@@ -1211,9 +1215,9 @@ function release(p){
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
 // Shift held: chips show they'd be removed by a click
-addEventListener('keydown', e => { if (e.key === 'Shift') document.body.classList.add('shift'); });
-addEventListener('keyup', e => { if (e.key === 'Shift') document.body.classList.remove('shift'); });
-function releaseAll(){ document.body.classList.remove('shift'); heldPre = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); }
+addEventListener('keydown', e => { if (e.key === 'Shift') document.body.classList.add('shift'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.add('alt'); } });
+addEventListener('keyup', e => { if (e.key === 'Shift') document.body.classList.remove('shift'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.remove('alt'); } });   // (no browser menu on Alt)
+function releaseAll(){ document.body.classList.remove('shift', 'alt'); heldPre = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); }
 window.addEventListener('blur', releaseAll);         // keys held while switching windows would otherwise stay down
 
 // ---------- fade one-shot envelope ----------
@@ -2235,7 +2239,8 @@ function onKey(e){
   if ((e.ctrlKey || e.metaKey) && !isTyping(e) && /^[zy]$/i.test(e.key)){
     e.preventDefault(); (e.key.toLowerCase() === 'y' || e.shiftKey) ? redo() : undo(); return;
   }
-  if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+1–4: the layer to edit / trigger into
+  if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+pad: swap · Alt+1–4: the layer to edit / trigger into
+    const ap = PAD_KEYS.indexOf(e.code); if (ap >= 0){ e.preventDefault(); if (!e.repeat) trigger(ap, true); return; }
     const a = /^Digit([1-4])$/.exec(e.code); if (a){ e.preventDefault(); setTarget(+a[1] - 1); } return;
   }
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -2296,7 +2301,7 @@ function buildPads(){
     el.className = 'pad empty'; el.dataset.i = i;
     el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
-    el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return; el.setPointerCapture(e.pointerId); trigger(i); });
+    el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return; el.setPointerCapture(e.pointerId); trigger(i, e.altKey); });   // Alt+click: swap
     el.addEventListener('contextmenu', e => { e.preventDefault(); focusPad(i); });   // right-click: select without playing
     el.addEventListener('pointerup', () => release(i));
     el.addEventListener('pointercancel', () => release(i));
@@ -2573,13 +2578,11 @@ function buildLayers(){
       <span class="lname" title="Click the card, PgUp / PgDn or Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
       ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
-      <div class="lrow"><select class="lmode" title="Stack: pads add GIFs to this layer (up to 6) · Replace: pads swap the GIF"><option value="stack">Stack</option><option value="replace">Replace</option></select>
-      <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
+      <div class="lrow">      <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
       <input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity">
       <div class="clips"></div>`;
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
-    row.querySelector('.lmode').addEventListener('change', e => { L.mode = e.target.value; if (L.mode === 'replace' && L.clips.length > 1){ L.clips = [selClip(li)]; syncLayerUI(); syncXfUI(); } });
     row.querySelector('.lclr').addEventListener('click', () => { L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });
     row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });
     if (li === 0){
@@ -2638,11 +2641,10 @@ const CLIP_MIME = 'application/x-gifvj-clip';
 function moveClip(sli, sid, dli, at){
   const S = layers[sli], D = layers[dli], clip = S.clips.find(c => c.id === sid); if (!clip) return;
   const i = S.clips.indexOf(clip);
-  if (S !== D && D.mode !== 'replace' && D.clips.length >= MAX_CLIPS) return refuse(D);
+  if (S !== D && D.clips.length >= MAX_CLIPS) return refuse(D);
   if (S === D && i < at) at--;                           // index shifts after removing from the same list
   S.clips.splice(i, 1); if (S.sel === clip) S.sel = null;
-  if (D.mode === 'replace') D.clips = [clip];
-  else {
+  {
     D.clips.splice(clamp(at, 0, D.clips.length), 0, clip);
   }
   D.sel = clip; selectPad(clip.pad);
@@ -2653,7 +2655,7 @@ function syncLayerUI(){
     const r = L.row, sel = selClip(L.i);
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target);
     r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
-    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.lmode').value = L.mode;
+    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend;
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
