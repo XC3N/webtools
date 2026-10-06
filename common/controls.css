@@ -1,5 +1,5 @@
 /* common/controls.css — visuals for common/controls.js (the value-bar look itself is in common/style.css) */
-input[type=range].wheelready{border-color:var(--muted)}
+input[type=range].wheelready,select.wheelready,.seg.wheelready{border-color:var(--muted)}
 input[type=range]+output{cursor:text}
 /* the type-in box sits exactly inside the readout, so nothing moves while editing */
 output .ctl-edit{all:unset;display:block;width:100%;min-width:5ch;font:inherit;color:#fff;text-align:inherit;caret-color:var(--sig, #6db3a2)}

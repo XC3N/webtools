@@ -10,20 +10,47 @@
 //   • click the readout → type a value; Enter or clicking away applies, Esc cancels
 //       the text is read by el.ctlParse(text) when the tool sets one, else as a number
 //       (data-pct on the slider: the number is a percentage → ÷100)
-// Every change is applied by setting the slider's value and dispatching 'input' then 'change', so the
-// tool's own handlers do the work. Opt out per element with data-no-ctl.
+// Choice controls — every <select>, and every .seg button group (one button .on; not .tabs, which navigate):
+//   • mouse wheel (same dwell gate) → next / previous option (wheel down = next, as down the list)
+//   • arrow keys while hovering → Down / Right = next, Up / Left = previous; disabled / hidden options are skipped
+//   • no double-click reset: a native dropdown opens on the first click, and a seg's double-click is two picks
+// Every change is applied by setting the slider's value and dispatching 'input' then 'change' (select: 'input' +
+// 'change'; seg: a click on the new button), so the tool's own handlers do the work. Opt out with data-no-ctl.
 'use strict';
 const Controls = (() => {
   const DWELL = 100, SCROLL_LOCK = 160, CHANGE_DELAY = 400;
   let px = 0, py = 0, lastMove = 0, lastScroll = -1e9, ready = null, readyT = 0, hover = null;
-  const isRange = el => el && el.tagName === 'INPUT' && el.type === 'range' && !el.closest('[data-no-ctl]');
+  const isRange = el => el && el.tagName === 'INPUT' && el.type === 'range' && !el.disabled && !el.closest('[data-no-ctl]');
   const rangeOf = el => {
     if (!el || !el.closest) return null;
     if (isRange(el)) return el;
     const o = el.closest('output'); if (!o) return null;
     const r = o.previousElementSibling; return isRange(r) ? r : null;
   };
-  const under = () => rangeOf(document.elementFromPoint(px, py));
+  // choice controls: a <select>, or a .seg group of buttons
+  const choiceOf = el => {
+    if (!el || !el.closest || el.closest('[data-no-ctl]')) return null;
+    const s = el.closest('select'); if (s) return s.disabled ? null : s;
+    const g = el.closest('.seg'); return g && !g.classList.contains('tabs') ? g : null;
+  };
+  const ctlOf = el => rangeOf(el) || choiceOf(el);
+  const under = () => ctlOf(document.elementFromPoint(px, py));
+  // step a choice control by n options
+  function stepChoice(el, n){
+    if (el.tagName === 'SELECT'){
+      const o = [...el.options], ok = o.map(x => !x.disabled && !x.hidden);
+      let i = el.selectedIndex;
+      for (let k = 0; k < Math.abs(n); k++){ let j = i; do j += Math.sign(n); while (j >= 0 && j < o.length && !ok[j]); if (j < 0 || j >= o.length) break; i = j; }
+      if (i === el.selectedIndex) return;
+      el.selectedIndex = i;
+      el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+    const bs = [...el.querySelectorAll(':scope > button')].filter(b => !b.disabled && b.offsetParent !== null);
+    const cur = bs.findIndex(b => b.classList.contains('on'));
+    const i = cur < 0 ? (n > 0 ? 0 : bs.length - 1) : Math.max(0, Math.min(bs.length - 1, cur + n));
+    if (bs[i] && i !== cur) bs[i].click();
+  }
   const num = (el, k) => +el[k];
   function defaultOf(el){
     const d = el.dataset.def;
@@ -103,20 +130,24 @@ const Controls = (() => {
     addEventListener('pointerup', () => { clearTimeout(readyT); readyT = setTimeout(checkReady, DWELL); }, { passive: true });
     addEventListener('scroll', () => { lastScroll = performance.now(); clearReady(); }, { passive: true, capture: true });
     addEventListener('wheel', e => {
-      const el = rangeOf(e.target); if (!el) return;
+      const el = ctlOf(e.target); if (!el) return;
       const now = performance.now();
       const armed = el === ready || (now - lastScroll >= SCROLL_LOCK && now - lastMove >= DWELL);
       if (!armed) return;                              // not settled yet: let the panel scroll
       e.preventDefault();
       const d = e.deltaY || e.deltaX; if (!d) return;
+      if (el.tagName !== 'INPUT'){ stepChoice(el, d > 0 ? 1 : -1); return; }
       nudge(el, (d < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1), true);
     }, { passive: false, capture: true });
     addEventListener('keydown', e => {                 // capture: runs before the tool's own arrow handling
       if (editing || e.ctrlKey || e.metaKey || e.altKey || !/^Arrow/.test(e.code)) return;   // real arrow keys only (not Shift+numpad)
       const a = document.activeElement;
-      if (a && (a.tagName === 'TEXTAREA' || a.isContentEditable || (a.tagName === 'INPUT' && a.type !== 'range') || a.tagName === 'SELECT')) return;
+      if (a && (a.tagName === 'TEXTAREA' || a.isContentEditable || (a.tagName === 'INPUT' && a.type !== 'range'))) return;
       const el = hover && hover.isConnected ? hover : null; if (!el) return;
+      if (a && a.tagName === 'SELECT' && a === el) return;   // a focused dropdown under the cursor uses its own arrows
+      if (a && a.tagName === 'SELECT') a.blur();
       e.preventDefault(); e.stopImmediatePropagation();
+      if (el.tagName !== 'INPUT'){ stepChoice(el, e.code === 'ArrowDown' || e.code === 'ArrowRight' ? 1 : -1); return; }
       const up = e.code === 'ArrowUp' || e.code === 'ArrowRight', big = e.code === 'ArrowLeft' || e.code === 'ArrowRight';
       nudge(el, (up ? 1 : -1) * (big ? 10 : 1) * (e.shiftKey ? 10 : 1), true);
     }, true);

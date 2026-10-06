@@ -13,8 +13,10 @@ In use:
 
 - `controls.js` + `controls.css` — the control behaviour standard from Bad MOPHO, for sliders:
   double-click resets to default (`data-def`), mouse wheel (dwell-gated) and hover + arrow keys adjust,
-  click the readout to type a value. Used by VJif; Bad MOPHO still has its own version (knobs) and can
-  move onto this later.
+  click the readout to type a value. Dropdowns (`<select>`) and `.seg` button groups (not `.tabs`) get the
+  same wheel (down = next option) and hover + arrows (Down/Right = next). Any control a tool adds with these
+  elements follows the standard automatically; opt out with `data-no-ctl`. Used by VJif and Logo Lab; Bad
+  MOPHO still has its own version (knobs) and can move onto this later.
 - `theme.js` + `theme.css` — Bad MOPHO's theming engine: seven numbers (four role hues — Controls, LCD,
   Curves, Meters — and a background hue / saturation / brightness) turned into the CSS colour tokens, the
   three presets, JSON import / export (same file as Bad MOPHO, so themes move between tools) and an editor

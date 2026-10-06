@@ -140,6 +140,8 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .btnrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 
 /* ---------- modals ---------- */
+@keyframes hl{from{background:var(--sig);color:var(--sigtxt)}}
+.sub.hl{animation:hl .7s ease-out}
 #setPanel{background:none;place-items:start end;pointer-events:none}
 #setPanel .modalBox{pointer-events:auto;margin:48px 10px 0 0;max-height:calc(100vh - 60px)}
 .modalBox .row{display:flex;gap:6px;margin:10px 0;align-items:center}.modalBox input[type=text]{flex:1;min-width:0}
@@ -1863,6 +1865,20 @@ function syncLayerUI(){
 const XF = [['#xX','x',v => v.toFixed(0)],['#xY','y',v => v.toFixed(0)],['#xSX','sx',v => v.toFixed(2)+'×'],['#xSY','sy',v => v.toFixed(2)+'×'],['#xR','rot',v => v.toFixed(0)+'°'],['#xO','alpha',v => Math.round(v*100)+'%']];
 const XF_LFO = { '#xX': ['x'], '#xY': ['y'], '#xSX': ['zoom', 'sx'], '#xSY': ['zoom', 'sy'], '#xR': ['rot'], '#xO': ['op'] };
 XF.forEach(([id, key, fmt]) => $(id).addEventListener('input', e => { const c = selClip(); if (!c) return; c[key] = +e.target.value; e.target.nextElementSibling.textContent = fmt(+e.target.value); }));
+// right-click a transform or colour setting → its LFO opens in GIF › Auto
+const AUTO_OF = { '#xX': 'x', '#xY': 'y', '#xSX': 'sx', '#xSY': 'sy', '#xR': 'rot', '#xO': 'op', '#hH': 'h', '#hS': 's', '#hV': 'v' };
+Object.entries(AUTO_OF).forEach(([id, k]) => {
+  const f = $(id).closest('.field'), lb = f.querySelector('label'); lb.title = 'Right-click: automate this (GIF › Auto)';
+  f.addEventListener('contextmenu', e => { e.preventDefault(); showAuto(k); });
+});
+function showAuto(k){
+  const c = selClip(); if (c && c.pad !== selPad) selectPad(c.pad);
+  const g = curGif(); if (!g) return;
+  if ((k === 'sx' || k === 'sy') && g.lfo.zoom && g.lfo.zoom.on && !(g.lfo[k] && g.lfo[k].on)) k = 'zoom';   // the scale is moved by Zoom
+  aSel = k; $('#gTabs [data-v=auto]').click(); syncAutoUI(g);
+  const row = $('#aTitle').parentElement; row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  row.classList.remove('hl'); void row.offsetWidth; row.classList.add('hl');
+}
 $('#xFit').addEventListener('change', e => { const c = selClip(); if (c) c.fit = e.target.value; });
 $('#xFx').addEventListener('change', e => { const c = selClip(); if (c) c.flipX = e.target.checked; });
 $('#xFy').addEventListener('change', e => { const c = selClip(); if (c) c.flipY = e.target.checked; });
