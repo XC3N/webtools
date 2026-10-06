@@ -3714,6 +3714,7 @@ Theme.mount(document.getElementById('popTheme'), { app:'mopho-programmer',
          ['hEnv','Envelopes','All ADSR / DADSR graphs'],['hMeter','Steps','Sequencer bars and reset']],
   toast:m=>flash('THEME',m), onChange:t=>{ prefs.theme=t; savePrefs(); } });
 Controls.init(document.getElementById('popTheme'));   // the shared slider standard: wheel, arrows, double-click, type a value
+Controls.skipKeys(()=>seqRecTrack!=null);             // while a sequencer step is armed, the arrows edit steps
 
 // after a real dropdown pick, drop focus so the computer-keyboard note keys work without clicking away
 // (synthetic wheel-change events are isTrusted=false, so scroll-to-change keeps focus and stays scrollable)

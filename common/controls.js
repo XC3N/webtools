@@ -22,7 +22,7 @@
 'use strict';
 const Controls = (() => {
   const DWELL = 100, SCROLL_LOCK = 160, CHANGE_DELAY = 400;
-  let px = 0, py = 0, lastMove = 0, lastScroll = -1e9, ready = null, readyT = 0, hover = null;
+  let px = 0, py = 0, lastMove = 0, lastScroll = -1e9, ready = null, readyT = 0, hover = null, skipKey = null;
   const isRange = el => el && el.tagName === 'INPUT' && el.type === 'range' && !el.disabled && !el.closest('[data-no-ctl]');
   const rangeOf = el => {
     if (!el || !el.closest) return null;
@@ -64,15 +64,16 @@ const Controls = (() => {
   }
   const changeT = new WeakMap();
   // set + notify; `lazy` batches the 'change' (one undo step per wheel / arrow gesture)
+  const lim = (el, k, d) => el[k] === '' ? d : +el[k];   // range defaults when the attribute is missing
   function apply(el, v, lazy = false){
-    const lo = num(el, 'min'), hi = num(el, 'max');
+    const lo = lim(el, 'min', 0), hi = lim(el, 'max', 100);
     el.value = Math.min(hi, Math.max(lo, v));
     el.dispatchEvent(new Event('input', { bubbles: true }));
     clearTimeout(changeT.get(el));
     if (lazy) changeT.set(el, setTimeout(() => el.dispatchEvent(new Event('change', { bubbles: true })), CHANGE_DELAY));
     else el.dispatchEvent(new Event('change', { bubbles: true }));
   }
-  const stepOf = el => (el.step && el.step !== 'any') ? +el.step : (num(el, 'max') - num(el, 'min')) / 100;
+  const stepOf = el => el.step === 'any' ? (lim(el, 'max', 100) - lim(el, 'min', 0)) / 100 : el.step ? +el.step : 1;
   function nudge(el, n, lazy){ apply(el, +el.value + n * stepOf(el), lazy); }
 
   function clearReady(){ if (ready){ ready.classList.remove('wheelready'); ready = null; } }
@@ -146,7 +147,8 @@ const Controls = (() => {
       if (editing || e.ctrlKey || e.metaKey || e.altKey || !/^Arrow/.test(e.code)) return;   // real arrow keys only (not Shift+numpad)
       const a = document.activeElement;
       if (a && (a.tagName === 'TEXTAREA' || a.isContentEditable || (a.tagName === 'INPUT' && a.type !== 'range'))) return;
-      const el = hover && hover.isConnected ? hover : null; if (!el) return;
+      if (skipKey && skipKey(e)) return;              // the tool wants these arrows right now
+      const el = under(); if (!el) return;             // re-checked under the pointer: a hidden control never takes keys
       if (a && a.tagName === 'SELECT' && a === el) return;   // a focused dropdown under the cursor uses its own arrows
       if (a && a.tagName === 'SELECT') a.blur();
       e.preventDefault(); e.stopImmediatePropagation();
@@ -169,5 +171,6 @@ const Controls = (() => {
       e.preventDefault(); e.stopPropagation(); apply(el, d);
     }, true);
   }
-  return { init, apply, paint, defaultOf, setDefault(el, v){ el.dataset.def = v; } };
+  // skipKeys(fn): fn(event) → true leaves the arrow keys to the tool (e.g. while it's editing something with them)
+  return { init, apply, paint, defaultOf, setDefault(el, v){ el.dataset.def = v; }, skipKeys(fn){ skipKey = fn; } };
 })();
