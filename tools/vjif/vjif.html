@@ -90,6 +90,8 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .scene .k{position:absolute;left:3px;top:3px;font:600 11px/1 var(--mono);color:#fff;background:#000b;border-radius:2px;padding:2px 4px}
 .scene .n{position:absolute;right:3px;bottom:3px;font:400 10px/1 var(--mono);color:var(--ink);background:#000a;border-radius:2px;padding:2px 4px}
 .scene.empty .n{color:var(--faint);background:none}
+.scene.padsOnly{background-blend-mode:luminosity;background-color:#333}
+.scene.padsOnly .n{color:var(--muted);background:#000a}
 .scene.cur{box-shadow:0 0 0 2px var(--sig)}
 .scene.wait{animation:wait .25s steps(1) infinite}
 .padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
@@ -1511,7 +1513,9 @@ function renderScenes(){
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
-    const bg = n && th ? `url(${th})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
+    const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(g => g && g.thumb) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
+    const bg = n && th ? `url(${th})` : pg ? `url(${pg.thumb})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
+    b.classList.toggle('padsOnly', !!pg);
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
     const nm = sceneName(i), ne = b.querySelector('.nm'); if (ne.textContent !== nm) ne.textContent = nm;
     b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
