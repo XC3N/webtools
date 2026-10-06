@@ -143,6 +143,10 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 @keyframes hl{from{background:var(--sig);color:var(--sigtxt)}}
 .sub.hl{animation:hl .7s ease-out}
 #setPanel{background:none;place-items:start end;pointer-events:none}
+#poolPanel{background:none;place-items:start start;pointer-events:none}
+#poolPanel .modalBox{pointer-events:auto;margin:48px 0 0 340px;max-height:calc(100vh - 60px);overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+#poolPanel.dropping .modalBox{outline:2px dashed var(--sig);outline-offset:-2px}
+.ptile[draggable=true]{cursor:grab}
 #setPanel .modalBox{pointer-events:auto;margin:48px 10px 0 0;max-height:calc(100vh - 60px)}
 .modalBox .row{display:flex;gap:6px;margin:10px 0;align-items:center}.modalBox input[type=text]{flex:1;min-width:0}
 #poolGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:min(60vh,520px);overflow:auto;padding:1px}
@@ -200,7 +204,7 @@ output.mod{color:var(--env)}
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
     <div class="row"><button id="addFiles" title="Or drop files / links onto a pad or anywhere in this panel">Add…</button><input id="urlIn" type="url" placeholder="https://…/loop.gif"><button id="urlBtn">Load</button></div>
   </div>
-  <h2>Scenes<span class="line"></span><span class="tag">1 – 9</span><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
+  <h2>Scenes<span class="line"></span><span class="tag">1 – 9</span><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
   <div class="field"><label>Type</label><div class="seg span grid4" id="trType"></div></div>
@@ -343,11 +347,11 @@ output.mod{color:var(--env)}
   </div>
 </div>
 <div id="poolPanel" class="modal" hidden>
-  <div class="modalBox" style="width:min(760px,94vw)">
+  <div class="modalBox" style="width:min(640px,92vw)">
     <h2>GIF pool<span id="poolTo" class="tag"></span><span class="line"></span><button id="poolClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <div id="poolGrid"></div>
-    <div class="row"><button id="poolAdd">Add files…</button><span style="flex:1"></span><button id="poolPrune" title="Remove the GIFs no pad of any scene uses (frees their memory)">Remove unused</button></div>
-    <p class="note">Every GIF loaded in this set, decoded once. Click one to put it on the next empty pad of this scene — each scene's pads have their own settings, so the same GIF can be timed or coloured differently per scene. Clearing a pad keeps its GIF here; remove unused ones to free memory.</p>
+    <div class="row"><button id="poolAdd" title="Add GIFs to the pool (or drop files / links on this window)">Add…</button><input id="poolUrl" type="url" placeholder="https://…/loop.gif"><button id="poolUrlBtn">Load</button><button id="poolPrune" title="Remove the GIFs no pad of any scene uses (frees their memory)">Remove unused</button></div>
+    <p class="note">Every GIF of this set, decoded once. Click one to put it on the next empty pad of this scene, or drag it onto a pad (replaces what's there; Ctrl+Z undoes). Each scene's pads have their own settings. Drop files or links here to add them without using a pad. Drag the title to move this window.</p>
   </div>
 </div>
 <div id="setsPanel" class="modal" hidden>
@@ -551,8 +555,11 @@ function putMedia(m, p, si = sceneIdx){
     if (sc.pads[p]) freeGif(sc.pads[p]); sc.pads[p] = g; renderScenes(); updateMem(); renderPool(); return g;
   }
   const pad = pads[p];
-  if (pad.gif) freeGif(pad.gif);
-  pad.gif = g; renderPad(p); selectPad(p); updateMem(); syncLayerUI(); renderScenes(); renderPool();
+  if (pad.gif){                                      // replacing: one undo step that swaps the old one back
+    if (hist.ready){ commit(); hist.undo.push({ swap: { pad: p, scene: sceneIdx, g: pad.gif } }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; }
+    else freeGif(pad.gif);
+  }
+  pad.gif = g; renderPad(p); selectPad(p); updateMem(); syncLayerUI(); renderScenes(); renderPool(); redraw.all = true;
   if (hist.ready){                                   // fold the new GIF's settings into undo's current state (loading isn't an undo step)
     const st = JSON.parse(hist.cur); st.gifs[p] = Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])); hist.cur = JSON.stringify(st);
   }
@@ -560,7 +567,7 @@ function putMedia(m, p, si = sceneIdx){
 }
 
 async function loadUrlInto(url, p){
-  if (p < 0) return toast('All 18 pads are full — clear one first');
+  if (p < 0 && p !== POOL_ONLY) return toast('All 18 pads are full — clear one first');
   const name = decodeURIComponent(url.split(/[?#]/)[0].split('/').pop() || 'url.gif');
   let blob;
   try {
@@ -570,6 +577,7 @@ async function loadUrlInto(url, p){
   } catch (err) {
     return toast(`Can't fetch that URL (${err.message}). The site probably blocks cross-origin access — download the file and drag it in instead.`);
   }
+  if (p === POOL_ONLY){ try { await mediaFor(blob, name); } catch (err) { toast(`Couldn't load ${name}: ${err.message}`); } return; }
   await loadInto(p, blob, name);
 }
 
@@ -582,6 +590,7 @@ function nextEmpty(from = 0, exclude = new Set()){
 }
 
 function loadFiles(files, start = -1){
+  if (start === POOL_ONLY) return Promise.all(files.map(f => mediaFor(f, f.name).catch(err => toast(`Couldn't load ${f.name}: ${err.message}`))));
   const used = new Set(), jobs = [];
   for (let k = 0; k < files.length; k++){
     const p = (k === 0 && start >= 0) ? start : nextEmpty(start >= 0 ? start : 0, used);
@@ -594,7 +603,8 @@ function loadFiles(files, start = -1){
 // ---------- pool window ----------
 let poolTarget = -1;                                 // the pad the next pick goes to (-1: next empty from the selected pad)
 const poolDest = () => poolTarget >= 0 && !pads[poolTarget].gif && !pads[poolTarget].loading ? poolTarget : nextEmpty(poolTarget >= 0 ? poolTarget : selPad);
-function openPool(i = -1){ poolTarget = i; $('#poolPanel').hidden = false; renderPool(); }
+const POOL_MIME = 'application/x-vjif-pool', POOL_ONLY = -2;
+function openPool(i = -1){ poolTarget = i; const was = $('#poolPanel').hidden; $('#poolPanel').hidden = false; if (was) placeMovable($('#poolPanel .modalBox'), 'vjif-poolpos'); renderPool(); }
 function closePool(){ $('#poolPanel').hidden = true; }
 // where each GIF is used: scenes (1-based) and this scene's pad keys
 function poolUse(m){
@@ -613,7 +623,8 @@ function renderPool(){
   const grid = $('#poolGrid'); grid.textContent = '';
   pool.forEach(m => {
     const u = poolUse(m), t = document.createElement('div');
-    t.className = 'ptile' + (u.sc.length ? '' : ' unused'); t.title = m.name;
+    t.className = 'ptile' + (u.sc.length ? '' : ' unused'); t.title = m.name + ' — click: next empty pad · drag onto a pad: put it there'; t.draggable = true;
+    t.addEventListener('dragstart', e => { e.dataTransfer.setData(POOL_MIME, m.hash); e.dataTransfer.effectAllowed = 'copy'; });
     t.innerHTML = `<canvas width="120" height="80"></canvas><span class="pn"></span><span class="pm">${m.w}×${m.h} · ${m.src.length} fr · ${(m.srcBytes / 1048576).toFixed(m.srcBytes < 10485760 ? 1 : 0)} MB</span>`
       + `<span class="pm use${u.here.length ? ' here' : ''}"></span><button class="px iconbtn" title="Remove from the pool">×</button>`;
     t.querySelector('.pn').textContent = m.name;
@@ -633,16 +644,31 @@ function pickPool(m){
 // drop a GIF from the pool (only when no pad uses it); undo steps that could bring it back go too
 function removeMedia(m){
   if (poolUse(m).sc.length) return;
-  const keep = e => !(e && e.clear && e.clear.g.media === m);
-  hist.undo.filter(e => !keep(e)).forEach(e => freeGif(e.clear.g));
-  hist.undo = hist.undo.filter(keep); hist.redo = hist.redo.filter(e => !(e && e.reclear));
+  const keep = e => !entryInsts(e).some(g => g && g.media === m);
+  [...hist.undo, ...hist.redo].filter(e => !keep(e)).forEach(dropEntry);
+  hist.undo = hist.undo.filter(keep); hist.redo = hist.redo.filter(e => keep(e) && !(e && e.reclear));
   [...insts.values()].forEach(g => { if (g.media === m) freeGif(g); });
   freeMedia(m); updateMem(); updHistUI(); renderPool(); gcGifs();
 }
-$('#poolBtn').addEventListener('click', () => openPool(-1));
+$('#poolBtn').addEventListener('click', () => $('#poolPanel').hidden ? openPool(-1) : closePool());
 $('#poolClose').addEventListener('click', closePool);
-$('#poolPanel').addEventListener('pointerdown', e => { if (e.target.id === 'poolPanel') closePool(); });
-$('#poolAdd').addEventListener('click', () => { fileTarget = poolDest(); $('#fileIn').click(); });
+$('#poolAdd').addEventListener('click', () => { fileTarget = POOL_ONLY; $('#fileIn').click(); });
+$('#poolUrlBtn').addEventListener('click', () => { const u = $('#poolUrl').value.trim(); if (u){ loadUrlInto(u, POOL_ONLY); $('#poolUrl').value = ''; } });
+$('#poolUrl').addEventListener('keydown', e => { if (e.key === 'Enter') $('#poolUrlBtn').click(); });
+// files / links dropped on the pool window (or the Pool button) only join the pool
+const poolFiles = dt => [...dt.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
+const dtLink = dt => (dt.getData('text/uri-list') || dt.getData('text/plain') || '').split(/\r?\n/).map(s => s.trim()).find(s => /^https?:\/\//.test(s));
+[$('#poolPanel .modalBox'), $('#poolBtn')].forEach(el => {
+  el.addEventListener('dragover', e => { if (e.dataTransfer.types.includes(POOL_MIME)) return; e.preventDefault(); e.stopPropagation(); $('#poolPanel').classList.add('dropping'); });
+  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) $('#poolPanel').classList.remove('dropping'); });
+  el.addEventListener('drop', e => {
+    if (e.dataTransfer.types.includes(POOL_MIME)) return;
+    e.preventDefault(); e.stopPropagation(); $('#poolPanel').classList.remove('dropping');
+    const f = poolFiles(e.dataTransfer); if (f.length) return loadFiles(f, POOL_ONLY);
+    const u = dtLink(e.dataTransfer); if (u) loadUrlInto(u, POOL_ONLY);
+  });
+});
+movable($('#poolPanel .modalBox'), 'vjif-poolpos');
 $('#poolPrune').addEventListener('click', () => { pool.filter(m => !poolUse(m).sc.length).forEach(removeMedia); toast2('Unused GIFs removed'); });
 
 // ---------- color key (pre-processed into a second frame set) ----------
@@ -1174,7 +1200,7 @@ const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p =
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
-  trans = !instant && transCfg.type !== 'cut' ? { from: layers.map(layerState), gifs: pads.map(p => p.gif), b0: beat, len: transCfg.len } : null;
+  trans = !instant && transCfg.type !== 'cut' ? { from: layers.map(layerState), gifs: pads.map(p => p.gif), b0: beat, len: transCfg.len, melt: transCfg.type === 'melt' ? meltTable() : null } : null;
   scenes[sceneIdx] = captureScene(); sceneIdx = i;
   const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   layers.forEach((L, li) => {
@@ -1216,7 +1242,7 @@ function syncTransUI(){
   segSet('#trType', T.type); segSet('#trDir', T.dir); segSet('#trCurve', T.smooth ? 1 : 0);
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
   $('#trDirRow').classList.toggle('dimmed', !['slide', 'wipe'].includes(T.type));
-  $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut);
+  $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || T.type === 'melt');   // the melt keeps Doom's own timing
   $('#trTag').textContent = cut ? 'instant' : `${TR_TYPES.find(t => t[0] === T.type)[1].toLowerCase()} · ${TR_LENS[i][1]}`;
 }
 $('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; syncTransUI(); } });
@@ -1232,6 +1258,14 @@ $('#scDup').addEventListener('click', () => {
     layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
     return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
   gotoScene(t); toast2(`Copied to scene ${t + 1}`);
+});
+$('#scEmpty').addEventListener('click', () => {
+  if (!sceneCount(sceneIdx) && !scenePads(sceneIdx)) return;
+  commit();
+  const E = { scene: sceneIdx, data: { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null) } };
+  applyScn(E); liveThumb = null;
+  hist.undo.push({ scn: E }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; hist.cur = histState(); updHistUI();
+  toast2(`Scene ${sceneIdx + 1} emptied — Ctrl+Z brings it back`);
 });
 setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); } }, 1000);
 function toggleLayer(li){ layers[li].on = !layers[li].on; syncLayerUI(); }
@@ -1393,7 +1427,7 @@ function render(list, ctx = mctx){
   }
 }
 // ---------- scene transitions: the scene being left and the new one are each drawn whole, then combined ----------
-const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['dip', 'Dip'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['flash', 'Flash']];
+const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['dip', 'Dip'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['flash', 'Flash'], ['melt', 'Melt']];
 const TR_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars'], [16, '4 bars']];
 const TR_DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const transCfg = { type: 'cut', dir: 'left', len: 2, smooth: true };
@@ -1404,6 +1438,23 @@ const disNoise = new Float32Array(disW * disH).map(() => Math.random());
 const disCv = new OffscreenCanvas(disW, disH), disCtx = disCv.getContext('2d'), disImg = disCtx.createImageData(disW, disH);
 function transProgress(){ if (!trans) return 1; const p = (clock.beat - trans.b0) / trans.len; return p < 0 ? 0 : p > 1 ? 1 : p; }
 // combine trA (leaving) and trB (arriving) on the master at progress e (0 → 1)
+// The screen melt from Doom (1993), same rules: 160 columns, each starting up to 15 ticks late (neighbours differ by
+// at most one), falling 1, 2, 4, 8, 16 px per tick as it speeds up, then 8 px per tick, down a 200 px screen.
+// The table holds every column's drop per tick; the transition length stretches the ticks.
+function meltTable(){
+  const N = 160, y = new Int32Array(N); y[0] = -((Math.random() * 16) | 0);
+  for (let i = 1; i < N; i++){ y[i] = y[i - 1] + ((Math.random() * 3) | 0) - 1; if (y[i] > 0) y[i] = 0; else if (y[i] === -16) y[i] = -15; }
+  const ticks = [Float32Array.from(y, v => Math.max(0, v))];
+  for (let busy = true; busy;){
+    busy = false;
+    for (let i = 0; i < N; i++){
+      if (y[i] < 0){ y[i]++; busy = true; }
+      else if (y[i] < 200){ let dy = y[i] < 16 ? y[i] + 1 : 8; if (y[i] + dy > 200) dy = 200 - y[i]; y[i] += dy; busy = true; }
+    }
+    ticks.push(Float32Array.from(y, v => Math.max(0, v)));
+  }
+  return ticks;
+}
 function composeTransition(e, T){
   const m = mctx; m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
   const A = trA.canvas, B = trB.canvas, [dx, dy] = TR_DIRS[T.dir] || TR_DIRS.left;
@@ -1429,6 +1480,16 @@ function composeTransition(e, T){
       trM.globalCompositeOperation = 'source-over'; trM.clearRect(0, 0, W, H); trM.drawImage(B, 0, 0);
       trM.globalCompositeOperation = 'destination-in'; trM.imageSmoothingEnabled = false; trM.drawImage(disCv, 0, 0, W, H);
       m.drawImage(trM.canvas, 0, 0); break; }
+    case 'melt': {                                   // the old scene's columns slide down, revealing the new one
+      const tk = trans && trans.melt; if (!tk){ m.drawImage(B, 0, 0); break; }
+      const t = transProgress() * (tk.length - 1), t0 = Math.floor(t), t1 = Math.min(tk.length - 1, t0 + 1), f = t - t0, N = tk[0].length;
+      m.drawImage(B, 0, 0); m.imageSmoothingEnabled = false;
+      for (let i = 0; i < N; i++){
+        const x0 = Math.round(i * W / N), cw = Math.round((i + 1) * W / N) - x0;
+        const oy = Math.round((tk[t0][i] * (1 - f) + tk[t1][i] * f) / 200 * H); if (oy >= H) continue;
+        m.drawImage(A, x0, 0, cw, H - oy, x0, oy, cw, H - oy);
+      }
+      m.imageSmoothingEnabled = true; break; }
     default: m.drawImage(B, 0, 0);
   }
   m.globalAlpha = 1;
@@ -1545,7 +1606,7 @@ function isTyping(e){
 function onKey(e){
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
-  if (!$('#poolPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closePool(); } return; }   // modal
+  if (!$('#poolPanel').hidden && e.key === 'Escape'){ e.preventDefault(); closePool(); return; }   // a floating window: keys keep working
   if (!$('#setsPanel').hidden){                      // the sets panel is modal
     if (e.key === 'Escape' && askBox){ e.preventDefault(); closeAsk(); }
     else if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
@@ -2124,13 +2185,20 @@ window.addEventListener('drop', e => {
 });
 const bank = $('#bank');
 bank.addEventListener('dragover', e => {
-  e.preventDefault();
+  e.preventDefault(); if (e.dataTransfer.types.includes(POOL_MIME)) e.dataTransfer.dropEffect = 'copy';
   const el = e.target.closest('.pad'); pads.forEach(p => p.el.classList.toggle('drop', p.el === el));
 });
 bank.addEventListener('dragleave', e => { if (!bank.contains(e.relatedTarget)) pads.forEach(p => p.el.classList.remove('drop')); });
 bank.addEventListener('drop', e => {
   e.preventDefault(); pads.forEach(p => p.el.classList.remove('drop'));
   const padEl = e.target.closest('.pad'), start = padEl ? +padEl.dataset.i : -1;
+  const ph = e.dataTransfer.getData(POOL_MIME);
+  if (ph){                                           // a pool GIF dragged onto a pad: put it there (replacing — undoable)
+    const m = pool.find(m => m.hash === ph), d = start >= 0 ? start : nextEmpty(selPad); if (!m) return;
+    if (d < 0) return toast('All 18 pads of this scene are full — drop it on a pad to replace');
+    if (pads[d].loading) return;
+    putMedia(m, d); renderPool(); return;
+  }
   const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
   if (files.length) return loadFiles(files, start);
   const uri = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '')
@@ -2185,25 +2253,26 @@ $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; 
 $('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = !$('#setPanel').hidden; if (!$('#setPanel').hidden) placeSettings(); });
 // a click anywhere outside the Settings window closes it (the click still reaches what's under it)
 document.addEventListener('pointerdown', e => { if (!$('#setPanel').hidden && !e.target.closest('#setPanel .modalBox, #setBtn')) $('#setPanel').hidden = true; }, true);
-// drag its title bar to move it out of the way; the spot is remembered
-{
-  const box = $('#setPanel .modalBox'), hd = box.querySelector('h2');
-  hd.style.cursor = 'move'; hd.title = 'Drag to move';
+// floating windows (Settings, Pool): drag the title bar to move them out of the way; the spot is remembered
+function movable(box, key){
+  const hd = box.querySelector('h2'); hd.style.cursor = 'move'; hd.title = 'Drag to move';
   hd.addEventListener('pointerdown', e => {
     if (e.button || e.target.closest('button')) return;
     const r = box.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
     hd.setPointerCapture(e.pointerId);
-    const mv = ev => { moveSettings(ev.clientX - ox, ev.clientY - oy); };
+    const mv = ev => moveBox(box, ev.clientX - ox, ev.clientY - oy);
     const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up);
-      try { localStorage.setItem('vjif-setpos', JSON.stringify([parseFloat(box.style.left), parseFloat(box.style.top)])); } catch (err) {} };
+      try { localStorage.setItem(key, JSON.stringify([parseFloat(box.style.left), parseFloat(box.style.top)])); } catch (err) {} };
     hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up);
   });
 }
-function moveSettings(x, y){
-  const box = $('#setPanel .modalBox'), w = box.offsetWidth;
+function moveBox(box, x, y){
+  const w = box.offsetWidth;
   Object.assign(box.style, { position: 'fixed', margin: '0', left: clamp(x, 0, innerWidth - w) + 'px', top: clamp(y, 0, innerHeight - 48) + 'px' });
 }
-function placeSettings(){ let p = null; try { p = JSON.parse(localStorage.getItem('vjif-setpos')); } catch (e) {} if (p) moveSettings(p[0], p[1]); }
+function placeMovable(box, key){ let p = null; try { p = JSON.parse(localStorage.getItem(key)); } catch (e) {} if (p) moveBox(box, p[0], p[1]); }
+movable($('#setPanel .modalBox'), 'vjif-setpos');
+const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos');
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
@@ -2671,7 +2740,22 @@ function commit(){
   dropAll(hist.redo); hist.redo.length = 0; hist.cur = s; updHistUI();
 }
 // undo entries are state strings, or { clear } (a cleared pad, holding its GIF) / { reclear } (redo of that)
-function dropEntry(e){ if (e && e.clear && !padInsts().has(e.clear.g)) freeGif(e.clear.g); }
+// GIF instances an undo entry holds off the pads (freed when the entry goes)
+const entryInsts = e => !e || typeof e === 'string' ? [] : e.clear ? [e.clear.g] : e.swap ? [e.swap.g] : e.scn ? e.scn.data.pads : [];
+function dropEntry(e){ const on = padInsts(); entryInsts(e).forEach(g => { if (g && !on.has(g)) freeGif(g); }); }
+// swap entries: applying one swaps what it holds with what's live, so undo and redo are the same move
+function applySwap(E){
+  if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true);
+  const cur = pads[E.pad].gif; pads[E.pad].gif = E.g; E.g = cur; afterPadChange(E.pad);
+}
+function applyScn(E){
+  if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true);
+  const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif) };
+  layers.forEach((L, li) => { const d = E.data.layers[li]; Object.assign(L, { on: d.on, opacity: d.opacity, blend: d.blend, mode: d.mode, clips: d.clips.slice(), sel: d.sel, fillOn: !!d.fillOn, fill: d.fill || '#1e2a3a' }); });
+  pads.forEach((p, k) => { p.gif = E.data.pads[k]; renderPad(k); });
+  E.data = cur; pending.clear();
+  selectPad(selPad); syncLayerUI(); syncXfUI(); renderScenes(); updateMem(); renderPool(); redraw.all = true;
+}
 function dropAll(list){ list.forEach(dropEntry); }
 function trimHist(){ while (hist.undo.length > 100) dropEntry(hist.undo.shift()); }
 function resetHist(){ dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI(); }
@@ -2680,6 +2764,8 @@ function undo(){
   if (!hist.ready || drag) return; commit(); if (!hist.undo.length) return;
   const e = hist.undo.pop();
   if (e && e.clear){ if (restoreClear(e.clear)) hist.redo.push({ reclear: { pad: e.clear.pad, scene: e.clear.scene } }); else dropEntry(e); }
+  else if (e && e.swap){ applySwap(e.swap); hist.redo.push(e); }
+  else if (e && e.scn){ applyScn(e.scn); hist.redo.push(e); }
   else { hist.redo.push(hist.cur); applyHist(e); }
   hist.cur = histState(); updHistUI();
 }
@@ -2687,6 +2773,8 @@ function redo(){
   if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return;
   const e = hist.redo.pop();
   if (e && e.reclear !== undefined){ if (e.reclear.scene !== sceneIdx) gotoScene(e.reclear.scene, clock.beat, true); clearPad(e.reclear.pad, true); }
+  else if (e && e.swap){ applySwap(e.swap); hist.undo.push(e); }
+  else if (e && e.scn){ applyScn(e.scn); hist.undo.push(e); }
   else { hist.undo.push(hist.cur); applyHist(e); }
   hist.cur = histState(); updHistUI();
 }
