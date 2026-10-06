@@ -30,7 +30,11 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .tabs{margin-bottom:9px}
 
 /* ---------- header ---------- */
-#top{grid-area:top;display:flex;align-items:center;gap:8px 10px;padding:6px 12px;background:var(--panel);flex-wrap:wrap}
+#top{grid-area:top;display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--panel);flex-wrap:wrap}
+/* header sections: each function group sits in its own darker well */
+.sect{background:var(--bg);border:1px solid var(--edge);border-radius:var(--r);padding:2px 3px;gap:4px}
+.sect>label{padding:0 2px 0 6px}
+#clockGrp #beats{margin:0 2px 0 4px}
 .brand{font:700 21px/1 var(--sans);letter-spacing:-.03em;color:var(--ink);cursor:default}
 .brand span{color:var(--sig)}
 .grp{display:flex;align-items:center;gap:6px}.grp.right{margin-left:auto}
@@ -45,11 +49,12 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #beats i:first-child.on{background:var(--ink)}
 #barpos{width:6ch;text-align:center}
 /* meters: memory and load, one LCD strip in the header */
-.meters{gap:0;background:var(--lcd-bg);border-radius:var(--r);padding:0 2px;height:var(--ch)}
-.meters .mtr{font:400 11px/1 var(--mono);color:var(--lcd-ink);padding:0 8px;white-space:nowrap;text-align:center}
+.meters{gap:0;background:var(--lcd-bg);border-radius:var(--r);padding:0 2px;height:calc(var(--ch) + 6px)}
+.meters .mtr{font:400 11px/1 var(--mono);color:var(--lcd-ink);padding:0 7px;white-space:nowrap;text-align:right}
+.meters .mtr i{font-style:normal;font-size:9px;opacity:.55;margin-right:4px}
 .meters .mtr+.mtr{border-left:1px solid color-mix(in srgb,var(--lcd-ink) 25%,transparent)}
-#mem{min-width:5ch}#fps{width:17ch;overflow:hidden}
-@media (max-width:1440px){ .meters .mtr{padding:0 5px} }
+.meters .mtr.warn{color:#e8b54d}.meters .mtr.bad{color:var(--danger)}
+#mem{min-width:9.5ch}#fps{min-width:11.5ch}#load{min-width:8.5ch}
 #saveStat{font:400 11px var(--mono);color:var(--muted);white-space:nowrap;padding:0 6px}
 #saveStat:empty{display:none}
 #setLabel{width:clamp(84px,8vw,150px);height:var(--ch);line-height:12px}
@@ -132,8 +137,9 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .pchip button:hover{color:var(--danger)}
 .pempty{font:400 11px var(--sans);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #fxPre .fxp.drop{border-color:var(--sig);background:var(--track)}
+#fxName.grab{cursor:grab;touch-action:none}
 body.fxdragging,body.fxdragging *{cursor:copy !important}
-#fxEdit.pre #fxStyle,#fxEdit.pre #fxRateRow,#fxEdit:not(.pre) #fxPreList,#fxEdit:not(.pre) #fxStore,#fxEdit:not(.pre) #fxClear{display:none}
+#fxEdit.sized #fxRateRow,#fxEdit:not(.sized) #fxSizeRow,#fxEdit.pre #fxSizeRow,#fxEdit.pre #fxStyle,#fxEdit.pre #fxRateRow,#fxEdit:not(.pre) #fxPreList,#fxEdit:not(.pre) #fxStore,#fxEdit:not(.pre) #fxClear{display:none}
 .fxp{position:relative;height:36px;display:flex;flex-direction:column;justify-content:space-between;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);overflow:hidden;cursor:pointer;user-select:none;padding:4px 7px 5px;min-width:0}
 .fxp:hover{background:var(--track)}
 .fxp .lv{position:absolute;inset:auto 0 0 0;height:0;background:var(--sig);opacity:.85}
@@ -227,20 +233,17 @@ output.mod{color:var(--env)}
 <body>
 <header id="top">
   <div class="brand" title="Actually, it's pronounced vjif">VJ<span>if</span></div>
-  <div class="grp"><label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Type a tempo and press Enter · mouse wheel over a digit changes that digit"><i id="bpmMark"></i></span>
+  <div class="grp sect" id="clockGrp" title="Tempo and timing">
+    <select id="clockSrc" style="width:112px" title="Where the tempo comes from"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
+    <select id="midiIn" hidden style="width:150px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span>
+    <label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Type a tempo and press Enter · mouse wheel over a digit changes that digit"><i id="bpmMark"></i></span>
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
-    <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span></div>
-  <div class="grp"><label for="snap">Snap</label>
-    <select id="snap" style="width:72px" title="Snap triggers and set swaps to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
-  <div class="grp meters" title="How hard VJif is working — hover each readout for details"><span id="mem" class="mtr"></span><span id="fps" class="mtr"></span><span id="saveStat"></span></div>
-  <div class="grp"><label for="clockSrc">Clock</label>
-    <select id="clockSrc" style="width:118px"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
-    <select id="midiIn" hidden style="width:160px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span></div>
-  <div class="grp right"><button id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button><button id="redoBtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>Redo</button></div>
-  <div class="vsep"></div>
-  <div class="grp"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="vsep"></div>
-  <div class="grp"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
+    <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span>
+    <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
+  <div class="grp meters" title="How hard VJif is working — hover each readout for details"><span id="mem" class="mtr"></span><span id="fps" class="mtr"></span><span id="load" class="mtr"></span><span id="saveStat"></span></div>
+  <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
+  <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -258,6 +261,7 @@ output.mod{color:var(--env)}
   <div class="field"><label>Type</label><div class="seg span grid4" id="trType"></div></div>
   <div class="field" id="trDirRow"><label>Direction</label><div class="seg span" id="trDir"><button data-v="left" title="Towards the left">←</button><button data-v="right" title="Towards the right">→</button><button data-v="up" title="Upwards">↑</button><button data-v="down" title="Downwards">↓</button></div></div>
   <div class="field" id="trLenRow"><label for="trLen">Length</label><input id="trLen" type="range" min="0" step="1" data-def="3"><output></output></div>
+  <div class="field" id="trPxRow"><label for="trPx">Pixel</label><input id="trPx" type="range" min="0" step="1" data-def="4" title="Block size for Dissolve, column width for Melt"><output></output></div>
   <div class="field" id="trCurveRow"><label>Curve</label><div class="seg span" id="trCurve"><button data-v="0" title="Constant speed">Linear</button><button data-v="1" title="Eases in and out">Smooth</button></div></div>
 </section>
 
@@ -273,6 +277,7 @@ output.mod{color:var(--env)}
         <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
       <div class="fxrow"><div class="field" id="fxLenRow" title="Length: how long a Hit takes to fade"><label for="fxLen">Len</label><input id="fxLen" type="range" min="0" step="1" data-def="2"><output></output></div>
         <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
+        <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
     <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
@@ -1271,7 +1276,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   if (hist.ready) commit();                          // an edit still waiting for its undo step gets it now, in its own scene
   // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
-  trans = !instant && transCfg.type !== 'cut' ? { cfg: { ...transCfg }, from: layers.map(layerState), gifs: pads.map(p => p.gif), b0: beat, len: transCfg.len, melt: transCfg.type === 'melt' ? meltTable() : null } : null;
+  trans = !instant && transCfg.type !== 'cut' ? { cfg: { ...transCfg }, from: layers.map(layerState), gifs: pads.map(p => p.gif), b0: beat, len: transCfg.len, melt: transCfg.type === 'melt' ? meltTable(transCfg.px) : null, dis: transCfg.type === 'dissolve' ? dissolveGrid(transCfg.px || 12) : null } : null;
   scenes[sceneIdx] = captureScene(); sceneIdx = i;
   const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   layers.forEach((L, li) => {
@@ -1360,11 +1365,13 @@ function swapScenes(a, b){
   renderScenes(); toast2(`Scenes ${a + 1} and ${b + 1} swapped`);
 }
 function syncTransUI(){
-  if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; }
+  if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; $('#trPx').max = TR_PX.length - 1; }
   const T = transCfg, cut = T.type === 'cut';
   const lab = P => P.type === 'cut' ? 'Cut' : TR_TYPES.find(t => t[0] === P.type)[1];
   $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="Key ${k + 1}: ${lab(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${k + 1}</button>`).join('');
   segSet('#trType', T.type); segSet('#trDir', T.dir); segSet('#trCurve', T.smooth ? 1 : 0);
+  const pi = optIdx(TR_PX, T.px || 12); $('#trPx').value = pi; $('#trPx').nextElementSibling.textContent = TR_PX[pi][1];
+  $('#trPxRow').classList.toggle('dimmed', !['dissolve', 'melt'].includes(T.type));
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
   $('#trDirRow').classList.toggle('dimmed', !['slide', 'wipe'].includes(T.type));
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || T.type === 'melt');   // the melt keeps Doom's own timing
@@ -1375,6 +1382,7 @@ $('#trType').addEventListener('click', e => { const b = e.target.closest('button
 $('#trDir').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.dir = b.dataset.v; syncTransUI(); } });
 $('#trCurve').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.smooth = b.dataset.v === '1'; syncTransUI(); } });
 $('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
+$('#trPx').addEventListener('input', e => { transCfg.px = TR_PX[+e.target.value][0]; syncTransUI(); });
 // copy the current scene into the next empty one (new clip ids, same placement) and go there
 $('#scDup').addEventListener('click', () => {
   let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i) && !scenePads(i)) t = i; }
@@ -1390,7 +1398,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target });   // an effect as a preset holds it
+const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -1424,11 +1432,25 @@ function wireFxTile(el){
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   el.addEventListener('contextmenu', e => { e.preventDefault(); selectFx(i); });
 }
+// the effect's name chip in the editor drags too (closer to the presets than its tile)
+{
+  const chip = $('#fxName'); let d = null;
+  const over = e => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && t.closest('#fxPre .fxp'); };
+  chip.addEventListener('pointerdown', e => { if (e.button || selFx >= NFX) return; chip.setPointerCapture(e.pointerId); d = { i: selFx, x: e.clientX, y: e.clientY, moved: false }; });
+  chip.addEventListener('pointermove', e => {
+    if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4){ d.moved = true; document.body.classList.add('fxdragging'); }
+    if (d.moved){ const o = over(e); document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === o)); }
+  });
+  const end = e => { if (!d) return; if (d.moved){ const o = over(e); if (o) addPreFx(+o.dataset.i - NFX, d.i); }
+    document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging'); d = null; };
+  chip.addEventListener('pointerup', end); chip.addEventListener('pointercancel', end);
+}
 function buildFx(){
   $('#fxPads').innerHTML = FX_DEFS.map((d, i) => fxTileHTML(i, FX_LABELS[i])).join('');
   $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, k + 1)).join('');
   document.querySelectorAll('#fxStrip .fxp').forEach(wireFxTile);
-  $('#fxLen').max = FX_LENS.length - 1; $('#fxRate').max = FX_RATES.length - 1;
+  $('#fxLen').max = FX_LENS.length - 1; $('#fxRate').max = FX_RATES.length - 1; $('#fxSize').max = FX_SIZES.length - 1;
   document.querySelectorAll('#fxTgt button').forEach(b => { if (b.dataset.v !== 'out') b.style.setProperty('--lc', LCOL[+b.dataset.v]); });
 }
 const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
@@ -1459,8 +1481,9 @@ function syncFxUI(){
       el.querySelector('.n').textContent = e ? 'empty' : fxPreName(P); el.querySelector('.s').textContent = ''; el.classList.toggle('empty', e);
       el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; }
   });
-  $('#fxEdit').classList.toggle('pre', pre);
-  $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d.name; $('#fxName').title = pre ? 'Effect preset' : d.title;
+  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('sized', !pre && !!d.size);
+  $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d.name; $('#fxName').title = pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
+  $('#fxName').classList.toggle('grab', !pre);
   if (pre){
     const ks = Object.keys(C.fx);
     $('#fxPreList').innerHTML = ks.length ? ks.map(i => `<span class="pchip" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}%">${FX_DEFS[i].name}${tgtKey(C.fx[i].target) !== 'out' ? ` <small>L${tgtKey(C.fx[i].target) + 1}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
@@ -1478,6 +1501,7 @@ function syncFxUI(){
   if (!pre){
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
     $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[selFx].rate);
+    const zi = optIdx(FX_SIZES, C.size || 64); $('#fxSize').value = zi; $('#fxSize').nextElementSibling.textContent = FX_SIZES[zi][1];
   }
 }
 $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
@@ -1487,6 +1511,7 @@ $('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'
 $('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx < NFX){ fxCfg[selFx].style = b.dataset.v; syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { fxConf(selFx).amt = +e.target.value; syncFxUI(); });
 $('#fxLen').addEventListener('input', e => { fxConf(selFx).len = FX_LENS[+e.target.value][0]; syncFxUI(); });
+$('#fxSize').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].size = FX_SIZES[+e.target.value][0]; syncFxUI(); } });
 $('#fxRate').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
 $('#fxPreList').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx >= NFX){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); } });
 $('#fxStore').addEventListener('click', () => { if (selFx >= NFX) storeFxPre(selFx - NFX); });
@@ -1675,25 +1700,28 @@ const TR_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 ba
 const TR_DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 // nine transition presets on the number row; pressing one arms it for the next scene change (the panel edits the armed one)
 const TR_KEYS = Array.from({ length: 9 }, (_, i) => 'Digit' + (i + 1));
-const trDefaults = () => [{ type: 'cut', dir: 'left', len: 2, smooth: true }, { type: 'fade', dir: 'left', len: 2, smooth: true },
-  { type: 'fade', dir: 'left', len: 4, smooth: true }, { type: 'dip', dir: 'left', len: 2, smooth: true },
-  { type: 'slide', dir: 'left', len: 2, smooth: true }, { type: 'slide', dir: 'right', len: 2, smooth: true },
-  { type: 'wipe', dir: 'down', len: 2, smooth: true }, { type: 'zoom', dir: 'left', len: 2, smooth: true },
-  { type: 'melt', dir: 'down', len: 4, smooth: false }];
+const trDefaults = () => [{ type: 'cut', dir: 'left', len: 2, smooth: true, px: 12 }, { type: 'fade', dir: 'left', len: 2, smooth: true, px: 12 },
+  { type: 'fade', dir: 'left', len: 4, smooth: true, px: 12 }, { type: 'dip', dir: 'left', len: 2, smooth: true, px: 12 },
+  { type: 'slide', dir: 'left', len: 2, smooth: true, px: 12 }, { type: 'slide', dir: 'right', len: 2, smooth: true, px: 12 },
+  { type: 'wipe', dir: 'down', len: 2, smooth: true, px: 12 }, { type: 'zoom', dir: 'left', len: 2, smooth: true, px: 12 },
+  { type: 'melt', dir: 'down', len: 4, smooth: false, px: 12 }];
 let trPresets = trDefaults(), trSel = 1, transCfg = trPresets[trSel];
 function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
 let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt }
 const trA = mkCanvas().getContext('2d', { alpha: false }), trB = mkCanvas().getContext('2d', { alpha: false }), trM = mkCanvas().getContext('2d');
-const DIS_CELL = 12, disW = Math.ceil(W / DIS_CELL), disH = Math.ceil(H / DIS_CELL);
-const disNoise = new Float32Array(disW * disH).map(() => Math.random());
-const disCv = new OffscreenCanvas(disW, disH), disCtx = disCv.getContext('2d'), disImg = disCtx.createImageData(disW, disH);
+const TR_PX = [[2, '2 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px']];
+// Dissolve: a random order for blocks of `px` pixels, made when the transition starts
+function dissolveGrid(px){
+  const w = Math.ceil(W / px), h = Math.ceil(H / px), cv = new OffscreenCanvas(w, h), ctx = cv.getContext('2d');
+  return { cv, ctx, img: ctx.createImageData(w, h), noise: new Float32Array(w * h).map(() => Math.random()) };
+}
 function transProgress(){ if (!trans) return 1; const p = (clock.beat - trans.b0) / trans.len; return p < 0 ? 0 : p > 1 ? 1 : p; }
 // combine trA (leaving) and trB (arriving) on the master at progress e (0 → 1)
 // The screen melt from Doom (1993), same rules: 160 columns, each starting up to 15 ticks late (neighbours differ by
 // at most one), falling 1, 2, 4, 8, 16 px per tick as it speeds up, then 8 px per tick, down a 200 px screen.
 // The table holds every column's drop per tick; the transition length stretches the ticks.
-function meltTable(){
-  const N = 160, y = new Int32Array(N); y[0] = -((Math.random() * 16) | 0);
+function meltTable(px = 12){
+  const N = Math.max(8, Math.round(W / px)), y = new Int32Array(N); y[0] = -((Math.random() * 16) | 0);
   for (let i = 1; i < N; i++){ y[i] = y[i - 1] + ((Math.random() * 3) | 0) - 1; if (y[i] > 0) y[i] = 0; else if (y[i] === -16) y[i] = -15; }
   const ticks = [Float32Array.from(y, v => Math.max(0, v))];
   for (let busy = true; busy;){
@@ -1725,11 +1753,12 @@ function composeTransition(e, T){
       const z = (img, k, a) => { m.globalAlpha = a; m.drawImage(img, W / 2 - W * k / 2, H / 2 - H * k / 2, W * k, H * k); };
       z(A, 1 + 0.8 * e, 1 - e); z(B, 0.6 + 0.4 * e, e); break; }
     case 'dissolve': {                               // blocks of the new scene appear in random order
-      const d = disImg.data; for (let i = 0; i < disNoise.length; i++) d[i * 4 + 3] = disNoise[i] < e ? 255 : 0;
-      disCtx.putImageData(disImg, 0, 0);
+      const D = trans && trans.dis || (trans && (trans.dis = dissolveGrid(T.px || 12))); if (!D){ m.drawImage(B, 0, 0); break; }
+      const d = D.img.data; for (let i = 0; i < D.noise.length; i++) d[i * 4 + 3] = D.noise[i] < e ? 255 : 0;
+      D.ctx.putImageData(D.img, 0, 0);
       m.drawImage(A, 0, 0);
       trM.globalCompositeOperation = 'source-over'; trM.clearRect(0, 0, W, H); trM.drawImage(B, 0, 0);
-      trM.globalCompositeOperation = 'destination-in'; trM.imageSmoothingEnabled = false; trM.drawImage(disCv, 0, 0, W, H);
+      trM.globalCompositeOperation = 'destination-in'; trM.imageSmoothingEnabled = false; trM.drawImage(D.cv, 0, 0, W, H);
       m.drawImage(trM.canvas, 0, 0); break; }
     case 'melt': {                                   // the old scene's columns slide down, revealing the new one
       const tk = trans && trans.melt; if (!tk){ m.drawImage(B, 0, 0); break; }
@@ -1788,11 +1817,12 @@ const FX_DEFS = [
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Six-fold kaleidoscope']] },
   { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices'], ['blocks', 'Blocks', 'Shuffled blocks'], ['melt', 'Melt', 'Columns drip down']] },
   { id: 'rgb', name: 'RGB', title: 'Colour channels / tape', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Scanlines, tracking wobble, colour bleed and noise']] },
-  { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
+  { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
 const FX_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
-const fxDefaults = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 1, rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out' }));
+const fxDefaults = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 1, rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: 64 }));
+const FX_SIZES = [[4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px'], [128, '128 px'], [192, '192 px']];
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
 // effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate, style } })
 // played together with the slot's own mode / length / amount. Index 12–20 in the shared selection / state arrays.
@@ -1834,27 +1864,27 @@ const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; ret
 const FX_TARGETS = ['out', 0, 1, 2, 3];
 const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
 function fxMix(b){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), rate: fxCfg.map(c => c.rate), style: fxCfg.map(c => c.style) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), rate: fxCfg.map(c => c.rate), style: fxCfg.map(c => c.style), size: fxCfg.map(c => c.size || 64) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = fxCfg[i], v = fxLevel(i, b) * C.amt; if (v > 0) M.get(tgtKey(C.target)).lv[i] = v; });
   fxPre.forEach((P, k) => {
     const l = fxLevel(NFX + k, b) * P.amt; if (!(l > 0)) return;
     for (const [i, e] of Object.entries(P.fx)){
       const m = M.get(tgtKey(e.target)), v = l * e.amt;
-      if (v > m.lv[i]){ m.lv[i] = v; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; }
+      if (v > m.lv[i]){ m.lv[i] = v; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
-function fxU(b, { lv, rate, style }){
+function fxU(b, { lv, rate, style, size }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), st = i => Math.floor(b / rate[i]);
   const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
     strobe: lv[2] * ((b / rate[2]) % 1 < 0.5 ? 1 : 0), strobeS: S(2), poster: lv[3], posterS: S(3),
     zoom: lv[4] * (S(4) ? -0.3 : 0.5), wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
     mirror: lv[7], mirS: S(7), glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, rgb: lv[9], rgbS: S(9),
-    pixel: lv[10], pixS: S(10), fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000 };
+    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000 };
   const jit = S(5) === 1, sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
   return U;
@@ -1886,7 +1916,7 @@ const post = (() => {
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
       uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS,
-                    glitch, glS, gseed, rgb, rgbS, pixel, pixS, fb, fbS, shakeZ;
+                    glitch, glS, gseed, rgb, rgbS, pixel, pixS, pixSize, fb, fbS, shakeZ;
       uniform vec3 shake; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -1900,7 +1930,7 @@ const post = (() => {
           if (wobS < 0.5){ p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wob; p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wob; }
           else { vec2 q = (p - 0.5) * a; float r = length(q); p += q / max(r, 1e-4) / a * sin(r * 40.0 - wobPh) * 0.012 * wob; }
         }
-        if (pixel > 0.001){ float n = mix(res.x, 24.0, sqrt(pixel)); vec2 cell = vec2(n, n * res.y / res.x); if (pixS > 0.5) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }
+        if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (pixS > 0.5) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
         return p;
       }
       bool offs(vec2 p){ return p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0; }
@@ -1985,7 +2015,7 @@ const post = (() => {
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS',
-                   'glitch', 'glS', 'gseed', 'rgb', 'rgbS', 'pixel', 'pixS', 'fb', 'fbS', 'shakeZ', 'time'];
+                   'glitch', 'glS', 'gseed', 'rgb', 'rgbS', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'shakeZ', 'time'];
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
     gl.viewport(0, 0, W, H);
@@ -2214,9 +2244,9 @@ function updateMem(){
   // decoded GIFs count once (the pool); each instance adds only its own processed frames / key masks
   const base = pool.reduce((a, m) => a + m.srcBytes, 0) / 1048576;
   let extra = 0; insts.forEach(g => { extra += g.bytes - g.srcBytes + (g.maskBytes || 0); }); extra /= 1048576;
-  const mb = base + extra, el = $('#mem'); el.textContent = `${mb.toFixed(0)} MB`;
+  const mb = base + extra, el = $('#mem'); el.innerHTML = `<i>MEM</i>${mb.toFixed(0)} MB`;
   el.title = `Decoded frames: ${pool.length} GIF${pool.length === 1 ? '' : 's'} in the pool, ~${base.toFixed(0)} MB` + (extra >= 0.5 ? ` + ~${extra.toFixed(0)} MB of colour-processed copies / key masks` : '');
-  el.style.color = mb > MEM_WARN_MB ? 'var(--danger)' : '';
+  el.classList.toggle('bad', mb > MEM_WARN_MB);
   if (mb > MEM_WARN_MB) toast(`The set is using ~${mb.toFixed(0)} MB of decoded frames — remove unused GIFs from the pool if playback stutters`);
   const pb = $('#poolBtn'); if (pb) pb.textContent = `Pool ${pool.length}`;
 }
@@ -2846,13 +2876,20 @@ function frame(gen){
     const g = meter.gaps.slice().sort((a, b) => a - b), typical = g.length ? g[Math.floor(g.length * 0.25)] : 16.7;
     meter.drops = g.filter(x => x > typical * 1.5).reduce((a, x) => a + Math.round(x / typical) - 1, 0);
     const load = Math.round(meter.busy / (s * 1000) * 100), heap = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(0) + ' MB JS heap' : '';
-    el.textContent = `${Math.round(drawn / s)}/${Math.round(fpsN / s)} fps ${load}%${meter.drops ? ' ' + meter.drops + '✕' : ''}`;
-    el.style.color = load > 70 || meter.drops > 5 ? 'var(--danger)' : load > 40 || meter.drops ? '#e8b54d' : '';
-    el.title = [`Redrawn ${Math.round(drawn / s)} of ${Math.round(fpsN / s)} screen refreshes per second (timed by the ${driver} window; unchanged frames are skipped)`,
-      `Load ${load}%: share of the second spent drawing (average ${(meter.busy / Math.max(1, fpsN)).toFixed(1)} ms, peak ${meter.peak.toFixed(1)} ms per frame; one refresh lasts ${typical.toFixed(1)} ms)`,
-      `Missed refreshes: ${meter.drops} (frames that came late — visible as stutter)`,
-      `Stalls over 50 ms: ${meter.longN}${meter.longN ? ` (${meter.longMs.toFixed(0)} ms), anything on the page, e.g. decoding or saving` : ''}`,
-      heap].filter(Boolean).join('\n');
+    // the screen's own rate: the shortest gaps seen (remembered — a busy second can't lower it)
+    const fast = g.length ? g[Math.floor(g.length * 0.05)] : 16.7; meter.hz = Math.max(meter.hz || 0, Math.min(360, Math.round(1000 / fast)));
+    const fps = Math.round(fpsN / s), hz = meter.hz, lo = $('#load');
+    el.innerHTML = `<i>FPS</i>${fps}/${hz}`;
+    el.classList.toggle('bad', fps < hz * 0.6); el.classList.toggle('warn', fps >= hz * 0.6 && fps < hz * 0.9);
+    lo.innerHTML = `<i>LOAD</i>${load}%`;
+    lo.classList.toggle('bad', load > 70); lo.classList.toggle('warn', load > 40 && load <= 70);
+    el.title = [`FPS ${fps}/${hz}: frames VJif managed this second / the screen's refresh rate. Below the screen's rate = motion is less smooth.`,
+      `${Math.round(drawn / s)} of them were redrawn (frames where nothing changed are skipped — that's normal).`,
+      `Late frames: ${meter.drops} (each one is visible as a small stutter).`,
+      `Stalls over 50 ms: ${meter.longN}${meter.longN ? ` (${meter.longMs.toFixed(0)} ms) — anything on the page, e.g. decoding or saving` : ''}`].join('\n');
+    lo.title = [`LOAD ${load}%: how much of each second VJif's drawing takes on the main thread.`,
+      `Average ${(meter.busy / Math.max(1, fpsN)).toFixed(1)} ms, worst ${meter.peak.toFixed(1)} ms per frame — one screen refresh lasts ${(1000 / hz).toFixed(1)} ms.`,
+      `Near 100% the frame rate drops. GPU work (effects, compositing) isn't counted here: it shows up as a lower FPS instead.`, heap].filter(Boolean).join('\n');
     Object.assign(meter, { busy: 0, peak: 0, gaps: [], longN: 0, longMs: 0 });
     fpsN = 0; drawn = 0; fpsT = now;
   }
