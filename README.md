@@ -5,7 +5,7 @@ the website or from your disk, and it works — no install, no server, offline o
 
 | Tool | What it does |
 |---|---|
-| **[VJif](tools/vjif/)** | GIF VJ tool: 18 keyboard pads, 4 blended layers, BPM / tap / MIDI-clock sync, live colour key and HSV, mouse transform handles, sets saved in the browser and exported as `.vjif` files. *Actually, it's pronounced vjif.* |
+| **[VJif](tools/vjif/)** | GIF VJ tool: 18 keyboard pads, 9 scenes with transitions, 4 blended layers, screen effects, BPM / tap / MIDI-clock sync, live colour key and HSV, automation, mouse transform handles, sets saved in the browser and exported as `.vjif` files. *Actually, it's pronounced vjif.* |
 | **[Bad MOPHO](tools/bad-mopho/)** | Web MIDI editor and librarian for the Dave Smith Instruments Mopho. |
 
 **Use them online:** https://xc3n.github.io/webtools/ (after the first deploy)
@@ -38,13 +38,12 @@ Tool sources can include shared files with `<!-- @include common/file.css -->` o
 ## Credits
 
 UX & features design by XC3N · implementation & coding by Claude.
-Typefaces: Archivo (Omnibus-Type) and JetBrains Mono (JetBrains), SIL Open Font License, loaded from Google Fonts.
+Typefaces: Instrument Sans and JetBrains Mono (JetBrains), SIL Open Font License, loaded from Google Fonts.
 
 If these tools are useful to you, consider supporting the music at [xc3n.bandcamp.com](https://xc3n.bandcamp.com).
 
 ## Licence
 
-Licensed by XC3N under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): free to use, share and adapt, with credit, for non-commercial purposes.
-Using the tools in your own work is fine, **including paid gigs, streams, videos and commissions** — what's excluded is selling, sublicensing or bundling the tools or their code (or modified versions) for money. Details in [LICENSE](LICENSE).
+[MIT](LICENSE) — use, change, share and sell it freely; keep the copyright notice.
 
 The names "VJif" and "Bad MOPHO" and their logos aren't covered — forks need their own name. See [TRADEMARKS.md](TRADEMARKS.md).

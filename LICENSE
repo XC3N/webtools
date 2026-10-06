@@ -1,20 +1,27 @@
-VJif and Bad MOPHO
+MIT License
+
+Copyright (c) 2026 XC3N
+
 Design, concepts and UX by XC3N. Code written by Claude (Anthropic).
 
-Everything in this repository (code, documentation and media) is licensed by XC3N under the
-Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-  Summary:    https://creativecommons.org/licenses/by-nc/4.0/
-  Legal text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Attribution
-  Credit "XC3N (design) and Claude by Anthropic (code)", link to https://github.com/XC3N/webtools,
-  and say if you made changes.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-Additional permission (granted by XC3N, outside the licence)
-  Using these tools in your own work is fine, including commercial work such as paid gigs,
-  streams, videos and commissions. The NonCommercial term restricts selling, sublicensing or
-  bundling the tools or their code, or modified versions of them, for money or commercial advantage.
-
-Names and logos
-  "VJif", "Bad MOPHO" and their logos are not covered by this licence. See TRADEMARKS.md.
+---
+Names and logos: "VJif", "Bad MOPHO" and their logos are not licensed under the
+MIT License. See TRADEMARKS.md.
