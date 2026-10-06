@@ -1,6 +1,6 @@
 // common/theme.js — Bad MOPHO's theming engine, shared by the tools.
 //
-// A theme is seven numbers: four role hues and a background ramp —
+// A theme is a few numbers: four role hues (Controls and LCD may also carry saturation / brightness) and a background ramp —
 //   hCtrl  controls & accents (buttons, sliders, highlights)      → --amber, --acc-*, --amber-dim
 //   hLcd   LCD readouts                                            → --lcd-ink, --lcd-bg
 //   hEnv   envelopes / curves (each tool says what that means)     → --env, --env-rgb (+ --env-f / --env-a / --env-3)
@@ -20,14 +20,14 @@ const Theme = (() => {
   }
   const hsv2hex = (h, s, v) => '#' + hsv2rgb(h, s, v).map(n => n.toString(16).padStart(2, '0')).join('');
   // sCtrl / vCtrl and sLcd / vLcd (saturation / brightness, %) are optional: missing = Bad MOPHO's fixed ramp
-  // the default theme is Matte (double-clicking a slider in the editor goes back to its Matte value)
-  const DEFAULT = { hCtrl: 166, sCtrl: 39, vCtrl: 70, hLcd: 166, sLcd: 39, vLcd: 72, hEnv: 166, hMeter: 212, bh: 220, bs: 11, bv: 11 };
   const PRESETS = {
     'Matte':          { hCtrl: 166, sCtrl: 39, vCtrl: 70, hLcd: 166, sLcd: 39, vLcd: 72, hEnv: 166, hMeter: 212, bh: 220, bs: 11, bv: 11 },
     "Claude's Mopho": { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 },
     'XC3N':           { hCtrl: 171, hLcd: 317, hEnv: 300, hMeter: 319, bh: 238, bs: 20, bv: 15 },
     'Blue Berries':   { hCtrl: 199, hLcd: 266, hEnv: 225, hMeter: 242, bh: 238, bs: 27, bv: 18 },
   };
+  // the default theme is Matte (double-clicking a slider in the editor goes back to its Matte value)
+  const DEFAULT = { ...PRESETS['Matte'] };
   const CORE = ['hCtrl', 'hEnv', 'hMeter', 'bh', 'bs', 'bv'];   // hLcd is optional in older files
   let cur = { ...DEFAULT };
   const OPT = ['sCtrl', 'vCtrl', 'sLcd', 'vLcd'];
@@ -67,7 +67,7 @@ const Theme = (() => {
     if (!t || typeof t !== 'object' || !CORE.every(k => typeof t[k] === 'number')) return null;
     const out = {}; CORE.forEach(k => out[k] = t[k]);
     out.hLcd = typeof t.hLcd === 'number' ? t.hLcd : t.hCtrl;     // older files predate the LCD hue
-    ['sCtrl', 'vCtrl', 'sLcd', 'vLcd'].forEach(k => { if (typeof t[k] === 'number') out[k] = t[k]; });
+    OPT.forEach(k => { if (typeof t[k] === 'number') out[k] = t[k]; });
     return out;
   }
   // current value of a CSS variable (for canvas drawing)
