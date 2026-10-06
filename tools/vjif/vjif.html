@@ -229,6 +229,14 @@ body.shift .chip::after{content:"";position:absolute;inset:0;border-radius:2px;b
 .ask span{flex:1;min-width:0;font:500 12px var(--sans);color:#ffd6d6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ask button{width:auto}
 #setList:empty::before{content:'No saved sets yet.';font:400 12px var(--sans);color:var(--faint)}
+#learnBar{position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;background:var(--panel);border:1px solid var(--sig);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12px;max-width:92vw}
+#learnBar b{color:var(--sig)}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.learning .learnMapped{outline:2px dotted var(--sig);outline-offset:-2px}
+body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px;animation:wait .5s steps(1) infinite}
+#midiMap{display:flex;flex-direction:column;gap:3px;max-height:220px;overflow:auto}
+.mrow{display:grid;grid-template-columns:12ch 1fr auto;gap:8px;align-items:center;padding:3px 6px;background:var(--panel-2);border-radius:var(--r);font-size:12px}
+.mrow .mk{font:400 11px var(--mono);color:var(--lcd-ink)}.mrow button{width:22px;height:22px}
+#midiCtlIn{flex:1;min-width:0}
 .abrand{font:700 22px/1 var(--sans);letter-spacing:-.03em;color:var(--ink)}.abrand span{color:var(--sig)}
 .aboutLead{margin:10px 0 4px;font-size:13px;line-height:1.5;color:var(--ink)}
 .steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
@@ -399,8 +407,14 @@ output.mod{color:var(--env)}
     <div class="sub" style="margin-top:0"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
     <p class="note">Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black.</p>
+    <div class="sub"><span>MIDI control</span><span class="line"></span></div>
+    <div class="row"><select id="midiCtlIn" title="Which MIDI input controls VJif"><option value="all">All MIDI inputs</option></select><button id="midiLearn" class="accent" title="Click something, then press or move a control on your controller">Learn</button><button id="midiClear" title="Remove every mapping">Clear all</button></div>
+    <div id="midiMap"></div>
+    <p class="note">Pads, scenes, transition presets, effects and presets, layer on / off, blackout, freeze, tap and sync answer keys or buttons; layer opacity and effect amount follow a knob or fader. Mappings are kept in this browser (they belong to your controller, not to a set).</p>
   </div>
 </div>
+<div id="learnBar" hidden><b>MIDI learn</b><span id="learnMsg"></span>
+  <button class="lbtn" data-learn="black" title="Map a control to blackout (held)">Blackout</button><button class="lbtn" data-learn="freeze" title="Map a control to freeze (held)">Freeze</button><button class="lbtn accent" id="learnDone">Done</button></div>
 <div id="aboutPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(720px,94vw)">
     <h2><span class="abrand">VJ<span>if</span></span><span class="tag">GIF VJ tool · <i>actually, it's pronounced vjif</i></span><span class="line"></span><button id="aboutClose" class="iconbtn" title="Close (Esc)">×</button></h2>
@@ -443,6 +457,7 @@ output.mod{color:var(--env)}
       <dt>Del / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
       <dt>Rec</dt><dd>Records the output to a WebM video. Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
+      <dt>MIDI learn</dt><dd>Settings › MIDI control › Learn: click a target (pad, scene, transition, effect, layer chip, opacity, effect amount, Tap, Sync, or Blackout/Freeze in the bar), then move a control on your controller. Faders need a knob/fader (CC). Esc or Done to finish; mappings are remembered</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
       <dt>Esc</dt><dd>Cancel a colour pick · close a panel</dd>
       <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
@@ -1102,9 +1117,9 @@ function updateClock(now){
 let midiAccess = null, midiInput = null;
 async function enableMidi(){
   if (!navigator.requestMIDIAccess){ toast('Web MIDI is not available in this browser'); return setClockSrc('internal'); }
-  try { midiAccess = midiAccess || await navigator.requestMIDIAccess(); }
+  try { await getMidi(); }
   catch { toast('MIDI access was denied'); return setClockSrc('internal'); }
-  midiAccess.onstatechange = fillMidi; fillMidi();
+  fillMidi();
 }
 function fillMidi(){
   const sel = $('#midiIn'), prev = sel.value, ins = [...midiAccess.inputs.values()];
@@ -1133,6 +1148,152 @@ function setClockSrc(v){
   $('#bpm').disabled = v === 'midi'; $('#tapBtn').disabled = v === 'midi';
   if (v === 'midi'){ clock.midiTicks = Math.round(clock.beat * 24); enableMidi(); }
   else { if (midiInput) midiInput.onmidimessage = null; $('#midiIn').hidden = true; $('#midiStat').textContent = ''; }
+}
+
+// ---------- MIDI control: notes / CCs from a controller drive VJif (MIDI learn) ----------
+// A mapping is { key: 'n<ch>.<note>' | 'c<ch>.<cc>', t: target kind, i: index }. Buttons (pads, scenes, transition
+// presets, effects, layers, blackout, freeze, tap, sync) react to notes, or to a CC crossing 64; faders (layer opacity,
+// effect amount) follow a CC. Mappings belong to this browser (they describe the controller, not the set).
+const midiCtl = { map: [], input: 'all', learning: false, target: null, inputs: [], cc: {} };
+try { const o = JSON.parse(localStorage.getItem('vjif-midi')); if (o){ midiCtl.map = o.map || []; midiCtl.input = o.input || 'all'; } } catch (e) {}
+const saveMidiCtl = () => { try { localStorage.setItem('vjif-midi', JSON.stringify({ map: midiCtl.map, input: midiCtl.input })); } catch (e) {} };
+async function getMidi(){
+  if (midiAccess) return midiAccess;
+  if (!navigator.requestMIDIAccess) throw new Error('Web MIDI is not available in this browser');
+  midiAccess = await navigator.requestMIDIAccess();
+  midiAccess.onstatechange = () => { if (clock.src === 'midi') fillMidi(); bindCtlInputs(); };
+  return midiAccess;
+}
+function bindCtlInputs(){
+  midiCtl.inputs.forEach(i => i.removeEventListener('midimessage', onCtl)); midiCtl.inputs = [];
+  if (!midiAccess) return;
+  const all = [...midiAccess.inputs.values()];
+  midiCtl.inputs = midiCtl.input === 'all' ? all : all.filter(i => i.id === midiCtl.input);
+  midiCtl.inputs.forEach(i => i.addEventListener('midimessage', onCtl));
+  renderMidiCtl();
+}
+const FADERS = new Set(['opacity', 'amount']);
+const ctlName = k => { const [ty, rest] = [k[0], k.slice(1)], [ch, n] = rest.split('.').map(Number); return `${ty === 'n' ? 'Note ' + n : 'CC ' + n} · ch ${ch + 1}`; };
+function targetName(T){
+  switch (T.t){
+    case 'pad': return `Pad ${PAD_LABELS[T.i]}`;
+    case 'scene': return `Scene ${T.i + 1}`;
+    case 'trans': return `Transition ${T.i + 1}`;
+    case 'fx': return T.i < NFX ? `Effect ${FX_LABELS[T.i]} ${FX_DEFS[T.i].name}` : `Effect preset ${T.i - NFX + 1}`;
+    case 'layer': return `Layer ${T.i + 1} on / off`;
+    case 'opacity': return `Layer ${T.i + 1} opacity`;
+    case 'amount': return T.i < NFX ? `${FX_DEFS[T.i].name} amount` : `Preset ${T.i - NFX + 1} amount`;
+    case 'black': return 'Blackout'; case 'freeze': return 'Freeze'; case 'tap': return 'Tap tempo'; case 'sync': return 'Sync';
+  }
+  return '?';
+}
+function onCtl(e){
+  const [st, d1, d2 = 0] = e.data; if (st >= 0xF0) return;
+  const ty = st & 0xF0, ch = st & 15;
+  let key, val, kind;
+  if (ty === 0x90 || ty === 0x80){ key = `n${ch}.${d1}`; kind = 'note'; val = ty === 0x90 && d2 > 0 ? d2 : 0; }
+  else if (ty === 0xB0){ key = `c${ch}.${d1}`; kind = 'cc'; val = d2; }
+  else return;
+  if (midiCtl.learning){
+    if (!midiCtl.target || (kind === 'note' && val === 0)) return;   // note-offs don't assign
+    const T = midiCtl.target;
+    if (FADERS.has(T.t) && kind !== 'cc') return toast2('Faders need a knob or fader (a CC), not a key');
+    midiCtl.map = midiCtl.map.filter(m => m.key !== key);              // one job per control
+    midiCtl.map.push({ key, t: T.t, i: T.i ?? 0 }); saveMidiCtl();
+    toast2(`${ctlName(key)} → ${targetName(T)}`);
+    midiCtl.target = null; markLearn(); renderMidiCtl(); return;
+  }
+  for (const m of midiCtl.map) if (m.key === key) ctlApply(m, kind, val, key);
+}
+// buttons fire on press and release (a CC counts as pressed above 63); faders follow the value
+function ctlApply(m, kind, val, key){
+  if (FADERS.has(m.t)){
+    if (kind !== 'cc') return;
+    const v = val / 127;
+    if (m.t === 'opacity'){ layers[m.i].opacity = v; syncLayerUI(); }
+    else { fxConf(m.i).amt = v; if (selFx === m.i) syncFxUI(); }
+    return;
+  }
+  const down = kind === 'note' ? val > 0 : val > 63, was = !!midiCtl.cc[key];
+  if (down === was && kind === 'cc') return;               // a CC only acts when it crosses the middle
+  midiCtl.cc[key] = down;
+  const i = m.i;
+  switch (m.t){
+    case 'pad': down ? trigger(i) : release(i); break;
+    case 'scene': if (down) sceneKey(i); break;
+    case 'trans': if (down) armTrans(i); break;
+    case 'fx': down ? fxDown(i) : fxUp(i); break;
+    case 'layer': if (down) toggleLayer(i); break;
+    case 'black': setBlack(down); updLiveTag(); break;
+    case 'freeze': setFreeze(down); break;
+    case 'tap': if (down) tap(); break;
+    case 'sync': if (down) resync(); break;
+  }
+}
+// ---- learn mode: click a target, then press / move the control ----
+function learnTargetAt(el){
+  if (!el || !el.closest) return null;
+  let x;
+  if ((x = el.closest('.pad'))) return { t: 'pad', i: +x.dataset.i };
+  if ((x = el.closest('#scenes .scene'))) return { t: 'scene', i: +x.dataset.i };
+  if ((x = el.closest('#trPre button'))) return { t: 'trans', i: +x.dataset.v };
+  if ((x = el.closest('#fxStrip .fxp'))) return { t: 'fx', i: +x.dataset.i };
+  if ((x = el.closest('#fxAmt, #fxAmt + output'))) return { t: 'amount', i: selFx };
+  if ((x = el.closest('.layer'))){
+    const li = [...$('#layers').children].indexOf(x);
+    if (el.closest('.lop')) return { t: 'opacity', i: li };
+    if (el.closest('.lon')) return { t: 'layer', i: li };
+    return null;
+  }
+  if ((x = el.closest('[data-learn]'))) return { t: x.dataset.learn };
+  if (el.closest('#tapBtn')) return { t: 'tap' };
+  if (el.closest('#syncBtn')) return { t: 'sync' };
+  return null;
+}
+async function startLearn(){
+  try { await getMidi(); } catch (e) { return toast(e.message === 'Web MIDI is not available in this browser' ? e.message : 'MIDI access was denied'); }
+  bindCtlInputs();
+  midiCtl.learning = true; midiCtl.target = null; $('#setPanel').hidden = true;
+  document.body.classList.add('learning'); $('#learnBar').hidden = false; markLearn();
+}
+function endLearn(){ midiCtl.learning = false; midiCtl.target = null; document.body.classList.remove('learning'); $('#learnBar').hidden = true; markLearn(); renderMidiCtl(); }
+const sameT = (a, b) => a && b && a.t === b.t && (a.i ?? 0) === (b.i ?? 0);
+function elFor(T){
+  switch (T.t){
+    case 'pad': return pads[T.i] && pads[T.i].el;
+    case 'scene': return $(`#scenes .scene[data-i="${T.i}"]`);
+    case 'trans': return $(`#trPre button[data-v="${T.i}"]`);
+    case 'fx': return $(`#fxStrip .fxp[data-i="${T.i}"]`);
+    case 'layer': return $('#layers').children[T.i] && $('#layers').children[T.i].querySelector('.lon');
+    case 'opacity': return $('#layers').children[T.i] && $('#layers').children[T.i].querySelector('.lop');
+    case 'amount': return selFx === T.i ? $('#fxAmt') : null;
+    case 'tap': return $('#tapBtn'); case 'sync': return $('#syncBtn');
+    default: return $(`#learnBar [data-learn="${T.t}"]`);
+  }
+}
+// while learning: mapped targets are outlined, the one waiting for a control is lit
+function markLearn(){
+  document.querySelectorAll('.learnMapped, .learnSel').forEach(x => x.classList.remove('learnMapped', 'learnSel'));
+  if (!midiCtl.learning) return;
+  midiCtl.map.forEach(m => { const el = elFor(m); if (el) el.classList.add('learnMapped'); });
+  const s = midiCtl.target && elFor(midiCtl.target); if (s) s.classList.add('learnSel');
+  $('#learnMsg').textContent = midiCtl.target ? `${targetName(midiCtl.target)}: now press or move a control on your controller` : 'Click what you want to control (pad, scene, transition, effect, layer button or opacity, effect amount…)';
+}
+document.addEventListener('pointerdown', e => {
+  if (!midiCtl.learning || e.target.closest('#learnDone, #setPanel')) return;
+  const T = learnTargetAt(e.target);
+  e.preventDefault(); e.stopPropagation();
+  if (!T) return;
+  midiCtl.target = T; markLearn();
+}, true);
+['click', 'dblclick', 'contextmenu'].forEach(t => document.addEventListener(t, e => { if (midiCtl.learning && !e.target.closest('#learnDone, #setPanel')){ e.preventDefault(); e.stopPropagation(); } }, true));
+function renderMidiCtl(){
+  const box = $('#midiMap'); if (!box) return;
+  const sel = $('#midiCtlIn'), ins = midiAccess ? [...midiAccess.inputs.values()] : [];
+  sel.innerHTML = '<option value="all">All MIDI inputs</option>' + ins.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
+  sel.value = ins.some(i => i.id === midiCtl.input) ? midiCtl.input : 'all';
+  box.innerHTML = midiCtl.map.length ? midiCtl.map.map((m, k) => `<div class="mrow"><span class="mk">${ctlName(m.key)}</span><span class="mt">${targetName(m)}</span><button data-k="${k}" class="iconbtn" title="Remove this mapping">×</button></div>`).join('')
+    : '<p class="note" style="margin:0">Nothing mapped yet — press Learn.</p>';
 }
 
 // ---------- playback ----------
@@ -2229,6 +2390,7 @@ function isTyping(e){
   return t.tagName === 'INPUT' && ['text','number','url','search'].includes(t.type);
 }
 function onKey(e){
+  if (midiCtl.learning){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); endLearn(); } return; }
   if (!$('#aboutPanel').hidden){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); closeAbout(); } return; }
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
@@ -2938,6 +3100,13 @@ const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos'
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
+$('#midiLearn').addEventListener('click', startLearn);
+$('#learnDone').addEventListener('click', endLearn);
+$('#midiClear').addEventListener('click', () => { midiCtl.map = []; saveMidiCtl(); renderMidiCtl(); });
+$('#midiMap').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ midiCtl.map.splice(+b.dataset.k, 1); saveMidiCtl(); renderMidiCtl(); } });
+$('#midiCtlIn').addEventListener('change', e => { midiCtl.input = e.target.value; saveMidiCtl(); bindCtlInputs(); });
+renderMidiCtl();
+if (midiCtl.map.length && navigator.requestMIDIAccess) getMidi().then(bindCtlInputs).catch(() => {});   // mappings exist: listen from the start
 // About & getting started: opens by itself the first time (and every start while its box is ticked)
 function openAbout(){ $('#helpPanel').hidden = true; $('#aboutPanel').hidden = false; }
 function closeAbout(){ $('#aboutPanel').hidden = true; try { localStorage.setItem('vjif-about', $('#aboutAgain').checked ? 'show' : 'seen'); } catch (e) {} }
