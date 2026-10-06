@@ -45,10 +45,17 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #beats i.on{background:var(--sig)}
 #beats i:first-child.on{background:var(--ink)}
 #barpos{width:6ch;text-align:center}
-#saveStat{flex:none;margin-left:auto;width:13ch;height:14px;line-height:14px;text-align:right;font:400 11px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
-#setLabel{width:clamp(110px,9vw,150px);height:var(--ch);line-height:12px}
+/* meters: memory and load, one LCD strip in the header */
+.meters{gap:0;background:var(--lcd-bg);border-radius:var(--r);padding:0 2px;height:var(--ch)}
+.meters .mtr{font:400 11px/1 var(--mono);color:var(--lcd-ink);padding:0 8px;white-space:nowrap;text-align:center}
+.meters .mtr+.mtr{border-left:1px solid color-mix(in srgb,var(--lcd-ink) 25%,transparent)}
+#mem{min-width:5ch}#fps{width:17ch;overflow:hidden}
+@media (max-width:1440px){ .meters .mtr{padding:0 5px} }
+#saveStat{font:400 11px var(--mono);color:var(--muted);white-space:nowrap;padding:0 6px}
+#saveStat:empty{display:none}
+#setLabel{width:clamp(84px,8vw,150px);height:var(--ch);line-height:12px}
 #setLabel.dirty::after{content:" •"}
-#fps{flex:none;width:21ch;height:14px;line-height:14px;text-align:center;font:400 11px var(--mono);color:var(--faint);white-space:nowrap}
+
 .led{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--track);margin-right:6px;vertical-align:0}
 .led.on{background:var(--sigtxt)}
 #outBtn:not(:has(.led.on)){background:var(--panel-2);color:var(--ink);border-color:var(--edge)}
@@ -78,9 +85,9 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .scene.empty .n{color:var(--faint);background:none}
 .scene.cur{box-shadow:0 0 0 2px var(--sig)}
 .scene.wait{animation:wait .25s steps(1) infinite}
-.padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}.padhead #mem{flex:none}
+.padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
 .padsub{margin:8px 0 5px;font:500 11px var(--mono);color:var(--faint)}.padsub .line{flex:1;height:1px;background:var(--edge)}
-#mem{width:7ch;text-align:right}
+
 #gifName{width:9ch}
 #gInfo{margin-bottom:8px}
 #bank h2:not(:first-child){margin-top:12px}
@@ -91,7 +98,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #gPrev{width:72px;height:72px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}
 
 /* ---------- stage: layer strip, preview, footer ---------- */
-#stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
+#stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
 #layers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
 #pvWrap{min-height:0;position:relative;overflow:hidden;background:var(--bg)}
 #pvScene{position:absolute;display:block;background:#000;outline:1px solid var(--edge)}
@@ -108,7 +115,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #fxPre .fxp .n{font-weight:500;color:var(--muted)}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
-.fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:32px}
+.fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:36px}
 .fxrow .lcd{flex:none;width:7.5ch;text-align:center}
 .fxrow .seg{flex:1;min-width:0}
 #fxMode{flex:none;width:120px}
@@ -117,32 +124,36 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
 .fxrow button{flex:none}
-#fxPreList{flex:1 !important;width:auto !important;text-align:left !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+#fxPreList{flex:1;min-width:0;display:flex;gap:4px;overflow:hidden;align-items:center}
+.pchip{display:inline-flex;align-items:center;gap:2px;flex:none;height:24px;padding:0 2px 0 7px;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);font:500 11px var(--sans);color:var(--ink)}
+.pchip button{width:18px;height:18px;padding:0;border:0;background:none;color:var(--muted);font:400 13px/1 var(--mono)}
+.pchip button:hover{color:var(--danger)}
+.pempty{font:400 11px var(--sans);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fxPre .fxp.drop{border-color:var(--sig);background:var(--track)}
+body.fxdragging,body.fxdragging *{cursor:copy !important}
 #fxEdit.pre #fxStyle,#fxEdit.pre #fxRateRow,#fxEdit:not(.pre) #fxPreList,#fxEdit:not(.pre) #fxStore,#fxEdit:not(.pre) #fxClear{display:none}
-.fxp{position:relative;height:32px;border-radius:var(--r);background:var(--panel-2);overflow:hidden;cursor:pointer;user-select:none;padding:3px 6px;min-width:0}
+.fxp{position:relative;height:36px;display:flex;flex-direction:column;justify-content:space-between;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);overflow:hidden;cursor:pointer;user-select:none;padding:4px 7px 5px;min-width:0}
 .fxp:hover{background:var(--track)}
 .fxp .lv{position:absolute;inset:auto 0 0 0;height:0;background:var(--sig);opacity:.85}
-.fxp .k{position:relative;font:600 9px var(--mono);color:var(--faint)}
-.fxp .md{position:absolute;top:3px;right:6px;font:400 9px var(--mono);color:var(--faint)}
-.fxp .t{position:relative;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
-.fxp .n{font:600 11.5px var(--sans);letter-spacing:-.01em;color:var(--ink)}
-.fxp .s{margin-left:5px;font:400 10px var(--sans);color:var(--muted)}
-.fxp.sel{box-shadow:inset 0 0 0 1px var(--sig)}
-.fxp.on .n,.fxp.on .k,.fxp.on .md,.fxp.on .s{color:var(--sigtxt)}
+.fxp .hd{position:relative;display:flex;justify-content:space-between;gap:4px;font:600 9px/1 var(--mono);color:var(--faint)}
+.fxp .md{font-weight:400}
+.fxp .t{position:relative;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:13px}
+.fxp .n{font:600 11.5px/13px var(--sans);letter-spacing:-.01em;color:var(--ink)}
+.fxp .s{margin-left:5px;font:400 10px/13px var(--sans);color:var(--muted)}
+.fxp.sel{border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig)}
+.fxp.on .n,.fxp.on .hd,.fxp.on .s{color:var(--sigtxt)}
 #liveTag{position:absolute;top:8px;left:8px;z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#fff;background:#a33;padding:3px 8px;border-radius:2px;pointer-events:none}
 #fxEdit{display:flex;gap:10px;align-items:center;min-width:0}
 #fxEdit .lcd{width:9ch;flex:none;text-align:center}
 #fxEdit .seg{flex:none;width:160px}
 #fxEdit .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
 #fxEdit .field.dimmed{opacity:.35;pointer-events:none}
-.hint{display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;font-size:12px;color:var(--muted);background:var(--panel);padding:5px 12px}
-.hint .t{overflow:hidden;text-overflow:ellipsis}
-#pvLayer{width:13.5ch;flex:none;text-align:center}
 
-/* ---------- layers: a surface each, colour bar on the left; the edited one is a shade lighter ---------- */
+
+/* ---------- layers: a surface each, colour bar on the left; the edited one is lighter and framed in its colour ---------- */
 .layer{position:relative;min-width:0;background:var(--panel);padding:7px 9px 8px 12px;cursor:pointer}
 .layer::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--lc)}
-.layer.tgt{background:var(--panel-2)}
+.layer.tgt{background:var(--panel-2);box-shadow:inset 0 0 0 2px var(--lc)}   /* the edit layer: framed in its colour */
 .layer.tgt select{background-color:var(--track)}
 .lhead{display:flex;align-items:center;gap:7px}
 .lhead .lname{flex:1;min-width:0}
@@ -224,8 +235,9 @@ output.mod{color:var(--env)}
     <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span></div>
   <div class="grp"><label for="snap">Snap</label>
     <select id="snap" style="width:72px" title="Snap triggers and set swaps to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
+  <div class="grp meters" title="How hard VJif is working — hover each readout for details"><span id="mem" class="mtr"></span><span id="fps" class="mtr"></span><span id="saveStat"></span></div>
   <div class="grp"><label for="clockSrc">Clock</label>
-    <select id="clockSrc" style="width:140px"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
+    <select id="clockSrc" style="width:118px"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
     <select id="midiIn" hidden style="width:160px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span></div>
   <div class="grp right"><button id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button><button id="redoBtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>Redo</button></div>
   <div class="vsep"></div>
@@ -235,7 +247,7 @@ output.mod{color:var(--env)}
 </header>
 
 <section id="bank" class="panel">
-  <h2 class="padhead">Pads<span id="mem" class="tag"></span>
+  <h2 class="padhead">Pads
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
     <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="urlBtn" hidden>Load</button><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
   <div class="sub padsub"><span>QWE / ASD / ZXC</span><span class="line"></span></div>
@@ -258,7 +270,7 @@ output.mod{color:var(--env)}
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects on the whole output — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
-      <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList" class="lcd"></span></div>
+      <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList"></span></div>
       <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
         <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
       <div class="fxrow"><div class="field" id="fxLenRow" title="Length: how long a Hit takes to fade"><label for="fxLen">Len</label><input id="fxLen" type="range" min="0" step="1" data-def="3"><output></output></div>
@@ -267,7 +279,6 @@ output.mod{color:var(--env)}
     </div>
     <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
   </div>
-  <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
 </main>
 
 <aside id="side" class="panel">
@@ -381,7 +392,7 @@ output.mod{color:var(--env)}
       <dt>F1–F12</dt><dd>Screen effects on the whole output — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (plays once, fades over Length; with Snap it waits for the beat / bar) or Latch (on / off); Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
-      <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length and Amount. To store one, switch on the effects you want (hold their F keys, or latch them) and press Shift+numpad key — or right-click the preset and press Store</dd>
+      <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length and Amount. To fill one: drag effect tiles onto it, or hold its key (Caps on) or its tile and click / press effects to add or remove them; Caps+Shift+numpad key stores the effects that are on right now. Right-click a preset to see and remove its effects</dd>
       <dt>1–9</dt><dd>Arm a transition preset for the next scene change (the Transition panel edits the armed one)</dd>
       <dt>Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>PgUp / PgDn · End</dt><dd>Edit layer up / down (or click its card; Alt+1–4 too) · End: the edit layer on / off</dd>
@@ -434,7 +445,7 @@ const MEM_WARN_MB = 1500;      // whole bank
 const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','KeyR','KeyT','KeyY','KeyF','KeyG','KeyH','KeyV','KeyB','KeyN'];
 const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','R','T','Y','F','G','H','V','B','N'];
 const BLENDS = [['source-over','Normal'],['lighter','Add'],['screen','Screen'],['multiply','Multiply'],['difference','Difference'],['exclusion','Exclusion'],['lighten','Lighten'],['darken','Darken'],['overlay','Overlay']];
-const LCOL = ['#ffb000','#3ad1c4','#ff5bb0','#8fa8ff'];
+const LCOL = ['#4dff7a','#3ad1c4','#ff5bb0','#8fa8ff'];
 const LNAMES = ['Background', 'Midground', 'Foreground', 'Overlay'];
 // musical lengths in beats (4/4): [beats, label]
 const LEN_OPTS     = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];
@@ -1161,7 +1172,7 @@ function release(p){
   const g = pads[p].gif; if (!g || g.trig !== 'fade' || !g.env.gate) return;
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
-window.addEventListener('blur', () => { pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); });
+window.addEventListener('blur', () => { heldPre = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); });
 
 // ---------- fade one-shot envelope ----------
 const ease = (g, t) => g.env.curve === 'smooth' ? t * t * (3 - 2 * t) : t;
@@ -1372,11 +1383,40 @@ $('#scDup').addEventListener('click', () => {
 });
 // ---- screen effect pads + editor ----
 const NP_ORDER = [6, 7, 8, 3, 4, 5, 0, 1, 2];           // preset tiles laid out like the numpad (7 8 9 on top)
-function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="k">${key}</span><span class="md"></span><span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
+function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span><span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
+// Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
+// click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
+let heldPre = -1, fxDrag = null;
+function togglePreFx(k, i){
+  const P = fxPre[k];
+  if (P.fx[i]) delete P.fx[i]; else P.fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style };
+  syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(P)}`);
+}
+function addPreFx(k, i){ fxPre[k].fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style }; selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`); }
 function wireFxTile(el){
   const i = +el.dataset.i;
-  el.addEventListener('pointerdown', e => { if (e.button) return; el.setPointerCapture(e.pointerId); fxDown(i); });
-  el.addEventListener('pointerup', () => fxUp(i)); el.addEventListener('pointercancel', () => fxUp(i));
+  el.addEventListener('pointerdown', e => {
+    if (e.button) return;
+    if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); return; }     // a preset is held: this click edits it
+    el.setPointerCapture(e.pointerId); fxDown(i);
+    if (i < NFX) fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; else heldPre = i - NFX;   // holding a preset tile: F keys edit it
+  });
+  el.addEventListener('pointermove', e => {
+    if (!fxDrag || fxDrag.i !== i) return;
+    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; fxUp(i); document.body.classList.add('fxdragging'); }
+    if (fxDrag.moved){ const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp');
+      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === d)); }
+  });
+  const end = e => {
+    fxUp(i); if (i >= NFX && heldPre === i - NFX) heldPre = -1;
+    if (fxDrag && fxDrag.i === i && fxDrag.moved){
+      const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp');
+      if (d) addPreFx(+d.dataset.i - NFX, i);
+      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging');
+    }
+    fxDrag = null;
+  };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   el.addEventListener('contextmenu', e => { e.preventDefault(); selectFx(i); });
 }
 function buildFx(){
@@ -1415,7 +1455,11 @@ function syncFxUI(){
   });
   $('#fxEdit').classList.toggle('pre', pre);
   $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d.name; $('#fxName').title = pre ? 'Effect preset' : d.title;
-  if (pre) $('#fxPreList').textContent = fxPreLong(C);
+  if (pre){
+    const ks = Object.keys(C.fx);
+    $('#fxPreList').innerHTML = ks.length ? ks.map(i => `<span class="pchip" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}%">${FX_DEFS[i].name}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
+      : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>';
+  }
   else {
     $('#fxStyle').innerHTML = d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join('');
     segSet('#fxStyle', C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
@@ -1436,6 +1480,7 @@ $('#fxStyle').addEventListener('click', e => { const b = e.target.closest('butto
 $('#fxAmt').addEventListener('input', e => { fxConf(selFx).amt = +e.target.value; syncFxUI(); });
 $('#fxLen').addEventListener('input', e => { fxConf(selFx).len = FX_LENS[+e.target.value][0]; syncFxUI(); });
 $('#fxRate').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
+$('#fxPreList').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx >= NFX){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); } });
 $('#fxStore').addEventListener('click', () => { if (selFx >= NFX) storeFxPre(selFx - NFX); });
 $('#fxClear').addEventListener('click', () => { if (selFx >= NFX){ fxPre[selFx - NFX].fx = {}; syncFxUI(); } });
 $('#fxAmt').ctlParse = t => parseFloat(t) / 100;
@@ -2041,7 +2086,7 @@ function onKey(e){
     syncXfUI(); return;
   }
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
-  if (xi >= 0){ e.preventDefault(); if (!e.repeat) e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
+  if (xi >= 0){ e.preventDefault(); if (!e.repeat) heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
   const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
   if (np){
     e.preventDefault(); if (e.repeat) return;
@@ -2050,7 +2095,8 @@ function onKey(e){
     if (!capsOn) return sceneKey(k);
     // Shift stores. On Windows, Shift+numpad with NumLock on arrives as Home / ↑ / PgUp… without the Shift flag
     const shifted = e.shiftKey || (e.getModifierState('NumLock') && !/^[0-9]$/.test(e.key));
-    shifted ? storeFxPre(k) : fxDown(NFX + k); return;
+    if (shifted) storeFxPre(k); else { fxDown(NFX + k); heldPre = k; selectFx(NFX + k); }
+    return;
   }
   if (e.code === 'Digit0'){ e.preventDefault(); if (!e.repeat){ setBlack(true); updLiveTag(); } return; }   // 0: blackout while held
   if (e.code === 'Insert'){ e.preventDefault(); if (!e.repeat) setFreeze(true); return; }                  // Ins: freeze while held
@@ -2072,7 +2118,7 @@ function onKeyUp(e){
   if (e.code === 'Space') e.preventDefault();
   const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0) release(pi);
   const xi = FX_KEYS.indexOf(e.code); if (xi >= 0) fxUp(xi);
-  const qi = FXP_KEYS.indexOf(e.code); if (qi >= 0) fxUp(NFX + qi);
+  const qi = FXP_KEYS.indexOf(e.code); if (qi >= 0){ fxUp(NFX + qi); if (heldPre === qi) heldPre = -1; }
   if (e.code === 'Digit0' && live.blackOn){ setBlack(false); updLiveTag(); }
   if (e.code === 'Insert') setFreeze(false);
 }
@@ -2129,9 +2175,9 @@ function updateMem(){
   // decoded GIFs count once (the pool); each instance adds only its own processed frames / key masks
   const base = pool.reduce((a, m) => a + m.srcBytes, 0) / 1048576;
   let extra = 0; insts.forEach(g => { extra += g.bytes - g.srcBytes + (g.maskBytes || 0); }); extra /= 1048576;
-  const mb = base + extra, el = $('#mem'); el.textContent = `~${mb.toFixed(0)} MB`;
+  const mb = base + extra, el = $('#mem'); el.textContent = `${mb.toFixed(0)} MB`;
   el.title = `Decoded frames: ${pool.length} GIF${pool.length === 1 ? '' : 's'} in the pool, ~${base.toFixed(0)} MB` + (extra >= 0.5 ? ` + ~${extra.toFixed(0)} MB of colour-processed copies / key masks` : '');
-  el.style.color = mb > MEM_WARN_MB ? 'var(--danger)' : 'var(--dim)';
+  el.style.color = mb > MEM_WARN_MB ? 'var(--danger)' : '';
   if (mb > MEM_WARN_MB) toast(`The set is using ~${mb.toFixed(0)} MB of decoded frames — remove unused GIFs from the pool if playback stutters`);
   const pb = $('#poolBtn'); if (pb) pb.textContent = `Pool ${pool.length}`;
 }
@@ -2449,7 +2495,7 @@ function syncLayerUI(){
       return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
     }).join('');
   }
-  $('#pvLayer').textContent = LNAMES[target];
+
   updatePadDots();
 }
 
@@ -2761,8 +2807,8 @@ function frame(gen){
     const g = meter.gaps.slice().sort((a, b) => a - b), typical = g.length ? g[Math.floor(g.length * 0.25)] : 16.7;
     meter.drops = g.filter(x => x > typical * 1.5).reduce((a, x) => a + Math.round(x / typical) - 1, 0);
     const load = Math.round(meter.busy / (s * 1000) * 100), heap = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(0) + ' MB JS heap' : '';
-    el.textContent = `${Math.round(drawn / s)}/${Math.round(fpsN / s)} fps · ${load}%${meter.drops ? ' · ' + meter.drops + ' missed' : ''}`;
-    el.style.color = load > 70 || meter.drops > 5 ? 'var(--danger)' : load > 40 || meter.drops ? 'var(--lcd-ink)' : '';
+    el.textContent = `${Math.round(drawn / s)}/${Math.round(fpsN / s)} fps ${load}%${meter.drops ? ' ' + meter.drops + '✕' : ''}`;
+    el.style.color = load > 70 || meter.drops > 5 ? 'var(--danger)' : load > 40 || meter.drops ? '#e8b54d' : '';
     el.title = [`Redrawn ${Math.round(drawn / s)} of ${Math.round(fpsN / s)} screen refreshes per second (timed by the ${driver} window; unchanged frames are skipped)`,
       `Load ${load}%: share of the second spent drawing (average ${(meter.busy / Math.max(1, fpsN)).toFixed(1)} ms, peak ${meter.peak.toFixed(1)} ms per frame; one refresh lasts ${typical.toFixed(1)} ms)`,
       `Missed refreshes: ${meter.drops} (frames that came late — visible as stutter)`,
