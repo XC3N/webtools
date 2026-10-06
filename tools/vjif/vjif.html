@@ -91,11 +91,27 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #gPrev{width:72px;height:72px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}
 
 /* ---------- stage: layer strip, preview, footer ---------- */
-#stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
+#stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
 #layers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
 #pvWrap{min-height:0;position:relative;overflow:hidden;background:var(--bg)}
 #pvScene{position:absolute;display:block;background:#000;outline:1px solid var(--edge)}
 #pv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
+#fxStrip{display:flex;flex-direction:column;gap:6px;background:var(--panel);padding:8px 10px}
+#fxPads{display:grid;grid-template-columns:repeat(4,1fr) 6px repeat(4,1fr) 6px repeat(4,1fr);gap:4px}
+#fxPads i{display:block}
+.fxp{position:relative;height:34px;border-radius:var(--r);background:var(--panel-2);overflow:hidden;cursor:pointer;user-select:none;padding:4px 6px;min-width:0}
+.fxp:hover{background:var(--track)}
+.fxp .lv{position:absolute;inset:auto 0 0 0;height:0;background:var(--sig);opacity:.85}
+.fxp .k{position:relative;font:600 10px var(--mono);color:var(--faint)}
+.fxp .n{position:relative;display:block;font:600 11.5px var(--sans);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fxp .md{position:absolute;top:4px;right:6px;font:400 9px var(--mono);color:var(--faint)}
+.fxp.sel{box-shadow:inset 0 0 0 1px var(--sig)}
+.fxp.on .n,.fxp.on .k,.fxp.on .md{color:var(--sigtxt)}
+#fxEdit{display:flex;gap:10px;align-items:center;min-width:0}
+#fxEdit .lcd{width:9ch;flex:none;text-align:center}
+#fxEdit .seg{flex:none;width:160px}
+#fxEdit .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
+#fxEdit .field.dimmed{opacity:.35;pointer-events:none}
 .hint{display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;font-size:12px;color:var(--muted);background:var(--panel);padding:5px 12px}
 .hint .t{overflow:hidden;text-overflow:ellipsis}
 #pvLayer{width:13.5ch;flex:none;text-align:center}
@@ -216,6 +232,16 @@ output.mod{color:var(--env)}
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
   <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
+  <div id="fxStrip">
+    <div id="fxPads" title="Screen effects on the whole output — keys U I O P / J K L ; / M , . /  · right-click or Shift+key: edit without playing"></div>
+    <div id="fxEdit">
+      <span class="lcd" id="fxName">Mono</span>
+      <div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
+      <div class="field"><label for="fxAmt">Amount</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div>
+      <div class="field" id="fxLenRow"><label for="fxLen">Length</label><input id="fxLen" type="range" min="0" step="1" data-def="3"><output></output></div>
+      <div class="field" id="fxRateRow"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
+    </div>
+  </div>
   <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
 </main>
 
@@ -327,6 +353,7 @@ output.mod{color:var(--env)}
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to pick from the GIF pool (or browse, while the pool is empty); <b>Pool</b> lists every GIF of the set; drop a .vjif anywhere to import a set</dd>
       <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Shift+Q…C · Shift+Num</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Delete or the × on its chip</dd>
+      <dt>U I O P · J K L ; · M , . /</dt><dd>Screen effects on the whole output (Mono, Invert, Strobe, Poster · Zoom, Shake, Wobble, Mirror · Glitch, RGB, Pixel, Kaleido). Each is Hold (while held), Hit (plays once, fades over Length) or Latch (on / off); Rate sets how fast shakes, strobes, wobbles and glitches move, in beats. Right-click or Shift+key edits one without playing it</dd>
       <dt>1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
       <dt>F1–F4 · Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>Alt+1–4</dt><dd>Choose the layer to edit / trigger into (or click its card)</dd>
@@ -1105,7 +1132,7 @@ function release(p){
   const g = pads[p].gif; if (!g || g.trig !== 'fade' || !g.env.gate) return;
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
-window.addEventListener('blur', () => pads.forEach((_, i) => release(i)));
+window.addEventListener('blur', () => { pads.forEach((_, i) => release(i)); FX_DEFS.forEach((_, i) => fxUp(i)); });
 
 // ---------- fade one-shot envelope ----------
 const ease = (g, t) => g.env.curve === 'smooth' ? t * t * (3 - 2 * t) : t;
@@ -1259,6 +1286,48 @@ $('#scDup').addEventListener('click', () => {
     return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
   gotoScene(t); toast2(`Copied to scene ${t + 1}`);
 });
+// ---- screen effect pads + editor ----
+function buildFx(){
+  const box = $('#fxPads');
+  box.innerHTML = FX_DEFS.map((d, i) => (i && i % 4 === 0 ? '<i></i>' : '') +
+    `<div class="fxp" data-i="${i}" title="${d[2]} (key ${FX_LABELS[i]})"><span class="lv"></span><span class="k">${FX_LABELS[i]}</span><span class="md"></span><span class="n">${d[1]}</span></div>`).join('');
+  box.querySelectorAll('.fxp').forEach(el => {
+    const i = +el.dataset.i;
+    el.addEventListener('pointerdown', e => { if (e.button) return; el.setPointerCapture(e.pointerId); fxDown(i); });
+    el.addEventListener('pointerup', () => fxUp(i)); el.addEventListener('pointercancel', () => fxUp(i));
+    el.addEventListener('contextmenu', e => { e.preventDefault(); selectFx(i); });
+  });
+  $('#fxLen').max = FX_LENS.length - 1; $('#fxRate').max = FX_RATES.length - 1;
+}
+const fxPadLv = [];
+function paintFxPads(b){
+  document.querySelectorAll('#fxPads .fxp').forEach((el, i) => {
+    const v = Math.round(fxLevel(i, b) * 100); if (fxPadLv[i] === v) return; fxPadLv[i] = v;
+    el.firstChild.style.height = v + '%'; el.classList.toggle('on', v > 50);
+  });
+}
+const FX_MD = { hold: 'hold', hit: 'hit', latch: 'latch' };
+function syncFxUI(){
+  const C = fxCfg[selFx], d = FX_DEFS[selFx];
+  document.querySelectorAll('#fxPads .fxp').forEach((el, i) => { el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = FX_MD[fxCfg[i].mode]; });
+  $('#fxName').textContent = d[1]; $('#fxName').title = d[2];
+  segSet('#fxMode', C.mode);
+  $('#fxAmt').value = C.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(C.amt * 100) + '%';
+  const li = optIdx(FX_LENS, C.len), ri = optIdx(FX_RATES, C.rate);
+  $('#fxLen').value = li; $('#fxLen').nextElementSibling.textContent = FX_LENS[li][1];
+  $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
+  $('#fxLenRow').classList.toggle('dimmed', C.mode !== 'hit'); $('#fxRateRow').classList.toggle('dimmed', !d[4]);
+  $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[selFx].rate);
+}
+$('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it
+  fxCfg[selFx].mode = b.dataset.v; syncFxUI(); });
+$('#fxAmt').addEventListener('input', e => { fxCfg[selFx].amt = +e.target.value; syncFxUI(); });
+$('#fxLen').addEventListener('input', e => { fxCfg[selFx].len = FX_LENS[+e.target.value][0]; syncFxUI(); });
+$('#fxRate').addEventListener('input', e => { fxCfg[selFx].rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
+$('#fxAmt').ctlParse = t => parseFloat(t) / 100;
+$('#fxAmt').removeAttribute('data-pct');
+
 $('#scEmpty').addEventListener('click', () => {
   if (!sceneCount(sceneIdx) && !scenePads(sceneIdx)) return;
   commit();
@@ -1522,6 +1591,123 @@ const redraw = { all: true, scene: '', overlay: '' };
 // (every colour change restyles the whole page; those redraws would compete with it). The output is unaffected.
 let uiQuiet = 0, quietT = 0;
 function quietUI(ms = 250){ uiQuiet = performance.now() + ms; clearTimeout(quietT); quietT = setTimeout(() => { redraw.all = true; }, ms + 20); }
+// ---------- screen effects: a WebGL pass over the finished frame (output and preview) ----------
+const FX_KEYS = ['KeyU', 'KeyI', 'KeyO', 'KeyP', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'KeyM', 'Comma', 'Period', 'Slash'];
+const FX_LABELS = ['U', 'I', 'O', 'P', 'J', 'K', 'L', ';', 'M', ',', '.', '/'];
+// [id, name, title, default mode, uses Rate]
+const FX_DEFS = [
+  ['mono', 'Mono', 'Black and white', 'hold', false], ['invert', 'Invert', 'Negative colours', 'hold', false],
+  ['strobe', 'Strobe', 'Flashes white on the beat grid (Rate)', 'hold', true], ['poster', 'Poster', 'Fewer colours, flat bands', 'hold', false],
+  ['zoom', 'Zoom', 'Zoom punch', 'hit', false], ['shake', 'Shake', 'Camera shake, a new jolt every Rate', 'hit', true],
+  ['wobble', 'Wobble', 'Wavy distortion, one wave cycle per Rate', 'hold', true], ['mirror', 'Mirror', 'Left half mirrored onto the right', 'latch', false],
+  ['glitch', 'Glitch', 'Torn slices and colour split, re-torn every Rate', 'hold', true], ['rgb', 'RGB', 'Colour channels pulled apart', 'hit', false],
+  ['pixel', 'Pixel', 'Pixelate', 'hold', false], ['kaleido', 'Kaleido', 'Kaleidoscope (six-fold)', 'latch', false]];
+const FX_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
+const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
+const fxDefaults = () => FX_DEFS.map(d => ({ mode: d[3], amt: 1, len: 1, rate: d[0] === 'wobble' ? 2 : 0.25 }));
+let fxCfg = fxDefaults(), selFx = 0;
+const fxSt = FX_DEFS.map(() => ({ held: false, on: false, b0: -1e9, rel: -1e9 }));
+const FX_REL = 0.125;                                // beats a held / latched effect takes to fade out
+function fxLevel(i, b){
+  const C = fxCfg[i], S = fxSt[i];
+  if (C.mode === 'hit'){ const x = (b - S.b0) / C.len; return x >= 0 && x < 1 ? (1 - x) * (1 - x) : 0; }
+  if (C.mode === 'hold' ? S.held : S.on) return 1;
+  const x = (b - S.rel) / FX_REL; return x >= 0 && x < 1 ? 1 - x : 0;
+}
+function fxDown(i){
+  const C = fxCfg[i], S = fxSt[i], b = clock.beat;
+  if (C.mode === 'hit') S.b0 = b;
+  else if (C.mode === 'hold') S.held = true;
+  else { S.on = !S.on; if (!S.on) S.rel = b; }
+  if (selFx !== i){ selFx = i; syncFxUI(); }
+}
+function fxUp(i){ const S = fxSt[i]; if (S.held){ S.held = false; S.rel = clock.beat; } }
+function selectFx(i){ selFx = i; syncFxUI(); }
+const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+// this frame's effect settings; null when nothing is on
+function fxUniforms(b){
+  const lv = FX_DEFS.map((d, i) => fxLevel(i, b) * fxCfg[i].amt), U = {};
+  if (!lv.some(v => v > 0.001)) return null;
+  FX_DEFS.forEach((d, i) => U[d[0]] = lv[i]);
+  const st = i => Math.floor(b / fxCfg[i].rate);
+  U.strobe *= (b / fxCfg[2].rate) % 1 < 0.5 ? 1 : 0;
+  U.zoom *= 0.5;
+  const sk = st(5), s = lv[5];
+  U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
+  U.wobPh = b / fxCfg[6].rate * Math.PI * 2;
+  U.gseed = st(8) * 7.13 % 100;
+  U.kalRot = b * 0.1;
+  return U;
+}
+const post = (() => {
+  try {
+    const cv = new OffscreenCanvas(W, H);
+    const gl = cv.getContext('webgl', { alpha: false, antialias: false, depth: false, premultipliedAlpha: false });
+    if (!gl) return null;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
+      uniform sampler2D tex; uniform vec2 res;
+      uniform float mono, invert, strobe, poster, zoom, wobble, wobPh, mirror, glitch, gseed, rgb, pixel, kaleido, kalRot, shakeZ;
+      uniform vec3 shake; varying vec2 uv;
+      float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
+      vec2 geo(vec2 p){
+        vec2 a = vec2(res.x / res.y, 1.0), d = (p - 0.5) * a;
+        d /= (1.0 + zoom) * (1.0 + shakeZ);
+        float c = cos(shake.z), s = sin(shake.z); d = mat2(c, s, -s, c) * d + shake.xy;
+        p = d / a + 0.5;
+        p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wobble;
+        p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wobble;
+        if (pixel > 0.001){ float n = mix(res.x, 24.0, sqrt(pixel)); vec2 cell = vec2(n, n * res.y / res.x); p = (floor(p * cell) + 0.5) / cell; }
+        return p;
+      }
+      vec3 samp(vec2 p, float split){
+        if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return vec3(0.0);
+        vec2 o = vec2(split, 0.0);
+        return vec3(texture2D(tex, p + o).r, texture2D(tex, p).g, texture2D(tex, p - o).b);
+      }
+      void main(){
+        vec2 p = uv, a = vec2(res.x / res.y, 1.0);
+        float split = rgb * 0.025, g = 0.0;
+        if (glitch > 0.001){
+          float band = floor(p.y * 24.0 + h1(gseed) * 24.0);
+          if (h1(band + gseed) < glitch * 0.55) g = (h1(band * 1.7 + gseed) - 0.5) * 0.25 * glitch;
+          split += abs(g) * 0.3 + glitch * 0.004;
+        }
+        vec3 c = samp(geo(p + vec2(g, 0.0)), split);
+        if (mirror > 0.001) c = mix(c, samp(geo(vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y) + vec2(g, 0.0)), split), mirror);
+        if (kaleido > 0.001){
+          vec2 d = (p - 0.5) * a; float r = length(d), seg = 6.2831853 / 6.0, an = mod(atan(d.y, d.x) + kalRot, seg);
+          an = abs(an - seg * 0.5);
+          c = mix(c, samp(geo(vec2(cos(an), sin(an)) * r / a + 0.5), split), kaleido);
+        }
+        if (poster > 0.001){ float lv = mix(24.0, 2.0, poster); c = floor(c * lv + 0.5) / lv; }
+        c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), mono);
+        c = mix(c, 1.0 - c, invert);
+        c = mix(c, vec3(1.0), strobe);
+        gl_FragColor = vec4(c, 1.0);
+      }`));
+    gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
+    const u = {}; ['res', 'mono', 'invert', 'strobe', 'poster', 'zoom', 'wobble', 'wobPh', 'mirror', 'glitch', 'gseed', 'rgb', 'pixel', 'kaleido', 'kalRot', 'shakeZ', 'shake'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
+    gl.viewport(0, 0, W, H);
+    return { run(U){
+      gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, master);
+      gl.uniform2f(u.res, W, H);
+      for (const k of ['mono', 'invert', 'strobe', 'poster', 'zoom', 'wobble', 'wobPh', 'mirror', 'glitch', 'gseed', 'rgb', 'pixel', 'kaleido', 'kalRot', 'shakeZ']) gl.uniform1f(u[k], U[k] || 0);
+      gl.uniform3fv(u.shake, U.shake);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over';
+      mctx.drawImage(cv, 0, 0);
+    } };
+  } catch (e) { console.warn('screen effects unavailable:', e.message); return null; }
+})();
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
@@ -1529,17 +1715,20 @@ function drawFrame(now){
   const list = frameList(now);
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ trans = null; redraw.all = true; } }
-  const sig = trans ? 'T' + now : sceneSig(list);    // a running transition redraws every frame
+  const fxU = post && fxUniforms(clock.beat);
+  const sig = trans ? 'T' + now : fxU ? 'F' + now : sceneSig(list);    // a running transition / effect redraws every frame
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++;
     if (trans){
       render(frameList(now, trans.from, trans.gifs), trA); render(list, trB);
       composeTransition(transCfg.smooth ? tp * tp * (3 - 2 * tp) : tp, transCfg);
     } else render(list);
+    if (fxU) post.run(fxU);
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
   }
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
+  paintFxPads(clock.beat);
   const L = layers[target], sel = selClip(), gh = ghostList();
   const osig = `${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
     + '|' + gh.map(([c, g]) => { const G = clipGeom(c); return `${c.id},${G.cx},${G.cy},${G.hw},${G.hh},${G.a},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb},${g.fxVer},${g.startF},${g.crisp}`; }).join(';');
@@ -1621,6 +1810,8 @@ function onKey(e){
     const a = /^Digit([1-4])$/.exec(e.code); if (a){ e.preventDefault(); setTarget(+a[1] - 1); } return;
   }
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const xi = FX_KEYS.indexOf(e.code);
+  if (xi >= 0){ e.preventDefault(); if (!e.repeat) e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
   if (e.code === 'Space') e.preventDefault();
   const pi = PAD_KEYS.indexOf(e.code);
   if (pi < 0 && /^Arrow/.test(e.key)){              // nudge the selected GIF: 1 px, Shift = 10 px (holding repeats; one undo step)
@@ -1652,6 +1843,7 @@ function onKeyUp(e){
   if (isTyping(e)) return;
   if (e.code === 'Space') e.preventDefault();
   const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0) release(pi);
+  const xi = FX_KEYS.indexOf(e.code); if (xi >= 0) fxUp(xi);
 }
 window.addEventListener('keydown', onKey);
 window.addEventListener('keyup', onKeyUp);
@@ -2372,7 +2564,7 @@ const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.bl
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: 4, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg },
+    v: 4, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, fx: fxCfg.map(c => ({ ...c })),
     pool: pool.map(m => ({ hash: m.hash, name: m.name })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
@@ -2462,6 +2654,7 @@ async function applySnapshot(st, { wait = true } = {}){
   }
   sceneIdx = idx; pendingScene = null; liveThumb = null; trans = null; renderScenes();
   Object.assign(transCfg, { type: 'cut', dir: 'left', len: 2, smooth: true }, st.trans || {}); syncTransUI();
+  fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); syncFxUI();
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
   selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem(); renderPool();
@@ -2512,6 +2705,7 @@ async function newEmptySet(){
   layers.forEach(L => Object.assign(L, emptyLayer()));
   scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; trans = null; renderScenes();
   Object.assign(transCfg, { type: 'cut', dir: 'left', len: 2, smooth: true }); syncTransUI();
+  fxCfg = fxDefaults(); syncFxUI();
   session.setId = null; session.savedSig = '';
   resetHist();
   selectPad(0); syncLayerUI(); syncXfUI(); updateMem(); redraw.all = true;
@@ -2819,6 +3013,7 @@ Theme.onApply(() => { if (!pads[0].el) return readThemeColours(); clearTimeout(t
 { let saved = null; try { saved = Theme.parse(JSON.parse(localStorage.getItem('vjif-theme2'))); } catch (e) {}
   Theme.apply(saved || Theme.PRESETS['Matte']); }
 buildPads(); pads.forEach((_, i) => renderPad(i));
+buildFx(); syncFxUI(); if (!post) $('#fxPads').title = 'Screen effects need WebGL, which this browser has turned off';
 buildLayers(); renderScenes(); syncTransUI(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
 // typing into readouts: musical lengths accept a label ("1/8", "2 bars") or a number of beats; phase is in degrees
 const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), i = opts.findIndex(o => o[1].toLowerCase() === l || o[1].toLowerCase() === l + 's');
