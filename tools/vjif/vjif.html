@@ -267,7 +267,7 @@ output.mod{color:var(--env)}
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="recBtn" title="Record the output to a video file (WebM). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -409,6 +409,7 @@ output.mod{color:var(--env)}
     <h2>Settings<span class="line"></span><button id="setClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <div class="sub" style="margin-top:0"><span>Canvas</span><span class="line"></span></div>
     <div class="row"><div class="seg" id="fmtSeg"></div><label class="tog" title="Vertical only: shade where Reels / TikTok / Shorts put their buttons and captions (preview only, not in the output)"><input type="checkbox" id="safeTog">Safe-zone guides</label></div>
+    <div class="row"><span class="lbl" style="color:var(--muted)">Recording</span><div class="seg" id="recFmtSeg"><button data-r="mp4" title="H.264 in MP4 — uploads straight to Instagram, TikTok, YouTube">MP4</button><button data-r="webm" title="VP9 in WebM — smaller, plays in browsers and VLC; most social apps want MP4">WebM</button></div></div>
     <p class="note">The output's shape: landscape for screens and projectors, vertical for Reels / TikTok / Shorts / Stories, square or 4:5 for the feed. It's saved with the set; the output window and recordings follow it.</p>
     <div class="sub"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
@@ -462,7 +463,7 @@ output.mod{color:var(--env)}
       <dt>Sliders</dt><dd>Double-click the bar resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · double-click the number to type a value (Enter applies, Esc cancels) · dropdowns and button rows take the wheel and arrows too</dd>
       <dt>Del / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
-      <dt>Rec</dt><dd>Records the output to a WebM video. Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
+      <dt>Rec</dt><dd>Records the output to an MP4 (H.264) or WebM video — Settings › Canvas picks which, and the size follows the canvas format. Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
       <dt>MIDI learn</dt><dd>Settings › MIDI control › Learn: click a target (pad, scene, transition, effect, layer chip, opacity, effect amount, Tap, Sync, or Blackout/Freeze in the bar), then move a control on your controller. Faders need a knob/fader (CC). Esc or Done to finish; mappings are remembered</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
       <dt>Esc</dt><dd>Cancel a colour pick · close a panel</dd>
@@ -503,6 +504,7 @@ let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
 let format = '16:9';
+let recFmt = (() => { try { return localStorage.getItem('vjif-recfmt') || 'mp4'; } catch (e) { return 'mp4'; } })();   // recording container (Settings)
 let safeGuides = (() => { try { return localStorage.getItem('vjif-safe') !== '0'; } catch (e) { return true; } })();   // preview only, never in the output
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
@@ -3150,6 +3152,9 @@ $('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<butto
 $('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
 syncFormatUI();
 $('#safeTog').checked = safeGuides;
+const syncRecFmt = () => document.querySelectorAll('#recFmtSeg button').forEach(b => b.classList.toggle('on', b.dataset.r === recFmt));
+syncRecFmt();
+$('#recFmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recFmt = b.dataset.r; try { localStorage.setItem('vjif-recfmt', recFmt); } catch (err) {} syncRecFmt(); recUI(); });
 $('#safeTog').addEventListener('change', e => { safeGuides = e.target.checked; try { localStorage.setItem('vjif-safe', safeGuides ? '1' : '0'); } catch (err) {} redraw.all = true; });
 $('#midiLearn').addEventListener('click', startLearn);
 $('#learnDone').addEventListener('click', endLearn);
@@ -3507,16 +3512,23 @@ async function exportSet(name, snap){
 // Where the browser can, the file is chosen first and written while recording (long sets don't fill memory);
 // otherwise the recording is kept in memory and downloaded at the end.
 const rec = { mr: null, chunks: [], writer: null, t0: 0, wait: null, name: '', bytes: 0, pending: Promise.resolve() };
-function recMime(){ for (const m of ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']) if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; return ''; }
+// MP4 (H.264) uploads straight to Instagram / TikTok / YouTube; WebM (VP9) is the fallback where the browser has no H.264 encoder
+const REC_MIMES = { mp4: ['video/mp4;codecs=avc1.64002A', 'video/mp4;codecs=avc1.640028', 'video/mp4;codecs=avc1.4D0028', 'video/mp4;codecs=avc1'],
+                    webm: ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'] };
+const recOk = m => window.MediaRecorder && MediaRecorder.isTypeSupported(m);
+function recMime(){ return REC_MIMES[recFmt].find(recOk) || REC_MIMES[recFmt === 'mp4' ? 'webm' : 'mp4'].find(recOk) || ''; }
+const recExt = mime => mime.startsWith('video/mp4') ? 'mp4' : 'webm';
 async function recToggle(){
   if (rec.mr) return recStop();
   if (rec.wait){ rec.wait = null; recUI(); return; }  // a second click cancels a waiting start
-  const mime = recMime(); if (!mime) return toast('Recording needs MediaRecorder with WebM (use Chrome)');
+  const mime = recMime(); if (!mime) return toast('Recording needs MediaRecorder (use Chrome)');
+  if (recExt(mime) !== recFmt) toast2(`This browser can't record ${recFmt.toUpperCase()} — recording ${recExt(mime).toUpperCase()} instead`);
+  const ext = recExt(mime), type = ext === 'mp4' ? 'video/mp4' : 'video/webm';
   const d = new Date(), pad2 = n => String(n).padStart(2, '0');
-  rec.name = `vjif-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.webm`;
+  rec.name = `vjif-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.${ext}`;
   rec.writer = null;
   if (window.showSaveFilePicker){
-    try { const h = await showSaveFilePicker({ suggestedName: rec.name, types: [{ description: 'WebM video', accept: { 'video/webm': ['.webm'] } }] });
+    try { const h = await showSaveFilePicker({ suggestedName: rec.name, types: [{ description: `${ext.toUpperCase()} video`, accept: { [type]: ['.' + ext] } }] });
       rec.writer = await h.createWritable(); rec.name = h.name; }
     catch (e) { if (e.name === 'AbortError') return; rec.writer = null; }
   }
@@ -3533,7 +3545,7 @@ function recStart(mime){
   mr.onstop = async () => {
     stream.getTracks().forEach(t => t.stop());
     if (rec.writer){ await rec.pending; try { await rec.writer.close(); toast2(`Recording saved: ${rec.name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } rec.writer = null; }
-    else { const blob = new Blob(rec.chunks, { type: 'video/webm' }); rec.chunks = [];
+    else { const blob = new Blob(rec.chunks, { type: mime.split(';')[0] }); rec.chunks = [];
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = rec.name; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${rec.name} (downloads folder)`); }
   };
@@ -3546,7 +3558,7 @@ function recUI(){
     $('#recTxt').textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
   else { $('#recTxt').textContent = rec.wait ? 'Wait' : 'Rec';
-    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : 'Record the output to a video file (WebM). With Snap on, recording starts on the next bar'; }
+    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${recFmt.toUpperCase()}, ${W}×${H}). With Snap on, recording starts on the next bar`; }
 }
 function recTick(){ if (rec.wait && clock.beat >= rec.wait.beat - 1e-9) recStart(rec.wait.mime); }
 setInterval(() => { if (rec.mr) recUI(); }, 500);
