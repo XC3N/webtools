@@ -72,39 +72,67 @@ const Theme = (() => {
   // current value of a CSS variable (for canvas drawing)
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
+  // the colour a role actually shows (what its swatch must match)
+  const OPT_DEF = { sCtrl: 100, vCtrl: 100, sLcd: 60, vLcd: 100 };
+  function roleColor(k, t = cur){
+    if (k === 'hCtrl') return hsv2hex(t.hCtrl, t.sCtrl ?? 100, t.vCtrl ?? 100);
+    if (k === 'hLcd') return hsv2hex(t.hLcd, t.sLcd ?? 60, t.vLcd ?? 100);
+    if (k === 'hEnv') return hsv2hex(t.hEnv, 78, 100);
+    if (k === 'hMeter') return hsv2hex(t.hMeter, 75, 90);
+    return hsv2hex(t[k], 100, 100);
+  }
+
   // ---- editor ----
-  // opts: { app: 'vjif' (for exported files), roles: [[key, label, title], …] (default: all four),
-  //         onChange(theme) after each edit (save prefs here), toast(msg) for import / export feedback }
+  // opts: { app: 'vjif' (for exported files), toast(msg), onChange(theme) after each edit (save prefs here),
+  //         roles: [[key, label, title, sv], …] — only the roles the tool uses; sv = also show saturation / brightness
+  //         (hCtrl → sCtrl / vCtrl, hLcd → sLcd / vLcd) }
+  // Slider drags are applied once per animation frame, however fast the input events come.
   function mount(host, opts = {}){
     const roles = opts.roles || [['hCtrl', 'Controls', 'Buttons, sliders, highlights'], ['hLcd', 'LCD', 'Readouts'],
                                  ['hEnv', 'Curves', 'Envelopes and curves'], ['hMeter', 'Meters', 'Meters and secondary accents']];
+    const SV = { hCtrl: ['sCtrl', 'vCtrl'], hLcd: ['sLcd', 'vLcd'] };
     const say = m => opts.toast && opts.toast(m), changed = () => opts.onChange && opts.onChange(get());
     const HUE = 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)';
     host.classList.add('thm');
     host.innerHTML = `<div class="thm-prow"><select class="thm-preset" title="Theme preset">${[...Object.keys(PRESETS), 'Custom'].map(n => `<option>${n}</option>`).join('')}</select>
       <button type="button" class="thm-exp" title="Export this theme to a .json file">Export</button><button type="button" class="thm-imp" title="Import a theme .json (from any XC3N tool)">Import</button>
       <input type="file" accept=".json,application/json" hidden></div>
-      <div class="thm-sub">Roles</div><div class="thm-roles"></div>
+      <div class="thm-roles"></div>
       <div class="thm-sub">Background</div><div class="thm-bg"></div>`;
-    const sliders = {};
-    const row = (box, key, label, title, min, max) => {
-      const r = document.createElement('div'); r.className = 'thm-row'; r.title = title || '';
-      r.innerHTML = `<label>${label}</label><input type="range" min="${min}" max="${max}" step="1" data-def="${DEFAULT[key]}"><output></output>${key[0] === 'h' && key !== 'bh' ? '<i class="thm-sw"></i>' : '<i></i>'}`;
+    const sliders = {}, owner = {};       // owner: s / v key → its hue key
+    let next = null;
+    const flush = () => { const t = next; next = null; if (t){ apply(t); sync(); } };
+    const set = (key, v) => { const base = next || cur; if (!next) requestAnimationFrame(flush); next = { ...base, [key]: v }; };
+    const row = (box, key, label, title, min, max, cls = '') => {
+      const r = document.createElement('div'); r.className = 'thm-row' + cls; r.title = title || '';
+      const def = DEFAULT[key] ?? OPT_DEF[key];
+      r.innerHTML = `<label>${label}</label><input type="range" min="${min}" max="${max}" step="1" data-def="${def}"><output></output><i class="${key[0] === 'h' && key !== 'bh' ? 'thm-sw' : ''}"></i>`;
       const inp = r.querySelector('input');
-      inp.addEventListener('input', () => { apply({ ...cur, [key]: +inp.value }); sync(); });
-      inp.addEventListener('change', changed);
+      inp.addEventListener('input', () => set(key, +inp.value));
+      inp.addEventListener('change', () => { flush(); changed(); });
       sliders[key] = r; box.appendChild(r);
     };
-    roles.forEach(([k, l, t]) => row(host.querySelector('.thm-roles'), k, l, t, 0, 360));
+    const rb = host.querySelector('.thm-roles');
+    roles.forEach(([k, l, t, sv]) => {
+      const g = document.createElement('div'); g.className = 'thm-group'; rb.appendChild(g);
+      row(g, k, l, t, 0, 360);
+      if (sv && SV[k]){ const [s, v] = SV[k]; owner[s] = owner[v] = k;
+        row(g, s, 'Saturation', `${l}: saturation`, 0, 100, ' thm-sv'); row(g, v, 'Brightness', `${l}: brightness`, 10, 100, ' thm-sv'); }
+    });
     const bg = host.querySelector('.thm-bg');
     row(bg, 'bh', 'Hue', 'Background hue', 0, 360); row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22);
     function sync(){
       for (const k in sliders){
         const r = sliders[k], inp = r.querySelector('input'), sw = r.querySelector('.thm-sw');
-        inp.value = cur[k]; r.querySelector('output').textContent = cur[k];
-        inp.style.background = k === 'bs' ? `linear-gradient(to right,${hsv2hex(cur.bh, 0, cur.bv)},${hsv2hex(cur.bh, 50, cur.bv)})`
-          : k === 'bv' ? `linear-gradient(to right,${hsv2hex(cur.bh, cur.bs, 2)},${hsv2hex(cur.bh, cur.bs, 22)})` : HUE;
-        if (sw) sw.style.background = hsv2hex(cur[k], k === 'hEnv' ? 78 : k === 'hMeter' ? 62 : 100, k === 'hMeter' ? 90 : 100);
+        const v = cur[k] ?? OPT_DEF[k];
+        inp.value = v; r.querySelector('output').textContent = v;
+        let grad = HUE;
+        if (k === 'bs') grad = `linear-gradient(to right,${hsv2hex(cur.bh, 0, cur.bv)},${hsv2hex(cur.bh, 50, cur.bv)})`;
+        else if (k === 'bv') grad = `linear-gradient(to right,${hsv2hex(cur.bh, cur.bs, 2)},${hsv2hex(cur.bh, cur.bs, 22)})`;
+        else if (owner[k]){ const h = cur[owner[k]], isS = k[0] === 's', other = isS ? cur['v' + k.slice(1)] ?? OPT_DEF['v' + k.slice(1)] : cur['s' + k.slice(1)] ?? OPT_DEF['s' + k.slice(1)];
+          grad = isS ? `linear-gradient(to right,${hsv2hex(h, 0, other)},${hsv2hex(h, 100, other)})` : `linear-gradient(to right,${hsv2hex(h, other, 10)},${hsv2hex(h, other, 100)})`; }
+        inp.style.background = grad;
+        if (sw) sw.style.background = roleColor(k);
       }
       host.querySelector('.thm-preset').value = match();
     }
@@ -126,5 +154,5 @@ const Theme = (() => {
     sync();
     return { sync };
   }
-  return { DEFAULT, PRESETS, hsv2rgb, hsv2hex, apply, get, match, parse, color, mount, onApply: f => listeners.push(f) };
+  return { DEFAULT, PRESETS, hsv2rgb, hsv2hex, apply, get, match, parse, color, roleColor, mount, onApply: f => listeners.push(f) };
 })();

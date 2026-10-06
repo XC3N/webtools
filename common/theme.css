@@ -3,7 +3,9 @@
 .thm-prow{display:flex;gap:6px;align-items:center}
 .thm-prow select{flex:1;min-width:0}
 .thm-sub{margin:8px 0 0;font:600 12px/1 var(--sans, system-ui);color:var(--muted)}
-.thm-roles,.thm-bg{display:flex;flex-direction:column;gap:8px}
+.thm-roles,.thm-bg,.thm-group{display:flex;flex-direction:column;gap:6px}
+.thm-roles{gap:12px}
+.thm-sv label{padding-left:12px;color:var(--faint)}
 .thm-row{display:grid;grid-template-columns:84px minmax(0,1fr) 44px 16px;gap:8px;align-items:center}
 .thm-row input[type=range]{height:14px;border:0}
 .thm-row output{text-align:center}

@@ -153,6 +153,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #setList:empty::before{content:'No saved sets yet.';font:400 12px var(--sans);color:var(--faint)}
 .keys{margin:0;display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:12px}
 .keys dt{font:600 11px var(--mono);color:var(--sig);white-space:nowrap}.keys dd{margin:0;color:var(--ink);line-height:1.45}
+output.mod{color:var(--env)}
 /* @include common/controls.css */
 /* @include common/theme.css */
 </style>
@@ -292,7 +293,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
     <h2>Settings<span class="line"></span><button id="setClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <div class="sub" style="margin-top:0"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
-    <p class="note">Controls colours buttons and sliders; LCD the readouts; Curves the fade and automation graphs; Meters the readout frames and automated values. Theme files are the same as Bad MOPHO's, so a theme exported there loads here. The output window always stays black.</p>
+    <p class="note">Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black.</p>
   </div>
 </div>
 <div id="helpPanel" class="modal" hidden>
@@ -1099,7 +1100,7 @@ $('#scDup').addEventListener('click', () => {
     return { on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null }; }) };
   gotoScene(t); toast2(`Copied to scene ${t + 1}`);
 });
-setInterval(() => { if (!document.hidden){ liveThumb = sceneThumb(); renderScenes(); } }, 1000);
+setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); } }, 1000);
 function toggleLayer(li){ layers[li].on = !layers[li].on; syncLayerUI(); }
 function setTarget(li){ target = li; syncLayerUI(); syncXfUI(); }
 document.addEventListener('visibilitychange', () => { redraw.all = true; });
@@ -1278,18 +1279,22 @@ function outline(G, k){
   pctx.closePath(); pctx.stroke();
 }
 const redraw = { all: true, scene: '', overlay: '' };
+// While theme colours are being dragged, the control window skips its preview, overlay, scopes and scene thumbnails
+// (every colour change restyles the whole page; those redraws would compete with it). The output is unaffected.
+let uiQuiet = 0, quietT = 0;
+function quietUI(ms = 250){ uiQuiet = performance.now() + ms; clearTimeout(quietT); quietT = setTimeout(() => { redraw.all = true; }, ms + 20); }
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
-  const hidden = document.hidden, force = redraw.all;
+  const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
   if (!outCtx && hidden) return;                   // nobody is looking
   const list = frameList(now), sig = sceneSig(list);
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++;
     render(list);
     if (outCtx) outCtx.drawImage(master, 0, 0);
-    if (!hidden) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
+    if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
   }
-  if (hidden) return;
+  if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
   const L = layers[target], sel = selClip(), gh = ghostList();
   const osig = `${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
     + '|' + gh.map(([c, g]) => { const G = clipGeom(c); return `${c.id},${G.cx},${G.cy},${G.hw},${G.hh},${G.a},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb},${g.fxVer},${g.startF},${g.crisp}`; }).join(';');
@@ -1581,7 +1586,7 @@ function drawScopes(){
 }
 function scopeTrace(x, w, h, d, fn, on){                 // fn: 0..1 across → 0..1 up
   const pad = 5 * d, y = v => h - pad - v * (h - 2 * pad);
-  x.strokeStyle = `rgba(${TC.meterRgb},.18)`; x.lineWidth = d; x.beginPath(); x.moveTo(0, y(0.5)); x.lineTo(w, y(0.5)); x.stroke();
+  x.strokeStyle = `rgba(${TC.envRgb},.2)`; x.lineWidth = d; x.beginPath(); x.moveTo(0, y(0.5)); x.lineTo(w, y(0.5)); x.stroke();
   x.strokeStyle = on ? TC.env : TC.faint; x.lineWidth = 1.5 * d; x.beginPath();
   for (let px = 0; px <= w; px += d){ const v = fn(px / w); px ? x.lineTo(px, y(v)) : x.moveTo(px, y(v)); }
   x.stroke(); return y;
@@ -1983,7 +1988,7 @@ function frame(gen){
   updateClock(now);
   if (pending.size || pendingScene) firePending();
   drawFrame(now);
-  if (!document.hidden && now - scopeT > 33){ scopeT = now; drawScopes(); }
+  if (!document.hidden && now >= uiQuiet && now - scopeT > 33){ scopeT = now; drawScopes(); }
   const bi = Math.floor(clock.beat);
   if (bi !== lastBeatIdx){
     lastBeatIdx = bi; const k = mod(bi, 4);
@@ -2401,11 +2406,14 @@ window.addEventListener('pagehide', autosave);
 
 // theme: saved per browser (not part of sets); canvases read the colours from TC
 const TC = {};
-Theme.onApply(() => {
-  Object.assign(TC, { track: Theme.color('--track'), edge2: Theme.color('--edge-2'), env: Theme.color('--env'), faint: Theme.color('--faint'), meterRgb: Theme.color('--meter-rgb') });
+// Reading computed colours and redrawing 18 pad thumbnails is slow, so during a drag it waits until the colour settles.
+let tcT = 0;
+function readThemeColours(){
+  Object.assign(TC, { track: Theme.color('--track'), edge2: Theme.color('--edge-2'), env: Theme.color('--env'), faint: Theme.color('--faint'), envRgb: Theme.color('--env-rgb') });
   if (pads[0].el) pads.forEach((_, i) => renderPad(i));
   redraw.all = true;
-});
+}
+Theme.onApply(() => { if (!pads[0].el) return readThemeColours(); clearTimeout(tcT); tcT = setTimeout(readThemeColours, 180); });
 { let saved = null; try { saved = Theme.parse(JSON.parse(localStorage.getItem('vjif-theme2'))); } catch (e) {}
   Theme.apply(saved || Theme.PRESETS['Matte']); }
 buildPads(); pads.forEach((_, i) => renderPad(i));
@@ -2416,8 +2424,10 @@ const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), 
 ['#tA', '#tH', '#tR'].forEach(id => $(id).ctlParse = lenParse(ENV_OPTS));
 $('#aPer').ctlParse = lenParse(PER_OPTS);
 $('#aPh').ctlParse = t => { const n = parseFloat(t); return isFinite(n) ? mod(n, 360) / 360 : null; };
+$('#themeBox').addEventListener('input', () => quietUI());
 Theme.mount($('#themeBox'), { app: 'vjif', toast: toast2,
-  roles: [['hCtrl', 'Controls', 'Buttons, sliders, highlights'], ['hLcd', 'LCD', 'Readouts and the tempo'], ['hEnv', 'Curves', 'Fade and automation graphs'], ['hMeter', 'Meters', 'Readout frames, automated values']],
+  roles: [['hCtrl', 'Signal', 'What is selected or on: chosen buttons, switches, the selected pad and scene', true], ['hLcd', 'LCD', 'Readouts, the tempo, the cycle display', true],
+          ['hEnv', 'Graphs', 'Fade and automation graphs; automated values in Transform']],
   onChange: t => { try { localStorage.setItem('vjif-theme2', JSON.stringify(t)); } catch (e) {} } });
 Controls.init();
 restore();
