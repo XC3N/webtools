@@ -1171,8 +1171,8 @@ function setClockSrc(v){
 // presets, effects, layers, blackout, freeze, tap, sync) react to notes, or to a CC crossing 64; faders (layer opacity,
 // effect amount) follow a CC. Mappings belong to this browser (they describe the controller, not the set).
 const midiCtl = { map: [], input: 'all', learning: false, target: null, inputs: [], cc: {} };
-try { const o = JSON.parse(localStorage.getItem('vjif-midi')); if (o){ midiCtl.map = o.map || []; midiCtl.input = o.input || 'all'; } } catch (e) {}
-const saveMidiCtl = () => { try { localStorage.setItem('vjif-midi', JSON.stringify({ map: midiCtl.map, input: midiCtl.input })); } catch (e) {} };
+try { const o = JSON.parse(localStorage.getItem('vjif-midi')); if (o){ midiCtl.map = o.map || []; midiCtl.input = o.input || 'all'; midiCtl.inputName = o.inputName || ''; } } catch (e) {}
+const saveMidiCtl = () => { try { localStorage.setItem('vjif-midi', JSON.stringify({ map: midiCtl.map, input: midiCtl.input, inputName: midiCtl.inputName || '' })); } catch (e) {} };
 async function getMidi(){
   if (midiAccess) return midiAccess;
   if (!navigator.requestMIDIAccess) throw new Error('Web MIDI is not available in this browser');
@@ -1302,12 +1302,14 @@ document.addEventListener('pointerdown', e => {
   if (!T) return;
   midiCtl.target = T; markLearn();
 }, true);
-['click', 'dblclick', 'contextmenu'].forEach(t => document.addEventListener(t, e => { if (midiCtl.learning && !e.target.closest('#learnDone, #setPanel')){ e.preventDefault(); e.stopPropagation(); } }, true));
+['click', 'dblclick', 'contextmenu', 'dragstart'].forEach(t => document.addEventListener(t, e => { if (midiCtl.learning && !e.target.closest('#learnDone, #setPanel')){ e.preventDefault(); e.stopPropagation(); } }, true));
 function renderMidiCtl(){
   const box = $('#midiMap'); if (!box) return;
   const sel = $('#midiCtlIn'), ins = midiAccess ? [...midiAccess.inputs.values()] : [];
-  sel.innerHTML = '<option value="all">All MIDI inputs</option>' + ins.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
-  sel.value = ins.some(i => i.id === midiCtl.input) ? midiCtl.input : 'all';
+  const gone = midiCtl.input !== 'all' && !ins.some(i => i.id === midiCtl.input);   // the chosen input isn't plugged in: say so (and let All be picked)
+  sel.innerHTML = '<option value="all">All MIDI inputs</option>' + ins.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('')
+    + (gone ? `<option value="${esc(midiCtl.input)}">${esc(midiCtl.inputName || 'Chosen input')} (not connected)</option>` : '');
+  sel.value = midiCtl.input;
   box.innerHTML = midiCtl.map.length ? midiCtl.map.map((m, k) => `<div class="mrow"><span class="mk">${ctlName(m.key)}</span><span class="mt">${targetName(m)}</span><button data-k="${k}" class="iconbtn" title="Remove this mapping">×</button></div>`).join('')
     : '<p class="note" style="margin:0">Nothing mapped yet — press Learn.</p>';
 }
@@ -1526,8 +1528,8 @@ function renderScenes(){
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
-    const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(g => g && g.thumb) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
-    const bg = n && th ? `url(${th})` : pg ? `url(${pg.thumb})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
+    const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
+    const bg = n && th ? `url(${th})` : pg ? `url(${gifThumb(pg)})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
     b.classList.toggle('padsOnly', !!pg);
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
     const nm = sceneName(i), ne = b.querySelector('.nm'); if (ne.textContent !== nm) ne.textContent = nm;
@@ -2230,7 +2232,7 @@ const post = (() => {
           if (glS < 0.5){ float band = floor(p.y * 24.0 + h1(gseed) * 24.0), g = 0.0;
             if (h1(band + gseed) < glitch * 0.55) g = (h1(band * 1.7 + gseed) - 0.5) * 0.25 * glitch;
             split += abs(g) * 0.3 + glitch * 0.004; p.x += g; }
-          else if (glS < 1.5){ vec2 cell = floor(p * vec2(16.0, 9.0));
+          else if (glS < 1.5){ vec2 cell = floor(p * vec2(16.0, 16.0 * res.y / res.x));
             if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
           else { float col = floor(p.x * 80.0); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
         }
@@ -2415,15 +2417,20 @@ function updateOutStat(){
   $('#outBtn').title = outCtx ? `Output window is live (${W}×${H}) — click to bring it to the front` : 'Open the output window';
 }
 // ---------- canvas format ----------
-function setFormat(k, { quiet = false } = {}){
+function setFormat(k, { quiet = false, force = false } = {}){
   if (!FORMATS[k]) k = '16:9';
   if (k === format) return syncFormatUI();
-  if (rec.mr || rec.wait){ toast('Stop recording before changing the canvas format'); return syncFormatUI(); }
+  if (rec.mr || rec.wait){
+    if (!force){ toast('Stop recording before changing the canvas format'); return syncFormatUI(); }
+    recCancelWait(); recStop(); toast('Recording stopped: the loaded set has another canvas format');   // a set's format wins (it's part of the set)
+  }
   format = k; [W, H] = FORMATS[k];
   [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = W; c.height = H; });
   if (post) post.resize();
   if (outCtx){ outCtx.canvas.width = W; outCtx.canvas.height = H; }
-  live.freeze = false; trans = null;
+  live.freeze = false; live.freezeReq = false; updLiveTag(); trans = null;
+  if (outWin && !outWin.closed && !outWin.document.fullscreenElement){ const k2 = 960 / Math.max(W, H);
+    try { outWin.resizeTo(Math.round(W * k2) + outWin.outerWidth - outWin.innerWidth, Math.round(H * k2) + outWin.outerHeight - outWin.innerHeight); } catch (e) {} }
   $('#xX').min = -W; $('#xX').max = W; $('#xY').min = -H; $('#xY').max = H;
   sizePreview(); syncXfUI(); updateOutStat(); syncFormatUI(); redraw.all = true;
   if (!quiet) toast(`Canvas ${W}×${H} — ${FORMATS[k][2]}`);
@@ -2527,6 +2534,14 @@ function buildPads(){
     p.el = el;
   });
 }
+// small cover-cropped copy for the layer chips and scene tiles (made on demand for GIFs of scenes not on screen)
+function gifThumb(g, f = fxImage(g, g.startF)){
+  if (g.thumb) return g.thumb;
+  const t = document.createElement('canvas'); t.width = 52; t.height = 48;
+  const tx = t.getContext('2d'), k = Math.max(t.width / f.width, t.height / f.height);
+  tx.imageSmoothingEnabled = !g.crisp; tx.drawImage(f, (t.width - f.width*k)/2, (t.height - f.height*k)/2, f.width*k, f.height*k);
+  return g.thumb = t.toDataURL();
+}
 function renderPad(i){
   const p = pads[i], el = p.el, c = el.querySelector('canvas'), x = c.getContext('2d');
   x.fillStyle = TC.track; x.fillRect(0, 0, c.width, c.height);
@@ -2540,11 +2555,7 @@ function renderPad(i){
   x.imageSmoothingEnabled = !p.gif.crisp;
   const f = fxImage(p.gif, p.gif.startF), s = Math.min(c.width / f.width, c.height / f.height);
   x.drawImage(f, (c.width - f.width*s)/2, (c.height - f.height*s)/2, f.width*s, f.height*s);
-  // small cover-cropped copy for the layer chips
-  const t = document.createElement('canvas'); t.width = 52; t.height = 48;
-  const tx = t.getContext('2d'), k = Math.max(t.width / f.width, t.height / f.height);
-  tx.imageSmoothingEnabled = !p.gif.crisp; tx.drawImage(f, (t.width - f.width*k)/2, (t.height - f.height*k)/2, f.width*k, f.height*k);
-  p.gif.thumb = t.toDataURL();
+  p.gif.thumb = null; gifThumb(p.gif, f);
   document.querySelectorAll(`.chip[data-pad="${i}"]`).forEach(ch => ch.style.backgroundImage = `url(${p.gif.thumb})`);
 }
 function selectPad(i){ selPad = i; pads.forEach(p => p.el.classList.toggle('sel', p.i === i)); syncGifUI(); }
@@ -2658,7 +2669,8 @@ function syncAutoUI(g){
   $('#aTitle').textContent = t[2] + (['h', 's', 'v'].includes(aSel) && !liveFx() ? ' — needs WebGL' : '');
   $('#aOn').checked = A.on; segSet('#aShape', A.shape); segSet('#aSync', A.sync);
   const D = lfoDef(aSel);                            // double-click resets to this target's defaults
-  [['#aMin', 'min'], ['#aMax', 'max']].forEach(([id, k]) => { const el = $(id); el.min = t[3]; el.max = t[4]; el.step = t[5]; el.value = A[k]; el.dataset.def = D[k];
+  [['#aMin', 'min'], ['#aMax', 'max']].forEach(([id, k]) => { const el = $(id); el.min = aSel === 'x' ? -W : aSel === 'y' ? -H : t[3]; el.max = aSel === 'x' ? W : aSel === 'y' ? H : t[4]; el.step = t[5];   // positions follow the canvas format
+    el.value = A[k]; el.dataset.def = D[k];
     el.nextElementSibling.textContent = lfoFmt(t, A[k]); if (t[6] === '%') el.dataset.pct = ''; else delete el.dataset.pct; });
   const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(PER_OPTS, D.per); $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
@@ -3166,7 +3178,7 @@ $('#midiLearn').addEventListener('click', startLearn);
 $('#learnDone').addEventListener('click', endLearn);
 $('#midiClear').addEventListener('click', () => { midiCtl.map = []; saveMidiCtl(); renderMidiCtl(); });
 $('#midiMap').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ midiCtl.map.splice(+b.dataset.k, 1); saveMidiCtl(); renderMidiCtl(); } });
-$('#midiCtlIn').addEventListener('change', e => { midiCtl.input = e.target.value; saveMidiCtl(); bindCtlInputs(); });
+$('#midiCtlIn').addEventListener('change', e => { midiCtl.input = e.target.value; midiCtl.inputName = e.target.selectedOptions[0].textContent.replace(/ \(not connected\)$/, ''); saveMidiCtl(); bindCtlInputs(); });
 renderMidiCtl();
 if (midiCtl.map.length && navigator.requestMIDIAccess) getMidi().then(bindCtlInputs).catch(() => {});   // mappings exist: listen from the start
 // About & getting started: opens by itself the first time (and every start while its box is ticked)
@@ -3366,7 +3378,7 @@ async function applySnapshot(st, { wait = true } = {}){
   const byHash = new Map(pool.map(m => [m.hash, m]));
   const mk = sp => { const m = sp && byHash.get(sp.hash); if (!m) return null; const g = makeInst(m, sp); if (g.key.on || hsvOn(g)) applyFx(g); return g; };
   const curGifs = st.pads.map(mk); pads.forEach((p, i) => p.gif = curGifs[i] || null);
-  setFormat(st.format || '16:9', { quiet: true });
+  setFormat(st.format || '16:9', { quiet: true, force: true });
   setBpm(st.bpm); snapMode = st.snap || 'off'; $('#snap').value = snapMode;
   const now = performance.now(), idx = st.scene || 0;
   deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s));
@@ -3526,7 +3538,16 @@ function recMime(){ return REC_MIMES[recFmt].find(recOk) || REC_MIMES[recFmt ===
 const recExt = mime => mime.startsWith('video/mp4') ? 'mp4' : 'webm';
 async function recToggle(){
   if (rec.mr) return recStop();
-  if (rec.wait){ rec.wait = null; recUI(); return; }  // a second click cancels a waiting start
+  if (rec.wait) return recCancelWait();              // a second click cancels a waiting start
+  if (rec.busy) return;                              // the save dialog is still open
+  rec.busy = true; try { await recPrepare(); } finally { rec.busy = false; }
+}
+function recCancelWait(){
+  if (!rec.wait) return;
+  rec.wait = null; if (rec.writer){ try { rec.writer.abort(); } catch (e) {} rec.writer = null; }   // the chosen file is dropped, not left empty
+  recUI();
+}
+async function recPrepare(){
   const mime = recMime(); if (!mime) return toast('Recording needs MediaRecorder (use Chrome)');
   if (recExt(mime) !== recFmt) toast2(`This browser can't record ${recFmt.toUpperCase()} — recording ${recExt(mime).toUpperCase()} instead`);
   const ext = recExt(mime), type = ext === 'mp4' ? 'video/mp4' : 'video/webm';
@@ -3538,11 +3559,12 @@ async function recToggle(){
       rec.writer = await h.createWritable(); rec.name = h.name; }
     catch (e) { if (e.name === 'AbortError') return; rec.writer = null; }
   }
-  if (snapUnit() || (recBars && !(clock.src === 'midi' && !clock.midiRunning))){ rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; recUI(); }
+  // a bar-length take always starts on a bar: with a stopped MIDI clock it waits for the clock to start
+  if (snapUnit() || recBars){ rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; rec.last = clock.beat; recUI(); }
   else recStart(mime);
 }
 function recStart(mime, beat = clock.beat){
-  rec.wait = null; rec.chunks = []; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
+  rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.chunks = []; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   const stream = master.captureStream(60);
   const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6 });
   mr.ondataavailable = e => { if (!e.data || !e.data.size) return; rec.bytes += e.data.size;
@@ -3567,8 +3589,16 @@ function recUI(){
     b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${recFmt.toUpperCase()}, ${W}×${H}). With Snap on, recording starts on the next bar`; }
 }
 function recTick(){
-  if (rec.wait && clock.beat >= rec.wait.beat - 1e-9) recStart(rec.wait.mime, rec.wait.beat);
-  else if (rec.mr && rec.stopAt && clock.beat >= rec.stopAt - 1e-9) recStop();      // fixed length: stops exactly on the bar (a clean loop)
+  const b = clock.beat, back = b < (rec.last ?? b) - 0.5; rec.last = b;   // the beat count jumps back on Sync or a MIDI Start
+  if (rec.wait){
+    if (back) recStart(rec.wait.mime, b);                                // restarted on a downbeat: go now
+    else if (b >= rec.wait.beat - 1e-9) recStart(rec.wait.mime, rec.wait.beat);
+  } else if (rec.mr && rec.stopAt){
+    if (back){ rec.stopAt = b + Math.max(0, rec.stopAt - rec.lastFwd); }   // keep the length still to go
+    if (clock.src === 'midi' && !clock.midiRunning) recStop();           // the DAW stopped: so does the take
+    else if (b >= rec.stopAt - 1e-9) recStop();                          // fixed length: stops exactly on the bar (a clean loop)
+  }
+  if (!back) rec.lastFwd = b;
 }
 setInterval(() => { if (rec.mr) recUI(); }, 500);
 $('#recBtn').addEventListener('click', recToggle);
