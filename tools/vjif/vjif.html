@@ -145,6 +145,17 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #setPanel{background:none;place-items:start end;pointer-events:none}
 #setPanel .modalBox{pointer-events:auto;margin:48px 10px 0 0;max-height:calc(100vh - 60px)}
 .modalBox .row{display:flex;gap:6px;margin:10px 0;align-items:center}.modalBox input[type=text]{flex:1;min-width:0}
+#poolGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:min(60vh,520px);overflow:auto;padding:1px}
+#poolGrid:empty::before{content:'No GIFs loaded yet — add files, or drop them on a pad.';font:400 12px var(--sans);color:var(--faint);grid-column:1/-1}
+.ptile{position:relative;display:flex;flex-direction:column;gap:4px;padding:4px;border-radius:var(--r);background:var(--panel-2);cursor:pointer;text-align:left}
+.ptile:hover{background:var(--track)}
+.ptile canvas{width:100%;aspect-ratio:3/2;display:block;border-radius:2px;background:var(--bg)}
+.ptile .pn{font:600 12px var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptile .pm{font:400 10px/1.35 var(--mono);color:var(--muted)}
+.ptile .pm.here{color:var(--sig)}
+.ptile.unused .pm.use{color:var(--faint)}
+.ptile .px{position:absolute;top:6px;right:6px;width:20px;height:20px;padding:0;line-height:18px;display:none}
+.ptile.unused:hover .px{display:block}
 .setRow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto;gap:4px;align-items:center;padding:8px 10px;border-radius:var(--r);margin-bottom:4px;background:var(--panel-2)}
 .setRow.cur{box-shadow:inset 3px 0 0 var(--sig)}
 .setRow .sname{display:block;font:600 13px var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.setRow .meta{display:block;font:400 11px var(--mono);color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -181,7 +192,7 @@ output.mod{color:var(--env)}
 </header>
 
 <section id="bank" class="panel">
-  <h2>Pads<span class="line"></span><span class="tag">QWE / ASD / ZXC</span><span id="mem" class="tag"></span></h2>
+  <h2>Pads<span class="line"></span><span class="tag">QWE / ASD / ZXC</span><span id="mem" class="tag"></span><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
   <div class="padgrid" id="gridA"></div>
   <h2>Numpad<span class="line"></span></h2>
   <div class="padgrid" id="gridB"></div>
@@ -309,10 +320,10 @@ output.mod{color:var(--env)}
   <div class="modalBox">
     <h2>Keys &amp; mouse<span class="line"></span><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <dl class="keys">
-      <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to browse; drop a .vjif anywhere to import a set</dd>
+      <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to pick from the GIF pool (or browse, while the pool is empty); <b>Pool</b> lists every GIF of the set; drop a .vjif anywhere to import a set</dd>
       <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Shift+Q…C · Shift+Num</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Delete or the × on its chip</dd>
-      <dt>1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar). A scene is what the four layers hold; a set has nine</dd>
+      <dt>1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
       <dt>F1–F4 · Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>Alt+1–4</dt><dd>Choose the layer to edit / trigger into (or click its card)</dd>
       <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
@@ -329,6 +340,14 @@ output.mod{color:var(--env)}
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · × on hover removes it</dd>
     </dl>
+  </div>
+</div>
+<div id="poolPanel" class="modal" hidden>
+  <div class="modalBox" style="width:min(760px,94vw)">
+    <h2>GIF pool<span id="poolTo" class="tag"></span><span class="line"></span><button id="poolClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <div id="poolGrid"></div>
+    <div class="row"><button id="poolAdd">Add files…</button><span style="flex:1"></span><button id="poolPrune" title="Remove the GIFs no pad of any scene uses (frees their memory)">Remove unused</button></div>
+    <p class="note">Every GIF loaded in this set, decoded once. Click one to put it on the next empty pad of this scene — each scene's pads have their own settings, so the same GIF can be timed or coloured differently per scene. Clearing a pad keeps its GIF here; remove unused ones to free memory.</p>
   </div>
 </div>
 <div id="setsPanel" class="modal" hidden>
@@ -420,6 +439,12 @@ let outWin = null, outCtx = null;
 // ---------- decoding (WebCodecs ImageDecoder, Chrome) ----------
 function guessType(name){ const m = /\.(gif|webp|png|apng)$/i.exec(name||''); if (!m) return 'image/gif'; const e = m[1].toLowerCase(); return e === 'gif' ? 'image/gif' : e === 'webp' ? 'image/webp' : 'image/png'; }
 
+// ---------- the GIF pool ----------
+// Each file of the set is decoded once (a "media": its frames and timing). Pads hold *instances*: a media plus
+// that pad's own settings (timing, colour, trigger, automation) and any processed frames. Every scene has its
+// own 18 pads, so the same GIF can be set up differently in each scene while its frames stay shared.
+const pool = [];                                     // media: { hash, name, blob, type, src, durs, w, h, srcBytes, fullTotal }
+const insts = new Map();                             // uid → every instance alive (on a pad in any scene, or held by undo)
 async function decodeAnim(blob, name){
   if (!('ImageDecoder' in window)) throw new Error('this browser has no ImageDecoder (use Chrome)');
   const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : guessType(name);
@@ -440,14 +465,33 @@ async function decodeAnim(blob, name){
   }
   dec.close();
   const srcBytes = frames.reduce((a, f) => a + f.width * f.height * 4, 0);
-  const g = { uid: ++gifSeq, fxWaits: [], name: name || 'untitled', blob, type, src: frames, frames, durs, w, h, srcBytes, bytes: srcBytes,
+  return { name: name || 'untitled', blob, type, src: frames, durs, w, h, srcBytes, fullTotal: durs.reduce((a, d) => a + d, 0) };
+}
+// a new instance of a media; `saved` = settings to apply, else a fresh one fitted to the tempo
+function makeInst(m, saved = null){
+  const n = m.src.length;
+  const g = { uid: ++gifSeq, fxWaits: [], media: m, hash: m.hash, name: m.name, blob: m.blob, type: m.type, src: m.src, frames: m.src, durs: m.durs,
+           w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes, fullTotal: m.fullTotal,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
            key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free' }, lfo: {} };
-  g.fullTotal = durs.reduce((a, d) => a + d, 0);
-  rebuildSeq(g);
+  insts.set(g.uid, g); rebuildSeq(g);
+  if (saved) applyGifSettings(g, saved); else autoFit(g);
   return g;
+}
+const gifSettings = g => JSON.parse(JSON.stringify(Object.fromEntries(GIF_KEYS.map(k => [k, g[k]]))));
+// an independent copy (same frames, own settings), with its colour work started
+function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); if (c.key.on || hsvOn(c)) applyFx(c); return c; }
+function freeMedia(m){ const i = pool.indexOf(m); if (i >= 0) pool.splice(i, 1); m.src.forEach(f => f.close()); }
+// a GIF file → its media in the pool (decoded and stored the first time it's seen)
+async function mediaFor(blob, name){
+  const hash = await hashBlob(blob);
+  let m = pool.find(m => m.hash === hash); if (m) return m;
+  m = await decodeAnim(blob, name); m.hash = hash;
+  if (pool.find(x => x.hash === hash)){ m.src.forEach(f => f.close()); return pool.find(x => x.hash === hash); }   // decoded twice at once
+  pool.push(m); store.put('gif:' + hash, { name: m.name, blob }); renderPool();
+  return m;
 }
 // playback order: frames in..out, rotated so the loop begins at startF
 function rebuildSeq(g){
@@ -458,12 +502,15 @@ function rebuildSeq(g){
   g.total = t;
 }
 
+// an instance goes away: its processed frames are freed; the decoded GIF stays in the pool
 function freeGif(g){
   g.keyGen++; g.maskGen++; clearTimeout(g.keyT); clearTimeout(g.maskT);
   if (fxWorker){ fxWorker.postMessage({ id: g.uid, gen: g.keyGen }); fxWorker.postMessage({ id: 'm' + g.uid, gen: g.maskGen }); }   // stop any work on it
   if (g.frames !== g.src) g.frames.forEach(f => f.close());
-  g.src.forEach(f => f.close());
+  g.frames = g.src; g.masks = null; insts.delete(g.uid);
 }
+// instances on a pad somewhere: the live pads and every stored scene's
+function padInsts(){ const u = new Set(); pads.forEach(p => p.gif && u.add(p.gif)); scenes.forEach(sc => sc && sc.pads.forEach(g => g && u.add(g))); return u; }
 
 function autoFit(g){                               // new imports: Fit, with the loop length nearest the GIF's natural length
   const natBeats = g.total / (60000 / clock.bpm);
@@ -490,24 +537,26 @@ async function hashBlob(blob){
   for (let i = 0; i < u.length; i++){ a = Math.imul(a ^ u[i], 0x01000193) >>> 0; b = Math.imul(b ^ u[i], 0x811c9dc5) >>> 0; }
   return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0') + u.length.toString(16);
 }
-async function loadInto(p, blob, name, saved = null){
-  const pad = pads[p]; pad.loading = true; pad.el.classList.add('loading');
-  try {
-    const g = await decodeAnim(blob, name);
-    if (pad.gif) freeGif(pad.gif);
-    if (saved){ applyGifSettings(g, saved); g.hash = saved.hash || await hashBlob(blob); }
-    else {
-      autoFit(g);
-      g.hash = await hashBlob(blob);
-      store.put('gif:' + g.hash, { name: g.name, blob });   // stored once, shared by every set that uses it
-    }
-    pad.gif = g; renderPad(p); selectPad(p); updateMem(); syncLayerUI();
-    if (hist.ready){                                 // fold the new GIF's settings into undo's current state (loading isn't an undo step)
-      const st = JSON.parse(hist.cur); st.gifs[p] = Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])); hist.cur = JSON.stringify(st);
-    }
-    if (g.key.on || hsvOn(g)) applyFx(g);
-  } catch (err) { toast(`Couldn't load ${name}: ${err.message}`); }
+async function loadInto(p, blob, name){
+  const pad = pads[p], s0 = sceneIdx; pad.loading = true; pad.el.classList.add('loading');
+  try { putMedia(await mediaFor(blob, name), p, s0); }
+  catch (err) { toast(`Couldn't load ${name}: ${err.message}`); }
   finally { pad.loading = false; pad.el.classList.remove('loading'); }
+}
+// a pool GIF onto pad p of scene `si` (default: the current one), as a fresh instance; replaces what was there
+function putMedia(m, p, si = sceneIdx){
+  const g = makeInst(m);
+  if (si !== sceneIdx){                              // the scene was left while the file decoded
+    const sc = scenes[si] || (scenes[si] = emptyScene());
+    if (sc.pads[p]) freeGif(sc.pads[p]); sc.pads[p] = g; renderScenes(); updateMem(); renderPool(); return g;
+  }
+  const pad = pads[p];
+  if (pad.gif) freeGif(pad.gif);
+  pad.gif = g; renderPad(p); selectPad(p); updateMem(); syncLayerUI(); renderScenes(); renderPool();
+  if (hist.ready){                                   // fold the new GIF's settings into undo's current state (loading isn't an undo step)
+    const st = JSON.parse(hist.cur); st.gifs[p] = Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])); hist.cur = JSON.stringify(st);
+  }
+  return g;
 }
 
 async function loadUrlInto(url, p){
@@ -541,6 +590,60 @@ function loadFiles(files, start = -1){
   }
   return Promise.all(jobs);
 }
+
+// ---------- pool window ----------
+let poolTarget = -1;                                 // the pad the next pick goes to (-1: next empty from the selected pad)
+const poolDest = () => poolTarget >= 0 && !pads[poolTarget].gif && !pads[poolTarget].loading ? poolTarget : nextEmpty(poolTarget >= 0 ? poolTarget : selPad);
+function openPool(i = -1){ poolTarget = i; $('#poolPanel').hidden = false; renderPool(); }
+function closePool(){ $('#poolPanel').hidden = true; }
+// where each GIF is used: scenes (1-based) and this scene's pad keys
+function poolUse(m){
+  const sc = [], here = [];
+  for (let s = 0; s < N_SCENES; s++){
+    const gs = s === sceneIdx ? pads.map(p => p.gif) : scenes[s] ? scenes[s].pads : [];
+    gs.forEach((g, k) => { if (g && g.media === m){ if (!sc.includes(s + 1)) sc.push(s + 1); if (s === sceneIdx) here.push(pads[k].label); } });
+  }
+  return { sc, here };
+}
+function renderPool(){
+  const pb = $('#poolBtn'); if (pb) pb.textContent = `Pool ${pool.length}`;
+  if (!pb || $('#poolPanel').hidden) return;
+  const d = poolDest();
+  $('#poolTo').textContent = d >= 0 ? `→ pad ${pads[d].label}` : 'all pads of this scene are full';
+  const grid = $('#poolGrid'); grid.textContent = '';
+  pool.forEach(m => {
+    const u = poolUse(m), t = document.createElement('div');
+    t.className = 'ptile' + (u.sc.length ? '' : ' unused'); t.title = m.name;
+    t.innerHTML = `<canvas width="120" height="80"></canvas><span class="pn"></span><span class="pm">${m.w}×${m.h} · ${m.src.length} fr · ${(m.srcBytes / 1048576).toFixed(m.srcBytes < 10485760 ? 1 : 0)} MB</span>`
+      + `<span class="pm use${u.here.length ? ' here' : ''}"></span><button class="px iconbtn" title="Remove from the pool">×</button>`;
+    t.querySelector('.pn').textContent = m.name;
+    t.querySelector('.use').textContent = (u.here.length ? `pad ${u.here.join(' ')} here` + (u.sc.length > 1 ? ` · scenes ${u.sc.join(' ')}` : '') : u.sc.length ? `scene${u.sc.length > 1 ? 's' : ''} ${u.sc.join(' ')}` : 'unused');
+    const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);
+    x.imageSmoothingEnabled = false; x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
+    t.addEventListener('click', e => { if (e.target.closest('.px')) return removeMedia(m); pickPool(m); });
+    grid.appendChild(t);
+  });
+}
+function pickPool(m){
+  const d = poolDest(); if (d < 0) return toast('All 18 pads of this scene are full — clear one first');
+  putMedia(m, d); poolTarget = -1;
+  pads[d].el.classList.remove('hit'); void pads[d].el.offsetWidth; pads[d].el.classList.add('hit');
+  renderPool();
+}
+// drop a GIF from the pool (only when no pad uses it); undo steps that could bring it back go too
+function removeMedia(m){
+  if (poolUse(m).sc.length) return;
+  const keep = e => !(e && e.clear && e.clear.g.media === m);
+  hist.undo.filter(e => !keep(e)).forEach(e => freeGif(e.clear.g));
+  hist.undo = hist.undo.filter(keep); hist.redo = hist.redo.filter(e => !(e && e.reclear));
+  [...insts.values()].forEach(g => { if (g.media === m) freeGif(g); });
+  freeMedia(m); updateMem(); updHistUI(); renderPool(); gcGifs();
+}
+$('#poolBtn').addEventListener('click', () => openPool(-1));
+$('#poolClose').addEventListener('click', closePool);
+$('#poolPanel').addEventListener('pointerdown', e => { if (e.target.id === 'poolPanel') closePool(); });
+$('#poolAdd').addEventListener('click', () => { fileTarget = poolDest(); $('#fileIn').click(); });
+$('#poolPrune').addEventListener('click', () => { pool.filter(m => !poolUse(m).sc.length).forEach(removeMedia); toast2('Unused GIFs removed'); });
 
 // ---------- color key (pre-processed into a second frame set) ----------
 // Live colour (key + HSV): each frame goes through a small WebGL shader right when it's drawn, so changes
@@ -736,7 +839,7 @@ try {
   fxWorker = new Worker(URL.createObjectURL(new Blob([FX_WORKER_SRC], { type: 'text/javascript' })));
   fxWorker.onmessage = e => {
     if (e.data.kind === 'mask') return maskMsg(e.data);
-    const m = e.data, pad = pads.find(p => p.gif && p.gif.uid === m.id), g = pad && pad.gif;
+    const m = e.data, g = insts.get(m.id);
     if (!g || m.gen !== g.keyGen){ if (m.frames) m.frames.forEach(f => f.close()); return; }   // stale or cleared
     if (m.frames) fxDone(g, m.frames);
     else if (m.error){ console.warn('color worker:', m.error, '— using main thread'); fxMain(g, m.gen, fxParams(g)); }
@@ -744,7 +847,7 @@ try {
   };
   fxWorker.onerror = e => {                          // worker unusable: redo pending work on this thread
     console.warn('color worker failed, using main thread', e.message); fxWorker = null;
-    pads.forEach(p => p.gif && p.gif.fxWaits.length && applyFx(p.gif));
+    insts.forEach(g => g.fxWaits.length && applyFx(g));
   };
 } catch (e) { fxWorker = null; }
 
@@ -783,7 +886,7 @@ function requestMasks(g){
   }, 120);
 }
 function maskMsg(m){
-  const pad = pads.find(p => p.gif && 'm' + p.gif.uid === m.id), g = pad && pad.gif;
+  const g = insts.get(+String(m.id).slice(1));
   if (!g || m.gen !== g.maskGen) return;
   if (m.masks) masksDone(g, m.masks.map(b => new Uint8Array(b)));
   else if (m.error){ console.warn('mask worker:', m.error); masksMain(g, m.gen, fxParams(g), g.src[0].width, g.src[0].height); }
@@ -1054,23 +1157,24 @@ function removeClip(li, c){
   syncLayerUI(); syncXfUI();
 }
 // ---------- scenes ----------
-// A set holds N_SCENES scenes; a scene is what the 4 layers hold (on / opacity / blend / mode, GIFs and their placement).
-// The live `layers` are the current scene; the others wait in `scenes` (null = empty). Pads and GIF settings belong to the set.
+// A set holds N_SCENES scenes; a scene is its 18 pads (each a GIF instance with its own settings) plus what the 4 layers hold.
+// The live `layers` and pad instances are the current scene; the others wait in `scenes` (null = empty). GIF files (the pool) belong to the set.
 const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
 let sceneIdx = 0, pendingScene = null, liveThumb = null;
 const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, fillOn: false, fill: '#1e2a3a' });
+const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
   const c = document.createElement('canvas'); c.width = 96; c.height = 54; c.getContext('2d').drawImage(master, 0, 0, 96, 54);
   return c.toDataURL('image/jpeg', 0.7);
 }
 const layerState = L => ({ i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
-const captureScene = () => ({ layers: layers.map(layerState), thumb: sceneThumb() });
+const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: sceneThumb() });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
-  trans = !instant && transCfg.type !== 'cut' ? { from: layers.map(layerState), b0: beat, len: transCfg.len } : null;
+  trans = !instant && transCfg.type !== 'cut' ? { from: layers.map(layerState), gifs: pads.map(p => p.gif), b0: beat, len: transCfg.len } : null;
   scenes[sceneIdx] = captureScene(); sceneIdx = i;
   const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   layers.forEach((L, li) => {
@@ -1078,9 +1182,10 @@ function gotoScene(i, beat = clock.beat, instant = false){
     Object.assign(L, { on: s.on, opacity: s.opacity, blend: s.blend, mode: s.mode, clips: s.clips.slice(), sel: s.sel, fillOn: !!s.fillOn, fill: s.fill || '#1e2a3a' });
     L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; });   // the scene starts from the top
   });
+  pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
   scenes[i] = null; liveThumb = sc && sc.thumb;
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
-  syncLayerUI(); syncXfUI(); renderScenes(); redraw.all = true;
+  selectPad(selPad); syncLayerUI(); syncXfUI(); renderScenes(); renderPool(); redraw.all = true;
   if (hist.ready) hist.cur = histState();             // switching isn't an undo step
 }
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
@@ -1093,14 +1198,15 @@ function sceneKey(i){
   pendingScene = { i, beat: prev + unit }; renderScenes();
 }
 const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers : []).reduce((a, l) => a + l.clips.length, 0);
+const scenePads = i => (i === sceneIdx ? pads.map(p => p.gif) : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
 function renderScenes(){
   const box = $('#scenes');
   if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" title="Scene ${i + 1} (key ${i + 1})"><span class="k">${i + 1}</span><span class="n"></span></button>`).join('');
   [...box.children].forEach((b, i) => {
-    const n = sceneCount(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
+    const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
     const bg = n && th ? `url(${th})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
-    b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : 'empty';
+    b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
   });
 }
 $('#scenes').addEventListener('click', e => { const b = e.target.closest('.scene'); if (b) sceneKey(+b.dataset.i); });
@@ -1119,10 +1225,12 @@ $('#trCurve').addEventListener('click', e => { const b = e.target.closest('butto
 $('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
 // copy the current scene into the next empty one (new clip ids, same placement) and go there
 $('#scDup').addEventListener('click', () => {
-  let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i)) t = i; }
+  let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i) && !scenePads(i)) t = i; }
   if (t < 0) return toast('No empty scene to copy into — clear one first');
-  scenes[t] = { thumb: sceneThumb(), layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
-    return { on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null }; }) };
+  if (scenes[t]) scenes[t].pads.forEach(g => g && freeGif(g));
+  scenes[t] = { thumb: sceneThumb(), pads: pads.map(p => p.gif && cloneInst(p.gif)),   // its own copy of every pad's settings
+    layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
+    return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
   gotoScene(t); toast2(`Copied to scene ${t + 1}`);
 });
 setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); } }, 1000);
@@ -1150,8 +1258,8 @@ function applyXf(ctx, c, k = 1){
 }
 // visible (cropped) box in output pixels: center, half extents, angle; bw/bh = visible base size,
 // fbw/fbh = uncropped base size, ox/oy = offset of the visible center from the clip origin (local, scaled)
-function clipGeom(c){
-  const g = pads[c.pad] && pads[c.pad].gif; if (!g) return null;
+function clipGeom(c, g = pads[c.pad] && pads[c.pad].gif){
+  if (!g) return null;
   const [fbw, fbh] = baseSize(g, c.fit);
   const a = c.rot * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
   const bw = fbw * (1 - c.cl - c.cr), bh = fbh * (1 - c.ct - c.cb);
@@ -1232,19 +1340,20 @@ function drawClip(ctx, c, g, img){
   ctx.restore();
 }
 // false only when the clip's (rotated) box is certainly outside the frame; tiled clips always draw
-function onScreen(c){
+function onScreen(c, g){
   if (c.tile) return true;
-  const G = clipGeom(c), r = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), q = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
+  const G = clipGeom(c, g); if (!G) return false;
+  const r = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), q = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
   return G.cx + r > 0 && G.cx - r < W && G.cy + q > 0 && G.cy - q < H;
 }
 // what each visible layer draws this frame: clips as drawn (automation + fade applied), invisible ones dropped
-function frameList(now, ls = layers){
+function frameList(now, ls = layers, gifs = null){
   const out = [];
   for (const L of ls){
     if (!L.on || L.opacity <= 0) continue;
     const items = [];
     for (const c of L.clips){
-      const g = pads[c.pad].gif; if (!g) continue;
+      const g = gifs ? gifs[c.pad] : pads[c.pad].gif; if (!g) continue;
       const e = effClip(c, g); if (!(e.alpha > 0)) continue;
       items.push({ g, e, fi: frameIndex(c, g, now) });
     }
@@ -1269,7 +1378,7 @@ function render(list, ctx = mctx){
     if (L.i === 0 && L.fillOn && L.fill){             // the Background layer's colour, under its GIFs
       ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     }
-    const vis = items.filter(it => onScreen(it.e));
+    const vis = items.filter(it => onScreen(it.e, it.g));
     if (!vis.length) continue;
     ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend;
     if (vis.length === 1 || (L.blend === 'source-over' && L.opacity >= 1)){
@@ -1363,7 +1472,7 @@ function drawFrame(now){
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++;
     if (trans){
-      render(frameList(now, trans.from), trA); render(list, trB);
+      render(frameList(now, trans.from, trans.gifs), trA); render(list, trB);
       composeTransition(transCfg.smooth ? tp * tp * (3 - 2 * tp) : tp, transCfg);
     } else render(list);
     if (outCtx) outCtx.drawImage(master, 0, 0);
@@ -1436,6 +1545,7 @@ function isTyping(e){
 function onKey(e){
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
+  if (!$('#poolPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closePool(); } return; }   // modal
   if (!$('#setsPanel').hidden){                      // the sets panel is modal
     if (e.key === 'Escape' && askBox){ e.preventDefault(); closeAsk(); }
     else if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
@@ -1499,7 +1609,7 @@ function buildPads(){
     el.addEventListener('contextmenu', e => { e.preventDefault(); focusPad(i); });   // right-click: select without playing
     el.addEventListener('pointerup', () => release(i));
     el.addEventListener('pointercancel', () => release(i));
-    el.addEventListener('click', () => { if (!p.gif && !p.loading){ selectPad(i); fileTarget = i; $('#fileIn').click(); } });
+    el.addEventListener('click', () => { if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
     p.el = el;
   });
@@ -1532,10 +1642,14 @@ function focusPad(i){
   if (li >= 0){ layers[li].sel = layers[li].clips.find(c => c.pad === i); setTarget(li); }
 }
 function updateMem(){
-  const mb = pads.reduce((a, p) => a + (p.gif ? p.gif.bytes + (p.gif.maskBytes || 0) : 0), 0) / 1048576;
-  const el = $('#mem'); el.textContent = `~${mb.toFixed(0)} MB`;
+  // decoded GIFs count once (the pool); each instance adds only its own processed frames / key masks
+  const base = pool.reduce((a, m) => a + m.srcBytes, 0) / 1048576;
+  let extra = 0; insts.forEach(g => { extra += g.bytes - g.srcBytes + (g.maskBytes || 0); }); extra /= 1048576;
+  const mb = base + extra, el = $('#mem'); el.textContent = `~${mb.toFixed(0)} MB`;
+  el.title = `Decoded frames: ${pool.length} GIF${pool.length === 1 ? '' : 's'} in the pool, ~${base.toFixed(0)} MB` + (extra >= 0.5 ? ` + ~${extra.toFixed(0)} MB of colour-processed copies / key masks` : '');
   el.style.color = mb > MEM_WARN_MB ? 'var(--danger)' : 'var(--dim)';
-  if (mb > MEM_WARN_MB) toast(`Bank is using ~${mb.toFixed(0)} MB of decoded frames — clear some pads if playback stutters`);
+  if (mb > MEM_WARN_MB) toast(`The set is using ~${mb.toFixed(0)} MB of decoded frames — remove unused GIFs from the pool if playback stutters`);
+  const pb = $('#poolBtn'); if (pb) pb.textContent = `Pool ${pool.length}`;
 }
 let padSig = '';
 function updatePadDots(){
@@ -1734,33 +1848,27 @@ function pickAt(px, py){
   g.key.color = [d[0], d[1], d[2]]; g.key.seed = [d.u, d.v]; g.key.on = true;
   selectPad(c.pad); scheduleFx(g, 0);
 }
-// Clearing a pad is undoable: the decoded GIF and every sprite of it (in every scene) are kept in the undo entry,
-// and only freed when that entry leaves the history.
+// Clearing a pad (in this scene) is undoable: its GIF instance and its sprites are kept in the undo entry,
+// and only freed when that entry leaves the history. The decoded GIF stays in the pool either way.
 function clearPad(i, fromRedo = false){
   const p = pads[i]; if (!p.gif) return;
   if (!fromRedo) commit();                           // whatever was pending becomes its own step first
-  const g = p.gif, removed = [];                     // [scene index (-1 = current), layer, position, clip]
-  const strip = (ls, si) => ls.forEach((l, li) => { for (let k = l.clips.length - 1; k >= 0; k--) if (l.clips[k].pad === i){ removed.push([si, li, k, l.clips[k], l.sel === l.clips[k]]); l.clips.splice(k, 1); }
+  const g = p.gif, removed = [];                     // [layer, position, clip, was selected]
+  layers.forEach((l, li) => { for (let k = l.clips.length - 1; k >= 0; k--) if (l.clips[k].pad === i){ removed.push([li, k, l.clips[k], l.sel === l.clips[k]]); l.clips.splice(k, 1); }
     if (!l.clips.includes(l.sel)) l.sel = null; });
-  strip(layers, -1); scenes.forEach((sc, si) => sc && strip(sc.layers, si));
   p.gif = null; pending.delete(i); p.el.classList.remove('wait');
   hist.undo.push({ clear: { pad: i, g, removed: removed.reverse(), scene: sceneIdx } }); trimHist();
   if (!fromRedo){ dropAll(hist.redo); hist.redo.length = 0; }
   afterPadChange(i); hist.cur = histState(); updHistUI();
 }
 function restoreClear(E){
+  if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true);   // a step from another scene: go there first
   const p = pads[E.pad]; if (p.gif) return false;    // the pad was refilled since: nothing to put back
   p.gif = E.g;
-  for (const [si, li, k, c, sel] of E.removed){
-    const sc = si < 0 ? E.scene : si;                 // -1 = the scene that was live when the pad was cleared
-    if (sc !== sceneIdx && !scenes[sc]) scenes[sc] = { layers: Array.from({ length: layers.length }, (_, j) => Object.assign(emptyLayer(), { i: j })), thumb: null };
-    const tgt = sc === sceneIdx ? layers[li] : scenes[sc].layers[li];
-    if (!tgt) continue;
-    tgt.clips.splice(Math.min(k, tgt.clips.length), 0, c); if (sel) tgt.sel = c;
-  }
+  for (const [li, k, c, sel] of E.removed){ const L = layers[li]; L.clips.splice(Math.min(k, L.clips.length), 0, c); if (sel) L.sel = c; }
   afterPadChange(E.pad); return true;
 }
-function afterPadChange(i){ renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); redraw.all = true; }
+function afterPadChange(i){ renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); renderPool(); redraw.all = true; }
 $('#gClear').addEventListener('click', () => { clearPad(selPad); toast2('Pad cleared — Ctrl+Z brings it back'); });
 
 // ---------- UI: layers ----------
@@ -2187,28 +2295,39 @@ const store = {
   keys(prefix){ return this.req('readonly', s => s.getAllKeys(IDBKeyRange.bound(prefix, prefix + '￿'))); },
   all(prefix){ return this.req('readonly', s => s.getAll(IDBKeyRange.bound(prefix, prefix + '￿'))); },
 };
-// v3: `layers` = the current scene (what v2 readers expect), `scenes` = all nine (the current one null), `scene` = which is current
+// v4: `pool` = every GIF of the set; `pads` + `layers` = the current scene; `scenes` = all nine as { pads, layers }
+// (the current one null); `scene` = which is current. v3 had one set of pads for all scenes: upgradeSnap() gives
+// every stored scene its own copy of them.
 const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a',
   clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
+const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: 3, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg },
-    pads: pads.map(p => p.gif ? { hash: p.gif.hash, name: p.gif.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) } : null),
+    v: 4, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg },
+    pool: pool.map(m => ({ hash: m.hash, name: m.name })),
+    pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
-    scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : serLayers(sc.layers)),
+    scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : { pads: serPads(sc.pads), layers: serLayers(sc.layers) }),
   });
+}
+function upgradeSnap(o){
+  if ((o.v || 1) >= 4) return o;
+  const ps = o.pads || [], seen = new Set();
+  o.pool = []; ps.forEach(p => { if (p && !seen.has(p.hash)){ seen.add(p.hash); o.pool.push({ hash: p.hash, name: p.name }); } });
+  o.scenes = Array.from({ length: N_SCENES }, (_, i) => o.scenes && o.scenes[i] ? { pads: JSON.parse(JSON.stringify(ps)), layers: o.scenes[i] } : null);
+  o.v = 4; return o;
 }
 // what counts as "changed" for the unsaved-changes dot: everything except which layer / GIF / scene is selected
 function contentSig(snap){
-  if (!snap) return ''; const o = JSON.parse(snap);
-  const all = o.scenes ? o.scenes.slice() : []; all[o.scene || 0] = o.layers;
-  all.forEach(ls => ls && ls.forEach(l => delete l.sel));
-  delete o.target; delete o.scene; delete o.layers; o.scenes = all;
+  if (!snap) return ''; const o = upgradeSnap(JSON.parse(snap));
+  const all = o.scenes.slice(); all[o.scene || 0] = { pads: o.pads, layers: o.layers };
+  all.forEach(sc => sc && sc.layers.forEach(l => delete l.sel));
+  delete o.target; delete o.scene; delete o.layers; delete o.pads; o.scenes = all;
   return JSON.stringify(o);
 }
 // saved layers → live layer states (only GIFs that loaded; a GIF lives on one layer: the topmost wins)
-function deserLayers(sls, now){
-  const out = sls.map(sl => { const clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
+function deserLayers(sls, now, gifs = pads.map(p => p.gif)){
+  const out = sls.map(sl => { const clips = sl.clips.filter(c => gifs[c.pad]).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
     return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null, fillOn: !!sl.fillOn, fill: sl.fill || '#1e2a3a' }; });
   const seen = new Set();
   for (let li = out.length - 1; li >= 0; li--){ const L = out[li]; L.clips = L.clips.filter(c => !seen.has(c.pad) && seen.add(c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; }
@@ -2218,7 +2337,7 @@ function deserLayers(sls, now){
 const sets = new Map();                              // id → set record
 const session = { setId: null, savedSig: '' };
 const curSet = () => session.setId && sets.get(session.setId);
-const hasContent = () => pads.some(p => p.gif) || layers.some(L => L.clips.length) || scenes.some(sc => sc && sc.layers.some(l => l.clips.length));
+const hasContent = () => pool.length > 0 || pads.some(p => p.gif) || layers.some(L => L.clips.length) || scenes.some(sc => sc && sc.layers.some(l => l.clips.length));
 let dirty = false;
 function updSetLabel(){
   const rec = curSet(), el = $('#setLabel');
@@ -2237,39 +2356,46 @@ async function autosave(){
 // (same file), waits for the swap point, then swaps everything in one go.
 let setsBusy = false;
 async function applySnapshot(st, { wait = true } = {}){
-  const have = [], used = new Set();
-  pads.forEach(p => { if (p.gif) have.push(p.gif); });
-  const plan = st.pads.map(sp => sp ? { sp, g: null, fresh: false } : null);
-  const todo = plan.filter(pl => pl && !(pl.g = have.find(g => g.hash === pl.sp.hash && !used.has(g) && used.add(g))));
+  st = upgradeSnap(st);
+  const scPads = [st.pads, ...st.scenes.map(sc => sc && sc.pads)].filter(Boolean);
+  scPads.flat().forEach(sp => { if (sp && !st.pool.some(e => e.hash === sp.hash)) st.pool.push({ hash: sp.hash, name: sp.name }); });
+  const have = new Map(pool.map(m => [m.hash, m])), got = new Map();
+  const todo = st.pool.filter(e => !have.has(e.hash));
   let done = 0, missing = 0;
   const stat = () => { $('#saveStat').textContent = todo.length ? `loading ${done}/${todo.length}` : ''; };
   stat();
-  await Promise.all(todo.map(async pl => {
+  await Promise.all(todo.map(async e => {
     try {
-      const rec = await store.get('gif:' + pl.sp.hash);
+      const rec = await store.get('gif:' + e.hash);
       if (!rec){ missing++; return; }
-      pl.g = await decodeAnim(rec.blob, rec.name); pl.g.hash = pl.sp.hash; pl.fresh = true;
-    } catch (e) { missing++; }
+      const m = await decodeAnim(rec.blob, rec.name); m.hash = e.hash; got.set(e.hash, m);
+    } catch (err) { missing++; }
     done++; stat();
   }));
   if (wait) await swapPoint();
-  // swap
-  pads.forEach((p, i) => { if (p.gif && !used.has(p.gif)) freeGif(p.gif); p.gif = null; });
-  plan.forEach((pl, i) => {
-    if (!pl || !pl.g) return;
-    const g = pl.g, fx0 = pl.fresh ? '' : JSON.stringify([g.key, g.hsv]);
-    applyGifSettings(g, pl.sp); pads[i].gif = g;
-    if (pl.fresh ? (g.key.on || hsvOn(g)) : JSON.stringify([g.key, g.hsv]) !== fx0) applyFx(g);
-  });
+  // swap: drop every instance of the old set (pads, scenes, undo) and the GIFs the new one doesn't use
+  dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0;
+  [...insts.values()].forEach(freeGif);
+  pads.forEach(p => p.gif = null);
+  const keep = new Set(st.pool.map(e => e.hash));
+  pool.slice().forEach(m => { if (!keep.has(m.hash)) freeMedia(m); });
+  pool.length = 0; st.pool.forEach(e => { const m = have.get(e.hash) || got.get(e.hash); if (m) pool.push(m); });
+  const byHash = new Map(pool.map(m => [m.hash, m]));
+  const mk = sp => { const m = sp && byHash.get(sp.hash); if (!m) return null; const g = makeInst(m, sp); if (g.key.on || hsvOn(g)) applyFx(g); return g; };
+  const curGifs = st.pads.map(mk); pads.forEach((p, i) => p.gif = curGifs[i] || null);
   setBpm(st.bpm); snapMode = st.snap || 'off'; $('#snap').value = snapMode;
   const now = performance.now(), idx = st.scene || 0;
   deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s));
-  for (let i = 0; i < N_SCENES; i++) scenes[i] = i !== idx && st.scenes && st.scenes[i] ? { layers: deserLayers(st.scenes[i], now), thumb: null } : null;
+  for (let i = 0; i < N_SCENES; i++){
+    const ss = i !== idx && st.scenes[i]; if (!ss){ scenes[i] = null; continue; }
+    const gs = pads.map((_, k) => mk(ss.pads[k]));
+    scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: null };
+  }
   sceneIdx = idx; pendingScene = null; liveThumb = null; trans = null; renderScenes();
   Object.assign(transCfg, { type: 'cut', dir: 'left', len: 2, smooth: true }, st.trans || {}); syncTransUI();
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
-  selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem();
+  selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem(); renderPool();
   resetHist();   // undo doesn't reach across sets
   redraw.all = true;
   $('#saveStat').textContent = '';
@@ -2293,7 +2419,7 @@ async function saveSet(asNew, name){
   const snap = snapshot();
   let rec = !asNew && curSet();
   if (!rec) rec = { id: newId(), name: uniqueName((name || '').trim() || 'Untitled set') };
-  Object.assign(rec, { snap, updated: Date.now(), count: pads.filter(p => p.gif).length });
+  Object.assign(rec, { snap, updated: Date.now(), count: pool.length });
   await store.put('set:' + rec.id, rec); sets.set(rec.id, rec);
   session.setId = rec.id; session.savedSig = contentSig(snap); await store.put('session', { setId: rec.id });
   updSetLabel(); renderSets(); toast2(`Saved "${rec.name}"`);
@@ -2311,7 +2437,9 @@ async function loadSet(id){
 }
 async function newEmptySet(){
   if (setsBusy) return;
-  pads.forEach((p, i) => { if (p.gif){ freeGif(p.gif); p.gif = null; renderPad(i); } });
+  dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0;
+  [...insts.values()].forEach(freeGif); pool.slice().forEach(freeMedia);
+  pads.forEach((p, i) => { p.gif = null; renderPad(i); }); renderPool();
   layers.forEach(L => Object.assign(L, emptyLayer()));
   scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; trans = null; renderScenes();
   Object.assign(transCfg, { type: 'cut', dir: 'left', len: 2, smooth: true }); syncTransUI();
@@ -2333,7 +2461,7 @@ async function renameSet(id, name){
 // remove stored GIF files that no set and not the working session refers to
 async function gcGifs(){
   const used = new Set();
-  const add = snap => { try { JSON.parse(snap).pads.forEach(p => p && used.add(p.hash)); } catch {} };
+  const add = snap => { try { upgradeSnap(JSON.parse(snap)).pool.forEach(e => used.add(e.hash)); } catch {} };
   sets.forEach(r => add(r.snap)); add(snapshot());
   for (const k of await store.keys('gif:')) if (!used.has(k.slice(4))) await store.del(k);
 }
@@ -2380,9 +2508,8 @@ async function readZip(blob){                        // → Map(name → Uint8Ar
 }
 const EXT = { 'image/gif': 'gif', 'image/webp': 'webp', 'image/png': 'png', 'image/apng': 'png' };
 async function exportSet(name, snap){
-  const st = JSON.parse(snap), files = [], byHash = new Map(), enc = new TextEncoder();
-  for (const sp of st.pads){
-    if (!sp) continue;
+  const st = upgradeSnap(JSON.parse(snap)), files = [], byHash = new Map(), enc = new TextEncoder();
+  for (const sp of st.pool){
     if (!byHash.has(sp.hash)){
       const rec = await store.get('gif:' + sp.hash); if (!rec) continue;
       const base = (rec.name || 'gif').replace(/\.[a-z0-9]+$/i, '').replace(/[^\w.-]+/g, '_').slice(0, 60);
@@ -2411,17 +2538,23 @@ async function importVjif(file){
     const files = await readZip(file), meta = files.get('set.json');
     if (!meta) throw new Error('no set.json inside');
     const info = JSON.parse(new TextDecoder().decode(meta)), st = info.set;
-    let missing = 0;
-    for (const sp of st.pads){
-      if (!sp) continue;
-      const data = files.get(sp.file);
-      if (!data){ missing++; continue; }
-      const ext = (sp.file.match(/\.(\w+)$/) || [, 'gif'])[1].toLowerCase();
-      const blob = new Blob([data], { type: ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : 'image/gif' });
-      sp.hash = await hashBlob(blob); delete sp.file;
-      await store.put('gif:' + sp.hash, { name: sp.name, blob });
+    let missing = 0; const byFile = new Map(), reHash = new Map();
+    // v4 files list the GIFs in `pool`; older ones on each pad
+    const ents = [...(st.pool || []), st.pads || [], ...(st.scenes || []).map(sc => sc && !Array.isArray(sc) && sc.pads)].flat().filter(e => e && e.file);
+    for (const sp of ents){
+      if (!byFile.has(sp.file)){
+        const data = files.get(sp.file);
+        if (!data){ missing++; byFile.set(sp.file, null); continue; }
+        const ext = (sp.file.match(/\.(\w+)$/) || [, 'gif'])[1].toLowerCase();
+        const blob = new Blob([data], { type: ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : 'image/gif' });
+        const h = await hashBlob(blob); byFile.set(sp.file, h);
+        await store.put('gif:' + h, { name: sp.name, blob });
+      }
+      if (byFile.get(sp.file)){ if (sp.hash) reHash.set(sp.hash, byFile.get(sp.file)); sp.hash = byFile.get(sp.file); }
+      delete sp.file;
     }
-    const rec = { id: newId(), name: uniqueName(info.name || file.name.replace(/\.(vjif|zip)$/i, '')), snap: JSON.stringify(st), updated: Date.now(), count: st.pads.filter(Boolean).length };
+    [st.pads || [], ...(st.scenes || []).map(sc => sc && !Array.isArray(sc) && sc.pads)].flat().forEach(sp => { if (sp && reHash.has(sp.hash)) sp.hash = reHash.get(sp.hash); });
+    const rec = { id: newId(), name: uniqueName(info.name || file.name.replace(/\.(vjif|zip)$/i, '')), snap: JSON.stringify(st), updated: Date.now(), count: upgradeSnap(JSON.parse(JSON.stringify(st))).pool.length };
     await store.put('set:' + rec.id, rec); sets.set(rec.id, rec); renderSets();
     if (missing) toast(`Imported "${rec.name}", but ${missing} GIF file(s) were missing from the .vjif`);
     if (!dirty) await loadSet(rec.id);
@@ -2538,7 +2671,7 @@ function commit(){
   dropAll(hist.redo); hist.redo.length = 0; hist.cur = s; updHistUI();
 }
 // undo entries are state strings, or { clear } (a cleared pad, holding its GIF) / { reclear } (redo of that)
-function dropEntry(e){ if (e && e.clear && !pads.some(p => p.gif === e.clear.g)) freeGif(e.clear.g); }
+function dropEntry(e){ if (e && e.clear && !padInsts().has(e.clear.g)) freeGif(e.clear.g); }
 function dropAll(list){ list.forEach(dropEntry); }
 function trimHist(){ while (hist.undo.length > 100) dropEntry(hist.undo.shift()); }
 function resetHist(){ dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI(); }
@@ -2546,14 +2679,14 @@ function resetHist(){ dropAll(hist.undo); dropAll(hist.redo); hist.undo.length =
 function undo(){
   if (!hist.ready || drag) return; commit(); if (!hist.undo.length) return;
   const e = hist.undo.pop();
-  if (e && e.clear){ if (restoreClear(e.clear)) hist.redo.push({ reclear: e.clear.pad }); else dropEntry(e); }
+  if (e && e.clear){ if (restoreClear(e.clear)) hist.redo.push({ reclear: { pad: e.clear.pad, scene: e.clear.scene } }); else dropEntry(e); }
   else { hist.redo.push(hist.cur); applyHist(e); }
   hist.cur = histState(); updHistUI();
 }
 function redo(){
   if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return;
   const e = hist.redo.pop();
-  if (e && e.reclear !== undefined) clearPad(e.reclear, true);
+  if (e && e.reclear !== undefined){ if (e.reclear.scene !== sceneIdx) gotoScene(e.reclear.scene, clock.beat, true); clearPad(e.reclear.pad, true); }
   else { hist.undo.push(hist.cur); applyHist(e); }
   hist.cur = histState(); updHistUI();
 }
