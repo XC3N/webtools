@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo).
 
+## 0.10.0 — 2026-10-06
+
+### Effects
+- Release (Rel) for effects and effect presets. A Hit now plays at full for Length, then fades over Release; Hold and Latch fade out over Release when let go / switched off (was a fixed 1/32). Double-click Rel for the mode's usual value.
+- Sets saved before this keep their sound: an old Hit's Length becomes its Release.
+
 ## 0.9.0 — 2026-10-06
 
 First numbered version. Everything before it was built between 2026-10-05 and 2026-10-06; the full history is in git.

@@ -303,9 +303,10 @@ output.mod{color:var(--env)}
     <div id="fxEdit">
       <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList"></span>
         <div class="seg" id="fxTgt" title="Where it plays: the whole output, or one layer (before the layer is blended)"><button data-v="out" title="The whole output">All</button><button data-v="0" title="Layer 1 only">1</button><button data-v="1" title="Layer 2 only">2</button><button data-v="2" title="Layer 3 only">3</button><button data-v="3" title="Layer 4 only">4</button></div></div>
-      <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
+      <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays at full for Length, then fades over Release (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
         <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
-      <div class="fxrow"><div class="field" id="fxLenRow" title="Length: how long a Hit takes to fade"><label for="fxLen">Len</label><input id="fxLen" type="range" min="0" step="1" data-def="2"><output></output></div>
+      <div class="fxrow"><div class="field" id="fxLenRow" title="Length: how long a Hit stays at full before its release"><label for="fxLen">Len</label><input id="fxLen" type="range" min="0" step="1" data-def="0"><output></output></div>
+        <div class="field" id="fxRelRow" title="Release: how long it takes to fade out — after a Hit's length, or after letting go of Hold / switching off Latch"><label for="fxRel">Rel</label><input id="fxRel" type="range" min="0" step="1"><output></output></div>
         <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
         <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
@@ -455,10 +456,10 @@ output.mod{color:var(--env)}
       <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (up to 6 — a full layer flashes red and refuses). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Alt+pad key · Alt+click</dt><dd>Swap: the GIF takes its layer for itself — the others there go, and it takes over the selected one's placement (pads get a frame while Alt is held)</dd>
       <dt>Shift+pad key</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Del or the × on its chip</dd>
-      <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (plays once, fades over Length; with Snap it waits for the beat / bar) or Latch (on / off); Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
+      <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (full for Length, then fades over Release; with Snap it waits for the beat / bar) or Latch (on / off); Release also sets how Hold and Latch fade out; Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
-      <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length and Amount. To fill one: drag effect tiles onto it, or hold its key (Caps on) or its tile and click / press effects to add or remove them; Caps+Shift+numpad key stores the effects that are on right now. Right-click a preset to see and remove its effects</dd>
+      <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length, Release and Amount. To fill one: drag effect tiles onto it, or hold its key (Caps on) or its tile and click / press effects to add or remove them; Caps+Shift+numpad key stores the effects that are on right now. Right-click a preset to see and remove its effects</dd>
       <dt>1–9</dt><dd>Arm a transition preset for the next scene change (the Transition panel edits the armed one)</dd>
       <dt>Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>PgUp / PgDn · End</dt><dd>Edit layer up / down (or click its card; Alt+1–4 too) · End: the edit layer on / off</dd>
@@ -507,7 +508,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.9.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.10.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1689,7 +1690,7 @@ function buildFx(){
   $('#fxPads').innerHTML = FX_DEFS.map((d, i) => fxTileHTML(i, FX_LABELS[i])).join('');
   $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, k + 1)).join('');
   document.querySelectorAll('#fxStrip .fxp').forEach(wireFxTile);
-  $('#fxLen').max = FX_LENS.length - 1; $('#fxRate').max = FX_RATES.length - 1; $('#fxSize').max = FX_SIZES.length - 1;
+  $('#fxLen').max = FX_LENS.length - 1; $('#fxRel').max = FX_RELS.length - 1; $('#fxRate').max = FX_RATES.length - 1; $('#fxSize').max = FX_SIZES.length - 1;
   document.querySelectorAll('#fxTgt button').forEach(b => { if (b.dataset.v !== 'out') b.style.setProperty('--lc', LCOL[+b.dataset.v]); });
 }
 const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
@@ -1737,6 +1738,8 @@ function syncFxUI(){
   $('#fxAmt').value = C.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(C.amt * 100) + '%';
   const li = optIdx(FX_LENS, C.len); $('#fxLen').value = li; $('#fxLen').nextElementSibling.textContent = FX_LENS[li][1];
   $('#fxLenRow').classList.toggle('dimmed', C.mode !== 'hit');
+  const ri = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode)); $('#fxRel').value = ri; $('#fxRel').nextElementSibling.textContent = FX_RELS[ri][1];
+  $('#fxRel').dataset.def = optIdx(FX_RELS, fxRelDef(C.mode));     // double-click: this mode's usual release
   if (!pre){
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
     $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[selFx].rate);
@@ -1750,6 +1753,7 @@ $('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'
 $('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx < NFX){ fxCfg[selFx].style = b.dataset.v; syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { fxConf(selFx).amt = +e.target.value; syncFxUI(); });
 $('#fxLen').addEventListener('input', e => { fxConf(selFx).len = FX_LENS[+e.target.value][0]; syncFxUI(); });
+$('#fxRel').addEventListener('input', e => { fxConf(selFx).rel = FX_RELS[+e.target.value][0]; syncFxUI(); });
 $('#fxSize').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].size = FX_SIZES[+e.target.value][0]; syncFxUI(); } });
 $('#fxRate').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
 $('#fxPreList').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx >= NFX){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); } });
@@ -2098,9 +2102,15 @@ const FX_DEFS = [
   { id: 'rgb', name: 'RGB', title: 'Colour channels / tape', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Scanlines, tracking wobble, colour bleed and noise']] },
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
-const FX_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
+const FX_LENS = [[0, '0'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
+const FX_REL = 0.125;                                // default release of Hold / Latch effects (beats)
+const FX_RELS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
+const fxRelDef = mode => mode === 'hit' ? 1 : FX_REL;
+// sets from before Release: a Hit faded over its whole Length — that becomes the release (held for 0)
+function fxMigrate(c){ if (!c || c.rel !== undefined || !Object.keys(c).length) return c;
+  if (c.mode === 'hit'){ c.rel = c.len ?? 1; c.len = 0; } else c.rel = FX_REL; return c; }
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
-const fxDefaults = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 1, rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: 64 }));
+const fxDefaults = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 0, rel: fxRelDef(d.mode), rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: 64 }));
 const FX_SIZES = [[4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px'], [128, '128 px'], [192, '192 px']];
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
 // effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate, style } })
@@ -2109,17 +2119,19 @@ const FXP_KEYS = Array.from({ length: 9 }, (_, i) => 'Numpad' + (i + 1)), FXP_LA
 let capsOn = false;                                   // Caps Lock: the numpad plays effect presets instead of scenes
 function setCaps(on){ if (on === capsOn) return; capsOn = on; $('#scenes').classList.toggle('fxmode', on); $('#fxPre').classList.toggle('armed', on); $('#capsTag').hidden = !on; $('#npTag').hidden = on; }
 ['keydown', 'keyup', 'pointerdown', 'pointermove'].forEach(t => addEventListener(t, e => { if (e.getModifierState) setCaps(e.getModifierState('CapsLock')); }, true));
-const fxPreDefaults = () => FXP_KEYS.map(() => ({ mode: 'hold', amt: 1, len: 1, fx: {} }));
+const fxPreDefaults = () => FXP_KEYS.map(() => ({ mode: 'hold', amt: 1, len: 0, rel: FX_REL, fx: {} }));
 let fxCfg = fxDefaults(), fxPre = fxPreDefaults(), selFx = 0;
 const NFX = FX_DEFS.length;
 const fxSt = [...FX_DEFS, ...FXP_KEYS].map(() => ({ held: false, on: false, b0: -1e9, rel: -1e9 }));
 const fxConf = i => i < NFX ? fxCfg[i] : fxPre[i - NFX];
-const FX_REL = 0.125;                                // beats a held / latched effect takes to fade out
 function fxLevel(i, b){
   const C = fxConf(i), S = fxSt[i];
-  if (C.mode === 'hit'){ const x = (b - S.b0) / C.len; return x >= 0 && x < 1 ? (1 - x) * (1 - x) : 0; }
+  const rel = C.rel ?? fxRelDef(C.mode);
+  if (C.mode === 'hit'){                             // full for Length, then fades over Release
+    const t = b - S.b0; if (t < 0) return 0; if (t < (C.len || 0)) return 1;
+    const x = rel > 0 ? (t - (C.len || 0)) / rel : 1; return x < 1 ? (1 - x) * (1 - x) : 0; }
   if (C.mode === 'hold' ? S.held : S.on) return 1;
-  const x = (b - S.rel) / FX_REL; return x >= 0 && x < 1 ? 1 - x : 0;
+  const x = rel > 0 ? (b - S.rel) / rel : 1; return x >= 0 && x < 1 ? 1 - x : 0;
 }
 // with Snap on, a Hit waits for the next beat / bar (a hit just after one counts as on it); Hold and Latch are instant
 // beats per snap step; 0 when Snap is off or a MIDI clock is stopped (nothing to wait for)
@@ -3412,8 +3424,8 @@ async function applySnapshot(st, { wait = true } = {}){
   if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => normTrans(Object.assign(trPresets[k], P)));
   else if (st.trans) normTrans(Object.assign(trPresets[trSel], st.trans));          // older sets: their transition on key 2
   armTrans(trSel);
-  fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
-  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {})); syncFxUI();   // older sets had six: they fill 1–6
+  fxCfg = fxDefaults().map((d, i) => Object.assign(d, fxMigrate(st.fx && st.fx[i] || {}))); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
+  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, fxMigrate(st.fxPre && st.fxPre[k] || {}))); syncFxUI();   // older sets had six: they fill 1–6
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
   selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem(); renderPool();
