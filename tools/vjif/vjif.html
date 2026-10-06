@@ -156,6 +156,8 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .fxp.sel{border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig)}
 .fxp.on .n,.fxp.on .hd,.fxp.on .s{color:var(--sigtxt)}
 #fmtSeg button,#recFmtSeg button,#recBarsSeg button{padding:0 10px;min-width:40px}
+#aboutVer{color:var(--muted);text-decoration:none;margin-left:10px;flex:none}
+#aboutVer:hover{color:var(--sig)}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
 #liveTag{position:absolute;top:8px;left:8px;z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#fff;background:#a33;padding:3px 8px;border-radius:2px;pointer-events:none}
 
@@ -428,7 +430,7 @@ output.mod{color:var(--env)}
   <button class="lbtn" data-learn="black" title="Map a control to blackout (held)">Blackout</button><button class="lbtn" data-learn="freeze" title="Map a control to freeze (held)">Freeze</button><button class="lbtn accent" id="learnDone">Done</button></div>
 <div id="aboutPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(720px,94vw)">
-    <h2><span class="abrand">VJ<span>if</span></span><span class="tag">GIF VJ tool · <i>actually, it's pronounced vjif</i></span><span class="line"></span><button id="aboutClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <h2><span class="abrand">VJ<span>if</span></span><span class="tag">GIF VJ tool · <i>actually, it's pronounced vjif</i></span><a id="aboutVer" class="tag" href="https://github.com/XC3N/webtools/blob/main/tools/vjif/CHANGELOG.md" target="_blank" rel="noopener" title="What's new (changelog on GitHub)"></a><span class="line"></span><button id="aboutClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <p class="aboutLead">Play GIFs to the beat: load them onto pads, trigger them with the keyboard, stack them on four layers, switch scenes with transitions and throw effects over it all. Everything runs in this browser tab — nothing is uploaded.</p>
     <div class="sub" style="margin-top:6px"><span>Getting started</span><span class="line"></span></div>
     <ol class="steps">
@@ -505,6 +507,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
+const APP_VERSION = '0.9.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -3177,6 +3180,7 @@ movable($('#setPanel .modalBox'), 'vjif-setpos');
 const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos');
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
+$('#aboutVer').textContent = 'v' + APP_VERSION;
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
 $('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<button data-f="${k}" title="${d} · ${w}×${h}">${k}</button>`).join('');
 $('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
