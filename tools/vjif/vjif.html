@@ -40,6 +40,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .grp{display:flex;align-items:center;gap:6px}.grp.right{margin-left:auto}
 .vsep{width:1px;height:20px;background:var(--edge);flex:none}
 .bpmwrap{position:relative;display:inline-block}
+#bpm{cursor:ns-resize}#bpm:focus{cursor:text}body.bpmdrag,body.bpmdrag *{cursor:ns-resize !important}
 #bpmMark{position:absolute;bottom:3px;height:2px;background:var(--lcd-ink);pointer-events:none;display:none}
 #bpm{width:80px;text-align:center;font:500 12px var(--mono);color:var(--lcd-ink);background:var(--lcd-bg);border-color:color-mix(in srgb,var(--lcd-ink) 22%,transparent);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 #bpm::-webkit-outer-spin-button,#bpm::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -247,7 +248,7 @@ output.mod{color:var(--env)}
   <div class="grp sect" id="clockGrp" title="Tempo and timing">
     <select id="clockSrc" style="width:112px" title="Where the tempo comes from"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
     <select id="midiIn" hidden style="width:150px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span>
-    <label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Type a tempo and press Enter · mouse wheel over a digit changes that digit"><i id="bpmMark"></i></span>
+    <label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Drag up / down or use the mouse wheel over a digit to change that digit · click to type a tempo, then Enter"><i id="bpmMark"></i></span>
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
     <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span>
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
@@ -431,7 +432,7 @@ output.mod{color:var(--env)}
       <dt>Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>PgUp / PgDn · End</dt><dd>Edit layer up / down (or click its card; Alt+1–4 too) · End: the edit layer on / off</dd>
       <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
-      <dt>Wheel on BPM</dt><dd>Steps the digit under the cursor (hundreds … hundredths, it's underlined)</dd>
+      <dt>BPM</dt><dd>Drag up / down or use the wheel over a digit to step that digit (hundreds … hundredths, it's underlined) · click to type a tempo</dd>
       <dt>Shift+Space</dt><dd>Resync: now is beat 1, every GIF restarts</dd>
       <dt>Arrows · Home</dt><dd>Nudge the selected GIF 1 px (Shift = 10 px; with the mouse over a slider or button row, the arrows adjust that control) · Home resets its placement</dd>
       <dt>Sliders</dt><dd>Double-click the bar resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · double-click the number to type a value (Enter applies, Esc cancels) · dropdowns and button rows take the wheel and arrows too</dd>
@@ -2881,6 +2882,23 @@ bpmEl.addEventListener('wheel', e => {
   const d = e.deltaY || e.deltaX; if (!d) return;
   setBpm(clock.bpm + (d < 0 ? 1 : -1) * bpmDigit(e).place);
 }, { passive: false });
+// drag the tempo up / down: the digit under the pointer moves 1 step every 6 px (a click without dragging types instead)
+{
+  let d = null;
+  bpmEl.addEventListener('pointerdown', e => {
+    if (e.button || clock.src !== 'internal' || document.activeElement === bpmEl) return;
+    e.preventDefault(); bpmEl.setPointerCapture(e.pointerId);
+    d = { y: e.clientY, place: bpmDigit(e).place, bpm0: clock.bpm, moved: false };
+  });
+  bpmEl.addEventListener('pointermove', e => {
+    if (!d) return;
+    const dy = d.y - e.clientY; if (!d.moved && Math.abs(dy) < 3) return;
+    d.moved = true; document.body.classList.add('bpmdrag');
+    setBpm(d.bpm0 + Math.trunc(dy / 6) * d.place);
+  });
+  const end = () => { if (!d) return; const typed = !d.moved; d = null; document.body.classList.remove('bpmdrag'); if (typed){ bpmEl.focus(); bpmEl.select(); } };
+  bpmEl.addEventListener('pointerup', end); bpmEl.addEventListener('pointercancel', end);
+}
 $('#tapBtn').addEventListener('click', tap);
 $('#syncBtn').addEventListener('click', resync);
 $('#clockSrc').addEventListener('change', e => setClockSrc(e.target.value));
