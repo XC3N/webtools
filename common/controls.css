@@ -1,7 +1,6 @@
-/* common/controls.css — visuals for common/controls.js (needs the theme tokens --acc-rgb, --mono, --ink, --amber-dim) */
-input[type=range].wheelready::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(var(--acc-rgb),.45),0 0 10px rgba(var(--acc-rgb),.7)}
-input[type=range].wheelready::-moz-range-thumb{box-shadow:0 0 0 3px rgba(var(--acc-rgb),.45),0 0 10px rgba(var(--acc-rgb),.7)}
+/* common/controls.css — visuals for common/controls.js (the value-bar look itself is in common/style.css) */
+input[type=range].wheelready{border-color:var(--muted)}
 input[type=range]+output{cursor:text}
 /* the type-in box sits exactly inside the readout, so nothing moves while editing */
-output .ctl-edit{all:unset;display:block;width:100%;font:inherit;color:#fff;text-align:inherit;caret-color:var(--amber, #ffb000)}
-output:has(.ctl-edit){border-color:var(--amber-dim, #a6731a);background:#000}
+output .ctl-edit{all:unset;display:block;width:100%;min-width:5ch;font:inherit;color:#fff;text-align:inherit;caret-color:var(--sig, #6db3a2)}
+output:has(.ctl-edit){background:var(--bg, #000);outline:1px solid var(--muted, #888)}

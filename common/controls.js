@@ -79,8 +79,18 @@ const Controls = (() => {
     apply(el, v);
   }
 
+  // value bars: --p (0–100 %) on each slider, for a CSS fill. Kept in sync on user input AND when code sets .value
+  // (tools set slider values directly when they show a different GIF / preset), via a hook on the value setter.
+  const paint = el => { const lo = el.min === '' ? 0 : +el.min, hi = el.max === '' ? 100 : +el.max;
+    el.style.setProperty('--p', Math.max(0, Math.min(100, (+el.value - lo) / ((hi - lo) || 1) * 100)) + '%'); };
+  (() => {
+    const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(HTMLInputElement.prototype, 'value', { configurable: true, enumerable: d.enumerable,
+      get(){ return d.get.call(this); }, set(v){ d.set.call(this, v); if (this.type === 'range') paint(this); } });
+    addEventListener('input', e => { if (e.target && e.target.type === 'range') paint(e.target); }, true);
+  })();
   function init(root = document){
-    root.querySelectorAll('input[type=range]').forEach(el => { if (el._ctlDef === undefined) el._ctlDef = +el.value; });
+    root.querySelectorAll('input[type=range]').forEach(el => { if (el._ctlDef === undefined) el._ctlDef = +el.value; paint(el); });
     if (init.done) return; init.done = true;
     addEventListener('pointermove', e => {
       lastMove = performance.now(); px = e.clientX; py = e.clientY;
@@ -123,5 +133,5 @@ const Controls = (() => {
       o._ctlT = setTimeout(() => startEdit(o, el), 220);
     }, true);
   }
-  return { init, apply, defaultOf, setDefault(el, v){ el.dataset.def = v; } };
+  return { init, apply, paint, defaultOf, setDefault(el, v){ el.dataset.def = v; } };
 })();

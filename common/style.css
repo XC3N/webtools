@@ -1,0 +1,110 @@
+/* common/style.css — the XC3N tool style (2026-10 recipe):
+   surfaces matte grey · grouping by surface tones (no borders between sections) · controls as cells · on / live = signal fill ·
+   numbers in LCD windows · sliders as value bars (number inside) · compact · Instrument Sans · 3 px corners.
+   Colours come from common/theme.js tokens (--bg, --panel, --panel-2, --track, --edge, --amber = signal, --lcd-*), so a theme
+   recolours everything. Tools add their own layout on top.
+
+   Layout-stability rules (from Bad MOPHO):
+   1. A value readout never changes size when its value changes: fixed width, no wrapping, tabular digits, ellipsis last.
+   2. Context-dependent text lives in a fixed box and never pushes neighbours.
+   3. Controls that swap with context are stacked in one cell, as tall as the tallest option.
+   4. Unavailable controls are dimmed in place, never removed.
+   5. Scroll areas reserve their scrollbar gutter. */
+:root{
+  --bg:#18191b;--panel:#202124;--panel-2:#28292d;--track:#313236;--edge:#34363a;--edge-2:#3e4045;
+  --ink:#dddbd5;--muted:#8e8d88;--faint:#5f5e5a;
+  --amber:#6db3a2;--acc-rgb:109,179,162;--amber-dim:#4c7d71;--acc-hi:#7fc4b3;--acc-lo:#609e8f;
+  --lcd-bg:#0a100e;--lcd-ink:#6db3a2;--meter-rgb:120,160,210;--env:#6db3a2;--env-rgb:109,179,162;
+  --sig:var(--amber);--sigtxt:#0d1412;
+  --danger:#ff8f8f;--ok:#6db3a2;
+  --r:3px;--ch:24px;--fs:12px;
+  --sans:"Instrument Sans",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+*{scrollbar-width:thin;scrollbar-color:var(--edge-2) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--edge-2);border-radius:5px;border:2px solid var(--panel)}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+input,textarea{-webkit-user-select:text;user-select:text}
+
+/* ---------- surfaces and headings ---------- */
+.panel{background:var(--panel);padding:10px 12px;overflow:auto;min-height:0;scrollbar-gutter:stable}
+h2{display:flex;align-items:center;gap:8px;margin:0 0 8px;font:600 13px/1.2 var(--sans);color:var(--ink);white-space:nowrap}
+h2 .line{flex:1;min-width:10px}
+h2 .tag{font:400 11px var(--mono);color:var(--faint);overflow:hidden;text-overflow:ellipsis}
+h2:not(:first-child){margin-top:16px}
+.sub{display:flex;align-items:center;gap:8px;margin:12px 0 7px;font:600 12px/1 var(--sans);color:var(--muted)}
+.sub .line{flex:1;height:1px;background:var(--edge)}
+.dim{color:var(--muted)}.small{font-size:11px}
+.note{font-size:12px;line-height:1.45;color:var(--muted);margin:8px 0 0}
+label{font:400 12px/1.2 var(--sans);color:var(--muted)}
+
+/* ---------- controls: cells ---------- */
+button{font:500 12px/1 var(--sans);background:var(--panel-2);color:var(--ink);border:1px solid var(--edge);border-radius:var(--r);height:var(--ch);padding:0 9px;
+  cursor:pointer;white-space:nowrap;transition:border-color .12s,color .12s,background .12s}
+button:hover{border-color:var(--muted)}
+button:disabled{opacity:.35;cursor:default;border-color:var(--edge)}
+button.accent{background:var(--sig);color:var(--sigtxt);border-color:var(--sig)}
+button.danger{color:var(--danger);border-color:#55302f}button.danger:hover{border-color:var(--danger);background:#2a1a1a}
+button.armed{background:#6a2020;border-color:#b04040;color:#fff}
+button.flash{background:var(--sig);color:var(--sigtxt);border-color:var(--sig)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:1px solid var(--sig);outline-offset:1px}
+select,input[type=number],input[type=url],input[type=text]{font:400 12px var(--mono);color:var(--ink);background:var(--panel-2);border:1px solid var(--edge);border-radius:var(--r);height:var(--ch);padding:0 8px;outline:none}
+select{appearance:none;font-family:var(--sans);padding-right:22px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%238e8d88'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+select:focus,input:focus{border-color:var(--muted)}
+input::placeholder{color:var(--faint)}
+/* switch: a small cell, signal-filled when on */
+input[type=checkbox]{-webkit-appearance:none;appearance:none;flex:none;width:30px;height:16px;margin:0;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);position:relative;cursor:pointer;vertical-align:middle}
+input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:2px;background:var(--muted);transition:left .12s}
+input[type=checkbox]:checked{background:var(--sig);border-color:var(--sig)}
+input[type=checkbox]:checked::before{left:16px;background:var(--sigtxt)}
+.tog{display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+input[type=color]{-webkit-appearance:none;appearance:none;width:40px;height:var(--ch);padding:2px;border:1px solid var(--edge);border-radius:var(--r);background:var(--panel-2);cursor:pointer}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:2px}
+/* segmented choices: joined cells, the chosen one signal-filled */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1px;background:var(--edge);border:1px solid var(--edge);border-radius:var(--r);overflow:hidden}
+.seg.grid4{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}
+.seg.grid5{grid-auto-flow:row;grid-template-columns:repeat(5,1fr)}
+.seg button{position:relative;border:0;border-radius:0;background:var(--panel-2);color:var(--muted);font:500 12px var(--sans);padding:0 2px;height:calc(var(--ch) - 2px)}
+.seg button:hover{color:var(--ink);background:var(--track)}
+.seg button.on{background:var(--sig);color:var(--sigtxt);font-weight:600}
+.seg button.act::after{content:"";position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--sig)}
+.seg button.on.act::after{background:var(--sigtxt)}
+.dimmed{opacity:.35;pointer-events:none}
+
+/* ---------- numbers: LCD windows ---------- */
+.lcd{font:500 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--lcd-ink);background:var(--lcd-bg);border:1px solid color-mix(in srgb,var(--lcd-ink) 22%,transparent);
+  border-radius:var(--r);padding:5px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 5px color-mix(in srgb,var(--lcd-ink) 30%,transparent)}
+.lcd.two{display:flex;flex-direction:column;justify-content:center;gap:4px;height:38px;padding:0 8px}
+.lcd.two span{display:block;height:13px;line-height:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lcd.two .l2{opacity:.6;text-shadow:none}
+.lcd.one{height:var(--ch);line-height:12px}
+.scope{display:block;width:100%;height:50px;background:var(--lcd-bg);border:1px solid color-mix(in srgb,var(--lcd-ink) 22%,transparent);border-radius:var(--r);margin-top:2px}
+
+/* ---------- sliders: value bars ----------
+   The bar fills to the value (--p, kept in sync by common/controls.js); a thin line marks the end. A readout
+   (<output>) right after the slider sits inside the bar on the right; click it to type a value. */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;height:calc(var(--ch) - 2px);margin:0;cursor:ew-resize;outline:none;
+  border:1px solid var(--edge);border-radius:var(--r);background:linear-gradient(var(--track),var(--track)) 0 0/var(--p,50%) 100% no-repeat var(--bg)}
+input[type=range]::-webkit-slider-runnable-track{height:100%;background:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:2px;height:100%;background:var(--muted);border:0;border-radius:0}
+input[type=range]::-moz-range-thumb{width:2px;height:100%;background:var(--muted);border:0;border-radius:0}
+input[type=range]:hover::-webkit-slider-thumb,input[type=range].wheelready::-webkit-slider-thumb{background:var(--ink)}
+input[type=range].wheelready{border-color:var(--muted)}
+input[type=range]+output{font:400 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);background:none;border:0;padding:0 7px;white-space:nowrap;overflow:hidden;text-align:right;cursor:text}
+output.mod{color:rgb(var(--meter-rgb))}
+/* label | bar (readout inside) rows */
+.field{display:grid;grid-template-columns:78px minmax(0,1fr);align-items:center;gap:8px;margin-bottom:5px;min-height:var(--ch)}
+.field>.span{grid-column:2/3}
+.field>input[type=range]{grid-column:2;grid-row:1}
+.field>input[type=range]+output{grid-column:2;grid-row:1;justify-self:end;max-width:60%;position:relative;z-index:1}
+
+/* ---------- modals, toast ---------- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;z-index:8}
+.modalBox{width:min(660px,92vw);max-height:86vh;overflow:auto;background:var(--panel);border:1px solid var(--edge);border-radius:calc(var(--r) + 1px);padding:18px 20px;box-shadow:0 16px 40px rgba(0,0,0,.5);scrollbar-gutter:stable}
+.modalBox h2 button{margin-left:auto}
+#toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#2a1a1a;border:1px solid #6a3434;color:#ffd6d6;padding:8px 14px;border-radius:var(--r);display:none;max-width:70vw;z-index:9;font:400 12px var(--sans)}
+#toast.ok{background:var(--panel-2);border-color:var(--sig);color:var(--ink)}

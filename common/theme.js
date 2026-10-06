@@ -19,24 +19,31 @@ const Theme = (() => {
     return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
   }
   const hsv2hex = (h, s, v) => '#' + hsv2rgb(h, s, v).map(n => n.toString(16).padStart(2, '0')).join('');
+  // sCtrl / vCtrl and sLcd / vLcd (saturation / brightness, %) are optional: missing = Bad MOPHO's fixed ramp
   const DEFAULT = { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 };
   const PRESETS = {
+    'Matte':          { hCtrl: 166, sCtrl: 39, vCtrl: 70, hLcd: 166, sLcd: 39, vLcd: 72, hEnv: 166, hMeter: 212, bh: 220, bs: 11, bv: 11 },
     "Claude's Mopho": { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 },
     'XC3N':           { hCtrl: 171, hLcd: 317, hEnv: 300, hMeter: 319, bh: 238, bs: 20, bv: 15 },
     'Blue Berries':   { hCtrl: 199, hLcd: 266, hEnv: 225, hMeter: 242, bh: 238, bs: 27, bv: 18 },
   };
   const CORE = ['hCtrl', 'hEnv', 'hMeter', 'bh', 'bs', 'bv'];   // hLcd is optional in older files
   let cur = { ...DEFAULT };
+  const OPT = ['sCtrl', 'vCtrl', 'sLcd', 'vLcd'];
   const listeners = [];
 
   function apply(t = cur){
     cur = { ...DEFAULT, ...t };
+    OPT.forEach(k => { if (t[k] === undefined) delete cur[k]; });   // a preset without them uses the classic ramp
     const R = document.documentElement.style, cl = n => Math.max(0, Math.min(100, n)), T = cur, set = (k, v) => R.setProperty(k, v);
-    const H = T.hCtrl;                                             // controls: hue only, S/V follow the Mopho amber ramp
-    set('--amber', hsv2hex(H, 100, 100)); set('--acc-rgb', hsv2rgb(H, 100, 100).join(','));
-    set('--acc-hi', hsv2hex(H, 88, 100)); set('--acc-lo', hsv2hex(H, 100, 88)); set('--acc-dk', hsv2hex(H, 100, 70));
-    set('--amber-dim', hsv2hex(H, 100, 68));
-    set('--lcd-ink', hsv2hex(T.hLcd, 60, 100)); set('--lcd-bg', hsv2hex(T.hLcd, 100, 8));
+    const H = T.hCtrl, cs = T.sCtrl ?? 100, cv = T.vCtrl ?? 100;   // controls / signal colour
+    set('--amber', hsv2hex(H, cs, cv)); set('--acc-rgb', hsv2rgb(H, cs, cv).join(','));
+    set('--acc-hi', hsv2hex(H, cs * 0.88, Math.min(100, cv * 1.08))); set('--acc-lo', hsv2hex(H, cs, cv * 0.88)); set('--acc-dk', hsv2hex(H, cs, cv * 0.7));
+    set('--amber-dim', hsv2hex(H, cs, cv * 0.68));
+    const sg = hsv2rgb(H, cs, cv).map(v => { v /= 255; return v <= 0.04 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    set('--sigtxt', 0.2126 * sg[0] + 0.7152 * sg[1] + 0.0722 * sg[2] > 0.3 ? '#0d1110' : '#ffffff');   // readable text on the signal colour
+    const ls = T.sLcd ?? 60, lv = T.vLcd ?? 100;
+    set('--lcd-ink', hsv2hex(T.hLcd, ls, lv)); set('--lcd-bg', hsv2hex(T.hLcd, Math.min(100, ls * 1.6), 6));
     const E = T.hEnv, Ef = (E + 335) % 360, E3 = (E + 25) % 360;
     set('--env', hsv2hex(E, 78, 100)); set('--env-rgb', hsv2rgb(E, 78, 100).join(','));
     set('--env-f', hsv2hex(Ef, 78, 100)); set('--env-f-rgb', hsv2rgb(Ef, 78, 100).join(','));
@@ -52,13 +59,14 @@ const Theme = (() => {
     listeners.forEach(f => f(get()));
   }
   const get = () => ({ ...cur });
-  function match(t = cur){ for (const n in PRESETS){ const p = PRESETS[n]; if (Object.keys(p).every(k => t[k] === p[k])) return n; } return 'Custom'; }
+  function match(t = cur){ for (const n in PRESETS){ const p = PRESETS[n]; if ([...Object.keys(p), ...OPT].every(k => t[k] === p[k])) return n; } return 'Custom'; }
   // a theme object from parsed JSON ({ theme: {...} } or bare), or null when it isn't one
   function parse(obj){
     const t = obj && obj.theme ? obj.theme : obj;
     if (!t || typeof t !== 'object' || !CORE.every(k => typeof t[k] === 'number')) return null;
     const out = {}; CORE.forEach(k => out[k] = t[k]);
     out.hLcd = typeof t.hLcd === 'number' ? t.hLcd : t.hCtrl;     // older files predate the LCD hue
+    ['sCtrl', 'vCtrl', 'sLcd', 'vLcd'].forEach(k => { if (typeof t[k] === 'number') out[k] = t[k]; });
     return out;
   }
   // current value of a CSS variable (for canvas drawing)

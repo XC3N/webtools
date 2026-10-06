@@ -2,9 +2,9 @@
 .thm{display:flex;flex-direction:column;gap:8px}
 .thm-prow{display:flex;gap:6px;align-items:center}
 .thm-prow select{flex:1;min-width:0}
-.thm-sub{margin:8px 0 0;font:700 9px/1 var(--sans, system-ui);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.thm-sub{margin:8px 0 0;font:600 12px/1 var(--sans, system-ui);color:var(--muted)}
 .thm-roles,.thm-bg{display:flex;flex-direction:column;gap:8px}
 .thm-row{display:grid;grid-template-columns:84px minmax(0,1fr) 44px 16px;gap:8px;align-items:center}
-.thm-row input[type=range]{height:6px}
+.thm-row input[type=range]{height:14px;border:0}
 .thm-row output{text-align:center}
 .thm-sw{width:14px;height:14px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.5) inset}
