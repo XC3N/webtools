@@ -155,6 +155,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .fxp .s{margin-left:5px;font:400 10px/13px var(--sans);color:var(--muted)}
 .fxp.sel{border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig)}
 .fxp.on .n,.fxp.on .hd,.fxp.on .s{color:var(--sigtxt)}
+#fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
 #liveTag{position:absolute;top:8px;left:8px;z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#fff;background:#a33;padding:3px 8px;border-radius:2px;pointer-events:none}
 
 
@@ -291,7 +292,7 @@ output.mod{color:var(--env)}
 
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span></div>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
@@ -406,7 +407,10 @@ output.mod{color:var(--env)}
 <div id="setPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(520px,92vw)">
     <h2>Settings<span class="line"></span><button id="setClose" class="iconbtn" title="Close (Esc)">×</button></h2>
-    <div class="sub" style="margin-top:0"><span>Theme</span><span class="line"></span></div>
+    <div class="sub" style="margin-top:0"><span>Canvas</span><span class="line"></span></div>
+    <div class="row"><div class="seg" id="fmtSeg"></div></div>
+    <p class="note">The output's shape: landscape for screens and projectors, vertical for Reels / TikTok / Shorts / Stories, square or 4:5 for the feed. It's saved with the set; the output window and recordings follow it.</p>
+    <div class="sub"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
     <p class="note">Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black.</p>
     <div class="sub"><span>MIDI control</span><span class="line"></span></div>
@@ -494,7 +498,11 @@ output.mod{color:var(--env)}
 /* @include common/controls.js */
 /* @include common/theme.js */
 // ---------- constants ----------
-const W = 1920, H = 1080;
+// canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
+let W = 1920, H = 1080;
+const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
+                  '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
+let format = '16:9';
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
 const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it flashes red)
@@ -2302,7 +2310,11 @@ const post = (() => {
       to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
       if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, W, H); } else to.clearRect(0, 0, W, H);   // what moved away is black / see-through
       to.drawImage(cv, 0, 0);
-    }, idle(slot){ if (slots[slot]) slots[slot].fbWas = false; } };
+    }, idle(slot){ if (slots[slot]) slots[slot].fbWas = false; },
+    resize(){                                        // new canvas format: the render targets follow (feedback history starts over)
+      cv.width = W; cv.height = H; gl.viewport(0, 0, W, H);
+      slots.forEach(S => { if (!S) return; S.rt.forEach(r => { gl.bindTexture(gl.TEXTURE_2D, r.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }); S.fbWas = false; });
+    } };
   } catch (e) { console.warn('screen effects unavailable:', e.message); return null; }
 })();
 function drawFrame(now){
@@ -2361,7 +2373,7 @@ function drawOverlay(gh = ghostList()){
 // ---------- output window ----------
 function openOutput(){
   if (outWin && !outWin.closed){ outWin.focus(); return; }
-  outWin = window.open('', 'gifvj_output', 'popup,width=960,height=540');
+  const k = 960 / Math.max(W, H); outWin = window.open('', 'gifvj_output', `popup,width=${Math.round(W * k)},height=${Math.round(H * k)}`);
   if (!outWin){ toast('Popup blocked — allow popups for this page, then click Open output again'); return; }
   const d = outWin.document;
   d.open();
@@ -2384,7 +2396,25 @@ html:fullscreen,html:fullscreen *{cursor:none}
 }
 function updateOutStat(){
   $('#outLed').classList.toggle('on', !!outCtx);
-  $('#outBtn').title = outCtx ? 'Output window is live (1920×1080) — click to bring it to the front' : 'Open the output window';
+  $('#outBtn').title = outCtx ? `Output window is live (${W}×${H}) — click to bring it to the front` : 'Open the output window';
+}
+// ---------- canvas format ----------
+function setFormat(k, { quiet = false } = {}){
+  if (!FORMATS[k]) k = '16:9';
+  if (k === format) return syncFormatUI();
+  if (rec.mr || rec.wait){ toast('Stop recording before changing the canvas format'); return syncFormatUI(); }
+  format = k; [W, H] = FORMATS[k];
+  [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = W; c.height = H; });
+  if (post) post.resize();
+  if (outCtx){ outCtx.canvas.width = W; outCtx.canvas.height = H; }
+  live.freeze = false; trans = null;
+  $('#xX').min = -W; $('#xX').max = W; $('#xY').min = -H; $('#xY').max = H;
+  sizePreview(); syncXfUI(); updateOutStat(); syncFormatUI(); redraw.all = true;
+  if (!quiet) toast(`Canvas ${W}×${H} — ${FORMATS[k][2]}`);
+}
+function syncFormatUI(){
+  document.querySelectorAll('#fmtSeg button').forEach(b => b.classList.toggle('on', b.dataset.f === format));
+  const t = $('#fmtTag'); if (t){ t.textContent = format === '16:9' ? '' : format; t.hidden = format === '16:9'; }
 }
 
 // ---------- keyboard ----------
@@ -2971,7 +3001,7 @@ pv.addEventListener('dblclick', e => {
 function sizePreview(){
   const wrap = $('#pvWrap'), aw = wrap.clientWidth, ah = wrap.clientHeight, dpr = devicePixelRatio || 1, M = 40;
   pv.width = Math.round(aw * dpr); pv.height = Math.round(ah * dpr);
-  view.w = Math.max(160, Math.min(aw - 2*M, (ah - 2*M) * 16/9)); view.h = view.w * 9/16;
+  view.w = Math.max(160 * Math.min(1, W / H), Math.min(aw - 2*M, (ah - 2*M) * W / H)); view.h = view.w * H / W;
   view.x = (aw - view.w) / 2; view.y = (ah - view.h) / 2;
   Object.assign(pvScene.style, { left: view.x + 'px', top: view.y + 'px', width: view.w + 'px', height: view.h + 'px' });
   pvScene.width = Math.round(view.w * dpr); pvScene.height = Math.round(view.h * dpr);
@@ -3105,6 +3135,9 @@ const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos'
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
+$('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<button data-f="${k}" title="${d} · ${w}×${h}">${k}</button>`).join('');
+$('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
+syncFormatUI();
 $('#midiLearn').addEventListener('click', startLearn);
 $('#learnDone').addEventListener('click', endLearn);
 $('#midiClear').addEventListener('click', () => { midiCtl.map = []; saveMidiCtl(); renderMidiCtl(); });
@@ -3226,7 +3259,7 @@ const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.bl
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: 4, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)),
+    v: 4, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)),
     pool: pool.map(m => ({ hash: m.hash, name: m.name })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
@@ -3243,7 +3276,7 @@ function upgradeSnap(o){
 }
 // what counts as "changed" for the unsaved-changes dot: everything except which layer / GIF / scene is selected
 function contentSig(snap){
-  if (!snap) return ''; const o = upgradeSnap(JSON.parse(snap));
+  if (!snap) return ''; const o = upgradeSnap(JSON.parse(snap)); o.format = o.format || '16:9';
   const all = o.scenes.slice(); all[o.scene || 0] = { pads: o.pads, layers: o.layers, name: o.sceneName || '' };
   const blank = sc => !sc || (!sc.name && !(sc.pads || []).some(Boolean) && !sc.layers.some(l => l.clips.length));
   o.scenes = all.map(sc => { if (blank(sc)) return null; sc.layers.forEach(l => delete l.sel); return sc; });   // visiting an empty scene changes nothing
@@ -3309,6 +3342,7 @@ async function applySnapshot(st, { wait = true } = {}){
   const byHash = new Map(pool.map(m => [m.hash, m]));
   const mk = sp => { const m = sp && byHash.get(sp.hash); if (!m) return null; const g = makeInst(m, sp); if (g.key.on || hsvOn(g)) applyFx(g); return g; };
   const curGifs = st.pads.map(mk); pads.forEach((p, i) => p.gif = curGifs[i] || null);
+  setFormat(st.format || '16:9', { quiet: true });
   setBpm(st.bpm); snapMode = st.snap || 'off'; $('#snap').value = snapMode;
   const now = performance.now(), idx = st.scene || 0;
   deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s));
