@@ -99,8 +99,12 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #fxStrip{display:flex;flex-direction:column;gap:6px;background:var(--panel);padding:8px 10px}
 #fxPads{display:grid;grid-template-columns:repeat(4,1fr) 6px repeat(4,1fr) 6px repeat(4,1fr);gap:4px}
 #fxPads i{display:block}
-#fxPre{display:grid;grid-template-columns:repeat(3,1fr) 6px repeat(3,1fr);gap:4px}
-#fxPre .fxp{height:34px}
+#fxPre{display:grid;grid-template-columns:repeat(3,1fr) 6px repeat(3,1fr) 6px repeat(3,1fr);gap:4px;border-radius:var(--r)}
+#fxPre.armed{box-shadow:0 0 0 1px var(--sig);background:var(--panel-2)}
+#scenes.fxmode{opacity:.35}
+#capsTag{color:var(--sigtxt);background:var(--sig);padding:1px 6px;border-radius:2px}
+#fxPre .fxp{height:36px}
+.scene.drop{outline:2px dashed var(--sig);outline-offset:-2px}
 #fxPre .fxp .n{font-weight:500;color:var(--muted)}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit button{flex:none}
@@ -226,10 +230,10 @@ output.mod{color:var(--env)}
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
     <div class="row"><button id="addFiles" title="Or drop files / links onto a pad or anywhere in this panel">Add…</button><input id="urlIn" type="url" placeholder="https://…/loop.gif"><button id="urlBtn">Load</button></div>
   </div>
-  <h2>Scenes<span class="line"></span><span class="tag">numpad</span><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
+  <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
-  <div class="field"><label>Preset</label><div class="seg span" id="trPre" title="Arrow keys arm a preset for the next scene change; the settings below edit the armed one"></div></div>
+  <div class="field"><label>Preset</label><div class="seg span" id="trPre" title="Keys 1–9 arm a preset for the next scene change; the settings below edit the armed one"></div></div>
   <div class="field"><label>Type</label><div class="seg span grid4" id="trType"></div></div>
   <div class="field" id="trDirRow"><label>Direction</label><div class="seg span" id="trDir"><button data-v="left" title="Towards the left">←</button><button data-v="right" title="Towards the right">→</button><button data-v="up" title="Upwards">↑</button><button data-v="down" title="Downwards">↓</button></div></div>
   <div class="field" id="trLenRow"><label for="trLen">Length</label><input id="trLen" type="range" min="0" step="1" data-def="3"><output></output></div>
@@ -241,7 +245,7 @@ output.mod{color:var(--env)}
   <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects on the whole output — keys F1–F12 · right-click or Shift+F-key: edit without playing"></div>
-    <div id="fxPre" title="Effect presets — Ins Home PgUp / Del End PgDn play a stored mix of effects · Shift+key or Store: store the effects that are on right now"></div>
+    <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
     <div id="fxEdit">
       <span class="lcd" id="fxName">Mono</span>
       <div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
@@ -361,25 +365,26 @@ output.mod{color:var(--env)}
     <dl class="keys">
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to pick from the GIF pool (or browse, while the pool is empty); <b>Pool</b> lists every GIF of the set; drop a .vjif anywhere to import a set</dd>
       <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
-      <dt>Shift+pad key</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Backspace or the × on its chip</dd>
+      <dt>Shift+pad key</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Del or the × on its chip</dd>
       <dt>F1–F12</dt><dd>Screen effects on the whole output (Mono, Invert, Strobe, Poster · Zoom, Shake, Wobble, Mirror · Glitch, RGB, Pixel, Kaleido). Each is Hold (while held), Hit (plays once, fades over Length) or Latch (on / off); Rate sets how fast shakes, strobes, wobbles and glitches move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
-      <dt>Ins Home PgUp · Del End PgDn</dt><dd>Effect presets: each plays a stored mix of effects at once (its own Hold / Hit / Latch, Length and Amount). To store one, switch on the effects you want (hold their F keys, or latch them) and press Shift+the preset key — or right-click the preset and press Store</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
-      <dt>← ↑ ↓ →</dt><dd>Arm a transition preset for the next scene change (Transition panel: the armed one is edited there)</dd>
-      <dt>1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
-      <dt>Shift+1–4</dt><dd>Choose the layer to edit / trigger into (or click its card; Alt+1–4 too)</dd>
+      <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length and Amount. To store one, switch on the effects you want (hold their F keys, or latch them) and press Shift+numpad key — or right-click the preset and press Store</dd>
+      <dt>1–9</dt><dd>Arm a transition preset for the next scene change (the Transition panel edits the armed one) · 0 is free</dd>
+      <dt>Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
+      <dt>PgUp / PgDn · End</dt><dd>Edit layer up / down (or click its card; Alt+1–4 too) · End: the edit layer on / off</dd>
       <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
       <dt>Wheel on BPM</dt><dd>Steps the digit under the cursor (hundreds … hundredths, it's underlined)</dd>
       <dt>Shift+Space</dt><dd>Resync: now is beat 1, every GIF restarts</dd>
-      <dt>Ctrl+arrows</dt><dd>Nudge the selected GIF 1 px (Ctrl+Shift = 10 px). Plain arrows with the mouse over a slider or button row adjust that control instead of arming a transition</dd>
+      <dt>Arrows · Home</dt><dd>Nudge the selected GIF 1 px (Shift = 10 px; with the mouse over a slider or button row, the arrows adjust that control) · Home resets its placement</dd>
       <dt>Sliders</dt><dd>Double-click the bar resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · double-click the number to type a value (Enter applies, Esc cancels) · dropdowns and button rows take the wheel and arrows too</dd>
-      <dt>⌫ Backspace</dt><dd>Remove the selected GIF from its layer</dd>
+      <dt>Del / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
       <dt>Esc</dt><dd>Cancel a colour pick · close a panel</dd>
       <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
       <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from center) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
+      <dt>Scene tiles</dt><dd>Click to go there · drag one onto another to swap them</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · × on hover removes it</dd>
     </dl>
   </div>
@@ -1265,7 +1270,7 @@ const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers 
 const scenePads = i => (i === sceneIdx ? pads.map(p => p.gif) : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
 function renderScenes(){
   const box = $('#scenes');
-  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" title="Scene ${i + 1} (numpad ${i + 1})"><span class="k">${i + 1}</span><span class="n"></span></button>`).join('');   // laid out like the numpad
+  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" title="Scene ${i + 1} (numpad ${i + 1}) · drag onto another scene to swap them" draggable="true"><span class="k">${i + 1}</span><span class="n"></span></button>`).join('');   // laid out like the numpad
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
@@ -1274,16 +1279,48 @@ function renderScenes(){
   });
 }
 $('#scenes').addEventListener('click', e => { const b = e.target.closest('.scene'); if (b) sceneKey(+b.dataset.i); });
+// drag a scene onto another: they swap places (the playing one keeps playing, under its new number)
+const SCENE_MIME = 'application/x-vjif-scene';
+$('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.scene'); if (!b) return; e.dataTransfer.setData(SCENE_MIME, b.dataset.i); e.dataTransfer.effectAllowed = 'move'; });
+$('#scenes').addEventListener('dragover', e => {
+  if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
+  e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
+  const b = e.target.closest('.scene'); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b));
+});
+$('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)) document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); });
+$('#scenes').addEventListener('drop', e => {
+  if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
+  e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
+  const b = e.target.closest('.scene'); if (b) swapScenes(+e.dataTransfer.getData(SCENE_MIME), +b.dataset.i);
+});
+$('#scenes').addEventListener('dragend', () => document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')));
+function swapScenes(a, b){
+  if (a === b || !(a >= 0 && b >= 0)) return;
+  const map = i => i === a ? b : i === b ? a : i;
+  if (a === sceneIdx || b === sceneIdx){                  // the live scene just changes number
+    const other = a === sceneIdx ? b : a;
+    scenes[sceneIdx] = scenes[other]; scenes[other] = null; sceneIdx = other;
+  } else [scenes[a], scenes[b]] = [scenes[b], scenes[a]];
+  pendingScene = null;
+  // undo steps name their scene by number: follow the move
+  const fix = e => {
+    if (typeof e === 'string'){ const o = JSON.parse(e); if (o.scene !== undefined) o.scene = map(o.scene); return JSON.stringify(o); }
+    for (const k of ['clear', 'swap', 'scn', 'reclear']) if (e && e[k] && e[k].scene !== undefined) e[k].scene = map(e[k].scene);
+    return e;
+  };
+  hist.undo = hist.undo.map(fix); hist.redo = hist.redo.map(fix); if (hist.cur) hist.cur = fix(hist.cur);
+  renderScenes(); toast2(`Scenes ${a + 1} and ${b + 1} swapped`);
+}
 function syncTransUI(){
   if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; }
   const T = transCfg, cut = T.type === 'cut';
   const lab = P => P.type === 'cut' ? 'Cut' : TR_TYPES.find(t => t[0] === P.type)[1];
-  $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="${TR_KEYS[k].replace('Arrow', '')} arrow: ${lab(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${TR_ARROWS[k]} ${lab(P)}</button>`).join('');
+  $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="Key ${k + 1}: ${lab(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${k + 1}</button>`).join('');
   segSet('#trType', T.type); segSet('#trDir', T.dir); segSet('#trCurve', T.smooth ? 1 : 0);
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
   $('#trDirRow').classList.toggle('dimmed', !['slide', 'wipe'].includes(T.type));
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || T.type === 'melt');   // the melt keeps Doom's own timing
-  $('#trTag').textContent = `${TR_ARROWS[trSel]} ` + (cut ? 'cut' : `${TR_TYPES.find(t => t[0] === T.type)[1].toLowerCase()} · ${TR_LENS[i][1]}`);
+  $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${TR_TYPES.find(t => t[0] === T.type)[1].toLowerCase()} · ${TR_LENS[i][1]}`);
 }
 $('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (b) armTrans(+b.dataset.v); });
 $('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; syncTransUI(); } });
@@ -1311,7 +1348,7 @@ function buildFx(){
     el.addEventListener('pointerup', () => fxUp(i)); el.addEventListener('pointercancel', () => fxUp(i));
     el.addEventListener('contextmenu', e => { e.preventDefault(); selectFx(i); });
   });
-  $('#fxPre').innerHTML = FXP_KEYS.map((_, k) => (k === 3 ? '<i></i>' : '') +
+  $('#fxPre').innerHTML = FXP_KEYS.map((_, k) => (k === 3 || k === 6 ? '<i></i>' : '') +
     `<div class="fxp" data-i="${NFX + k}"><span class="lv"></span><span class="k">${FXP_LABELS[k]}</span><span class="md"></span><span class="n"></span></div>`).join('');
   $('#fxPre').querySelectorAll('.fxp').forEach(el => {
     const i = +el.dataset.i;
@@ -1341,7 +1378,7 @@ function syncFxUI(){
   const pre = selFx >= NFX, C = fxConf(selFx), d = pre ? null : FX_DEFS[selFx];
   document.querySelectorAll('#fxStrip .fxp').forEach(el => { const i = +el.dataset.i; el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = FX_MD[fxConf(i).mode]; });
   $('#fxPre').querySelectorAll('.fxp').forEach((el, k) => { const P = fxPre[k]; el.querySelector('.n').textContent = fxPreName(P); el.classList.toggle('empty', !Object.keys(P.fx).length);
-    el.title = `${FXP_LABELS[k]}: ${fxPreName(P)} — Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; });
+    el.title = `${FXP_LABELS[k]} (Caps Lock on): ${fxPreName(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; });
   $('#fxEdit').classList.toggle('pre', pre);
   $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d[1]; $('#fxName').title = pre ? fxPreName(C) : d[2];
   if (pre){ segSet('#fxMode', C.mode); $('#fxAmt').value = C.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(C.amt * 100) + '%';
@@ -1537,10 +1574,13 @@ function render(list, ctx = mctx){
 const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['dip', 'Dip'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['flash', 'Flash'], ['melt', 'Melt']];
 const TR_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars'], [16, '4 bars']];
 const TR_DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-// four transition presets on the arrow keys; pressing one arms it for the next scene change (the panel edits the armed one)
-const TR_KEYS = ['ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight'], TR_ARROWS = ['←', '↑', '↓', '→'];
-const trDefaults = () => [{ type: 'slide', dir: 'left', len: 2, smooth: true }, { type: 'fade', dir: 'left', len: 4, smooth: true },
-                          { type: 'melt', dir: 'down', len: 4, smooth: false }, { type: 'slide', dir: 'right', len: 2, smooth: true }];
+// nine transition presets on the number row; pressing one arms it for the next scene change (the panel edits the armed one)
+const TR_KEYS = Array.from({ length: 9 }, (_, i) => 'Digit' + (i + 1));
+const trDefaults = () => [{ type: 'cut', dir: 'left', len: 2, smooth: true }, { type: 'fade', dir: 'left', len: 2, smooth: true },
+  { type: 'fade', dir: 'left', len: 4, smooth: true }, { type: 'dip', dir: 'left', len: 2, smooth: true },
+  { type: 'slide', dir: 'left', len: 2, smooth: true }, { type: 'slide', dir: 'right', len: 2, smooth: true },
+  { type: 'wipe', dir: 'down', len: 2, smooth: true }, { type: 'zoom', dir: 'left', len: 2, smooth: true },
+  { type: 'melt', dir: 'down', len: 4, smooth: false }];
 let trPresets = trDefaults(), trSel = 1, transCfg = trPresets[trSel];
 function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
 let trans = null;                                    // { from: layer states, b0: start beat }
@@ -1647,9 +1687,12 @@ const FX_DEFS = [
 const FX_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
 const fxDefaults = () => FX_DEFS.map(d => ({ mode: d[3], amt: 1, len: 1, rate: d[0] === 'wobble' ? 2 : 0.25 }));
-// effect presets: six slots on Ins Home PgUp / Del End PgDn, each a stored mix of effects ({ effect index: { amt, rate } })
-// played together with the slot's own mode / length / amount. Index 12–17 in the shared selection / state arrays.
-const FXP_KEYS = ['Insert', 'Home', 'PageUp', 'Delete', 'End', 'PageDown'], FXP_LABELS = ['Ins', 'Home', 'PgUp', 'Del', 'End', 'PgDn'];
+// effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate } })
+// played together with the slot's own mode / length / amount. Index 12–20 in the shared selection / state arrays.
+const FXP_KEYS = Array.from({ length: 9 }, (_, i) => 'Numpad' + (i + 1)), FXP_LABELS = FXP_KEYS.map((_, i) => 'Num ' + (i + 1));
+let capsOn = false;                                   // Caps Lock: the numpad plays effect presets instead of scenes
+function setCaps(on){ if (on === capsOn) return; capsOn = on; $('#scenes').classList.toggle('fxmode', on); $('#fxPre').classList.toggle('armed', on); $('#capsTag').hidden = !on; $('#npTag').hidden = on; }
+['keydown', 'keyup', 'pointerdown', 'pointermove'].forEach(t => addEventListener(t, e => { if (e.getModifierState) setCaps(e.getModifierState('CapsLock')); }, true));
 const fxPreDefaults = () => FXP_KEYS.map(() => ({ mode: 'hold', amt: 1, len: 1, fx: {} }));
 let fxCfg = fxDefaults(), fxPre = fxPreDefaults(), selFx = 0;
 const NFX = FX_DEFS.length;
@@ -1863,10 +1906,11 @@ function onKey(e){
   if ((e.ctrlKey || e.metaKey) && !isTyping(e) && /^[zy]$/i.test(e.key)){
     e.preventDefault(); (e.key.toLowerCase() === 'y' || e.shiftKey) ? redo() : undo(); return;
   }
-  if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+1–4: the layer to edit / trigger into (same as Shift+1–4)
+  if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+1–4: the layer to edit / trigger into
     const a = /^Digit([1-4])$/.exec(e.code); if (a){ e.preventDefault(); setTarget(+a[1] - 1); } return;
   }
-  if (!isTyping(e) && e.ctrlKey && !e.altKey && !e.metaKey && /^Arrow/.test(e.code)){   // nudge the selected GIF: 1 px, Shift = 10 px (holding repeats; one undo step)
+  if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/^Arrow/.test(e.code)){                        // nudge the selected GIF: 1 px, Shift = 10 px (holding repeats; one undo step)
     const c = selClip(); if (!c) return;
     e.preventDefault();
     const st = e.shiftKey ? 10 : 1;
@@ -1874,24 +1918,30 @@ function onKey(e){
     c.y = clamp(c.y + (e.code === 'ArrowUp' ? -st : e.code === 'ArrowDown' ? st : 0), -H, H);
     syncXfUI(); return;
   }
-  if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
   if (xi >= 0){ e.preventDefault(); if (!e.repeat) e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
-  const qi = FXP_KEYS.indexOf(e.code);               // Ins Home PgUp / Del End PgDn: effect presets (Shift: store what's on)
-  if (qi >= 0){ e.preventDefault(); if (!e.repeat) e.shiftKey ? storeFxPre(qi) : fxDown(NFX + qi); return; }
-  const ti = TR_KEYS.indexOf(e.code);                // arrows: arm a transition preset
-  if (ti >= 0){ e.preventDefault(); armTrans(ti); return; }
+  const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
+  if (np){
+    e.preventDefault(); if (e.repeat) return;
+    const k = +np[1] - 1;
+    setCaps(e.getModifierState('CapsLock'));
+    if (!capsOn) return sceneKey(k);
+    // Shift stores. On Windows, Shift+numpad with NumLock on arrives as Home / ↑ / PgUp… without the Shift flag
+    const shifted = e.shiftKey || (e.getModifierState('NumLock') && !/^[0-9]$/.test(e.key));
+    shifted ? storeFxPre(k) : fxDown(NFX + k); return;
+  }
+  const ti = TR_KEYS.indexOf(e.code);                // 1–9: arm a transition preset · Shift+1–4: layer on / off
+  if (ti >= 0){ e.preventDefault(); if (e.shiftKey){ if (ti < 4) toggleLayer(ti); } else armTrans(ti); return; }
   if (e.code === 'Space') e.preventDefault();
   const pi = PAD_KEYS.indexOf(e.code);
   if (e.repeat) return;
   if (pi >= 0){ e.preventDefault(); e.shiftKey ? focusPad(pi) : trigger(pi); return; }   // Shift = select without playing
   if (e.code === 'Space'){ e.shiftKey ? resync() : tap(); return; }
   if (e.code === 'Escape'){ stopPick(); return; }
-  if (e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
-  const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9: scenes (by position, so NumLock and Shift don't matter)
-  if (np){ e.preventDefault(); sceneKey(+np[1] - 1); return; }
-  const m = /^Digit([1-4])$/.exec(e.code);           // 1–4: layer on / off · Shift+1–4: the layer to edit
-  if (m){ e.preventDefault(); e.shiftKey ? setTarget(+m[1] - 1) : toggleLayer(+m[1] - 1); }
+  if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
+  if (e.code === 'Home'){ e.preventDefault(); const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); commit(); } return; }   // reset placement
+  if (e.code === 'End'){ e.preventDefault(); toggleLayer(target); return; }                  // the edit layer on / off
+  if (e.code === 'PageUp' || e.code === 'PageDown'){ e.preventDefault(); setTarget(clamp(target + (e.code === 'PageUp' ? 1 : -1), 0, 3)); return; }   // edit layer up / down
 }
 function onKeyUp(e){
   if (isTyping(e)) return;
@@ -2186,8 +2236,8 @@ function buildLayers(){
     const L = layers[li], row = document.createElement('div');
     row.className = 'layer'; row.style.setProperty('--lc', LCOL[li]);
     // a narrow card: on / name / clear — mode / blend — opacity — GIF chips
-    row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: key ${li+1}">${li+1}</button>
-      <span class="lname" title="Click the card or press Shift+${li+1} to edit this layer">${LNAMES[li]}</span>
+    row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: Shift+${li+1} (End: the edit layer)">${li+1}</button>
+      <span class="lname" title="Click the card, PgUp / PgDn or Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
       ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow"><select class="lmode" title="Stack: pads add GIFs to this layer (up to 6) · Replace: pads swap the GIF"><option value="stack">Stack</option><option value="replace">Replace</option></select>
@@ -2708,12 +2758,12 @@ async function applySnapshot(st, { wait = true } = {}){
     scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: null };
   }
   sceneIdx = idx; pendingScene = null; liveThumb = null; trans = null; renderScenes();
-  trPresets = trDefaults(); trSel = st.transSel ?? 1;
-  if (st.transP) st.transP.forEach((P, k) => Object.assign(trPresets[k], P));
-  else if (st.trans) Object.assign(trPresets[trSel], st.trans);          // older sets: their one transition on ↑
+  trPresets = trDefaults(); trSel = st.transP && st.transP.length === 9 ? st.transSel ?? 1 : 1;
+  if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => Object.assign(trPresets[k], P));
+  else if (st.trans) Object.assign(trPresets[trSel], st.trans);          // older sets: their transition on key 2
   armTrans(trSel);
   fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
-  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {})); syncFxUI();
+  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {})); syncFxUI();   // older sets had six: they fill 1–6
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
   selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem(); renderPool();
