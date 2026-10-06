@@ -118,6 +118,8 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .lclr{width:var(--ch);padding:0;flex:none;font:400 14px/1 var(--mono);color:var(--muted)}
 .lclr:hover{color:var(--danger);border-color:var(--danger)}
 .lbl{width:92px;flex:none}
+.lfillw{display:flex;align-items:center;gap:4px;flex:none}
+.lfillw input[type=color]{width:24px;padding:2px}
 .clips{display:flex;flex-wrap:nowrap;gap:2px;margin-top:6px;height:24px;overflow:visible}
 .clips:empty::before{content:'No GIFs';font:400 12px var(--sans);color:var(--faint);line-height:24px}
 .layer.dropzone{outline:2px dashed var(--lc);outline-offset:-2px}
@@ -187,6 +189,11 @@ output.mod{color:var(--env)}
   </div>
   <h2>Scenes<span class="line"></span><span class="tag">1 – 9</span><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
+  <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
+  <div class="field"><label>Type</label><div class="seg span grid4" id="trType"></div></div>
+  <div class="field" id="trDirRow"><label>Direction</label><div class="seg span" id="trDir"><button data-v="left" title="Towards the left">←</button><button data-v="right" title="Towards the right">→</button><button data-v="up" title="Upwards">↑</button><button data-v="down" title="Downwards">↓</button></div></div>
+  <div class="field" id="trLenRow"><label for="trLen">Length</label><input id="trLen" type="range" min="0" step="1" data-def="3"><output></output></div>
+  <div class="field" id="trCurveRow"><label>Curve</label><div class="seg span" id="trCurve"><button data-v="0" title="Constant speed">Linear</button><button data-v="1" title="Eases in and out">Smooth</button></div></div>
 </section>
 
 <main id="stage" class="panel">
@@ -302,7 +309,7 @@ output.mod{color:var(--env)}
     <dl class="keys">
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to browse; drop a .vjif anywhere to import a set</dd>
       <dt>Q…C, Num 1–9</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
-      <dt>Shift+Q…C</dt><dd>Remove that GIF from the edited layer</dd>
+      <dt>Shift+Q…C · Shift+Num</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Delete or the × on its chip</dd>
       <dt>1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar). A scene is what the four layers hold; a set has nine</dd>
       <dt>F1–F4 · Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>Alt+1–4</dt><dd>Choose the layer to edit / trigger into (or click its card)</dd>
@@ -388,7 +395,7 @@ const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: fal
 let clipSeq = 0, gifSeq = 0;
 // alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)
 const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, alpha: 1, env: null, ...newXf() });
-const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, row: null }));
+const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, row: null, fillOn: false, fill: '#1e2a3a' }));
 let target = 0, selPad = 0, snapMode = 'off', picking = false;
 const clock = { bpm: 120, beat: 0, last: performance.now(), src: 'internal', taps: [],
                 midiTicks: 0, midiRunning: false, midiTickTimes: [], lastTick: 0 };
@@ -1050,20 +1057,23 @@ function removeClip(li, c){
 const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
 let sceneIdx = 0, pendingScene = null, liveThumb = null;
-const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null });
+const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, fillOn: false, fill: '#1e2a3a' });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
   const c = document.createElement('canvas'); c.width = 96; c.height = 54; c.getContext('2d').drawImage(master, 0, 0, 96, 54);
   return c.toDataURL('image/jpeg', 0.7);
 }
-const captureScene = () => ({ layers: layers.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel })), thumb: sceneThumb() });
-function gotoScene(i, beat = clock.beat){
+const layerState = L => ({ i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
+const captureScene = () => ({ layers: layers.map(layerState), thumb: sceneThumb() });
+function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
+  // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
+  trans = !instant && transCfg.type !== 'cut' ? { from: layers.map(layerState), b0: beat, len: transCfg.len } : null;
   scenes[sceneIdx] = captureScene(); sceneIdx = i;
   const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   layers.forEach((L, li) => {
     const s = sc ? sc.layers[li] : emptyLayer();
-    Object.assign(L, { on: s.on, opacity: s.opacity, blend: s.blend, mode: s.mode, clips: s.clips.slice(), sel: s.sel });
+    Object.assign(L, { on: s.on, opacity: s.opacity, blend: s.blend, mode: s.mode, clips: s.clips.slice(), sel: s.sel, fillOn: !!s.fillOn, fill: s.fill || '#1e2a3a' });
     L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; });   // the scene starts from the top
   });
   scenes[i] = null; liveThumb = sc && sc.thumb;
@@ -1092,6 +1102,19 @@ function renderScenes(){
   });
 }
 $('#scenes').addEventListener('click', e => { const b = e.target.closest('.scene'); if (b) sceneKey(+b.dataset.i); });
+function syncTransUI(){
+  if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; }
+  const T = transCfg, cut = T.type === 'cut';
+  segSet('#trType', T.type); segSet('#trDir', T.dir); segSet('#trCurve', T.smooth ? 1 : 0);
+  const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
+  $('#trDirRow').classList.toggle('dimmed', !['slide', 'wipe'].includes(T.type));
+  $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut);
+  $('#trTag').textContent = cut ? 'instant' : `${TR_TYPES.find(t => t[0] === T.type)[1].toLowerCase()} · ${TR_LENS[i][1]}`;
+}
+$('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; syncTransUI(); } });
+$('#trDir').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.dir = b.dataset.v; syncTransUI(); } });
+$('#trCurve').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.smooth = b.dataset.v === '1'; syncTransUI(); } });
+$('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
 // copy the current scene into the next empty one (new clip ids, same placement) and go there
 $('#scDup').addEventListener('click', () => {
   let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i)) t = i; }
@@ -1213,9 +1236,9 @@ function onScreen(c){
   return G.cx + r > 0 && G.cx - r < W && G.cy + q > 0 && G.cy - q < H;
 }
 // what each visible layer draws this frame: clips as drawn (automation + fade applied), invisible ones dropped
-function frameList(now){
+function frameList(now, ls = layers){
   const out = [];
-  for (const L of layers){
+  for (const L of ls){
     if (!L.on || L.opacity <= 0) continue;
     const items = [];
     for (const c of L.clips){
@@ -1231,29 +1254,73 @@ function frameList(now){
 function sceneSig(list){
   let s = '';
   for (const { L, items } of list){
-    s += `|${L.i},${L.opacity},${L.blend}`;
+    s += `|${L.i},${L.opacity},${L.blend},${L.fillOn && L.fill}`;
     for (const { g, e, fi } of items)
       s += `;${e.id},${fi},${g.fxVer},${g.crisp},${e.x},${e.y},${e.sx},${e.sy},${e.rot},${e.fit},${e.flipX},${e.flipY},${e.tile},${e.cl},${e.ct},${e.cr},${e.cb},${e.alpha},${e.H},${e.S},${e.V}`;
   }
   return s;
 }
-function render(list){
-  mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = 1;
-  mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H);
+function render(list, ctx = mctx){
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (const { L, items } of list){
+    if (L.i === 0 && L.fillOn && L.fill){             // the Background layer's colour, under its GIFs
+      ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+    }
     const vis = items.filter(it => onScreen(it.e));
     if (!vis.length) continue;
-    mctx.save(); mctx.globalAlpha = L.opacity; mctx.globalCompositeOperation = L.blend;
+    ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend;
     if (vis.length === 1 || (L.blend === 'source-over' && L.opacity >= 1)){
-      // one GIF, or Normal at full opacity: identical result drawn straight onto the master (no buffer clear + composite)
-      for (const { g, e, fi } of vis) drawClip(mctx, e, g, fxImage(g, fi, e));
+      // one GIF, or Normal at full opacity: identical result drawn straight onto the target (no buffer clear + composite)
+      for (const { g, e, fi } of vis) drawClip(ctx, e, g, fxImage(g, fi, e));
     } else {                                       // several: flatten into the layer buffer, then blend once
       const b = lbufs[L.i]; b.clearRect(0, 0, W, H);
       for (const { g, e, fi } of vis) drawClip(b, e, g, fxImage(g, fi, e));
-      mctx.drawImage(b.canvas, 0, 0);
+      ctx.drawImage(b.canvas, 0, 0);
     }
-    mctx.restore();
+    ctx.restore();
   }
+}
+// ---------- scene transitions: the scene being left and the new one are each drawn whole, then combined ----------
+const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['dip', 'Dip'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['flash', 'Flash']];
+const TR_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars'], [16, '4 bars']];
+const TR_DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
+const transCfg = { type: 'cut', dir: 'left', len: 2, smooth: true };
+let trans = null;                                    // { from: layer states, b0: start beat }
+const trA = mkCanvas().getContext('2d', { alpha: false }), trB = mkCanvas().getContext('2d', { alpha: false }), trM = mkCanvas().getContext('2d');
+const DIS_CELL = 12, disW = Math.ceil(W / DIS_CELL), disH = Math.ceil(H / DIS_CELL);
+const disNoise = new Float32Array(disW * disH).map(() => Math.random());
+const disCv = new OffscreenCanvas(disW, disH), disCtx = disCv.getContext('2d'), disImg = disCtx.createImageData(disW, disH);
+function transProgress(){ if (!trans) return 1; const p = (clock.beat - trans.b0) / trans.len; return p < 0 ? 0 : p > 1 ? 1 : p; }
+// combine trA (leaving) and trB (arriving) on the master at progress e (0 → 1)
+function composeTransition(e, T){
+  const m = mctx; m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
+  const A = trA.canvas, B = trB.canvas, [dx, dy] = TR_DIRS[T.dir] || TR_DIRS.left;
+  switch (T.type){
+    case 'fade': m.drawImage(A, 0, 0); m.globalAlpha = e; m.drawImage(B, 0, 0); break;
+    case 'dip': case 'flash': {                      // through black (dip) or white (flash): out, then in
+      m.drawImage(e < 0.5 ? A : B, 0, 0); m.fillStyle = T.type === 'dip' ? '#000' : '#fff';
+      m.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2; m.fillRect(0, 0, W, H); break; }
+    case 'slide':                                    // the new scene pushes the old one out
+      m.drawImage(A, dx * e * W, dy * e * H); m.drawImage(B, dx * (e - 1) * W, dy * (e - 1) * H); break;
+    case 'wipe': {                                   // an edge sweeps across, revealing the new scene
+      m.drawImage(A, 0, 0); m.save(); m.beginPath();
+      if (dx) m.rect(dx < 0 ? W * (1 - e) : 0, 0, W * e, H); else m.rect(0, dy < 0 ? H * (1 - e) : 0, W, H * e);
+      m.clip(); m.drawImage(B, 0, 0); m.restore(); break; }
+    case 'zoom': {                                   // the old scene grows and fades; the new one grows in from smaller
+      m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
+      const z = (img, k, a) => { m.globalAlpha = a; m.drawImage(img, W / 2 - W * k / 2, H / 2 - H * k / 2, W * k, H * k); };
+      z(A, 1 + 0.8 * e, 1 - e); z(B, 0.6 + 0.4 * e, e); break; }
+    case 'dissolve': {                               // blocks of the new scene appear in random order
+      const d = disImg.data; for (let i = 0; i < disNoise.length; i++) d[i * 4 + 3] = disNoise[i] < e ? 255 : 0;
+      disCtx.putImageData(disImg, 0, 0);
+      m.drawImage(A, 0, 0);
+      trM.globalCompositeOperation = 'source-over'; trM.clearRect(0, 0, W, H); trM.drawImage(B, 0, 0);
+      trM.globalCompositeOperation = 'destination-in'; trM.imageSmoothingEnabled = false; trM.drawImage(disCv, 0, 0, W, H);
+      m.drawImage(trM.canvas, 0, 0); break; }
+    default: m.drawImage(B, 0, 0);
+  }
+  m.globalAlpha = 1;
 }
 // fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
 function ghostList(){
@@ -1287,10 +1354,16 @@ function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
   if (!outCtx && hidden) return;                   // nobody is looking
-  const list = frameList(now), sig = sceneSig(list);
+  const list = frameList(now);
+  let tp = 1;
+  if (trans){ tp = transProgress(); if (tp >= 1){ trans = null; redraw.all = true; } }
+  const sig = trans ? 'T' + now : sceneSig(list);    // a running transition redraws every frame
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++;
-    render(list);
+    if (trans){
+      render(frameList(now, trans.from), trA); render(list, trB);
+      composeTransition(transCfg.smooth ? tp * tp * (3 - 2 * tp) : tp, transCfg);
+    } else render(list);
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
   }
@@ -1376,7 +1449,8 @@ function onKey(e){
   }
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === 'Space') e.preventDefault();
-  if (/^Arrow/.test(e.key)){                         // nudge the selected GIF: 1 px, Shift = 10 px (holding repeats; one undo step)
+  const pi = PAD_KEYS.indexOf(e.code);
+  if (pi < 0 && /^Arrow/.test(e.key)){              // nudge the selected GIF: 1 px, Shift = 10 px (holding repeats; one undo step)
     const c = selClip(); if (!c) return;
     e.preventDefault();
     const st = e.shiftKey ? 10 : 1;
@@ -1385,11 +1459,12 @@ function onKey(e){
     syncXfUI(); return;
   }
   if (e.repeat) return;
-  const pi = PAD_KEYS.indexOf(e.code);
   if (pi >= 0){
     e.preventDefault();
-    if (e.shiftKey) removeClip(target, layers[target].clips.find(c => c.pad === pi));
-    else trigger(pi);
+    // Shift = select without playing. On Windows with NumLock on, Shift+numpad arrives as a navigation key
+    // (Home, ↑, PgUp…) without the Shift flag: the key position still says which pad.
+    const shifted = e.shiftKey || (e.code.startsWith('Numpad') && !/^[0-9]$/.test(e.key));
+    shifted ? focusPad(pi) : trigger(pi);
     return;
   }
   if (e.code === 'Space'){ e.shiftKey ? resync() : tap(); return; }
@@ -1419,6 +1494,7 @@ function buildPads(){
     el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
     el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return; el.setPointerCapture(e.pointerId); trigger(i); });
+    el.addEventListener('contextmenu', e => { e.preventDefault(); focusPad(i); });   // right-click: select without playing
     el.addEventListener('pointerup', () => release(i));
     el.addEventListener('pointercancel', () => release(i));
     el.addEventListener('click', () => { if (!p.gif && !p.loading){ selectPad(i); fileTarget = i; $('#fileIn').click(); } });
@@ -1447,6 +1523,12 @@ function renderPad(i){
   document.querySelectorAll(`.chip[data-pad="${i}"]`).forEach(ch => ch.style.backgroundImage = `url(${p.gif.thumb})`);
 }
 function selectPad(i){ selPad = i; pads.forEach(p => p.el.classList.toggle('sel', p.i === i)); syncGifUI(); }
+// select a pad to edit it, without playing it: its GIF settings, and its sprite in Transform if it's on a layer
+function focusPad(i){
+  selectPad(i);
+  const li = layers.findIndex(L => L.clips.some(c => c.pad === i));
+  if (li >= 0){ layers[li].sel = layers[li].clips.find(c => c.pad === i); setTarget(li); }
+}
 function updateMem(){
   const mb = pads.reduce((a, p) => a + (p.gif ? p.gif.bytes + (p.gif.maskBytes || 0) : 0), 0) / 1048576;
   const el = $('#mem'); el.textContent = `~${mb.toFixed(0)} MB`;
@@ -1668,6 +1750,7 @@ function buildLayers(){
     // a narrow card: on / name / clear — mode / blend — opacity — GIF chips
     row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: F${li+1} or Shift+${li+1}">${li+1}</button>
       <span class="lname" title="Click the card or press Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
+      ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow"><select class="lmode" title="Stack: pads add GIFs to this layer (up to 6) · Replace: pads swap the GIF"><option value="stack">Stack</option><option value="replace">Replace</option></select>
       <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
@@ -1678,6 +1761,10 @@ function buildLayers(){
     row.querySelector('.lmode').addEventListener('change', e => { L.mode = e.target.value; if (L.mode === 'replace' && L.clips.length > 1){ L.clips = [selClip(li)]; syncLayerUI(); syncXfUI(); } });
     row.querySelector('.lclr').addEventListener('click', () => { L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });
     row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });
+    if (li === 0){
+      row.querySelector('.lfillon').addEventListener('change', e => { L.fillOn = e.target.checked; });
+      row.querySelector('.lfill').addEventListener('input', e => { L.fill = e.target.value; L.fillOn = true; row.querySelector('.lfillon').checked = true; });
+    }
     row.querySelector('.lop').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
     row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
     row.querySelector('.clips').addEventListener('click', e => {
@@ -1742,6 +1829,7 @@ function syncLayerUI(){
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target);
     r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
     r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.lmode').value = L.mode;
+    if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
       return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
@@ -2026,11 +2114,11 @@ const store = {
   all(prefix){ return this.req('readonly', s => s.getAll(IDBKeyRange.bound(prefix, prefix + '￿'))); },
 };
 // v3: `layers` = the current scene (what v2 readers expect), `scenes` = all nine (the current one null), `scene` = which is current
-const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, sel: L.clips.indexOf(L.sel),
+const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a',
   clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
 function snapshot(){
   return JSON.stringify({
-    v: 3, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx,
+    v: 3, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg },
     pads: pads.map(p => p.gif ? { hash: p.gif.hash, name: p.gif.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) } : null),
     layers: serLayers(layers),
     scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : serLayers(sc.layers)),
@@ -2047,7 +2135,7 @@ function contentSig(snap){
 // saved layers → live layer states (only GIFs that loaded; a GIF lives on one layer: the topmost wins)
 function deserLayers(sls, now){
   const out = sls.map(sl => { const clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
-    return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null }; });
+    return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null, fillOn: !!sl.fillOn, fill: sl.fill || '#1e2a3a' }; });
   const seen = new Set();
   for (let li = out.length - 1; li >= 0; li--){ const L = out[li]; L.clips = L.clips.filter(c => !seen.has(c.pad) && seen.add(c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; }
   return out;
@@ -2103,7 +2191,8 @@ async function applySnapshot(st, { wait = true } = {}){
   const now = performance.now(), idx = st.scene || 0;
   deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s));
   for (let i = 0; i < N_SCENES; i++) scenes[i] = i !== idx && st.scenes && st.scenes[i] ? { layers: deserLayers(st.scenes[i], now), thumb: null } : null;
-  sceneIdx = idx; pendingScene = null; liveThumb = null; renderScenes();
+  sceneIdx = idx; pendingScene = null; liveThumb = null; trans = null; renderScenes();
+  Object.assign(transCfg, { type: 'cut', dir: 'left', len: 2, smooth: true }, st.trans || {}); syncTransUI();
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
   selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem();
@@ -2150,7 +2239,8 @@ async function newEmptySet(){
   if (setsBusy) return;
   pads.forEach((p, i) => { if (p.gif){ freeGif(p.gif); p.gif = null; renderPad(i); } });
   layers.forEach(L => Object.assign(L, emptyLayer()));
-  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; renderScenes();
+  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; trans = null; renderScenes();
+  Object.assign(transCfg, { type: 'cut', dir: 'left', len: 2, smooth: true }); syncTransUI();
   session.setId = null; session.savedSig = '';
   hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI();
   selectPad(0); syncLayerUI(); syncXfUI(); updateMem(); redraw.all = true;
@@ -2362,7 +2452,7 @@ const hist = { ready: false, cur: '', undo: [], redo: [] };
 function histState(){
   return JSON.stringify({
     scene: sceneIdx,
-    layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, mode: L.mode,
+    layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, mode: L.mode, fillOn: !!L.fillOn, fill: L.fill,
       clips: L.clips.map(c => ({ id: c.id, pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
     gifs: pads.map(p => p.gif ? Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) : null),
   });
@@ -2378,12 +2468,12 @@ function undo(){ if (!hist.ready || drag) return; commit(); if (!hist.undo.lengt
 function redo(){ if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return; hist.undo.push(hist.cur); applyHist(hist.redo.pop()); hist.cur = histState(); }
 function applyHist(s){
   const st = JSON.parse(s);
-  if (st.scene !== undefined && st.scene !== sceneIdx) gotoScene(st.scene);   // a step from another scene: go there first
+  if (st.scene !== undefined && st.scene !== sceneIdx) gotoScene(st.scene, clock.beat, true);   // a step from another scene: go there first
   const byId = new Map(), now = performance.now();
   layers.forEach(L => L.clips.forEach(c => byId.set(c.id, c)));      // reuse live clips so playback doesn't restart
   st.layers.forEach((sl, li) => {
     const L = layers[li], prevSel = L.sel;
-    Object.assign(L, { opacity: sl.opacity, blend: sl.blend, mode: sl.mode });
+    Object.assign(L, { opacity: sl.opacity, blend: sl.blend, mode: sl.mode, fillOn: !!sl.fillOn, fill: sl.fill || L.fill });
     L.clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif)
       .map(c => Object.assign(byId.get(c.id) || Object.assign(newClip(c.pad), { startTime: now, startBeat: clock.beat }), c));
     L.sel = L.clips.includes(prevSel) ? prevSel : null;
@@ -2417,7 +2507,7 @@ Theme.onApply(() => { if (!pads[0].el) return readThemeColours(); clearTimeout(t
 { let saved = null; try { saved = Theme.parse(JSON.parse(localStorage.getItem('vjif-theme2'))); } catch (e) {}
   Theme.apply(saved || Theme.PRESETS['Matte']); }
 buildPads(); pads.forEach((_, i) => renderPad(i));
-buildLayers(); renderScenes(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
+buildLayers(); renderScenes(); syncTransUI(); syncLayerUI(); syncXfUI(); selectPad(0); updateMem(); sizePreview();
 // typing into readouts: musical lengths accept a label ("1/8", "2 bars") or a number of beats; phase is in degrees
 const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), i = opts.findIndex(o => o[1].toLowerCase() === l || o[1].toLowerCase() === l + 's');
   if (i >= 0) return i; const n = parseFloat(t); return isFinite(n) ? optIdx(opts, n) : null; };

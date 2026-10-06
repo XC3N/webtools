@@ -112,12 +112,12 @@ const Controls = (() => {
       nudge(el, (d < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1), true);
     }, { passive: false, capture: true });
     addEventListener('keydown', e => {                 // capture: runs before the tool's own arrow handling
-      if (editing || e.ctrlKey || e.metaKey || e.altKey || !/^Arrow/.test(e.key)) return;
+      if (editing || e.ctrlKey || e.metaKey || e.altKey || !/^Arrow/.test(e.code)) return;   // real arrow keys only (not Shift+numpad)
       const a = document.activeElement;
       if (a && (a.tagName === 'TEXTAREA' || a.isContentEditable || (a.tagName === 'INPUT' && a.type !== 'range') || a.tagName === 'SELECT')) return;
       const el = hover && hover.isConnected ? hover : null; if (!el) return;
       e.preventDefault(); e.stopImmediatePropagation();
-      const up = e.key === 'ArrowUp' || e.key === 'ArrowRight', big = e.key === 'ArrowLeft' || e.key === 'ArrowRight';
+      const up = e.code === 'ArrowUp' || e.code === 'ArrowRight', big = e.code === 'ArrowLeft' || e.code === 'ArrowRight';
       nudge(el, (up ? 1 : -1) * (big ? 10 : 1) * (e.shiftKey ? 10 : 1), true);
     }, true);
     addEventListener('dblclick', e => {
