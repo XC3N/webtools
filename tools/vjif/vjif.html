@@ -96,27 +96,36 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #pvWrap{min-height:0;position:relative;overflow:hidden;background:var(--bg)}
 #pvScene{position:absolute;display:block;background:#000;outline:1px solid var(--edge)}
 #pv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
-#fxStrip{display:flex;flex-direction:column;gap:6px;background:var(--panel);padding:8px 10px}
-#fxPads{display:grid;grid-template-columns:repeat(4,1fr) 6px repeat(4,1fr) 6px repeat(4,1fr);gap:4px}
-#fxPads i{display:block}
-#fxPre{display:grid;grid-template-columns:repeat(3,1fr) 6px repeat(3,1fr) 6px repeat(3,1fr);gap:4px;border-radius:var(--r)}
-#fxPre.armed{box-shadow:0 0 0 1px var(--sig);background:var(--panel-2)}
+#fxStrip{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.25fr) minmax(0,.95fr);gap:10px;background:var(--panel);padding:8px 10px}
+#fxPads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+#fxPre{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;border-radius:var(--r)}
+#fxPre.armed{box-shadow:0 0 0 1px var(--sig),0 0 0 4px var(--panel-2)}
 #scenes.fxmode{opacity:.35}
 #capsTag{color:var(--sigtxt);background:var(--sig);padding:1px 6px;border-radius:2px}
-#fxPre .fxp{height:36px}
 .scene.drop{outline:2px dashed var(--sig);outline-offset:-2px}
 #fxPre .fxp .n{font-weight:500;color:var(--muted)}
 #fxPre .fxp.empty .n{color:var(--faint)}
-#fxEdit button{flex:none}
-#fxEdit.pre #fxRateRow,#fxEdit:not(.pre) #fxStore,#fxEdit:not(.pre) #fxClear{display:none}
-.fxp{position:relative;height:34px;border-radius:var(--r);background:var(--panel-2);overflow:hidden;cursor:pointer;user-select:none;padding:4px 6px;min-width:0}
+#fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:32px}
+.fxrow .lcd{flex:none;width:7.5ch;text-align:center}
+.fxrow .seg{flex:1;min-width:0}
+#fxMode{flex:none;width:44%}
+.fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
+.fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
+.fxrow button{flex:none}
+#fxPreList{flex:1 !important;width:auto !important;text-align:left !important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+#fxEdit.pre #fxStyle,#fxEdit.pre #fxRateRow,#fxEdit:not(.pre) #fxPreList,#fxEdit:not(.pre) #fxStore,#fxEdit:not(.pre) #fxClear{display:none}
+.fxp{position:relative;height:32px;border-radius:var(--r);background:var(--panel-2);overflow:hidden;cursor:pointer;user-select:none;padding:3px 6px;min-width:0}
 .fxp:hover{background:var(--track)}
 .fxp .lv{position:absolute;inset:auto 0 0 0;height:0;background:var(--sig);opacity:.85}
-.fxp .k{position:relative;font:600 10px var(--mono);color:var(--faint)}
-.fxp .n{position:relative;display:block;font:600 11.5px var(--sans);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fxp .md{position:absolute;top:4px;right:6px;font:400 9px var(--mono);color:var(--faint)}
+.fxp .k{position:relative;font:600 9px var(--mono);color:var(--faint)}
+.fxp .md{position:absolute;top:3px;right:6px;font:400 9px var(--mono);color:var(--faint)}
+.fxp .t{position:relative;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+.fxp .n{font:600 11.5px var(--sans);letter-spacing:-.01em;color:var(--ink)}
+.fxp .s{margin-left:5px;font:400 10px var(--sans);color:var(--muted)}
 .fxp.sel{box-shadow:inset 0 0 0 1px var(--sig)}
-.fxp.on .n,.fxp.on .k,.fxp.on .md{color:var(--sigtxt)}
+.fxp.on .n,.fxp.on .k,.fxp.on .md,.fxp.on .s{color:var(--sigtxt)}
+#liveTag{position:absolute;top:8px;left:8px;z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#fff;background:#a33;padding:3px 8px;border-radius:2px;pointer-events:none}
 #fxEdit{display:flex;gap:10px;align-items:center;min-width:0}
 #fxEdit .lcd{width:9ch;flex:none;text-align:center}
 #fxEdit .seg{flex:none;width:160px}
@@ -241,18 +250,18 @@ output.mod{color:var(--env)}
 
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas></div>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span></div>
   <div id="fxStrip">
-    <div id="fxPads" title="Screen effects on the whole output — keys F1–F12 · right-click or Shift+F-key: edit without playing"></div>
-    <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
+    <div id="fxPads" title="Screen effects on the whole output — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
-      <span class="lcd" id="fxName">Mono</span>
-      <div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
-      <div class="field"><label for="fxAmt">Amount</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div>
-      <div class="field" id="fxLenRow"><label for="fxLen">Length</label><input id="fxLen" type="range" min="0" step="1" data-def="3"><output></output></div>
-      <div class="field" id="fxRateRow"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
-      <button id="fxStore" title="Store the effects that are on right now into this preset (or Shift+its key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button>
+      <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList" class="lcd"></span></div>
+      <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
+        <div class="field"><label for="fxAmt">Amount</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
+      <div class="fxrow"><div class="field" id="fxLenRow"><label for="fxLen">Length</label><input id="fxLen" type="range" min="0" step="1" data-def="3"><output></output></div>
+        <div class="field" id="fxRateRow"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
+        <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
+    <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
   </div>
   <div class="hint"><span class="lcd" id="pvLayer">Background</span><span class="t">click to select · drag to move · sides stretch, corners zoom · Shift+handle crops · knob rotates · wheel zooms — more under ?</span><span id="saveStat"></span><span id="fps"></span></div>
 </main>
@@ -365,10 +374,11 @@ output.mod{color:var(--env)}
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to pick from the GIF pool (or browse, while the pool is empty); <b>Pool</b> lists every GIF of the set; drop a .vjif anywhere to import a set</dd>
       <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Shift+pad key</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Del or the × on its chip</dd>
-      <dt>F1–F12</dt><dd>Screen effects on the whole output (Mono, Invert, Strobe, Poster · Zoom, Shake, Wobble, Mirror · Glitch, RGB, Pixel, Kaleido). Each is Hold (while held), Hit (plays once, fades over Length) or Latch (on / off); Rate sets how fast shakes, strobes, wobbles and glitches move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
+      <dt>F1–F12</dt><dd>Screen effects on the whole output — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (plays once, fades over Length; with Snap it waits for the beat / bar) or Latch (on / off); Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
+      <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
       <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length and Amount. To store one, switch on the effects you want (hold their F keys, or latch them) and press Shift+numpad key — or right-click the preset and press Store</dd>
-      <dt>1–9</dt><dd>Arm a transition preset for the next scene change (the Transition panel edits the armed one) · 0 is free</dd>
+      <dt>1–9</dt><dd>Arm a transition preset for the next scene change (the Transition panel edits the armed one)</dd>
       <dt>Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
       <dt>PgUp / PgDn · End</dt><dd>Edit layer up / down (or click its card; Alt+1–4 too) · End: the edit layer on / off</dd>
       <dt>Space</dt><dd>Tap tempo (first tap = downbeat)</dd>
@@ -1147,7 +1157,7 @@ function release(p){
   const g = pads[p].gif; if (!g || g.trig !== 'fade' || !g.env.gate) return;
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
-window.addEventListener('blur', () => { pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); });
+window.addEventListener('blur', () => { pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); });
 
 // ---------- fade one-shot envelope ----------
 const ease = (g, t) => g.env.curve === 'smooth' ? t * t * (3 - 2 * t) : t;
@@ -1337,31 +1347,26 @@ $('#scDup').addEventListener('click', () => {
   gotoScene(t); toast2(`Copied to scene ${t + 1}`);
 });
 // ---- screen effect pads + editor ----
+const NP_ORDER = [6, 7, 8, 3, 4, 5, 0, 1, 2];           // preset tiles laid out like the numpad (7 8 9 on top)
+function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="k">${key}</span><span class="md"></span><span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
+function wireFxTile(el){
+  const i = +el.dataset.i;
+  el.addEventListener('pointerdown', e => { if (e.button) return; el.setPointerCapture(e.pointerId); fxDown(i); });
+  el.addEventListener('pointerup', () => fxUp(i)); el.addEventListener('pointercancel', () => fxUp(i));
+  el.addEventListener('contextmenu', e => { e.preventDefault(); selectFx(i); });
+}
 function buildFx(){
-  const box = $('#fxPads');
-  box.innerHTML = FX_DEFS.map((d, i) => (i && i % 4 === 0 ? '<i></i>' : '') +
-    `<div class="fxp" data-i="${i}" title="${d[2]} (key ${FX_LABELS[i]})"><span class="lv"></span><span class="k">${FX_LABELS[i]}</span><span class="md"></span><span class="n">${d[1]}</span></div>`).join('');
-  box.querySelectorAll('.fxp').forEach(el => {
-    const i = +el.dataset.i;
-    el.addEventListener('pointerdown', e => { if (e.button) return; el.setPointerCapture(e.pointerId); fxDown(i); });
-    el.addEventListener('pointerup', () => fxUp(i)); el.addEventListener('pointercancel', () => fxUp(i));
-    el.addEventListener('contextmenu', e => { e.preventDefault(); selectFx(i); });
-  });
-  $('#fxPre').innerHTML = FXP_KEYS.map((_, k) => (k === 3 || k === 6 ? '<i></i>' : '') +
-    `<div class="fxp" data-i="${NFX + k}"><span class="lv"></span><span class="k">${FXP_LABELS[k]}</span><span class="md"></span><span class="n"></span></div>`).join('');
-  $('#fxPre').querySelectorAll('.fxp').forEach(el => {
-    const i = +el.dataset.i;
-    el.addEventListener('pointerdown', e => { if (e.button) return; el.setPointerCapture(e.pointerId); fxDown(i); });
-    el.addEventListener('pointerup', () => fxUp(i)); el.addEventListener('pointercancel', () => fxUp(i));
-    el.addEventListener('contextmenu', e => { e.preventDefault(); selectFx(i); });
-  });
+  $('#fxPads').innerHTML = FX_DEFS.map((d, i) => fxTileHTML(i, FX_LABELS[i])).join('');
+  $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, FXP_LABELS[k])).join('');
+  document.querySelectorAll('#fxStrip .fxp').forEach(wireFxTile);
   $('#fxLen').max = FX_LENS.length - 1; $('#fxRate').max = FX_RATES.length - 1;
 }
-const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i][1]).join(' + ') : 'empty'; };
+const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
+const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${FX_DEFS[i].styles[styleIdx(i, P.fx[i].style)][1]}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
 // store the effects that are on right now (from their own keys) into preset slot k
 function storeFxPre(k){
   const b = clock.beat, fx = {};
-  FX_DEFS.forEach((d, i) => { if (fxLevel(i, b) > 0.05) fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate }; });
+  FX_DEFS.forEach((d, i) => { if (fxLevel(i, b) > 0.05) fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style }; });
   if (!Object.keys(fx).length) return toast('Nothing to store — switch on the effects you want first (hold their F keys, or set them to Latch), then store');
   fxPre[k].fx = fx; selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`);
 }
@@ -1372,33 +1377,43 @@ function paintFxPads(b){
     el.firstChild.style.height = v + '%'; el.classList.toggle('on', v > 50);
   });
 }
-const FX_MD = { hold: 'hold', hit: 'hit', latch: 'latch' };
 function syncFxUI(){
   const pre = selFx >= NFX, C = fxConf(selFx), d = pre ? null : FX_DEFS[selFx];
-  document.querySelectorAll('#fxStrip .fxp').forEach(el => { const i = +el.dataset.i; el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = FX_MD[fxConf(i).mode]; });
-  $('#fxPre').querySelectorAll('.fxp').forEach((el, k) => { const P = fxPre[k]; el.querySelector('.n').textContent = fxPreName(P); el.classList.toggle('empty', !Object.keys(P.fx).length);
-    el.title = `${FXP_LABELS[k]} (Caps Lock on): ${fxPreName(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; });
+  document.querySelectorAll('#fxStrip .fxp').forEach(el => {
+    const i = +el.dataset.i, c = fxConf(i);
+    el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = c.mode;
+    if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
+      el.querySelector('.n').textContent = D.name; el.querySelector('.s').textContent = D.styles.length > 1 ? st[1] : '';
+      el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
+    else { const k = i - NFX, P = fxPre[k], e = !Object.keys(P.fx).length;
+      el.querySelector('.n').textContent = e ? 'empty' : fxPreName(P); el.querySelector('.s').textContent = ''; el.classList.toggle('empty', e);
+      el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; }
+  });
   $('#fxEdit').classList.toggle('pre', pre);
-  $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d[1]; $('#fxName').title = pre ? fxPreName(C) : d[2];
-  if (pre){ segSet('#fxMode', C.mode); $('#fxAmt').value = C.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(C.amt * 100) + '%';
-    const li = optIdx(FX_LENS, C.len); $('#fxLen').value = li; $('#fxLen').nextElementSibling.textContent = FX_LENS[li][1];
-    $('#fxLenRow').classList.toggle('dimmed', C.mode !== 'hit'); return; }
+  $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d.name; $('#fxName').title = pre ? 'Effect preset' : d.title;
+  if (pre) $('#fxPreList').textContent = fxPreLong(C);
+  else {
+    $('#fxStyle').innerHTML = d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join('');
+    segSet('#fxStyle', C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
+  }
   segSet('#fxMode', C.mode);
   $('#fxAmt').value = C.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(C.amt * 100) + '%';
-  const li = optIdx(FX_LENS, C.len), ri = optIdx(FX_RATES, C.rate);
-  $('#fxLen').value = li; $('#fxLen').nextElementSibling.textContent = FX_LENS[li][1];
-  $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
-  $('#fxLenRow').classList.toggle('dimmed', C.mode !== 'hit'); $('#fxRateRow').classList.toggle('dimmed', !d[4]);
-  $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[selFx].rate);
+  const li = optIdx(FX_LENS, C.len); $('#fxLen').value = li; $('#fxLen').nextElementSibling.textContent = FX_LENS[li][1];
+  $('#fxLenRow').classList.toggle('dimmed', C.mode !== 'hit');
+  if (!pre){
+    const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
+    $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[selFx].rate);
+  }
 }
 $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it
   fxConf(selFx).mode = b.dataset.v; syncFxUI(); });
+$('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx < NFX){ fxCfg[selFx].style = b.dataset.v; syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { fxConf(selFx).amt = +e.target.value; syncFxUI(); });
 $('#fxLen').addEventListener('input', e => { fxConf(selFx).len = FX_LENS[+e.target.value][0]; syncFxUI(); });
+$('#fxRate').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
 $('#fxStore').addEventListener('click', () => { if (selFx >= NFX) storeFxPre(selFx - NFX); });
 $('#fxClear').addEventListener('click', () => { if (selFx >= NFX){ fxPre[selFx - NFX].fx = {}; syncFxUI(); } });
-$('#fxRate').addEventListener('input', e => { fxCfg[selFx].rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxAmt').ctlParse = t => parseFloat(t) / 100;
 $('#fxAmt').removeAttribute('data-pct');
 
@@ -1674,19 +1689,27 @@ const redraw = { all: true, scene: '', overlay: '' };
 let uiQuiet = 0, quietT = 0;
 function quietUI(ms = 250){ uiQuiet = performance.now() + ms; clearTimeout(quietT); quietT = setTimeout(() => { redraw.all = true; }, ms + 20); }
 // ---------- screen effects: a WebGL pass over the finished frame (output and preview) ----------
+// Twelve effect slots on F1–F12, each with a few styles; nine presets (stored mixes) on the numpad with Caps Lock.
 const FX_KEYS = Array.from({ length: 12 }, (_, i) => 'F' + (i + 1)), FX_LABELS = FX_KEYS;
-// [id, name, title, default mode, uses Rate]
+// { id, name, title, mode (default), rate (uses Rate), styles: [[value, label, title]] }
 const FX_DEFS = [
-  ['mono', 'Mono', 'Black and white', 'hold', false], ['invert', 'Invert', 'Negative colours', 'hold', false],
-  ['strobe', 'Strobe', 'Flashes white on the beat grid (Rate)', 'hold', true], ['poster', 'Poster', 'Fewer colours, flat bands', 'hold', false],
-  ['zoom', 'Zoom', 'Zoom punch', 'hit', false], ['shake', 'Shake', 'Camera shake, a new jolt every Rate', 'hit', true],
-  ['wobble', 'Wobble', 'Wavy distortion, one wave cycle per Rate', 'hold', true], ['mirror', 'Mirror', 'Left half mirrored onto the right', 'latch', false],
-  ['glitch', 'Glitch', 'Torn slices and colour split, re-torn every Rate', 'hold', true], ['rgb', 'RGB', 'Colour channels pulled apart', 'hit', false],
-  ['pixel', 'Pixel', 'Pixelate', 'hold', false], ['kaleido', 'Kaleido', 'Kaleidoscope (six-fold)', 'latch', false]];
+  { id: 'mono', name: 'Mono', title: 'Black and white', mode: 'hold', styles: [['grey', 'Grey', 'Shades of grey'], ['thresh', 'Threshold', 'Hard black and white']] },
+  { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['invert', 'Invert', 'Negative colours'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)'], ['flip', 'Flip', 'Hue turned halfway round']] },
+  { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black']] },
+  { id: 'poster', name: 'Poster', title: 'Flat colours / outlines', mode: 'hold', styles: [['bands', 'Bands', 'Fewer colours, flat bands'], ['edges', 'Edges', 'Neon outlines on black']] },
+  { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in'], ['out', 'Out', 'Punches out']] },
+  { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']] },
+  { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
+  { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Six-fold kaleidoscope']] },
+  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices'], ['blocks', 'Blocks', 'Shuffled blocks'], ['melt', 'Melt', 'Columns drip down']] },
+  { id: 'rgb', name: 'RGB', title: 'Colour channels / tape', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Scanlines, tracking wobble, colour bleed and noise']] },
+  { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
+  { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
 const FX_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
-const fxDefaults = () => FX_DEFS.map(d => ({ mode: d[3], amt: 1, len: 1, rate: d[0] === 'wobble' ? 2 : 0.25 }));
-// effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate } })
+const fxDefaults = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 1, rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0] }));
+const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
+// effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate, style } })
 // played together with the slot's own mode / length / amount. Index 12–20 in the shared selection / state arrays.
 const FXP_KEYS = Array.from({ length: 9 }, (_, i) => 'Numpad' + (i + 1)), FXP_LABELS = FXP_KEYS.map((_, i) => 'Num ' + (i + 1));
 let capsOn = false;                                   // Caps Lock: the numpad plays effect presets instead of scenes
@@ -1704,9 +1727,16 @@ function fxLevel(i, b){
   if (C.mode === 'hold' ? S.held : S.on) return 1;
   const x = (b - S.rel) / FX_REL; return x >= 0 && x < 1 ? 1 - x : 0;
 }
+// with Snap on, a Hit waits for the next beat / bar (a hit just after one counts as on it); Hold and Latch are instant
+function snapBeat(b){
+  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0;
+  if (!unit || (clock.src === 'midi' && !clock.midiRunning)) return b;
+  const prev = Math.floor(b / unit + 1e-9) * unit;
+  return b - prev <= unit * SNAP_GRACE ? prev : prev + unit;
+}
 function fxDown(i){
   const C = fxConf(i), S = fxSt[i], b = clock.beat;
-  if (C.mode === 'hit') S.b0 = b;
+  if (C.mode === 'hit') S.b0 = snapBeat(b);
   else if (C.mode === 'hold') S.held = true;
   else { S.on = !S.on; if (!S.on) S.rel = b; }
   if (selFx !== i){ selFx = i; syncFxUI(); }
@@ -1714,30 +1744,38 @@ function fxDown(i){
 function fxUp(i){ const S = fxSt[i]; if (S.held){ S.held = false; S.rel = clock.beat; } }
 function selectFx(i){ selFx = i; syncFxUI(); }
 const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
-// this frame's effect settings; null when nothing is on
-// each effect's strength now: the strongest of its own key and the presets playing it (whose rate then counts)
+// each effect's strength now: the strongest of its own key and the presets playing it (whose rate and style then count)
 function fxMix(b){
-  const lv = FX_DEFS.map((d, i) => fxLevel(i, b) * fxCfg[i].amt), rate = fxCfg.map(c => c.rate);
+  const lv = FX_DEFS.map((d, i) => fxLevel(i, b) * fxCfg[i].amt), rate = fxCfg.map(c => c.rate), style = fxCfg.map(c => c.style);
   fxPre.forEach((P, k) => {
     const l = fxLevel(NFX + k, b) * P.amt; if (!(l > 0)) return;
-    for (const [i, e] of Object.entries(P.fx)){ const v = l * e.amt; if (v > lv[i]){ lv[i] = v; rate[i] = e.rate; } }
+    for (const [i, e] of Object.entries(P.fx)){ const v = l * e.amt; if (v > lv[i]){ lv[i] = v; rate[i] = e.rate; if (e.style) style[i] = e.style; } }
   });
-  return { lv, rate };
+  return { lv, rate, style };
 }
+// this frame's shader settings; null when nothing is on
 function fxUniforms(b){
-  const { lv, rate } = fxMix(b), U = {};
+  const { lv, rate, style } = fxMix(b);
   if (!lv.some(v => v > 0.001)) return null;
-  FX_DEFS.forEach((d, i) => U[d[0]] = lv[i]);
-  const st = i => Math.floor(b / rate[i]);
-  U.strobe *= (b / rate[2]) % 1 < 0.5 ? 1 : 0;
-  U.zoom *= 0.5;
-  const sk = st(5), s = lv[5];
+  const S = i => styleIdx(i, style[i]), st = i => Math.floor(b / rate[i]);
+  const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
+    strobe: lv[2] * ((b / rate[2]) % 1 < 0.5 ? 1 : 0), strobeS: S(2), poster: lv[3], posterS: S(3),
+    zoom: lv[4] * (S(4) ? -0.3 : 0.5), wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
+    mirror: lv[7], mirS: S(7), glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, rgb: lv[9], rgbS: S(9),
+    pixel: lv[10], pixS: S(10), fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000 };
+  const jit = S(5) === 1, sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
-  U.wobPh = b / rate[6] * Math.PI * 2;
-  U.gseed = st(8) * 7.13 % 100;
-  U.kalRot = b * 0.1;
   return U;
 }
+// ---- blackout (0, held) and freeze (Ins, held): applied to whatever is on the output, effects included ----
+const live = { black: 0, blackOn: false, blackT: 0, freeze: false, freezeReq: false };
+const BLACK_MS = 120;
+function blackLevel(now){ const x = Math.min(1, (now - live.blackT) / BLACK_MS); return live.blackOn ? Math.max(live.black0, x) : (1 - x) * live.black0; }
+function setBlack(on){ const now = performance.now(); live.black0 = blackLevel(now); live.blackOn = on; live.blackT = now; }
+live.black0 = 0; live.blackT = -1e9;
+const freezeCv = mkCanvas(), freezeCtx = freezeCv.getContext('2d');
+function setFreeze(on){ if (on && !live.freeze){ live.freezeReq = true; redraw.all = true; } if (!on){ live.freeze = false; live.freezeReq = false; redraw.all = true; } updLiveTag(); }
+function updLiveTag(){ const t = $('#liveTag'); if (!t) return; const b = live.blackOn, f = live.freeze || live.freezeReq; t.textContent = b && f ? 'BLACK · FREEZE' : b ? 'BLACKOUT' : f ? 'FREEZE' : ''; t.hidden = !b && !f; }
 const post = (() => {
   try {
     const cv = new OffscreenCanvas(W, H);
@@ -1747,64 +1785,121 @@ const post = (() => {
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D tex; uniform vec2 res;
-      uniform float mono, invert, strobe, poster, zoom, wobble, wobPh, mirror, glitch, gseed, rgb, pixel, kaleido, kalRot, shakeZ;
+      uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
+      uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS,
+                    glitch, glS, gseed, rgb, rgbS, pixel, pixS, fb, fbS, shakeZ;
       uniform vec3 shake; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
-      vec2 geo(vec2 p){
-        vec2 a = vec2(res.x / res.y, 1.0), d = (p - 0.5) * a;
+      float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
+      vec2 A(){ return vec2(res.x / res.y, 1.0); }
+      vec2 geo(vec2 p){                              // zoom, shake, wobble, pixelate: where to read the frame from
+        vec2 a = A(), d = (p - 0.5) * a;
         d /= (1.0 + zoom) * (1.0 + shakeZ);
         float c = cos(shake.z), s = sin(shake.z); d = mat2(c, s, -s, c) * d + shake.xy;
         p = d / a + 0.5;
-        p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wobble;
-        p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wobble;
-        if (pixel > 0.001){ float n = mix(res.x, 24.0, sqrt(pixel)); vec2 cell = vec2(n, n * res.y / res.x); p = (floor(p * cell) + 0.5) / cell; }
+        if (wob > 0.001){
+          if (wobS < 0.5){ p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wob; p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wob; }
+          else { vec2 q = (p - 0.5) * a; float r = length(q); p += q / max(r, 1e-4) / a * sin(r * 40.0 - wobPh) * 0.012 * wob; }
+        }
+        if (pixel > 0.001){ float n = mix(res.x, 24.0, sqrt(pixel)); vec2 cell = vec2(n, n * res.y / res.x); if (pixS > 0.5) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }
         return p;
       }
+      bool offs(vec2 p){ return p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0; }
+      vec3 raw(vec2 p){ return offs(p) ? vec3(0.0) : texture2D(tex, p).rgb; }
       vec3 samp(vec2 p, float split){
-        if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return vec3(0.0);
+        if (offs(p)) return vec3(0.0);
         vec2 o = vec2(split, 0.0);
         return vec3(texture2D(tex, p + o).r, texture2D(tex, p).g, texture2D(tex, p - o).b);
       }
+      vec2 fold(vec2 p){
+        if (mirS < 0.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y);
+        if (mirS < 1.5) return vec2(p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
+        if (mirS < 2.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
+        vec2 a = A(), d = (p - 0.5) * a; float r = length(d), seg = 6.2831853 / 6.0, an = mod(atan(d.y, d.x) + time * 0.1, seg);
+        an = abs(an - seg * 0.5);
+        return vec2(cos(an), sin(an)) * r / a + 0.5;
+      }
+      vec3 hueRot(vec3 c, float an){                 // rotate the hue in YIQ space
+        vec3 y = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312) * c;
+        float cs = cos(an), sn = sin(an); y.yz = vec2(y.y * cs - y.z * sn, y.y * sn + y.z * cs);
+        return mat3(1.0, 1.0, 1.0, 0.956, -0.272, -1.106, 0.621, -0.647, 1.703) * y;
+      }
       void main(){
-        vec2 p = uv, a = vec2(res.x / res.y, 1.0);
-        float split = rgb * 0.025, g = 0.0;
+        if (blit > 0.5){ gl_FragColor = vec4(texture2D(tex, vec2(uv.x, 1.0 - uv.y)).rgb, 1.0); return; }
+        vec2 p = uv, a = A();
+        float split = rgb > 0.001 ? (rgbS < 0.5 ? rgb * 0.025 : rgb * 0.006) : 0.0;
+        if (rgb > 0.001 && rgbS > 0.5){              // VHS tracking: a gentle sway and a torn band rolling down
+          p.x += sin(p.y * 30.0 + time * 6.0) * 0.0015 * rgb;
+          float ty = fract(time * 0.23); if (abs(p.y - ty) < 0.025) p.x += (h1(floor(p.y * 200.0) + floor(time * 30.0)) - 0.5) * 0.03 * rgb;
+        }
         if (glitch > 0.001){
-          float band = floor(p.y * 24.0 + h1(gseed) * 24.0);
-          if (h1(band + gseed) < glitch * 0.55) g = (h1(band * 1.7 + gseed) - 0.5) * 0.25 * glitch;
-          split += abs(g) * 0.3 + glitch * 0.004;
+          if (glS < 0.5){ float band = floor(p.y * 24.0 + h1(gseed) * 24.0), g = 0.0;
+            if (h1(band + gseed) < glitch * 0.55) g = (h1(band * 1.7 + gseed) - 0.5) * 0.25 * glitch;
+            split += abs(g) * 0.3 + glitch * 0.004; p.x += g; }
+          else if (glS < 1.5){ vec2 cell = floor(p * vec2(16.0, 9.0));
+            if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
+          else { float col = floor(p.x * 80.0); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
         }
-        vec3 c = samp(geo(p + vec2(g, 0.0)), split);
-        if (mirror > 0.001) c = mix(c, samp(geo(vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y) + vec2(g, 0.0)), split), mirror);
-        if (kaleido > 0.001){
-          vec2 d = (p - 0.5) * a; float r = length(d), seg = 6.2831853 / 6.0, an = mod(atan(d.y, d.x) + kalRot, seg);
-          an = abs(an - seg * 0.5);
-          c = mix(c, samp(geo(vec2(cos(an), sin(an)) * r / a + 0.5), split), kaleido);
+        vec3 c = samp(geo(p), split);
+        if (mirror > 0.001) c = mix(c, samp(geo(fold(p)), split), mirror);
+        if (poster > 0.001){
+          if (posterS < 0.5){ float lv = mix(24.0, 2.0, poster); c = floor(c * lv + 0.5) / lv; }
+          else { vec2 t = 1.5 / res, q = geo(p); vec3 w = vec3(0.333);
+            float e = length(vec2(dot(raw(q + vec2(t.x, 0.0)), w) - dot(raw(q - vec2(t.x, 0.0)), w), dot(raw(q + vec2(0.0, t.y)), w) - dot(raw(q - vec2(0.0, t.y)), w))) * 4.0;
+            vec3 neon = c / max(max(c.r, max(c.g, c.b)), 0.15) * smoothstep(0.05, 0.5, e);
+            c = mix(c, neon, poster); }
         }
-        if (poster > 0.001){ float lv = mix(24.0, 2.0, poster); c = floor(c * lv + 0.5) / lv; }
-        c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), mono);
-        c = mix(c, 1.0 - c, invert);
-        c = mix(c, vec3(1.0), strobe);
-        gl_FragColor = vec4(c, 1.0);
+        if (rgb > 0.001 && rgbS > 0.5){              // VHS picture: washed colour, scanlines, noise
+          c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rgb);
+          c *= 1.0 - 0.28 * rgb * step(0.5, fract(gl_FragCoord.y / 3.0));
+          c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * rgb;
+        }
+        float y = dot(c, vec3(0.299, 0.587, 0.114));
+        c = mix(c, monoS < 0.5 ? vec3(y) : vec3(step(0.5, y)), mono);
+        if (colr > 0.001) c = mix(c, clamp(colrS < 0.5 ? 1.0 - c : hueRot(c, colrS < 1.5 ? hue : 3.14159), 0.0, 1.0), colr);
+        c = mix(c, vec3(strobeS < 0.5 ? 1.0 : 0.0), strobe);
+        if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
+          vec2 q = uv;
+          if (fbS > 0.5){ vec2 d = (q - 0.5) * a * 1.06; if (fbS > 1.5){ float cs = cos(0.06), sn = sin(0.06); d = mat2(cs, sn, -sn, cs) * d; } q = d / a + 0.5; }
+          vec3 pv = fbInit > 0.5 || offs(q) ? vec3(0.0) : texture2D(prev, vec2(q.x, 1.0 - q.y)).rgb;
+          vec3 f = max(c, pv * (fbS < 0.5 ? 0.72 + 0.16 * fb : 0.86));      // older copies fade as they repeat
+          c = mix(c, f, fb);
+        }
+        gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
       }`));
     gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     gl.useProgram(prog);
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
-    [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
-    const u = {}; ['res', 'mono', 'invert', 'strobe', 'poster', 'zoom', 'wobble', 'wobPh', 'mirror', 'glitch', 'gseed', 'rgb', 'pixel', 'kaleido', 'kalRot', 'shakeZ', 'shake'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
+    const mkTex = () => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
+      return t; };
+    const src = mkTex();
+    // two render targets, swapped each frame: one is drawn into, the other holds the previous output (for Feedback)
+    const rt = [0, 1].map(() => { const t = mkTex(); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return { t, f }; });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS',
+                   'glitch', 'glS', 'gseed', 'rgb', 'rgbS', 'pixel', 'pixS', 'fb', 'fbS', 'shakeZ', 'time'];
+    const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
+    gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
     gl.viewport(0, 0, W, H);
+    let cur = 0, fbWas = false;
     return { run(U){
-      gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, master);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, master);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rt[1 - cur].t);
       gl.uniform2f(u.res, W, H);
-      for (const k of ['mono', 'invert', 'strobe', 'poster', 'zoom', 'wobble', 'wobPh', 'mirror', 'glitch', 'gseed', 'rgb', 'pixel', 'kaleido', 'kalRot', 'shakeZ']) gl.uniform1f(u[k], U[k] || 0);
+      for (const k of NAMES) gl.uniform1f(u[k], U[k] || 0);
       gl.uniform3fv(u.shake, U.shake);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      const fbOn = U.fb > 0.001; gl.uniform1f(u.fbInit, fbOn && !fbWas ? 1 : 0); fbWas = fbOn;
+      gl.uniform1f(u.blit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, rt[cur].f); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rt[cur].t);
+      gl.uniform1f(u.blit, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      cur = 1 - cur;
       mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over';
       mctx.drawImage(cv, 0, 0);
-    } };
+    }, reset(){ fbWas = false; } };
   } catch (e) { console.warn('screen effects unavailable:', e.message); return null; }
 })();
 function drawFrame(now){
@@ -1814,15 +1909,19 @@ function drawFrame(now){
   const list = frameList(now);
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ trans = null; redraw.all = true; } }
-  const fxU = post && fxUniforms(clock.beat);
-  const sig = trans ? 'T' + now : fxU ? 'F' + now : sceneSig(list);    // a running transition / effect redraws every frame
+  const fxU = post && fxUniforms(clock.beat), bl = blackLevel(now);
+  // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
+  const sig = trans && !live.freeze ? 'T' + now : fxU || (bl > 0 && bl < 1) ? 'F' + now : (live.freeze ? 'Z' : sceneSig(list)) + (bl >= 1 ? 'B' : '');
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++;
-    if (trans){
+    if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
+    else if (trans){
       render(frameList(now, trans.from, trans.gifs), trA); render(list, trB);
       composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
     } else render(list);
+    if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
     if (fxU) post.run(fxU);
+    if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
   }
@@ -1929,6 +2028,8 @@ function onKey(e){
     const shifted = e.shiftKey || (e.getModifierState('NumLock') && !/^[0-9]$/.test(e.key));
     shifted ? storeFxPre(k) : fxDown(NFX + k); return;
   }
+  if (e.code === 'Digit0'){ e.preventDefault(); if (!e.repeat){ setBlack(true); updLiveTag(); } return; }   // 0: blackout while held
+  if (e.code === 'Insert'){ e.preventDefault(); if (!e.repeat) setFreeze(true); return; }                  // Ins: freeze while held
   const ti = TR_KEYS.indexOf(e.code);                // 1–9: arm a transition preset · Shift+1–4: layer on / off
   if (ti >= 0){ e.preventDefault(); if (e.shiftKey){ if (ti < 4) toggleLayer(ti); } else armTrans(ti); return; }
   if (e.code === 'Space') e.preventDefault();
@@ -1948,6 +2049,8 @@ function onKeyUp(e){
   const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0) release(pi);
   const xi = FX_KEYS.indexOf(e.code); if (xi >= 0) fxUp(xi);
   const qi = FXP_KEYS.indexOf(e.code); if (qi >= 0) fxUp(NFX + qi);
+  if (e.code === 'Digit0' && live.blackOn){ setBlack(false); updLiveTag(); }
+  if (e.code === 'Insert') setFreeze(false);
 }
 window.addEventListener('keydown', onKey);
 window.addEventListener('keyup', onKeyUp);
@@ -2762,7 +2865,7 @@ async function applySnapshot(st, { wait = true } = {}){
   if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => Object.assign(trPresets[k], P));
   else if (st.trans) Object.assign(trPresets[trSel], st.trans);          // older sets: their transition on key 2
   armTrans(trSel);
-  fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
+  fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
   fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {})); syncFxUI();   // older sets had six: they fill 1–6
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
