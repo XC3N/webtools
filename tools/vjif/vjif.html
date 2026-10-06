@@ -45,6 +45,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #bpm{width:80px;text-align:center;font:500 12px var(--mono);color:var(--lcd-ink);background:var(--lcd-bg);border-color:color-mix(in srgb,var(--lcd-ink) 22%,transparent);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 #bpm::-webkit-outer-spin-button,#bpm::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #bpm.pending{border-color:var(--sig);outline:1px solid var(--sig)}
+#recBtn{min-width:62px;font-variant-numeric:tabular-nums}#recLed.on{background:#ff4040;box-shadow:0 0 0 2px rgba(255,64,64,.25)}#recLed.wait{background:#ff4040;animation:wait .5s steps(1) infinite}
 #beats{display:flex;gap:4px}#beats i{width:8px;height:8px;border-radius:50%;background:var(--track)}
 #beats i.on{background:var(--sig)}
 #beats i:first-child.on{background:var(--ink)}
@@ -255,7 +256,7 @@ output.mod{color:var(--env)}
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="recBtn" title="Record the output to a video file (WebM). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -441,6 +442,7 @@ output.mod{color:var(--env)}
       <dt>Sliders</dt><dd>Double-click the bar resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · double-click the number to type a value (Enter applies, Esc cancels) · dropdowns and button rows take the wheel and arrows too</dd>
       <dt>Del / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
+      <dt>Rec</dt><dd>Records the output to a WebM video. Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
       <dt>Esc</dt><dd>Cancel a colour pick · close a panel</dd>
       <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
@@ -2140,7 +2142,7 @@ const post = (() => {
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
-  if (!outCtx && hidden) return;                   // nobody is looking
+  if (!outCtx && hidden && !rec.mr) return;        // nobody is looking (and nothing is recording)
   const list = frameList(now);
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ trans = null; redraw.all = true; } }
@@ -2984,6 +2986,7 @@ function frame(gen){
   lastFrame = now;
   updateClock(now);
   if (pending.size || pendingScene) firePending();
+  if (rec.wait) recTick();
   drawFrame(now);
   if (!document.hidden && now >= uiQuiet && now - scopeT > 33){ scopeT = now; drawScopes(); }
   const bi = Math.floor(clock.beat);
@@ -3279,6 +3282,55 @@ async function exportSet(name, snap){
   files.unshift({ name: 'set.json', data: enc.encode(JSON.stringify({ app: 'VJif', format: 1, name, exported: new Date().toISOString(), set: st }, null, 1)) });
   await saveFile(buildZip(files), (name || 'set').replace(/[^\w .-]+/g, '_').trim() + '.vjif');
 }
+// ---------- recording the output (MediaRecorder on the master canvas) ----------
+// Where the browser can, the file is chosen first and written while recording (long sets don't fill memory);
+// otherwise the recording is kept in memory and downloaded at the end.
+const rec = { mr: null, chunks: [], writer: null, t0: 0, wait: null, name: '', bytes: 0, pending: Promise.resolve() };
+function recMime(){ for (const m of ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']) if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; return ''; }
+async function recToggle(){
+  if (rec.mr) return recStop();
+  if (rec.wait){ rec.wait = null; recUI(); return; }  // a second click cancels a waiting start
+  const mime = recMime(); if (!mime) return toast('Recording needs MediaRecorder with WebM (use Chrome)');
+  const d = new Date(), pad2 = n => String(n).padStart(2, '0');
+  rec.name = `vjif-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.webm`;
+  rec.writer = null;
+  if (window.showSaveFilePicker){
+    try { const h = await showSaveFilePicker({ suggestedName: rec.name, types: [{ description: 'WebM video', accept: { 'video/webm': ['.webm'] } }] });
+      rec.writer = await h.createWritable(); rec.name = h.name; }
+    catch (e) { if (e.name === 'AbortError') return; rec.writer = null; }
+  }
+  const unit = snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0;
+  if (unit && !(clock.src === 'midi' && !clock.midiRunning)){ rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; recUI(); }
+  else recStart(mime);
+}
+function recStart(mime){
+  rec.wait = null; rec.chunks = []; rec.bytes = 0;
+  const stream = master.captureStream(60);
+  const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6 });
+  mr.ondataavailable = e => { if (!e.data || !e.data.size) return; rec.bytes += e.data.size;
+    if (rec.writer){ const w = rec.writer, b = e.data; rec.pending = rec.pending.then(() => w.write(b)).catch(err => toast('Writing the recording failed: ' + err.message)); }
+    else rec.chunks.push(e.data); };
+  mr.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    if (rec.writer){ await rec.pending; try { await rec.writer.close(); toast2(`Recording saved: ${rec.name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } rec.writer = null; }
+    else { const blob = new Blob(rec.chunks, { type: 'video/webm' }); rec.chunks = [];
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = rec.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${rec.name} (downloads folder)`); }
+  };
+  mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI();
+}
+function recStop(){ if (!rec.mr) return; const mr = rec.mr; rec.mr = null; mr.stop(); recUI(); }
+function recUI(){
+  const b = $('#recBtn'); $('#recLed').classList.toggle('on', !!rec.mr); $('#recLed').classList.toggle('wait', !!rec.wait);
+  if (rec.mr){ const t = (performance.now() - rec.t0) / 1000, mb = rec.bytes / 1048576;
+    $('#recTxt').textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+    b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
+  else { $('#recTxt').textContent = rec.wait ? 'Wait' : 'Rec';
+    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : 'Record the output to a video file (WebM). With Snap on, recording starts on the next bar'; }
+}
+function recTick(){ if (rec.wait && clock.beat >= rec.wait.beat - 1e-9) recStart(rec.wait.mime); }
+setInterval(() => { if (rec.mr) recUI(); }, 500);
+$('#recBtn').addEventListener('click', recToggle);
 async function saveFile(blob, filename){
   if (window.showSaveFilePicker){
     try {
