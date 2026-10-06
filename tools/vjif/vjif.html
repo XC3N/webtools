@@ -408,7 +408,7 @@ output.mod{color:var(--env)}
   <div class="modalBox" style="width:min(520px,92vw)">
     <h2>Settings<span class="line"></span><button id="setClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <div class="sub" style="margin-top:0"><span>Canvas</span><span class="line"></span></div>
-    <div class="row"><div class="seg" id="fmtSeg"></div></div>
+    <div class="row"><div class="seg" id="fmtSeg"></div><label class="tog" title="Vertical only: shade where Reels / TikTok / Shorts put their buttons and captions (preview only, not in the output)"><input type="checkbox" id="safeTog">Safe-zone guides</label></div>
     <p class="note">The output's shape: landscape for screens and projectors, vertical for Reels / TikTok / Shorts / Stories, square or 4:5 for the feed. It's saved with the set; the output window and recordings follow it.</p>
     <div class="sub"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
@@ -503,6 +503,7 @@ let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
 let format = '16:9';
+let safeGuides = (() => { try { return localStorage.getItem('vjif-safe') !== '0'; } catch (e) { return true; } })();   // preview only, never in the output
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
 const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it flashes red)
@@ -1479,7 +1480,8 @@ const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: '
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
-  const c = document.createElement('canvas'); c.width = 96; c.height = 54; c.getContext('2d').drawImage(master, 0, 0, 96, 54);
+  const c = document.createElement('canvas'); c.width = 96; c.height = 54; const x = c.getContext('2d'), k = Math.min(96 / W, 54 / H);
+  x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54); x.drawImage(master, (96 - W * k) / 2, (54 - H * k) / 2, W * k, H * k);   // other formats letterboxed
   return c.toDataURL('image/jpeg', 0.7);
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)
@@ -2344,7 +2346,7 @@ function drawFrame(now){
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
   paintFxPads(clock.beat);
   const L = layers[target], sel = selClip(), gh = ghostList();
-  const osig = `${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
+  const osig = `${format},${safeGuides},${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
     + '|' + gh.map(([c, g]) => { const G = clipGeom(c); return `${c.id},${G.cx},${G.cy},${G.hw},${G.hh},${G.a},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb},${g.fxVer},${g.startF},${g.crisp}`; }).join(';');
   if (force || osig !== redraw.overlay){ redraw.overlay = osig; drawOverlay(gh); }
   redraw.all = false;
@@ -2354,6 +2356,15 @@ function drawOverlay(gh = ghostList()){
   pctx.clearRect(0, 0, pv.width, pv.height);
   const k = view.w * dpr / W, L = layers[target], sel = selClip();
   if (gh.length) drawGhosts(gh, k, dpr);
+  if (format === '9:16' && safeGuides){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
+    const x0 = (view.x + view.w * 0.06) * dpr, y0 = (view.y + view.h * 0.14) * dpr, x1 = (view.x + view.w * 0.86) * dpr, y1 = (view.y + view.h * 0.78) * dpr;
+    pctx.save(); pctx.fillStyle = '#ffffff10';
+    pctx.fillRect(view.x * dpr, view.y * dpr, view.w * dpr, y0 - view.y * dpr); pctx.fillRect(view.x * dpr, y1, view.w * dpr, (view.y + view.h) * dpr - y1);
+    pctx.fillRect(x1, y0, (view.x + view.w) * dpr - x1, y1 - y0);
+    pctx.strokeStyle = '#ffffff55'; pctx.lineWidth = dpr; pctx.setLineDash([6 * dpr, 5 * dpr]); pctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+    pctx.fillStyle = '#ffffff88'; pctx.font = `${10 * dpr}px ui-monospace, monospace`; pctx.fillText('safe zone', x0 + 4 * dpr, y0 + 13 * dpr);
+    pctx.restore();
+  }
   pctx.save(); pctx.translate(view.x * dpr, view.y * dpr); pctx.strokeStyle = LCOL[target];
   for (const c of L.clips){
     const G = clipGeom(c); if (!G) continue;
@@ -3138,6 +3149,8 @@ $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true;
 $('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<button data-f="${k}" title="${d} · ${w}×${h}">${k}</button>`).join('');
 $('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
 syncFormatUI();
+$('#safeTog').checked = safeGuides;
+$('#safeTog').addEventListener('change', e => { safeGuides = e.target.checked; try { localStorage.setItem('vjif-safe', safeGuides ? '1' : '0'); } catch (err) {} redraw.all = true; });
 $('#midiLearn').addEventListener('click', startLearn);
 $('#learnDone').addEventListener('click', endLearn);
 $('#midiClear').addEventListener('click', () => { midiCtl.map = []; saveMidiCtl(); renderMidiCtl(); });
