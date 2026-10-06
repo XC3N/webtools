@@ -13,7 +13,7 @@ In use:
 
 - `controls.js` + `controls.css` — the control behaviour standard from Bad MOPHO, for sliders:
   double-click resets to default (`data-def`), mouse wheel (dwell-gated) and hover + arrow keys adjust,
-  click the readout to type a value. Dropdowns (`<select>`) and `.seg` button groups (not `.tabs`) get the
+  double-click the number to type a value (single clicks and drags on it go to the slider). Dropdowns (`<select>`) and `.seg` button groups (not `.tabs`) get the
   same wheel (down = next option) and hover + arrows (Down/Right = next). Any control a tool adds with these
   elements follows the standard automatically; opt out with `data-no-ctl`. Used by VJif and Logo Lab; Bad
   MOPHO still has its own version (knobs) and can move onto this later.

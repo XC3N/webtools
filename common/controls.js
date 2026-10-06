@@ -1,13 +1,15 @@
 // common/controls.js — the control behaviour standard (from Bad MOPHO), for slider rows.
 //
 // Applies to every <input type=range> (optionally followed by an <output> readout):
-//   • double-click the slider or its readout → back to its default
+//   • double-click the slider → back to its default
 //       default = data-def ("min" / "max" allowed), or the value it had when Controls.init() ran
 //   • mouse wheel over a hovered slider → ±1 step (Shift ×10). Dwell-gated: the slider only takes the
 //     wheel once the cursor has settled on it and the page isn't scrolling (it glows when armed), so
 //     scrolling a panel never changes values by accident
 //   • arrow keys while hovering a slider → Up/Down ±1 step, Left/Right ±10 steps (Shift ×10)
-//   • click the readout → type a value; Enter or clicking away applies, Esc cancels
+//   • double-click the readout (the number) → type a value; Enter or clicking away applies, Esc cancels.
+//     A readout drawn inside the bar lets clicks and drags through to the slider (style.css), so the slider
+//     can be grabbed anywhere; a double-click over the number types instead of resetting
 //       the text is read by el.ctlParse(text) when the tool sets one, else as a number
 //       (data-pct on the slider: the number is a percentage → ÷100)
 // Choice controls — every <select>, and every .seg button group (one button .on; not .tabs, which navigate):
@@ -151,17 +153,19 @@ const Controls = (() => {
       const up = e.code === 'ArrowUp' || e.code === 'ArrowRight', big = e.code === 'ArrowLeft' || e.code === 'ArrowRight';
       nudge(el, (up ? 1 : -1) * (big ? 10 : 1) * (e.shiftKey ? 10 : 1), true);
     }, true);
+    // the value before a double-click's first click (which may have moved the slider), so typing starts from it
+    addEventListener('mousedown', e => { const el = rangeOf(e.target); if (el && e.detail <= 1) el._ctlPrev = +el.value; }, true);
     addEventListener('dblclick', e => {
       const el = rangeOf(e.target); if (!el || editing) return;
+      const o = el.nextElementSibling && el.nextElementSibling.tagName === 'OUTPUT' ? el.nextElementSibling : null;
+      const r = o && o.getBoundingClientRect();
+      if (o && (o.contains(e.target) || (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom))){
+        e.preventDefault(); e.stopPropagation();
+        if (el._ctlPrev !== undefined && +el.value !== el._ctlPrev) apply(el, el._ctlPrev);
+        return startEdit(o, el);
+      }
       const d = defaultOf(el); if (d === null) return;
       e.preventDefault(); e.stopPropagation(); apply(el, d);
-    }, true);
-    addEventListener('click', e => {
-      const o = e.target.closest && e.target.closest('output'); if (!o || o.contains(editing && editing.inp)) return;
-      const el = rangeOf(o); if (!el) return;
-      // a quick second click is a double-click (reset): wait it out before opening the editor
-      clearTimeout(o._ctlT); if (e.detail > 1) return;
-      o._ctlT = setTimeout(() => startEdit(o, el), 220);
     }, true);
   }
   return { init, apply, paint, defaultOf, setDefault(el, v){ el.dataset.def = v; } };

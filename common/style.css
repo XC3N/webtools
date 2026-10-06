@@ -86,7 +86,7 @@ input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-we
 
 /* ---------- sliders: value bars ----------
    The bar fills to the value (--p, kept in sync by common/controls.js); a thin line marks the end. A readout
-   (<output>) right after the slider sits inside the bar on the right; click it to type a value. */
+   (<output>) right after the slider sits inside the bar on the right (clicks pass through to the slider); double-click it to type a value. */
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;height:calc(var(--ch) - 2px);margin:0;cursor:ew-resize;outline:none;
   border:1px solid var(--edge);border-radius:var(--r);background:linear-gradient(var(--track),var(--track)) 0 0/var(--p,50%) 100% no-repeat var(--bg)}
 input[type=range]::-webkit-slider-runnable-track{height:100%;background:none}
@@ -94,13 +94,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:2px;height
 input[type=range]::-moz-range-thumb{width:2px;height:100%;background:var(--muted);border:0;border-radius:0}
 input[type=range]:hover::-webkit-slider-thumb,input[type=range].wheelready::-webkit-slider-thumb{background:var(--ink)}
 input[type=range].wheelready{border-color:var(--muted)}
-input[type=range]+output{font:400 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);background:none;border:0;padding:0 7px;white-space:nowrap;overflow:hidden;text-align:right;cursor:text}
+input[type=range]+output{font:400 11px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);background:none;border:0;padding:0 7px;white-space:nowrap;overflow:hidden;text-align:right}
 output.mod{color:rgb(var(--meter-rgb))}
 /* label | bar (readout inside) rows */
 .field{display:grid;grid-template-columns:78px minmax(0,1fr);align-items:center;gap:8px;margin-bottom:5px;min-height:var(--ch)}
 .field>.span{grid-column:2/3}
 .field>input[type=range]{grid-column:2;grid-row:1}
-.field>input[type=range]+output{grid-column:2;grid-row:1;justify-self:end;max-width:60%;position:relative;z-index:1}
+.field>input[type=range]+output{grid-column:2;grid-row:1;justify-self:end;max-width:60%;position:relative;z-index:1;pointer-events:none}
 
 /* ---------- modals, toast ---------- */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;z-index:8}
