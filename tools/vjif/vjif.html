@@ -173,19 +173,22 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .lbl{width:92px;flex:none}
 .lfillw{display:flex;align-items:center;gap:4px;flex:none}
 .lfillw input[type=color]{width:24px;padding:2px}
-.clips{display:flex;flex-wrap:nowrap;gap:2px;margin-top:6px;height:24px;overflow:visible}
-.clips:empty::before{content:'No GIFs';font:400 12px var(--sans);color:var(--faint);line-height:24px}
+.clips{display:flex;flex-wrap:nowrap;gap:3px;margin-top:6px;height:38px;overflow:visible}
+.clips:empty::before{content:'No GIFs';font:400 12px var(--sans);color:var(--faint);line-height:38px}
 .layer.dropzone{outline:2px dashed var(--lc);outline-offset:-2px}
 .layer.refused{animation:refused .45s ease-out}@keyframes refused{0%,40%{background:#4a1c1c;box-shadow:inset 0 0 0 1px #ff6b6b}}
-#layers .chip{flex:0 1 26px;min-width:14px}
-.chip{position:relative;flex:none;width:26px;height:24px;border-radius:2px;cursor:grab;background:var(--bg) center/cover no-repeat;image-rendering:pixelated;box-shadow:0 0 0 1px var(--edge)}
-.chip>span{position:absolute;left:1px;bottom:1px;padding:1px 2px;border-radius:2px;background:#000c;font:600 9px/1 var(--mono);color:#fff}
+#layers .chip{flex:0 1 44px;min-width:18px}
+.chip{position:relative;flex:none;width:44px;height:38px;border-radius:2px;cursor:grab;background:var(--bg) center/cover no-repeat;image-rendering:pixelated;box-shadow:0 0 0 1px var(--edge)}
+.chip>span{position:absolute;left:2px;bottom:2px;padding:2px 3px;border-radius:2px;background:#000c;font:600 10px/1 var(--mono);color:#fff}
 .chip.sel{box-shadow:0 0 0 2px var(--lc)}
 .chip.dragging{opacity:.35}
 .chip.insL{box-shadow:-3px 0 0 -1px var(--bg),-4px 0 0 0 var(--lc)}
 .chip.insR{box-shadow:3px 0 0 -1px var(--bg),4px 0 0 0 var(--lc)}
-.chip b{position:absolute;right:-5px;top:-6px;width:14px;height:14px;border-radius:50%;background:#000;border:1px solid var(--edge-2);font:400 10px/12px var(--mono);text-align:center;color:var(--muted);visibility:hidden;cursor:pointer}
-.chip:hover b{visibility:visible}.chip b:hover{color:var(--danger);border-color:var(--danger)}
+.chip b{position:absolute;right:1px;top:1px;width:18px;height:18px;border-radius:2px;background:#000d;font:400 14px/17px var(--mono);text-align:center;color:#ddd;visibility:hidden;cursor:pointer}
+.chip:hover b{visibility:visible}.chip b:hover{color:#fff;background:var(--danger)}
+/* Shift held: a click (or right-click any time) removes — the chips say so */
+body.shift .chip{box-shadow:0 0 0 2px var(--danger);cursor:pointer}
+body.shift .chip::after{content:"";position:absolute;inset:0;border-radius:2px;background:rgba(255,70,70,.28);pointer-events:none}
 
 /* ---------- transform ---------- */
 #xfTitle{width:100%}
@@ -259,6 +262,7 @@ output.mod{color:var(--env)}
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
   <div class="field"><label>Preset</label><div class="seg span" id="trPre" title="Keys 1–9 arm a preset for the next scene change; the settings below edit the armed one"></div></div>
   <div class="field"><label>Type</label><div class="seg span grid4" id="trType"></div></div>
+  <div class="field" id="trStyleRow"><label>Style</label><div class="seg span" id="trStyle"></div></div>
   <div class="field" id="trDirRow"><label>Direction</label><div class="seg span" id="trDir"><button data-v="left" title="Towards the left">←</button><button data-v="right" title="Towards the right">→</button><button data-v="up" title="Upwards">↑</button><button data-v="down" title="Downwards">↓</button></div></div>
   <div class="field" id="trLenRow"><label for="trLen">Length</label><input id="trLen" type="range" min="0" step="1" data-def="3"><output></output></div>
   <div class="field" id="trPxRow"><label for="trPx">Pixel</label><input id="trPx" type="range" min="0" step="1" data-def="4" title="Block size for Dissolve, column width for Melt"><output></output></div>
@@ -412,7 +416,7 @@ output.mod{color:var(--env)}
       <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from center) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
       <dt>Scene tiles</dt><dd>Click to go there · right-click to name it · drag one onto another to swap them</dd>
-      <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · × on hover removes it</dd>
+      <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, right-click, or Shift+click (with Shift held the chips turn red)</dd>
     </dl>
   </div>
 </div>
@@ -1178,7 +1182,10 @@ function release(p){
   const g = pads[p].gif; if (!g || g.trig !== 'fade' || !g.env.gate) return;
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
-function releaseAll(){ heldPre = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); }
+// Shift held: chips show they'd be removed by a click
+addEventListener('keydown', e => { if (e.key === 'Shift') document.body.classList.add('shift'); });
+addEventListener('keyup', e => { if (e.key === 'Shift') document.body.classList.remove('shift'); });
+function releaseAll(){ document.body.classList.remove('shift'); heldPre = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); }
 window.addEventListener('blur', releaseAll);         // keys held while switching windows would otherwise stay down
 
 // ---------- fade one-shot envelope ----------
@@ -1367,18 +1374,23 @@ function swapScenes(a, b){
 function syncTransUI(){
   if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; $('#trPx').max = TR_PX.length - 1; }
   const T = transCfg, cut = T.type === 'cut';
-  const lab = P => P.type === 'cut' ? 'Cut' : TR_TYPES.find(t => t[0] === P.type)[1];
-  $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="Key ${k + 1}: ${lab(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${k + 1}</button>`).join('');
+  $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="Key ${k + 1}: ${trLabel(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${k + 1}</button>`).join('');
   segSet('#trType', T.type); segSet('#trDir', T.dir); segSet('#trCurve', T.smooth ? 1 : 0);
+  const sts = TR_STYLES[T.type] || [], stl = trStyleOf(T);
+  $('#trStyle').innerHTML = sts.length ? sts.map(x => `<button data-v="${x[0]}" class="${x[0] === stl ? 'on' : ''}" title="${x[2]}">${x[1]}</button>`).join('') : '<button disabled>—</button>';
+  $('#trStyleRow').classList.toggle('dimmed', !sts.length);
   const pi = optIdx(TR_PX, T.px || 12); $('#trPx').value = pi; $('#trPx').nextElementSibling.textContent = TR_PX[pi][1];
   $('#trPxRow').classList.toggle('dimmed', !['dissolve', 'melt'].includes(T.type));
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
-  $('#trDirRow').classList.toggle('dimmed', !['slide', 'wipe'].includes(T.type));
+  $('#trDirRow').classList.toggle('dimmed', !(T.type === 'slide' || (T.type === 'wipe' && stl === 'line')));
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || T.type === 'melt');   // the melt keeps Doom's own timing
-  $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${TR_TYPES.find(t => t[0] === T.type)[1].toLowerCase()} · ${TR_LENS[i][1]}`);
+  $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
 $('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (b) armTrans(+b.dataset.v); });
-$('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; syncTransUI(); } });
+$('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); } });
+$('#trStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
+  transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
+  syncTransUI(); });
 $('#trDir').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.dir = b.dataset.v; syncTransUI(); } });
 $('#trCurve').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.smooth = b.dataset.v === '1'; syncTransUI(); } });
 $('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
@@ -1695,22 +1707,35 @@ function render(list, ctx = mctx){
   }
 }
 // ---------- scene transitions: the scene being left and the new one are each drawn whole, then combined ----------
-const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['dip', 'Dip'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['flash', 'Flash'], ['melt', 'Melt']];
+// transition families, each with its styles (like the effects); a preset = family + style + its settings
+const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['melt', 'Melt']];
+const TR_STYLES = {
+  fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
+  wipe: [['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],
+  dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)']] };
+const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
+// presets from before the families: dip / flash were their own types
+function normTrans(P){
+  if (P.type === 'dip' || P.type === 'flash'){ P.style = P.type; P.type = 'fade'; }
+  if (!TR_TYPES.some(t => t[0] === P.type)) P.type = 'cut';
+  P.style = trStyleOf(P); if (!P.px) P.px = 12;
+  return P;
+}
+const trLabel = P => P.type === 'cut' ? 'Cut' : TR_TYPES.find(t => t[0] === P.type)[1] + (TR_STYLES[P.type] ? ' ' + TR_STYLES[P.type].find(x => x[0] === trStyleOf(P))[1].toLowerCase() : '');
 const TR_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars'], [16, '4 bars']];
 const TR_DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 // nine transition presets on the number row; pressing one arms it for the next scene change (the panel edits the armed one)
 const TR_KEYS = Array.from({ length: 9 }, (_, i) => 'Digit' + (i + 1));
-const trDefaults = () => [{ type: 'cut', dir: 'left', len: 2, smooth: true, px: 12 }, { type: 'fade', dir: 'left', len: 2, smooth: true, px: 12 },
-  { type: 'fade', dir: 'left', len: 4, smooth: true, px: 12 }, { type: 'dip', dir: 'left', len: 2, smooth: true, px: 12 },
-  { type: 'slide', dir: 'left', len: 2, smooth: true, px: 12 }, { type: 'slide', dir: 'right', len: 2, smooth: true, px: 12 },
-  { type: 'wipe', dir: 'down', len: 2, smooth: true, px: 12 }, { type: 'zoom', dir: 'left', len: 2, smooth: true, px: 12 },
-  { type: 'melt', dir: 'down', len: 4, smooth: false, px: 12 }];
+const trDefaults = () => [{ type: 'cut' }, { type: 'fade', style: 'cross', len: 2 }, { type: 'fade', style: 'cross', len: 4 }, { type: 'fade', style: 'dip', len: 2 },
+  { type: 'slide', dir: 'left', len: 2 }, { type: 'slide', dir: 'right', len: 2 }, { type: 'wipe', style: 'iris', len: 2 },
+  { type: 'glitch', len: 1 }, { type: 'melt', len: 4, smooth: false }].map(P => normTrans({ dir: 'left', len: 2, smooth: true, px: 12, ...P }));
 let trPresets = trDefaults(), trSel = 1, transCfg = trPresets[trSel];
 function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
 let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt }
 const trA = mkCanvas().getContext('2d', { alpha: false }), trB = mkCanvas().getContext('2d', { alpha: false }), trM = mkCanvas().getContext('2d');
 const TR_PX = [[2, '2 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px']];
 // Dissolve: a random order for blocks of `px` pixels, made when the transition starts
+const pxCv = new OffscreenCanvas(W, H), pxCtx = pxCv.getContext('2d');   // Pixelate: the scene shrunk, then drawn back up blocky
 function dissolveGrid(px){
   const w = Math.ceil(W / px), h = Math.ceil(H / px), cv = new OffscreenCanvas(w, h), ctx = cv.getContext('2d');
   return { cv, ctx, img: ctx.createImageData(w, h), noise: new Float32Array(w * h).map(() => Math.random()) };
@@ -1738,21 +1763,31 @@ function composeTransition(e, T){
   const m = mctx; m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
   const A = trA.canvas, B = trB.canvas, [dx, dy] = TR_DIRS[T.dir] || TR_DIRS.left;
   switch (T.type){
-    case 'fade': m.drawImage(A, 0, 0); m.globalAlpha = e; m.drawImage(B, 0, 0); break;
-    case 'dip': case 'flash': {                      // through black (dip) or white (flash): out, then in
-      m.drawImage(e < 0.5 ? A : B, 0, 0); m.fillStyle = T.type === 'dip' ? '#000' : '#fff';
-      m.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2; m.fillRect(0, 0, W, H); break; }
+    case 'fade': {
+      const st = trStyleOf(T);
+      if (st === 'dip' || st === 'flash'){          // through black (dip) or white (flash): out, then in
+        m.drawImage(e < 0.5 ? A : B, 0, 0); m.fillStyle = st === 'dip' ? '#000' : '#fff';
+        m.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2; m.fillRect(0, 0, W, H); break; }
+      if (st === 'luma' && post){ post.luma(A, B, e); break; }   // the brightest parts of the old scene give way first
+      m.drawImage(A, 0, 0); m.globalAlpha = e; m.drawImage(B, 0, 0); break; }
     case 'slide':                                    // the new scene pushes the old one out
       m.drawImage(A, dx * e * W, dy * e * H); m.drawImage(B, dx * (e - 1) * W, dy * (e - 1) * H); break;
-    case 'wipe': {                                   // an edge sweeps across, revealing the new scene
+    case 'wipe': {                                   // an edge sweeps across (or a circle opens), revealing the new scene
       m.drawImage(A, 0, 0); m.save(); m.beginPath();
-      if (dx) m.rect(dx < 0 ? W * (1 - e) : 0, 0, W * e, H); else m.rect(0, dy < 0 ? H * (1 - e) : 0, W, H * e);
+      if (trStyleOf(T) === 'iris') m.arc(W / 2, H / 2, e * Math.hypot(W, H) / 2, 0, Math.PI * 2);
+      else if (dx) m.rect(dx < 0 ? W * (1 - e) : 0, 0, W * e, H); else m.rect(0, dy < 0 ? H * (1 - e) : 0, W, H * e);
       m.clip(); m.drawImage(B, 0, 0); m.restore(); break; }
     case 'zoom': {                                   // the old scene grows and fades; the new one grows in from smaller
       m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
       const z = (img, k, a) => { m.globalAlpha = a; m.drawImage(img, W / 2 - W * k / 2, H / 2 - H * k / 2, W * k, H * k); };
       z(A, 1 + 0.8 * e, 1 - e); z(B, 0.6 + 0.4 * e, e); break; }
     case 'dissolve': {                               // blocks of the new scene appear in random order
+      if (trStyleOf(T) === 'pixelate'){              // the old scene breaks into ever bigger blocks, the new one resolves out of them
+        const big = Math.max(2, T.px || 48), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
+        const w = Math.ceil(W / bs), h = Math.ceil(H / bs);
+        pxCtx.imageSmoothingEnabled = true; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(e < 0.5 ? A : B, 0, 0, w, h);
+        m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; break;
+      }
       const D = trans && trans.dis || (trans && (trans.dis = dissolveGrid(T.px || 12))); if (!D){ m.drawImage(B, 0, 0); break; }
       const d = D.img.data; for (let i = 0; i < D.noise.length; i++) d[i * 4 + 3] = D.noise[i] < e ? 255 : 0;
       D.ctx.putImageData(D.img, 0, 0);
@@ -1760,6 +1795,18 @@ function composeTransition(e, T){
       trM.globalCompositeOperation = 'source-over'; trM.clearRect(0, 0, W, H); trM.drawImage(B, 0, 0);
       trM.globalCompositeOperation = 'destination-in'; trM.imageSmoothingEnabled = false; trM.drawImage(D.cv, 0, 0, W, H);
       m.drawImage(trM.canvas, 0, 0); break; }
+    case 'glitch': {                                 // torn horizontal slices from both scenes, settling on the new one
+      const G = trans && (trans.gl || (trans.gl = Array.from({ length: 22 }, () => [Math.random(), Math.random(), Math.random()])));
+      if (!G){ m.drawImage(B, 0, 0); break; }
+      const tear = Math.sin(Math.PI * e), step = Math.floor(e * 24);   // re-torn a couple dozen times over the transition
+      m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
+      G.forEach(([r, o, j], i) => {
+        const y = Math.round(i * H / G.length), h = Math.round((i + 1) * H / G.length) - y;
+        const src = r < e ? B : A, jit = fxRand(i * 7.1 + step) - 0.5, ox = Math.round(((o - 0.5) * 0.3 + jit * 0.12) * W * tear);
+        m.drawImage(src, 0, y, W, h, ox, y, W, h); m.drawImage(src, 0, y, W, h, ox - Math.sign(ox || 1) * W, y, W, h);
+        if (j < 0.25 * tear){ m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.5; m.drawImage(src, 0, y, W, h, ox + 14, y, W, h); m.globalAlpha = 1; m.globalCompositeOperation = 'source-over'; }
+      });
+      break; }
     case 'melt': {                                   // the old scene's columns slide down, revealing the new one
       const tk = trans && trans.melt; if (!tk){ m.drawImage(B, 0, 0); break; }
       const t = transProgress() * (tk.length - 1), t0 = Math.floor(t), t1 = Math.min(tk.length - 1, t0 + 1), f = t - t0, N = tk[0].length;
@@ -2022,7 +2069,23 @@ const post = (() => {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.clearColor(0, 0, 0, 0);
     // run(U, from, to, slot): the effects in U applied to canvas `from`, the result drawn into context `to`
     // (slot 0 = the output, 1–4 = layers; each keeps its own Feedback history)
-    return { run(U, from = master, to = mctx, slot = 0){
+    // Luma transition: a second small program in the same context
+    const lp = gl.createProgram();
+    gl.attachShader(lp, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
+    gl.attachShader(lp, sh(gl.FRAGMENT_SHADER, `precision mediump float; uniform sampler2D a, b; uniform float e; varying vec2 uv;
+      void main(){ vec4 A = texture2D(a, uv), B = texture2D(b, uv); float l = dot(A.rgb, vec3(0.299, 0.587, 0.114)), t = e * 1.25;
+        gl_FragColor = vec4(mix(A.rgb, B.rgb, smoothstep(1.0 - t, 1.25 - t, l)), 1.0); }`));
+    gl.linkProgram(lp); if (!gl.getProgramParameter(lp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(lp));
+    const lu = { a: gl.getUniformLocation(lp, 'a'), b: gl.getUniformLocation(lp, 'b'), e: gl.getUniformLocation(lp, 'e') }, lpLoc = gl.getAttribLocation(lp, 'p'), texB = mkTex();
+    return { luma(A, B, e){
+      gl.useProgram(lp); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(lpLoc); gl.vertexAttribPointer(lpLoc, 2, gl.FLOAT, false, 0, 0);
+      gl.uniform1i(lu.a, 0); gl.uniform1i(lu.b, 1); gl.uniform1f(lu.e, e);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, A);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texB); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, B);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.useProgram(prog); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(cv, 0, 0);
+    }, run(U, from = master, to = mctx, slot = 0){
       const S = slotOf(slot), rt = S.rt, cur = S.cur;
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rt[1 - cur].t);
@@ -2499,8 +2562,12 @@ function buildLayers(){
     row.querySelector('.clips').addEventListener('click', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
-      if (e.target.tagName === 'B') removeClip(li, c);
+      if (e.target.tagName === 'B' || e.shiftKey) removeClip(li, c);
       else { L.sel = c; selectPad(c.pad); setTarget(li); }
+    });
+    row.querySelector('.clips').addEventListener('contextmenu', e => {   // right-click a chip: remove it
+      const chip = e.target.closest('.chip'); if (!chip) return; e.preventDefault();
+      const c = L.clips.find(c => c.id === +chip.dataset.id); if (c) removeClip(li, c);
     });
     const clipsEl = row.querySelector('.clips');
     clipsEl.addEventListener('dragstart', e => {
@@ -2561,7 +2628,7 @@ function syncLayerUI(){
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
-      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
+      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · right-click or Shift+click to remove"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
     }).join('');
   }
 
@@ -2874,18 +2941,20 @@ function frame(gen){
     const s = (now - fpsT) / 1000, el = $('#fps');
     // a refresh counts as missed when its gap is over 1.5× the usual one (the screen's own rate)
     const g = meter.gaps.slice().sort((a, b) => a - b), typical = g.length ? g[Math.floor(g.length * 0.25)] : 16.7;
-    meter.drops = g.filter(x => x > typical * 1.5).reduce((a, x) => a + Math.round(x / typical) - 1, 0);
+    const slot = Math.max(typical, 1000 / 60);         // judged against 60 fps: on a faster screen, 60 is still smooth
+    meter.drops = g.filter(x => x > slot * 1.5).reduce((a, x) => a + Math.round(x / slot) - 1, 0);
     const load = Math.round(meter.busy / (s * 1000) * 100), heap = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(0) + ' MB JS heap' : '';
     // the screen's own rate: the shortest gaps seen (remembered — a busy second can't lower it)
     const fast = g.length ? g[Math.floor(g.length * 0.05)] : 16.7; meter.hz = Math.max(meter.hz || 0, Math.min(360, Math.round(1000 / fast)));
     const fps = Math.round(fpsN / s), hz = meter.hz, lo = $('#load');
     el.innerHTML = `<i>FPS</i>${fps}/${hz}`;
-    el.classList.toggle('bad', fps < hz * 0.6); el.classList.toggle('warn', fps >= hz * 0.6 && fps < hz * 0.9);
+    const goal = Math.min(hz, 60);                     // smooth enough = 60 fps (or the screen's rate if lower)
+    el.classList.toggle('bad', fps < goal * 0.6); el.classList.toggle('warn', fps >= goal * 0.6 && fps < goal * 0.9);
     lo.innerHTML = `<i>LOAD</i>${load}%`;
     lo.classList.toggle('bad', load > 70); lo.classList.toggle('warn', load > 40 && load <= 70);
-    el.title = [`FPS ${fps}/${hz}: frames VJif managed this second / the screen's refresh rate. Below the screen's rate = motion is less smooth.`,
+    el.title = [`FPS ${fps}/${hz}: frames VJif managed this second / the screen's refresh rate. It turns amber below ${Math.round(goal * 0.9)} and red below ${Math.round(goal * 0.6)} (judged against ${goal} fps — smooth enough even on a faster screen).`,
       `${Math.round(drawn / s)} of them were redrawn (frames where nothing changed are skipped — that's normal).`,
-      `Late frames: ${meter.drops} (each one is visible as a small stutter).`,
+      `Late frames (slower than 60 fps): ${meter.drops} — each one is visible as a small stutter.`,
       `Stalls over 50 ms: ${meter.longN}${meter.longN ? ` (${meter.longMs.toFixed(0)} ms) — anything on the page, e.g. decoding or saving` : ''}`].join('\n');
     lo.title = [`LOAD ${load}%: how much of each second VJif's drawing takes on the main thread.`,
       `Average ${(meter.busy / Math.max(1, fpsN)).toFixed(1)} ms, worst ${meter.peak.toFixed(1)} ms per frame — one screen refresh lasts ${(1000 / hz).toFixed(1)} ms.`,
@@ -3016,8 +3085,8 @@ async function applySnapshot(st, { wait = true } = {}){
   sceneIdx = idx; pendingScene = null; liveThumb = null; liveName = st.sceneName || ''; trans = null; renderScenes();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait')); heldPre = -1;
   trPresets = trDefaults(); trSel = st.transP && st.transP.length === 9 ? st.transSel ?? 1 : 1;
-  if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => Object.assign(trPresets[k], P));
-  else if (st.trans) Object.assign(trPresets[trSel], st.trans);          // older sets: their transition on key 2
+  if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => normTrans(Object.assign(trPresets[k], P)));
+  else if (st.trans) normTrans(Object.assign(trPresets[trSel], st.trans));          // older sets: their transition on key 2
   armTrans(trSel);
   fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
   fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {})); syncFxUI();   // older sets had six: they fill 1–6
