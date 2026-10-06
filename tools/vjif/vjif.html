@@ -103,7 +103,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #pvWrap{min-height:0;position:relative;overflow:hidden;background:var(--bg)}
 #pvScene{position:absolute;display:block;background:#000;outline:1px solid var(--edge)}
 #pv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
-#fxStrip{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.25fr) minmax(0,.95fr);gap:10px;background:var(--panel);padding:8px 10px}
+#fxStrip{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.5fr) minmax(0,.9fr);gap:10px;background:var(--panel);padding:8px 10px}
 #fxPads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
 #fxPre{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;border-radius:var(--r)}
 #fxPre.armed{box-shadow:0 0 0 1px var(--sig),0 0 0 4px var(--panel-2)}
@@ -119,6 +119,9 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .fxrow .lcd{flex:none;width:7.5ch;text-align:center}
 .fxrow .seg{flex:1;min-width:0}
 #fxMode{flex:none;width:120px}
+#fxTgt{flex:none;width:118px}#fxTgt button{padding:0}
+#fxTgt button[data-v]:not([data-v=out]){box-shadow:inset 0 -2px 0 var(--lc)}
+#fxEdit.pre #fxTgt{display:none}
 #fxMode button{padding:0}
 @media (max-width:1500px){ .fxp .s{display:none} .fxrow .field label{font-size:11px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
@@ -135,8 +138,8 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .fxp{position:relative;height:36px;display:flex;flex-direction:column;justify-content:space-between;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);overflow:hidden;cursor:pointer;user-select:none;padding:4px 7px 5px;min-width:0}
 .fxp:hover{background:var(--track)}
 .fxp .lv{position:absolute;inset:auto 0 0 0;height:0;background:var(--sig);opacity:.85}
-.fxp .hd{position:relative;display:flex;justify-content:space-between;gap:4px;font:600 9px/1 var(--mono);color:var(--faint)}
-.fxp .md{font-weight:400}
+.fxp .hd{position:relative;display:flex;justify-content:space-between;gap:4px;font:600 9px/1 var(--mono);color:var(--faint);white-space:nowrap}
+.fxp .md{font-weight:400;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .fxp .t{position:relative;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:13px}
 .fxp .n{font:600 11.5px/13px var(--sans);letter-spacing:-.01em;color:var(--ink)}
 .fxp .s{margin-left:5px;font:400 10px/13px var(--sans);color:var(--muted)}
@@ -270,7 +273,8 @@ output.mod{color:var(--env)}
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects on the whole output — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
-      <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList"></span></div>
+      <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList"></span>
+        <div class="seg" id="fxTgt" title="Where it plays: the whole output, or one layer (before the layer is blended)"><button data-v="out" title="The whole output">All</button><button data-v="0" title="Layer 1 only">1</button><button data-v="1" title="Layer 2 only">2</button><button data-v="2" title="Layer 3 only">3</button><button data-v="3" title="Layer 4 only">4</button></div></div>
       <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
         <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
       <div class="fxrow"><div class="field" id="fxLenRow" title="Length: how long a Hit takes to fade"><label for="fxLen">Len</label><input id="fxLen" type="range" min="0" step="1" data-def="3"><output></output></div>
@@ -1389,10 +1393,10 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 let heldPre = -1, fxDrag = null;
 function togglePreFx(k, i){
   const P = fxPre[k];
-  if (P.fx[i]) delete P.fx[i]; else P.fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style };
+  if (P.fx[i]) delete P.fx[i]; else P.fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target };
   syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(P)}`);
 }
-function addPreFx(k, i){ fxPre[k].fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style }; selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`); }
+function addPreFx(k, i){ fxPre[k].fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target }; selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`); }
 function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
@@ -1424,13 +1428,14 @@ function buildFx(){
   $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, k + 1)).join('');
   document.querySelectorAll('#fxStrip .fxp').forEach(wireFxTile);
   $('#fxLen').max = FX_LENS.length - 1; $('#fxRate').max = FX_RATES.length - 1;
+  document.querySelectorAll('#fxTgt button').forEach(b => { if (b.dataset.v !== 'out') b.style.setProperty('--lc', LCOL[+b.dataset.v]); });
 }
 const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
 const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${FX_DEFS[i].styles[styleIdx(i, P.fx[i].style)][1]}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
 // store the effects that are on right now (from their own keys) into preset slot k
 function storeFxPre(k){
   const b = clock.beat, fx = {};
-  FX_DEFS.forEach((d, i) => { if (fxLevel(i, b) > 0.05) fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style }; });
+  FX_DEFS.forEach((d, i) => { if (fxLevel(i, b) > 0.05) fx[i] = { amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target }; });
   if (!Object.keys(fx).length) return toast('Nothing to store — switch on the effects you want first (hold their F keys, or set them to Latch), then store');
   fxPre[k].fx = fx; selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`);
 }
@@ -1445,7 +1450,7 @@ function syncFxUI(){
   const pre = selFx >= NFX, C = fxConf(selFx), d = pre ? null : FX_DEFS[selFx];
   document.querySelectorAll('#fxStrip .fxp').forEach(el => {
     const i = +el.dataset.i, c = fxConf(i);
-    el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = c.mode;
+    el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = (i < NFX && tgtKey(c.target) !== 'out' ? `L${tgtKey(c.target) + 1} ` : '') + c.mode;
     if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
       el.querySelector('.n').textContent = D.name; el.querySelector('.s').textContent = D.styles.length > 1 ? st[1] : '';
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
@@ -1457,12 +1462,13 @@ function syncFxUI(){
   $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d.name; $('#fxName').title = pre ? 'Effect preset' : d.title;
   if (pre){
     const ks = Object.keys(C.fx);
-    $('#fxPreList').innerHTML = ks.length ? ks.map(i => `<span class="pchip" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}%">${FX_DEFS[i].name}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
+    $('#fxPreList').innerHTML = ks.length ? ks.map(i => `<span class="pchip" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}%">${FX_DEFS[i].name}${tgtKey(C.fx[i].target) !== 'out' ? ` <small>L${tgtKey(C.fx[i].target) + 1}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>';
   }
   else {
     $('#fxStyle').innerHTML = d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join('');
     segSet('#fxStyle', C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
+    segSet('#fxTgt', String(tgtKey(C.target)));
   }
   segSet('#fxMode', C.mode);
   $('#fxAmt').value = C.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(C.amt * 100) + '%';
@@ -1476,6 +1482,7 @@ function syncFxUI(){
 $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it
   fxConf(selFx).mode = b.dataset.v; syncFxUI(); });
+$('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx < NFX){ fxCfg[selFx].target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
 $('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx < NFX){ fxCfg[selFx].style = b.dataset.v; syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { fxConf(selFx).amt = +e.target.value; syncFxUI(); });
 $('#fxLen').addEventListener('input', e => { fxConf(selFx).len = FX_LENS[+e.target.value][0]; syncFxUI(); });
@@ -1636,6 +1643,15 @@ function render(list, ctx = mctx){
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (const { L, items } of list){
+    const LU = post && layerFxU[L.i];
+    if (LU){                                         // effects on this layer: flatten it (colour fill included), run them, then blend
+      const b = lbufs[L.i]; b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
+      if (L.i === 0 && L.fillOn && L.fill){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
+      for (const { g, e, fi } of items) drawClip(b, e, g, fxImage(g, fi, e));
+      post.run(LU, b.canvas, b, L.i + 1);
+      ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend; ctx.drawImage(b.canvas, 0, 0); ctx.restore();
+      continue;
+    }
     if (L.i === 0 && L.fillOn && L.fill){             // the Background layer's colour, under its GIFs
       ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     }
@@ -1776,7 +1792,7 @@ const FX_DEFS = [
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
 const FX_LENS = [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
-const fxDefaults = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 1, rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0] }));
+const fxDefaults = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 1, rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out' }));
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
 // effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate, style } })
 // played together with the slot's own mode / length / amount. Index 12–20 in the shared selection / state arrays.
@@ -1813,18 +1829,25 @@ function fxDown(i){
 function fxUp(i){ const S = fxSt[i]; if (S.held){ S.held = false; S.rel = clock.beat; } }
 function selectFx(i){ selFx = i; syncFxUI(); }
 const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
-// each effect's strength now: the strongest of its own key and the presets playing it (whose rate and style then count)
+// Each effect plays on a target: the whole output ('out') or one layer (0–3). Per target, an effect's strength is the
+// strongest of its own key and the presets playing it on that target (whose rate and style then count).
+const FX_TARGETS = ['out', 0, 1, 2, 3];
+const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
 function fxMix(b){
-  const lv = FX_DEFS.map((d, i) => fxLevel(i, b) * fxCfg[i].amt), rate = fxCfg.map(c => c.rate), style = fxCfg.map(c => c.style);
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), rate: fxCfg.map(c => c.rate), style: fxCfg.map(c => c.style) });
+  const M = new Map(FX_TARGETS.map(t => [t, mk()]));
+  FX_DEFS.forEach((d, i) => { const C = fxCfg[i], v = fxLevel(i, b) * C.amt; if (v > 0) M.get(tgtKey(C.target)).lv[i] = v; });
   fxPre.forEach((P, k) => {
     const l = fxLevel(NFX + k, b) * P.amt; if (!(l > 0)) return;
-    for (const [i, e] of Object.entries(P.fx)){ const v = l * e.amt; if (v > lv[i]){ lv[i] = v; rate[i] = e.rate; if (e.style) style[i] = e.style; } }
+    for (const [i, e] of Object.entries(P.fx)){
+      const m = M.get(tgtKey(e.target)), v = l * e.amt;
+      if (v > m.lv[i]){ m.lv[i] = v; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; }
+    }
   });
-  return { lv, rate, style };
+  return M;
 }
-// this frame's shader settings; null when nothing is on
-function fxUniforms(b){
-  const { lv, rate, style } = fxMix(b);
+// one target's shader settings; null when nothing plays on it
+function fxU(b, { lv, rate, style }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), st = i => Math.floor(b / rate[i]);
   const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
@@ -1836,6 +1859,12 @@ function fxUniforms(b){
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
   return U;
 }
+// this frame's settings for every target: { out: U | null, layers: [U | null ×4], any }
+function fxFrame(b){
+  const M = fxMix(b), out = fxU(b, M.get('out')), layers = [0, 1, 2, 3].map(t => fxU(b, M.get(t)));
+  return { out, layers, any: !!out || layers.some(Boolean) };
+}
+let layerFxU = [null, null, null, null];             // read by render(): effects playing on each layer this frame
 // ---- blackout (0, held) and freeze (Ins, held): applied to whatever is on the output, effects included ----
 const live = { black: 0, blackOn: false, blackT: 0, freeze: false, freezeReq: false };
 const BLACK_MS = 120;
@@ -1848,7 +1877,8 @@ function updLiveTag(){ const t = $('#liveTag'); if (!t) return; const b = live.b
 const post = (() => {
   try {
     const cv = new OffscreenCanvas(W, H);
-    const gl = cv.getContext('webgl', { alpha: false, antialias: false, depth: false, premultipliedAlpha: false });
+    // alpha kept (straight, not premultiplied) so a layer's transparent parts stay transparent
+    const gl = cv.getContext('webgl', { alpha: true, antialias: false, depth: false, premultipliedAlpha: false });
     if (!gl) return null;
     const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
     const prog = gl.createProgram();
@@ -1875,10 +1905,11 @@ const post = (() => {
       }
       bool offs(vec2 p){ return p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0; }
       vec3 raw(vec2 p){ return offs(p) ? vec3(0.0) : texture2D(tex, p).rgb; }
-      vec3 samp(vec2 p, float split){
-        if (offs(p)) return vec3(0.0);
+      vec4 samp(vec2 p, float split){
+        if (offs(p)) return vec4(0.0);
         vec2 o = vec2(split, 0.0);
-        return vec3(texture2D(tex, p + o).r, texture2D(tex, p).g, texture2D(tex, p - o).b);
+        vec4 m = texture2D(tex, p), r = texture2D(tex, p + o), b = texture2D(tex, p - o);
+        return vec4(r.r, m.g, b.b, max(m.a, max(r.a, b.a) * step(0.0001, split)));
       }
       vec2 fold(vec2 p){
         if (mirS < 0.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y);
@@ -1894,7 +1925,7 @@ const post = (() => {
         return mat3(1.0, 1.0, 1.0, 0.956, -0.272, -1.106, 0.621, -0.647, 1.703) * y;
       }
       void main(){
-        if (blit > 0.5){ gl_FragColor = vec4(texture2D(tex, vec2(uv.x, 1.0 - uv.y)).rgb, 1.0); return; }
+        if (blit > 0.5){ gl_FragColor = texture2D(tex, vec2(uv.x, 1.0 - uv.y)); return; }
         vec2 p = uv, a = A();
         float split = rgb > 0.001 ? (rgbS < 0.5 ? rgb * 0.025 : rgb * 0.006) : 0.0;
         if (rgb > 0.001 && rgbS > 0.5){              // VHS tracking: a gentle sway and a torn band rolling down
@@ -1909,8 +1940,9 @@ const post = (() => {
             if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
           else { float col = floor(p.x * 80.0); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
         }
-        vec3 c = samp(geo(p), split);
-        if (mirror > 0.001) c = mix(c, samp(geo(fold(p)), split), mirror);
+        vec4 c4 = samp(geo(p), split);
+        if (mirror > 0.001) c4 = mix(c4, samp(geo(fold(p)), split), mirror);
+        vec3 c = c4.rgb; float al = c4.a;
         if (poster > 0.001){
           if (posterS < 0.5){ float lv = mix(24.0, 2.0, poster); c = floor(c * lv + 0.5) / lv; }
           else { vec2 t = 1.5 / res, q = geo(p); vec3 w = vec3(0.333);
@@ -1926,15 +1958,15 @@ const post = (() => {
         float y = dot(c, vec3(0.299, 0.587, 0.114));
         c = mix(c, monoS < 0.5 ? vec3(y) : vec3(step(0.5, y)), mono);
         if (colr > 0.001) c = mix(c, clamp(colrS < 0.5 ? 1.0 - c : hueRot(c, colrS < 1.5 ? hue : 3.14159), 0.0, 1.0), colr);
-        c = mix(c, vec3(strobeS < 0.5 ? 1.0 : 0.0), strobe);
+        c = mix(c, vec3(strobeS < 0.5 ? 1.0 : 0.0), strobe); if (strobeS < 0.5) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
           vec2 q = uv;
           if (fbS > 0.5){ vec2 d = (q - 0.5) * a * 1.06; if (fbS > 1.5){ float cs = cos(0.06), sn = sin(0.06); d = mat2(cs, sn, -sn, cs) * d; } q = d / a + 0.5; }
-          vec3 pv = fbInit > 0.5 || offs(q) ? vec3(0.0) : texture2D(prev, vec2(q.x, 1.0 - q.y)).rgb;
-          vec3 f = max(c, pv * (fbS < 0.5 ? 0.72 + 0.16 * fb : 0.86));      // older copies fade as they repeat
-          c = mix(c, f, fb);
+          vec4 pv = fbInit > 0.5 || offs(q) ? vec4(0.0) : texture2D(prev, vec2(q.x, 1.0 - q.y));
+          float k = fbS < 0.5 ? 0.72 + 0.16 * fb : 0.86;                     // older copies fade as they repeat
+          c = mix(c, max(c, pv.rgb * k), fb); al = mix(al, max(al, pv.a * k), fb);
         }
-        gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+        gl_FragColor = vec4(clamp(c, 0.0, 1.0), clamp(al, 0.0, 1.0));
       }`));
     gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
     gl.useProgram(prog);
@@ -1945,30 +1977,37 @@ const post = (() => {
       [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
       return t; };
     const src = mkTex();
-    // two render targets, swapped each frame: one is drawn into, the other holds the previous output (for Feedback)
-    const rt = [0, 1].map(() => { const t = mkTex(); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return { t, f }; });
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // per target (output, layers 1–4): two render targets swapped each frame — one is drawn into, the other holds
+    // that target's previous result (for Feedback). Made the first time a target gets an effect.
+    const mkRT = () => { const t = mkTex(); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); return { t, f }; };
+    const slots = [];
+    const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS',
                    'glitch', 'glS', 'gseed', 'rgb', 'rgbS', 'pixel', 'pixS', 'fb', 'fbS', 'shakeZ', 'time'];
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
     gl.viewport(0, 0, W, H);
-    let cur = 0, fbWas = false;
-    return { run(U){
-      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, master);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.clearColor(0, 0, 0, 0);
+    // run(U, from, to, slot): the effects in U applied to canvas `from`, the result drawn into context `to`
+    // (slot 0 = the output, 1–4 = layers; each keeps its own Feedback history)
+    return { run(U, from = master, to = mctx, slot = 0){
+      const S = slotOf(slot), rt = S.rt, cur = S.cur;
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rt[1 - cur].t);
       gl.uniform2f(u.res, W, H);
       for (const k of NAMES) gl.uniform1f(u[k], U[k] || 0);
       gl.uniform3fv(u.shake, U.shake);
-      const fbOn = U.fb > 0.001; gl.uniform1f(u.fbInit, fbOn && !fbWas ? 1 : 0); fbWas = fbOn;
-      gl.uniform1f(u.blit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, rt[cur].f); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      const fbOn = U.fb > 0.001; gl.uniform1f(u.fbInit, fbOn && !S.fbWas ? 1 : 0); S.fbWas = fbOn;
+      gl.uniform1f(u.blit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, rt[cur].f); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rt[cur].t);
-      gl.uniform1f(u.blit, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      cur = 1 - cur;
-      mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over';
-      mctx.drawImage(cv, 0, 0);
-    }, reset(){ fbWas = false; } };
+      gl.clear(gl.COLOR_BUFFER_BIT); gl.uniform1f(u.blit, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      S.cur = 1 - cur;
+      to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
+      if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, W, H); } else to.clearRect(0, 0, W, H);   // what moved away is black / see-through
+      to.drawImage(cv, 0, 0);
+    }, idle(slot){ if (slots[slot]) slots[slot].fbWas = false; } };
   } catch (e) { console.warn('screen effects unavailable:', e.message); return null; }
 })();
 function drawFrame(now){
@@ -1978,9 +2017,10 @@ function drawFrame(now){
   const list = frameList(now);
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ trans = null; redraw.all = true; } }
-  const fxU = post && fxUniforms(clock.beat), bl = blackLevel(now);
+  const fxF = post ? fxFrame(clock.beat) : { out: null, layers: [null, null, null, null], any: false }, fxU = fxF.out, bl = blackLevel(now);
+  layerFxU = fxF.layers; layerFxU.forEach((U, li) => { if (!U && post) post.idle(li + 1); });
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
-  const sig = trans && !live.freeze ? 'T' + now : fxU || (bl > 0 && bl < 1) ? 'F' + now : (live.freeze ? 'Z' : sceneSig(list)) + (bl >= 1 ? 'B' : '');
+  const sig = trans && !live.freeze ? 'T' + now : fxF.any || (bl > 0 && bl < 1) ? 'F' + now : (live.freeze ? 'Z' : sceneSig(list)) + (bl >= 1 ? 'B' : '');
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++;
     if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
@@ -1989,7 +2029,7 @@ function drawFrame(now){
       composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
     } else render(list);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
-    if (fxU) post.run(fxU);
+    if (fxU) post.run(fxU); else if (post) post.idle(0);
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
