@@ -14,9 +14,9 @@
 :root{--gap:2px}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;
-  display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:clamp(290px,21.5vw,330px) minmax(0,1fr) clamp(300px,23.5vw,360px);
-  grid-template-areas:"top top top" "bank stage side";gap:var(--gap);padding:0;height:100vh;overflow:hidden}
-#bank{grid-area:bank}#stage{grid-area:stage}#side{grid-area:side}
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto;grid-template-columns:clamp(290px,21.5vw,330px) minmax(0,1fr) clamp(300px,23.5vw,360px);
+  grid-template-areas:"top top top" "bank stage side" "bank stage perf";gap:var(--gap);padding:0;height:100vh;overflow:hidden}
+#bank{grid-area:bank}#stage{grid-area:stage}#side{grid-area:side}#perf{grid-area:perf}
 .keyrow{display:flex;align-items:center;gap:6px}
 #gifSettings.disabled,#xfPanel.disabled{opacity:.35;pointer-events:none}
 /* rule 3: swapped controls share one grid cell, sized to the tallest */
@@ -48,15 +48,16 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #beats{display:flex;gap:4px}#beats i{width:8px;height:8px;border-radius:50%;background:var(--track)}
 #beats i.on{background:var(--sig)}
 #beats i:first-child.on{background:var(--ink)}
-#barpos{width:6ch;text-align:center}
 /* meters: memory and load, one LCD strip in the header */
-.meters{gap:0;background:var(--lcd-bg);border-radius:var(--r);padding:0 2px;height:calc(var(--ch) + 6px)}
-.meters .mtr{font:400 11px/1 var(--mono);color:var(--lcd-ink);padding:0 7px;white-space:nowrap;text-align:right}
+#perf{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 12px}
+#perf .ptitle{font:600 12px var(--sans);color:var(--muted)}
+.meters{display:flex;align-items:center;width:100%;background:var(--lcd-bg);border-radius:var(--r);padding:0 2px;height:calc(var(--ch) + 4px)}
+.meters .mtr{flex:1;font:400 11px/1 var(--mono);color:var(--lcd-ink);padding:0 7px;white-space:nowrap;text-align:center}
 .meters .mtr i{font-style:normal;font-size:9px;opacity:.55;margin-right:4px}
 .meters .mtr+.mtr{border-left:1px solid color-mix(in srgb,var(--lcd-ink) 25%,transparent)}
 .meters .mtr.warn{color:#e8b54d}.meters .mtr.bad{color:var(--danger)}
-#mem{min-width:9.5ch}#fps{min-width:11.5ch}#load{min-width:8.5ch}
-#saveStat{font:400 11px var(--mono);color:var(--muted);white-space:nowrap;padding:0 6px}
+
+#saveStat{margin-left:auto;font:400 11px var(--mono);color:var(--muted);white-space:nowrap}
 #saveStat:empty{display:none}
 #setLabel{width:clamp(84px,8vw,150px);height:var(--ch);line-height:12px}
 #setLabel.dirty::after{content:" •"}
@@ -245,14 +246,13 @@ output.mod{color:var(--env)}
 <body>
 <header id="top">
   <div class="brand" title="About VJif & getting started (actually, it's pronounced vjif)">VJ<span>if</span></div>
-  <div class="grp sect" id="clockGrp" title="Tempo and timing">
+  <div class="grp sect" id="clockGrp">
     <select id="clockSrc" style="width:112px" title="Where the tempo comes from"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
     <select id="midiIn" hidden style="width:150px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span>
     <label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Drag up / down or use the mouse wheel over a digit to change that digit · click to type a tempo, then Enter"><i id="bpmMark"></i></span>
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
-    <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span>
+    <div id="beats" title="The beat within the bar (the first dot is the downbeat)"><i></i><i></i><i></i><i></i></div>
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
-  <div class="grp meters" title="How hard VJif is working — hover each readout for details"><span id="mem" class="mtr"></span><span id="fps" class="mtr"><i>FPS</i>—</span><span id="load" class="mtr"><i>LOAD</i>—</span><span id="saveStat"></span></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
   <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
@@ -389,6 +389,8 @@ output.mod{color:var(--env)}
     </div>
   </div>
 </aside>
+<div id="perf" class="panel" title="How hard VJif is working — hover each readout for details"><span class="ptitle">Performance</span><span id="saveStat"></span>
+  <div class="meters"><span id="mem" class="mtr"></span><span id="fps" class="mtr"><i>FPS</i>—</span><span id="load" class="mtr"><i>LOAD</i>—</span></div></div>
 <div id="toast"></div>
 <div id="setPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(520px,92vw)">
@@ -2278,7 +2280,7 @@ function onKey(e){
   if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
   if (e.code === 'Home'){ e.preventDefault(); const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); commit(); } return; }   // reset placement
   if (e.code === 'End'){ e.preventDefault(); toggleLayer(target); return; }                  // the edit layer on / off
-  if (e.code === 'PageUp' || e.code === 'PageDown'){ e.preventDefault(); setTarget(clamp(target + (e.code === 'PageUp' ? 1 : -1), 0, 3)); return; }   // edit layer up / down
+  if (e.code === 'PageUp' || e.code === 'PageDown'){ e.preventDefault(); setTarget(clamp(target + (e.code === 'PageUp' ? -1 : 1), 0, 3)); return; }   // PgUp: the layer to the left (cards are 1→4 left to right), PgDn: to the right
 }
 function onKeyUp(e){                                // releases always count, even if focus moved into a text field meanwhile
   if (e.code === 'Space' && !isTyping(e)) e.preventDefault();
@@ -2988,7 +2990,6 @@ function frame(gen){
   if (bi !== lastBeatIdx){
     lastBeatIdx = bi; const k = mod(bi, 4);
     dots.forEach((d, j) => d.classList.toggle('on', j === k));
-    $('#barpos').textContent = `${Math.floor(bi / 4) + 1}.${k + 1}`;
     if (clock.src === 'midi'){ setBpm(clock.bpm); $('#midiStat').textContent = clock.midiRunning ? 'running' : 'waiting'; }
   }
   if (clock.src === 'midi' && !clock.midiRunning){ const t = midiInput ? 'waiting for clock' : 'no input'; if ($('#midiStat').textContent !== t) $('#midiStat').textContent = t; }
