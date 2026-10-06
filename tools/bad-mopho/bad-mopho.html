@@ -110,10 +110,28 @@
   .lfosync.on{color:var(--lcd-bg);background:var(--amber);border-color:var(--amber)}
   .gbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
   .gbtn svg{flex:none}
+/* @include common/controls.css */
+/* @include common/theme.css */
+  /* the shared theme editor (common/theme.js), in Bad MOPHO's look */
   #popTheme{display:flex;flex-direction:column;gap:12px}
-  .thm-prow{display:flex;gap:8px;align-items:center}
-  .thm-prow select,.thm-prow .csel{flex:1;min-width:0}
-  .thm-io{width:32px;height:32px;flex:none}
+  .thm{--sans:"Instrument Sans"}
+  .thm select{appearance:none;background:var(--panel-2);color:var(--ink);border:1px solid var(--edge-2);border-radius:3px;height:32px;
+    font-family:"JetBrains Mono";font-size:12px;padding:0 30px 0 10px;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888892'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center}
+  .thm select:focus{outline:none;border-color:var(--amber-dim)}
+  .thm button{font-family:"Instrument Sans";font-weight:800;font-size:11px;background:var(--panel-2);color:var(--ink);border:1px solid var(--edge-2);border-radius:3px;height:32px;padding:0 12px;cursor:pointer}
+  .thm button:hover{border-color:var(--amber-dim);color:#fff}
+  .thm .thm-sub{font-size:9px;color:var(--faint);font-weight:700;margin-top:4px}
+  .thm .thm-row{grid-template-columns:70px minmax(0,1fr) 34px 16px}
+  .thm .thm-row label{font-size:10px;color:var(--muted);font-family:"Instrument Sans";font-weight:600}
+  .thm .thm-sv label{color:var(--faint)}
+  .thm .thm-row output{font-size:10px;color:var(--muted);font-family:"JetBrains Mono";text-align:right}
+  .thm .thm-row input[type=range]{-webkit-appearance:none;appearance:none;height:9px;border-radius:3px;cursor:pointer;border:1px solid rgba(0,0,0,.45)}
+  .thm .thm-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.55);cursor:pointer}
+  .thm .thm-row input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.55);cursor:pointer}
+  .thm .thm-row input[type=range].wheelready{border-color:var(--amber-dim)}
+  .thm .thm-sw{border-radius:3px;border:1px solid var(--edge-2)}
   #popGlobals{display:flex;flex-direction:column;gap:11px}
   .gcols{display:flex;gap:22px;align-items:flex-start}
   .gcol{display:flex;flex-direction:column;gap:13px}
@@ -640,19 +658,6 @@
     color:var(--ink);font-size:16px;font-weight:800;cursor:pointer;line-height:1}
   .stepbtn:hover{border-color:var(--amber-dim)}
   .bignum{font-family:"JetBrains Mono";font-size:22px;color:var(--amber);min-width:48px;text-align:center;font-weight:700;text-shadow:none}
-  .thmgrp{margin-bottom:16px}
-  .thmaccent{display:flex;flex-direction:column;gap:11px}
-  .thmsliders{flex:1}
-  .thmtriad{display:flex;flex-direction:row;gap:8px}
-  .thmsw2{flex:1;height:28px;border-radius:3px;border:1px solid var(--edge-2);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
-  .thmhd{font-size:9px;letter-spacing:0;text-transform:none;color:var(--faint);font-weight:700;margin-bottom:9px}
-  .thmrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-  .thmlbl{font-size:10px;color:var(--muted);width:28px;font-family:"JetBrains Mono"}
-  .thmval{font-size:10px;color:var(--muted);width:34px;text-align:right;font-family:"JetBrains Mono"}
-  .thmslider{-webkit-appearance:none;appearance:none;flex:1;height:9px;border-radius:3px;cursor:pointer;background:#333;border:1px solid rgba(0,0,0,.45)}
-  .thmslider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.55);cursor:pointer;box-shadow:none}
-  .thmslider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.55);cursor:pointer}
-  .thmsw{display:inline-block;width:16px;height:16px;border-radius:3px;border:1px solid var(--edge-2);vertical-align:middle;margin-left:8px}
   .keys{position:relative;height:150px;display:flex;user-select:none;touch-action:none;flex:1;
     border:1px solid #000;border-radius:3px;overflow:hidden;box-shadow:none}
   .wkey{flex:1;background:linear-gradient(180deg,#efece2 0%,#dcd8cc 88%,#c7c3b6 100%);border-right:1px solid #b3afa2;
@@ -799,6 +804,8 @@
 <script>
 (function(){
 'use strict';
+/* @include common/controls.js */
+/* @include common/theme.js */
 const APP_VERSION='0.9.204', APP_BUILD='2026-06-09';   // bump on each release; shown in header for cache checks
 /* ---- preferences: persisted to localStorage, all access guarded so a blocked store just disables persistence ---- */
 const PREFS_KEY='mopho-programmer-prefs';
@@ -2921,7 +2928,7 @@ const kbBar=document.getElementById('kbBar'), kbBody=document.getElementById('kb
   /* velocity as a compact slider, label below */
   const vel=el('div','kbfield');
   const velRow=el('div','kbfield-row');
-  const vr=el('input','kbrange');vr.type='range';vr.min=1;vr.max=127;vr.value=kbVelocity;vr.title='Note-on velocity for clicks & computer keys (wheel/arrow keys on hover; double-click to reset to 100)';
+  const vr=el('input','kbrange');vr.type='range';vr.dataset.noCtl='';vr.min=1;vr.max=127;vr.value=kbVelocity;vr.title='Note-on velocity for clicks & computer keys (wheel/arrow keys on hover; double-click to reset to 100)';
   const vv=el('span','kbfield-val',String(kbVelocity));
   const KB_VEL_DEF=100;
   const setVel=v=>{ const nv=Math.max(1,Math.min(127,v|0)); kbVelocity=nv; vr.value=nv; vv.textContent=nv; };
@@ -3155,7 +3162,7 @@ const kbBar=document.getElementById('kbBar'), kbBody=document.getElementById('kb
   const wheels=el('div','kbwheels');
   function makeWheel(label,bip){
     const w=el('div','kbwheel');
-    const r=el('input','kbrange vert');r.type='range';
+    const r=el('input','kbrange vert');r.type='range';r.dataset.noCtl='';
     if(bip){r.min=-8192;r.max=8191;r.value=0;} else {r.min=0;r.max=127;r.value=0;}
     w.appendChild(r);w.appendChild(el('span','kbwheel-lbl',label));wheels.appendChild(w);return r;
   }
@@ -3697,149 +3704,16 @@ const gLfo=document.getElementById('g-lfo');
 
 lcd('fFreq',state.fFreq);
 
-/* ============================ Theming (HSV) ============================ */
-function hsv2rgb(h,s,v){h=((h%360)+360)%360;s/=100;v/=100;const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;let r,g,b;
-  if(h<60)[r,g,b]=[c,x,0];else if(h<120)[r,g,b]=[x,c,0];else if(h<180)[r,g,b]=[0,c,x];
-  else if(h<240)[r,g,b]=[0,x,c];else if(h<300)[r,g,b]=[x,0,c];else[r,g,b]=[c,0,x];
-  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];}
-function hsv2hex(h,s,v){return '#'+hsv2rgb(h,s,v).map(n=>n.toString(16).padStart(2,'0')).join('');}
-// sCtrl/vCtrl and sLcd/vLcd (saturation / brightness, %) are optional — same keys as the shared engine in common/theme.js
-const THEME_DEFAULT={hCtrl:166,sCtrl:39,vCtrl:70,hLcd:166,sLcd:39,vLcd:72,hEnv:166,hMeter:212,bh:220,bs:11,bv:11};
-const THEME_OPT=['sCtrl','vCtrl','sLcd','vLcd'];
-const THEMES={
-  'Matte':{hCtrl:166,sCtrl:39,vCtrl:70,hLcd:166,sLcd:39,vLcd:72,hEnv:166,hMeter:212,bh:220,bs:11,bv:11},
-  "Claude's Mopho":{hCtrl:46,hLcd:215,hEnv:210,hMeter:222,bh:229,bs:9,bv:12},
-  'XC3N':  {hCtrl:171,hLcd:317,hEnv:300,hMeter:319,bh:238,bs:20,bv:15},
-  'Blue Berries':{hCtrl:199,hLcd:266,hEnv:225,hMeter:242,bh:238,bs:27,bv:18}
-};
-let themeSel=null;
-function matchPreset(){ for(const n in THEMES){ const p=THEMES[n]; if([...Object.keys(p),...THEME_OPT].every(k=>theme[k]===p[k])) return n; } return 'Custom'; }
-function setTheme(t){ THEME_OPT.forEach(k=>delete theme[k]); Object.assign(theme,t); }   // a preset without S/V uses the classic ramp
-function syncThemeSel(){ if(themeSel) themeSel.csSet(matchPreset()); }
-/* Theme file I/O — the whole theme is the 6-key `theme` object, saved/loaded as JSON. */
-function exportTheme(){
-  const name=(matchPreset()==='Custom'?'mopho-theme':'mopho-theme-'+matchPreset().toLowerCase().replace(/\s+/g,'-'))+'.json';
-  const json=JSON.stringify({app:'mopho-programmer',kind:'theme',version:APP_VERSION,theme:{...theme}},null,2);
-  const a=document.createElement('a'),url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
-  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  flash('THEME EXPORTED',name);
-}
-function importTheme(file){
-  const rd=new FileReader();
-  rd.onload=()=>{
-    let obj; try{ obj=JSON.parse(rd.result); }catch(e){ flash('THEME IMPORT FAILED','not valid JSON'); return; }
-    const t=(obj&&obj.theme)?obj.theme:obj;          // accept {theme:{...}} or a bare theme object
-    const core=['hCtrl','hEnv','hMeter','bh','bs','bv'];
-    if(!t||typeof t!=='object'||!core.every(k=>typeof t[k]==='number')){ flash('THEME IMPORT FAILED','missing or invalid values'); return; }
-    THEME_OPT.forEach(k=>delete theme[k]); core.forEach(k=>theme[k]=t[k]); THEME_OPT.forEach(k=>{ if(typeof t[k]==='number') theme[k]=t[k]; });
-    theme.hLcd=(typeof t.hLcd==='number')?t.hLcd:theme.hCtrl;   // older files predate the LCD hue
-    prefs.theme={...theme};savePrefs();applyTheme();
-    for(const k in thmSliders){ thmSliders[k].r.value=theme[k]; thmSliders[k].val.textContent=theme[k]; }
-    syncThemeSel();
-    flash('THEME IMPORTED', matchPreset());
-  };
-  rd.onerror=()=>flash('THEME IMPORT FAILED','could not read file');
-  rd.readAsText(file);
-}
+/* ============================ Theming — the shared engine (common/theme.js) ============================
+   Same keys and theme files as before; the editor now also has Saturation / Brightness for Controls and LCD. */
 if(prefs.theme && !prefs.themeV2){ prefs.theme=null; }   // 2026-10: everyone starts once on the new Matte look
 prefs.themeV2=1;
-const theme=Object.assign({}, prefs.theme||THEME_DEFAULT), thmSliders={}; let triSwA=null,triSwL=null,triSwB=null,triSw3=null;
-if(typeof theme.hLcd!=='number') theme.hLcd=theme.hCtrl;   // older saved themes predate the LCD hue — keep LCD = Ctrl as it used to be
-function applyTheme(){
-  const R=document.documentElement.style, cl=(n)=>Math.max(0,Math.min(100,n)), T=theme;
-  // CONTROLS role — knobs, switches, header accents; saturation / brightness optional (missing = the classic Mopho ramp)
-  const H=T.hCtrl, cs=T.sCtrl??100, cv=T.vCtrl??100;
-  R.setProperty('--amber',hsv2hex(H,cs,cv));
-  R.setProperty('--acc-rgb',hsv2rgb(H,cs,cv).join(','));
-  R.setProperty('--acc-hi',hsv2hex(H,cs*.88,Math.min(100,cv*1.08)));
-  R.setProperty('--acc-lo',hsv2hex(H,cs,cv*.88));
-  R.setProperty('--acc-dk',hsv2hex(H,cs,cv*.7));
-  R.setProperty('--amber-dim',hsv2hex(H,cs,cv*.68));
-  const sg=hsv2rgb(H,cs,cv).map(v=>{v/=255;return v<=.04?v/12.92:((v+.055)/1.055)**2.4;});
-  R.setProperty('--sigtxt',(.2126*sg[0]+.7152*sg[1]+.0722*sg[2])>.3?'#0d1110':'#ffffff');   // text on the signal colour
-  const ls=T.sLcd??60, lv=T.vLcd??100;
-  R.setProperty('--lcd-ink',hsv2hex(T.hLcd,ls,lv));
-  R.setProperty('--lcd-bg',hsv2hex(T.hLcd,Math.min(100,ls*1.6),6));
-  // ENVELOPES role — every ADSR/DADSR graph shares one contrasting colour
-  const E=T.hEnv;
-  R.setProperty('--env',hsv2hex(E,78,100));
-  R.setProperty('--env-rgb',hsv2rgb(E,78,100).join(','));
-  const Ef=(E-25+360)%360, E3=(E+25)%360;        // per-envelope hues: accent2 and ±25°
-  R.setProperty('--env-f',hsv2hex(Ef,78,100));   R.setProperty('--env-f-rgb',hsv2rgb(Ef,78,100).join(','));   // Filter
-  R.setProperty('--env-a',hsv2hex(E,78,100));    R.setProperty('--env-a-rgb',hsv2rgb(E,78,100).join(','));    // Amplifier (base accent2)
-  R.setProperty('--env-3',hsv2hex(E3,78,100));   R.setProperty('--env-3-rgb',hsv2rgb(E3,78,100).join(','));   // Env 3
-  // METER role — sequencer value bars + reset/data accents
-  const M=T.hMeter;
-  R.setProperty('--meter-hi',hsv2hex(M,75,90));
-  R.setProperty('--meter-lo',hsv2hex(M,85,63));
-  R.setProperty('--meter-dk',hsv2hex(M,68,22));
-  R.setProperty('--meter',hsv2hex(M,75,90));
-  R.setProperty('--meter-rgb',hsv2rgb(M,75,90).join(','));
-  // BACKGROUND ramp
-  R.setProperty('--bg',hsv2hex(T.bh,T.bs,T.bv));
-  R.setProperty('--panel',hsv2hex(T.bh,T.bs,cl(T.bv+3.5)));
-  R.setProperty('--panel-2',hsv2hex(T.bh,T.bs,cl(T.bv+6.5)));
-  R.setProperty('--track',hsv2hex(T.bh,T.bs,cl(T.bv+11)));
-  R.setProperty('--edge',hsv2hex(T.bh,T.bs,cl(T.bv+10)));
-  R.setProperty('--edge-2',hsv2hex(T.bh,T.bs,cl(T.bv+15)));
-  if(triSwA)triSwA.style.background=hsv2hex(H,cs,cv);
-  if(triSwL)triSwL.style.background=hsv2hex(T.hLcd,ls,lv);
-  if(triSwB)triSwB.style.background=hsv2hex(E,78,100);
-  if(triSw3)triSw3.style.background=hsv2hex(M,62,90);
-  refreshThmGradients();
-}
-function thmGradient(key){const T=theme;
-  if(key==='hCtrl'||key==='hLcd'||key==='hEnv'||key==='hMeter'||key==='bh') return 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)';
-  if(key==='bs') return 'linear-gradient(to right,'+hsv2hex(T.bh,0,T.bv)+','+hsv2hex(T.bh,50,T.bv)+')';
-  if(key==='bv') return 'linear-gradient(to right,'+hsv2hex(T.bh,T.bs,2)+','+hsv2hex(T.bh,T.bs,22)+')';
-}
-function refreshThmGradients(){for(const k in thmSliders){const g=thmGradient(k);if(g)thmSliders[k].r.style.background=g;}}
-(function(){
-  const host=document.getElementById('popTheme');
-  const mk=(label,key,min,max)=>{
-    const row=el('div','thmrow');row.appendChild(el('span','thmlbl',label));
-    const r=el('input','thmslider');r.type='range';r.min=min;r.max=max;r.step=1;r.value=theme[key];
-    const val=el('span','thmval',theme[key]);
-    r.addEventListener('input',()=>{theme[key]=+r.value;val.textContent=r.value;applyTheme();syncThemeSel();});
-    r.addEventListener('change',()=>{prefs.theme={...theme};savePrefs();});
-    thmSliders[key]={r,val};row.appendChild(r);row.appendChild(val);return row;
-  };
-  const roles=el('div','thmgrp','<div class="thmhd">Role colors</div>');
-  const rolesRow=el('div','thmaccent'), rolesCol=el('div','thmsliders');
-  rolesCol.appendChild(mk('Ctrl','hCtrl',0,360));
-  rolesCol.appendChild(mk('LCD','hLcd',0,360));
-  rolesCol.appendChild(mk('Env','hEnv',0,360));
-  rolesCol.appendChild(mk('Steps','hMeter',0,360));
-  const triad=el('div','thmtriad');
-  triSwA=el('div','thmsw2');triSwA.title='Controls — knobs, switches, header';
-  triSwL=el('div','thmsw2');triSwL.title='LCD — the display';
-  triSwB=el('div','thmsw2');triSwB.title='Envelopes — all ADSR / DADSR graphs';
-  triSw3=el('div','thmsw2');triSw3.title='Steps — sequencer bars & reset';
-  triad.appendChild(triSwA);triad.appendChild(triSwL);triad.appendChild(triSwB);triad.appendChild(triSw3);
-  rolesRow.appendChild(rolesCol);rolesRow.appendChild(triad);
-  roles.appendChild(rolesRow);
-  const bg=el('div','thmgrp','<div class="thmhd">Background</div>');
-  bg.appendChild(mk('H','bh',0,360));bg.appendChild(mk('S','bs',0,50));bg.appendChild(mk('V','bv',2,22));
-  const presetRow=el('div','field');presetRow.appendChild(el('label',null,'Preset'));
-  themeSel=cListSel(n=>{ if(!THEMES[n])return; setTheme(THEMES[n]);prefs.theme={...theme};savePrefs();applyTheme();for(const k in thmSliders){thmSliders[k].r.value=theme[k];thmSliders[k].val.textContent=theme[k];} });
-  themeSel.csItems(['Matte',"Claude's Mopho",'XC3N','Blue Berries','Custom'].map(n=>({v:n,label:n})));
-  const prow=el('div','thm-prow');
-  prow.appendChild(themeSel);
-  const expBtn=el('button','iconbtn thm-io');expBtn.type='button';expBtn.title='Export theme to a .json file';
-  expBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/></svg>';
-  const impBtn=el('button','iconbtn thm-io');impBtn.type='button';impBtn.title='Import theme from a .json file';
-  impBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M7 12l5-5 5 5"/><path d="M5 3h14"/></svg>';
-  const thmFile=el('input');thmFile.type='file';thmFile.accept='.json,application/json';thmFile.style.display='none';
-  expBtn.onclick=exportTheme;
-  impBtn.onclick=()=>thmFile.click();
-  thmFile.onchange=()=>{ if(thmFile.files[0]) importTheme(thmFile.files[0]); thmFile.value=''; };
-  prow.appendChild(expBtn);prow.appendChild(impBtn);prow.appendChild(thmFile);
-  presetRow.appendChild(prow);
-  host.appendChild(presetRow);host.appendChild(roles);host.appendChild(bg);
-  themeSel.csSet(matchPreset());
-})();
-applyTheme();
+Theme.apply(Theme.parse(prefs.theme) || Theme.PRESETS['Matte']);
+Theme.mount(document.getElementById('popTheme'), { app:'mopho-programmer',
+  roles:[['hCtrl','Controls','Knobs, switches, header, highlights',true],['hLcd','LCD','The display',true],
+         ['hEnv','Envelopes','All ADSR / DADSR graphs'],['hMeter','Steps','Sequencer bars and reset']],
+  toast:m=>flash('THEME',m), onChange:t=>{ prefs.theme=t; savePrefs(); } });
+Controls.init(document.getElementById('popTheme'));   // the shared slider standard: wheel, arrows, double-click, type a value
 
 // after a real dropdown pick, drop focus so the computer-keyboard note keys work without clicking away
 // (synthetic wheel-change events are isTrusted=false, so scroll-to-change keeps focus and stays scrollable)

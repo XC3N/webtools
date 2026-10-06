@@ -20,7 +20,8 @@ const Theme = (() => {
   }
   const hsv2hex = (h, s, v) => '#' + hsv2rgb(h, s, v).map(n => n.toString(16).padStart(2, '0')).join('');
   // sCtrl / vCtrl and sLcd / vLcd (saturation / brightness, %) are optional: missing = Bad MOPHO's fixed ramp
-  const DEFAULT = { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 };
+  // the default theme is Matte (double-clicking a slider in the editor goes back to its Matte value)
+  const DEFAULT = { hCtrl: 166, sCtrl: 39, vCtrl: 70, hLcd: 166, sLcd: 39, vLcd: 72, hEnv: 166, hMeter: 212, bh: 220, bs: 11, bv: 11 };
   const PRESETS = {
     'Matte':          { hCtrl: 166, sCtrl: 39, vCtrl: 70, hLcd: 166, sLcd: 39, vLcd: 72, hEnv: 166, hMeter: 212, bh: 220, bs: 11, bv: 11 },
     "Claude's Mopho": { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 },

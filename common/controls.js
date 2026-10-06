@@ -12,7 +12,8 @@
 //     can be grabbed anywhere; a double-click over the number types instead of resetting
 //       the text is read by el.ctlParse(text) when the tool sets one, else as a number
 //       (data-pct on the slider: the number is a percentage → ÷100)
-// Choice controls — every <select>, and every .seg button group (one button .on; not .tabs, which navigate):
+// Choice controls — every <select>, and every .seg button group that shows a choice (one button .on or .sel;
+// not .tabs, which navigate, nor groups of plain action buttons):
 //   • mouse wheel (same dwell gate) → next / previous option (wheel down = next, as down the list)
 //   • arrow keys while hovering → Down / Right = next, Up / Left = previous; disabled / hidden options are skipped
 //   • no double-click reset: a native dropdown opens on the first click, and a seg's double-click is two picks
@@ -33,7 +34,7 @@ const Controls = (() => {
   const choiceOf = el => {
     if (!el || !el.closest || el.closest('[data-no-ctl]')) return null;
     const s = el.closest('select'); if (s) return s.disabled ? null : s;
-    const g = el.closest('.seg'); return g && !g.classList.contains('tabs') ? g : null;
+    const g = el.closest('.seg'); return g && !g.classList.contains('tabs') && g.querySelector(':scope > button.on, :scope > button.sel') ? g : null;
   };
   const ctlOf = el => rangeOf(el) || choiceOf(el);
   const under = () => ctlOf(document.elementFromPoint(px, py));
@@ -49,7 +50,7 @@ const Controls = (() => {
       return;
     }
     const bs = [...el.querySelectorAll(':scope > button')].filter(b => !b.disabled && b.offsetParent !== null);
-    const cur = bs.findIndex(b => b.classList.contains('on'));
+    const cur = bs.findIndex(b => b.classList.contains('on') || b.classList.contains('sel'));
     const i = cur < 0 ? (n > 0 ? 0 : bs.length - 1) : Math.max(0, Math.min(bs.length - 1, cur + n));
     if (bs[i] && i !== cur) bs[i].click();
   }
