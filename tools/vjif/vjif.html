@@ -226,6 +226,14 @@ body.shift .chip::after{content:"";position:absolute;inset:0;border-radius:2px;b
 .ask span{flex:1;min-width:0;font:500 12px var(--sans);color:#ffd6d6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ask button{width:auto}
 #setList:empty::before{content:'No saved sets yet.';font:400 12px var(--sans);color:var(--faint)}
+.abrand{font:700 22px/1 var(--sans);letter-spacing:-.03em;color:var(--ink)}.abrand span{color:var(--sig)}
+.aboutLead{margin:10px 0 4px;font-size:13px;line-height:1.5;color:var(--ink)}
+.steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
+.steps b{color:var(--ink)}.steps li::marker{color:var(--sig);font:600 12px var(--mono)}
+kbd{display:inline-block;min-width:1.5em;padding:1px 4px;margin:0 1px;border:1px solid var(--edge-2);border-bottom-width:2px;border-radius:3px;background:var(--panel-2);font:600 10.5px/1.3 var(--mono);text-align:center;color:var(--ink)}
+.aboutFoot{margin-top:12px}
+#aboutPanel a{color:var(--sig)}
+.brand{cursor:pointer}
 .keys{margin:0;display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:12px}
 .keys dt{font:600 11px var(--mono);color:var(--sig);white-space:nowrap}.keys dd{margin:0;color:var(--ink);line-height:1.45}
 output.mod{color:var(--env)}
@@ -235,7 +243,7 @@ output.mod{color:var(--env)}
 </head>
 <body>
 <header id="top">
-  <div class="brand" title="Actually, it's pronounced vjif">VJ<span>if</span></div>
+  <div class="brand" title="About VJif & getting started (actually, it's pronounced vjif)">VJ<span>if</span></div>
   <div class="grp sect" id="clockGrp" title="Tempo and timing">
     <select id="clockSrc" style="width:112px" title="Where the tempo comes from"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
     <select id="midiIn" hidden style="width:150px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span>
@@ -243,7 +251,7 @@ output.mod{color:var(--env)}
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
     <div id="beats"><i></i><i></i><i></i><i></i></div><span id="barpos" class="lcd">1.1</span>
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
-  <div class="grp meters" title="How hard VJif is working — hover each readout for details"><span id="mem" class="mtr"></span><span id="fps" class="mtr"></span><span id="load" class="mtr"></span><span id="saveStat"></span></div>
+  <div class="grp meters" title="How hard VJif is working — hover each readout for details"><span id="mem" class="mtr"></span><span id="fps" class="mtr"><i>FPS</i>—</span><span id="load" class="mtr"><i>LOAD</i>—</span><span id="saveStat"></span></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
   <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
@@ -389,9 +397,28 @@ output.mod{color:var(--env)}
     <p class="note">Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black.</p>
   </div>
 </div>
+<div id="aboutPanel" class="modal" hidden>
+  <div class="modalBox" style="width:min(720px,94vw)">
+    <h2><span class="abrand">VJ<span>if</span></span><span class="tag">GIF VJ tool · <i>actually, it's pronounced vjif</i></span><span class="line"></span><button id="aboutClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <p class="aboutLead">Play GIFs to the beat: load them onto pads, trigger them with the keyboard, stack them on four layers, switch scenes with transitions and throw effects over it all. Everything runs in this browser tab — nothing is uploaded.</p>
+    <div class="sub" style="margin-top:6px"><span>Getting started</span><span class="line"></span></div>
+    <ol class="steps">
+      <li><b>Load GIFs.</b> Drop GIF / WebP / APNG files or links onto a pad (or anywhere in the Pads panel), or click an empty pad. Every GIF you load also goes into the set's <b>Pool</b>.</li>
+      <li><b>Play them.</b> Press a pad's key — <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd> <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd> and <kbd>R</kbd><kbd>T</kbd><kbd>Y</kbd> <kbd>F</kbd><kbd>G</kbd><kbd>H</kbd> <kbd>V</kbd><kbd>B</kbd><kbd>N</kbd>. It lands on the layer you're editing (the framed one). <kbd>PgUp</kbd> <kbd>PgDn</kbd> change that layer, <kbd>Shift</kbd>+<kbd>1</kbd>–<kbd>4</kbd> turn layers on and off.</li>
+      <li><b>Arrange.</b> In the preview: drag to move, side handles stretch, corners zoom, the round knob rotates, <kbd>Shift</kbd>+handle crops, the wheel zooms. Fine-tune in Transform; timing, colour and automation are under GIF.</li>
+      <li><b>Keep time.</b> Tap the tempo with <kbd>Space</kbd> (or use MIDI clock). With Snap on, hits land on the beat or bar.</li>
+      <li><b>Scenes.</b> <kbd>Num 1</kbd>–<kbd>9</kbd> switch between nine scenes, each with its own pads and layers. Keys <kbd>1</kbd>–<kbd>9</kbd> pick the transition used for the next switch.</li>
+      <li><b>Effects.</b> <kbd>F1</kbd>–<kbd>F12</kbd> play screen effects; with <kbd>Caps Lock</kbd> on, the numpad plays effect presets. Hold <kbd>0</kbd> for blackout, <kbd>Ins</kbd> to freeze.</li>
+      <li><b>Go live.</b> Click <b>Output</b>, move that window to the projector or second screen, double-click it for full screen.</li>
+      <li><b>Save.</b> <kbd>Ctrl</kbd>+<kbd>S</kbd> saves the set in this browser; <b>Sets</b> exports it as a <code>.vjif</code> file. Every key and mouse move is listed under <b>?</b>.</li>
+    </ol>
+    <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><span style="flex:1"></span><button id="aboutGo" class="accent">Start</button></div>
+    <p class="note">Design and UX by XC3N · code by Claude (Anthropic). MIT licence — source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a>. If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
+  </div>
+</div>
 <div id="helpPanel" class="modal" hidden>
   <div class="modalBox">
-    <h2>Keys &amp; mouse<span class="line"></span><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <h2>Keys &amp; mouse<span class="line"></span><button id="helpAbout" title="About VJif and getting started">About &amp; getting started</button><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <dl class="keys">
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to pick from the GIF pool (or browse, while the pool is empty); <b>Pool</b> lists every GIF of the set; drop a .vjif anywhere to import a set</dd>
       <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (Stack, up to 6 — a full layer flashes red and refuses) or swaps it in (Replace). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
@@ -2193,6 +2220,7 @@ function isTyping(e){
   return t.tagName === 'INPUT' && ['text','number','url','search'].includes(t.type);
 }
 function onKey(e){
+  if (!$('#aboutPanel').hidden){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); closeAbout(); } return; }
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
   if (!$('#poolPanel').hidden && e.key === 'Escape'){ e.preventDefault(); closePool(); return; }   // a floating window: keys keep working
@@ -2886,6 +2914,15 @@ const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos'
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
+// About & getting started: opens by itself the first time (and every start while its box is ticked)
+function openAbout(){ $('#helpPanel').hidden = true; $('#aboutPanel').hidden = false; }
+function closeAbout(){ $('#aboutPanel').hidden = true; try { localStorage.setItem('vjif-about', $('#aboutAgain').checked ? 'show' : 'seen'); } catch (e) {} }
+$('.brand').addEventListener('click', openAbout);
+$('#helpAbout').addEventListener('click', openAbout);
+$('#aboutClose').addEventListener('click', closeAbout); $('#aboutGo').addEventListener('click', closeAbout);
+$('#aboutPanel').addEventListener('pointerdown', e => { if (e.target.id === 'aboutPanel') closeAbout(); });
+{ let a = null; try { a = localStorage.getItem('vjif-about'); } catch (e) {}
+  $('#aboutAgain').checked = a === 'show'; if (a !== 'seen') openAbout(); }
 $('#helpPanel').addEventListener('pointerdown', e => { if (e.target.id === 'helpPanel') $('#helpPanel').hidden = true; });
 // GIF tabs: all panes share one grid cell (rule 3), so switching never moves anything below
 $('#gTabs').addEventListener('click', e => {
