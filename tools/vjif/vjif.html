@@ -78,8 +78,8 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .scene.empty .n{color:var(--faint);background:none}
 .scene.cur{box-shadow:0 0 0 2px var(--sig)}
 .scene.wait{animation:wait .25s steps(1) infinite}
-.import{display:flex;flex-direction:column;gap:6px;margin-top:4px}
-.import .row{display:flex;gap:4px}.import input[type=url]{flex:1;min-width:0}
+.padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}.padhead #mem{flex:none}
+.padsub{margin:8px 0 5px;font:500 11px var(--mono);color:var(--faint)}.padsub .line{flex:1;height:1px;background:var(--edge)}
 #mem{width:7ch;text-align:right}
 #gifName{width:9ch}
 #gInfo{margin-bottom:8px}
@@ -222,14 +222,13 @@ output.mod{color:var(--env)}
 </header>
 
 <section id="bank" class="panel">
-  <h2>Pads<span class="line"></span><span class="tag">QWE / ASD / ZXC</span><span id="mem" class="tag"></span><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
-  <div class="padgrid" id="gridA"></div>
-  <h2>Pads 10–18<span class="line"></span><span class="tag">RTY / FGH / VBN</span></h2>
-  <div class="padgrid" id="gridB"></div>
-  <div class="import">
+  <h2 class="padhead">Pads<span id="mem" class="tag"></span>
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
-    <div class="row"><button id="addFiles" title="Or drop files / links onto a pad or anywhere in this panel">Add…</button><input id="urlIn" type="url" placeholder="https://…/loop.gif"><button id="urlBtn">Load</button></div>
-  </div>
+    <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="urlBtn" hidden>Load</button><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
+  <div class="sub padsub"><span>QWE / ASD / ZXC</span><span class="line"></span></div>
+  <div class="padgrid" id="gridA"></div>
+  <div class="sub padsub"><span>RTY / FGH / VBN</span><span class="line"></span></div>
+  <div class="padgrid" id="gridB"></div>
   <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
@@ -2474,6 +2473,7 @@ $('#urlBtn').addEventListener('click', () => {
   loadUrlInto(u, pads[selPad].gif ? nextEmpty(selPad) : selPad); $('#urlIn').value = '';
 });
 $('#urlIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#urlBtn').click(); });
+$('#urlIn').addEventListener('paste', () => setTimeout(() => { if (/^https?:\/\/\S+$/.test($('#urlIn').value.trim())) $('#urlBtn').click(); }, 0));   // a pasted link loads at once
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => {
   e.preventDefault();
