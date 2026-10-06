@@ -48,7 +48,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #saveStat{flex:none;margin-left:auto;width:13ch;height:14px;line-height:14px;text-align:right;font:400 11px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden}
 #setLabel{width:clamp(110px,9vw,150px);height:var(--ch);line-height:12px}
 #setLabel.dirty::after{content:" •"}
-#fps{flex:none;width:11ch;height:14px;line-height:14px;text-align:center;font:400 11px var(--mono);color:var(--faint);white-space:nowrap}
+#fps{flex:none;width:21ch;height:14px;line-height:14px;text-align:center;font:400 11px var(--mono);color:var(--faint);white-space:nowrap}
 .led{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--track);margin-right:6px;vertical-align:0}
 .led.on{background:var(--sigtxt)}
 #outBtn:not(:has(.led.on)){background:var(--panel-2);color:var(--ink);border-color:var(--edge)}
@@ -1732,14 +1732,34 @@ function pickAt(px, py){
   g.key.color = [d[0], d[1], d[2]]; g.key.seed = [d.u, d.v]; g.key.on = true;
   selectPad(c.pad); scheduleFx(g, 0);
 }
-$('#gClear').addEventListener('click', () => {
-  const p = pads[selPad]; if (!p.gif) return;
-  freeGif(p.gif); p.gif = null;
-  pending.delete(selPad); p.el.classList.remove('wait');
-  layers.forEach(L => { L.clips = L.clips.filter(c => c.pad !== selPad); });
-  scenes.forEach(sc => sc && sc.layers.forEach(l => { l.clips = l.clips.filter(c => c.pad !== selPad); if (!l.clips.includes(l.sel)) l.sel = null; }));
-  renderScenes(); renderPad(selPad); syncGifUI(); syncLayerUI(); syncXfUI(); updateMem();
-});
+// Clearing a pad is undoable: the decoded GIF and every sprite of it (in every scene) are kept in the undo entry,
+// and only freed when that entry leaves the history.
+function clearPad(i, fromRedo = false){
+  const p = pads[i]; if (!p.gif) return;
+  if (!fromRedo) commit();                           // whatever was pending becomes its own step first
+  const g = p.gif, removed = [];                     // [scene index (-1 = current), layer, position, clip]
+  const strip = (ls, si) => ls.forEach((l, li) => { for (let k = l.clips.length - 1; k >= 0; k--) if (l.clips[k].pad === i){ removed.push([si, li, k, l.clips[k], l.sel === l.clips[k]]); l.clips.splice(k, 1); }
+    if (!l.clips.includes(l.sel)) l.sel = null; });
+  strip(layers, -1); scenes.forEach((sc, si) => sc && strip(sc.layers, si));
+  p.gif = null; pending.delete(i); p.el.classList.remove('wait');
+  hist.undo.push({ clear: { pad: i, g, removed: removed.reverse(), scene: sceneIdx } }); trimHist();
+  if (!fromRedo){ dropAll(hist.redo); hist.redo.length = 0; }
+  afterPadChange(i); hist.cur = histState(); updHistUI();
+}
+function restoreClear(E){
+  const p = pads[E.pad]; if (p.gif) return false;    // the pad was refilled since: nothing to put back
+  p.gif = E.g;
+  for (const [si, li, k, c, sel] of E.removed){
+    const sc = si < 0 ? E.scene : si;                 // -1 = the scene that was live when the pad was cleared
+    if (sc !== sceneIdx && !scenes[sc]) scenes[sc] = { layers: Array.from({ length: layers.length }, (_, j) => Object.assign(emptyLayer(), { i: j })), thumb: null };
+    const tgt = sc === sceneIdx ? layers[li] : scenes[sc].layers[li];
+    if (!tgt) continue;
+    tgt.clips.splice(Math.min(k, tgt.clips.length), 0, c); if (sel) tgt.sel = c;
+  }
+  afterPadChange(E.pad); return true;
+}
+function afterPadChange(i){ renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); redraw.all = true; }
+$('#gClear').addEventListener('click', () => { clearPad(selPad); toast2('Pad cleared — Ctrl+Z brings it back'); });
 
 // ---------- UI: layers ----------
 function buildLayers(){
@@ -2038,7 +2058,28 @@ $('#midiIn').addEventListener('change', bindMidiInput);
 $('#snap').addEventListener('change', e => snapMode = e.target.value);
 $('#outBtn').addEventListener('click', openOutput);
 $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
-$('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = !$('#setPanel').hidden; });
+$('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = !$('#setPanel').hidden; if (!$('#setPanel').hidden) placeSettings(); });
+// a click anywhere outside the Settings window closes it (the click still reaches what's under it)
+document.addEventListener('pointerdown', e => { if (!$('#setPanel').hidden && !e.target.closest('#setPanel .modalBox, #setBtn')) $('#setPanel').hidden = true; }, true);
+// drag its title bar to move it out of the way; the spot is remembered
+{
+  const box = $('#setPanel .modalBox'), hd = box.querySelector('h2');
+  hd.style.cursor = 'move'; hd.title = 'Drag to move';
+  hd.addEventListener('pointerdown', e => {
+    if (e.button || e.target.closest('button')) return;
+    const r = box.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
+    hd.setPointerCapture(e.pointerId);
+    const mv = ev => { moveSettings(ev.clientX - ox, ev.clientY - oy); };
+    const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up);
+      try { localStorage.setItem('vjif-setpos', JSON.stringify([parseFloat(box.style.left), parseFloat(box.style.top)])); } catch (err) {} };
+    hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up);
+  });
+}
+function moveSettings(x, y){
+  const box = $('#setPanel .modalBox'), w = box.offsetWidth;
+  Object.assign(box.style, { position: 'fixed', margin: '0', left: clamp(x, 0, innerWidth - w) + 'px', top: clamp(y, 0, innerHeight - 48) + 'px' });
+}
+function placeSettings(){ let p = null; try { p = JSON.parse(localStorage.getItem('vjif-setpos')); } catch (e) {} if (p) moveSettings(p[0], p[1]); }
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
@@ -2069,9 +2110,15 @@ function schedule(){
 }
 function restartLoop(){ loopGen++; schedule(); }
 setInterval(() => { if (performance.now() - lastFrame > 400) restartLoop(); }, 250);
+// ---------- load meter: how much of each second VJif's frame work takes, plus missed screen refreshes and stalls ----------
+const meter = { busy: 0, peak: 0, drops: 0, gaps: [], longN: 0, longMs: 0 };
+try { new PerformanceObserver(l => l.getEntries().forEach(en => { meter.longN++; meter.longMs += en.duration; })).observe({ type: 'longtask', buffered: false }); } catch (e) {}
+let prevFrameT = 0;
 function frame(gen){
   if (gen !== loopGen) return;                       // a stale loop: drop it
   const now = performance.now();                     // own clock (the output window's rAF time has another origin)
+  if (prevFrameT){ const gap = now - prevFrameT; meter.gaps.push(gap); }
+  prevFrameT = now;
   lastFrame = now;
   updateClock(now);
   if (pending.size || pendingScene) firePending();
@@ -2086,10 +2133,21 @@ function frame(gen){
   }
   if (clock.src === 'midi' && !clock.midiRunning){ const t = midiInput ? 'waiting for clock' : 'no input'; if ($('#midiStat').textContent !== t) $('#midiStat').textContent = t; }
   fpsN++;
+  const work = performance.now() - now; meter.busy += work; if (work > meter.peak) meter.peak = work;
   if (now - fpsT > 1000){
-    const s = (now - fpsT) / 1000;
-    $('#fps').textContent = `${Math.round(drawn / s)}/${Math.round(fpsN / s)} fps`;
-    $('#fps').title = `frames actually redrawn / screen refreshes (timed by the ${driver} window) — unchanged frames are skipped`;
+    const s = (now - fpsT) / 1000, el = $('#fps');
+    // a refresh counts as missed when its gap is over 1.5× the usual one (the screen's own rate)
+    const g = meter.gaps.slice().sort((a, b) => a - b), typical = g.length ? g[Math.floor(g.length * 0.25)] : 16.7;
+    meter.drops = g.filter(x => x > typical * 1.5).reduce((a, x) => a + Math.round(x / typical) - 1, 0);
+    const load = Math.round(meter.busy / (s * 1000) * 100), heap = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(0) + ' MB JS heap' : '';
+    el.textContent = `${Math.round(drawn / s)}/${Math.round(fpsN / s)} fps · ${load}%${meter.drops ? ' · ' + meter.drops + ' missed' : ''}`;
+    el.style.color = load > 70 || meter.drops > 5 ? 'var(--danger)' : load > 40 || meter.drops ? 'var(--lcd-ink)' : '';
+    el.title = [`Redrawn ${Math.round(drawn / s)} of ${Math.round(fpsN / s)} screen refreshes per second (timed by the ${driver} window; unchanged frames are skipped)`,
+      `Load ${load}%: share of the second spent drawing (average ${(meter.busy / Math.max(1, fpsN)).toFixed(1)} ms, peak ${meter.peak.toFixed(1)} ms per frame; one refresh lasts ${typical.toFixed(1)} ms)`,
+      `Missed refreshes: ${meter.drops} (frames that came late — visible as stutter)`,
+      `Stalls over 50 ms: ${meter.longN}${meter.longN ? ` (${meter.longMs.toFixed(0)} ms), anything on the page, e.g. decoding or saving` : ''}`,
+      heap].filter(Boolean).join('\n');
+    Object.assign(meter, { busy: 0, peak: 0, gaps: [], longN: 0, longMs: 0 });
     fpsN = 0; drawn = 0; fpsT = now;
   }
   schedule();
@@ -2196,7 +2254,7 @@ async function applySnapshot(st, { wait = true } = {}){
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
   selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem();
-  hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI();   // undo doesn't reach across sets
+  resetHist();   // undo doesn't reach across sets
   redraw.all = true;
   $('#saveStat').textContent = '';
   if (missing) toast(`${missing} GIF file(s) of this set are missing from storage`);
@@ -2242,7 +2300,7 @@ async function newEmptySet(){
   scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; trans = null; renderScenes();
   Object.assign(transCfg, { type: 'cut', dir: 'left', len: 2, smooth: true }); syncTransUI();
   session.setId = null; session.savedSig = '';
-  hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI();
+  resetHist();
   selectPad(0); syncLayerUI(); syncXfUI(); updateMem(); redraw.all = true;
   store.last = snapshot(); await store.put('state', store.last); await store.put('session', { setId: null });
   updSetLabel(); renderSets(); gcGifs();
@@ -2460,12 +2518,29 @@ function histState(){
 function commit(){
   if (!hist.ready || drag) return;
   const s = histState(); if (s === hist.cur) return;
-  hist.undo.push(hist.cur); if (hist.undo.length > 100) hist.undo.shift();
-  hist.redo.length = 0; hist.cur = s; updHistUI();
+  hist.undo.push(hist.cur); trimHist();
+  dropAll(hist.redo); hist.redo.length = 0; hist.cur = s; updHistUI();
 }
+// undo entries are state strings, or { clear } (a cleared pad, holding its GIF) / { reclear } (redo of that)
+function dropEntry(e){ if (e && e.clear && !pads.some(p => p.gif === e.clear.g)) freeGif(e.clear.g); }
+function dropAll(list){ list.forEach(dropEntry); }
+function trimHist(){ while (hist.undo.length > 100) dropEntry(hist.undo.shift()); }
+function resetHist(){ dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI(); }
 // after applying, re-read the live state: GIFs loaded/cleared since a step was recorded aren't part of history
-function undo(){ if (!hist.ready || drag) return; commit(); if (!hist.undo.length) return; hist.redo.push(hist.cur); applyHist(hist.undo.pop()); hist.cur = histState(); }
-function redo(){ if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return; hist.undo.push(hist.cur); applyHist(hist.redo.pop()); hist.cur = histState(); }
+function undo(){
+  if (!hist.ready || drag) return; commit(); if (!hist.undo.length) return;
+  const e = hist.undo.pop();
+  if (e && e.clear){ if (restoreClear(e.clear)) hist.redo.push({ reclear: e.clear.pad }); else dropEntry(e); }
+  else { hist.redo.push(hist.cur); applyHist(e); }
+  hist.cur = histState(); updHistUI();
+}
+function redo(){
+  if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return;
+  const e = hist.redo.pop();
+  if (e && e.reclear !== undefined) clearPad(e.reclear, true);
+  else { hist.undo.push(hist.cur); applyHist(e); }
+  hist.cur = histState(); updHistUI();
+}
 function applyHist(s){
   const st = JSON.parse(s);
   if (st.scene !== undefined && st.scene !== sceneIdx) gotoScene(st.scene, clock.beat, true);   // a step from another scene: go there first
