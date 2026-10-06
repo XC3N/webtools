@@ -103,13 +103,17 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #scenes.fxmode{opacity:.35}
 #capsTag{color:var(--sigtxt);background:var(--sig);padding:1px 6px;border-radius:2px}
 .scene.drop{outline:2px dashed var(--sig);outline-offset:-2px}
+.scene .nm{position:absolute;left:24px;right:3px;top:3px;font:600 11px/14px var(--sans);color:#fff;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}
+.scene .nmEdit{position:absolute;left:3px;right:3px;top:50%;transform:translateY(-50%);height:22px;font:600 12px var(--sans);padding:0 6px}
 #fxPre .fxp .n{font-weight:500;color:var(--muted)}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:32px}
 .fxrow .lcd{flex:none;width:7.5ch;text-align:center}
 .fxrow .seg{flex:1;min-width:0}
-#fxMode{flex:none;width:44%}
+#fxMode{flex:none;width:120px}
+#fxMode button{padding:0}
+@media (max-width:1500px){ .fxp .s{display:none} .fxrow .field label{font-size:11px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
 .fxrow button{flex:none}
@@ -256,9 +260,9 @@ output.mod{color:var(--env)}
     <div id="fxEdit">
       <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList" class="lcd"></span></div>
       <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays once and fades over Length (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
-        <div class="field"><label for="fxAmt">Amount</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
-      <div class="fxrow"><div class="field" id="fxLenRow"><label for="fxLen">Length</label><input id="fxLen" type="range" min="0" step="1" data-def="3"><output></output></div>
-        <div class="field" id="fxRateRow"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
+        <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
+      <div class="fxrow"><div class="field" id="fxLenRow" title="Length: how long a Hit takes to fade"><label for="fxLen">Len</label><input id="fxLen" type="range" min="0" step="1" data-def="3"><output></output></div>
+        <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
     <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
@@ -393,7 +397,7 @@ output.mod{color:var(--env)}
       <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
       <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from center) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
-      <dt>Scene tiles</dt><dd>Click to go there · drag one onto another to swap them</dd>
+      <dt>Scene tiles</dt><dd>Click to go there · right-click to name it · drag one onto another to swap them</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · × on hover removes it</dd>
     </dl>
   </div>
@@ -1239,7 +1243,7 @@ function removeClip(li, c){
 // The live `layers` and pad instances are the current scene; the others wait in `scenes` (null = empty). GIF files (the pool) belong to the set.
 const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
-let sceneIdx = 0, pendingScene = null, liveThumb = null;
+let sceneIdx = 0, pendingScene = null, liveThumb = null, liveName = '';   // liveName: the current scene's name
 const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, fillOn: false, fill: '#1e2a3a' });
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
@@ -1248,7 +1252,7 @@ function sceneThumb(){
   return c.toDataURL('image/jpeg', 0.7);
 }
 const layerState = L => ({ i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
-const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: sceneThumb() });
+const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: sceneThumb(), name: liveName });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
@@ -1261,7 +1265,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
     L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; });   // the scene starts from the top
   });
   pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
-  scenes[i] = null; liveThumb = sc && sc.thumb;
+  scenes[i] = null; liveThumb = sc && sc.thumb; liveName = sc && sc.name || '';
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
   selectPad(selPad); syncLayerUI(); syncXfUI(); renderScenes(); renderPool(); redraw.all = true;
   if (hist.ready) hist.cur = histState();             // switching isn't an undo step
@@ -1279,15 +1283,35 @@ const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers 
 const scenePads = i => (i === sceneIdx ? pads.map(p => p.gif) : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
 function renderScenes(){
   const box = $('#scenes');
-  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" title="Scene ${i + 1} (numpad ${i + 1}) · drag onto another scene to swap them" draggable="true"><span class="k">${i + 1}</span><span class="n"></span></button>`).join('');   // laid out like the numpad
+  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" draggable="true"><span class="k">${i + 1}</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
     const bg = n && th ? `url(${th})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
+    const nm = sceneName(i), ne = b.querySelector('.nm'); if (ne.textContent !== nm) ne.textContent = nm;
+    b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
   });
 }
-$('#scenes').addEventListener('click', e => { const b = e.target.closest('.scene'); if (b) sceneKey(+b.dataset.i); });
+$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (b) sceneKey(+b.dataset.i); });
+// scene names: right-click a tile to type one (a click would go to the scene) (Enter or clicking away keeps it, Esc cancels, empty = no name)
+const sceneName = i => i === sceneIdx ? liveName : scenes[i] && scenes[i].name || '';
+function setSceneName(i, name){
+  name = name.trim().slice(0, 40);
+  if (i === sceneIdx) liveName = name;
+  else { if (!scenes[i]) scenes[i] = emptyScene(); scenes[i].name = name; }
+  renderScenes();
+}
+$('#scenes').addEventListener('contextmenu', e => {
+  const b = e.target.closest('.scene'); if (!b) return; e.preventDefault(); if (b.querySelector('.nmEdit')) return;
+  const i = +b.dataset.i, inp = document.createElement('input');
+  inp.className = 'nmEdit'; inp.value = sceneName(i); inp.placeholder = `Scene ${i + 1}`; inp.spellcheck = false; b.draggable = false;
+  b.appendChild(inp); inp.focus(); inp.select();
+  let done = false;
+  const end = keep => { if (done) return; done = true; if (keep) setSceneName(i, inp.value); inp.remove(); b.draggable = true; };
+  inp.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') end(true); else if (ev.key === 'Escape') end(false); });
+  inp.addEventListener('blur', () => end(true));
+});
 // drag a scene onto another: they swap places (the playing one keeps playing, under its new number)
 const SCENE_MIME = 'application/x-vjif-scene';
 $('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.scene'); if (!b) return; e.dataTransfer.setData(SCENE_MIME, b.dataset.i); e.dataTransfer.effectAllowed = 'move'; });
@@ -1341,7 +1365,7 @@ $('#scDup').addEventListener('click', () => {
   let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i) && !scenePads(i)) t = i; }
   if (t < 0) return toast('No empty scene to copy into — clear one first');
   if (scenes[t]) scenes[t].pads.forEach(g => g && freeGif(g));
-  scenes[t] = { thumb: sceneThumb(), pads: pads.map(p => p.gif && cloneInst(p.gif)),   // its own copy of every pad's settings
+  scenes[t] = { thumb: sceneThumb(), name: liveName, pads: pads.map(p => p.gif && cloneInst(p.gif)),   // its own copy of every pad's settings
     layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
     return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
   gotoScene(t); toast2(`Copied to scene ${t + 1}`);
@@ -1357,7 +1381,7 @@ function wireFxTile(el){
 }
 function buildFx(){
   $('#fxPads').innerHTML = FX_DEFS.map((d, i) => fxTileHTML(i, FX_LABELS[i])).join('');
-  $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, FXP_LABELS[k])).join('');
+  $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, k + 1)).join('');
   document.querySelectorAll('#fxStrip .fxp').forEach(wireFxTile);
   $('#fxLen').max = FX_LENS.length - 1; $('#fxRate').max = FX_RATES.length - 1;
 }
@@ -2462,7 +2486,11 @@ function syncXfUI(){
   const c = selClip();
   $('#xfPanel').classList.toggle('disabled', !c);
   $('#xfTitle').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label} · ${pads[c.pad].gif ? pads[c.pad].gif.name : ''}` : `${LNAMES[target]} · no GIF selected`;
-  if (!c) return;
+  if (!c){                                          // nothing selected: show neutral values, not the last GIF's
+    XF.forEach(([id]) => { const el = $(id); el.value = el.dataset.def ?? 0; el.nextElementSibling.textContent = '—'; el.nextElementSibling.classList.remove('mod'); });
+    $('#xFit').value = 'auto'; $('#xFx').checked = $('#xFy').checked = $('#xT').checked = false; $('#xCrop').textContent = 'none';
+    return;
+  }
   XF.forEach(([id, key, fmt]) => { $(id).value = c[key]; $(id).nextElementSibling.textContent = fmt(c[key]); });
   const g = pads[c.pad].gif;                         // automated values: readout tinted blue (it shows the base value)
   Object.entries(XF_LFO).forEach(([id, ks]) => { const o = $(id).nextElementSibling, m = !!g && ks.some(k => g.lfo[k] && g.lfo[k].on);
@@ -2776,7 +2804,8 @@ function snapshot(){
     pool: pool.map(m => ({ hash: m.hash, name: m.name })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
-    scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : { pads: serPads(sc.pads), layers: serLayers(sc.layers) }),
+    sceneName: liveName,
+    scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : { pads: serPads(sc.pads), layers: serLayers(sc.layers), name: sc.name || '' }),
   });
 }
 function upgradeSnap(o){
@@ -2858,9 +2887,9 @@ async function applySnapshot(st, { wait = true } = {}){
   for (let i = 0; i < N_SCENES; i++){
     const ss = i !== idx && st.scenes[i]; if (!ss){ scenes[i] = null; continue; }
     const gs = pads.map((_, k) => mk(ss.pads[k]));
-    scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: null };
+    scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: null, name: ss.name || '' };
   }
-  sceneIdx = idx; pendingScene = null; liveThumb = null; trans = null; renderScenes();
+  sceneIdx = idx; pendingScene = null; liveThumb = null; liveName = st.sceneName || ''; trans = null; renderScenes();
   trPresets = trDefaults(); trSel = st.transP && st.transP.length === 9 ? st.transSel ?? 1 : 1;
   if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => Object.assign(trPresets[k], P));
   else if (st.trans) Object.assign(trPresets[trSel], st.trans);          // older sets: their transition on key 2
@@ -2915,7 +2944,7 @@ async function newEmptySet(){
   [...insts.values()].forEach(freeGif); pool.slice().forEach(freeMedia);
   pads.forEach((p, i) => { p.gif = null; renderPad(i); }); renderPool();
   layers.forEach(L => Object.assign(L, emptyLayer()));
-  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; trans = null; renderScenes();
+  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; trans = null; renderScenes();
   trPresets = trDefaults(); armTrans(1);
   fxCfg = fxDefaults(); fxPre = fxPreDefaults(); syncFxUI();
   session.setId = null; session.savedSig = '';
