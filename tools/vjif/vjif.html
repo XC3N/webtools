@@ -459,7 +459,7 @@ output.mod{color:var(--env)}
   <button class="lbtn" data-learn="black" title="Map a control to blackout (held)">Blackout</button><button class="lbtn" data-learn="freeze" title="Map a control to freeze (held)">Freeze</button><button class="lbtn accent" id="learnDone">Done</button></div>
 <div id="aboutPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(720px,94vw)">
-    <h2><span class="abrand">VJ<span>if</span></span><span class="tag">GIF VJ tool · <i>actually, it's pronounced vjif</i></span><a id="aboutVer" class="tag" href="#" title="What's new in this version"></a><span class="line"></span><button id="aboutClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <h2><span class="abrand">VJ<span>if</span></span><span class="tag">GIF VJ tool · <i id="tagline">actually, it's pronounced vjif</i></span><a id="aboutVer" class="tag" href="#" title="What's new in this version"></a><span class="line"></span><button id="aboutClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <p class="aboutLead">Play GIFs to the beat: load them onto pads, trigger them with the keyboard, stack them on four layers, switch scenes with transitions and throw effects over it all. Everything runs in this browser tab — nothing is uploaded.</p>
     <div class="seg tabs" id="aboutTabs" style="margin-top:8px"><button data-v="start" class="on">Getting started</button><button data-v="log">What's new</button></div>
     <div id="aboutStart">
@@ -542,7 +542,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.17.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.17.1';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -3445,7 +3445,8 @@ $('#midiCtlIn').addEventListener('change', e => { midiCtl.input = e.target.value
 renderMidiCtl();
 if (midiCtl.map.length && navigator.requestMIDIAccess) getMidi().then(bindCtlInputs).catch(() => {});   // mappings exist: listen from the start
 // About & getting started: opens by itself the first time (and every start while its box is ticked)
-function openAbout(tab = 'start'){ $('#helpPanel').hidden = true; $('#aboutPanel').hidden = false; aboutTab(tab); }
+const TAGLINES = ["actually, it's pronounced vjif", 'Vanks Jod It\'s Friday', 'VJing, with a hard G'];
+function openAbout(tab = 'start'){ $('#tagline').textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)]; $('#helpPanel').hidden = true; $('#aboutPanel').hidden = false; aboutTab(tab); }
 function aboutTab(v){ $('#aboutTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('#aboutStart').hidden = v !== 'start'; $('#aboutLog').hidden = v !== 'log'; $(v === 'log' ? '#aboutLog' : '#aboutStart').scrollTop = 0; }
 $('#aboutTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) aboutTab(b.dataset.v); });
