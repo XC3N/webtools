@@ -13,7 +13,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 
 ## Recording
 - {r1} **MP4 recording** — Settings › Canvas › Recording: MP4. The file is .mp4, not a WebM fallback.
-- {r2} **Upload the MP4 to Instagram or TikTok** — Chrome writes MP4s in a slightly unusual layout.
+- {r2} **Upload the MP4 to Facebook / Instagram / TikTok** (0.19: standard MP4, 30 fps, H.264 + AAC) — Chrome writes MP4s in a slightly unusual layout.
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 
@@ -42,6 +42,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n17} **Small ones** (0.17.1) — pool drags show the slanted chip; the About tagline rotates.
 - {n18} **Full-screen button** (0.18) — next to ⚙ and ?: the whole VJif window goes full screen and back.
 - {n19} **About footer** (0.18) — Show this at start + Play! at the lower right, credits on the left.
+- {n21} **Swap colours** (0.19) — GIF › Colour › Swap colours: click a palette swatch, pick its new colour; check it in the output and after reloading the set.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.

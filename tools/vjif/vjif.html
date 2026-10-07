@@ -110,6 +110,14 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 /* ---------- frames tab ---------- */
 .frames{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:10px;align-items:start}
 .frames .field{grid-template-columns:40px minmax(0,1fr)}
+#swPal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin:2px 0 6px}
+#swPal button{height:16px;min-width:0;padding:0;border:1px solid #0006;border-radius:2px}
+#swPal button.on{outline:2px solid var(--sig);outline-offset:1px}
+#swList{display:grid;gap:4px}
+#swList .swr{display:flex;align-items:center;gap:6px;font:400 11px var(--mono);color:var(--muted)}
+#swList .swr i{width:26px;height:20px;border-radius:2px;border:1px solid #0006;flex:none}
+#swList .swr input[type=color]{width:46px;height:22px;padding:0;flex:none}
+#swList .swr span{flex:1;min-width:0}
 #gPrev{width:72px;height:72px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}
 
 /* ---------- stage: layer strip, preview, footer ---------- */
@@ -407,6 +415,9 @@ output.mod{color:var(--env)}
         <div class="field"><label for="hH">Hue</label><input id="hH" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
         <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
         <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
+        <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" title="Remove every swap">Clear</button></div>
+        <div id="swPal" title="The GIF's colours, most used first — click one to swap it"></div>
+        <div id="swList"></div>
       </div>
       <div data-pane="trig" class="off">
         <div class="field"><label>Mode</label><div class="seg span" id="tMode">
@@ -539,13 +550,14 @@ output.mod{color:var(--env)}
   </div>
 </div>
 
+<script>/* @include common/vendor/mp4-muxer.js */</script>
 <script>
 'use strict';
 /* @include common/controls.js */
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.18.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.19.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -660,7 +672,7 @@ function makeInst(m, saved = null){
   const g = { uid: ++gifSeq, fxWaits: [], media: m, hash: m.hash, name: m.name, blob: m.blob, type: m.type, src: m.src, frames: m.src, durs: m.durs,
            w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
-           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, swap: [], fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free' }, lfo: {} };
   insts.set(g.uid, g); rebuildSeq(g);
@@ -705,7 +717,8 @@ function autoFit(g){                               // new imports: Fit, with the
   g.beats = BEAT_OPTS.reduce((a, b) => Math.abs(Math.log2(b / natBeats)) < Math.abs(Math.log2(a / natBeats)) ? b : a);
 }
 function applyGifSettings(g, saved){
-  const { key, hsv, env, lfo, hash, name, file, ...rest } = saved;
+  const { key, hsv, env, lfo, swap, hash, name, file, ...rest } = saved;
+  g.swap = Array.isArray(swap) ? JSON.parse(JSON.stringify(swap)).slice(0, SWAP_MAX) : [];
   Object.assign(g, Object.fromEntries(Object.entries(rest).filter(([k]) => GIF_KEYS.includes(k))));
   if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv); if (env) Object.assign(g.env, env);
   if (lfo) g.lfo = JSON.parse(JSON.stringify(lfo));
@@ -875,7 +888,7 @@ const fxGL = (() => {
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; varying vec2 uv;
+      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 swF[8], swT[8]; uniform int swN; varying vec2 uv;
       void main(){
         vec4 px = texture2D(tex, uv);
         if (px.a == 0.0){ gl_FragColor = vec4(0.0); return; }
@@ -883,8 +896,11 @@ const fxGL = (() => {
         if (doKey && useMask) f = texture2D(mtex, uv).a;          // connected key: per-frame mask from the flood fill
         else if (doKey){ vec3 d = c - key; float dsq = dot(d, d);
           if (dsq < t1sq){ float dist = sqrt(dsq); f = dist <= t0 ? 0.0 : floor((dist - t0) / span * 255.0 + 0.5) / 255.0; } }
-        vec3 o = c / 255.0;
+        vec3 cs = c;                                   // colour swaps: an exact palette colour becomes another (the key still sees the original)
+        for (int i = 0; i < 8; i++){ if (i >= swN) break; vec3 e = abs(c - swF[i]); if (e.r < 1.5 && e.g < 1.5 && e.b < 1.5){ cs = swT[i]; break; } }
+        vec3 o = cs / 255.0;
         if (doHsv){
+          vec3 c = cs;
           float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), d = mx - mn, h = 0.0;
           if (d > 0.0){ h = mx == c.r ? mod((c.g - c.b) / d, 6.0) : mx == c.g ? (c.b - c.r) / d + 2.0 : (c.r - c.g) / d + 4.0; h *= 60.0; }
           h = mod(h + H, 360.0);
@@ -908,7 +924,8 @@ const fxGL = (() => {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);            // mask rows are 1 byte per pixel, any width
-    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swN'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const swF = new Float32Array(24), swT = new Float32Array(24);
     gl.uniform1i(U.tex, 0); gl.uniform1i(U.mtex, 1);
     let lost = false;
     cv.addEventListener('webglcontextlost', () => { lost = true; });
@@ -923,6 +940,8 @@ const fxGL = (() => {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
         gl.uniform3f(U.key, p.kr, p.kg, p.kb); gl.uniform1f(U.t0, p.t0); gl.uniform1f(U.t1sq, p.t1sq); gl.uniform1f(U.span, p.span);
         gl.uniform1f(U.H, p.H); gl.uniform1f(U.S, p.S); gl.uniform1f(U.V, p.V); gl.uniform1i(U.doKey, p.doKey); gl.uniform1i(U.doHsv, p.doHsv);
+        const sw = p.sw || []; swF.fill(0); swT.fill(0); sw.forEach((x, i) => { swF.set(x.slice(0, 3), i * 3); swT.set(x.slice(3), i * 3); });
+        gl.uniform3fv(U.swF, swF); gl.uniform3fv(U.swT, swT); gl.uniform1i(U.swN, sw.length);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         return cv;
@@ -931,7 +950,8 @@ const fxGL = (() => {
   } catch (e) { console.warn('live colour (WebGL) unavailable, using pre-processing:', e.message); return null; }
 })();
 const liveFx = () => fxGL && fxGL.ok;
-const fxActive = g => g.key.on || hsvOn(g);
+const SWAP_MAX = 8;                                 // colour swaps per GIF: { from: [r,g,b], to: [r,g,b] }
+const fxActive = g => g.key.on || hsvOn(g) || !!(g.swap && g.swap.length);
 // the image to draw for frame `fi` of GIF `g`: run through the colour shader when live colour is on.
 // e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
 // Connected key: the frame's mask (from the flood fill) replaces the per-pixel colour test.
@@ -969,8 +989,9 @@ function fxColor(c, p){
   let f = 255;
   if (p.doKey){ const dr = r - p.kr, dg = gr - p.kg, db = b - p.kb, dsq = dr*dr + dg*dg + db*db;
     if (dsq < p.t1sq){ const dist = Math.sqrt(dsq); f = dist <= p.t0 ? 0 : Math.round(255 * (dist - p.t0) / p.span); } }
-  let rgb = c;
-  if (p.doHsv){ const o = hsvShift(r, gr, b, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
+  let rgb = c & 0xffffff, sr = r, sg = gr, sb = b;
+  if (p.sw) for (const x of p.sw) if (Math.abs(r - x[0]) < 1.5 && Math.abs(gr - x[1]) < 1.5 && Math.abs(b - x[2]) < 1.5){ sr = x[3]; sg = x[4]; sb = x[5]; rgb = sr | (sg << 8) | (sb << 16); break; }
+  if (p.doHsv){ const o = hsvShift(sr, sg, sb, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
   return f * 16777216 + rgb;
 }
 // one frame in place: u = Uint32 view of RGBA pixels (0xAABBGGRR). GIFs have few distinct colors and long runs
@@ -1015,7 +1036,7 @@ function fxParams(g, hsv = g.hsv){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
            region: g.key.region || 'all', seed: g.key.seed || null,
-           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v };
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, sw: (g.swap || []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to]) };
 }
 // The worker gets the same functions as source text, so both paths run identical code.
 const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels].map(f => f.toString()).join('\n') + `
@@ -1085,7 +1106,7 @@ function applyFx(g){
     if (p.doKey && p.region !== 'all') requestMasks(g); else dropMasks(g);
     g.fxP = null; fxDone(g, g.src); return wait;
   }
-  if (!p.doKey && !p.doHsv){ if (fxWorker) fxWorker.postMessage({ id: g.uid, gen }); fxDone(g, g.src); }
+  if (!p.doKey && !p.doHsv && !(p.sw && p.sw.length)){ if (fxWorker) fxWorker.postMessage({ id: g.uid, gen }); fxDone(g, g.src); }
   else if (fxWorker) fxWorker.postMessage({ id: g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w: g.src[0].width, h: g.src[0].height, p });
   else fxMain(g, gen, p);
   return wait;
@@ -2490,7 +2511,7 @@ function drawPrep(now, hidden, quiet){
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
-  if (!outCtx && hidden && !rec.mr) return;        // nobody is looking (and nothing is recording)
+  if (!outCtx && hidden && !rec.mr && !rec.wc) return;   // nobody is looking (and nothing is recording)
   if (prep) drawPrep(now, hidden, quiet); else {
   const list = frameList(now);
   let tp = 1;
@@ -2897,6 +2918,7 @@ function syncGifUI(){
   $('#kSoft').value = g.key.soft; $('#kSoft').nextElementSibling.textContent = (g.key.soft * 100).toFixed(0) + '%';
   syncRangeUI(g); drawPrev(g, g.startF);
   HSV_UI.forEach(([id, k, fmt]) => { $(id).value = g.hsv[k]; $(id).nextElementSibling.textContent = fmt(g.hsv[k]); });
+  if (!$('#gPanes [data-pane="colour"]').classList.contains('off')) syncSwapUI(g);
   segSet('#tMode', g.trig); segSet('#tCurve', g.env.curve); $('#tGate').checked = g.env.gate;
   ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
   segSet('#tLen', g.env.len || 'free');
@@ -2907,6 +2929,44 @@ function syncGifUI(){
   $('#gInfo').textContent = g.keyMsg || `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
 }
 const curGif = () => pads[selPad].gif;
+// ---- colour swaps: the GIF's palette (most used colours first), each swap = one palette colour → another ----
+function gifPalette(g){
+  const m = g.media; if (m.palette) return m.palette;
+  const cnt = new Map(), step = Math.max(1, Math.floor(m.src.length / 8));
+  const cv = new OffscreenCanvas(m.w, m.h), x = cv.getContext('2d', { willReadFrequently: true });
+  for (let i = 0; i < m.src.length; i += step){
+    x.clearRect(0, 0, m.w, m.h); x.drawImage(m.src[i], 0, 0);
+    const d = x.getImageData(0, 0, m.w, m.h).data;
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3] > 127){ const c = (d[k] << 16) | (d[k + 1] << 8) | d[k + 2]; cnt.set(c, (cnt.get(c) || 0) + 1); }
+  }
+  return m.palette = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 36).map(([c]) => [c >> 16, (c >> 8) & 255, c & 255]);
+}
+const rgbHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const sameRgb = (a, b) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+function syncSwapUI(g){
+  if (!g) return;
+  const pal = gifPalette(g);
+  $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}" style="background:${rgbHex(c)}" title="${rgbHex(c)}"></button>`).join('');
+  $('#swList').innerHTML = g.swap.length ? g.swap.map((x, i) => `<div class="swr"><i style="background:${rgbHex(x.from)}"></i>→<input type="color" data-i="${i}" value="${rgbHex(x.to)}"><span>${rgbHex(x.from)} → ${rgbHex(x.to)}</span><button class="iconbtn" data-x="${i}" title="Remove this swap">×</button></div>`).join('')
+    : '<p class="note" style="margin:0">No swaps: click a colour above.</p>';
+}
+$('#swPal').addEventListener('click', e => {
+  const b = e.target.closest('button'), g = curGif(); if (!b || !g) return;
+  const c = gifPalette(g)[+b.dataset.i], k = g.swap.findIndex(x => sameRgb(x.from, c));
+  if (k >= 0){ const inp = $(`#swList input[data-i="${k}"]`); if (inp) inp.click(); return; }   // already swapped: edit it
+  if (g.swap.length >= SWAP_MAX) return toast(`Up to ${SWAP_MAX} swaps per GIF`);
+  g.swap.push({ from: c.slice(), to: c.slice() }); syncSwapUI(g);
+  const inp = $(`#swList input[data-i="${g.swap.length - 1}"]`); if (inp) inp.click();   // pick what it becomes
+});
+$('#swList').addEventListener('input', e => {
+  const g = curGif(); if (!g || !e.target.matches('input[type=color]')) return;
+  const x = g.swap[+e.target.dataset.i]; if (!x) return; x.to = hexRgb(e.target.value);
+  e.target.nextElementSibling.textContent = `${rgbHex(x.from)} → ${rgbHex(x.to)}`; scheduleFx(g, 60);
+});
+$('#swList').addEventListener('change', () => { const g = curGif(); if (g){ scheduleFx(g, 0); renderPad(selPad); } });
+$('#swList').addEventListener('click', e => { const b = e.target.closest('[data-x]'), g = curGif(); if (!b || !g) return; g.swap.splice(+b.dataset.x, 1); scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
+$('#swClear').addEventListener('click', () => { const g = curGif(); if (!g || !g.swap.length) return; g.swap = []; scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
 
 $('#gSmooth').addEventListener('change', e => { const c = selClip(), g = c && pads[c.pad].gif; if (g){ g.crisp = !e.target.checked; renderPad(c.pad); } });
 $('#gSpeed').addEventListener('input', e => { const g = curGif(); if (g){ g.speed = +e.target.value; e.target.nextElementSibling.textContent = g.speed.toFixed(2) + '×'; showCycle(g); } });
@@ -3497,6 +3557,7 @@ $('#gTabs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   segSet('#gTabs', b.dataset.v); gTab = b.dataset.v;
   document.querySelectorAll('#gPanes > [data-pane]').forEach(p => p.classList.toggle('off', p.dataset.pane !== b.dataset.v));
+  if (gTab === 'colour') syncSwapUI(curGif());   // the palette is worked out when the tab is first opened
 });
 // key reset
 $('#kReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.key, { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }); scheduleFx(g, 0); syncGifUI(); });
@@ -3532,6 +3593,7 @@ function frame(gen){
   if (pending.size || pendingScene || pendingLive !== null) firePending();
   if (rec.wait || rec.stopAt) recTick();
   drawFrame(now);
+  if (rec.wc) wcCapture(now);
   if (!document.hidden && now >= uiQuiet && now - scopeT > 33){ scopeT = now; drawScopes(); }
   const bi = Math.floor(clock.beat);
   if (bi !== lastBeatIdx){
@@ -3571,7 +3633,7 @@ function frame(gen){
 }
 
 // ---------- persistence: GIF files + settings in IndexedDB (cookies cap at ~4 KB) ----------
-const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'trig', 'env', 'lfo'];
+const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'swap', 'trig', 'env', 'lfo'];
 const XF_KEYS = [...Object.keys(newXf()), 'alpha'];
 // IndexedDB 'kv' store:
 //   'gif:<hash>' → { name, blob }               original files, stored once (content hash), shared by sets
@@ -3840,8 +3902,15 @@ const recOk = m => window.MediaRecorder && MediaRecorder.isTypeSupported(m);
 // with sound: the same containers with an audio codec (AAC or Opus in MP4, Opus in WebM)
 const REC_MIMES_AV = { mp4: ['video/mp4;codecs=avc1.64002A,mp4a.40.2', 'video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=avc1.64002A,opus', 'video/mp4;codecs=avc1,opus'],
                        webm: ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus'] };
-function recMime(av = false){ const M = av ? REC_MIMES_AV : REC_MIMES; return M[recFmt].find(recOk) || M[recFmt === 'mp4' ? 'webm' : 'mp4'].find(recOk) || ''; }
-const recExt = mime => mime.startsWith('video/mp4') ? 'mp4' : 'webm';
+// MP4 is made with WebCodecs + mp4-muxer where the browser has them: a standard (not fragmented) MP4 at a constant
+// 30 fps, H.264 High + AAC, which Facebook / Instagram / TikTok accept. MediaRecorder's MP4 is the fallback.
+const WC_MP4 = 'wc:video/mp4';
+const wcOk = () => typeof VideoEncoder === 'function' && typeof Mp4Muxer === 'object';
+function recMime(av = false){
+  if (recFmt === 'mp4' && wcOk()) return WC_MP4;
+  const M = av ? REC_MIMES_AV : REC_MIMES; return M[recFmt].find(recOk) || M[recFmt === 'mp4' ? 'webm' : 'mp4'].find(recOk) || '';
+}
+const recExt = mime => mime.startsWith('video/mp4') || mime === WC_MP4 ? 'mp4' : 'webm';
 async function recToggle(){
   if (rec.mr) return recStop();
   if (rec.wait) return recCancelWait();              // a second click cancels a waiting start
@@ -3878,6 +3947,7 @@ async function recPrepare(){
   else recStart(mime);
 }
 function recStart(mime, beat = clock.beat){
+  if (mime === WC_MP4) return wcStart(beat);
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   // this take owns its writer, chunks, name and sound input: a quick next take can't step on them while this one saves
   const writer = rec.writer, name = rec.name, chunks = [], audio = rec.audio; rec.audio = null;
@@ -3896,6 +3966,81 @@ function recStart(mime, beat = clock.beat){
       setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${name} (downloads folder)`); }
   };
   mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI();
+}
+// ---- MP4 through WebCodecs: frames from the master canvas at a steady 30 fps, sound from the chosen input ----
+const WC_FPS = 30, WC_US = 1e6 / WC_FPS;
+let wcCodecs = ['avc1.640028', 'avc1.64002A', 'avc1.4d0028', 'avc1.4d002a'];   // H.264 High / Main, levels 4.0–4.2
+async function wcStart(beat = clock.beat){
+  rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
+  const writer = rec.writer, name = rec.name, audio = rec.audio; rec.audio = null;
+  const w = W & ~1, h = H & ~1;                      // H.264 wants even sizes
+  let vcfg = null;
+  for (const codec of wcCodecs){
+    const c = { codec, width: w, height: h, bitrate: 12e6, framerate: WC_FPS, ...(codec.startsWith('avc') ? { avc: { format: 'avc' } } : {}) };
+    try { if ((await VideoEncoder.isConfigSupported(c)).supported){ vcfg = c; break; } } catch (e) {}
+  }
+  if (!vcfg){                                        // no H.264 here: fall back to MediaRecorder (WebM when nothing else)
+    const m = REC_MIMES_AV.mp4.concat(REC_MIMES.mp4).find(recOk) || (audio ? REC_MIMES_AV.webm : REC_MIMES.webm).find(recOk);
+    if (!m){ if (audio) audio.getTracks().forEach(t => t.stop()); toast('This browser can\'t record video'); return; }
+    if (!writer && !m.startsWith('video/mp4')) rec.name = name.replace(/\.mp4$/, '.webm');
+    toast2('No WebCodecs H.264 encoder here — recording with the browser\'s own recorder instead');
+    rec.audio = audio; return recStart(m, beat);
+  }
+  const track = audio && audio.getAudioTracks()[0], set = track ? track.getSettings() : null;
+  let acfg = null;
+  if (track && typeof AudioEncoder === 'function' && typeof MediaStreamTrackProcessor === 'function'){
+    for (const codec of ['mp4a.40.2', 'opus']){         // AAC is what the social sites expect; Opus in MP4 plays in browsers and VLC
+      const c = { codec, sampleRate: set.sampleRate || 48000, numberOfChannels: Math.min(2, set.channelCount || 2), bitrate: 192000 };
+      try { if ((await AudioEncoder.isConfigSupported(c)).supported){ acfg = c; break; } } catch (e) {}
+    }
+    if (!acfg) toast('This browser can\'t encode sound for MP4 — recording without sound');
+    else if (acfg.codec === 'opus') toast2('No AAC encoder here: the sound is Opus, which some sites refuse');
+  }
+  const target = writer ? new Mp4Muxer.FileSystemWritableFileStreamTarget(writer) : new Mp4Muxer.ArrayBufferTarget();
+  const muxer = new Mp4Muxer.Muxer({ target, fastStart: writer ? false : 'in-memory', firstTimestampBehavior: 'offset',
+    video: { codec: vcfg.codec.startsWith('avc') ? 'avc' : vcfg.codec.startsWith('vp09') ? 'vp9' : 'av1', width: w, height: h, frameRate: WC_FPS },
+    audio: acfg ? { codec: acfg.codec === 'opus' ? 'opus' : 'aac', sampleRate: acfg.sampleRate, numberOfChannels: acfg.numberOfChannels } : undefined });
+  const fail = e => { toast('Recording failed: ' + (e && e.message || e)); recStop(); };
+  const venc = new VideoEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addVideoChunk(ch, meta); }, error: fail });
+  venc.configure(vcfg);
+  let aenc = null, reader = null;
+  if (acfg){
+    aenc = new AudioEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addAudioChunk(ch, meta); }, error: fail });
+    aenc.configure(acfg);
+    reader = new MediaStreamTrackProcessor({ track }).readable.getReader();
+    (async () => { for (;;){ const { value, done } = await reader.read().catch(() => ({ done: true })); if (done) break;
+      if (aenc.state === 'configured') aenc.encode(value); value.close(); } })();
+  } else if (audio) audio.getTracks().forEach(t => t.stop());
+  // the clip's clock starts on the bar it was asked to start on (getting the encoders ready took a few ms), so a bar-length take is exactly that long
+  const C = { venc, aenc, reader, audio, muxer, target, writer, name, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm, stopping: false };
+  rec.wc = C;
+  rec.mr = { stop: () => wcStop(C) };                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
+  rec.t0 = C.t0; redraw.all = true; recUI();
+}
+// called every frame while recording: one encoded frame per 1/30 s of real time (a slow frame repeats the picture,
+// so the clip keeps its length and stays in sync with the sound)
+function wcCapture(now){
+  const C = rec.wc; if (!C || C.stopping) return;
+  const due = Math.floor((now - C.t0) / (1000 / WC_FPS));
+  if (due < C.n) return;
+  if (due - C.n > WC_FPS * 2) C.n = due;              // stalled for over 2 s (window hidden…): jump rather than flood the encoder
+  for (; C.n <= due; C.n++){                         // every 1/30 s gets a frame, so the frame rate stays constant
+    const f = new VideoFrame(master, { timestamp: C.n * WC_US, duration: WC_US });
+    C.venc.encode(f, { keyFrame: C.n % (WC_FPS * 2) === 0 }); f.close();
+  }
+}
+async function wcStop(C){
+  if (C.stopping) return; C.stopping = true; if (rec.wc === C) rec.wc = null;
+  try {
+    if (C.reader) await C.reader.cancel().catch(() => {});
+    if (C.audio) C.audio.getTracks().forEach(t => t.stop());
+    await C.venc.flush(); if (C.aenc) await C.aenc.flush();
+    C.muxer.finalize(); C.venc.close(); if (C.aenc) C.aenc.close();
+    if (C.writer){ await C.writer.close(); toast2(`Recording saved: ${C.name}`); if (rec.writer === C.writer) rec.writer = null; }
+    else { const blob = new Blob([C.target.buffer], { type: 'video/mp4' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = C.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${C.name} (downloads folder)`); }
+  } catch (e) { toast('Saving the recording failed: ' + e.message); }
 }
 function recStop(){ if (!rec.mr) return; const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
 function recUI(){

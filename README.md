@@ -36,6 +36,10 @@ and a Markdown file as HTML with `<!-- @markdown tools/vjif/CHANGELOG.md -->` (V
 - UI follows the shared design language and its layout-stability rules: readouts have fixed widths, context-dependent text lives in fixed boxes, swapped controls share one slot sized to the largest, unavailable controls are dimmed in place. See the comment at the top of each tool's stylesheet.
 - Desktop Chrome is the target browser (WebCodecs, Web MIDI, OffscreenCanvas).
 
+## Third-party code
+
+- [mp4-muxer](https://github.com/Vanilagy/mp4-muxer) 5.2.2 (MIT) in `common/vendor/`, used by VJif to write MP4 recordings.
+
 ## Credits
 
 UX & features design by XC3N · implementation & coding by Claude.
