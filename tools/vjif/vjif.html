@@ -37,6 +37,8 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #clockGrp #beats{margin:0 2px 0 4px}
 .brand{font:700 21px/1 var(--sans);letter-spacing:-.03em;color:var(--ink);cursor:default}
 .brand span{color:var(--sig)}
+#hdrVer{border:0;background:none;padding:0 2px;height:auto;margin:3px 22px 0 -2px;font:500 10px var(--mono);color:var(--faint);align-self:center;cursor:pointer}
+#hdrVer:hover{color:var(--sig)}
 .grp{display:flex;align-items:center;gap:6px}.grp.right{margin-left:auto}
 .vsep{width:1px;height:20px;background:var(--edge);flex:none}
 .bpmwrap{position:relative;display:inline-block}
@@ -273,7 +275,7 @@ output.mod{color:var(--env)}
 </head>
 <body>
 <header id="top">
-  <div class="brand" title="About VJif & getting started (actually, it's pronounced vjif)">VJ<span>if</span></div>
+  <div class="brand" title="About VJif & getting started (actually, it's pronounced vjif)">VJ<span>if</span></div><button id="hdrVer" title="What's new in this version"></button>
   <div class="grp sect" id="clockGrp">
     <select id="clockSrc" style="width:112px" title="Where the tempo comes from"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
     <select id="midiIn" hidden style="width:150px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span>
@@ -523,7 +525,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.13.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.13.2';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -3265,7 +3267,8 @@ movable($('#setPanel .modalBox'), 'vjif-setpos');
 const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos');
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
-$('#aboutVer').textContent = 'v' + APP_VERSION;
+$('#aboutVer').textContent = $('#hdrVer').textContent = 'v' + APP_VERSION;
+$('#hdrVer').addEventListener('click', () => openAbout('log'));
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
 $('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<button data-f="${k}" title="${d} · ${w}×${h}">${k}</button>`).join('');
 $('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
