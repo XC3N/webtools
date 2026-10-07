@@ -523,7 +523,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.13.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.13.1';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1509,8 +1509,11 @@ const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: '
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
+  // the scene itself, drawn apart from the output: no screen or layer effects, transition, blackout or freeze
+  const fx = layerFxU; layerFxU = [null, null, null, null];
+  try { render(frameList(performance.now()), trB); } finally { layerFxU = fx; }
   const c = document.createElement('canvas'); c.width = 96; c.height = 54; const x = c.getContext('2d'), k = Math.min(96 / W, 54 / H);
-  x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54); x.drawImage(master, (96 - W * k) / 2, (54 - H * k) / 2, W * k, H * k);   // other formats letterboxed
+  x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54); x.drawImage(trB.canvas, (96 - W * k) / 2, (54 - H * k) / 2, W * k, H * k);   // other formats letterboxed
   return c.toDataURL('image/jpeg', 0.7);
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)

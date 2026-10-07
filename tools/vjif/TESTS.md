@@ -31,6 +31,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n6} **What's new in About** — click the version number in the About title.
 - {n7} **Drag pads** (0.12) — pad onto pad swaps (onto an empty pad: moves); pad onto a layer card puts the GIF there. A quick press still plays instantly; a drag doesn't leave the GIF playing.
 - {n8} **Mono › Dither** (0.13) — F1, style Dither: crisp black and white dots, also on one layer and full screen in the output window.
+- {n9} **Clean scene thumbnails** (0.13.1) — with effects on (output and per layer) or mid-transition, the scene tiles show only the GIFs.
 
 ## Open questions
 - {q1} **Alt shortcuts on Windows** — Alt+E, Alt+F etc. don't open Chrome's menus.
