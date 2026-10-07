@@ -91,6 +91,8 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .pad .dots b{width:14px;height:14px;font:600 9px/14px var(--mono);border-radius:2px;color:#000;text-align:center}
 .pad.loading::after{content:'decoding…';position:absolute;inset:0;display:grid;place-items:center;background:#000b;font:400 11px var(--mono);color:var(--ink)}
 .scgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.brb{display:flex;gap:4px;min-width:0;margin-top:4px}.brb .seg{flex:1;min-width:0}.brb .seg button{padding:0 4px;min-width:0}
+#brbBtn{flex:none;width:86px;font-variant-numeric:tabular-nums;padding:0 6px}#brbLed.on{background:var(--sigtxt)}#brbLed.wait{background:var(--sigtxt);animation:ledblink .25s steps(1) infinite}
 .scene{position:relative;height:40px;padding:0;border:0;border-radius:var(--r);background:var(--bg) center/cover no-repeat;cursor:pointer}
 .scene:hover{box-shadow:0 0 0 1px var(--edge-2)}
 .scene .k{position:absolute;left:3px;top:3px;font:600 11px/1 var(--mono);color:#fff;background:#000b;border-radius:2px;padding:2px 4px}
@@ -327,6 +329,10 @@ output.mod{color:var(--env)}
   <div class="padgrid" id="gridB"></div>
   <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
+  <div class="brb"><button id="brbBtn" title="BRB (be right back): change scene by itself every few bars, on the bar, while you step away · any scene key or click takes back control"><span class="led" id="brbLed"></span><span id="brbTxt">BRB</span></button>
+    <div class="seg" id="brbBars" title="BRB: bars between scene changes"><button data-v="4">4 bars</button><button data-v="8">8</button><button data-v="16">16</button><button data-v="32">32</button></div></div>
+  <div class="brb"><div class="seg" id="brbScn" title="BRB: the next scene with GIFs playing, in order, or any of them at random"><button data-v="order">In order</button><button data-v="rand">Shuffle</button></div>
+    <div class="seg" id="brbTr" title="BRB: the armed transition every time, or a random preset each change"><button data-v="armed">Armed</button><button data-v="rand">Random</button></div></div>
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
   <div class="field"><label>Preset</label><div class="seg span" id="trPre" title="Keys 1–9 arm a preset for the next scene change; the settings below edit the armed one"></div></div>
   <div class="field"><label>Type</label><div class="seg span grid4" id="trType"></div></div>
@@ -515,6 +521,7 @@ output.mod{color:var(--env)}
       <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (full for Length, then fades over Release; with Snap it waits for the beat / bar) or Latch (on / off); Release also sets how Hold and Latch fade out; Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
+      <dt>BRB</dt><dd>Under the scenes: VJif changes scene by itself every 4 / 8 / 16 / 32 bars, on the bar, to the next scene with GIFs playing (In order) or a random one (Shuffle), with the armed transition or a random preset (Random). The button counts the bars down. Any scene key or click, or BRB again, takes back control; Prep pauses it</dd>
       <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length, Release and Amount. To fill one: drag effect tiles onto it, or hold its key (Caps on) or its tile and click / press effects to add or remove them; Caps+Shift+numpad key stores the effects that are on right now. Right-click a preset to see and remove its effects</dd>
       <dt>1–9</dt><dd>Arm a transition preset for the next scene change (the Transition panel edits the armed one)</dd>
       <dt>Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay</dd>
@@ -568,7 +575,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.20.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.21.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1291,7 +1298,7 @@ function targetName(T){
     case 'layer': return `Layer ${T.i + 1} on / off`;
     case 'opacity': return `Layer ${T.i + 1} opacity`;
     case 'amount': return T.i < NFX ? `${FX_DEFS[T.i].name} amount` : `Preset ${T.i - NFX + 1} amount`;
-    case 'black': return 'Blackout'; case 'freeze': return 'Freeze'; case 'tap': return 'Tap tempo'; case 'sync': return 'Sync';
+    case 'black': return 'Blackout'; case 'freeze': return 'Freeze'; case 'tap': return 'Tap tempo'; case 'sync': return 'Sync'; case 'brb': return 'BRB';
   }
   return '?';
 }
@@ -1336,6 +1343,7 @@ function ctlApply(m, kind, val, key){
     case 'freeze': setFreeze(down); break;
     case 'tap': if (down) tap(); break;
     case 'sync': if (down) resync(); break;
+    case 'brb': if (down) brb.on ? brbStop() : brbStart(); break;
   }
 }
 // ---- learn mode: click a target, then press / move the control ----
@@ -1356,6 +1364,7 @@ function learnTargetAt(el){
   if ((x = el.closest('[data-learn]'))) return { t: x.dataset.learn };
   if (el.closest('#tapBtn')) return { t: 'tap' };
   if (el.closest('#syncBtn')) return { t: 'sync' };
+  if (el.closest('#brbBtn')) return { t: 'brb' };
   return null;
 }
 async function startLearn(){
@@ -1375,7 +1384,7 @@ function elFor(T){
     case 'layer': return $('#layers').children[T.i] && $('#layers').children[T.i].querySelector('.lon');
     case 'opacity': return $('#layers').children[T.i] && $('#layers').children[T.i].querySelector('.lop');
     case 'amount': return selFx === T.i ? $('#fxAmt') : null;
-    case 'tap': return $('#tapBtn'); case 'sync': return $('#syncBtn');
+    case 'tap': return $('#tapBtn'); case 'sync': return $('#syncBtn'); case 'brb': return $('#brbBtn');
     default: return $(`#learnBar [data-learn="${T.t}"]`);
   }
 }
@@ -1612,6 +1621,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
 }
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
 function sceneKey(i){
+  if (brb.on) brbStop();                             // you're back: a scene key takes control again
   if (i === sceneIdx){ pendingScene = null; renderScenes(); return; }
   if (prep) return gotoScene(i, clock.beat, true);   // preparing: just open that scene (the output doesn't change)
   const at = snapBeat(clock.beat);
@@ -1635,6 +1645,44 @@ function renderScenes(){
   });
 }
 $('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; (e.ctrlKey || e.metaKey) ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
+// ---- BRB: scene changes by themselves every few bars, on the bar, while you step away ----
+const brb = (() => { let s = {}; try { s = JSON.parse(localStorage.getItem('vjif-brb')) || {}; } catch (e) {}
+  return { on: false, next: 0, bars: [4, 8, 16, 32].includes(s.bars) ? s.bars : 8, scn: s.scn === 'rand' ? 'rand' : 'order', tr: s.tr === 'rand' ? 'rand' : 'armed', lastTr: -1 }; })();
+const brbSave = () => { try { localStorage.setItem('vjif-brb', JSON.stringify({ bars: brb.bars, scn: brb.scn, tr: brb.tr })); } catch (e) {} };
+const brbFirst = () => (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4 + (brb.bars - 1) * 4;   // counted from the next bar
+function brbStart(){ brb.on = true; brb.next = brbFirst(); brbUI(); }
+function brbStop(){ brb.on = false; brbUI(); }
+// scenes it can go to: those with GIFs playing, other than the current one
+const brbChoices = () => Array.from({ length: N_SCENES }, (_, i) => i).filter(i => i !== sceneIdx && sceneCount(i) > 0);
+function brbPick(){
+  const c = brbChoices(); if (!c.length) return -1;
+  if (brb.scn === 'rand') return c[Math.floor(Math.random() * c.length)];
+  for (let k = 1; k <= N_SCENES; k++){ const i = (sceneIdx + k) % N_SCENES; if (c.includes(i)) return i; }
+  return -1;
+}
+function brbTick(){
+  const b = clock.beat;
+  if (b < brb.next - brb.bars * 4 - 4) brb.next = brbFirst();   // the beat count jumped back (Sync, MIDI Start): count again
+  if (prep || b < brb.next - 1e-9) return;           // Prep holds the output still: BRB waits for go-live
+  const at = brb.next; brb.next += brb.bars * 4;
+  const i = brbPick(); if (i < 0) return;            // nothing else to play: stay
+  if (brb.tr === 'rand'){                            // a random preset (not the same twice in a row), without re-arming it
+    const all = trPresets.map((_, k) => k).filter(k => k !== brb.lastTr && trPresets[k].type !== 'cut');
+    const k = all.length ? all[Math.floor(Math.random() * all.length)] : trSel; brb.lastTr = k;
+    const keep = transCfg; transCfg = trPresets[k]; try { gotoScene(i, at); } finally { transCfg = keep; }
+  } else gotoScene(i, at);
+}
+function brbUI(){
+  const left = brb.on ? Math.max(1, Math.ceil((brb.next - clock.beat) / 4 - 1e-9)) : 0;
+  $('#brbLed').classList.toggle('on', brb.on); $('#brbLed').classList.toggle('wait', brb.on && left <= 1);
+  $('#brbBtn').classList.toggle('on', brb.on);
+  const t = brb.on ? `${left} bar${left > 1 ? 's' : ''}` : 'BRB'; if ($('#brbTxt').textContent !== t) $('#brbTxt').textContent = t;
+  [['#brbBars', brb.bars], ['#brbScn', brb.scn], ['#brbTr', brb.tr]].forEach(([q, v]) => document.querySelectorAll(q + ' button').forEach(x => x.classList.toggle('on', x.dataset.v === String(v))));
+}
+$('#brbBtn').addEventListener('click', () => brb.on ? brbStop() : brbStart());
+[['#brbBars', v => { brb.bars = +v; if (brb.on) brb.next = brbFirst(); }], ['#brbScn', v => { brb.scn = v; }], ['#brbTr', v => { brb.tr = v; }]].forEach(([q, f]) =>
+  $(q).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; f(b.dataset.v); brbSave(); brbUI(); }));
+brbUI();
 // scene names: right-click a tile to type one (a click would go to the scene) (Enter or clicking away keeps it, Esc cancels, empty = no name)
 const sceneName = i => i === sceneIdx ? liveName : scenes[i] && scenes[i].name || '';
 function setSceneName(i, name){
@@ -3610,7 +3658,7 @@ setInterval(() => { if (performance.now() - lastFrame > 400) restartLoop(); }, 2
 // ---------- load meter: how much of each second VJif's frame work takes, plus missed screen refreshes and stalls ----------
 const meter = { busy: 0, peak: 0, drops: 0, gaps: [], longN: 0, longMs: 0 };
 try { new PerformanceObserver(l => l.getEntries().forEach(en => { meter.longN++; meter.longMs += en.duration; })).observe({ type: 'longtask', buffered: false }); } catch (e) {}
-let prevFrameT = 0;
+let prevFrameT = 0, brbUIt = 0;
 function frame(gen){
   if (gen !== loopGen) return;                       // a stale loop: drop it
   const now = performance.now();                     // own clock (the output window's rAF time has another origin)
@@ -3620,6 +3668,7 @@ function frame(gen){
   updateClock(now);
   if (pending.size || pendingScene || pendingLive !== null) firePending();
   if (rec.wait || rec.stopAt) recTick();
+  if (brb.on){ brbTick(); if (now - brbUIt > 100){ brbUIt = now; brbUI(); } }
   drawFrame(now);
   if (rec.wc) wcCapture(now);
   if (!document.hidden && now >= uiQuiet && now - scopeT > 33){ scopeT = now; drawScopes(); }

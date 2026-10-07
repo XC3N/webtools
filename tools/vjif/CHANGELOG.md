@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.21.0 — 2026-10-07
+
+### Scenes
+- BRB (be right back), under the scene tiles: VJif changes scene by itself every 4, 8, 16 or 32 bars, on the bar, to the next scene with GIFs playing (In order) or a random one (Shuffle), with the armed transition or a random preset each time (Random, never the same twice in a row; the armed preset stays armed). The button counts the bars down. Any scene key or click, or BRB again, takes back control; Prep pauses it. It can be MIDI-learned.
+
 ## 0.20.0 — 2026-10-07
 
 ### Recording
