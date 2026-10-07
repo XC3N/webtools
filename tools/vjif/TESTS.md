@@ -16,6 +16,9 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r2} **Upload the MP4 to Facebook / Instagram / TikTok** (0.19: standard MP4, 30 fps, H.264 + AAC) — Chrome writes MP4s in a slightly unusual layout.
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
+- {pvt} **Guides / Stick / Ghosts** (0.25) — lower right of the preview: each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {pre} **Adjust an effect inside a preset** (0.25) — click a chip in a preset: change its style, layer, amount; ‹ name goes back.
+- {int} **Interrupted transition** (0.25) — a 1-bar fade from 1 to 2, back to 1 at once: no jump.
 - {glx} **Glitch styles** (0.24) — Transition › Glitch: Slices, Blocks, Melt, Scramble at a few Pixel sizes; F9 Glitch › Scramble.
 - {sel} **Scene selection** (0.24) — select a GIF and a layer in scene 1, go to 2, select others, back to 1: as you left it.
 - {mus} **Music player** (0.23) — Settings › Recording › Music: load an MP3, Sound: Music player, 8-bar take: the music starts on the bar with the clip and is in the file; reload: the track is still there.

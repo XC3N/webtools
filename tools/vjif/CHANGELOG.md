@@ -4,6 +4,26 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.25.0 — 2026-10-07
+
+### Preview
+- Guides (lower right of the preview): thirds, golden ratio, centre or a 4×4 grid, drawn over the preview only.
+- Stick: a dragged GIF's edges or centre stick to the guides, the centre and the edges of the frame (a pink line shows which); hold Alt to place it freely.
+- Ghosts: show or hide the dotted ghosts of faded one-shot GIFs.
+
+### Effect presets
+- Click an effect's chip in a preset to adjust it as the preset plays it: style, layer, amount, rate / size. Click the name (‹ Num 1 › Glitch) to go back to the preset.
+
+### Transitions
+- Changing scene again while a transition runs starts the new one from what's on screen, instead of cutting to the half-arrived scene.
+- Glitch › Slices uses Pixel too (slice height).
+
+### Colour swap
+- Reworked: click a palette colour to select it (again to deselect), then pick what it becomes in the row below; the picker stays open while you drag in it and opens next to the row. Click a swap in the list to select it, × removes it.
+
+### Lettering
+- A font list instead of a typing box: twelve fonts built in (Russo One, Anton, Bebas Neue, Bungee, Monoton, Orbitron, Permanent Marker, Press Start 2P, Righteous, Rubik Mono One, Instrument Sans, JetBrains Mono), common installed ones, and "This computer's fonts…" (Chrome lists every font installed, after asking). The default text is VJif.
+
 ## 0.24.0 — 2026-10-07
 
 ### Transitions

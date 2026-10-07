@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Russo+One&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Russo+One&family=Anton&family=Bebas+Neue&family=Bungee&family=Monoton&family=Orbitron:wght@400;700;900&family=Permanent+Marker&family=Press+Start+2P&family=Rubik+Mono+One&family=Righteous&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* @include common/style.css */
 /* VJif on top of the shared style: layout, header, pads, scenes, layers, preview. Sections are grouped by surface tone:
@@ -115,7 +115,10 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #swPal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin:2px 0 6px}
 #swPal button{height:16px;min-width:0;padding:0;border:1px solid #0006;border-radius:2px}
 #swPal button.on{outline:2px solid var(--sig);outline-offset:1px}
-#swList{display:grid;gap:4px}
+#swPal button.sel{outline:2px solid #fff;outline-offset:1px;position:relative;z-index:1}
+.swEd{display:flex;align-items:center;gap:6px;margin:0 0 6px;font:400 11px var(--mono);color:var(--muted)}.swEd.off{opacity:.45;pointer-events:none}
+.swEd i{width:26px;height:20px;border-radius:2px;border:1px solid #0006;flex:none}.swEd input[type=color]{width:46px;height:22px;padding:0;flex:none}.swEd #swTxt{flex:1;min-width:0}
+#swList{display:grid;gap:4px}#swList .swr{cursor:pointer}#swList .swr.sel span{color:var(--ink)}
 #swList .swr{display:flex;align-items:center;gap:6px;font:400 11px var(--mono);color:var(--muted)}
 #swList .swr i{width:26px;height:20px;border-radius:2px;border:1px solid #0006;flex:none}
 #swList .swr input[type=color]{width:46px;height:22px;padding:0;flex:none}
@@ -148,6 +151,9 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxTgt{flex:none;width:118px}#fxTgt button{padding:0}
 #fxTgt button[data-v]:not([data-v=out]){box-shadow:inset 0 -2px 0 var(--lc)}
 #fxEdit.pre #fxTgt{display:none}
+#fxEdit.pre.ent #fxTgt,#fxEdit.pre.ent #fxStyle{display:grid}#fxEdit.ent #fxPreList{display:none}#fxEdit.pre.ent:not(.sized) #fxRateRow,#fxEdit.pre.ent.sized #fxSizeRow{display:grid}
+#fxEdit.ent #fxMode,#fxEdit.ent #fxLenRow,#fxEdit.ent #fxRelRow{opacity:.5}
+.pchip{cursor:pointer}.pchip:hover{border-color:var(--sig)}#fxName.back{cursor:pointer}#fxName.back::before{content:'‹ ';opacity:.6}
 #fxMode button{padding:0}
 @media (max-width:1760px){ .fxp .s{display:none} .fxrow .field label{font-size:11px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
@@ -177,6 +183,8 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .musName{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 12px var(--sans)}.musTime{font:400 11px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
 #aboutVer{color:var(--muted);text-decoration:none;margin-left:10px;flex:none}
 #aboutVer:hover{color:var(--sig)}
+#pvTools{position:absolute;right:8px;bottom:8px;z-index:3;display:flex;gap:10px;align-items:center;background:#000b;padding:3px 8px;border-radius:var(--r);font-size:12px;opacity:.55;transition:opacity .15s}
+#pvTools:hover,#pvTools:focus-within{opacity:1}#pvTools select{height:24px;font-size:12px}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
 #prepTag{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#1a1200;background:#ffb000;padding:3px 10px;border-radius:2px;pointer-events:none;white-space:nowrap}
 body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
@@ -245,7 +253,7 @@ body.del #fxPads .fxp,body.del #trPre button{box-shadow:inset 0 0 0 2px var(--cl
 #poolPanel{background:none;place-items:start start;pointer-events:none}
 #txPrev{width:100%;height:auto;display:block;margin:0 0 10px;border-radius:var(--r);background:repeating-conic-gradient(#2a2a2a 0 25%,#1c1c1c 0 50%) 0 0/16px 16px}
 #textPanel textarea{width:100%;resize:vertical;font:600 15px var(--sans);background:var(--bg);color:var(--ink);border:1px solid var(--edge);border-radius:var(--r);padding:6px 8px}
-.txRow{display:flex;gap:10px;align-items:center;min-width:0}.txRow input[list]{flex:1;min-width:0}#txCol{width:44px;height:var(--ch);padding:0;border:0;background:none}
+.txRow{display:flex;gap:10px;align-items:center;min-width:0}.txRow select{flex:1;min-width:0}#txCol{width:44px;height:var(--ch);padding:0;border:0;background:none}
 #poolPanel .modalBox{pointer-events:auto;margin:48px 0 0 340px;max-height:calc(100vh - 60px);overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 #poolPanel.dropping .modalBox{outline:2px dashed var(--sig);outline-offset:-2px}
 .ptile[draggable=true]{cursor:grab}
@@ -348,7 +356,10 @@ output.mod{color:var(--env)}
 
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span></div>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span>
+    <div id="pvTools"><select id="guideSel" title="Guide lines over the preview (never in the output)"><option value="">No guides</option><option value="thirds">Thirds</option><option value="golden">Golden ratio</option><option value="centre">Centre</option><option value="grid">Grid 4×4</option></select>
+      <label class="tog" title="Dragged GIFs stick to the guides, the centre and the edges (hold Alt while dragging to place freely)"><input type="checkbox" id="stickTog" checked>Stick</label>
+      <label class="tog" title="Show faded one-shot GIFs as dotted ghosts while they're invisible (preview only)"><input type="checkbox" id="ghostTog" checked>Ghosts</label></div></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
@@ -426,7 +437,8 @@ output.mod{color:var(--env)}
         <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
         <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
         <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" title="Remove every swap">Clear</button></div>
-        <div id="swPal" title="The GIF's colours, most used first — click one to swap it"></div>
+        <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>
+        <div class="swEd" id="swEd"><i id="swFrom"></i><span>→</span><input type="color" id="swTo" title="What the selected colour becomes"><span id="swTxt">Select a colour above</span><button id="swDel" class="iconbtn" title="Remove this swap">×</button></div>
         <div id="swList"></div>
       </div>
       <div data-pane="trig" class="off">
@@ -528,6 +540,7 @@ output.mod{color:var(--env)}
       <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt, scramble · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (full for Length, then fades over Release; with Snap it waits for the beat / bar) or Latch (on / off); Release also sets how Hold and Latch fade out; Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
+      <dt>Preview tools</dt><dd>Lower right of the preview: guide lines (thirds, golden ratio, centre, 4×4 grid; preview only), Stick (a dragged GIF's edges or centre stick to the guides, the centre and the edges; hold Alt to place freely) and Ghosts (show or hide faded one-shot GIFs while they're invisible)</dd>
       <dt>Music & tab audio</dt><dd>Settings › Recording › Music: load a track (or drop an audio file on Settings, or paste a direct link) to play along; with Sound set to "Music player" the recording takes it straight from the file, and With Rec starts it from the top when the take starts (on the bar) and stops it with the take. Sound "Tab audio": when you press Rec, Chrome asks which tab to share (YouTube in another tab works; tick "Also share tab audio") and its sound is recorded with the video</dd>
       <dt>Text…</dt><dd>Lettering (button next to Add…): type a text, pick a font, size, spacing and colour, and it goes on the next empty pad as a one-frame "GIF". Letters: just the text. Cut-out: a matte with see-through letters, to put on a layer above others so they show through the text. Marquee: scrolls across from right to left, one pass per 1–16 bars from the hit (X automation in the Auto tab). Edit text (GIF panel) changes it and keeps the pad's settings. Texts are redrawn when the canvas format changes and saved with the set</dd>
       <dt>BRB</dt><dd>Under the scenes: VJif changes scene by itself every 4 / 8 / 16 / 32 bars, on the bar, to the next scene with GIFs playing (In order) or a random one (Shuffle), with the armed transition or a random preset (Random). The button counts the bars down. Any scene key or click, or BRB again, takes back control; Prep pauses it</dd>
@@ -562,9 +575,11 @@ output.mod{color:var(--env)}
   <div class="modalBox" style="width:min(620px,94vw)">
     <h2>Text<span id="txTo" class="tag"></span><span class="line"></span><button id="txClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <canvas id="txPrev" width="560" height="315"></canvas>
-    <div class="field"><label for="txText">Text</label><textarea id="txText" rows="2" placeholder="XC3N" spellcheck="false"></textarea></div>
-    <div class="field"><label for="txFont">Font</label><div class="txRow"><input id="txFont" list="txFonts" value="Russo One" spellcheck="false" title="Any font installed on this computer, or one from the list"><datalist id="txFonts">
-      <option value="Russo One"><option value="Instrument Sans"><option value="JetBrains Mono"><option value="Arial Black"><option value="Impact"><option value="Helvetica"><option value="Georgia"><option value="Times New Roman"><option value="Courier New"></datalist>
+    <div class="field"><label for="txText">Text</label><textarea id="txText" rows="2" placeholder="VJif" spellcheck="false"></textarea></div>
+    <div class="field"><label for="txFont">Font</label><div class="txRow"><select id="txFont" title="Fonts: the ones in VJif load from Google Fonts (online); “This computer's fonts…” lists what's installed here (Chrome asks once)">
+      <optgroup label="In VJif"><option>Russo One</option><option>Anton</option><option>Bebas Neue</option><option>Bungee</option><option>Monoton</option><option>Orbitron</option><option>Permanent Marker</option><option>Press Start 2P</option><option>Righteous</option><option>Rubik Mono One</option><option>Instrument Sans</option><option>JetBrains Mono</option></optgroup>
+      <optgroup label="Usually installed"><option>Arial Black</option><option>Impact</option><option>Georgia</option><option>Times New Roman</option><option>Courier New</option><option>Verdana</option></optgroup>
+      <optgroup id="txLocal" label="This computer"><option value="?local">This computer's fonts…</option></optgroup></select>
       <label class="tog"><input type="checkbox" id="txBold">Bold</label><label class="tog"><input type="checkbox" id="txItal">Italic</label></div></div>
     <div class="field"><label for="txSize">Size</label><input type="range" id="txSize" min="0.04" max="0.6" step="0.01" value="0.2"><output></output></div>
     <div class="field"><label for="txTrack">Spacing</label><input type="range" id="txTrack" min="-0.1" max="0.5" step="0.01" value="0"><output></output></div>
@@ -600,7 +615,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.24.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.25.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -693,7 +708,7 @@ function guessType(name){ const m = /\.(gif|webp|png|apng)$/i.exec(name||''); if
 const TEXT_MIME = 'application/vnd.vjif.text+json';
 const isTextBlob = (blob, name) => blob.type === TEXT_MIME || /\.vjtext$/i.test(name || '');
 const textName = sp => (sp.text || 'text').replace(/\s+/g, ' ').trim().slice(0, 24) + '.vjtext';
-const TEXT_DEF = { v: 1, text: 'XC3N', font: 'Russo One', bold: false, ital: false, size: 0.2, track: 0, cut: false, color: '#ffffff', marquee: 0 };
+const TEXT_DEF = { v: 1, text: 'VJif', font: 'Russo One', bold: false, ital: false, size: 0.2, track: 0, cut: false, color: '#ffffff', marquee: 0 };
 // one frame at the current canvas size. Letters: tight around the text. Cut-out: a matte the size of the output
 // (wider when it scrolls, so it always covers the screen) with the letters punched through.
 async function renderText(spec){
@@ -742,7 +757,7 @@ function openText(edit = -1){
   const g = edit >= 0 && pads[edit].gif;
   txSpec = { ...TEXT_DEF, ...(g && g.media.text ? g.media.text : (() => { try { return JSON.parse(localStorage.getItem('vjif-textdef')) || {}; } catch (e) { return {}; } })()) };
   if (!g) txSpec.text = '';
-  $('#txText').value = txSpec.text; $('#txFont').value = txSpec.font; $('#txBold').checked = txSpec.bold; $('#txItal').checked = txSpec.ital;
+  $('#txText').value = txSpec.text; txFontSet(txSpec.font); $('#txBold').checked = txSpec.bold; $('#txItal').checked = txSpec.ital;
   $('#txSize').value = txSpec.size; $('#txTrack').value = txSpec.track; $('#txCol').value = txSpec.color;
   const d = edit >= 0 ? edit : nextEmpty(selPad);
   $('#txTo').textContent = edit >= 0 ? `pad ${pads[edit].label}` : d >= 0 ? `→ pad ${pads[d].label}` : 'all pads full: pool only';
@@ -751,7 +766,7 @@ function openText(edit = -1){
 }
 function closeText(){ $('#textPanel').hidden = true; }
 function txRead(){
-  Object.assign(txSpec, { text: $('#txText').value, font: $('#txFont').value.trim() || 'Russo One', bold: $('#txBold').checked, ital: $('#txItal').checked,
+  Object.assign(txSpec, { text: $('#txText').value, font: $('#txFont').value === '?local' ? txSpec.font : $('#txFont').value || 'Russo One', bold: $('#txBold').checked, ital: $('#txItal').checked,
     size: +$('#txSize').value, track: +$('#txTrack').value, color: $('#txCol').value });
 }
 function txUI(){
@@ -762,7 +777,7 @@ function txUI(){
   clearTimeout(txT); txT = setTimeout(txPreview, 60);
 }
 async function txPreview(){
-  const spec = { ...txSpec, text: txSpec.text || 'XC3N' }, r = await renderText({ ...spec, marquee: 0 });   // the still picture (a marquee scrolls it)
+  const spec = { ...txSpec, text: txSpec.text || 'VJif' }, r = await renderText({ ...spec, marquee: 0 });   // the still picture (a marquee scrolls it)
   const c = $('#txPrev'), x = c.getContext('2d'), k = c.width / W; c.height = Math.round(H * k);
   x.clearRect(0, 0, c.width, c.height);
   if (spec.cut){ x.fillStyle = '#3a6'; x.fillRect(0, 0, c.width, c.height); }   // what shows through the letters
@@ -785,6 +800,18 @@ async function textOk(){
     } else { const d = nextEmpty(selPad); if (d >= 0){ putMedia(m, d); pads[d].el.classList.remove('hit'); void pads[d].el.offsetWidth; pads[d].el.classList.add('hit'); } else toast('All pads are full: the text is in the pool'); }
   } catch (err) { toast("Couldn't make the text: " + err.message); }
 }
+// the font list: a font not listed (a set from another computer) is added so it stays selected
+function txFontSet(f){ const sel = $('#txFont'); if (![...sel.options].some(o => o.value === f)){ const o = document.createElement('option'); o.textContent = f; $('#txLocal').prepend(o); } sel.value = f; }
+$('#txFont').addEventListener('change', async e => {
+  if (e.target.value !== '?local') return;
+  e.target.value = txSpec.font;
+  if (!window.queryLocalFonts) return toast("This browser can't list installed fonts (Chrome can)");
+  try { const fams = [...new Set((await queryLocalFonts()).map(f => f.family))].sort((a, b) => a.localeCompare(b));
+    const g = $('#txLocal'), have = new Set([...$('#txFont').options].map(o => o.value));
+    fams.forEach(f => { if (!have.has(f)){ const o = document.createElement('option'); o.textContent = f; g.appendChild(o); } });
+    g.querySelector('option[value="?local"]').textContent = `This computer: ${fams.length} fonts`; toast2(`${fams.length} fonts listed under “This computer”`);
+  } catch (err) { toast('Installed fonts were not shared'); }
+});
 $('#textBtn').addEventListener('click', () => openText(-1));
 $('#gText').addEventListener('click', () => openText(selPad));
 $('#txClose').addEventListener('click', closeText); $('#txCancel').addEventListener('click', closeText);
@@ -1746,7 +1773,10 @@ function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   if (hist.ready) commit();                          // an edit still waiting for its undo step gets it now, in its own scene
   // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
-  endTrans(); if (!instant) trans = makeTrans(layers.map(layerState), pads.map(p => p.gif), beat);
+  // changing again mid-transition: the new one starts from what's on screen right now (a still of it), so nothing jumps
+  let still = null;
+  if (!instant && trans && transProgress() < 1 && transCfg.type !== 'cut'){ still = document.createElement('canvas'); still.width = W; still.height = H; still.getContext('2d').drawImage(master, 0, 0); }
+  endTrans(); if (!instant){ trans = makeTrans(layers.map(layerState), pads.map(p => p.gif), beat); if (trans && still) trans.still = still; }
   scenes[sceneIdx] = captureScene(); sceneIdx = i;
   const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   layers.forEach((L, li) => {
@@ -1890,7 +1920,7 @@ function syncTransUI(){
   $('#trStyle').innerHTML = sts.length ? sts.map(x => `<button data-v="${x[0]}" class="${x[0] === stl ? 'on' : ''}" title="${x[2]}">${x[1]}</button>`).join('') : '<button disabled>—</button>';
   $('#trStyleRow').classList.toggle('dimmed', !sts.length);
   const pi = optIdx(TR_PX, T.px || 12); $('#trPx').value = pi; $('#trPx').nextElementSibling.textContent = TR_PX[pi][1];
-  $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || (T.type === 'glitch' && trStyleOf(T) !== 'slices')));
+  $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || T.type === 'glitch'));
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
   $('#trDirRow').classList.toggle('dimmed', !(T.type === 'slide' || (T.type === 'wipe' && stl === 'line')));
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || (T.type === 'glitch' && trStyleOf(T) === 'melt'));   // the melt keeps Doom's own timing
@@ -2000,8 +2030,12 @@ function paintFxPads(b){
     el.firstChild.style.height = v + '%'; el.classList.toggle('on', v > 50);
   });
 }
+let preEd = null, preEdOf = -1;                      // an effect inside the selected preset being edited (its index), or null
 function syncFxUI(){
-  const pre = selFx >= NFX, C = fxConf(selFx), d = pre ? null : FX_DEFS[selFx];
+  if (selFx !== preEdOf){ preEd = null; preEdOf = selFx; }
+  const pre = selFx >= NFX, C = fxConf(selFx);
+  if (pre && preEd != null && !C.fx[preEd]) preEd = null;
+  const E = pre && preEd != null ? C.fx[preEd] : null, d = pre ? (E ? FX_DEFS[preEd] : null) : FX_DEFS[selFx];
   document.querySelectorAll('#fxStrip .fxp').forEach(el => {
     const i = +el.dataset.i, c = fxConf(i);
     el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = (i < NFX && tgtKey(c.target) !== 'out' ? `L${tgtKey(c.target) + 1} ` : '') + c.mode;
@@ -2012,12 +2046,18 @@ function syncFxUI(){
       el.querySelector('.n').textContent = e ? 'empty' : fxPreName(P); el.querySelector('.s').textContent = ''; el.classList.toggle('empty', e);
       el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; }
   });
-  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('sized', !pre && !!d.size);
-  $('#fxName').textContent = pre ? FXP_LABELS[selFx - NFX] : d.name; $('#fxName').title = pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
-  $('#fxName').classList.toggle('grab', !pre);
-  if (pre){
+  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && !!d.size);
+  $('#fxName').textContent = E ? `${FXP_LABELS[selFx - NFX]} › ${d.name}` : pre ? FXP_LABELS[selFx - NFX] : d.name;
+  $('#fxName').title = E ? `${d.name} as this preset plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
+  $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
+  if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
+    $('#fxStyle').innerHTML = d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join('');
+    segSet('#fxStyle', E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
+    segSet('#fxTgt', String(tgtKey(E.target)));
+  }
+  else if (pre){
     const ks = Object.keys(C.fx);
-    $('#fxPreList').innerHTML = ks.length ? ks.map(i => `<span class="pchip" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}%">${FX_DEFS[i].name}${tgtKey(C.fx[i].target) !== 'out' ? ` <small>L${tgtKey(C.fx[i].target) + 1}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
+    $('#fxPreList').innerHTML = ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtKey(C.fx[i].target) !== 'out' ? ` <small>L${tgtKey(C.fx[i].target) + 1}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>';
   }
   else {
@@ -2026,28 +2066,33 @@ function syncFxUI(){
     segSet('#fxTgt', String(tgtKey(C.target)));
   }
   segSet('#fxMode', C.mode);
-  $('#fxAmt').value = C.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(C.amt * 100) + '%';
+  const A = E || C; $('#fxAmt').value = A.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(A.amt * 100) + '%';
   const li = optIdx(FX_LENS, C.len); $('#fxLen').value = li; $('#fxLen').nextElementSibling.textContent = FX_LENS[li][1];
   $('#fxLenRow').classList.toggle('dimmed', C.mode !== 'hit');
   const ri = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode)); $('#fxRel').value = ri; $('#fxRel').nextElementSibling.textContent = FX_RELS[ri][1];
   $('#fxRel').dataset.def = optIdx(FX_RELS, fxRelDef(C.mode));     // double-click: this mode's usual release
-  if (!pre){
+  if (!pre || E){
+    const C = E || fxConf(selFx), di = E ? preEd : selFx;
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
-    $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[selFx].rate);
+    $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate);
     const zi = optIdx(FX_SIZES, C.size || 64); $('#fxSize').value = zi; $('#fxSize').nextElementSibling.textContent = FX_SIZES[zi][1];
   }
 }
 $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it
   fxConf(selFx).mode = b.dataset.v; syncFxUI(); });
-$('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx < NFX){ fxCfg[selFx].target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
-$('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx < NFX){ fxCfg[selFx].style = b.dataset.v; syncFxUI(); } });
-$('#fxAmt').addEventListener('input', e => { fxConf(selFx).amt = +e.target.value; syncFxUI(); });
+const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NFX].fx[preEd] : null;   // what the effect-level controls change
+$('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
+$('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.style = b.dataset.v; syncFxUI(); } });
+$('#fxAmt').addEventListener('input', e => { (fxEd() || fxConf(selFx)).amt = +e.target.value; syncFxUI(); });
+$('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 $('#fxLen').addEventListener('input', e => { fxConf(selFx).len = FX_LENS[+e.target.value][0]; syncFxUI(); });
 $('#fxRel').addEventListener('input', e => { fxConf(selFx).rel = FX_RELS[+e.target.value][0]; syncFxUI(); });
-$('#fxSize').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].size = FX_SIZES[+e.target.value][0]; syncFxUI(); } });
-$('#fxRate').addEventListener('input', e => { if (selFx < NFX){ fxCfg[selFx].rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
-$('#fxPreList').addEventListener('click', e => { const b = e.target.closest('button'); if (b && selFx >= NFX){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); } });
+$('#fxSize').addEventListener('input', e => { const X = fxEd(); if (X){ X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); } });
+$('#fxRate').addEventListener('input', e => { const X = fxEd(); if (X){ X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
+$('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
+  if (b){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); return; }
+  const ch = e.target.closest('.pchip'); if (ch){ preEd = +ch.dataset.e; syncFxUI(); } });
 $('#fxStore').addEventListener('click', () => { if (selFx >= NFX) storeFxPre(selFx - NFX); });
 $('#fxClear').addEventListener('click', () => { if (selFx >= NFX){ fxPre[selFx - NFX].fx = {}; syncFxUI(); } });
 
@@ -2241,7 +2286,7 @@ const TR_STYLES = {
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
   wipe: [['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)']],
-  glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
+  glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
            ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)'], ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)']] };
 const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
 // presets from before the families: dip / flash were their own types
@@ -2417,7 +2462,7 @@ function composeTransition(e, T){
         }
         m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; break; }
       // slices: torn horizontal slices from both scenes, settling on the new one
-      const G = trans && (trans.gl || (trans.gl = Array.from({ length: 22 }, () => [Math.random(), Math.random(), Math.random()])));
+      const G = trans && (trans.gl || (trans.gl = Array.from({ length: Math.max(4, Math.min(120, Math.round(H / ((T.px || 12) * 4)))) }, () => [Math.random(), Math.random(), Math.random()])));   // Pixel = slice height ÷ 4
       if (!G){ m.drawImage(B, 0, 0); break; }
       const tear = Math.sin(Math.PI * e), step = Math.floor(e * 24);   // re-torn a couple dozen times over the transition
       m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
@@ -2433,8 +2478,14 @@ function composeTransition(e, T){
   m.globalAlpha = 1;
 }
 // fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
+const pvOpt = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('vjif-pvopt')) || {}; } catch (e) {} return { guides: o.guides || '', stick: o.stick !== false, ghosts: o.ghosts !== false }; })();
+// guide lines in output pixels: [xs, ys]
+function guideLines(kind = pvOpt.guides){
+  const f = kind === 'thirds' ? [1 / 3, 2 / 3] : kind === 'golden' ? [0.382, 0.618] : kind === 'centre' ? [0.5] : kind === 'grid' ? [0.25, 0.5, 0.75] : [];
+  return [f.map(v => v * W), f.map(v => v * H)];
+}
 function ghostList(){
-  const out = [];
+  const out = []; if (!pvOpt.ghosts) return out;
   for (const L of layers){ if (!L.on) continue; for (const c of L.clips){ const g = pads[c.pad].gif; if (g && g.trig === 'fade' && !(envLevel(c, g, clock.beat) > 0)) out.push([c, g]); } }
   return out;
 }
@@ -2785,6 +2836,10 @@ function drawFrame(now){
   if (force || sig !== redraw.scene){
     redraw.scene = sig; drawn++; let sideFx = false;
     if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
+    else if (trans && trans.still){                   // from a still of the interrupted transition
+      trA.setTransform(1, 0, 0, 1, 0, 0); trA.globalAlpha = 1; trA.globalCompositeOperation = 'source-over'; trA.drawImage(trans.still, 0, 0); render(list, trB);
+      composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
+    }
     else if (trans && trans.fx && post){                 // going live from Prep: each side with its own effects, then combined
       const aF = fxFrame(clock.beat, trans.fx);
       render(frameList(now, trans.from, trans.gifs), trA, 4, aF.layers); if (aF.out) post.run(aF.out, trA.canvas, trA, 15); else post.idle(15);
@@ -2805,7 +2860,7 @@ function drawFrame(now){
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
   paintFxPads(clock.beat);
   const L = layers[target], sel = selClip(), gh = ghostList();
-  const osig = `${format},${safeGuides},${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
+  const osig = `${format},${safeGuides},${pvOpt.guides},${drag && drag.snap ? drag.snap.x + ':' + drag.snap.y : ''},${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
     + '|' + gh.map(([c, g]) => { const G = clipGeom(c); return `${c.id},${G.cx},${G.cy},${G.hw},${G.hh},${G.a},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb},${g.fxVer},${g.startF},${g.crisp}`; }).join(';');
   if (force || osig !== redraw.overlay){ redraw.overlay = osig; drawOverlay(gh); }
   redraw.all = false;
@@ -2815,6 +2870,18 @@ function drawOverlay(gh = ghostList()){
   pctx.clearRect(0, 0, pv.width, pv.height);
   const k = view.w * dpr / W, L = layers[target], sel = selClip();
   if (gh.length) drawGhosts(gh, k, dpr);
+  if (pvOpt.guides){                                    // guide lines (preview only)
+    const [xs, ys] = guideLines(); pctx.save(); pctx.strokeStyle = '#ffffff40'; pctx.lineWidth = dpr; pctx.setLineDash([4 * dpr, 4 * dpr]); pctx.beginPath();
+    xs.forEach(x => { const X = Math.round((view.x + x * view.w / W) * dpr) + 0.5; pctx.moveTo(X, view.y * dpr); pctx.lineTo(X, (view.y + view.h) * dpr); });
+    ys.forEach(y => { const Y = Math.round((view.y + y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); });
+    pctx.stroke(); pctx.restore();
+  }
+  if (drag && drag.snap){                               // the line a dragged GIF sticks to
+    pctx.save(); pctx.strokeStyle = '#ff5bb0'; pctx.lineWidth = dpr; pctx.beginPath();
+    if (drag.snap.x != null){ const X = Math.round((view.x + drag.snap.x * view.w / W) * dpr) + 0.5; pctx.moveTo(X, view.y * dpr); pctx.lineTo(X, (view.y + view.h) * dpr); }
+    if (drag.snap.y != null){ const Y = Math.round((view.y + drag.snap.y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); }
+    pctx.stroke(); pctx.restore();
+  }
   if (format === '9:16' && safeGuides){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
     const x0 = (view.x + view.w * 0.06) * dpr, y0 = (view.y + view.h * 0.14) * dpr, x1 = (view.x + view.w * 0.86) * dpr, y1 = (view.y + view.h * 0.78) * dpr;
     pctx.save(); pctx.fillStyle = '#ffffff10';
@@ -3208,28 +3275,41 @@ function gifPalette(g){
 const rgbHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const sameRgb = (a, b) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+let swSel = null;                                     // the palette colour being edited ([r,g,b]) or null
 function syncSwapUI(g){
   if (!g) return;
   const pal = gifPalette(g);
-  $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}" style="background:${rgbHex(c)}" title="${rgbHex(c)}"></button>`).join('');
-  $('#swList').innerHTML = g.swap.length ? g.swap.map((x, i) => `<div class="swr"><i style="background:${rgbHex(x.from)}"></i>→<input type="color" data-i="${i}" value="${rgbHex(x.to)}"><span>${rgbHex(x.from)} → ${rgbHex(x.to)}</span><button class="iconbtn" data-x="${i}" title="Remove this swap">×</button></div>`).join('')
-    : '<p class="note" style="margin:0">No swaps: click a colour above.</p>';
+  if (swSel && !pal.some(c => sameRgb(c, swSel))) swSel = null;
+  $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}${swSel && sameRgb(swSel, c) ? ' sel' : ''}" style="background:${rgbHex(c)}" title="${rgbHex(c)}"></button>`).join('');
+  $('#swList').innerHTML = g.swap.length ? g.swap.map((x, i) => `<div class="swr${swSel && sameRgb(swSel, x.from) ? ' sel' : ''}" data-r="${i}"><i style="background:${rgbHex(x.from)}"></i>→<i style="background:${rgbHex(x.to)}"></i><span>${rgbHex(x.from)} → ${rgbHex(x.to)}</span><button class="iconbtn" data-x="${i}" title="Remove this swap">×</button></div>`).join('')
+    : '<p class="note" style="margin:0">No swaps yet.</p>';
+  swEdUI(g);
+}
+// the editor row never gets rebuilt, so the colour picker can stay open and be dragged in
+function swEdUI(g){
+  const x = swSel && g.swap.find(x => sameRgb(x.from, swSel));
+  $('#swEd').classList.toggle('off', !swSel); $('#swDel').hidden = !x;
+  $('#swFrom').style.background = swSel ? rgbHex(swSel) : 'transparent';
+  if (document.activeElement !== $('#swTo')) $('#swTo').value = rgbHex(x ? x.to : swSel || [0, 0, 0]);
+  $('#swTxt').textContent = !swSel ? 'Select a colour above' : x ? `${rgbHex(x.from)} → ${rgbHex(x.to)}` : `${rgbHex(swSel)}: pick what it becomes`;
 }
 $('#swPal').addEventListener('click', e => {
   const b = e.target.closest('button'), g = curGif(); if (!b || !g) return;
-  const c = gifPalette(g)[+b.dataset.i], k = g.swap.findIndex(x => sameRgb(x.from, c));
-  if (k >= 0){ const inp = $(`#swList input[data-i="${k}"]`); if (inp) inp.click(); return; }   // already swapped: edit it
-  if (g.swap.length >= SWAP_MAX) return toast(`Up to ${SWAP_MAX} swaps per GIF`);
-  g.swap.push({ from: c.slice(), to: c.slice() }); syncSwapUI(g);
-  const inp = $(`#swList input[data-i="${g.swap.length - 1}"]`); if (inp) inp.click();   // pick what it becomes
+  const c = gifPalette(g)[+b.dataset.i]; swSel = swSel && sameRgb(swSel, c) ? null : c.slice(); syncSwapUI(g);
 });
-$('#swList').addEventListener('input', e => {
-  const g = curGif(); if (!g || !e.target.matches('input[type=color]')) return;
-  const x = g.swap[+e.target.dataset.i]; if (!x) return; x.to = hexRgb(e.target.value);
-  e.target.nextElementSibling.textContent = `${rgbHex(x.from)} → ${rgbHex(x.to)}`; scheduleFx(g, 60);
+$('#swList').addEventListener('click', e => {
+  const g = curGif(); if (!g) return;
+  const b = e.target.closest('[data-x]'); if (b){ const x = g.swap[+b.dataset.x]; if (x && swSel && sameRgb(x.from, swSel)) swSel = null; g.swap.splice(+b.dataset.x, 1); scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); return; }
+  const r = e.target.closest('[data-r]'); if (r){ const x = g.swap[+r.dataset.r]; swSel = swSel && sameRgb(swSel, x.from) ? null : x.from.slice(); syncSwapUI(g); }
 });
-$('#swList').addEventListener('change', () => { const g = curGif(); if (g){ scheduleFx(g, 0); renderPad(selPad); } });
-$('#swList').addEventListener('click', e => { const b = e.target.closest('[data-x]'), g = curGif(); if (!b || !g) return; g.swap.splice(+b.dataset.x, 1); scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
+$('#swTo').addEventListener('input', e => {
+  const g = curGif(); if (!g || !swSel) return;
+  let x = g.swap.find(x => sameRgb(x.from, swSel));
+  if (!x){ if (g.swap.length >= SWAP_MAX) return toast(`Up to ${SWAP_MAX} swaps per GIF`); x = { from: swSel.slice(), to: swSel.slice() }; g.swap.push(x); }
+  x.to = hexRgb(e.target.value); swEdUI(g); scheduleFx(g, 60);
+});
+$('#swTo').addEventListener('change', () => { const g = curGif(); if (g){ scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); } });
+$('#swDel').addEventListener('click', () => { const g = curGif(); if (!g || !swSel) return; g.swap = g.swap.filter(x => !sameRgb(x.from, swSel)); scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
 $('#swClear').addEventListener('click', () => { const g = curGif(); if (!g || !g.swap.length) return; g.swap = []; scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
 
 $('#gSmooth').addEventListener('change', e => { const c = selClip(), g = c && pads[c.pad].gif; if (g){ g.crisp = !e.target.checked; renderPad(c.pad); } });
@@ -3586,6 +3666,15 @@ pv.addEventListener('pointermove', e => {
     }
   } else if (drag.type === 'move'){
     c.x = clamp(drag.x0 + px - drag.px, -W, W); c.y = clamp(drag.y0 + py - drag.py, -H, H);
+    drag.snap = null;
+    if (pvOpt.stick && !e.altKey){                       // stick: the GIF's edges or centre onto a guide, the centre or an edge, within ~8 screen px
+      const G = clipGeom(c);
+      if (G){ const tol = 8 * W / view.w, rx = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), ry = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
+        const [gx, gy] = guideLines(), LX = [0, W / 2, W, ...gx], LY = [0, H / 2, H, ...gy];
+        const best = (pts, lines) => { let b = null; for (const p of pts) for (const l of lines){ const d = l - p; if (Math.abs(d) <= tol && (!b || Math.abs(d) < Math.abs(b.d))) b = { d, l }; } return b; };
+        const bx = best([G.cx - rx, G.cx, G.cx + rx], LX), by = best([G.cy - ry, G.cy, G.cy + ry], LY);
+        if (bx || by){ drag.snap = { x: bx ? bx.l : null, y: by ? by.l : null }; if (bx) c.x += bx.d; if (by) c.y += by.d; } }
+    }
   } else {
     const { G0, h } = drag, [lx, ly] = toLocal(G0, px, py), center = e.altKey;
     let ncx = 0, ncy = 0;
@@ -3612,6 +3701,12 @@ pv.addEventListener('pointermove', e => {
   syncXfUI();
 });
 pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.style.cursor = 'grab'; drag = null; commit(); });
+// preview tools: guides, stick, ghosts (per browser)
+const pvSave = () => { try { localStorage.setItem('vjif-pvopt', JSON.stringify(pvOpt)); } catch (e) {} redraw.all = true; };
+$('#guideSel').value = pvOpt.guides; $('#stickTog').checked = pvOpt.stick; $('#ghostTog').checked = pvOpt.ghosts;
+$('#guideSel').addEventListener('change', e => { pvOpt.guides = e.target.value; pvSave(); e.target.blur(); });
+$('#stickTog').addEventListener('change', e => { pvOpt.stick = e.target.checked; pvSave(); });
+$('#ghostTog').addEventListener('change', e => { pvOpt.ghosts = e.target.checked; pvSave(); });
 pv.addEventListener('pointercancel', () => drag = null);
 pv.addEventListener('wheel', e => {
   e.preventDefault();
