@@ -16,6 +16,8 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r2} **Upload the MP4 to Facebook / Instagram / TikTok** (0.19: standard MP4, 30 fps, H.264 + AAC) — Chrome writes MP4s in a slightly unusual layout.
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
+- {mus} **Music player** (0.23) — Settings › Recording › Music: load an MP3, Sound: Music player, 8-bar take: the music starts on the bar with the clip and is in the file; reload: the track is still there.
+- {tab} **Tab audio** (0.23) — Sound: Tab audio, play YouTube in another tab, press Rec, pick that tab with "Also share tab audio": its sound is in the file.
 - {r5} **Recording settings** (0.20) — Settings › Recording: try HEVC and AV1, 60 fps, 40 Mb/s, Opus. The file plays at that rate (VLC › Codec info); an unsupported codec says so and records H.264.
 
 ## Canvas formats

@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.23.0 — 2026-10-07
+
+### Recording sound
+- Music player (Settings › Recording › Music): load an audio file (MP3, WAV, FLAC, OGG, M4A…, or drop one on Settings) or a direct link to one. Play / pause, listening level, loop. The track is remembered.
+- Sound › Music player: recordings take the track straight from the file at full level (no loopback cable). With Rec starts it from the top when the take starts, on the bar, and stops it with the take, so a clip and its music line up.
+- Sound › Tab audio: when you press Rec, Chrome asks which tab to share; its sound is recorded with the video (YouTube or any player in another tab; tick "Also share tab audio"). YouTube / Spotify / SoundCloud links can't be played inside VJif itself.
+
 ## 0.22.2 — 2026-10-07
 
 ### Interface

@@ -174,6 +174,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .fxp.on .n,.fxp.on .hd,.fxp.on .s{color:var(--sigtxt)}
 #fmtSeg button,#recBarsSeg button,#recFpsSeg button,#recMbpsSeg button,#recACodecSeg button{padding:0 10px;min-width:40px}
 .recLbl{color:var(--muted);width:72px;flex:none}
+.musName{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 12px var(--sans)}.musTime{font:400 11px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
 #aboutVer{color:var(--muted);text-decoration:none;margin-left:10px;flex:none}
 #aboutVer:hover{color:var(--sig)}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
@@ -479,7 +480,10 @@ output.mod{color:var(--env)}
     <div class="row"><span class="lbl recLbl">Quality</span><div class="seg" id="recMbpsSeg" title="Video bit rate: higher is sharper on noisy, busy GIFs and makes bigger files. The upload sites re-encode anyway"><button data-m="6">6</button><button data-m="12">12</button><button data-m="20">20</button><button data-m="40">40</button></div><span class="lbl" style="color:var(--muted)">Mb/s</span></div>
     <div class="row"><span class="lbl recLbl">Sound</span><select id="recAudioSel" style="flex:1;min-width:0" title="Record a sound input with the video: your audio interface, a loopback / virtual cable carrying the DJ mix…"><option value="">No sound</option></select>
       <div class="seg" id="recACodecSeg" title="Sound codec in MP4: AAC is what the social sites expect; Opus sounds a little better for its size but some sites refuse it. WebM is always Opus"><button data-a="aac">AAC</button><button data-a="opus">Opus</button></div></div>
-    <p class="note">H.264 at 30 fps is the safe choice for Facebook, Instagram and TikTok. A codec this browser can't encode falls back to H.264 (or WebM), with a message. MP4 keeps the frame rate exactly; in WebM it's a maximum (the browser's recorder drops frames when busy).</p>
+    <div class="row"><span class="lbl recLbl">Music</span><button id="musLoad" title="Load a track: MP3, WAV, FLAC, OGG, M4A… (or drop an audio file here)">Load…</button><input id="musUrl" type="url" placeholder="…or a direct link to an audio file" style="flex:1;min-width:0" title="A direct link to an audio file (the site must allow it). YouTube / Spotify / SoundCloud pages can't be used: pick Tab audio as the sound instead"><input id="musFile" type="file" accept="audio/*" hidden></div>
+    <div class="row"><span class="lbl recLbl"></span><button id="musPlay" class="iconbtn" title="Play / pause the track (you hear it here; the recording takes it at full level)" disabled>▶</button><span id="musName" class="musName">no track</span><span id="musTime" class="musTime"></span></div>
+    <div class="row"><span class="lbl recLbl"></span><span class="lbl" style="color:var(--muted)">Level</span><input id="musVol" type="range" min="0" max="1" step="0.01" value="0.8" title="Listening level (the recording isn't affected)" style="flex:1;min-width:0"><label class="tog" title="Start the track from the top when a recording starts (on the bar) and stop it when the recording stops"><input type="checkbox" id="musSync" checked>With Rec</label><label class="tog"><input type="checkbox" id="musLoop">Loop</label></div>
+    <p class="note">Sound: an input, the Music player (straight from the file), or Tab audio (at Rec, Chrome asks which tab to share: tick "Also share tab audio"). H.264 at 30 fps is the safe choice for Facebook, Instagram and TikTok; a codec this browser can't encode falls back to H.264, with a message. WebM's frame rate is a maximum.</p>
     <div class="sub"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
     <p class="note">Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black.</p>
@@ -524,6 +528,7 @@ output.mod{color:var(--env)}
       <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (full for Length, then fades over Release; with Snap it waits for the beat / bar) or Latch (on / off); Release also sets how Hold and Latch fade out; Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
+      <dt>Music & tab audio</dt><dd>Settings › Recording › Music: load a track (or drop an audio file on Settings, or paste a direct link) to play along; with Sound set to "Music player" the recording takes it straight from the file, and With Rec starts it from the top when the take starts (on the bar) and stops it with the take. Sound "Tab audio": when you press Rec, Chrome asks which tab to share (YouTube in another tab works; tick "Also share tab audio") and its sound is recorded with the video</dd>
       <dt>Text…</dt><dd>Lettering (button next to Add…): type a text, pick a font, size, spacing and colour, and it goes on the next empty pad as a one-frame "GIF". Letters: just the text. Cut-out: a matte with see-through letters, to put on a layer above others so they show through the text. Marquee: scrolls across from right to left, one pass per 1–16 bars from the hit (X automation in the Auto tab). Edit text (GIF panel) changes it and keeps the pad's settings. Texts are redrawn when the canvas format changes and saved with the set</dd>
       <dt>BRB</dt><dd>Under the scenes: VJif changes scene by itself every 4 / 8 / 16 / 32 bars, on the bar, to the next scene with GIFs playing (In order) or a random one (Shuffle), with the armed transition or a random preset (Random). The button counts the bars down. Any scene key or click, or BRB again, takes back control; Prep pauses it</dd>
       <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length, Release and Amount. To fill one: drag effect tiles onto it, or hold its key (Caps on) or its tile and click / press effects to add or remove them; Caps+Shift+numpad key stores the effects that are on right now. Right-click a preset to see and remove its effects</dd>
@@ -595,7 +600,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.22.2';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.23.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -3739,8 +3744,8 @@ async function fillRecAudio(ask = false){
   if (ask){ try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach(t => t.stop()); } catch (e) { toast('Sound input access was not allowed'); } }
   let ins = []; try { ins = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput' && d.deviceId !== 'default' && d.deviceId !== 'communications'); } catch (e) {}
   const named = ins.some(d => d.label);
-  sel.innerHTML = '<option value="">No sound</option>' + (named ? ins.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label)}</option>`).join('') : '<option value="?">Choose an input… (asks permission)</option>')
-    + (recAudio && !ins.some(d => d.deviceId === recAudio.id) ? `<option value="${esc(recAudio.id)}">${esc(recAudio.label || 'Chosen input')} (not connected)</option>` : '');
+  sel.innerHTML = '<option value="">No sound</option><option value="music">Music player (below)</option><option value="tab">Tab audio (pick a tab at Rec)</option>' + (named ? ins.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label)}</option>`).join('') : '<option value="?">Choose an input… (asks permission)</option>')
+    + (recAudio && !SPECIAL_SND.includes(recAudio.id) && !ins.some(d => d.deviceId === recAudio.id) ? `<option value="${esc(recAudio.id)}">${esc(recAudio.label || 'Chosen input')} (not connected)</option>` : '');
   sel.value = recAudio ? recAudio.id : '';
 }
 $('#recAudioSel').addEventListener('change', async e => {
@@ -4123,6 +4128,48 @@ async function exportSet(name, snap){
 // ---------- recording the output (MediaRecorder on the master canvas) ----------
 // Where the browser can, the file is chosen first and written while recording (long sets don't fill memory);
 // otherwise the recording is kept in memory and downloaded at the end.
+// ---- music player: a track to play along and to record with the video (Settings › Recording › Music) ----
+const SPECIAL_SND = ['music', 'tab'];
+const mus = { el: new Audio(), name: '', url: null, ctx: null, dest: null, gain: null };
+mus.el.crossOrigin = 'anonymous'; mus.el.preload = 'auto';
+// file → speakers (at the listening level) and → a stream for recordings (full level)
+function musGraph(){
+  if (mus.ctx) return;
+  mus.ctx = new AudioContext(); const src = mus.ctx.createMediaElementSource(mus.el);
+  mus.gain = mus.ctx.createGain(); mus.gain.gain.value = +$('#musVol').value; mus.dest = mus.ctx.createMediaStreamDestination();
+  src.connect(mus.gain); mus.gain.connect(mus.ctx.destination); src.connect(mus.dest);
+}
+function musSet(src, name, save = true){
+  if (mus.url){ URL.revokeObjectURL(mus.url); mus.url = null; }
+  mus.el.pause();
+  if (src instanceof Blob){ mus.url = URL.createObjectURL(src); mus.el.src = mus.url; if (save) store.put('music', { name, blob: src }); }
+  else { mus.el.src = src; if (save) store.put('music', { name, url: src }); }
+  mus.name = name; musUI();
+}
+async function musPlay(){ musGraph(); try { await mus.ctx.resume(); await mus.el.play(); } catch (e) { toast("Can't play that track: " + (e.message || e.name)); } musUI(); }
+const musSyncOn = () => recAudio && recAudio.id === 'music' && $('#musSync').checked && mus.el.src;
+function musRecStart(){ if (!musSyncOn()) return; mus.el.currentTime = 0; musPlay(); }
+function musRecStop(){ if (musSyncOn()){ mus.el.pause(); musUI(); } }
+const mmss = t => isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '–:––';
+function musUI(){
+  $('#musName').textContent = mus.name || 'no track'; $('#musPlay').disabled = !mus.el.src;
+  $('#musPlay').textContent = mus.el.paused ? '▶' : '❚❚';
+  $('#musTime').textContent = mus.el.src ? `${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : '';
+}
+['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata'].forEach(ev => mus.el.addEventListener(ev, musUI));
+mus.el.addEventListener('error', () => { if (mus.el.src) toast(`Can't load ${mus.name}: ${mus.url ? 'not an audio format this browser plays' : "the link isn't an audio file, or the site doesn't allow it"}`); });
+$('#musLoad').addEventListener('click', () => $('#musFile').click());
+$('#musFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) musSet(f, f.name); });
+$('#musUrl').addEventListener('keydown', e => { if (e.key !== 'Enter') return; const u = e.target.value.trim(); if (!u) return;
+  if (/youtube\.com|youtu\.be|spotify\.com|soundcloud\.com/i.test(u)) return toast('That page can\'t be played here: open it in another tab and pick Tab audio as the sound');
+  musSet(u, decodeURIComponent(u.split(/[?#]/)[0].split('/').pop() || 'link')); e.target.value = ''; });
+$('#musPlay').addEventListener('click', () => mus.el.paused ? musPlay() : mus.el.pause());
+$('#musVol').addEventListener('input', e => { if (mus.gain) mus.gain.gain.value = +e.target.value; });
+$('#musLoop').addEventListener('change', e => { mus.el.loop = e.target.checked; });
+$('#setPanel').addEventListener('dragover', e => { if ([...e.dataTransfer.items].some(i => i.type.startsWith('audio/'))) e.preventDefault(); });
+$('#setPanel').addEventListener('drop', e => { const f = [...e.dataTransfer.files].find(f => f.type.startsWith('audio/')); if (!f) return; e.preventDefault(); e.stopPropagation(); musSet(f, f.name); });
+async function musRestore(){ try { const r = await store.get('music'); if (r) musSet(r.blob || r.url, r.name, false); } catch (e) {} }
+
 const rec = { mr: null, chunks: [], writer: null, t0: 0, wait: null, name: '', bytes: 0, pending: Promise.resolve() };
 // MP4 (H.264) uploads straight to Instagram / TikTok / YouTube; WebM (VP9) is the fallback where the browser has no H.264 encoder
 const REC_MIMES = { mp4: ['video/mp4;codecs=avc1.64002A', 'video/mp4;codecs=avc1.640028', 'video/mp4;codecs=avc1.4D0028', 'video/mp4;codecs=avc1'],
@@ -4156,7 +4203,16 @@ function recCancelWait(){
 }
 async function recPrepare(){
   rec.audio = null;
-  if (recAudio){                                     // the chosen sound input, raw (no echo cancelling / noise gate / level riding)
+  if (recAudio && recAudio.id === 'music'){          // the music player, straight from the file
+    if (!mus.el.src) toast('No track loaded (Settings › Recording › Music) — recording without sound');
+    else { musGraph(); try { await mus.ctx.resume(); } catch (e) {} rec.audio = new MediaStream(mus.dest.stream.getAudioTracks().map(t => t.clone())); }
+  } else if (recAudio && recAudio.id === 'tab'){     // another tab's sound: Chrome asks which tab (its picture is captured too, then ignored)
+    try {
+      const st = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, preferCurrentTab: false, selfBrowserSurface: 'exclude', systemAudio: 'include', surfaceSwitching: 'include' });
+      if (!st.getAudioTracks().length){ st.getTracks().forEach(t => t.stop()); toast('That share had no sound: tick "Also share tab audio" in Chrome\'s picker — recording without sound'); }
+      else rec.audio = st;
+    } catch (e) { if (e.name === 'NotAllowedError') return toast('Recording cancelled (no tab shared)'); toast(`Tab audio didn't start (${e.name === 'InvalidStateError' ? 'it needs a click on Rec, not a MIDI or key trigger' : e.message || e.name}) — recording without sound`); }
+  } else if (recAudio){                              // the chosen sound input, raw (no echo cancelling / noise gate / level riding)
     try { rec.audio = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: recAudio.id }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
     catch (e) { toast(`Can't open the sound input (${recAudio.label || 'chosen input'}) — recording without sound`); }
   }
@@ -4178,6 +4234,7 @@ async function recPrepare(){
   else recStart(mime);
 }
 function recStart(mime, beat = clock.beat){
+  musRecStart();
   if (mime === WC_MP4) return wcStart(beat);
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   // this take owns its writer, chunks, name and sound input: a quick next take can't step on them while this one saves
@@ -4190,7 +4247,7 @@ function recStart(mime, beat = clock.beat){
     if (writer){ const b = e.data; pend = pend.then(() => writer.write(b)).catch(err => toast('Writing the recording failed: ' + err.message)); }
     else chunks.push(e.data); };
   mr.onstop = async () => {
-    stream.getTracks().forEach(t => t.stop());
+    stream.getTracks().forEach(t => t.stop()); if (audio) audio.getTracks().forEach(t => t.stop());
     if (writer){ await pend; try { await writer.close(); toast2(`Recording saved: ${name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } if (rec.writer === writer) rec.writer = null; }
     else { const blob = new Blob(chunks, { type: mime.split(';')[0] });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
@@ -4283,7 +4340,7 @@ async function wcStop(C){
       setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${C.name} (downloads folder)`); }
   } catch (e) { toast('Saving the recording failed: ' + e.message); }
 }
-function recStop(){ if (!rec.mr) return; const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
+function recStop(){ if (!rec.mr) return; musRecStop(); const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
 function recUI(){
   const b = $('#recBtn'); $('#recLed').classList.toggle('on', !!rec.mr); $('#recLed').classList.toggle('wait', !!rec.wait);
   if (rec.mr){ const t = (performance.now() - rec.t0) / 1000, mb = rec.bytes / 1048576;
@@ -4435,7 +4492,7 @@ async function restore(){
     session.savedSig = curSet() ? contentSig(curSet().snap) : '';
   } catch (e) { toast('Saved session could not be loaded: ' + e.message); }
   finally {
-    syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot();
+    syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot(); musRestore();
     hist.cur = histState(); hist.ready = true;
     $('#saveStat').textContent = '';
     updSetLabel(); gcGifs();
