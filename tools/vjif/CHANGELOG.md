@@ -4,6 +4,17 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.16.0 — 2026-10-06
+
+### Prep mode
+- Prep (P, or the header button): the output keeps playing the live scene exactly as it is, with its own copy of the GIFs and effects, while you work on any scene in the main window. Switch scenes, load and place GIFs, try effects: only the preview shows it.
+- The live scene's tile says LIVE; the preview is framed in amber with a PREP tag.
+- Go live (Enter, P or the button) sends the scene you're on out with the armed transition, on the next beat / bar with Snap.
+- Blackout, freeze and recording keep acting on the output while you prep.
+
+### Fixes
+- Effect style buttons share the room when the window is narrow, so the last style (e.g. Dither) no longer disappears.
+
 ## 0.15.0 — 2026-10-06
 
 ### Output window

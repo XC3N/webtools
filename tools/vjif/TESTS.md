@@ -36,11 +36,11 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n11} **New logo** (0.14) — header and About: Russo One, chrome, "if" in magenta, slanted; nothing clipped at your display scaling.
 - {n12} **Slanted drag chips everywhere** (0.14.1) — dragging a layer chip, an effect tile or the effect name shows the same slanted chip as pads.
 - {n13} **Output window remembers its place** (0.15) — move it to the projector screen, close it, reopen: same place and size. Drag inside it to move it; Shift+click Output resets.
+- {i5} **Prep mode** (0.16) — P: the output keeps the live scene while you edit any scene (with the output window open on a second screen); Go live (Enter) sends it out with the transition.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.
 - {i3} **Hercules P32 DJ** (parked) — probably not needed if the Launchpad's fader mode covers knobs.
-- {i5} **Prep mode** (proposal) — edit any scene while the output keeps playing the live one; Go live sends it out.
 
 ## Open questions
 - none right now (Alt shortcuts: fine on Windows; controller: Hercules P32 DJ, layout to follow)

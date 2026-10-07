@@ -132,6 +132,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:36px}
 .fxrow .lcd{flex:none;width:9.5ch;text-align:center;font-size:11px}
 .fxrow .seg{flex:1;min-width:0}
+#fxStyle button{flex:1 1 0;min-width:0;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* every style shrinks a little, rather than the last one vanishing */
 #fxMode{flex:none;width:120px}
 #fxTgt{flex:none;width:118px}#fxTgt button{padding:0}
 #fxTgt button[data-v]:not([data-v=out]){box-shadow:inset 0 -2px 0 var(--lc)}
@@ -164,6 +165,12 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #aboutVer{color:var(--muted);text-decoration:none;margin-left:10px;flex:none}
 #aboutVer:hover{color:var(--sig)}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
+#prepTag{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#1a1200;background:#ffb000;padding:3px 10px;border-radius:2px;pointer-events:none;white-space:nowrap}
+body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
+#prepLed.on{background:#ffb000;box-shadow:0 0 6px #ffb000}
+#liveBtn.wait{animation:wait .25s steps(1) infinite}
+.scene.onair{box-shadow:0 0 0 2px #ff3b3b}
+.scene.onair::before{content:"LIVE";position:absolute;right:3px;top:3px;z-index:1;font:700 9px/1 var(--mono);color:#fff;background:#d01f1f;border-radius:2px;padding:2px 4px}
 #liveTag{position:absolute;top:8px;left:8px;z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#fff;background:#a33;padding:3px 8px;border-radius:2px;pointer-events:none}
 
 
@@ -294,7 +301,7 @@ output.mod{color:var(--env)}
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="prepBtn" title="Prep (P): the output keeps playing what's live while you work on any scene · Go live (Enter or P) sends it out"><span class="led" id="prepLed"></span>Prep</button><button id="liveBtn" class="accent" hidden title="Send the scene you're on to the output with the armed transition (Enter or P)">Go live</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -319,7 +326,7 @@ output.mod{color:var(--env)}
 
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span></div>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · the output still shows the live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
@@ -495,6 +502,7 @@ output.mod{color:var(--env)}
       <dt>Sliders</dt><dd>Double-click the bar resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · double-click the number to type a value (Enter applies, Esc cancels) · dropdowns and button rows take the wheel and arrows too</dd>
       <dt>Del / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
+      <dt>P · Enter</dt><dd>Prep: the output keeps playing the live scene, untouched, while you work on any scene here (switch scenes, load and place GIFs, try effects: the preview shows it, the output doesn't). The live scene's tile says LIVE. Go live (Enter, P or the button) sends the scene you're on to the output with the armed transition, on the next beat / bar with Snap. Blackout, freeze and recording still act on the output</dd>
       <dt>Output</dt><dd>Opens the output window, where you left it last time (position and size are remembered). Drag anywhere in it to move it; double-click switches full screen on and off. Shift+click Output resets its position if it ends up somewhere unreachable</dd>
       <dt>Rec</dt><dd>Records the output to an MP4 (H.264) or WebM video — Settings › Canvas picks which, and the size follows the canvas format. A length in bars (4–32) starts on the next bar and stops exactly on the bar, so the clip loops cleanly (good for Reels). Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
       <dt>MIDI learn</dt><dd>Settings › MIDI control › Learn: click a target (pad, scene, transition, effect, layer chip, opacity, effect amount, Tap, Sync, or Blackout/Freeze in the bar), then move a control on your controller. Faders need a knob/fader (CC). Esc or Done to finish; mappings are remembered</dd>
@@ -535,7 +543,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.15.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.16.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1400,6 +1408,7 @@ function trigger(p, swap = false){
   el.classList.add('wait');
 }
 function firePending(){
+  if (pendingLive !== null && clock.beat >= pendingLive - 1e-9) doGoLive(pendingLive);
   if (pendingScene && clock.beat >= pendingScene.beat - 1e-9){ const q = pendingScene; pendingScene = null; gotoScene(q.i, q.beat); }
   for (const [p, q] of pending) if (clock.beat >= q.beat - 1e-9 || !pads[p].gif){
     pending.delete(p); pads[p].el.classList.remove('wait'); fire(p, q.beat, q.released, q.swap);
@@ -1536,7 +1545,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   if (hist.ready) commit();                          // an edit still waiting for its undo step gets it now, in its own scene
   // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
-  trans = !instant && transCfg.type !== 'cut' ? { cfg: { ...transCfg }, from: layers.map(layerState), gifs: pads.map(p => p.gif), b0: beat, len: transCfg.len, melt: transCfg.type === 'melt' ? meltTable(transCfg.px) : null, dis: transCfg.type === 'dissolve' ? dissolveGrid(transCfg.px || 12) : null } : null;
+  endTrans(); if (!instant) trans = makeTrans(layers.map(layerState), pads.map(p => p.gif), beat);
   scenes[sceneIdx] = captureScene(); sceneIdx = i;
   const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
   layers.forEach((L, li) => {
@@ -1553,6 +1562,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
 function sceneKey(i){
   if (i === sceneIdx){ pendingScene = null; renderScenes(); return; }
+  if (prep) return gotoScene(i, clock.beat, true);   // preparing: just open that scene (the output doesn't change)
   const at = snapBeat(clock.beat);
   if (at <= clock.beat) return gotoScene(i, at);
   pendingScene = { i, beat: at }; renderScenes();
@@ -1564,7 +1574,7 @@ function renderScenes(){
   if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" draggable="true"><span class="k">${i + 1}</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
-    b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
+    b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
     const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
     const bg = n && th ? `url(${th})` : pg ? `url(${gifThumb(pg)})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
     b.classList.toggle('padsOnly', !!pg);
@@ -1617,7 +1627,7 @@ function swapScenes(a, b){
     const other = a === sceneIdx ? b : a;
     scenes[sceneIdx] = scenes[other]; scenes[other] = null; sceneIdx = other;
   } else [scenes[a], scenes[b]] = [scenes[b], scenes[a]];
-  pendingScene = null; [sceneIds[a], sceneIds[b]] = [sceneIds[b], sceneIds[a]];
+  pendingScene = null; [sceneIds[a], sceneIds[b]] = [sceneIds[b], sceneIds[a]]; if (prep) prep.scene = map(prep.scene);
   // undo steps name their scene by number: follow the move
   const fix = e => {
     if (typeof e === 'string'){ const o = JSON.parse(e); if (o.scene !== undefined) o.scene = map(o.scene); return JSON.stringify(o); }
@@ -1948,11 +1958,11 @@ function sceneSig(list){
   }
   return s;
 }
-function render(list, ctx = mctx){
+function render(list, ctx = mctx, slotOff = null, LUs = layerFxU){
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (const { L, items } of list){
-    const LU = post && layerFxU[L.i];
+    const LU = post && LUs[L.i];
     if (L.i === 0 && L.fillOn && L.fill && !LU){       // the Background layer's colour, under its GIFs
       ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     }
@@ -1960,7 +1970,7 @@ function render(list, ctx = mctx){
       const b = lbufs[L.i]; b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
       if (L.i === 0 && L.fillOn && L.fill){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
       for (const { g, e, fi } of items) drawClip(b, e, g, fxImage(g, fi, e));
-      post.run(LU, b.canvas, b, L.i + 1 + (ctx === trA ? 4 : 0));   // the scene being left keeps its own Feedback history
+      post.run(LU, b.canvas, b, L.i + 1 + (slotOff ?? (ctx === trA ? 4 : 0)));   // the scene being left (and Prep's preview) keep their own Feedback history
       ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend; ctx.drawImage(b.canvas, 0, 0); ctx.restore();
       continue;
     }
@@ -2003,7 +2013,57 @@ const trDefaults = () => [{ type: 'cut' }, { type: 'fade', style: 'cross', len: 
   { type: 'glitch', len: 1 }, { type: 'melt', len: 4, smooth: false }].map(P => normTrans({ dir: 'left', len: 2, smooth: true, px: 12, ...P }));
 let trPresets = trDefaults(), trSel = 1, transCfg = trPresets[trSel];
 function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
-let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt }
+let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt, free: GIF copies to let go after }
+function makeTrans(from, gifs, beat, free = null){
+  if (transCfg.type === 'cut') return null;
+  return { cfg: { ...transCfg }, from, gifs, b0: beat, len: transCfg.len, free, melt: transCfg.type === 'melt' ? meltTable(transCfg.px) : null, dis: transCfg.type === 'dissolve' ? dissolveGrid(transCfg.px || 12) : null };
+}
+function endTrans(){ if (trans && trans.free) trans.free.forEach(freeGif); trans = null; }
+// ---------- Prep: the output keeps playing what's live while you work on any scene ----------
+// prep = { layers, gifs, free, fx, scene }: copies of the live scene's layers and clips, of the GIFs they play
+// (own settings, same frames) and of the effects' state. Nothing the editor does reaches them.
+let prep = null, pendingLive = null;
+function startPrep(){
+  if (prep) return;
+  if (trans){ toast('Wait for the transition to finish'); return; }
+  if (hist.ready) commit();
+  pendingScene = null;
+  const gifs = pads.map(() => null), free = [];
+  const used = new Set(layers.flatMap(L => L.clips.map(c => c.pad)));
+  pads.forEach((p, k) => { if (p.gif && used.has(k)){ gifs[k] = cloneInst(p.gif); free.push(gifs[k]); } });
+  const now = clock.beat, cp = o => JSON.parse(JSON.stringify(o));
+  const st = fxSt.map(S => ({ ...S }));
+  st.forEach(S => { if (S.held){ S.held = false; S.rel = now; } });   // a key held right now would never be let go on the output
+  prep = { layers: layers.map(L => ({ ...layerState(L), clips: L.clips.map(c => ({ ...c, env: c.env && { ...c.env } })) })), gifs, free,
+           fx: { cfg: cp(fxCfg), pre: cp(fxPre), st }, scene: sceneIdx };
+  syncPrepUI(); renderScenes(); redraw.all = true;
+}
+// Go live: the scene you're on goes out with the armed transition (on the next beat / bar with Snap)
+function goLive(){
+  if (!prep) return;
+  updateClock(performance.now());                    // the beat right now, not as of the last frame
+  const at = snapBeat(clock.beat);
+  if (at > clock.beat){ pendingLive = at; syncPrepUI(); return; }
+  doGoLive(at);
+}
+function doGoLive(beat = clock.beat){
+  const P = prep; pendingLive = null; if (!P) return;
+  prep = null; endTrans();
+  const t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
+  if (P.scene !== sceneIdx) layers.forEach(L => L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; }));   // another scene starts from the top
+  trans = makeTrans(P.layers, P.gifs, beat, P.free);
+  if (!trans) P.free.forEach(freeGif);
+  syncPrepUI(); renderScenes(); redraw.all = true;
+}
+function dropPrep(){ if (!prep) return; prep.free.forEach(freeGif); prep = null; pendingLive = null; syncPrepUI(); }
+function syncPrepUI(){
+  const b = $('#prepBtn'); if (!b) return;
+  b.classList.toggle('on', !!prep); $('#prepLed').classList.toggle('on', !!prep);
+  $('#liveBtn').hidden = !prep; $('#liveBtn').classList.toggle('wait', pendingLive !== null);
+  $('#liveBtn').textContent = pendingLive !== null ? 'Going live…' : 'Go live';
+  $('#prepTag').hidden = !prep;
+  document.body.classList.toggle('prepping', !!prep);
+}
 const trA = mkCanvas().getContext('2d', { alpha: false }), trB = mkCanvas().getContext('2d', { alpha: false }), trM = mkCanvas().getContext('2d');
 const TR_PX = [[2, '2 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px']];
 // Dissolve: a random order for blocks of `px` pixels, made when the transition starts
@@ -2160,8 +2220,10 @@ let fxCfg = fxDefaults(), fxPre = fxPreDefaults(), selFx = 0;
 const NFX = FX_DEFS.length;
 const fxSt = [...FX_DEFS, ...FXP_KEYS].map(() => ({ held: false, on: false, b0: -1e9, rel: -1e9 }));
 const fxConf = i => i < NFX ? fxCfg[i] : fxPre[i - NFX];
-function fxLevel(i, b){
-  const C = fxConf(i), S = fxSt[i];
+// effect state: the editor's own, or (in Prep) the copy the output keeps playing
+const fxLive = () => ({ cfg: fxCfg, pre: fxPre, st: fxSt });
+function fxLevel(i, b, X = null){
+  const C = X ? (i < NFX ? X.cfg[i] : X.pre[i - NFX]) : fxConf(i), S = (X ? X.st : fxSt)[i];
   const rel = C.rel ?? fxRelDef(C.mode);
   if (C.mode === 'hit'){                             // full for Length, then fades over Release
     const t = b - S.b0; if (t < 0) return 0; if (t < (C.len || 0)) return 1;
@@ -2193,12 +2255,12 @@ const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; ret
 // strongest of its own key and the presets playing it on that target (whose rate and style then count).
 const FX_TARGETS = ['out', 0, 1, 2, 3];
 const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
-function fxMix(b){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), rate: fxCfg.map(c => c.rate), style: fxCfg.map(c => c.style), size: fxCfg.map(c => c.size || 64) });
+function fxMix(b, X = fxLive()){
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map(c => c.size || 64) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
-  FX_DEFS.forEach((d, i) => { const C = fxCfg[i], v = fxLevel(i, b) * C.amt; if (v > 0) M.get(tgtKey(C.target)).lv[i] = v; });
-  fxPre.forEach((P, k) => {
-    const l = fxLevel(NFX + k, b) * P.amt; if (!(l > 0)) return;
+  FX_DEFS.forEach((d, i) => { const C = X.cfg[i], v = fxLevel(i, b, X) * C.amt; if (v > 0) M.get(tgtKey(C.target)).lv[i] = v; });
+  X.pre.forEach((P, k) => {
+    const l = fxLevel(NFX + k, b, X) * P.amt; if (!(l > 0)) return;
     for (const [i, e] of Object.entries(P.fx)){
       const m = M.get(tgtKey(e.target)), v = l * e.amt;
       if (v > m.lv[i]){ m.lv[i] = v; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; }
@@ -2220,8 +2282,8 @@ function fxU(b, { lv, rate, style, size }){
   return U;
 }
 // this frame's settings for every target: { out: U | null, layers: [U | null ×4], any }
-function fxFrame(b){
-  const M = fxMix(b), out = fxU(b, M.get('out')), layers = [0, 1, 2, 3].map(t => fxU(b, M.get(t)));
+function fxFrame(b, X){
+  const M = fxMix(b, X), out = fxU(b, M.get('out')), layers = [0, 1, 2, 3].map(t => fxU(b, M.get(t)));
   return { out, layers, any: !!out || layers.some(Boolean) };
 }
 let layerFxU = [null, null, null, null];             // read by render(): effects playing on each layer this frame
@@ -2392,13 +2454,34 @@ const post = (() => {
     } };
   } catch (e) { console.warn('screen effects unavailable:', e.message); return null; }
 })();
+const NOFX = { out: null, layers: [null, null, null, null], any: false };
+// Prep: the output keeps playing the scene that was live (its own copy of the clips, GIFs and effects), while the
+// editor's picture goes to the preview only. Both are drawn every frame.
+function drawPrep(now, hidden, quiet){
+  const P = prep, b = clock.beat, bl = blackLevel(now); drawn++;
+  const oF = post ? fxFrame(b, P.fx) : NOFX;
+  oF.layers.forEach((U, li) => { if (!U && post) post.idle(li + 1); });
+  if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
+  else render(frameList(now, P.layers, P.gifs), mctx, 0, oF.layers);
+  if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }
+  if (oF.out) post.run(oF.out); else if (post) post.idle(0);
+  if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
+  if (outCtx) outCtx.drawImage(master, 0, 0);
+  if (hidden || quiet) return;
+  const eF = post ? fxFrame(b) : NOFX; layerFxU = eF.layers;
+  eF.layers.forEach((U, li) => { if (!U && post) post.idle(li + 10); });
+  render(frameList(now), trB, 9, eF.layers);
+  if (eF.out) post.run(eF.out, trB.canvas, trB, 14); else if (post) post.idle(14);
+  sctx.drawImage(trB.canvas, 0, 0, pvScene.width, pvScene.height);
+}
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
   if (!outCtx && hidden && !rec.mr) return;        // nobody is looking (and nothing is recording)
+  if (prep) drawPrep(now, hidden, quiet); else {
   const list = frameList(now);
   let tp = 1;
-  if (trans){ tp = transProgress(); if (tp >= 1){ trans = null; redraw.all = true; } }
+  if (trans){ tp = transProgress(); if (tp >= 1){ endTrans(); redraw.all = true; } }
   const fxF = post ? fxFrame(clock.beat) : { out: null, layers: [null, null, null, null], any: false }, fxU = fxF.out, bl = blackLevel(now);
   layerFxU = fxF.layers; layerFxU.forEach((U, li) => { if (!U && post) post.idle(li + 1); });
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
@@ -2415,6 +2498,7 @@ function drawFrame(now){
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
+  }
   }
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
   paintFxPads(clock.beat);
@@ -2517,7 +2601,7 @@ function setFormat(k, { quiet = false, force = false } = {}){
   [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = W; c.height = H; });
   if (post) post.resize();
   if (outCtx){ outCtx.canvas.width = W; outCtx.canvas.height = H; }
-  live.freeze = false; live.freezeReq = false; updLiveTag(); trans = null;
+  live.freeze = false; live.freezeReq = false; updLiveTag(); endTrans();
   if (outWin && !outWin.closed && !outWin.document.fullscreenElement){ const k2 = 960 / Math.max(W, H);
     try { outWin.resizeTo(Math.round(W * k2) + outWin.outerWidth - outWin.innerWidth, Math.round(H * k2) + outWin.outerHeight - outWin.innerHeight); } catch (e) {} }
   $('#xX').min = -W; $('#xX').max = W; $('#xY').min = -H; $('#xY').max = H;
@@ -2565,6 +2649,8 @@ function onKey(e){
     c.y = clamp(c.y + (e.code === 'ArrowUp' ? -st : e.code === 'ArrowDown' ? st : 0), -H, H);
     syncXfUI(); return;
   }
+  if (e.code === 'KeyP' && !e.repeat){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // P: Prep on / go live
+  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && prep && !e.repeat){ e.preventDefault(); goLive(); return; }
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
   if (xi >= 0){ e.preventDefault(); if (!e.repeat) heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
   const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
@@ -3396,7 +3482,7 @@ function frame(gen){
   prevFrameT = now;
   lastFrame = now;
   updateClock(now);
-  if (pending.size || pendingScene) firePending();
+  if (pending.size || pendingScene || pendingLive !== null) firePending();
   if (rec.wait || rec.stopAt) recTick();
   drawFrame(now);
   if (!document.hidden && now >= uiQuiet && now - scopeT > 33){ scopeT = now; drawScopes(); }
@@ -3555,7 +3641,7 @@ async function applySnapshot(st, { wait = true } = {}){
     const gs = pads.map((_, k) => mk(ss.pads[k]));
     scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: null, name: ss.name || '' };
   }
-  sceneIdx = idx; pendingScene = null; liveThumb = null; liveName = st.sceneName || ''; trans = null; renderScenes();
+  sceneIdx = idx; pendingScene = null; liveThumb = null; liveName = st.sceneName || ''; endTrans(); dropPrep(); renderScenes();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait')); heldPre = -1;
   trPresets = trDefaults(); trSel = st.transP && st.transP.length === 9 ? st.transSel ?? 1 : 1;
   if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => normTrans(Object.assign(trPresets[k], P)));
@@ -3612,7 +3698,7 @@ async function newEmptySet(){
   [...insts.values()].forEach(freeGif); pool.slice().forEach(freeMedia);
   pads.forEach((p, i) => { p.gif = null; renderPad(i); }); renderPool();
   layers.forEach(L => Object.assign(L, emptyLayer()));
-  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; trans = null; renderScenes();
+  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; endTrans(); dropPrep(); renderScenes();
   trPresets = trDefaults(); armTrans(1);
   fxCfg = fxDefaults(); fxPre = fxPreDefaults(); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); heldPre = -1; syncFxUI();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
@@ -3770,6 +3856,8 @@ function recTick(){
 }
 setInterval(() => { if (rec.mr) recUI(); }, 500);
 $('#recBtn').addEventListener('click', recToggle);
+$('#prepBtn').addEventListener('click', () => prep ? goLive() : startPrep());
+$('#liveBtn').addEventListener('click', goLive);
 async function saveFile(blob, filename){
   if (window.showSaveFilePicker){
     try {
