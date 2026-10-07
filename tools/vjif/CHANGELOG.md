@@ -4,6 +4,18 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.18.1 — 2026-10-07
+
+### Fixes (review of Prep, Ctrl+click and recording)
+- Prep: a GIF the output is still playing can't be removed from the pool (it used to freeze the output); loading a set, a new set, importing or changing the canvas format wait until you go live.
+- Prep: the output's copy keeps the same random automation and colour-key region, and a pad held down when Prep starts is let go on the output.
+- Prep: Sync restarts the output's GIFs too; a go-live waiting for the beat follows Sync.
+- Going live: fade-trigger GIFs of the new scene fade in instead of staying invisible; the leaving scene keeps the output's effects while it fades out.
+- Enter only starts Prep / goes live when no button, menu or field has focus.
+- Ctrl+click on a Mac (which arrives as a right-click) deletes or resets on scenes, pool GIFs and transition presets too.
+- Recording: each take keeps its own file and sound input, so starting the next one quickly can't cut the previous save or lose the sound; the microphone is let go on every early exit; if a format can't carry sound, it records without and says so.
+- Scene tiles refresh after a GIF's colour work finishes.
+
 ## 0.18.0 — 2026-10-07
 
 ### Interface

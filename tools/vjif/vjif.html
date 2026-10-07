@@ -545,7 +545,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.18.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.18.1';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -669,7 +669,7 @@ function makeInst(m, saved = null){
 }
 const gifSettings = g => JSON.parse(JSON.stringify(Object.fromEntries(GIF_KEYS.map(k => [k, g[k]]))));
 // an independent copy (same frames, own settings), with its colour work started
-function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); if (c.key.on || hsvOn(c)) applyFx(c); return c; }
+function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); c.seed = g.seed ?? g.uid; if (g.masks) c.masks = g.masks; if (c.key.on || hsvOn(c)) applyFx(c); return c; }
 function freeMedia(m){ const i = pool.indexOf(m); if (i >= 0) pool.splice(i, 1); m.src.forEach(f => f.close()); }
 // a GIF file → its media in the pool (decoded and stored the first time it's seen)
 async function mediaFor(blob, name){
@@ -799,7 +799,8 @@ function poolUse(m){
     const gs = s === sceneIdx ? pads.map(p => p.gif) : scenes[s] ? scenes[s].pads : [];
     gs.forEach((g, k) => { if (g && g.media === m){ if (!sc.includes(s + 1)) sc.push(s + 1); if (s === sceneIdx) here.push(pads[k].label); } });
   }
-  return { sc, here };
+  const air = [...(prep ? prep.gifs : []), ...(trans && trans.free ? trans.gifs : [])].some(g => g && g.media === m);
+  return { sc, here, air };   // air: the output is playing a copy of it (Prep or a go-live transition)
 }
 function renderPool(){
   const pb = $('#poolBtn'); if (pb) pb.textContent = `Pool ${pool.length}`;
@@ -820,6 +821,7 @@ function renderPool(){
     const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);
     x.imageSmoothingEnabled = false; x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
     t.addEventListener('click', e => { if (e.target.closest('.px') || e.ctrlKey || e.metaKey) return poolUse(m).sc.length ? toast('Still on a pad — clear it there first') : removeMedia(m); pickPool(m); });   // Ctrl+click: remove
+    t.addEventListener('contextmenu', e => { if (!e.ctrlKey) return; e.preventDefault(); poolUse(m).sc.length ? toast('Still on a pad — clear it there first') : removeMedia(m); });   // (a Mac's Ctrl+click)
     grid.appendChild(t);
   });
 }
@@ -831,7 +833,8 @@ function pickPool(m){
 }
 // drop a GIF from the pool (only when no pad uses it); undo steps that could bring it back go too
 function removeMedia(m){
-  if (poolUse(m).sc.length) return;
+  const u = poolUse(m); if (u.sc.length) return;
+  if (u.air){ toast('That GIF is on the output — go live first'); return; }
   const keep = e => !entryInsts(e).some(g => g && g.media === m);
   [...hist.undo, ...hist.redo].filter(e => !keep(e)).forEach(dropEntry);
   hist.undo = hist.undo.filter(keep); hist.redo = hist.redo.filter(keep);
@@ -857,7 +860,7 @@ const dtLink = dt => (dt.getData('text/uri-list') || dt.getData('text/plain') ||
   });
 });
 movable($('#poolPanel .modalBox'), 'vjif-poolpos');
-$('#poolPrune').addEventListener('click', () => { pool.filter(m => !poolUse(m).sc.length).forEach(removeMedia); toast2('Unused GIFs removed'); });
+$('#poolPrune').addEventListener('click', () => { pool.filter(m => { const u = poolUse(m); return !u.sc.length && !u.air; }).forEach(removeMedia); toast2('Unused GIFs removed'); });
 
 // ---------- color key (pre-processed into a second frame set) ----------
 // Live colour (key + HSV): each frame goes through a small WebGL shader right when it's drawn, so changes
@@ -1066,7 +1069,7 @@ try {
 } catch (e) { fxWorker = null; }
 
 function fxDone(g, frames){
-  const old = g.frames; g.frames = frames; g.fxP = null;
+  const old = g.frames; g.frames = frames; g.fxP = null; g.tileThumb = null;
   if (old !== g.src && old !== frames) old.forEach(f => f.close());
   g.bytes = g.srcBytes * (frames === g.src ? 1 : 2); g.keyMsg = ''; g.fxVer++;
   const pi = pads.findIndex(p => p.gif === g); if (pi >= 0) renderPad(pi);
@@ -1162,6 +1165,8 @@ function resync(){
   const now = performance.now();
   if (clock.src === 'internal'){ clock.beat = 0; clock.taps.length = 0; }
   layers.forEach(L => L.clips.forEach(c => { c.startTime = now; c.startBeat = clock.beat; }));
+  if (prep) prep.layers.forEach(L => L.clips.forEach(c => { c.startTime = now; c.startBeat = clock.beat; }));   // the output follows Sync too
+  if (pendingLive !== null) pendingLive = clock.beat;
   const b = $('#syncBtn'); b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 120);
 }
 function updateClock(now){
@@ -1499,7 +1504,7 @@ function lfoShape(A, pos, seed){
     default: return 0.5 - 0.5 * Math.cos(2 * Math.PI * f);        // sine, starting at Min
   }
 }
-const lfoSeed = (g, i) => g.uid * 16 + i;
+const lfoSeed = (g, i) => (g.seed ?? g.uid) * 16 + i;   // a copy keeps its original's random automation
 const lfoAny = g => LFO_T.some(t => g.lfo[t[0]] && g.lfo[t[0]].on);
 // the clip as drawn right now: automation and the fade envelope applied on a copy (the clip itself keeps its settings)
 function effClip(c, g){
@@ -1600,6 +1605,7 @@ function setSceneName(i, name){
 }
 $('#scenes').addEventListener('contextmenu', e => {
   const b = e.target.closest('.scene'); if (!b) return; e.preventDefault(); if (b.querySelector('.nmEdit')) return;
+  if (e.ctrlKey) return emptySceneAt(+b.dataset.i);   // a Mac's Ctrl+click arrives as a right-click
   const i = +b.dataset.i, inp = document.createElement('input');
   inp.className = 'nmEdit'; inp.value = sceneName(i); inp.placeholder = `Scene ${i + 1}`; inp.spellcheck = false; b.draggable = false;
   b.appendChild(inp); inp.focus(); inp.select();
@@ -1660,6 +1666,7 @@ function syncTransUI(){
 }
 $('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = +b.dataset.v;
   if (e.ctrlKey || e.metaKey){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Ctrl+click: reset it
+$('#trPre').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || !e.ctrlKey) return; e.preventDefault(); const k = +b.dataset.v; trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); armTrans(k); });
 $('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); } });
 $('#trStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
   transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
@@ -1675,7 +1682,7 @@ $('#scDup').addEventListener('click', () => {
   scenes[t] = { thumb: sceneThumb(), name: liveName, pads: pads.map(p => p.gif && cloneInst(p.gif)),   // its own copy of every pad's settings
     layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
     return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
-  gotoScene(t); toast2(`Copied to scene ${t + 1}`);
+  gotoScene(t, clock.beat, !!prep); toast2(`Copied to scene ${t + 1}`);
 });
 // ---- screen effect pads + editor ----
 const NP_ORDER = [6, 7, 8, 3, 4, 5, 0, 1, 2];           // preset tiles laid out like the numpad (7 8 9 on top)
@@ -2040,7 +2047,9 @@ function startPrep(){
   const now = clock.beat, cp = o => JSON.parse(JSON.stringify(o));
   const st = fxSt.map(S => ({ ...S }));
   st.forEach(S => { if (S.held){ S.held = false; S.rel = now; } });   // a key held right now would never be let go on the output
-  prep = { layers: layers.map(L => ({ ...layerState(L), clips: L.clips.map(c => ({ ...c, env: c.env && { ...c.env } })) })), gifs, free,
+  // a gated fade held open right now (pad still down) is let go on the copy: the editor's release never reaches it
+  const gated = c => { const g = pads[c.pad].gif; return c.env && c.env.rel === null && g && g.trig === 'fade' && g.env.gate && !c.env.noGate; };
+  prep = { layers: layers.map(L => ({ ...layerState(L), clips: L.clips.map(c => ({ ...c, env: c.env && { ...c.env, rel: gated(c) ? Math.max(now, c.env.t0) : c.env.rel } })) })), gifs, free,
            fx: { cfg: cp(fxCfg), pre: cp(fxPre), st }, scene: sceneIdx };
   syncPrepUI(); renderScenes(); redraw.all = true;
 }
@@ -2056,8 +2065,8 @@ function doGoLive(beat = clock.beat){
   const P = prep; pendingLive = null; if (!P) return;
   prep = null; endTrans();
   const t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
-  if (P.scene !== sceneIdx) layers.forEach(L => L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; }));   // another scene starts from the top
-  trans = makeTrans(P.layers, P.gifs, beat, P.free);
+  if (P.scene !== sceneIdx) layers.forEach(L => L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; if (c.env) c.env = { ...c.env, t0: beat, from: 0, rel: null }; }));   // another scene starts from the top (fades too)
+  trans = makeTrans(P.layers, P.gifs, beat, P.free); if (trans) trans.fx = P.fx;   // the leaving scene keeps the output's own effects while it fades out
   if (!trans) P.free.forEach(freeGif);
   syncPrepUI(); renderScenes(); redraw.all = true;
 }
@@ -2491,14 +2500,20 @@ function drawFrame(now){
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
   const sig = trans && !live.freeze ? 'T' + now : fxF.any || (bl > 0 && bl < 1) ? 'F' + now : (live.freeze ? 'Z' : sceneSig(list)) + (bl >= 1 ? 'B' : '');
   if (force || sig !== redraw.scene){
-    redraw.scene = sig; drawn++;
+    redraw.scene = sig; drawn++; let sideFx = false;
     if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
+    else if (trans && trans.fx && post){                 // going live from Prep: each side with its own effects, then combined
+      const aF = fxFrame(clock.beat, trans.fx);
+      render(frameList(now, trans.from, trans.gifs), trA, 4, aF.layers); if (aF.out) post.run(aF.out, trA.canvas, trA, 15); else post.idle(15);
+      render(list, trB); if (fxU) post.run(fxU, trB.canvas, trB, 14); else post.idle(14);
+      composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg); sideFx = true;
+    }
     else if (trans){
       render(frameList(now, trans.from, trans.gifs), trA); render(list, trB);
       composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
     } else render(list);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
-    if (fxU) post.run(fxU); else if (post) post.idle(0);
+    if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(0);
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
@@ -2597,6 +2612,7 @@ function updateOutStat(){
 function setFormat(k, { quiet = false, force = false } = {}){
   if (!FORMATS[k]) k = '16:9';
   if (k === format) return syncFormatUI();
+  if (prep && !force){ toast('Go live first (Enter): the canvas format changes the output'); return syncFormatUI(); }
   if (rec.mr || rec.wait){
     if (!force){ toast('Stop recording before changing the canvas format'); return syncFormatUI(); }
     recCancelWait(); recStop(); toast('Recording stopped: the loaded set has another canvas format');   // a set's format wins (it's part of the set)
@@ -2653,7 +2669,7 @@ function onKey(e){
     c.y = clamp(c.y + (e.code === 'ArrowUp' ? -st : e.code === 'ArrowDown' ? st : 0), -H, H);
     syncXfUI(); return;
   }
-  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // Enter: Prep / go live
+  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat && !(e.target && e.target.closest && e.target.closest('button, select, a, input, textarea'))){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // Enter: Prep / go live (a focused control keeps its own Enter)
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
   if (xi >= 0){ e.preventDefault(); if (!e.repeat) heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
   const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
@@ -2708,7 +2724,7 @@ function buildPads(){
       el.setPointerCapture(e.pointerId);
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
       trigger(i, e.altKey); });   // Alt+click: swap
-    el.addEventListener('contextmenu', e => { e.preventDefault(); focusPad(i); });   // right-click: select without playing
+    el.addEventListener('contextmenu', e => { e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
     el.addEventListener('pointerup', e => { if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
@@ -3445,7 +3461,7 @@ async function fillRecAudio(ask = false){
 }
 $('#recAudioSel').addEventListener('change', async e => {
   const v = e.target.value;
-  if (v === '?'){ await fillRecAudio(true); $('#recAudioSel').focus(); return; }
+  if (v === '?'){ await fillRecAudio(true); return; }
   recAudio = v ? { id: v, label: e.target.selectedOptions[0].textContent } : null;
   try { localStorage.setItem('vjif-recaudio', JSON.stringify(recAudio)); } catch (err) {}
 });
@@ -3715,6 +3731,7 @@ async function saveSet(asNew, name){
 function quickSave(){ if (curSet()) saveSet(false); else { openSets(); $('#setNameIn').focus(); } }
 async function loadSet(id){
   const rec = sets.get(id); if (!rec || setsBusy) return;
+  if (prep) return toast('Go live first (Enter): Prep keeps the output on the current set');
   setsBusy = true; closeSets();
   try {
     await applySnapshot(JSON.parse(rec.snap));
@@ -3724,6 +3741,7 @@ async function loadSet(id){
 }
 async function newEmptySet(){
   if (setsBusy) return;
+  if (prep) return toast('Go live first (Enter): Prep keeps the output on the current set');
   setGen++;
   dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0;
   [...insts.values()].forEach(freeGif); pool.slice().forEach(freeMedia);
@@ -3842,7 +3860,9 @@ async function recPrepare(){
     try { rec.audio = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: recAudio.id }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
     catch (e) { toast(`Can't open the sound input (${recAudio.label || 'chosen input'}) — recording without sound`); }
   }
-  const mime = recMime(!!rec.audio); if (!mime) return toast('Recording needs MediaRecorder (use Chrome)');
+  let mime = recMime(!!rec.audio);
+  if (!mime && rec.audio){ recDropAudio(); toast('This browser can\'t record sound with this format — recording without sound'); mime = recMime(false); }
+  if (!mime){ recDropAudio(); return toast('Recording needs MediaRecorder (use Chrome)'); }
   if (recExt(mime) !== recFmt) toast2(`This browser can't record ${recFmt.toUpperCase()} — recording ${recExt(mime).toUpperCase()} instead`);
   const ext = recExt(mime), type = ext === 'mp4' ? 'video/mp4' : 'video/webm';
   const d = new Date(), pad2 = n => String(n).padStart(2, '0');
@@ -3858,19 +3878,22 @@ async function recPrepare(){
   else recStart(mime);
 }
 function recStart(mime, beat = clock.beat){
-  rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.chunks = []; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
+  rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
+  // this take owns its writer, chunks, name and sound input: a quick next take can't step on them while this one saves
+  const writer = rec.writer, name = rec.name, chunks = [], audio = rec.audio; rec.audio = null;
+  let pend = Promise.resolve();
   const stream = master.captureStream(60);
-  if (rec.audio) rec.audio.getAudioTracks().forEach(t => stream.addTrack(t));
+  if (audio) audio.getAudioTracks().forEach(t => stream.addTrack(t));
   const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6, audioBitsPerSecond: 256e3 });
   mr.ondataavailable = e => { if (!e.data || !e.data.size) return; rec.bytes += e.data.size;
-    if (rec.writer){ const w = rec.writer, b = e.data; rec.pending = rec.pending.then(() => w.write(b)).catch(err => toast('Writing the recording failed: ' + err.message)); }
-    else rec.chunks.push(e.data); };
+    if (writer){ const b = e.data; pend = pend.then(() => writer.write(b)).catch(err => toast('Writing the recording failed: ' + err.message)); }
+    else chunks.push(e.data); };
   mr.onstop = async () => {
-    stream.getTracks().forEach(t => t.stop()); rec.audio = null;
-    if (rec.writer){ await rec.pending; try { await rec.writer.close(); toast2(`Recording saved: ${rec.name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } rec.writer = null; }
-    else { const blob = new Blob(rec.chunks, { type: mime.split(';')[0] }); rec.chunks = [];
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = rec.name; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${rec.name} (downloads folder)`); }
+    stream.getTracks().forEach(t => t.stop());
+    if (writer){ await pend; try { await writer.close(); toast2(`Recording saved: ${name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } if (rec.writer === writer) rec.writer = null; }
+    else { const blob = new Blob(chunks, { type: mime.split(';')[0] });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${name} (downloads folder)`); }
   };
   mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI();
 }
@@ -3913,6 +3936,7 @@ async function saveFile(blob, filename){
 }
 async function importVjif(file){
   if (setsBusy) return;
+  if (prep) return toast('Go live first (Enter): Prep keeps the output on the current set');
   try {
     const files = await readZip(file), meta = files.get('set.json');
     if (!meta) throw new Error('no set.json inside');
