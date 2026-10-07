@@ -523,7 +523,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.12.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.13.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -2105,7 +2105,7 @@ function quietUI(ms = 250){ uiQuiet = performance.now() + ms; clearTimeout(quiet
 const FX_KEYS = Array.from({ length: 12 }, (_, i) => 'F' + (i + 1)), FX_LABELS = FX_KEYS;
 // { id, name, title, mode (default), rate (uses Rate), styles: [[value, label, title]] }
 const FX_DEFS = [
-  { id: 'mono', name: 'Mono', title: 'Black and white', mode: 'hold', styles: [['grey', 'Grey', 'Shades of grey'], ['thresh', 'Threshold', 'Hard black and white']] },
+  { id: 'mono', name: 'Mono', title: 'Black and white', mode: 'hold', styles: [['grey', 'Grey', 'Shades of grey'], ['thresh', 'Threshold', 'Hard black and white'], ['dither', 'Dither', 'Black and white dots, ordered dither (1-bit, like an old Mac screen)']] },
   { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['invert', 'Invert', 'Negative colours'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)'], ['flip', 'Flip', 'Hue turned halfway round']] },
   { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black']] },
   { id: 'poster', name: 'Poster', title: 'Flat colours / outlines', mode: 'hold', styles: [['bands', 'Bands', 'Fewer colours, flat bands'], ['edges', 'Edges', 'Neon outlines on black']] },
@@ -2229,6 +2229,8 @@ const post = (() => {
       uniform vec3 shake; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
+      float bay2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }        // ordered (Bayer) dither thresholds
+      float bay8(vec2 a){ return bay2(0.25 * a) * 0.0625 + bay2(0.5 * a) * 0.25 + bay2(a); }
       vec2 A(){ return vec2(res.x / res.y, 1.0); }
       vec2 geo(vec2 p){                              // zoom, shake, wobble, pixelate: where to read the frame from
         vec2 a = A(), d = (p - 0.5) * a;
@@ -2295,7 +2297,7 @@ const post = (() => {
           c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * rgb;
         }
         float y = dot(c, vec3(0.299, 0.587, 0.114));
-        c = mix(c, monoS < 0.5 ? vec3(y) : vec3(step(0.5, y)), mono);
+        c = mix(c, monoS < 0.5 ? vec3(y) : monoS < 1.5 ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / 2.0) + 0.0078, y)), mono);   // dither: 2-px dots, 8×8 pattern
         if (colr > 0.001) c = mix(c, clamp(colrS < 0.5 ? 1.0 - c : hueRot(c, colrS < 1.5 ? hue : 3.14159), 0.0, 1.0), colr);
         c = mix(c, vec3(strobeS < 0.5 ? 1.0 : 0.0), strobe); if (strobeS < 0.5) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)

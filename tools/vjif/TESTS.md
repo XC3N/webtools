@@ -22,7 +22,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {c2} **Safe-zone guides in 9:16** — preview only, never in the output.
 - {c3} **Format is saved with the set** — save a 9:16 set, load a 16:9 one, reload the first: back in 9:16.
 
-## New in 0.9–0.12
+## New in 0.9–0.13
 - {n1} **Shift+click clearing** — pad, scene (name stays), effect preset, Pool GIF; resets an effect or transition preset. Ctrl+Z brings pads and scenes back.
 - {n2} **Is the red under Shift too much?** — especially when using Shift+key to select pads.
 - {n3} **Effect Release (Rel)** — Zoom on F5: Len holds at full, Rel fades. Also Rel on a Hold effect when you let go.
@@ -30,6 +30,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n5} **Scene tiles with pads but nothing playing** — show the first GIF, greyed.
 - {n6} **What's new in About** — click the version number in the About title.
 - {n7} **Drag pads** (0.12) — pad onto pad swaps (onto an empty pad: moves); pad onto a layer card puts the GIF there. A quick press still plays instantly; a drag doesn't leave the GIF playing.
+- {n8} **Mono › Dither** (0.13) — F1, style Dither: crisp black and white dots, also on one layer and full screen in the output window.
 
 ## Open questions
 - {q1} **Alt shortcuts on Windows** — Alt+E, Alt+F etc. don't open Chrome's menus.
