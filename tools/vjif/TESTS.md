@@ -33,6 +33,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n8} **Mono › Dither** (0.13) — F1, style Dither: crisp black and white dots, also on one layer and full screen in the output window.
 - {n9} **Clean scene thumbnails** (0.13.1) — with effects on (output and per layer) or mid-transition, the scene tiles show only the GIFs.
 - {n10} **Version next to the logo** (0.13.2) — click it: About opens on What's new; the tempo controls sit further right.
+- {n11} **New logo** (0.14) — header and About: Russo One, chrome, "if" in magenta, slanted; nothing clipped at your display scaling.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.

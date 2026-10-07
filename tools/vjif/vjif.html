@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Russo+One&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* @include common/style.css */
 /* VJif on top of the shared style: layout, header, pads, scenes, layers, preview. Sections are grouped by surface tone:
@@ -35,8 +35,10 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .sect{background:var(--bg);border:1px solid var(--edge);border-radius:var(--r);padding:2px 3px;gap:4px}
 .sect>label{padding:0 2px 0 6px}
 #clockGrp #beats{margin:0 2px 0 4px}
-.brand{font:700 21px/1 var(--sans);letter-spacing:-.03em;color:var(--ink);cursor:default}
-.brand span{color:var(--sig)}
+/* the wordmark (Logo Lab: Russo One 400 · chrome · accent #8f004a on "if" · tracking -0.08em · slant -16°) */
+.brand,.abrand{display:inline-block;font:400 22px/1.05 'Russo One',var(--sans);letter-spacing:-.08em;transform:skewX(-16deg);padding:.06em .14em .06em .04em;
+  background-image:linear-gradient(180deg,#fff,#bdbdc6);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:default}
+.brand span,.abrand span{display:inline-block;padding:0 .14em;margin:0 -.14em;background-image:linear-gradient(180deg,#ff359e,#8f004a);-webkit-background-clip:text;background-clip:text;color:transparent}
 #hdrVer{border:0;background:none;padding:0 2px;height:auto;margin:3px 22px 0 -2px;font:500 10px var(--mono);color:var(--faint);align-self:center;cursor:pointer}
 #hdrVer:hover{color:var(--sig)}
 .grp{display:flex;align-items:center;gap:6px}.grp.right{margin-left:auto}
@@ -250,7 +252,7 @@ body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px
 .mrow{display:grid;grid-template-columns:12ch 1fr auto;gap:8px;align-items:center;padding:3px 6px;background:var(--panel-2);border-radius:var(--r);font-size:12px}
 .mrow .mk{font:400 11px var(--mono);color:var(--lcd-ink)}.mrow button{width:22px;height:22px}
 #midiCtlIn{flex:1;min-width:0}
-.abrand{font:700 22px/1 var(--sans);letter-spacing:-.03em;color:var(--ink)}.abrand span{color:var(--sig)}
+.abrand{font-size:26px}
 .aboutLead{margin:10px 0 4px;font-size:13px;line-height:1.5;color:var(--ink)}
 .steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
 .steps b{color:var(--ink)}.steps li::marker{color:var(--sig);font:600 12px var(--mono)}
@@ -527,7 +529,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.13.4';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.14.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
