@@ -23,7 +23,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {c3} **Format is saved with the set** — save a 9:16 set, load a 16:9 one, reload the first: back in 9:16.
 
 ## New in 0.9–0.13
-- {n1} **Shift+click clearing** — pad, scene (name stays), effect preset, Pool GIF; resets an effect or transition preset. Ctrl+Z brings pads and scenes back.
+- {n1} **Ctrl+click deleting** (0.17) — pads, scenes (name stays), effect presets, layer chips, pool GIFs turn red with ✕ while Ctrl is held; Ctrl+Z brings pads and scenes back; right-click a chip selects it.
 - {n2} **Shift highlight** (0.14.2) — hold Shift: what a click clears turns red with a ✕; effects and transition presets (reset only) get a red outline.
 - {n3} **Effect Release (Rel)** — Zoom on F5: Len holds at full, Rel fades. Also Rel on a Hold effect when you let go.
 - {n4} **Old sets still look the same** — load an existing set: its hit effects fade out as before Release existed.
@@ -37,9 +37,9 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n12} **Slanted drag chips everywhere** (0.14.1) — dragging a layer chip, an effect tile or the effect name shows the same slanted chip as pads.
 - {n13} **Output window remembers its place** (0.15) — move it to the projector screen, close it, reopen: same place and size. Drag inside it to move it; Shift+click Output resets.
 - {i5} **Prep mode** (0.17: Enter toggles) — Enter: the output keeps the live scene while you edit any scene (with the output window open on a second screen); Enter again goes live with the transition.
-- {n15} **Ctrl+click deletes** (0.17) — pads, scenes, effect presets, layer chips, pool GIFs turn red with ✕ while Ctrl is held; right-click a chip selects it.
-- {n16} **Frames under Play** (0.17) — In / Out / Start next to Loop.
-- {n17} **Recording with sound** (0.17) — Settings › Canvas › Sound: pick your interface or loopback; the file has audio in sync.
+- {n15} **Frames under Play** (0.17) — In / Out / Start next to Loop.
+- {n16} **Recording with sound** (0.17) — Settings › Canvas › Sound: pick your interface or loopback; the file has audio in sync.
+- {n17} **Small ones** (0.17.1) — pool drags show the slanted chip; the About tagline rotates.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.
