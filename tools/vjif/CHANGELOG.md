@@ -4,6 +4,17 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.24.0 — 2026-10-07
+
+### Transitions
+- Glitch has styles, like the Glitch effect: Slices (as before), Blocks (shuffled, displaced blocks of both scenes settling on the new one), Melt (the Doom melt, which was its own type) and Scramble (pixelates, scrambles the colours into the new scene, then resolves). Pixel sets the block size / column width. Presets that used Melt become Glitch › Melt.
+
+### Effects
+- Glitch › Scramble: pixelated blocks with their colours scrambled (channels rotated, swapped or inverted; black stays black). Amount sets how big and how many.
+
+### Scenes
+- Each scene remembers what you had selected: the pad shown in the GIF panel and the edit layer. A scene you haven't edited yet keeps the edit layer, and the GIF panel shows that layer's selected GIF (it used to keep the same pad key, so the GIF panel and Transform could show two different GIFs).
+
 ## 0.23.0 — 2026-10-07
 
 ### Recording sound
