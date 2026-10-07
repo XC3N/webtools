@@ -36,7 +36,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .sect>label{padding:0 2px 0 6px}
 #clockGrp #beats{margin:0 2px 0 4px}
 /* the wordmark (Logo Lab: Russo One 400 · chrome · accent #8f004a on "if" · tracking -0.08em · slant -16°) */
-.brand,.abrand{display:inline-block;font:400 22px/1.05 'Russo One',var(--sans);letter-spacing:-.08em;transform:skewX(-16deg);padding:.06em .14em .06em .04em;
+.brand,.abrand{display:inline-block;font:400 27px/1 'Russo One',var(--sans);letter-spacing:-.08em;transform:skewX(-16deg);padding:.06em .14em .06em .04em;
   background-image:linear-gradient(180deg,#fff,#bdbdc6);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:default}
 .brand span,.abrand span{display:inline-block;padding:0 .14em;margin:0 -.14em;background-image:linear-gradient(180deg,#ff359e,#8f004a);-webkit-background-clip:text;background-clip:text;color:transparent}
 #hdrVer{border:0;background:none;padding:0 2px;height:auto;margin:3px 22px 0 -2px;font:500 10px var(--mono);color:var(--faint);align-self:center;cursor:pointer}
@@ -196,7 +196,8 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip>span{position:absolute;left:2px;bottom:2px;padding:2px 3px;border-radius:2px;background:#000c;font:600 10px/1 var(--mono);color:#fff}
 .chip.sel{box-shadow:0 0 0 2px var(--lc)}
 .chip.dragging{opacity:.35}
-.ghost{position:fixed;z-index:50;pointer-events:none;margin:0;box-shadow:0 0 0 2px var(--sig),0 6px 16px #000a;transform:translate(-50%,-60%) rotate(-4deg)}
+.ghost{position:fixed;z-index:50;pointer-events:none;margin:0;box-shadow:0 0 0 2px var(--gc,var(--sig)),0 6px 16px #000a;transform:translate(-50%,-60%) rotate(-4deg)}
+.scghost{width:64px;background-color:#000}
 .fxghost{padding:6px 10px;border-radius:3px;font:600 11px var(--mono);color:var(--lcd-ink);background:var(--lcd-bg);white-space:nowrap}
 .pad.lifted{opacity:.45}
 .chip.insL{box-shadow:-3px 0 0 -1px var(--bg),-4px 0 0 0 var(--lc)}
@@ -204,10 +205,13 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip b{position:absolute;right:1px;top:1px;width:18px;height:18px;border-radius:2px;background:#000d;font:400 14px/17px var(--mono);text-align:center;color:#ddd;visibility:hidden;cursor:pointer}
 .chip:hover b{visibility:visible}.chip b:hover{color:#fff;background:var(--danger)}
 /* Shift held: a click (or right-click any time) removes — the chips say so */
-body.shift .pad:not(.empty),body.shift .scene:not(.empty),body.shift .scene.padsOnly,body.shift #fxStrip .fxp:not(.empty),body.shift #trPre button,body.shift .ptile{box-shadow:0 0 0 2px var(--danger)}
-body.shift .pad:not(.empty)::after,body.shift .scene:not(.empty)::after,body.shift .scene.padsOnly::after,body.shift #fxPre .fxp:not(.empty)::after{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,70,70,.22);pointer-events:none}
-body.shift .chip{box-shadow:0 0 0 2px var(--danger);cursor:pointer}
-body.shift .chip::after{content:"";position:absolute;inset:0;border-radius:2px;background:rgba(255,70,70,.28);pointer-events:none}
+/* Shift held: what a click would clear turns red with a ✕ (pads, scenes, presets, chips, pool GIFs); what it would reset (effects, transition presets) gets a red outline */
+body.shift{--clr:#ff3b3b}
+body.shift .pad:not(.empty),body.shift .scene:not(.empty),body.shift .scene.padsOnly,body.shift #fxPre .fxp:not(.empty),body.shift .ptile,body.shift .chip{box-shadow:0 0 0 2px var(--clr);cursor:pointer}
+body.shift .pad:not(.empty)::after,body.shift .scene:not(.empty)::after,body.shift .scene.padsOnly::after,body.shift #fxPre .fxp:not(.empty)::after,body.shift .ptile::after,body.shift .chip::after{
+  content:"✕";position:absolute;inset:0;z-index:2;display:grid;place-items:center;border-radius:inherit;background:rgba(200,20,20,.42);color:#fff;font:700 20px/1 var(--sans);text-shadow:0 1px 3px #000;pointer-events:none}
+body.shift .chip::after{font-size:16px}
+body.shift #fxPads .fxp,body.shift #trPre button{box-shadow:inset 0 0 0 2px var(--clr)}
 
 /* ---------- transform ---------- */
 #xfTitle{width:100%}
@@ -253,7 +257,7 @@ body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px
 .mrow{display:grid;grid-template-columns:12ch 1fr auto;gap:8px;align-items:center;padding:3px 6px;background:var(--panel-2);border-radius:var(--r);font-size:12px}
 .mrow .mk{font:400 11px var(--mono);color:var(--lcd-ink)}.mrow button{width:22px;height:22px}
 #midiCtlIn{flex:1;min-width:0}
-.abrand{font-size:26px}
+.abrand{font-size:32px}
 .aboutLead{margin:10px 0 4px;font-size:13px;line-height:1.5;color:var(--ink)}
 .steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
 .steps b{color:var(--ink)}.steps li::marker{color:var(--sig);font:600 12px var(--mono)}
@@ -530,7 +534,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.14.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.14.2';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1589,7 +1593,10 @@ $('#scenes').addEventListener('contextmenu', e => {
 });
 // drag a scene onto another: they swap places (the playing one keeps playing, under its new number)
 const SCENE_MIME = 'application/x-vjif-scene';
-$('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.scene'); if (!b) return; e.dataTransfer.setData(SCENE_MIME, b.dataset.i); e.dataTransfer.effectAllowed = 'move'; });
+$('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.scene'); if (!b) return; e.dataTransfer.setData(SCENE_MIME, b.dataset.i); e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setDragImage(NO_IMG, 0, 0);
+  const g = document.createElement('span'); g.className = 'chip scghost'; g.innerHTML = `<span>${+b.dataset.i + 1}</span>`; g.style.backgroundImage = b.style.backgroundImage;
+  ghost.show(g, e.clientX, e.clientY); });
 $('#scenes').addEventListener('dragover', e => {
   if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
   e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
@@ -2605,7 +2612,7 @@ let padDrag = null;
 const ghost = {
   el: null,
   show(el, x, y){ this.hide(); el.classList.add('ghost'); document.body.appendChild(el); this.el = el; if (x !== undefined) this.move(x, y); },
-  chip(pad, x, y){ const g = pads[pad].gif, el = document.createElement('span'); el.className = 'chip';
+  chip(pad, x, y, col){ const g = pads[pad].gif, el = document.createElement('span'); el.className = 'chip'; if (col) el.style.setProperty('--gc', col);
     el.innerHTML = `<span>${pads[pad].label}</span>`; if (g) el.style.backgroundImage = `url(${gifThumb(g)})`; this.show(el, x, y); },
   move(x, y){ if (this.el && (x || y)){ this.el.style.left = x + 'px'; this.el.style.top = y + 'px'; } },
   hide(){ if (this.el){ this.el.remove(); this.el = null; } },
@@ -2963,7 +2970,7 @@ function buildLayers(){
     clipsEl.addEventListener('dragstart', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       e.dataTransfer.setData(CLIP_MIME, `${li}:${chip.dataset.id}`); e.dataTransfer.effectAllowed = 'copyMove';
-      chip.classList.add('dragging'); e.dataTransfer.setDragImage(NO_IMG, 0, 0); ghost.chip(+chip.dataset.pad, e.clientX, e.clientY);
+      chip.classList.add('dragging'); e.dataTransfer.setDragImage(NO_IMG, 0, 0); ghost.chip(+chip.dataset.pad, e.clientX, e.clientY, LCOL[li]);   // in its layer's colour
     });
     clipsEl.addEventListener('dragend', e => { const chip = e.target.closest('.chip'); if (chip) chip.classList.remove('dragging');
       layers.forEach(l => { l.row.classList.remove('dropzone'); l.row.querySelectorAll('.insL,.insR').forEach(c => c.classList.remove('insL', 'insR')); }); });
@@ -3898,7 +3905,13 @@ function applySwap(E){
   const cur = pads[E.pad].gif; pads[E.pad].gif = E.g; E.g = cur; afterPadChange(E.pad);
 }
 function applyScn(E){
-  if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true);
+  if (E.scene !== sceneIdx){                         // another scene: swap its contents back in place, without going there
+    const sc = scenes[E.scene] || Object.assign(emptyScene(), { name: '' });
+    const cur = { layers: sc.layers, pads: sc.pads };
+    scenes[E.scene] = Object.assign({}, sc, { layers: E.data.layers.map((l, li) => Object.assign({}, l, { i: li })), pads: E.data.pads, thumb: null });
+    E.data = cur; if (pendingScene && pendingScene.i === E.scene) pendingScene = null;
+    renderScenes(); updateMem(); renderPool(); toast2(`Scene ${E.scene + 1} changed back`); return;
+  }
   const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif) };
   layers.forEach((L, li) => { const d = E.data.layers[li]; Object.assign(L, layerProps(d)); });
   pads.forEach((p, k) => { p.gif = E.data.pads[k]; renderPad(k); });

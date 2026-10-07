@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.14.2 — 2026-10-06
+
+### Fixes and polish
+- Shift held: what a click would clear turns clearly red with a ✕; what it would reset (effects, transition presets) gets a red outline, now drawn properly on the transition presets too.
+- Undoing (or redoing) emptying another scene restores it in place, without switching to it.
+- Dragging a scene tile or a layer chip shows the slanted chip too; a layer chip keeps its layer's colour.
+- The logo is bigger.
+
 ## 0.14.1 — 2026-10-06
 
 ### Dragging
