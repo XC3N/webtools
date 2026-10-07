@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.22.0 — 2026-10-07
+
+### Lettering
+- Text… (next to Add…): type a text (an artist's name, a message) and it goes on a pad like a GIF. Font (any installed font, or Russo One, Instrument Sans, JetBrains Mono…), bold / italic, size as a share of the output's height, letter spacing, colour.
+- Looks: Letters (the text alone) or Cut-out (a matte with see-through letters: on a layer above the others, they show through the text only).
+- Marquee: scrolls across from right to left, one pass per 1, 2, 4, 8 or 16 bars, starting when the pad is hit. It's X automation in the Auto tab, so it can be changed there.
+- Edit text in the GIF panel changes a pad's text and keeps its settings. Texts are redrawn when the canvas format changes, and saved with the set and in .vjif files (as small .vjtext files).
+
 ## 0.21.0 — 2026-10-07
 
 ### Scenes

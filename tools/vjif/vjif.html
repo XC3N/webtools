@@ -242,6 +242,9 @@ body.del #fxPads .fxp,body.del #trPre button{box-shadow:inset 0 0 0 2px var(--cl
 .sub.hl{animation:hl .7s ease-out}
 #setPanel{background:none;place-items:start end;pointer-events:none}
 #poolPanel{background:none;place-items:start start;pointer-events:none}
+#txPrev{width:100%;height:auto;display:block;margin:0 0 10px;border-radius:var(--r);background:repeating-conic-gradient(#2a2a2a 0 25%,#1c1c1c 0 50%) 0 0/16px 16px}
+#textPanel textarea{width:100%;resize:vertical;font:600 15px var(--sans);background:var(--bg);color:var(--ink);border:1px solid var(--edge);border-radius:var(--r);padding:6px 8px}
+.txRow{display:flex;gap:10px;align-items:center;min-width:0}.txRow input[list]{flex:1;min-width:0}#txCol{width:44px;height:var(--ch);padding:0;border:0;background:none}
 #poolPanel .modalBox{pointer-events:auto;margin:48px 0 0 340px;max-height:calc(100vh - 60px);overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 #poolPanel.dropping .modalBox{outline:2px dashed var(--sig);outline-offset:-2px}
 .ptile[draggable=true]{cursor:grab}
@@ -322,7 +325,7 @@ output.mod{color:var(--env)}
 <section id="bank" class="panel">
   <h2 class="padhead">Pads
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
-    <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="urlBtn" hidden>Load</button><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
+    <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><button id="textBtn" title="Lettering: type a text (an artist's name, a message) and use it like a GIF — plain, scrolling across (marquee) or cut out of a black matte">Text…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="urlBtn" hidden>Load</button><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
   <div class="sub padsub"><span>QWE / ASD / ZXC</span><span class="line"></span></div>
   <div class="padgrid" id="gridA"></div>
   <div class="sub padsub"><span>RTY / FGH / VBN</span><span class="line"></span></div>
@@ -380,7 +383,7 @@ output.mod{color:var(--env)}
     <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
     <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
   </div>
-  <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
+  <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
   <div id="gifSettings" class="disabled">
     <div class="lcd one" id="gInfo"></div>
     <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
@@ -521,6 +524,7 @@ output.mod{color:var(--env)}
       <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · RGB · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt · RGB: split, VHS · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (full for Length, then fades over Release; with Snap it waits for the beat / bar) or Latch (on / off); Release also sets how Hold and Latch fade out; Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
+      <dt>Text…</dt><dd>Lettering (button next to Add…): type a text, pick a font, size, spacing and colour, and it goes on the next empty pad as a one-frame "GIF". Letters: just the text. Cut-out: a matte with see-through letters, to put on a layer above others so they show through the text. Marquee: scrolls across from right to left, one pass per 1–16 bars from the hit (X automation in the Auto tab). Edit text (GIF panel) changes it and keeps the pad's settings. Texts are redrawn when the canvas format changes and saved with the set</dd>
       <dt>BRB</dt><dd>Under the scenes: VJif changes scene by itself every 4 / 8 / 16 / 32 bars, on the bar, to the next scene with GIFs playing (In order) or a random one (Shuffle), with the armed transition or a random preset (Random). The button counts the bars down. Any scene key or click, or BRB again, takes back control; Prep pauses it</dd>
       <dt>Caps Lock + numpad 1–9</dt><dd>Effect presets instead of scenes (the scene tiles dim and the preset row lights up). Each plays a stored mix of effects at once with its own Hold / Hit / Latch, Length, Release and Amount. To fill one: drag effect tiles onto it, or hold its key (Caps on) or its tile and click / press effects to add or remove them; Caps+Shift+numpad key stores the effects that are on right now. Right-click a preset to see and remove its effects</dd>
       <dt>1–9</dt><dd>Arm a transition preset for the next scene change (the Transition panel edits the armed one)</dd>
@@ -549,6 +553,22 @@ output.mod{color:var(--env)}
     </dl>
   </div>
 </div>
+<div id="textPanel" class="modal" hidden>
+  <div class="modalBox" style="width:min(620px,94vw)">
+    <h2>Text<span id="txTo" class="tag"></span><span class="line"></span><button id="txClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <canvas id="txPrev" width="560" height="315"></canvas>
+    <div class="field"><label for="txText">Text</label><textarea id="txText" rows="2" placeholder="XC3N" spellcheck="false"></textarea></div>
+    <div class="field"><label for="txFont">Font</label><div class="txRow"><input id="txFont" list="txFonts" value="Russo One" spellcheck="false" title="Any font installed on this computer, or one from the list"><datalist id="txFonts">
+      <option value="Russo One"><option value="Instrument Sans"><option value="JetBrains Mono"><option value="Arial Black"><option value="Impact"><option value="Helvetica"><option value="Georgia"><option value="Times New Roman"><option value="Courier New"></datalist>
+      <label class="tog"><input type="checkbox" id="txBold">Bold</label><label class="tog"><input type="checkbox" id="txItal">Italic</label></div></div>
+    <div class="field"><label for="txSize">Size</label><input type="range" id="txSize" min="0.04" max="0.6" step="0.01" value="0.2"><output></output></div>
+    <div class="field"><label for="txTrack">Spacing</label><input type="range" id="txTrack" min="-0.1" max="0.5" step="0.01" value="0"><output></output></div>
+    <div class="field"><label>Look</label><div class="txRow"><div class="seg" id="txCut"><button data-v="0" title="Letters in the colour, on nothing">Letters</button><button data-v="1" title="A matte in the colour with see-through letters: put it on a layer above the others and they show through the text only">Cut-out</button></div><input type="color" id="txCol" value="#ffffff" title="The letters' colour (Cut-out: the matte's colour)"></div></div>
+    <div class="field"><label>Marquee</label><div class="seg" id="txMarq" title="Scrolls across the output from right to left, on the beat: one pass per this many bars (from when the pad is hit). It's X automation in the Auto tab, so you can change it there"><button data-v="0">Off</button><button data-v="1">1 bar</button><button data-v="2">2</button><button data-v="4">4</button><button data-v="8">8</button><button data-v="16">16</button></div></div>
+    <div class="row" style="justify-content:flex-end"><button id="txCancel">Cancel</button><button id="txOk" class="accent">Put on pad</button></div>
+    <p class="note">The text is made for the canvas format and redrawn when it changes. It's saved with the set like a GIF file. Ctrl+Enter puts it on the pad.</p>
+  </div>
+</div>
 <div id="poolPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(640px,92vw)">
     <h2>GIF pool<span id="poolTo" class="tag"></span><span class="line"></span><button id="poolClose" class="iconbtn" title="Close (Esc)">×</button></h2>
@@ -575,7 +595,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.21.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.22.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -664,6 +684,115 @@ let outWin = null, outCtx = null;
 // ---------- decoding (WebCodecs ImageDecoder, Chrome) ----------
 function guessType(name){ const m = /\.(gif|webp|png|apng)$/i.exec(name||''); if (!m) return 'image/gif'; const e = m[1].toLowerCase(); return e === 'gif' ? 'image/gif' : e === 'webp' ? 'image/webp' : 'image/png'; }
 
+// ---------- lettering: text drawn into a one-frame "GIF" (the file is a small JSON description) ----------
+const TEXT_MIME = 'application/vnd.vjif.text+json';
+const isTextBlob = (blob, name) => blob.type === TEXT_MIME || /\.vjtext$/i.test(name || '');
+const textName = sp => (sp.text || 'text').replace(/\s+/g, ' ').trim().slice(0, 24) + '.vjtext';
+const TEXT_DEF = { v: 1, text: 'XC3N', font: 'Russo One', bold: false, ital: false, size: 0.2, track: 0, cut: false, color: '#ffffff', marquee: 0 };
+// one frame at the current canvas size. Letters: tight around the text. Cut-out: a matte the size of the output
+// (wider when it scrolls, so it always covers the screen) with the letters punched through.
+async function renderText(spec){
+  const S = { ...TEXT_DEF, ...spec }, px = Math.max(8, Math.round(S.size * H));
+  const font = `${S.ital ? 'italic ' : ''}${S.bold ? 700 : 400} ${px}px "${S.font.replace(/"/g, '')}", sans-serif`;
+  try { await document.fonts.load(font, S.text || 'x'); } catch (e) {}
+  const lines = S.marquee ? [String(S.text).replace(/\s*\n\s*/g, '   ')] : String(S.text).split('\n');
+  const cv = document.createElement('canvas'), x = cv.getContext('2d');
+  const setup = () => { x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle'; try { x.letterSpacing = (S.track * px).toFixed(1) + 'px'; } catch (e) {} };
+  setup();
+  const lh = px * 1.15, pad = Math.ceil(px * (S.ital ? 0.35 : 0.15));
+  const tw = Math.ceil(Math.max(1, ...lines.map(l => x.measureText(l).width))), th = Math.ceil(lines.length * lh);
+  let w, h;
+  if (S.cut){ w = S.marquee ? Math.min(16000, 2 * W + tw + 2 * pad) : W; h = H; }
+  else { w = Math.min(16000, tw + 2 * pad); h = th + 2 * pad; }
+  cv.width = w; cv.height = h; setup();
+  if (S.cut){ x.fillStyle = S.color; x.fillRect(0, 0, w, h); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; }
+  else x.fillStyle = S.color;
+  lines.forEach((l, i) => x.fillText(l, w / 2, h / 2 + (i - (lines.length - 1) / 2) * lh));
+  const bmp = await createImageBitmap(cv);
+  return { src: [bmp], durs: [1000], w, h, srcBytes: w * h * 4, textW: tw + 2 * pad };
+}
+// a new text instance: scrolling text gets X automation (right to left, one pass per N bars, from the hit)
+function textDefaults(g){
+  const m = g.media, T = m.text; g.sync = 'free'; g.crisp = false;
+  if (T.marquee){ const span = Math.round((W + m.textW) / 2);
+    g.lfo.x = { on: true, min: span, max: -span, shape: 'up', per: T.marquee * 4, ph: 0, sync: 'trig' }; }
+}
+// the canvas format changed: every text is redrawn for it (its file stays the same)
+async function retextAll(){
+  for (const m of pool.filter(m => m.text)){
+    const old = m.src, r = await renderText(m.text);
+    Object.assign(m, r);
+    insts.forEach(g => { if (g.media !== m) return;
+      const fx = g.frames !== g.src; Object.assign(g, { src: m.src, frames: m.src, w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes, thumb: null, tileThumb: null });
+      if (m.text.marquee && g.lfo.x && g.lfo.x.on){ const sp = Math.round((W + m.textW) / 2); g.lfo.x.min = sp; g.lfo.x.max = -sp; }
+      rebuildSeq(g); if (fx) applyFx(g); });
+    old.forEach(f => f.close());
+  }
+  pads.forEach(p => p.gif && p.gif.media && p.gif.media.text && renderPad(p.i)); renderPool(); redraw.all = true;
+}
+// the Text window: new text onto a pad, or changing the text of the selected pad
+let txEdit = -1, txSpec = { ...TEXT_DEF }, txT = 0;
+function openText(edit = -1){
+  txEdit = edit;
+  const g = edit >= 0 && pads[edit].gif;
+  txSpec = { ...TEXT_DEF, ...(g && g.media.text ? g.media.text : (() => { try { return JSON.parse(localStorage.getItem('vjif-textdef')) || {}; } catch (e) { return {}; } })()) };
+  if (!g) txSpec.text = '';
+  $('#txText').value = txSpec.text; $('#txFont').value = txSpec.font; $('#txBold').checked = txSpec.bold; $('#txItal').checked = txSpec.ital;
+  $('#txSize').value = txSpec.size; $('#txTrack').value = txSpec.track; $('#txCol').value = txSpec.color;
+  const d = edit >= 0 ? edit : nextEmpty(selPad);
+  $('#txTo').textContent = edit >= 0 ? `pad ${pads[edit].label}` : d >= 0 ? `→ pad ${pads[d].label}` : 'all pads full: pool only';
+  $('#txOk').textContent = edit >= 0 ? 'Update' : d >= 0 ? 'Put on pad' : 'Add to pool';
+  $('#textPanel').hidden = false; txUI(); $('#txText').focus();
+}
+function closeText(){ $('#textPanel').hidden = true; }
+function txRead(){
+  Object.assign(txSpec, { text: $('#txText').value, font: $('#txFont').value.trim() || 'Russo One', bold: $('#txBold').checked, ital: $('#txItal').checked,
+    size: +$('#txSize').value, track: +$('#txTrack').value, color: $('#txCol').value });
+}
+function txUI(){
+  $('#txSize').nextElementSibling.textContent = Math.round(txSpec.size * 100) + '% of height';
+  $('#txTrack').nextElementSibling.textContent = (txSpec.track >= 0 ? '+' : '') + Math.round(txSpec.track * 100) + '%';
+  document.querySelectorAll('#txCut button').forEach(b => b.classList.toggle('on', +b.dataset.v === +txSpec.cut));
+  document.querySelectorAll('#txMarq button').forEach(b => b.classList.toggle('on', +b.dataset.v === txSpec.marquee));
+  clearTimeout(txT); txT = setTimeout(txPreview, 60);
+}
+async function txPreview(){
+  const spec = { ...txSpec, text: txSpec.text || 'XC3N' }, r = await renderText({ ...spec, marquee: 0 });   // the still picture (a marquee scrolls it)
+  const c = $('#txPrev'), x = c.getContext('2d'), k = c.width / W; c.height = Math.round(H * k);
+  x.clearRect(0, 0, c.width, c.height);
+  if (spec.cut){ x.fillStyle = '#3a6'; x.fillRect(0, 0, c.width, c.height); }   // what shows through the letters
+  const f = r.src[0], bw = Math.min(f.width, W) * k, bh = f.height * k;
+  x.drawImage(f, (f.width - Math.min(f.width, W)) / 2, 0, Math.min(f.width, W), f.height, (c.width - bw) / 2, (c.height - bh) / 2, bw, bh);
+  f.close();
+}
+async function textOk(){
+  txRead(); if (!txSpec.text.trim()) return toast('Type a text first');
+  const spec = { ...txSpec, v: 1 }; try { localStorage.setItem('vjif-textdef', JSON.stringify({ ...spec, text: '' })); } catch (e) {}
+  const blob = new Blob([JSON.stringify(spec)], { type: TEXT_MIME }), name = textName(spec), edit = txEdit;
+  closeText();
+  try {
+    const m = await mediaFor(blob, name);
+    if (edit >= 0 && pads[edit].gif){                // keep the pad's settings, with the new text
+      const old = pads[edit].gif, keep = gifSettings(old), g = putMedia(m, edit);
+      if (g){ delete keep.lfo; applyGifSettings(g, keep); g.lfo = JSON.parse(JSON.stringify(old.lfo)); if (g.lfo.x) delete g.lfo.x; textDefaults(g);
+        if (!spec.marquee && old.lfo.x && !old.media.text.marquee) g.lfo.x = JSON.parse(JSON.stringify(old.lfo.x));
+        if (g.key.on || hsvOn(g)) applyFx(g); syncGifUI(); }
+    } else { const d = nextEmpty(selPad); if (d >= 0){ putMedia(m, d); pads[d].el.classList.remove('hit'); void pads[d].el.offsetWidth; pads[d].el.classList.add('hit'); } else toast('All pads are full: the text is in the pool'); }
+  } catch (err) { toast("Couldn't make the text: " + err.message); }
+}
+$('#textBtn').addEventListener('click', () => openText(-1));
+$('#gText').addEventListener('click', () => openText(selPad));
+$('#txClose').addEventListener('click', closeText); $('#txCancel').addEventListener('click', closeText);
+$('#txOk').addEventListener('click', textOk);
+$('#textPanel').addEventListener('input', () => { txRead(); txUI(); });
+$('#textPanel').addEventListener('change', () => { txRead(); txUI(); });
+$('#txCut').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  const cut = b.dataset.v === '1'; if (cut !== txSpec.cut){ const c = txSpec.color.toLowerCase();   // white letters ↔ a black matte, the usual pairs
+    if (cut && c === '#ffffff') txSpec.color = '#000000'; else if (!cut && c === '#000000') txSpec.color = '#ffffff'; $('#txCol').value = txSpec.color; }
+  txSpec.cut = cut; txUI(); });
+$('#txMarq').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ txSpec.marquee = +b.dataset.v; txUI(); } });
+$('#textPanel').addEventListener('pointerdown', e => { if (e.target.id === 'textPanel') closeText(); });
+
 // ---------- the GIF pool ----------
 // Each file of the set is decoded once (a "media": its frames and timing). Pads hold *instances*: a media plus
 // that pad's own settings (timing, colour, trigger, automation) and any processed frames. Every scene has its
@@ -671,6 +800,10 @@ function guessType(name){ const m = /\.(gif|webp|png|apng)$/i.exec(name||''); if
 const pool = [];                                     // media: { hash, name, blob, type, src, durs, w, h, srcBytes }
 const insts = new Map();                             // uid → every instance alive (on a pad in any scene, or held by undo)
 async function decodeAnim(blob, name){
+  if (isTextBlob(blob, name)){                       // lettering: a small text description, drawn into one frame
+    const spec = JSON.parse(await blob.text()), r = await renderText(spec);
+    return { name: name || textName(spec), blob, type: TEXT_MIME, text: spec, ...r };
+  }
   if (!('ImageDecoder' in window)) throw new Error('this browser has no ImageDecoder (use Chrome)');
   const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : guessType(name);
   if (!(await ImageDecoder.isTypeSupported(type))) throw new Error('unsupported type ' + type);
@@ -702,7 +835,7 @@ function makeInst(m, saved = null){
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free' }, lfo: {} };
   insts.set(g.uid, g); rebuildSeq(g);
-  if (saved) applyGifSettings(g, saved); else autoFit(g);
+  if (saved) applyGifSettings(g, saved); else { autoFit(g); if (m.text) textDefaults(g); }
   return g;
 }
 const gifSettings = g => JSON.parse(JSON.stringify(Object.fromEntries(GIF_KEYS.map(k => [k, g[k]]))));
@@ -1928,6 +2061,7 @@ document.addEventListener('visibilitychange', () => { redraw.all = true; });
 
 // ---------- geometry ----------
 function baseSize(g, fit){
+  if (fit === 'auto' && g.media && g.media.text) return [g.w, g.h];   // lettering is drawn at output size
   if (fit === 'auto'){
     // native pixels; big GIFs shrink to fit the frame, small sprites grow by a whole factor up to ~1/3 frame height
     if (g.w > W || g.h > H){ const s = Math.min(W / g.w, H / g.h); return [g.w * s, g.h * s]; }
@@ -2705,7 +2839,7 @@ function setFormat(k, { quiet = false, force = false } = {}){
     if (!force){ toast('Stop recording before changing the canvas format'); return syncFormatUI(); }
     recCancelWait(); recStop(); toast('Recording stopped: the loaded set has another canvas format');   // a set's format wins (it's part of the set)
   }
-  format = k; [W, H] = FORMATS[k];
+  format = k; [W, H] = FORMATS[k]; retextAll();
   [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = W; c.height = H; });
   if (post) post.resize();
   if (outCtx){ outCtx.canvas.width = W; outCtx.canvas.height = H; }
@@ -2730,6 +2864,7 @@ function isTyping(e){
 }
 function onKey(e){
   if (midiCtl.learning){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); endLearn(); } return; }
+  if (!$('#textPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closeText(); } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); textOk(); } return; }
   if (!$('#aboutPanel').hidden){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); closeAbout(); } return; }
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
@@ -2974,6 +3109,7 @@ function syncGifUI(){
   const p = pads[selPad], g = p.gif;
   $('#gifSettings').classList.toggle('disabled', !g);
   $('#gifName').textContent = `${p.label}${g ? '' : ' · empty'}`;
+  $('#gText').hidden = !(g && g.media && g.media.text);
   if (!g){ $('#gInfo').textContent = ''; return; }
   segSet('#gSync', g.sync); segSet('#gLoop', g.loop);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
@@ -3953,7 +4089,7 @@ async function readZip(blob){                        // → Map(name → Uint8Ar
   }
   return out;
 }
-const EXT = { 'image/gif': 'gif', 'image/webp': 'webp', 'image/png': 'png', 'image/apng': 'png' };
+const EXT = { 'image/gif': 'gif', 'image/webp': 'webp', 'image/png': 'png', 'image/apng': 'png', 'application/vnd.vjif.text+json': 'vjtext' };
 async function exportSet(name, snap){
   const st = upgradeSnap(JSON.parse(snap)), files = [], byHash = new Map(), enc = new TextEncoder();
   for (const sp of st.pool){
@@ -4183,7 +4319,7 @@ async function importVjif(file){
         const data = files.get(sp.file);
         if (!data){ missing++; byFile.set(sp.file, null); continue; }
         const ext = (sp.file.match(/\.(\w+)$/) || [, 'gif'])[1].toLowerCase();
-        const blob = new Blob([data], { type: ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : 'image/gif' });
+        const blob = new Blob([data], { type: ext === 'vjtext' ? TEXT_MIME : ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : 'image/gif' });
         const h = await hashBlob(blob); byFile.set(sp.file, h);
         await store.put('gif:' + h, { name: sp.name, blob });
       }

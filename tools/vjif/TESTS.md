@@ -43,6 +43,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n17} **Small ones** (0.17.1) — pool drags show the slanted chip; the About tagline rotates.
 - {n18} **Full-screen button** (0.18) — next to ⚙ and ?: the whole VJif window goes full screen and back.
 - {n19} **About footer** (0.18) — Show this at start + Play! at the lower right, credits on the left.
+- {txt} **Lettering** (0.22) — Text…: your name in a few fonts, a marquee at 2 bars, a Cut-out over a busy GIF on a lower layer; Edit text; switch to 9:16 and back; save, reload, export / import the set.
 - {brb} **BRB** (0.21) — under the scenes: fill 3 scenes, pick 4 bars, press BRB and walk away. It changes on the bar, skips empty scenes; try Shuffle and Random transitions; a scene key takes back control.
 - {n21} **Swap colours** (0.19) — GIF › Colour › Swap colours: click a palette swatch, pick its new colour; check it in the output and after reloading the set.
 
