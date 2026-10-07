@@ -79,6 +79,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .pad.empty .nm{background:none}
 .pad.sel{box-shadow:0 0 0 2px var(--sig)}
 .pad.drop{outline:2px dashed var(--sig);outline-offset:-2px}
+body.paddragging,body.paddragging *{cursor:grabbing!important}
 .pad.hit{animation:hit .2s}@keyframes hit{from{filter:brightness(1.8)}}
 .pad.wait{animation:wait .25s steps(1) infinite}@keyframes wait{50%{box-shadow:0 0 0 2px var(--sig)}}
 .pad .dots{position:absolute;right:3px;top:3px;display:flex;gap:2px}
@@ -490,6 +491,7 @@ output.mod{color:var(--env)}
       <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
       <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from center) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
+      <dt>Dragging a pad</dt><dd>Onto another pad: they swap (onto an empty one: it moves there) — what plays keeps playing under its new key · onto a layer card: the GIF goes on that layer (on top), or starts there if it wasn't playing. Undoable</dd>
       <dt>Scene tiles</dt><dd>Click to go there · right-click to name it · drag one onto another to swap them</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, right-click, or Shift+click (with Shift held the chips turn red)</dd>
       <dt>Shift+click</dt><dd>Clears what you click (everything turns red while Shift is held): a pad, a scene (its name stays), a layer chip, an effect (back to defaults), an effect preset, a transition preset (back to its default), a GIF in the pool (when no pad uses it). Pads and scenes come back with Ctrl+Z</dd>
@@ -521,7 +523,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.11.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.12.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1601,7 +1603,7 @@ function swapScenes(a, b){
   // undo steps name their scene by number: follow the move
   const fix = e => {
     if (typeof e === 'string'){ const o = JSON.parse(e); if (o.scene !== undefined) o.scene = map(o.scene); return JSON.stringify(o); }
-    for (const k of ['clear', 'swap', 'scn', 'reclear']) if (e && e[k] && e[k].scene !== undefined) e[k].scene = map(e[k].scene);
+    for (const k of ['clear', 'swap', 'scn', 'reclear', 'pswap']) if (e && e[k] && e[k].scene !== undefined) e[k].scene = map(e[k].scene);
     return e;
   };
   hist.undo = hist.undo.map(fix); hist.redo = hist.redo.map(fix); if (hist.cur) hist.cur = fix(hist.cur);
@@ -2568,14 +2570,67 @@ function buildPads(){
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
     el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return;
       if (e.shiftKey){ clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); el._shift = true; return; }   // Shift+click: clear
-      el.setPointerCapture(e.pointerId); trigger(i, e.altKey); });   // Alt+click: swap
+      el.setPointerCapture(e.pointerId);
+      padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
+      trigger(i, e.altKey); });   // Alt+click: swap
     el.addEventListener('contextmenu', e => { e.preventDefault(); focusPad(i); });   // right-click: select without playing
-    el.addEventListener('pointerup', () => release(i));
-    el.addEventListener('pointercancel', () => release(i));
+    el.addEventListener('pointermove', e => padDragMove(e, i));
+    el.addEventListener('pointerup', e => { if (!padDragEnd(e, i)) release(i); });
+    el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
     el.addEventListener('click', e => { if (el._shift || e.shiftKey){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
     p.el = el;
   });
+}
+// ---- dragging a pad: onto another pad swaps them (an empty one: moves there), onto a layer puts the GIF on it ----
+// The press already hit the pad; once the pointer leaves it that hit is taken back (a GIF it added to a layer goes,
+// a snapped hit waiting for the beat is cancelled), so dragging only rearranges.
+let padDrag = null;
+const padDropAt = e => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && (t.closest('.pad') || t.closest('.layer')); };
+function padDragMove(e, i){
+  const d = padDrag; if (!d || d.i !== i) return;
+  if (!d.moved){
+    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
+    d.moved = true; release(i);
+    if (!d.wasPending && pending.has(i)){ pending.delete(i); pads[i].el.classList.remove('wait'); }
+    if (!d.had) layers.forEach((L, li) => { L.clips = L.clips.filter(c => c.pad !== i); if (!L.clips.includes(L.sel)) L.sel = null; L.on = d.on[li]; });
+    syncLayerUI(); redraw.all = true; document.body.classList.add('paddragging');
+  }
+  const o = padDropAt(e);
+  pads.forEach(p => p.el.classList.toggle('drop', p.el === o && p.i !== i));
+  layers.forEach(L => L.row.classList.toggle('dropzone', L.row === o));
+}
+function padDragEnd(e, i){
+  const d = padDrag; padDrag = null;
+  pads.forEach(p => p.el.classList.remove('drop')); layers.forEach(L => L.row.classList.remove('dropzone')); document.body.classList.remove('paddragging');
+  if (!d || d.i !== i || !d.moved) return false;
+  pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
+  const o = e && padDropAt(e); if (!o) return true;
+  if (o.classList.contains('pad')){ const j = +o.dataset.i; if (j !== i) swapPads(i, j); }
+  else padToLayer(i, layers.findIndex(L => L.row === o));
+  return true;
+}
+function swapPads(a, b, record = true){
+  if (a === b || pads[a].loading || pads[b].loading) return;
+  if (record) commit();
+  const map = k => k === a ? b : k === b ? a : k;
+  [pads[a].gif, pads[b].gif] = [pads[b].gif, pads[a].gif];
+  layers.forEach(L => L.clips.forEach(c => c.pad = map(c.pad)));
+  const pend = [...pending]; pending.clear(); pend.forEach(([k, q]) => pending.set(map(k), q));
+  pads.forEach(p => p.el.classList.toggle('wait', pending.has(p.i)));
+  if (record){ hist.undo.push({ pswap: { a, b, scene: sceneIdx } }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; hist.cur = histState(); updHistUI();
+    toast2(pads[a].gif ? `Pads ${pads[a].label} and ${pads[b].label} swapped` : `Moved to pad ${pads[b].label}`); }
+  renderPad(a); renderPad(b); selectPad(map(selPad)); syncLayerUI(); syncXfUI(); renderPool(); renderScenes(); redraw.all = true;
+}
+function applyPswap(E){ if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true); swapPads(E.a, E.b, false); }
+// a pad dropped on a layer: its GIF moves there (on top), or starts there if it wasn't playing
+function padToLayer(p, li){
+  if (li < 0 || !pads[p].gif) return;
+  const S = layers.findIndex(L => L.clips.some(c => c.pad === p));
+  if (S === li){ setTarget(li); return; }
+  if (S >= 0){ const c = layers[S].clips.find(c => c.pad === p); moveClip(S, c.id, li, layers[li].clips.length); }
+  else { if (layers[li].clips.length >= MAX_CLIPS) return refuse(layers[li]); setTarget(li); fire(p, clock.beat); }
+  syncLayerUI(); syncXfUI(); redraw.all = true; commit();
 }
 // small cover-cropped copy for the layer chips and scene tiles (made on demand for GIFs of scenes not on screen)
 function gifThumb(g, f = fxImage(g, g.startF)){
@@ -3827,6 +3882,7 @@ function undo(){
   const e = hist.undo.pop();
   if (e && e.clear){ if (restoreClear(e.clear)) hist.redo.push({ reclear: { pad: e.clear.pad, scene: e.clear.scene } }); else dropEntry(e); }
   else if (e && e.swap){ applySwap(e.swap); hist.redo.push(e); }
+  else if (e && e.pswap){ applyPswap(e.pswap); hist.redo.push(e); }
   else if (e && e.scn){ applyScn(e.scn); hist.redo.push(e); }
   else { hist.redo.push(hist.cur); applyHist(e); }
   hist.cur = histState(); updHistUI();
@@ -3836,6 +3892,7 @@ function redo(){
   const e = hist.redo.pop();
   if (e && e.reclear !== undefined){ if (e.reclear.scene !== sceneIdx) gotoScene(e.reclear.scene, clock.beat, true); clearPad(e.reclear.pad, true); }
   else if (e && e.swap){ applySwap(e.swap); hist.undo.push(e); }
+  else if (e && e.pswap){ applyPswap(e.pswap); hist.undo.push(e); }
   else if (e && e.scn){ applyScn(e.scn); hist.undo.push(e); }
   else { hist.undo.push(hist.cur); applyHist(e); }
   hist.cur = histState(); updHistUI();

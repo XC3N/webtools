@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo).
 
+## 0.12.0 — 2026-10-06
+
+### Pads
+- Drag a pad onto another to swap them (onto an empty pad: it moves). A GIF that's playing keeps playing under its new key. Undoable.
+- Drag a pad onto a layer card to put its GIF on that layer (on top), or start it there if it wasn't playing.
+- The press still hits the pad; once you drag, that hit is taken back, so dragging only rearranges.
+
 ## 0.11.0 — 2026-10-06
 
 ### About
