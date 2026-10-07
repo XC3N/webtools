@@ -4,6 +4,24 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.17.0 — 2026-10-07
+
+### Prep mode
+- Enter toggles Prep: Enter starts it, Enter again goes live. No more P key and no Go live button (nothing in the header moves); the Prep button's LED shows it's on, and blinks while waiting for the beat to go live.
+
+### Deleting
+- Ctrl+click (⌘+click on a Mac) deletes, instead of Shift+click: pads, scenes, effect presets, layer chips, GIFs in the pool. Holding Ctrl turns them red with a ✕. Shift is back to meaning "select / layers" only.
+- Effects and transition presets are no longer reset by a modifier click (double-click a slider still resets that setting).
+- Right-clicking a layer chip selects it (it used to delete it).
+
+### Recording
+- Sound: Settings › Canvas › Sound records an audio input with the video (an audio interface, or a loopback / virtual cable carrying the mix). Picked from a list the first time you allow audio input; Opus or AAC alongside the video.
+
+### Layout
+- The Frames controls (In / Out / Start) now sit under Play, next to the loop options; the Frames tab is gone.
+- Dragging a GIF from the pool shows the slanted chip too.
+- The logo is bigger again.
+
 ## 0.16.0 — 2026-10-06
 
 ### Prep mode

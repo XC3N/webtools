@@ -36,7 +36,10 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n11} **New logo** (0.14) — header and About: Russo One, chrome, "if" in magenta, slanted; nothing clipped at your display scaling.
 - {n12} **Slanted drag chips everywhere** (0.14.1) — dragging a layer chip, an effect tile or the effect name shows the same slanted chip as pads.
 - {n13} **Output window remembers its place** (0.15) — move it to the projector screen, close it, reopen: same place and size. Drag inside it to move it; Shift+click Output resets.
-- {i5} **Prep mode** (0.16) — P: the output keeps the live scene while you edit any scene (with the output window open on a second screen); Go live (Enter) sends it out with the transition.
+- {i5} **Prep mode** (0.17: Enter toggles) — Enter: the output keeps the live scene while you edit any scene (with the output window open on a second screen); Enter again goes live with the transition.
+- {n15} **Ctrl+click deletes** (0.17) — pads, scenes, effect presets, layer chips, pool GIFs turn red with ✕ while Ctrl is held; right-click a chip selects it.
+- {n16} **Frames under Play** (0.17) — In / Out / Start next to Loop.
+- {n17} **Recording with sound** (0.17) — Settings › Canvas › Sound: pick your interface or loopback; the file has audio in sync.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.

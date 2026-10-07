@@ -36,8 +36,9 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .sect>label{padding:0 2px 0 6px}
 #clockGrp #beats{margin:0 2px 0 4px}
 /* the wordmark (Logo Lab: Russo One 400 · chrome · accent #8f004a on "if" · tracking -0.08em · slant -16°) */
-.brand,.abrand{display:inline-block;font:400 27px/1 'Russo One',var(--sans);letter-spacing:-.08em;transform:skewX(-16deg);padding:.06em .14em .06em .04em;
+.brand,.abrand{display:inline-block;font:400 34px/1 'Russo One',var(--sans);letter-spacing:-.08em;transform:skewX(-16deg);padding:.06em .14em .06em .04em;
   background-image:linear-gradient(180deg,#fff,#bdbdc6);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:default}
+.brand{margin:-8px 0 -8px -4px}   /* a big logo without making the header taller */
 .brand span,.abrand span{display:inline-block;padding:0 .14em;margin:0 -.14em;background-image:linear-gradient(180deg,#ff359e,#8f004a);-webkit-background-clip:text;background-clip:text;color:transparent}
 #hdrVer{border:0;background:none;padding:0 2px;height:auto;margin:3px 22px 0 -2px;font:500 10px var(--mono);color:var(--faint);align-self:center;cursor:pointer}
 #hdrVer:hover{color:var(--sig)}
@@ -168,7 +169,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #prepTag{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#1a1200;background:#ffb000;padding:3px 10px;border-radius:2px;pointer-events:none;white-space:nowrap}
 body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 #prepLed.on{background:#ffb000;box-shadow:0 0 6px #ffb000}
-#liveBtn.wait{animation:wait .25s steps(1) infinite}
+#prepLed.wait{animation:wait .25s steps(1) infinite}
 .scene.onair{box-shadow:0 0 0 2px #ff3b3b}
 .scene.onair::before{content:"LIVE";position:absolute;right:3px;top:3px;z-index:1;font:700 9px/1 var(--mono);color:#fff;background:#d01f1f;border-radius:2px;padding:2px 4px}
 #liveTag{position:absolute;top:8px;left:8px;z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#fff;background:#a33;padding:3px 8px;border-radius:2px;pointer-events:none}
@@ -212,13 +213,12 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip b{position:absolute;right:1px;top:1px;width:18px;height:18px;border-radius:2px;background:#000d;font:400 14px/17px var(--mono);text-align:center;color:#ddd;visibility:hidden;cursor:pointer}
 .chip:hover b{visibility:visible}.chip b:hover{color:#fff;background:var(--danger)}
 /* Shift held: a click (or right-click any time) removes — the chips say so */
-/* Shift held: what a click would clear turns red with a ✕ (pads, scenes, presets, chips, pool GIFs); what it would reset (effects, transition presets) gets a red outline */
-body.shift{--clr:#ff3b3b}
-body.shift .pad:not(.empty),body.shift .scene:not(.empty),body.shift .scene.padsOnly,body.shift #fxPre .fxp:not(.empty),body.shift .ptile,body.shift .chip{box-shadow:0 0 0 2px var(--clr);cursor:pointer}
-body.shift .pad:not(.empty)::after,body.shift .scene:not(.empty)::after,body.shift .scene.padsOnly::after,body.shift #fxPre .fxp:not(.empty)::after,body.shift .ptile::after,body.shift .chip::after{
+/* Ctrl (⌘) held: what a click would delete turns red with a ✕ (pads, scenes, effect presets, layer chips, pool GIFs) */
+body.del{--clr:#ff3b3b}
+body.del .pad:not(.empty),body.del .scene:not(.empty),body.del .scene.padsOnly,body.del #fxPre .fxp:not(.empty),body.del .ptile,body.del .chip{box-shadow:0 0 0 2px var(--clr);cursor:pointer}
+body.del .pad:not(.empty)::after,body.del .scene:not(.empty)::after,body.del .scene.padsOnly::after,body.del #fxPre .fxp:not(.empty)::after,body.del .ptile::after,body.del .chip::after{
   content:"✕";position:absolute;inset:0;z-index:2;display:grid;place-items:center;border-radius:inherit;background:rgba(200,20,20,.42);color:#fff;font:700 20px/1 var(--sans);text-shadow:0 1px 3px #000;pointer-events:none}
-body.shift .chip::after{font-size:16px}
-body.shift #fxPads .fxp,body.shift #trPre button{box-shadow:inset 0 0 0 2px var(--clr)}
+body.del .chip::after{font-size:16px}
 
 /* ---------- transform ---------- */
 #xfTitle{width:100%}
@@ -264,7 +264,7 @@ body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px
 .mrow{display:grid;grid-template-columns:12ch 1fr auto;gap:8px;align-items:center;padding:3px 6px;background:var(--panel-2);border-radius:var(--r);font-size:12px}
 .mrow .mk{font:400 11px var(--mono);color:var(--lcd-ink)}.mrow button{width:22px;height:22px}
 #midiCtlIn{flex:1;min-width:0}
-.abrand{font-size:32px}
+.abrand{font-size:40px}
 .aboutLead{margin:10px 0 4px;font-size:13px;line-height:1.5;color:var(--ink)}
 .steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
 .steps b{color:var(--ink)}.steps li::marker{color:var(--sig);font:600 12px var(--mono)}
@@ -301,7 +301,7 @@ output.mod{color:var(--env)}
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="prepBtn" title="Prep (P): the output keeps playing what's live while you work on any scene · Go live (Enter or P) sends it out"><span class="led" id="prepLed"></span>Prep</button><button id="liveBtn" class="accent" hidden title="Send the scene you're on to the output with the armed transition (Enter or P)">Go live</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="prepBtn" title="Prep (Enter): the output keeps playing what's live while you work on any scene · Enter again sends the scene you're on out, with the armed transition"><span class="led" id="prepLed"></span>Prep</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -364,7 +364,7 @@ output.mod{color:var(--env)}
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
   <div id="gifSettings" class="disabled">
     <div class="lcd one" id="gInfo"></div>
-    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="frames">Frames</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
+    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
     <div id="gPanes">
       <div data-pane="play">
         <div class="field"><label>Timing</label><div class="seg span" id="gSync">
@@ -381,16 +381,14 @@ output.mod{color:var(--env)}
           <button data-v="pingpong" title="Forward then backward (in Fit, the round trip fills the loop length)">Ping-pong</button>
           <button data-v="once" title="Play through, then hold the last frame until triggered again">Once</button></div></div>
         <div class="field"><label title="Jump back to the start every …">Restart</label><div class="seg span grid4" id="gRestart"></div></div>
-        <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
-      </div>
-      <div data-pane="frames" class="off">
+        <div class="sub"><span title="In / Out trim the animation; Start sets the frame the loop begins on (it wraps within In–Out)">Frames</span><span class="line"></span></div>
         <div class="frames">
           <div><div class="field"><label for="gIn">In</label><input id="gIn" type="range" data-def="min" min="0" step="1"><output></output></div>
           <div class="field"><label for="gOut">Out</label><input id="gOut" type="range" data-def="max" min="0" step="1"><output></output></div>
           <div class="field"><label for="gStart">Start</label><input id="gStart" type="range" data-def="min" min="0" step="1"><output></output></div></div>
           <canvas id="gPrev" width="96" height="96" title="Frame under the slider you last touched"></canvas>
         </div>
-        <p class="note">In / Out trim the animation. Start sets which frame the loop begins on; it wraps around within In–Out.</p>
+        <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
       </div>
       <div data-pane="colour" class="off">
         <div class="sub" style="margin-top:0"><span>Key</span><span class="line"></span><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
@@ -446,6 +444,7 @@ output.mod{color:var(--env)}
     <div class="row"><div class="seg" id="fmtSeg"></div><label class="tog" title="Vertical only: shade where Reels / TikTok / Shorts put their buttons and captions (preview only, not in the output)"><input type="checkbox" id="safeTog">Safe-zone guides</label></div>
     <div class="row"><span class="lbl" style="color:var(--muted)">Recording</span><div class="seg" id="recFmtSeg"><button data-r="mp4" title="H.264 in MP4 — uploads straight to Instagram, TikTok, YouTube">MP4</button><button data-r="webm" title="VP9 in WebM — smaller, plays in browsers and VLC; most social apps want MP4">WebM</button></div>
       <div class="seg" id="recBarsSeg" title="Recording length: stop by hand, or after a number of bars (starts and ends on the bar, so the clip loops cleanly)"><button data-b="0">Free</button><button data-b="4">4 bars</button><button data-b="8">8</button><button data-b="16">16</button><button data-b="32">32</button></div></div>
+    <div class="row"><span class="lbl" style="color:var(--muted)">Sound</span><select id="recAudioSel" style="flex:1;min-width:0" title="Record a sound input with the video: your audio interface, a loopback / virtual cable carrying the DJ mix…"><option value="">No sound</option></select></div>
     <p class="note">The output's shape: landscape for screens and projectors, vertical for Reels / TikTok / Shorts / Stories, square or 4:5 for the feed. It's saved with the set; the output window and recordings follow it.</p>
     <div class="sub"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
@@ -502,9 +501,9 @@ output.mod{color:var(--env)}
       <dt>Sliders</dt><dd>Double-click the bar resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · double-click the number to type a value (Enter applies, Esc cancels) · dropdowns and button rows take the wheel and arrows too</dd>
       <dt>Del / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
-      <dt>P · Enter</dt><dd>Prep: the output keeps playing the live scene, untouched, while you work on any scene here (switch scenes, load and place GIFs, try effects: the preview shows it, the output doesn't). The live scene's tile says LIVE. Go live (Enter, P or the button) sends the scene you're on to the output with the armed transition, on the next beat / bar with Snap. Blackout, freeze and recording still act on the output</dd>
+      <dt>Enter</dt><dd>Prep: the output keeps playing the live scene, untouched, while you work on any scene here (switch scenes, load and place GIFs, try effects: the preview shows it, the output doesn't). The live scene's tile says LIVE. Enter again (or the Prep button) goes live: the scene you're on goes to the output with the armed transition, on the next beat / bar with Snap. Blackout, freeze and recording still act on the output</dd>
       <dt>Output</dt><dd>Opens the output window, where you left it last time (position and size are remembered). Drag anywhere in it to move it; double-click switches full screen on and off. Shift+click Output resets its position if it ends up somewhere unreachable</dd>
-      <dt>Rec</dt><dd>Records the output to an MP4 (H.264) or WebM video — Settings › Canvas picks which, and the size follows the canvas format. A length in bars (4–32) starts on the next bar and stops exactly on the bar, so the clip loops cleanly (good for Reels). Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
+      <dt>Rec</dt><dd>Records the output to an MP4 (H.264) or WebM video — Settings › Canvas picks which, and the size follows the canvas format. A length in bars (4–32) starts on the next bar and stops exactly on the bar, so the clip loops cleanly (good for Reels). Settings › Canvas › Sound records an audio input with it (your interface, or a loopback / virtual cable carrying the mix). Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
       <dt>MIDI learn</dt><dd>Settings › MIDI control › Learn: click a target (pad, scene, transition, effect, layer chip, opacity, effect amount, Tap, Sync, or Blackout/Freeze in the bar), then move a control on your controller. Faders need a knob/fader (CC). Esc or Done to finish; mappings are remembered</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
       <dt>Esc</dt><dd>Cancel a colour pick · close a panel</dd>
@@ -513,8 +512,8 @@ output.mod{color:var(--env)}
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
       <dt>Dragging a pad</dt><dd>Onto another pad: they swap (onto an empty one: it moves there) — what plays keeps playing under its new key · onto a layer card: the GIF goes on that layer (on top), or starts there if it wasn't playing. Undoable</dd>
       <dt>Scene tiles</dt><dd>Click to go there · right-click to name it · drag one onto another to swap them</dd>
-      <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, right-click, or Shift+click (with Shift held the chips turn red)</dd>
-      <dt>Shift+click</dt><dd>Clears what you click (everything turns red while Shift is held): a pad, a scene (its name stays), a layer chip, an effect (back to defaults), an effect preset, a transition preset (back to its default), a GIF in the pool (when no pad uses it). Pads and scenes come back with Ctrl+Z</dd>
+      <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, or Ctrl+click (with Ctrl held the chips turn red)</dd>
+      <dt>Ctrl+click</dt><dd>Deletes what you click (everything deletable turns red with a ✕ while Ctrl is held; ⌘ on a Mac): a pad, a scene (its name stays), a layer chip, an effect preset, a GIF in the pool (when no pad uses it). Pads and scenes come back with Ctrl+Z</dd>
     </dl>
   </div>
 </div>
@@ -543,12 +542,13 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.16.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.17.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
 let format = '16:9';
 let recBars = (() => { try { return +localStorage.getItem('vjif-recbars') || 0; } catch (e) { return 0; } })();   // 0 = until stopped
+let recAudio = (() => { try { return JSON.parse(localStorage.getItem('vjif-recaudio')) || null; } catch (e) { return null; } })();   // { id, label } of the sound input recorded with the video, or null
 let recFmt = (() => { try { return localStorage.getItem('vjif-recfmt') || 'mp4'; } catch (e) { return 'mp4'; } })();   // recording container (Settings)
 let safeGuides = (() => { try { return localStorage.getItem('vjif-safe') !== '0'; } catch (e) { return true; } })();   // preview only, never in the output
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
@@ -807,14 +807,16 @@ function renderPool(){
   pool.forEach(m => {
     const u = poolUse(m), t = document.createElement('div');
     t.className = 'ptile' + (u.sc.length ? '' : ' unused'); t.title = m.name + ' — click: next empty pad · drag onto a pad: put it there'; t.draggable = true;
-    t.addEventListener('dragstart', e => { e.dataTransfer.setData(POOL_MIME, m.hash); e.dataTransfer.effectAllowed = 'copy'; });
+    t.addEventListener('dragstart', e => { e.dataTransfer.setData(POOL_MIME, m.hash); e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setDragImage(NO_IMG, 0, 0);
+      const gh = document.createElement('span'); gh.className = 'chip'; gh.style.backgroundImage = `url(${t.querySelector('canvas').toDataURL()})`; ghost.show(gh, e.clientX, e.clientY); });
     t.innerHTML = `<canvas width="120" height="80"></canvas><span class="pn"></span><span class="pm">${m.w}×${m.h} · ${m.src.length} fr · ${(m.srcBytes / 1048576).toFixed(m.srcBytes < 10485760 ? 1 : 0)} MB</span>`
       + `<span class="pm use${u.here.length ? ' here' : ''}"></span><button class="px iconbtn" title="Remove from the pool">×</button>`;
     t.querySelector('.pn').textContent = m.name;
     t.querySelector('.use').textContent = (u.here.length ? `pad ${u.here.join(' ')} here` + (u.sc.length > 1 ? ` · scenes ${u.sc.join(' ')}` : '') : u.sc.length ? `scene${u.sc.length > 1 ? 's' : ''} ${u.sc.join(' ')}` : 'unused');
     const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);
     x.imageSmoothingEnabled = false; x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
-    t.addEventListener('click', e => { if (e.target.closest('.px') || e.shiftKey) return poolUse(m).sc.length ? toast('Still on a pad — clear it there first') : removeMedia(m); pickPool(m); });   // Shift+click: remove
+    t.addEventListener('click', e => { if (e.target.closest('.px') || e.ctrlKey || e.metaKey) return poolUse(m).sc.length ? toast('Still on a pad — clear it there first') : removeMedia(m); pickPool(m); });   // Ctrl+click: remove
     grid.appendChild(t);
   });
 }
@@ -1439,9 +1441,10 @@ function release(p){
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
 // Shift held: chips show they'd be removed by a click
-addEventListener('keydown', e => { if (e.key === 'Shift') document.body.classList.add('shift'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.add('alt'); } });
-addEventListener('keyup', e => { if (e.key === 'Shift') document.body.classList.remove('shift'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.remove('alt'); } });   // (no browser menu on Alt)
-function releaseAll(){ document.body.classList.remove('shift', 'alt'); heldPre = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); }
+const DEL_KEYS = ['Control', 'Meta'];   // Ctrl (⌘ on a Mac) + click deletes
+addEventListener('keydown', e => { if (DEL_KEYS.includes(e.key)) document.body.classList.add('del'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.add('alt'); } });
+addEventListener('keyup', e => { if (DEL_KEYS.includes(e.key)) document.body.classList.remove('del'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.remove('alt'); } });   // (no browser menu on Alt)
+function releaseAll(){ document.body.classList.remove('del', 'alt'); heldPre = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); }
 window.addEventListener('blur', releaseAll);         // keys held while switching windows would otherwise stay down
 
 // ---------- fade one-shot envelope ----------
@@ -1583,7 +1586,7 @@ function renderScenes(){
     b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
   });
 }
-$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; e.shiftKey ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Shift+click: empty it
+$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; (e.ctrlKey || e.metaKey) ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
 // scene names: right-click a tile to type one (a click would go to the scene) (Enter or clicking away keeps it, Esc cancels, empty = no name)
 const sceneName = i => i === sceneIdx ? liveName : scenes[i] && scenes[i].name || '';
 function setSceneName(i, name){
@@ -1652,8 +1655,7 @@ function syncTransUI(){
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || T.type === 'melt');   // the melt keeps Doom's own timing
   $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
-$('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = +b.dataset.v;
-  if (e.shiftKey){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Shift+click: reset it
+$('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = +b.dataset.v; armTrans(k); });
 $('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); } });
 $('#trStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
   transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
@@ -1689,10 +1691,8 @@ function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
     if (e.button) return;
-    if (e.shiftKey && heldPre < 0){ el._edit = true;                                      // Shift+click: reset an effect / empty a preset
-      if (i < NFX){ fxUp(i); fxCfg[i] = fxDefaults()[i]; toast2(`${FX_DEFS[i].name} back to its defaults`); }
-      else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
-      selFx = i; syncFxUI(); return; }
+    if ((e.ctrlKey || e.metaKey) && i >= NFX && heldPre < 0){ el._edit = true;            // Ctrl+click a preset: empty it
+      fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); selFx = i; syncFxUI(); return; }
     if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); el._edit = true; return; }     // a preset is held: this click edits it
     el.setPointerCapture(e.pointerId); fxDown(i);
     if (i < NFX) fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; else heldPre = i - NFX;   // holding a preset tile: F keys edit it
@@ -2058,9 +2058,7 @@ function doGoLive(beat = clock.beat){
 function dropPrep(){ if (!prep) return; prep.free.forEach(freeGif); prep = null; pendingLive = null; syncPrepUI(); }
 function syncPrepUI(){
   const b = $('#prepBtn'); if (!b) return;
-  b.classList.toggle('on', !!prep); $('#prepLed').classList.toggle('on', !!prep);
-  $('#liveBtn').hidden = !prep; $('#liveBtn').classList.toggle('wait', pendingLive !== null);
-  $('#liveBtn').textContent = pendingLive !== null ? 'Going live…' : 'Go live';
+  b.classList.toggle('on', !!prep); $('#prepLed').classList.toggle('on', !!prep); $('#prepLed').classList.toggle('wait', pendingLive !== null);   // blinks until the beat it goes live on
   $('#prepTag').hidden = !prep;
   document.body.classList.toggle('prepping', !!prep);
 }
@@ -2649,8 +2647,7 @@ function onKey(e){
     c.y = clamp(c.y + (e.code === 'ArrowUp' ? -st : e.code === 'ArrowDown' ? st : 0), -H, H);
     syncXfUI(); return;
   }
-  if (e.code === 'KeyP' && !e.repeat){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // P: Prep on / go live
-  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && prep && !e.repeat){ e.preventDefault(); goLive(); return; }
+  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // Enter: Prep / go live
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
   if (xi >= 0){ e.preventDefault(); if (!e.repeat) heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
   const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
@@ -2701,7 +2698,7 @@ function buildPads(){
     el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
     el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return;
-      if (e.shiftKey){ clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); el._shift = true; return; }   // Shift+click: clear
+      if (e.ctrlKey || e.metaKey){ clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); el._shift = true; return; }   // Ctrl+click: clear
       el.setPointerCapture(e.pointerId);
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
       trigger(i, e.altKey); });   // Alt+click: swap
@@ -2709,7 +2706,7 @@ function buildPads(){
     el.addEventListener('pointermove', e => padDragMove(e, i));
     el.addEventListener('pointerup', e => { if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
-    el.addEventListener('click', e => { if (el._shift || e.shiftKey){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
+    el.addEventListener('click', e => { if (el._shift || e.ctrlKey || e.metaKey){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
     p.el = el;
   });
@@ -3069,12 +3066,13 @@ function buildLayers(){
     row.querySelector('.clips').addEventListener('click', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
-      if (e.target.tagName === 'B' || e.shiftKey) removeClip(li, c);
+      if (e.target.tagName === 'B' || e.ctrlKey || e.metaKey) removeClip(li, c);
       else { L.sel = c; selectPad(c.pad); setTarget(li); }
     });
-    row.querySelector('.clips').addEventListener('contextmenu', e => {   // right-click a chip: remove it
+    row.querySelector('.clips').addEventListener('contextmenu', e => {   // right-click a chip: select it (a Mac's Ctrl+click arrives here: delete)
       const chip = e.target.closest('.chip'); if (!chip) return; e.preventDefault();
-      const c = L.clips.find(c => c.id === +chip.dataset.id); if (c) removeClip(li, c);
+      const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
+      if (e.ctrlKey) removeClip(li, c); else { L.sel = c; selectPad(c.pad); setTarget(li); }
     });
     const clipsEl = row.querySelector('.clips');
     clipsEl.addEventListener('dragstart', e => {
@@ -3134,7 +3132,7 @@ function syncLayerUI(){
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
-      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · right-click or Shift+click to remove"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
+      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · Ctrl+click to remove"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
     }).join('');
   }
 
@@ -3420,6 +3418,23 @@ syncRecFmt();
 const syncRecBars = () => document.querySelectorAll('#recBarsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.b === recBars));
 syncRecBars();
 $('#recBarsSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recBars = +b.dataset.b; try { localStorage.setItem('vjif-recbars', recBars); } catch (err) {} syncRecBars(); });
+// sound inputs: names only show once the browser has been allowed to use audio input (asked the first time you pick one)
+async function fillRecAudio(ask = false){
+  const sel = $('#recAudioSel'); if (!sel || !navigator.mediaDevices) return;
+  if (ask){ try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach(t => t.stop()); } catch (e) { toast('Sound input access was not allowed'); } }
+  let ins = []; try { ins = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput' && d.deviceId !== 'default' && d.deviceId !== 'communications'); } catch (e) {}
+  const named = ins.some(d => d.label);
+  sel.innerHTML = '<option value="">No sound</option>' + (named ? ins.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label)}</option>`).join('') : '<option value="?">Choose an input… (asks permission)</option>')
+    + (recAudio && !ins.some(d => d.deviceId === recAudio.id) ? `<option value="${esc(recAudio.id)}">${esc(recAudio.label || 'Chosen input')} (not connected)</option>` : '');
+  sel.value = recAudio ? recAudio.id : '';
+}
+$('#recAudioSel').addEventListener('change', async e => {
+  const v = e.target.value;
+  if (v === '?'){ await fillRecAudio(true); $('#recAudioSel').focus(); return; }
+  recAudio = v ? { id: v, label: e.target.selectedOptions[0].textContent } : null;
+  try { localStorage.setItem('vjif-recaudio', JSON.stringify(recAudio)); } catch (err) {}
+});
+$('#setBtn').addEventListener('click', () => fillRecAudio());
 $('#recFmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recFmt = b.dataset.r; try { localStorage.setItem('vjif-recfmt', recFmt); } catch (err) {} syncRecFmt(); recUI(); });
 $('#safeTog').addEventListener('change', e => { safeGuides = e.target.checked; try { localStorage.setItem('vjif-safe', safeGuides ? '1' : '0'); } catch (err) {} redraw.all = true; });
 $('#midiLearn').addEventListener('click', startLearn);
@@ -3788,7 +3803,10 @@ const rec = { mr: null, chunks: [], writer: null, t0: 0, wait: null, name: '', b
 const REC_MIMES = { mp4: ['video/mp4;codecs=avc1.64002A', 'video/mp4;codecs=avc1.640028', 'video/mp4;codecs=avc1.4D0028', 'video/mp4;codecs=avc1'],
                     webm: ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'] };
 const recOk = m => window.MediaRecorder && MediaRecorder.isTypeSupported(m);
-function recMime(){ return REC_MIMES[recFmt].find(recOk) || REC_MIMES[recFmt === 'mp4' ? 'webm' : 'mp4'].find(recOk) || ''; }
+// with sound: the same containers with an audio codec (AAC or Opus in MP4, Opus in WebM)
+const REC_MIMES_AV = { mp4: ['video/mp4;codecs=avc1.64002A,mp4a.40.2', 'video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=avc1.64002A,opus', 'video/mp4;codecs=avc1,opus'],
+                       webm: ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus'] };
+function recMime(av = false){ const M = av ? REC_MIMES_AV : REC_MIMES; return M[recFmt].find(recOk) || M[recFmt === 'mp4' ? 'webm' : 'mp4'].find(recOk) || ''; }
 const recExt = mime => mime.startsWith('video/mp4') ? 'mp4' : 'webm';
 async function recToggle(){
   if (rec.mr) return recStop();
@@ -3796,13 +3814,19 @@ async function recToggle(){
   if (rec.busy) return;                              // the save dialog is still open
   rec.busy = true; try { await recPrepare(); } finally { rec.busy = false; }
 }
+function recDropAudio(){ if (rec.audio){ rec.audio.getTracks().forEach(t => t.stop()); rec.audio = null; } }
 function recCancelWait(){
   if (!rec.wait) return;
-  rec.wait = null; if (rec.writer){ try { rec.writer.abort(); } catch (e) {} rec.writer = null; }   // the chosen file is dropped, not left empty
+  rec.wait = null; recDropAudio(); if (rec.writer){ try { rec.writer.abort(); } catch (e) {} rec.writer = null; }   // the chosen file is dropped, not left empty
   recUI();
 }
 async function recPrepare(){
-  const mime = recMime(); if (!mime) return toast('Recording needs MediaRecorder (use Chrome)');
+  rec.audio = null;
+  if (recAudio){                                     // the chosen sound input, raw (no echo cancelling / noise gate / level riding)
+    try { rec.audio = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: recAudio.id }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
+    catch (e) { toast(`Can't open the sound input (${recAudio.label || 'chosen input'}) — recording without sound`); }
+  }
+  const mime = recMime(!!rec.audio); if (!mime) return toast('Recording needs MediaRecorder (use Chrome)');
   if (recExt(mime) !== recFmt) toast2(`This browser can't record ${recFmt.toUpperCase()} — recording ${recExt(mime).toUpperCase()} instead`);
   const ext = recExt(mime), type = ext === 'mp4' ? 'video/mp4' : 'video/webm';
   const d = new Date(), pad2 = n => String(n).padStart(2, '0');
@@ -3811,7 +3835,7 @@ async function recPrepare(){
   if (window.showSaveFilePicker){
     try { const h = await showSaveFilePicker({ suggestedName: rec.name, types: [{ description: `${ext.toUpperCase()} video`, accept: { [type]: ['.' + ext] } }] });
       rec.writer = await h.createWritable(); rec.name = h.name; }
-    catch (e) { if (e.name === 'AbortError') return; rec.writer = null; }
+    catch (e) { if (e.name === 'AbortError'){ recDropAudio(); return; } rec.writer = null; }
   }
   // a bar-length take always starts on a bar: with a stopped MIDI clock it waits for the clock to start
   if (snapUnit() || recBars){ rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; rec.last = clock.beat; recUI(); }
@@ -3820,12 +3844,13 @@ async function recPrepare(){
 function recStart(mime, beat = clock.beat){
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.chunks = []; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   const stream = master.captureStream(60);
-  const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6 });
+  if (rec.audio) rec.audio.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6, audioBitsPerSecond: 256e3 });
   mr.ondataavailable = e => { if (!e.data || !e.data.size) return; rec.bytes += e.data.size;
     if (rec.writer){ const w = rec.writer, b = e.data; rec.pending = rec.pending.then(() => w.write(b)).catch(err => toast('Writing the recording failed: ' + err.message)); }
     else rec.chunks.push(e.data); };
   mr.onstop = async () => {
-    stream.getTracks().forEach(t => t.stop());
+    stream.getTracks().forEach(t => t.stop()); rec.audio = null;
     if (rec.writer){ await rec.pending; try { await rec.writer.close(); toast2(`Recording saved: ${rec.name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } rec.writer = null; }
     else { const blob = new Blob(rec.chunks, { type: mime.split(';')[0] }); rec.chunks = [];
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = rec.name; document.body.appendChild(a); a.click(); a.remove();
@@ -3857,7 +3882,6 @@ function recTick(){
 setInterval(() => { if (rec.mr) recUI(); }, 500);
 $('#recBtn').addEventListener('click', recToggle);
 $('#prepBtn').addEventListener('click', () => prep ? goLive() : startPrep());
-$('#liveBtn').addEventListener('click', goLive);
 async function saveFile(blob, filename){
   if (window.showSaveFilePicker){
     try {
