@@ -170,7 +170,8 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .fxp .s{margin-left:5px;font:400 10px/13px var(--sans);color:var(--muted)}
 .fxp.sel{border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig)}
 .fxp.on .n,.fxp.on .hd,.fxp.on .s{color:var(--sigtxt)}
-#fmtSeg button,#recFmtSeg button,#recBarsSeg button{padding:0 10px;min-width:40px}
+#fmtSeg button,#recBarsSeg button,#recFpsSeg button,#recMbpsSeg button,#recACodecSeg button{padding:0 10px;min-width:40px}
+.recLbl{color:var(--muted);width:72px;flex:none}
 #aboutVer{color:var(--muted);text-decoration:none;margin-left:10px;flex:none}
 #aboutVer:hover{color:var(--sig)}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
@@ -457,10 +458,20 @@ output.mod{color:var(--env)}
     <h2>Settings<span class="line"></span><button id="setClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <div class="sub" style="margin-top:0"><span>Canvas</span><span class="line"></span></div>
     <div class="row"><div class="seg" id="fmtSeg"></div><label class="tog" title="Vertical only: shade where Reels / TikTok / Shorts put their buttons and captions (preview only, not in the output)"><input type="checkbox" id="safeTog">Safe-zone guides</label></div>
-    <div class="row"><span class="lbl" style="color:var(--muted)">Recording</span><div class="seg" id="recFmtSeg"><button data-r="mp4" title="H.264 in MP4 — uploads straight to Instagram, TikTok, YouTube">MP4</button><button data-r="webm" title="VP9 in WebM — smaller, plays in browsers and VLC; most social apps want MP4">WebM</button></div>
-      <div class="seg" id="recBarsSeg" title="Recording length: stop by hand, or after a number of bars (starts and ends on the bar, so the clip loops cleanly)"><button data-b="0">Free</button><button data-b="4">4 bars</button><button data-b="8">8</button><button data-b="16">16</button><button data-b="32">32</button></div></div>
-    <div class="row"><span class="lbl" style="color:var(--muted)">Sound</span><select id="recAudioSel" style="flex:1;min-width:0" title="Record a sound input with the video: your audio interface, a loopback / virtual cable carrying the DJ mix…"><option value="">No sound</option></select></div>
     <p class="note">The output's shape: landscape for screens and projectors, vertical for Reels / TikTok / Shorts / Stories, square or 4:5 for the feed. It's saved with the set; the output window and recordings follow it.</p>
+    <div class="sub"><span>Recording</span><span class="line"></span></div>
+    <div class="row"><span class="lbl recLbl">Video</span><select id="recCodecSel" style="flex:1;min-width:0" title="Video codec and file type">
+        <option value="h264">H.264 · MP4 — plays and uploads everywhere</option>
+        <option value="hevc">HEVC (H.265) · MP4 — half the size, Apple / newer devices</option>
+        <option value="av1">AV1 · MP4 — smallest, newer browsers and YouTube</option>
+        <option value="vp9">VP9 · WebM — browsers and VLC</option>
+        <option value="vp8">VP8 · WebM — oldest, plays almost anywhere WebM does</option></select></div>
+    <div class="row"><span class="lbl recLbl">Length</span><div class="seg" id="recBarsSeg" title="Recording length: stop by hand, or after a number of bars (starts and ends on the bar, so the clip loops cleanly)"><button data-b="0">Free</button><button data-b="4">4 bars</button><button data-b="8">8</button><button data-b="16">16</button><button data-b="32">32</button></div></div>
+    <div class="row"><span class="lbl recLbl">Frame rate</span><div class="seg" id="recFpsSeg" title="Frames per second in the file (constant). 50 and 60 need a screen running at 60 Hz or more"><button data-f="24">24</button><button data-f="25">25</button><button data-f="30">30</button><button data-f="50">50</button><button data-f="60">60</button></div><span class="lbl" style="color:var(--muted)">fps</span></div>
+    <div class="row"><span class="lbl recLbl">Quality</span><div class="seg" id="recMbpsSeg" title="Video bit rate: higher is sharper on noisy, busy GIFs and makes bigger files. The upload sites re-encode anyway"><button data-m="6">6</button><button data-m="12">12</button><button data-m="20">20</button><button data-m="40">40</button></div><span class="lbl" style="color:var(--muted)">Mb/s</span></div>
+    <div class="row"><span class="lbl recLbl">Sound</span><select id="recAudioSel" style="flex:1;min-width:0" title="Record a sound input with the video: your audio interface, a loopback / virtual cable carrying the DJ mix…"><option value="">No sound</option></select>
+      <div class="seg" id="recACodecSeg" title="Sound codec in MP4: AAC is what the social sites expect; Opus sounds a little better for its size but some sites refuse it. WebM is always Opus"><button data-a="aac">AAC</button><button data-a="opus">Opus</button></div></div>
+    <p class="note">H.264 at 30 fps is the safe choice for Facebook, Instagram and TikTok. A codec this browser can't encode falls back to H.264 (or WebM), with a message. MP4 keeps the frame rate exactly; in WebM it's a maximum (the browser's recorder drops frames when busy).</p>
     <div class="sub"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
     <p class="note">Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black.</p>
@@ -557,14 +568,22 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.19.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.20.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
 let format = '16:9';
 let recBars = (() => { try { return +localStorage.getItem('vjif-recbars') || 0; } catch (e) { return 0; } })();   // 0 = until stopped
 let recAudio = (() => { try { return JSON.parse(localStorage.getItem('vjif-recaudio')) || null; } catch (e) { return null; } })();   // { id, label } of the sound input recorded with the video, or null
-let recFmt = (() => { try { return localStorage.getItem('vjif-recfmt') || 'mp4'; } catch (e) { return 'mp4'; } })();   // recording container (Settings)
+// recording settings (Settings › Recording), kept per browser
+const recLS = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+const REC_CODECS = ['h264', 'hevc', 'av1', 'vp9', 'vp8'];
+const WC_NAMES = { h264: 'H.264', hevc: 'HEVC', av1: 'AV1', vp9: 'VP9', vp8: 'VP8' };
+let recCodec = REC_CODECS.includes(recLS('vjif-reccodec', '')) ? recLS('vjif-reccodec', '') : 'h264';
+let recFmt = recCodec.startsWith('vp') ? 'webm' : 'mp4';   // container, follows the codec
+let recFps = [24, 25, 30, 50, 60].includes(+recLS('vjif-recfps', 30)) ? +recLS('vjif-recfps', 30) : 30;
+let recMbps = [6, 12, 20, 40].includes(+recLS('vjif-recmbps', 12)) ? +recLS('vjif-recmbps', 12) : 12;
+let recACodec = recLS('vjif-recacodec', 'aac') === 'opus' ? 'opus' : 'aac';
 let safeGuides = (() => { try { return localStorage.getItem('vjif-safe') !== '0'; } catch (e) { return true; } })();   // preview only, never in the output
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
@@ -3504,7 +3523,12 @@ $('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<butto
 $('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
 syncFormatUI();
 $('#safeTog').checked = safeGuides;
-const syncRecFmt = () => document.querySelectorAll('#recFmtSeg button').forEach(b => b.classList.toggle('on', b.dataset.r === recFmt));
+const syncRecFmt = () => {
+  $('#recCodecSel').value = recCodec;
+  document.querySelectorAll('#recFpsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.f === recFps));
+  document.querySelectorAll('#recMbpsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.m === recMbps));
+  document.querySelectorAll('#recACodecSeg button').forEach(b => { b.classList.toggle('on', recFmt === 'webm' ? b.dataset.a === 'opus' : b.dataset.a === recACodec); b.disabled = recFmt === 'webm'; });
+};
 syncRecFmt();
 const syncRecBars = () => document.querySelectorAll('#recBarsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.b === recBars));
 syncRecBars();
@@ -3526,7 +3550,11 @@ $('#recAudioSel').addEventListener('change', async e => {
   try { localStorage.setItem('vjif-recaudio', JSON.stringify(recAudio)); } catch (err) {}
 });
 $('#setBtn').addEventListener('click', () => fillRecAudio());
-$('#recFmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recFmt = b.dataset.r; try { localStorage.setItem('vjif-recfmt', recFmt); } catch (err) {} syncRecFmt(); recUI(); });
+const recSave = (k, v) => { try { localStorage.setItem(k, v); } catch (err) {} syncRecFmt(); recUI(); };
+$('#recCodecSel').addEventListener('change', e => { recCodec = e.target.value; recFmt = recCodec.startsWith('vp') ? 'webm' : 'mp4'; recSave('vjif-reccodec', recCodec); });
+$('#recFpsSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recFps = +b.dataset.f; recSave('vjif-recfps', recFps); });
+$('#recMbpsSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recMbps = +b.dataset.m; recSave('vjif-recmbps', recMbps); });
+$('#recACodecSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; recACodec = b.dataset.a; recSave('vjif-recacodec', recACodec); });
 $('#safeTog').addEventListener('change', e => { safeGuides = e.target.checked; try { localStorage.setItem('vjif-safe', safeGuides ? '1' : '0'); } catch (err) {} redraw.all = true; });
 $('#midiLearn').addEventListener('click', startLearn);
 $('#learnDone').addEventListener('click', endLearn);
@@ -3903,12 +3931,14 @@ const recOk = m => window.MediaRecorder && MediaRecorder.isTypeSupported(m);
 const REC_MIMES_AV = { mp4: ['video/mp4;codecs=avc1.64002A,mp4a.40.2', 'video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=avc1.64002A,opus', 'video/mp4;codecs=avc1,opus'],
                        webm: ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus'] };
 // MP4 is made with WebCodecs + mp4-muxer where the browser has them: a standard (not fragmented) MP4 at a constant
-// 30 fps, H.264 High + AAC, which Facebook / Instagram / TikTok accept. MediaRecorder's MP4 is the fallback.
+// frame rate, H.264 High + AAC by default, which Facebook / Instagram / TikTok accept. MediaRecorder's MP4 is the fallback.
 const WC_MP4 = 'wc:video/mp4';
 const wcOk = () => typeof VideoEncoder === 'function' && typeof Mp4Muxer === 'object';
 function recMime(av = false){
   if (recFmt === 'mp4' && wcOk()) return WC_MP4;
-  const M = av ? REC_MIMES_AV : REC_MIMES; return M[recFmt].find(recOk) || M[recFmt === 'mp4' ? 'webm' : 'mp4'].find(recOk) || '';
+  const M = av ? REC_MIMES_AV : REC_MIMES;
+  const own = recFmt === 'webm' ? [`video/webm;codecs=${recCodec}${av ? ',opus' : ''}`] : [];   // the chosen WebM codec first
+  return own.concat(M[recFmt]).find(recOk) || M[recFmt === 'mp4' ? 'webm' : 'mp4'].find(recOk) || '';
 }
 const recExt = mime => mime.startsWith('video/mp4') || mime === WC_MP4 ? 'mp4' : 'webm';
 async function recToggle(){
@@ -3952,9 +3982,9 @@ function recStart(mime, beat = clock.beat){
   // this take owns its writer, chunks, name and sound input: a quick next take can't step on them while this one saves
   const writer = rec.writer, name = rec.name, chunks = [], audio = rec.audio; rec.audio = null;
   let pend = Promise.resolve();
-  const stream = master.captureStream(60);
+  const stream = master.captureStream(recFps);
   if (audio) audio.getAudioTracks().forEach(t => stream.addTrack(t));
-  const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 16e6, audioBitsPerSecond: 256e3 });
+  const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: recMbps * 1e6, audioBitsPerSecond: 256e3 });
   mr.ondataavailable = e => { if (!e.data || !e.data.size) return; rec.bytes += e.data.size;
     if (writer){ const b = e.data; pend = pend.then(() => writer.write(b)).catch(err => toast('Writing the recording failed: ' + err.message)); }
     else chunks.push(e.data); };
@@ -3967,38 +3997,48 @@ function recStart(mime, beat = clock.beat){
   };
   mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI();
 }
-// ---- MP4 through WebCodecs: frames from the master canvas at a steady 30 fps, sound from the chosen input ----
-const WC_FPS = 30, WC_US = 1e6 / WC_FPS;
-let wcCodecs = ['avc1.640028', 'avc1.64002A', 'avc1.4d0028', 'avc1.4d002a'];   // H.264 High / Main, levels 4.0–4.2
+// ---- MP4 through WebCodecs: frames from the master canvas at a steady frame rate (Settings), sound from the chosen input ----
+// codec strings to try, best first. Levels cover 1080p (and 1080×1920) at the chosen frame rate
+const H264 = fps => fps > 30 ? ['avc1.64002A', 'avc1.4d002a', 'avc1.640028', 'avc1.4d0028'] : ['avc1.640028', 'avc1.64002A', 'avc1.4d0028', 'avc1.4d002a'];   // High / Main, level 4.0 or 4.2
+const WC_CODECS = { h264: H264, hevc: () => ['hvc1.1.6.L123.B0', 'hev1.1.6.L123.B0'],   // HEVC Main, level 4.1
+                    av1: fps => fps > 30 ? ['av01.0.09M.08', 'av01.0.08M.08'] : ['av01.0.08M.08', 'av01.0.09M.08'] };   // AV1 Main 8-bit, level 4.0 / 4.1
+let wcCodecs = null;                                 // tests can force a codec list here
 async function wcStart(beat = clock.beat){
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   const writer = rec.writer, name = rec.name, audio = rec.audio; rec.audio = null;
   const w = W & ~1, h = H & ~1;                      // H.264 wants even sizes
-  let vcfg = null;
-  for (const codec of wcCodecs){
-    const c = { codec, width: w, height: h, bitrate: 12e6, framerate: WC_FPS, ...(codec.startsWith('avc') ? { avc: { format: 'avc' } } : {}) };
-    try { if ((await VideoEncoder.isConfigSupported(c)).supported){ vcfg = c; break; } } catch (e) {}
+  const fps = recFps, us = 1e6 / fps;
+  const tryList = async list => { for (const codec of list){
+    const c = { codec, width: w, height: h, bitrate: recMbps * 1e6, framerate: fps,
+      ...(codec.startsWith('avc') ? { avc: { format: 'avc' } } : codec.startsWith('h') ? { hevc: { format: 'hevc' } } : {}) };
+    try { if ((await VideoEncoder.isConfigSupported(c)).supported) return c; } catch (e) {}
+  } return null; };
+  let vcfg = await tryList(wcCodecs || (WC_CODECS[recCodec] || H264)(fps));
+  if (!vcfg && !wcCodecs && recCodec !== 'h264'){
+    vcfg = await tryList(H264(fps));
+    if (vcfg) toast2(`This browser can't encode ${WC_NAMES[recCodec]} — recording H.264 instead`);
   }
   if (!vcfg){                                        // no H.264 here: fall back to MediaRecorder (WebM when nothing else)
     const m = REC_MIMES_AV.mp4.concat(REC_MIMES.mp4).find(recOk) || (audio ? REC_MIMES_AV.webm : REC_MIMES.webm).find(recOk);
     if (!m){ if (audio) audio.getTracks().forEach(t => t.stop()); toast('This browser can\'t record video'); return; }
     if (!writer && !m.startsWith('video/mp4')) rec.name = name.replace(/\.mp4$/, '.webm');
-    toast2('No WebCodecs H.264 encoder here — recording with the browser\'s own recorder instead');
+    toast2(`No ${WC_NAMES[recCodec]}${recCodec !== 'h264' ? ' or H.264' : ''} encoder here — recording with the browser's own recorder instead`);
     rec.audio = audio; return recStart(m, beat);
   }
   const track = audio && audio.getAudioTracks()[0], set = track ? track.getSettings() : null;
   let acfg = null;
   if (track && typeof AudioEncoder === 'function' && typeof MediaStreamTrackProcessor === 'function'){
-    for (const codec of ['mp4a.40.2', 'opus']){         // AAC is what the social sites expect; Opus in MP4 plays in browsers and VLC
+    for (const codec of recACodec === 'opus' ? ['opus', 'mp4a.40.2'] : ['mp4a.40.2', 'opus']){   // AAC is what the social sites expect; Opus in MP4 plays in browsers and VLC
       const c = { codec, sampleRate: set.sampleRate || 48000, numberOfChannels: Math.min(2, set.channelCount || 2), bitrate: 192000 };
       try { if ((await AudioEncoder.isConfigSupported(c)).supported){ acfg = c; break; } } catch (e) {}
     }
     if (!acfg) toast('This browser can\'t encode sound for MP4 — recording without sound');
-    else if (acfg.codec === 'opus') toast2('No AAC encoder here: the sound is Opus, which some sites refuse');
+    else if (acfg.codec === 'opus' && recACodec === 'aac') toast2('No AAC encoder here: the sound is Opus, which some sites refuse');
+    else if (acfg.codec !== 'opus' && recACodec === 'opus') toast2('No Opus encoder here: the sound is AAC');
   }
   const target = writer ? new Mp4Muxer.FileSystemWritableFileStreamTarget(writer) : new Mp4Muxer.ArrayBufferTarget();
   const muxer = new Mp4Muxer.Muxer({ target, fastStart: writer ? false : 'in-memory', firstTimestampBehavior: 'offset',
-    video: { codec: vcfg.codec.startsWith('avc') ? 'avc' : vcfg.codec.startsWith('vp09') ? 'vp9' : 'av1', width: w, height: h, frameRate: WC_FPS },
+    video: { codec: vcfg.codec.startsWith('avc') ? 'avc' : vcfg.codec.startsWith('h') ? 'hevc' : vcfg.codec.startsWith('vp09') ? 'vp9' : 'av1', width: w, height: h, frameRate: fps },
     audio: acfg ? { codec: acfg.codec === 'opus' ? 'opus' : 'aac', sampleRate: acfg.sampleRate, numberOfChannels: acfg.numberOfChannels } : undefined });
   const fail = e => { toast('Recording failed: ' + (e && e.message || e)); recStop(); };
   const venc = new VideoEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addVideoChunk(ch, meta); }, error: fail });
@@ -4012,21 +4052,21 @@ async function wcStart(beat = clock.beat){
       if (aenc.state === 'configured') aenc.encode(value); value.close(); } })();
   } else if (audio) audio.getTracks().forEach(t => t.stop());
   // the clip's clock starts on the bar it was asked to start on (getting the encoders ready took a few ms), so a bar-length take is exactly that long
-  const C = { venc, aenc, reader, audio, muxer, target, writer, name, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm, stopping: false };
+  const C = { venc, aenc, reader, audio, muxer, target, writer, name, fps, us, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm, stopping: false };
   rec.wc = C;
   rec.mr = { stop: () => wcStop(C) };                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
   rec.t0 = C.t0; redraw.all = true; recUI();
 }
-// called every frame while recording: one encoded frame per 1/30 s of real time (a slow frame repeats the picture,
+// called every frame while recording: one encoded frame per frame slot of real time (a slow frame repeats the picture,
 // so the clip keeps its length and stays in sync with the sound)
 function wcCapture(now){
   const C = rec.wc; if (!C || C.stopping) return;
-  const due = Math.floor((now - C.t0) / (1000 / WC_FPS));
+  const due = Math.floor((now - C.t0) / (1000 / C.fps));
   if (due < C.n) return;
-  if (due - C.n > WC_FPS * 2) C.n = due;              // stalled for over 2 s (window hidden…): jump rather than flood the encoder
-  for (; C.n <= due; C.n++){                         // every 1/30 s gets a frame, so the frame rate stays constant
-    const f = new VideoFrame(master, { timestamp: C.n * WC_US, duration: WC_US });
-    C.venc.encode(f, { keyFrame: C.n % (WC_FPS * 2) === 0 }); f.close();
+  if (due - C.n > C.fps * 2) C.n = due;              // stalled for over 2 s (window hidden…): jump rather than flood the encoder
+  for (; C.n <= due; C.n++){                         // every frame slot gets a frame, so the frame rate stays constant
+    const f = new VideoFrame(master, { timestamp: C.n * C.us, duration: C.us });
+    C.venc.encode(f, { keyFrame: C.n % (C.fps * 2) === 0 }); f.close();   // a keyframe every 2 s
   }
 }
 async function wcStop(C){
@@ -4049,7 +4089,7 @@ function recUI(){
     $('#recTxt').textContent = rec.stopAt ? `${Math.max(1, Math.ceil((rec.stopAt - clock.beat) / 4))} bar${Math.ceil((rec.stopAt - clock.beat) / 4) > 1 ? 's' : ''}` : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
   else { $('#recTxt').textContent = rec.wait ? 'Wait' : 'Rec';
-    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${recFmt.toUpperCase()}, ${W}×${H}). With Snap on, recording starts on the next bar`; }
+    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${W}×${H}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). With Snap on, recording starts on the next bar`; }
 }
 function recTick(){
   const b = clock.beat, back = b < (rec.last ?? b) - 0.5; rec.last = b;   // the beat count jumps back on Sync or a MIDI Start

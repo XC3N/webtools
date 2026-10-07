@@ -12,10 +12,11 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {g5} **Performance on your GPU** — Feedback, Glitch and Luma especially, full screen in the output window.
 
 ## Recording
-- {r1} **MP4 recording** — Settings › Canvas › Recording: MP4. The file is .mp4, not a WebM fallback.
+- {r1} **MP4 recording** — Settings › Recording › Video: H.264 · MP4. The file is .mp4, not a WebM fallback.
 - {r2} **Upload the MP4 to Facebook / Instagram / TikTok** (0.19: standard MP4, 30 fps, H.264 + AAC) — Chrome writes MP4s in a slightly unusual layout.
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
+- {r5} **Recording settings** (0.20) — Settings › Recording: try HEVC and AV1, 60 fps, 40 Mb/s, Opus. The file plays at that rate (VLC › Codec info); an unsupported codec says so and records H.264.
 
 ## Canvas formats
 - {c1} **Switch formats with GIFs playing** — 16:9 → 9:16 → 1:1 → 4:5: preview, effects and output window follow.
