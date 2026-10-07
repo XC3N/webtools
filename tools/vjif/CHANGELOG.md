@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.22.1 — 2026-10-07
+
+### Transitions
+- Luma fade takes the same time whatever the scene's brightness. It used to sweep through raw brightness, so a dark scene sat still for most of the fade and then flipped at the end; now it sweeps through the scene's own brightness ranks (brightest parts first, as before), so the same share of the picture changes at each moment.
+
 ## 0.22.0 — 2026-10-07
 
 ### Lettering

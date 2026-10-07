@@ -595,7 +595,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.22.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.22.1';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -2654,14 +2654,27 @@ const post = (() => {
     // Luma transition: a second small program in the same context
     const lp = gl.createProgram();
     gl.attachShader(lp, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
-    gl.attachShader(lp, sh(gl.FRAGMENT_SHADER, `precision mediump float; uniform sampler2D a, b; uniform float e; varying vec2 uv;
-      void main(){ vec4 A = texture2D(a, uv), B = texture2D(b, uv); float l = dot(A.rgb, vec3(0.299, 0.587, 0.114)), t = e * 1.25;
+    gl.attachShader(lp, sh(gl.FRAGMENT_SHADER, `precision mediump float; uniform sampler2D a, b, c; uniform float e; varying vec2 uv;
+      void main(){ vec4 A = texture2D(a, uv), B = texture2D(b, uv); float l0 = dot(A.rgb, vec3(0.299, 0.587, 0.114)), t = e * 1.25;
+        float l = texture2D(c, vec2((l0 * 255.0 + 0.5) / 256.0, 0.5)).a;   // brightness → its rank in this scene (0 = darkest, 1 = brightest)
         gl_FragColor = vec4(mix(A.rgb, B.rgb, smoothstep(1.0 - t, 1.25 - t, l)), 1.0); }`));
     gl.linkProgram(lp); if (!gl.getProgramParameter(lp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(lp));
-    const lu = { a: gl.getUniformLocation(lp, 'a'), b: gl.getUniformLocation(lp, 'b'), e: gl.getUniformLocation(lp, 'e') }, lpLoc = gl.getAttribLocation(lp, 'p'), texB = mkTex();
+    const lu = { a: gl.getUniformLocation(lp, 'a'), b: gl.getUniformLocation(lp, 'b'), c: gl.getUniformLocation(lp, 'c'), e: gl.getUniformLocation(lp, 'e') }, lpLoc = gl.getAttribLocation(lp, 'p'), texB = mkTex(), texC = mkTex();
+    // Luma pacing: the edge sweeps through the old scene's brightness *ranks*, not raw brightness, so a dark or a bright
+    // scene takes the same time (equal areas change per moment). The ranks come from a 64×36 copy, every 4th frame.
+    const rk = document.createElement('canvas'); rk.width = 64; rk.height = 36; const rx = rk.getContext('2d', { willReadFrequently: true });
+    const rank = new Uint8Array(256); let rankN = 0;
+    const ranks = A => {
+      rx.drawImage(A, 0, 0, 64, 36); const d = rx.getImageData(0, 0, 64, 36).data, hist = new Uint32Array(256), n = d.length / 4;
+      for (let i = 0; i < d.length; i += 4) hist[Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114)]++;
+      let below = 0; for (let v = 0; v < 256; v++){ rank[v] = Math.round(255 * (below + hist[v] / 2) / n); below += hist[v]; }   // mid-rank: a flat scene sits at 0.5
+      for (let v = 1; v < 256; v++) if (!hist[v] && rank[v] < rank[v - 1]) rank[v] = rank[v - 1];
+    };
     return { luma(A, B, e){
       gl.useProgram(lp); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(lpLoc); gl.vertexAttribPointer(lpLoc, 2, gl.FLOAT, false, 0, 0);
-      gl.uniform1i(lu.a, 0); gl.uniform1i(lu.b, 1); gl.uniform1f(lu.e, e);
+      gl.uniform1i(lu.a, 0); gl.uniform1i(lu.b, 1); gl.uniform1i(lu.c, 2); gl.uniform1f(lu.e, e);
+      gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texC);
+      if (rankN++ % 4 === 0 || e < 0.02){ ranks(A); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, 256, 1, 0, gl.ALPHA, gl.UNSIGNED_BYTE, rank); }
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, A);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texB); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, B);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
