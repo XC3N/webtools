@@ -5,16 +5,36 @@
 // Source files can pull in shared code from common/ with include markers, inlined recursively:
 //   <!-- @include common/ui-kit.css -->     in HTML
 //   /* @include common/midi.js */           inside <style> or <script>
+//   <!-- @markdown tools/vjif/CHANGELOG.md -->   a Markdown file turned into HTML (headings, lists, paragraphs, `code`, **bold**, links)
 // Paths are relative to the repo root. No dependencies: `node build.js`.
 'use strict';
 const fs = require('fs'), path = require('path');
 const root = __dirname, out = path.join(root, 'dist');
-const MARK = /<!--\s*@include\s+(\S+?)\s*-->|\/\*\s*@include\s+(\S+?)\s*\*\//g;
+const MARK = /<!--\s*@include\s+(\S+?)\s*-->|\/\*\s*@include\s+(\S+?)\s*\*\//g, MD = /<!--\s*@markdown\s+(\S+?)\s*-->/g;
 
 function inline(file, stack = []){
   if (stack.includes(file)) throw new Error('include cycle: ' + [...stack, file].map(f => path.relative(root, f)).join(' → '));
   if (!fs.existsSync(file)) throw new Error(`missing include ${path.relative(root, file)} (from ${path.relative(root, stack.at(-1) || file)})`);
-  return fs.readFileSync(file, 'utf8').replace(MARK, (_, a, b) => inline(path.join(root, a || b), [...stack, file]));
+  return fs.readFileSync(file, 'utf8').replace(MD, (_, f) => markdown(path.join(root, f), file))
+    .replace(MARK, (_, a, b) => inline(path.join(root, a || b), [...stack, file]));
+}
+// just enough Markdown for changelogs and notes
+function markdown(file, from){
+  if (!fs.existsSync(file)) throw new Error(`missing markdown ${path.relative(root, file)} (from ${path.relative(root, from)})`);
+  const span = t => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const html = [], para = [];
+  let list = false;
+  const flush = () => { if (para.length){ html.push(`<p>${span(para.join(' '))}</p>`); para.length = 0; } if (list){ html.push('</ul>'); list = false; } };
+  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)){
+    let m;
+    if ((m = line.match(/^(#{1,4})\s+(.*)/))){ flush(); const n = m[1].length; html.push(`<h${n + 2}>${span(m[2])}</h${n + 2}>`); }
+    else if ((m = line.match(/^\s*[-*]\s+(.*)/))){ if (para.length) flush(); if (!list){ html.push('<ul>'); list = true; } html.push(`<li>${span(m[1])}</li>`); }
+    else if (!line.trim()) flush();
+    else if (list && /^\s+/.test(line)) html[html.length - 1] = html.at(-1).replace(/<\/li>$/, ' ' + span(line.trim()) + '</li>');
+    else { if (list) flush(); para.push(line.trim()); }
+  }
+  flush(); return html.join('\n');
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 

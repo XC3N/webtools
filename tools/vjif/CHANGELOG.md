@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo).
 
+## 0.11.0 — 2026-10-06
+
+### About
+- The changelog is built into VJif: About › What's new (or click the version number). After an update, VJif opens on What's new once.
+
 ## 0.10.0 — 2026-10-06
 
 ### Effects

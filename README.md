@@ -27,7 +27,8 @@ node build.js
 ```
 
 Node 18+, no dependencies. Output goes to `dist/` (not committed — GitHub Actions builds it).
-Tool sources can include shared files with `<!-- @include common/file.css -->` or `/* @include common/file.js */`.
+Tool sources can include shared files with `<!-- @include common/file.css -->` or `/* @include common/file.js */`,
+and a Markdown file as HTML with `<!-- @markdown tools/vjif/CHANGELOG.md -->` (VJif's About panel shows its changelog this way).
 
 ## Conventions
 
