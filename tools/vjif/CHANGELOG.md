@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.22.2 — 2026-10-07
+
+### Interface
+- The GIF pool closes when you click anywhere outside it (the Pool button still toggles it; dragging a GIF onto a pad still works).
+- About: the credits get their own row; below them, "Show this at start" on the left and Play! on the right.
+
 ## 0.22.1 — 2026-10-07
 
 ### Transitions

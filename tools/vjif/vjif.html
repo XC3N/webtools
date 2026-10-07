@@ -284,10 +284,9 @@ body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px
 .steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
 .steps b{color:var(--ink)}.steps li::marker{color:var(--sig);font:600 12px var(--mono)}
 kbd{display:inline-block;min-width:1.5em;padding:1px 4px;margin:0 1px;border:1px solid var(--edge-2);border-bottom-width:2px;border-radius:3px;background:var(--panel-2);font:600 10.5px/1.3 var(--mono);text-align:center;color:var(--ink)}
-.aboutFoot{margin-top:12px;align-items:flex-end;gap:14px}
-.aboutFoot .note{flex:1;min-width:0;max-width:420px;margin:0}
+.aboutCred{margin:14px 0 0;padding-top:10px;border-top:1px solid var(--edge)}
+.aboutFoot{margin-top:10px;align-items:center;justify-content:space-between;gap:14px}
 .aboutFoot .tog,.aboutFoot button{flex:none;white-space:nowrap}
-.aboutFoot .tog{margin-left:auto}
 #aboutTabs{width:max-content}
 #aboutStart,#aboutLog{height:min(420px,56vh);overflow:auto;margin-top:8px}
 #aboutLog{font-size:12.5px;line-height:1.5;color:var(--ink);padding-right:6px}
@@ -510,7 +509,8 @@ output.mod{color:var(--env)}
     </ol>
     </div>
     <div id="aboutLog" hidden><!-- @markdown tools/vjif/CHANGELOG.md --></div>
-    <div class="row aboutFoot"><p class="note">Design and UX by XC3N · code by Claude (Anthropic). MIT licence — source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a>. If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
+    <p class="note aboutCred">Design and UX by XC3N · code by Claude (Anthropic). MIT licence — source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a>. If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
+    <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
   </div>
 </div>
 <div id="helpPanel" class="modal" hidden>
@@ -595,7 +595,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.22.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.22.2';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1014,6 +1014,9 @@ function removeMedia(m){
   freeMedia(m); updateMem(); updHistUI(); renderPool(); gcGifs();
 }
 $('#poolBtn').addEventListener('click', () => $('#poolPanel').hidden ? openPool(-1) : closePool());
+// a click anywhere outside the pool window closes it (the Pool button toggles it; drags onto pads still work)
+document.addEventListener('pointerdown', e => { if ($('#poolPanel').hidden || e.button !== 0) return;
+  if (e.target.closest('#poolPanel .modalBox, #poolBtn, .modal:not(#poolPanel)')) return; closePool(); }, true);
 $('#poolClose').addEventListener('click', closePool);
 $('#poolAdd').addEventListener('click', () => { fileTarget = POOL_ONLY; $('#fileIn').click(); });
 $('#poolUrlBtn').addEventListener('click', () => { const u = $('#poolUrl').value.trim(); if (u){ loadUrlInto(u, POOL_ONLY); $('#poolUrl').value = ''; } });
