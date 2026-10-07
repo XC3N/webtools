@@ -294,7 +294,7 @@ output.mod{color:var(--env)}
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -495,6 +495,7 @@ output.mod{color:var(--env)}
       <dt>Sliders</dt><dd>Double-click the bar resets to default · mouse wheel (once the slider glows) or arrows adjust: Up/Down 1 step, Left/Right 10, Shift ×10 · double-click the number to type a value (Enter applies, Esc cancels) · dropdowns and button rows take the wheel and arrows too</dd>
       <dt>Del / ⌫</dt><dd>Remove the selected GIF from its layer</dd>
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
+      <dt>Output</dt><dd>Opens the output window, where you left it last time (position and size are remembered). Drag anywhere in it to move it; double-click switches full screen on and off. Shift+click Output resets its position if it ends up somewhere unreachable</dd>
       <dt>Rec</dt><dd>Records the output to an MP4 (H.264) or WebM video — Settings › Canvas picks which, and the size follows the canvas format. A length in bars (4–32) starts on the next bar and stops exactly on the bar, so the clip loops cleanly (good for Reels). Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
       <dt>MIDI learn</dt><dd>Settings › MIDI control › Learn: click a target (pad, scene, transition, effect, layer chip, opacity, effect amount, Tap, Sync, or Blackout/Freeze in the bar), then move a control on your controller. Faders need a knob/fader (CC). Esc or Done to finish; mappings are remembered</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
@@ -534,7 +535,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.14.2';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.15.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -2454,22 +2455,40 @@ function drawOverlay(gh = ghostList()){
 }
 
 // ---------- output window ----------
-function openOutput(){
+// where the output window was last time (screen position and size); Shift+click Output forgets it
+const OUT_KEY = 'vjif-outwin';
+const outGeo = () => { try { return JSON.parse(localStorage.getItem(OUT_KEY)); } catch (e) { return null; } };
+function outDefault(){ const k = 960 / Math.max(W, H); return { w: Math.round(W * k), h: Math.round(H * k) }; }
+function openOutput(e){
+  if (e && e.shiftKey){                              // reset: back to the default size, near the top left of this screen
+    try { localStorage.removeItem(OUT_KEY); } catch (err) {}
+    const D = outDefault();
+    if (outWin && !outWin.closed){ try { outWin.document.exitFullscreen && outWin.document.fullscreenElement && outWin.document.exitFullscreen(); outWin.moveTo(screen.availLeft || 0, screen.availTop || 0);
+      outWin.resizeTo(D.w + outWin.outerWidth - outWin.innerWidth, D.h + outWin.outerHeight - outWin.innerHeight); } catch (err) {} outWin.focus(); }
+    toast2('Output window position reset'); if (outWin && !outWin.closed) return;
+  }
   if (outWin && !outWin.closed){ outWin.focus(); return; }
-  const k = 960 / Math.max(W, H); outWin = window.open('', 'gifvj_output', `popup,width=${Math.round(W * k)},height=${Math.round(H * k)}`);
+  const G = outGeo(), D = outDefault();
+  const feat = G ? `popup,left=${G.x},top=${G.y},width=${G.w},height=${G.h}` : `popup,width=${D.w},height=${D.h}`;
+  outWin = window.open('', 'gifvj_output', feat);
   if (!outWin){ toast('Popup blocked — allow popups for this page, then click Open output again'); return; }
   const d = outWin.document;
   d.open();
   d.write(`<!doctype html><meta charset="utf-8"><title>VJif — Output</title>
 <style>html,body{margin:0;height:100%;background:#000;overflow:hidden}
-canvas{width:100vw;height:100vh;object-fit:contain;display:block}
+canvas{width:100vw;height:100vh;object-fit:contain;display:block;cursor:move}
 html:fullscreen,html:fullscreen *{cursor:none}
 #h{position:fixed;left:8px;top:6px;font:12px monospace;color:#888;transition:opacity 1s}</style>
-<canvas width="${W}" height="${H}"></canvas><div id="h">double-click for fullscreen</div>`);
+<canvas width="${W}" height="${H}"></canvas><div id="h">drag to move · double-click: full screen on / off</div>`);
   d.close();
   outCtx = d.querySelector('canvas').getContext('2d', { alpha: false });
   setTimeout(() => { const h = d.getElementById('h'); if (h) h.style.opacity = 0; }, 2500);
   d.addEventListener('dblclick', () => d.fullscreenElement ? d.exitFullscreen() : d.documentElement.requestFullscreen());
+  // drag anywhere to move the window (a projector window has no use for its title bar)
+  let mv = null;
+  d.addEventListener('pointerdown', e => { if (e.button || d.fullscreenElement) return; mv = { x: e.screenX, y: e.screenY, wx: outWin.screenX, wy: outWin.screenY }; d.documentElement.setPointerCapture?.(e.pointerId); });
+  d.addEventListener('pointermove', e => { if (mv) try { outWin.moveTo(mv.wx + e.screenX - mv.x, mv.wy + e.screenY - mv.y); } catch (err) {} });
+  d.addEventListener('pointerup', () => { mv = null; saveOutGeo(); });
   outWin.addEventListener('keydown', onKey);
   outWin.addEventListener('keyup', e => { onKeyUp(e); commit(); });
   outWin.addEventListener('blur', releaseAll);
@@ -2477,9 +2496,14 @@ html:fullscreen,html:fullscreen *{cursor:none}
   redraw.all = true; restartLoop();
   updateOutStat();
 }
+function saveOutGeo(){
+  if (!outWin || outWin.closed || outWin.document.fullscreenElement) return;
+  try { localStorage.setItem(OUT_KEY, JSON.stringify({ x: outWin.screenX, y: outWin.screenY, w: outWin.innerWidth, h: outWin.innerHeight })); } catch (e) {}
+}
+setInterval(saveOutGeo, 2000);                       // catches moves and resizes made with the window's own frame too
 function updateOutStat(){
   $('#outLed').classList.toggle('on', !!outCtx);
-  $('#outBtn').title = outCtx ? `Output window is live (${W}×${H}) — click to bring it to the front` : 'Open the output window';
+  $('#outBtn').title = outCtx ? `Output window is live (${W}×${H}) — click to bring it to the front · Shift+click: reset its position` : 'Open the output window (it reopens where you left it) · Shift+click: reset its position';
 }
 // ---------- canvas format ----------
 function setFormat(k, { quiet = false, force = false } = {}){
@@ -3271,7 +3295,7 @@ $('#syncBtn').addEventListener('click', resync);
 $('#clockSrc').addEventListener('change', e => setClockSrc(e.target.value));
 $('#midiIn').addEventListener('change', bindMidiInput);
 $('#snap').addEventListener('change', e => snapMode = e.target.value);
-$('#outBtn').addEventListener('click', openOutput);
+$('#outBtn').addEventListener('click', openOutput);   // Shift+click: reset its position and size
 $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
 $('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = !$('#setPanel').hidden; if (!$('#setPanel').hidden) placeSettings(); });
 // a click anywhere outside the Settings window closes it (the click still reaches what's under it)

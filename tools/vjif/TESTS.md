@@ -35,6 +35,8 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n10} **Version next to the logo** (0.13.2) — click it: About opens on What's new; the tempo controls sit further right.
 - {n11} **New logo** (0.14) — header and About: Russo One, chrome, "if" in magenta, slanted; nothing clipped at your display scaling.
 - {n12} **Slanted drag chips everywhere** (0.14.1) — dragging a layer chip, an effect tile or the effect name shows the same slanted chip as pads.
+- {n13} **Output window remembers its place** (0.15) — move it to the projector screen, close it, reopen: same place and size. Drag inside it to move it; Shift+click Output resets.
+- {n14} **Shift highlight, take 2** (0.14.2) — red + ✕ on what a click clears; red outline on what it resets; transition presets outlined properly.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.

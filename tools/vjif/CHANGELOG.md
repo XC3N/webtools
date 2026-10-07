@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.15.0 — 2026-10-06
+
+### Output window
+- Reopens where you left it: position and size are remembered. Shift+click Output resets them.
+- Drag anywhere in the output to move the window; double-click switches full screen on and off.
+
 ## 0.14.2 — 2026-10-06
 
 ### Fixes and polish
