@@ -196,7 +196,8 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip>span{position:absolute;left:2px;bottom:2px;padding:2px 3px;border-radius:2px;background:#000c;font:600 10px/1 var(--mono);color:#fff}
 .chip.sel{box-shadow:0 0 0 2px var(--lc)}
 .chip.dragging{opacity:.35}
-.chip.ghost{position:fixed;z-index:50;pointer-events:none;margin:0;box-shadow:0 0 0 2px var(--sig),0 6px 16px #000a;transform:translate(-50%,-60%) rotate(-4deg)}
+.ghost{position:fixed;z-index:50;pointer-events:none;margin:0;box-shadow:0 0 0 2px var(--sig),0 6px 16px #000a;transform:translate(-50%,-60%) rotate(-4deg)}
+.fxghost{padding:6px 10px;border-radius:3px;font:600 11px var(--mono);color:var(--lcd-ink);background:var(--lcd-bg);white-space:nowrap}
 .pad.lifted{opacity:.45}
 .chip.insL{box-shadow:-3px 0 0 -1px var(--bg),-4px 0 0 0 var(--lc)}
 .chip.insR{box-shadow:3px 0 0 -1px var(--bg),4px 0 0 0 var(--lc)}
@@ -529,7 +530,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.14.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.14.1';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1665,6 +1666,7 @@ function togglePreFx(k, i){
   syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(P)}`);
 }
 function addPreFx(k, i){ fxPre[k].fx[i] = fxEntry(i); selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`); }
+function fxGhost(i){ const el = document.createElement('span'); el.className = 'fxghost'; el.textContent = FX_DEFS[i].name; ghost.show(el); }
 function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
@@ -1679,7 +1681,8 @@ function wireFxTile(el){
   });
   el.addEventListener('pointermove', e => {
     if (!fxDrag || fxDrag.i !== i) return;
-    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; fxUp(i); document.body.classList.add('fxdragging'); }
+    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; fxUp(i); document.body.classList.add('fxdragging'); fxGhost(i); }
+    if (fxDrag.moved) ghost.move(e.clientX, e.clientY);
     if (fxDrag.moved){ const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp');
       document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === d)); }
   });
@@ -1691,6 +1694,7 @@ function wireFxTile(el){
       if (d) addPreFx(+d.dataset.i - NFX, i);
       document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging');
     }
+    if (fxDrag && fxDrag.moved) ghost.hide();
     fxDrag = null;
   };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
@@ -1703,11 +1707,11 @@ function wireFxTile(el){
   chip.addEventListener('pointerdown', e => { if (e.button || selFx >= NFX) return; chip.setPointerCapture(e.pointerId); d = { i: selFx, x: e.clientX, y: e.clientY, moved: false }; });
   chip.addEventListener('pointermove', e => {
     if (!d) return;
-    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4){ d.moved = true; document.body.classList.add('fxdragging'); }
-    if (d.moved){ const o = over(e); document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === o)); }
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4){ d.moved = true; document.body.classList.add('fxdragging'); fxGhost(d.i); }
+    if (d.moved){ ghost.move(e.clientX, e.clientY); const o = over(e); document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === o)); }
   });
   const end = e => { if (!d) return; if (d.moved){ const o = over(e); if (o) addPreFx(+o.dataset.i - NFX, d.i); }
-    document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging'); d = null; };
+    document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging'); if (d.moved) ghost.hide(); d = null; };
   chip.addEventListener('pointerup', end); chip.addEventListener('pointercancel', end);
 }
 function buildFx(){
@@ -2597,6 +2601,19 @@ function buildPads(){
 // The press already hit the pad; once the pointer leaves it that hit is taken back (a GIF it added to a layer goes,
 // a snapped hit waiting for the beat is cancelled), so dragging only rearranges.
 let padDrag = null;
+// the thing being dragged, slanted under the pointer (pads, layer chips, effects all use it)
+const ghost = {
+  el: null,
+  show(el, x, y){ this.hide(); el.classList.add('ghost'); document.body.appendChild(el); this.el = el; if (x !== undefined) this.move(x, y); },
+  chip(pad, x, y){ const g = pads[pad].gif, el = document.createElement('span'); el.className = 'chip';
+    el.innerHTML = `<span>${pads[pad].label}</span>`; if (g) el.style.backgroundImage = `url(${gifThumb(g)})`; this.show(el, x, y); },
+  move(x, y){ if (this.el && (x || y)){ this.el.style.left = x + 'px'; this.el.style.top = y + 'px'; } },
+  hide(){ if (this.el){ this.el.remove(); this.el = null; } },
+};
+const NO_IMG = (() => { const c = document.createElement('canvas'); c.width = c.height = 1; return c; })();   // hides the browser's own drag picture
+document.addEventListener('dragover', e => ghost.move(e.clientX, e.clientY), true);
+document.addEventListener('dragend', () => ghost.hide(), true);
+document.addEventListener('drop', () => ghost.hide(), true);
 const padDropAt = e => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && (t.closest('.pad') || t.closest('.layer')); };
 function padDragMove(e, i){
   const d = padDrag; if (!d || d.i !== i) return;
@@ -2606,18 +2623,16 @@ function padDragMove(e, i){
     if (!d.wasPending && pending.has(i)){ pending.delete(i); pads[i].el.classList.remove('wait'); }
     if (!d.had) layers.forEach((L, li) => { L.clips = L.clips.filter(c => c.pad !== i); if (!L.clips.includes(L.sel)) L.sel = null; L.on = d.on[li]; });
     syncLayerUI(); redraw.all = true; document.body.classList.add('paddragging');
-    const g = pads[i].gif, gh = document.createElement('span');             // the chip you're carrying, as when dragging between layers
-    gh.className = 'chip ghost'; gh.innerHTML = `<span>${pads[i].label}</span>`; gh.style.backgroundImage = `url(${gifThumb(g)})`;
-    document.body.appendChild(gh); d.ghost = gh; pads[i].el.classList.add('lifted');
+    ghost.chip(i); d.ghost = true; pads[i].el.classList.add('lifted');      // the chip you're carrying
   }
-  if (d.ghost){ d.ghost.style.left = e.clientX + 'px'; d.ghost.style.top = e.clientY + 'px'; }
+  if (d.ghost) ghost.move(e.clientX, e.clientY);
   const o = padDropAt(e);
   pads.forEach(p => p.el.classList.toggle('drop', p.el === o && p.i !== i));
   layers.forEach(L => L.row.classList.toggle('dropzone', L.row === o));
 }
 function padDragEnd(e, i){
   const d = padDrag; padDrag = null;
-  if (d && d.ghost){ d.ghost.remove(); pads[d.i].el.classList.remove('lifted'); }
+  if (d && d.ghost){ ghost.hide(); pads[d.i].el.classList.remove('lifted'); }
   pads.forEach(p => p.el.classList.remove('drop')); layers.forEach(L => L.row.classList.remove('dropzone')); document.body.classList.remove('paddragging');
   if (!d || d.i !== i || !d.moved) return false;
   pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
@@ -2948,7 +2963,7 @@ function buildLayers(){
     clipsEl.addEventListener('dragstart', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       e.dataTransfer.setData(CLIP_MIME, `${li}:${chip.dataset.id}`); e.dataTransfer.effectAllowed = 'copyMove';
-      chip.classList.add('dragging');
+      chip.classList.add('dragging'); e.dataTransfer.setDragImage(NO_IMG, 0, 0); ghost.chip(+chip.dataset.pad, e.clientX, e.clientY);
     });
     clipsEl.addEventListener('dragend', e => { const chip = e.target.closest('.chip'); if (chip) chip.classList.remove('dragging');
       layers.forEach(l => { l.row.classList.remove('dropzone'); l.row.querySelectorAll('.insL,.insR').forEach(c => c.classList.remove('insL', 'insR')); }); });

@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.14.1 — 2026-10-06
+
+### Dragging
+- Everything you drag rides under the pointer as a little slanted chip: pads, layer chips, effect tiles and the effect name.
+
 ## 0.14.0 — 2026-10-06
 
 ### Look
