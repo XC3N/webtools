@@ -35,5 +35,4 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n10} **Version next to the logo** (0.13.2) — click it: About opens on What's new; the tempo controls sit further right.
 
 ## Open questions
-- {q1} **Alt shortcuts on Windows** — Alt+E, Alt+F etc. don't open Chrome's menus.
-- {q2} **Which MIDI controller do you use?** — decides the next MIDI work (BPM on a knob, LED feedback…).
+- none right now (Alt shortcuts: fine on Windows; controller: Hercules P32 DJ, layout to follow)
