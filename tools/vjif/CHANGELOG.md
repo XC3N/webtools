@@ -4,6 +4,23 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.18.0 — 2026-10-07
+
+### Interface
+- Full-screen button next to the settings and ? icons (F11 belongs to the effects).
+- About: "Show this at start" and the button (now "Play!") sit at the lower right, the credits beside them on the left. Getting started mentions Prep.
+- The logo sits centred in the header.
+
+### Prep mode
+- The tag reads "PREP · output locked to the last live scene".
+- The Prep LED really blinks while it waits for the beat to go live.
+
+### Resetting
+- Ctrl+click on an effect or a transition preset puts it back to its defaults again (red outline while Ctrl is held); Ctrl+click on everything else still deletes.
+
+### Scenes
+- A scene with GIFs on its pads but nothing playing shows its first GIF fitted like a real scene thumbnail (it used to be a zoomed chip picture).
+
 ## 0.17.1 — 2026-10-07
 
 ### About

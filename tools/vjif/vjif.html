@@ -38,7 +38,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 /* the wordmark (Logo Lab: Russo One 400 · chrome · accent #8f004a on "if" · tracking -0.08em · slant -16°) */
 .brand,.abrand{display:inline-block;font:400 34px/1 'Russo One',var(--sans);letter-spacing:-.08em;transform:skewX(-16deg);padding:.06em .14em .06em .04em;
   background-image:linear-gradient(180deg,#fff,#bdbdc6);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:default}
-.brand{margin:-8px 0 -8px -4px}   /* a big logo without making the header taller */
+.brand{margin:-8px 0 -8px -4px;position:relative;top:1px}   /* a big logo without making the header taller, its glyphs centred in it */
 .brand span,.abrand span{display:inline-block;padding:0 .14em;margin:0 -.14em;background-image:linear-gradient(180deg,#ff359e,#8f004a);-webkit-background-clip:text;background-clip:text;color:transparent}
 #hdrVer{border:0;background:none;padding:0 2px;height:auto;margin:3px 22px 0 -2px;font:500 10px var(--mono);color:var(--faint);align-self:center;cursor:pointer}
 #hdrVer:hover{color:var(--sig)}
@@ -169,7 +169,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #prepTag{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#1a1200;background:#ffb000;padding:3px 10px;border-radius:2px;pointer-events:none;white-space:nowrap}
 body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 #prepLed.on{background:#ffb000;box-shadow:0 0 6px #ffb000}
-#prepLed.wait{animation:wait .25s steps(1) infinite}
+#prepLed.wait{animation:ledblink .25s steps(1) infinite}@keyframes ledblink{50%{background:var(--track);box-shadow:none}}
 .scene.onair{box-shadow:0 0 0 2px #ff3b3b}
 .scene.onair::before{content:"LIVE";position:absolute;right:3px;top:3px;z-index:1;font:700 9px/1 var(--mono);color:#fff;background:#d01f1f;border-radius:2px;padding:2px 4px}
 #liveTag{position:absolute;top:8px;left:8px;z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#fff;background:#a33;padding:3px 8px;border-radius:2px;pointer-events:none}
@@ -213,12 +213,13 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip b{position:absolute;right:1px;top:1px;width:18px;height:18px;border-radius:2px;background:#000d;font:400 14px/17px var(--mono);text-align:center;color:#ddd;visibility:hidden;cursor:pointer}
 .chip:hover b{visibility:visible}.chip b:hover{color:#fff;background:var(--danger)}
 /* Shift held: a click (or right-click any time) removes — the chips say so */
-/* Ctrl (⌘) held: what a click would delete turns red with a ✕ (pads, scenes, effect presets, layer chips, pool GIFs) */
+/* Ctrl (⌘) held: what a click would delete turns red with a ✕ (pads, scenes, effect presets, layer chips, pool GIFs); what it would reset (effects, transition presets) gets a red outline */
 body.del{--clr:#ff3b3b}
 body.del .pad:not(.empty),body.del .scene:not(.empty),body.del .scene.padsOnly,body.del #fxPre .fxp:not(.empty),body.del .ptile,body.del .chip{box-shadow:0 0 0 2px var(--clr);cursor:pointer}
 body.del .pad:not(.empty)::after,body.del .scene:not(.empty)::after,body.del .scene.padsOnly::after,body.del #fxPre .fxp:not(.empty)::after,body.del .ptile::after,body.del .chip::after{
   content:"✕";position:absolute;inset:0;z-index:2;display:grid;place-items:center;border-radius:inherit;background:rgba(200,20,20,.42);color:#fff;font:700 20px/1 var(--sans);text-shadow:0 1px 3px #000;pointer-events:none}
 body.del .chip::after{font-size:16px}
+body.del #fxPads .fxp,body.del #trPre button{box-shadow:inset 0 0 0 2px var(--clr)}   /* reset (not delete): outline only */
 
 /* ---------- transform ---------- */
 #xfTitle{width:100%}
@@ -269,7 +270,10 @@ body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px
 .steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
 .steps b{color:var(--ink)}.steps li::marker{color:var(--sig);font:600 12px var(--mono)}
 kbd{display:inline-block;min-width:1.5em;padding:1px 4px;margin:0 1px;border:1px solid var(--edge-2);border-bottom-width:2px;border-radius:3px;background:var(--panel-2);font:600 10.5px/1.3 var(--mono);text-align:center;color:var(--ink)}
-.aboutFoot{margin-top:12px}
+.aboutFoot{margin-top:12px;align-items:flex-end;gap:14px}
+.aboutFoot .note{flex:1;min-width:0;max-width:420px;margin:0}
+.aboutFoot .tog,.aboutFoot button{flex:none;white-space:nowrap}
+.aboutFoot .tog{margin-left:auto}
 #aboutTabs{width:max-content}
 #aboutStart,#aboutLog{height:min(420px,56vh);overflow:auto;margin-top:8px}
 #aboutLog{font-size:12.5px;line-height:1.5;color:var(--ink);padding-right:6px}
@@ -301,7 +305,7 @@ output.mod{color:var(--env)}
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="prepBtn" title="Prep (Enter): the output keeps playing what's live while you work on any scene · Enter again sends the scene you're on out, with the armed transition"><span class="led" id="prepLed"></span>Prep</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="fsBtn" class="iconbtn" title="Full screen on / off for this window (F11 belongs to the effects)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="prepBtn" title="Prep (Enter): the output keeps playing what's live while you work on any scene · Enter again sends the scene you're on out, with the armed transition"><span class="led" id="prepLed"></span>Prep</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -326,7 +330,7 @@ output.mod{color:var(--env)}
 
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · the output still shows the live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span></div>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
@@ -470,13 +474,12 @@ output.mod{color:var(--env)}
       <li><b>Keep time.</b> Tap the tempo with <kbd>Space</kbd> (or use MIDI clock). With Snap on, hits land on the beat or bar.</li>
       <li><b>Scenes.</b> <kbd>Num 1</kbd>–<kbd>9</kbd> switch between nine scenes, each with its own pads and layers. Keys <kbd>1</kbd>–<kbd>9</kbd> pick the transition used for the next switch.</li>
       <li><b>Effects.</b> <kbd>F1</kbd>–<kbd>F12</kbd> play screen effects; with <kbd>Caps Lock</kbd> on, the numpad plays effect presets. Hold <kbd>0</kbd> for blackout, <kbd>Ins</kbd> to freeze.</li>
-      <li><b>Go live.</b> Click <b>Output</b>, move that window to the projector or second screen, double-click it for full screen.</li>
+      <li><b>Go live.</b> Click <b>Output</b>, move that window to the projector or second screen, double-click it for full screen. <kbd>Enter</kbd> starts <b>Prep</b>: the output stays locked on the live scene while you get the next one ready; <kbd>Enter</kbd> again sends it out.</li>
       <li><b>Save.</b> <kbd>Ctrl</kbd>+<kbd>S</kbd> saves the set in this browser; <b>Sets</b> exports it as a <code>.vjif</code> file. Every key and mouse move is listed under <b>?</b>.</li>
     </ol>
     </div>
     <div id="aboutLog" hidden><!-- @markdown tools/vjif/CHANGELOG.md --></div>
-    <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><span style="flex:1"></span><button id="aboutGo" class="accent">Start</button></div>
-    <p class="note">Design and UX by XC3N · code by Claude (Anthropic). MIT licence — source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a>. If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
+    <div class="row aboutFoot"><p class="note">Design and UX by XC3N · code by Claude (Anthropic). MIT licence — source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a>. If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
   </div>
 </div>
 <div id="helpPanel" class="modal" hidden>
@@ -513,7 +516,7 @@ output.mod{color:var(--env)}
       <dt>Dragging a pad</dt><dd>Onto another pad: they swap (onto an empty one: it moves there) — what plays keeps playing under its new key · onto a layer card: the GIF goes on that layer (on top), or starts there if it wasn't playing. Undoable</dd>
       <dt>Scene tiles</dt><dd>Click to go there · right-click to name it · drag one onto another to swap them</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, or Ctrl+click (with Ctrl held the chips turn red)</dd>
-      <dt>Ctrl+click</dt><dd>Deletes what you click (everything deletable turns red with a ✕ while Ctrl is held; ⌘ on a Mac): a pad, a scene (its name stays), a layer chip, an effect preset, a GIF in the pool (when no pad uses it). Pads and scenes come back with Ctrl+Z</dd>
+      <dt>Ctrl+click</dt><dd>Deletes what you click (it turns red with a ✕ while Ctrl is held; ⌘ on a Mac): a pad, a scene (its name stays), a layer chip, an effect preset, a GIF in the pool (when no pad uses it). Effects and transition presets get a red outline: Ctrl+click puts them back to their defaults. Pads and scenes come back with Ctrl+Z</dd>
     </dl>
   </div>
 </div>
@@ -542,7 +545,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.17.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.18.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -1579,7 +1582,7 @@ function renderScenes(){
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
     const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
-    const bg = n && th ? `url(${th})` : pg ? `url(${gifThumb(pg)})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
+    const bg = n && th ? `url(${th})` : pg ? `url(${gifTile(pg)})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
     b.classList.toggle('padsOnly', !!pg);
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
     const nm = sceneName(i), ne = b.querySelector('.nm'); if (ne.textContent !== nm) ne.textContent = nm;
@@ -1655,7 +1658,8 @@ function syncTransUI(){
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || T.type === 'melt');   // the melt keeps Doom's own timing
   $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
-$('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = +b.dataset.v; armTrans(k); });
+$('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = +b.dataset.v;
+  if (e.ctrlKey || e.metaKey){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Ctrl+click: reset it
 $('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); } });
 $('#trStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
   transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
@@ -1691,8 +1695,10 @@ function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
     if (e.button) return;
-    if ((e.ctrlKey || e.metaKey) && i >= NFX && heldPre < 0){ el._edit = true;            // Ctrl+click a preset: empty it
-      fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); selFx = i; syncFxUI(); return; }
+    if ((e.ctrlKey || e.metaKey) && heldPre < 0){ el._edit = true;                        // Ctrl+click: reset an effect / empty a preset
+      if (i < NFX){ fxUp(i); fxCfg[i] = fxDefaults()[i]; toast2(`${FX_DEFS[i].name} back to its defaults`); }
+      else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
+      selFx = i; syncFxUI(); return; }
     if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); el._edit = true; return; }     // a preset is held: this click edits it
     el.setPointerCapture(e.pointerId); fxDown(i);
     if (i < NFX) fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; else heldPre = i - NFX;   // holding a preset tile: F keys edit it
@@ -2777,6 +2783,15 @@ function padToLayer(p, li){
   else { if (layers[li].clips.length >= MAX_CLIPS) return refuse(layers[li]); setTarget(li); fire(p, clock.beat); }
   syncLayerUI(); syncXfUI(); redraw.all = true; commit();
 }
+// a scene-tile-shaped picture of a GIF's first frame, fitted whole like a scene thumbnail (pads loaded, nothing playing)
+function gifTile(g){
+  if (g.tileThumb && g.tileFmt === format) return g.tileThumb;
+  const c = document.createElement('canvas'); c.width = 96; c.height = 54; const x = c.getContext('2d'), f = fxImage(g, g.startF);
+  const k = Math.min(96 / W, 54 / H), fw = W * k, fh = H * k, s = Math.min(fw / f.width, fh / f.height);   // the canvas frame, then the GIF inside it
+  x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54); x.imageSmoothingEnabled = !g.crisp;
+  x.drawImage(f, (96 - f.width * s) / 2, (54 - f.height * s) / 2, f.width * s, f.height * s);
+  g.tileFmt = format; return g.tileThumb = c.toDataURL('image/jpeg', 0.8);
+}
 // small cover-cropped copy for the layer chips and scene tiles (made on demand for GIFs of scenes not on screen)
 function gifThumb(g, f = fxImage(g, g.startF)){
   if (g.thumb) return g.thumb;
@@ -2798,7 +2813,7 @@ function renderPad(i){
   x.imageSmoothingEnabled = !p.gif.crisp;
   const f = fxImage(p.gif, p.gif.startF), s = Math.min(c.width / f.width, c.height / f.height);
   x.drawImage(f, (c.width - f.width*s)/2, (c.height - f.height*s)/2, f.width*s, f.height*s);
-  p.gif.thumb = null; gifThumb(p.gif, f);
+  p.gif.thumb = p.gif.tileThumb = null; gifThumb(p.gif, f);
   document.querySelectorAll(`.chip[data-pad="${i}"]`).forEach(ch => ch.style.backgroundImage = `url(${p.gif.thumb})`);
 }
 function selectPad(i){ selPad = i; pads.forEach(p => p.el.classList.toggle('sel', p.i === i)); syncGifUI(); }
@@ -3882,6 +3897,8 @@ function recTick(){
 }
 setInterval(() => { if (rec.mr) recUI(); }, 500);
 $('#recBtn').addEventListener('click', recToggle);
+$('#fsBtn').addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => toast('Full screen was refused by the browser')));
+document.addEventListener('fullscreenchange', () => $('#fsBtn').classList.toggle('on', !!document.fullscreenElement));
 $('#prepBtn').addEventListener('click', () => prep ? goLive() : startPrep());
 async function saveFile(blob, filename){
   if (window.showSaveFilePicker){

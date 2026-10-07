@@ -40,6 +40,8 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n15} **Frames under Play** (0.17) — In / Out / Start next to Loop.
 - {n16} **Recording with sound** (0.17) — Settings › Canvas › Sound: pick your interface or loopback; the file has audio in sync.
 - {n17} **Small ones** (0.17.1) — pool drags show the slanted chip; the About tagline rotates.
+- {n18} **Full-screen button** (0.18) — next to ⚙ and ?: the whole VJif window goes full screen and back.
+- {n19} **About footer** (0.18) — Show this at start + Play! at the lower right, credits on the left.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.
