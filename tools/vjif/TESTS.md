@@ -24,10 +24,10 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 
 ## New in 0.9–0.13
 - {n1} **Shift+click clearing** — pad, scene (name stays), effect preset, Pool GIF; resets an effect or transition preset. Ctrl+Z brings pads and scenes back.
-- {n2} **Is the red under Shift too much?** — especially when using Shift+key to select pads.
+- {n2} **Shift highlight** (0.14.2) — hold Shift: what a click clears turns red with a ✕; effects and transition presets (reset only) get a red outline.
 - {n3} **Effect Release (Rel)** — Zoom on F5: Len holds at full, Rel fades. Also Rel on a Hold effect when you let go.
-- {n4} **Old sets keep their sound** — load one of your existing sets: hit effects sound as before.
-- {n5} **Scene tiles with pads but nothing playing** — show the first GIF, greyed.
+- {n4} **Old sets still look the same** — load an existing set: its hit effects fade out as before Release existed.
+- {n5} **Scene tile when GIFs are loaded but nothing plays** — load a GIF on a pad of an empty scene without triggering it: the tile shows it greyed.
 - {n6} **What's new in About** — click the version number in the About title.
 - {n7} **Drag pads** (0.12) — pad onto pad swaps (onto an empty pad: moves); pad onto a layer card puts the GIF there. A quick press still plays instantly; a drag doesn't leave the GIF playing; the chip follows the pointer (0.13.4).
 - {n8} **Mono › Dither** (0.13) — F1, style Dither: crisp black and white dots, also on one layer and full screen in the output window.
@@ -36,11 +36,11 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {n11} **New logo** (0.14) — header and About: Russo One, chrome, "if" in magenta, slanted; nothing clipped at your display scaling.
 - {n12} **Slanted drag chips everywhere** (0.14.1) — dragging a layer chip, an effect tile or the effect name shows the same slanted chip as pads.
 - {n13} **Output window remembers its place** (0.15) — move it to the projector screen, close it, reopen: same place and size. Drag inside it to move it; Shift+click Output resets.
-- {n14} **Shift highlight, take 2** (0.14.2) — red + ✕ on what a click clears; red outline on what it resets; transition presets outlined properly.
 
 ## Next up
 - {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.
 - {i3} **Hercules P32 DJ** (parked) — probably not needed if the Launchpad's fader mode covers knobs.
+- {i5} **Prep mode** (proposal) — edit any scene while the output keeps playing the live one; Go live sends it out.
 
 ## Open questions
 - none right now (Alt shortcuts: fine on Windows; controller: Hercules P32 DJ, layout to follow)
