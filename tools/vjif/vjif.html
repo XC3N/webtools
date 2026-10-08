@@ -394,12 +394,12 @@ output.mod{color:var(--env)}
     <div id="fxEdit">
       <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList"></span>
         <div class="seg" id="fxTgt" title="Where it plays: the whole output, or one layer (before the layer is blended)"><button data-v="out" title="The whole output">All</button><button data-v="0" title="Layer 1 only">1</button><button data-v="1" title="Layer 2 only">2</button><button data-v="2" title="Layer 3 only">3</button><button data-v="3" title="Layer 4 only">4</button></div></div>
-      <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays at full for Length, then fades over Release (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
+      <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays through its envelope (Attack, Decay, Gate at Sustain), then fades over Release (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
         <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0.05" max="1" step="0.01" data-def="1" data-pct><output></output></div>
         <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
         <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div></div>
-      <div class="fxrow envrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Length (Hit: how long it stays at Sustain), Release (fade out after the Length, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><div class="envhd"><span>Envelope</span><span class="line"></span><button class="iconbtn" id="envPrev" title="Preview: while you drag a point (or a slider), the effect plays its envelope over and over, so you can hear… see it"><svg viewBox="0 0 16 16" width="11" height="11" style="display:block;margin:auto"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button><button class="iconbtn" id="envView" title="Graph or sliders"></button></div><canvas id="fxEnv" class="scope"></canvas>
-          <div id="fxEnvSl"><div class="sl"><span>A</span><input type="range" min="0" step="1" data-k="a"><output></output></div><div class="sl"><span>D</span><input type="range" min="0" step="1" data-k="d"><output></output></div><div class="sl"><span>S</span><input type="range" min="0" max="20" step="1" data-k="s"><output></output></div><div class="sl"><span>L</span><input type="range" min="0" step="1" data-k="l"><output></output></div><div class="sl"><span>R</span><input type="range" min="0" step="1" data-k="r"><output></output></div></div></div>
+      <div class="fxrow envrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Gate (Hit: how long it stays at Sustain, as if the key were held), Release (fade out after the Gate, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><div class="envhd"><span>Envelope</span><span class="line"></span><button class="iconbtn" id="envPrev" title="Preview: while you drag a point (or a slider), the effect plays its envelope over and over, so you can hear… see it"><svg viewBox="0 0 16 16" width="11" height="11" style="display:block;margin:auto"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button><button class="iconbtn" id="envView" title="Graph or sliders"></button></div><canvas id="fxEnv" class="scope"></canvas>
+          <div id="fxEnvSl"><div class="sl"><span>A</span><input type="range" min="0" step="1" data-k="a"><output></output></div><div class="sl"><span>D</span><input type="range" min="0" step="1" data-k="d"><output></output></div><div class="sl"><span>S</span><input type="range" min="0" max="20" step="1" data-k="s"><output></output></div><div class="sl"><span>G</span><input type="range" min="0" step="1" data-k="l"><output></output></div><div class="sl"><span>R</span><input type="range" min="0" step="1" data-k="r"><output></output></div></div></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
     <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
@@ -2302,10 +2302,10 @@ function drawFxEnv(){
   x.stroke();
   const pts = [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]];
   for (const [k, px, py] of pts){ x.fillStyle = fxEnvDrag && fxEnvDrag.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); }
-  const lab = `A ${FX_ATTS[G.ia][1]} · D ${FX_ATTS[G.id][1]} · S ${Math.round(G.sus * 100)}%${G.hit ? ' · L ' + FX_LENS[G.il][1] : ''} · R ${FX_RELS[G.ir][1]}`;
+  const lab = `A ${FX_ATTS[G.ia][1]} · D ${FX_ATTS[G.id][1]} · S ${Math.round(G.sus * 100)}%${G.hit ? ' · G ' + FX_LENS[G.il][1] : ''} · R ${FX_RELS[G.ir][1]}`;
   const k = fxEnvDrag ? fxEnvDrag.k : fxEnvHover;      // the value of the point under the pointer, next to it
   if (k){ const P = pts.find(p => p[0] === k); if (P){
-    const t = k === 'a' ? `Attack ${FX_ATTS[G.ia][1]}` : k === 'd' ? `Decay ${FX_ATTS[G.id][1]} · Sustain ${Math.round(G.sus * 100)}%` : k === 'l' ? `Length ${FX_LENS[G.il][1]}` : `Release ${FX_RELS[G.ir][1]}`;
+    const t = k === 'a' ? `Attack ${FX_ATTS[G.ia][1]}` : k === 'd' ? `Decay ${FX_ATTS[G.id][1]} · Sustain ${Math.round(G.sus * 100)}%` : k === 'l' ? `Gate ${FX_LENS[G.il][1]}` : `Release ${FX_RELS[G.ir][1]}`;
     x.font = `600 ${10 * d}px ui-monospace, monospace`; const tw = x.measureText(t).width + 8 * d, tx = clamp(P[1] + 6 * d, 2 * d, w - tw - 2 * d), ty = 3 * d;
     x.fillStyle = 'rgba(0,0,0,.75)'; x.fillRect(tx, ty, tw, 13 * d); x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText(t, tx + 4 * d, ty + 10 * d); } }
   if (cv.dataset.lab !== lab){ cv.dataset.lab = lab; cv.title = 'Envelope: ' + lab + ' — drag a point; double-click: its default'; }
@@ -2926,7 +2926,7 @@ const fxSt = [...FX_DEFS, ...FXP_KEYS].map(() => ({ held: false, on: false, b0: 
 const fxConf = i => i < NFX ? fxCfg[i] : fxPre[i - NFX];
 // effect state: the editor's own, or (in Prep) the copy the output keeps playing
 const fxLive = () => ({ cfg: fxCfg, pre: fxPre, st: fxSt });
-// envelope: Attack rises to full, Decay falls to Sustain; a Hit stays there for Length, Hold / Latch while on; then Release
+// envelope: Attack rises to full, Decay falls to Sustain; a Hit stays there for Gate, Hold / Latch while on; then Release
 function fxAD(C, t){
   const a = C.att || 0, dc = C.dec || 0, s = C.sus ?? 1;
   if (t < 0) return 0; if (t < a) return t / a;

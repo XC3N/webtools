@@ -16,6 +16,7 @@ The version shows in the About panel (click the logo). What still needs testing 
 - Colour › Palette: the Amount slider picks the palette, the Rate slider becomes Dither (ordered dots between palette colours, for in-between shades). The palette is either on or off, so it no longer goes muddy halfway.
 - Mirror › Kaleido Zoom moves smoothly (1× to 6×, 0.05 steps).
 - Switching an effect to Latch starts it straight at Sustain (no Attack: it wasn't a hit). Switching away from a playing effect fades it out over its Release instead of cutting it.
+- Envelope: Length is now Gate (G): how long a Hit stays at Sustain, as if the key were held.
 - Envelope: an Envelope heading above the graph, which takes the editor's whole width; the controls rows are a little tighter. With Attack at 0, the graph rises straight up. New icons for preview and graph / sliders.
 
 ### Preview
@@ -79,7 +80,7 @@ The version shows in the About panel (click the logo). What still needs testing 
 ## 0.29.0 — 2026-10-08
 
 ### Effects
-- Full envelope (ADSR) for effects and effect presets: Attack (rise to full), Decay (fall to Sustain), Sustain (the level it rests at), Length (Hit only: how long it rests) and Release. Edited as a small graph (Env): drag the points; the value shows next to the point; double-click one for its default. A bar on the right shows the level right now.
+- Full envelope (ADSR) for effects and effect presets: Attack (rise to full), Decay (fall to Sustain), Sustain (the level it rests at), Length (Hit only: how long it rests; called Gate since 0.31) and Release. Edited as a small graph (Env): drag the points; the value shows next to the point; double-click one for its default. A bar on the right shows the level right now.
 - Defaults sound as before (Attack 0, Decay 0, Sustain 100%).
 - Rate and Size moved up next to Amount, so the envelope gets the whole bottom row.
 
