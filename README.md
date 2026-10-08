@@ -1,14 +1,13 @@
 # XC3N web tools
 
-Browser tools for music and visuals. Each tool ships as **one standalone HTML file**: open it in Chrome, from
-the website or from your disk, and it works — no install, no server, offline once loaded.
+VibeCoded Browser tools for music and visuals. While AI was used for the totality of the code, hundreds of hours of human time was also put into designing, refining and testing the UX and UI.
 
 | Tool | What it does |
 |---|---|
 | **[VJif](tools/vjif/)** | GIF VJ tool: 18 keyboard pads, 9 scenes with transitions, 4 blended layers, screen effects, BPM / tap / MIDI-clock sync, live colour key and HSV, automation, mouse transform handles, sets saved in the browser and exported as `.vjif` files. *Actually, it's pronounced vjif.* [Changelog](tools/vjif/CHANGELOG.md) |
 | **[Bad MOPHO](tools/bad-mopho/)** | Web MIDI editor and librarian for the Dave Smith Instruments Mopho. |
 
-**Use them online:** https://xc3n.github.io/webtools/ (after the first deploy)
+**Use them online:** https://xc3n.github.io/webtools/
 **Use them offline:** download the file from the site (or build it, below) and open it in Chrome.
 
 ## Layout
