@@ -4,6 +4,46 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.30.0 — 2026-10-08
+
+### Effects
+- Colour › Palette: every colour snapped to an old machine's palette: CGA 1, 2 and 3, EGA, C64, NES, Game Boy, Game Boy Pocket, Game Boy Light. The Rate slider becomes the palette picker for this style.
+- Mirror › Kaleido: the Rate slider becomes Zoom (1× to 6×, into the middle of the kaleidoscope).
+- Glitch › Melt has a Size (column width).
+- Amount goes down to 5% (Kaleido's slice count starts at the low end of it).
+- Switching an effect to Latch turns it on.
+- Envelope: twice as tall, and zoomed to fit the envelope (with room to drag further), so short envelopes are easy to grab. The scale holds still while you drag.
+- Envelope preview (▶ next to the graph, on by default): while you drag a point or a slider, the effect plays its envelope over and over, so you see the change.
+- Envelope as sliders (≡ next to the graph): A, D, S, L, R as five sliders instead of the graph. Both choices are kept in this browser.
+- Effect names in the editor have more room.
+
+### Transitions
+- On / off transition per layer: a select under each layer's opacity (cut, the armed preset, or preset 1–9), replacing the single setting in Transition.
+- Glitch › VHS: much heavier tracking: two torn bands rolling down at different speeds, white dropouts, the top of the picture bending (flagging) and head-switching noise along the bottom.
+
+### Placement
+- Crop › To content: crops away the see-through border, measured over every frame.
+- Undo / redo say what they changed ("Undo: W position", "Undo: Background opacity"). Settings › Interface › Undo turns the message off.
+
+### Preview
+- Guides bar: thirds and centre are now grid sizes (3×3, 2×2), a colour for the guide lines, a magnet icon for Stick, the on state in the signal colour, bigger icons. The grid numbers can be dragged up / down, scrolled or typed. The bar sits halfway between the picture and the panel below.
+- Music transport over the preview while a track is loaded: play / pause, name, time.
+
+### Pads
+- The two pad sections fold away (click their heading) to give the panels below more room; a folded one shows how many GIFs it holds. Their keys keep working.
+
+### Lettering
+- Centred on the letters themselves, not the font's box, so big text sits in the middle.
+- Cut-out: the black matte grows when the text is bigger than the frame, and the preview zooms out to show all of it.
+- The preview is drawn small, so dragging Size is smooth.
+
+### Interface
+- Settings › Interface › Size is a slider (70% to 130%; double-click for 100%).
+- Defaults: "Save current settings" and "Reset".
+- The swap palette's colours are in spectrum order (greys first, dark to light).
+- About says this is a preview version.
+- The logo is centred in the top bar.
+
 ## 0.29.0 — 2026-10-08
 
 ### Effects

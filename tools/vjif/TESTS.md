@@ -17,10 +17,17 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {pal} **Colour › Palette** (0.30) — F2, style Palette: step through the palettes with the slider (CGA, EGA, C64, NES, Game Boys); Mirror › Kaleido Zoom.
+- {envz} **Envelope editing** (0.30) — short envelopes are easy to grab; the ▶ preview plays while dragging (try Decay); ≡ switches to sliders.
+- {crop} **Crop to content** (0.30) — a GIF with a see-through border (a sprite): Transform › Crop › To content.
+- {utoast} **Undo says what changed** (0.30) — move a GIF, change opacity, crop: Ctrl+Z names it; Settings › Interface › Undo turns it off.
+- {fold} **Fold pad sections** (0.30) — click QWE / ASD / ZXC: folded, keys still play, the panels below get the room.
+- {txc} **Lettering centring and cut-out** (0.30) — Size 150%: text in the middle; Cut-out with big text zooms out; dragging Size is smooth.
+- {mbar} **Music transport over the preview** (0.30) — load a track: play / pause, name and time above the picture; Prep's tag moves below it.
 - {drop} **Pad onto the preview** (0.26) — drag a pad onto the preview: on the edit layer, centred where dropped.
 - {link} **Link X / Y, From centre** (0.26) — Transform: scale sliders together; preview handles from the centre.
-- {ltr} **Layer transitions** (0.26) — Transition › Layers: armed / a preset; Shift+1–4 fades / wipes a layer in and out.
-- {vhs} **Glitch › VHS** (0.26).
+- {ltr} **Layer transitions** (0.30: per layer, the select under each layer's opacity) — cut / armed / a preset; Shift+1–4 fades / wipes a layer in and out.
+- {vhs} **Glitch › VHS** (0.30: heavier tracking, dropouts, flagging, head-switching noise).
 - {crt} **CRT effect** (0.27) — F10: Scanlines, Phosphor, Degauss (as a Hit with a long Release).
 - {res} **GIF Resolution** (0.27) — Play › Resolution ½ / ¼ on a big GIF: same size on screen, MEM drops; save / reload keeps it.
 - {adsr} **Effect envelope** (0.29) — Env graph: Zoom as a Hit with Attack 1/8, Decay 1/4, Sustain 40%, Length 1 bar; Mono Hold with a slow Attack and Release; a preset with its own envelope.

@@ -42,7 +42,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 /* the wordmark (Logo Lab: Russo One 400 · chrome · accent #8f004a on "if" · tracking -0.08em · slant -16°) */
 .brand,.abrand{display:inline-block;font:400 34px/1 'Russo One',var(--sans);letter-spacing:-.08em;transform:skewX(-16deg);padding:.06em .14em .06em .04em;
   background-image:linear-gradient(180deg,#fff,#bdbdc6);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:default}
-.brand{margin:-8px 0 -8px -4px;position:relative;top:1px}   /* a big logo without making the header taller, its glyphs centred in it */
+.brand{margin:-8px 0 -8px -4px;position:relative;top:1.8px}   /* a big logo without making the header taller, its glyphs centred in it */
 .brand span,.abrand span{display:inline-block;padding:0 .14em;margin:0 -.14em;background-image:linear-gradient(180deg,#ff359e,#8f004a);-webkit-background-clip:text;background-clip:text;color:transparent}
 #hdrVer{border:0;background:none;padding:0 2px;height:auto;margin:3px 22px 0 -2px;font:500 10px var(--mono);color:var(--faint);align-self:center;cursor:pointer}
 #hdrVer:hover{color:var(--sig)}
@@ -107,6 +107,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .scene.cur{box-shadow:0 0 0 2px var(--sig)}
 .scene.wait{animation:wait .25s steps(1) infinite}
 .padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
+.padsub{cursor:pointer;user-select:none}.padsub:hover{color:var(--muted)}.padsub::before{content:'▾';width:10px;display:inline-block}.padsub.fold::before{content:'▸'}.padsub.fold+.padgrid{display:none}.padsub .cnt{display:none}.padsub.fold .cnt{display:inline}
 .padsub{margin:8px 0 5px;font:500 11px var(--mono);color:var(--faint)}.padsub .line{flex:1;height:1px;background:var(--edge)}
 
 #gifName{width:9ch}
@@ -148,7 +149,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:36px}
-.fxrow .lcd{flex:none;width:9.5ch;text-align:center;font-size:11px}
+.fxrow .lcd{flex:none;width:12ch;text-align:center;font-size:11px}
 .fxrow .seg{flex:1;min-width:0}
 #fxStyle button{flex:1 1 0;min-width:0;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* every style shrinks a little, rather than the last one vanishing */
 #fxMode{flex:none;width:120px}
@@ -157,7 +158,12 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxEdit.pre #fxTgt{display:none}
 #fxEdit.pre.ent #fxTgt,#fxEdit.pre.ent #fxStyle{display:grid}#fxEdit.ent #fxPreList{display:none}#fxEdit.pre.ent.rated #fxRateRow,#fxEdit.pre.ent:not(.sized) #fxRateRow,#fxEdit.pre.ent.sized #fxSizeRow{display:grid}
 #fxEdit.ent #fxMode,#fxEdit.ent #fxEnvRow{opacity:.5}
-#fxEnvRow{flex:2.2!important}#fxEnv{width:100%;height:32px;min-width:120px;display:block;cursor:pointer;touch-action:none;background:var(--bg);border-radius:var(--r)}
+.fxrow.envrow{height:auto}#fxEnvRow{flex:2.2!important;grid-template-columns:auto auto minmax(0,1fr)!important}#fxEnvRow>label{align-self:start;padding-top:4px}
+.envtg{display:flex;flex-direction:column;gap:3px}.envtg .iconbtn{width:24px;height:28px;padding:0;font-size:11px}.envtg .iconbtn.on{background:var(--sig);color:var(--sigtxt);border-color:var(--sig)}
+#fxEnvSl{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;align-items:center;height:60px;font:400 11px var(--mono);color:var(--muted)}
+#fxEnvSl output{grid-column:2;grid-row:1;justify-self:end;padding-right:6px;pointer-events:none;color:var(--lcd);white-space:nowrap;position:relative;z-index:1}#fxEnvSl .sl{display:grid;grid-template-columns:10px minmax(0,1fr);gap:4px;align-items:center;min-width:0}#fxEnvSl .sl>input{grid-column:2;grid-row:1;width:100%}#fxEnvSl .sl.dimmed{opacity:.35}#fxEnvSl input{min-width:0;height:22px}
+#fxEnvRow.sliders #fxEnv{display:none}#fxEnvRow.sliders #fxEnvSl{display:grid}
+#fxEnv{width:100%;height:60px;min-width:120px;display:block;cursor:pointer;touch-action:none;background:var(--bg);border-radius:var(--r)}
 .pchip{cursor:pointer}.pchip:hover{border-color:var(--sig)}#fxName.back{cursor:pointer}#fxName.back::before{content:'‹ ';opacity:.6}
 #fxMode button{padding:0}
 @media (max-width:1760px){ .fxrow .field label{font-size:11px} }
@@ -191,9 +197,13 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #aboutVer:hover{color:var(--sig)}
 #sizeNote{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:20;background:#ffb000;color:#1a1200;font:600 12px var(--sans);padding:6px 6px 6px 12px;border-radius:var(--r);box-shadow:0 4px 16px #0008;display:flex;gap:8px;align-items:center}
 #sizeNote button{color:#1a1200}
-#pvBar{display:flex;justify-content:center}
+#pvBar{position:absolute;left:0;right:0;z-index:3;display:flex;justify-content:center;pointer-events:none}#pvBar .grp{pointer-events:auto;background:var(--panel);border-radius:var(--r);padding:2px 4px}
+#pvBar .iconbtn{width:30px;height:28px}#pvBar .iconbtn.on{background:var(--sig);color:var(--sigtxt);border-color:var(--sig)}
+#guideCol{width:28px;height:24px;padding:0;border:1px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}
+#guideGrp input[type=number]{cursor:ns-resize}
 #guideGrp input[type=number]{width:34px;height:var(--ch);padding:0 2px;text-align:center;font:400 11px var(--mono);-moz-appearance:textfield}
 #guideGrp input[type=number]::-webkit-inner-spin-button{display:none}#guideGrp .dim{font-size:11px}
+#musBar{position:absolute;left:50%;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:var(--r);padding:2px 10px 2px 4px;max-width:60%}#musBar[hidden]{display:none}#musBar:not([hidden])~#prepTag{top:44px}#musBar .iconbtn{width:30px;height:26px}#musBar .musName{max-width:320px}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
 #prepTag{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#1a1200;background:#ffb000;padding:3px 10px;border-radius:2px;pointer-events:none;white-space:nowrap}
 body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
@@ -214,7 +224,7 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 .lrow{display:flex;gap:4px;margin-top:6px}
 .lbl{width:92px;flex:none}
 .lrow .lbl{flex:1;min-width:0;width:auto}
-.layer .lop{display:block;margin:6px 0 0}
+.layer .lop{display:block;margin:6px 0 0}.layer .ltr{display:block;width:100%;margin:5px 0 0;height:22px;font-size:11px}
 .lon{width:var(--ch);height:var(--ch);padding:0;font:600 12px var(--mono);color:var(--muted);flex:none}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#111}
 .lname{font:600 13px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -305,6 +315,7 @@ body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px
 .steps{margin:4px 0 8px;padding-left:22px;display:grid;gap:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
 .steps b{color:var(--ink)}.steps li::marker{color:var(--sig);font:600 12px var(--mono)}
 kbd{display:inline-block;min-width:1.5em;padding:1px 4px;margin:0 1px;border:1px solid var(--edge-2);border-bottom-width:2px;border-radius:3px;background:var(--panel-2);font:600 10.5px/1.3 var(--mono);text-align:center;color:var(--ink)}
+.preview{margin:10px 0 0;padding:6px 10px;border-radius:var(--r);background:#ffb000;color:#1a1200;font:700 12px/1.3 var(--mono);letter-spacing:.08em;text-align:center}
 .aboutCred{margin:14px 0 0;padding-top:10px;border-top:1px solid var(--edge)}
 .aboutFoot{margin-top:10px;align-items:center;justify-content:space-between;gap:14px}
 .aboutFoot .tog,.aboutFoot button{flex:none;white-space:nowrap}
@@ -346,9 +357,9 @@ output.mod{color:var(--env)}
   <h2 class="padhead">Pads
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
     <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><button id="textBtn" title="Lettering: type a text (an artist's name, a message) and use it like a GIF — plain, scrolling across (marquee) or cut out of a black matte">Text…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
-  <div class="sub padsub"><span>QWE / ASD / ZXC</span><span class="line"></span></div>
+  <div class="sub padsub" data-g="A" title="Click: fold / unfold these pads (their keys keep working)"><span>QWE / ASD / ZXC</span><span class="cnt"></span><span class="line"></span></div>
   <div class="padgrid" id="gridA"></div>
-  <div class="sub padsub"><span>RTY / FGH / VBN</span><span class="line"></span></div>
+  <div class="sub padsub" data-g="B" title="Click: fold / unfold these pads (their keys keep working)"><span>RTY / FGH / VBN</span><span class="cnt"></span><span class="line"></span></div>
   <div class="padgrid" id="gridB"></div>
   <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
@@ -363,28 +374,28 @@ output.mod{color:var(--env)}
   <div class="field" id="trDirRow"><label>Direction</label><div class="seg span" id="trDir"><button data-v="left" title="Towards the left">←</button><button data-v="right" title="Towards the right">→</button><button data-v="up" title="Upwards">↑</button><button data-v="down" title="Downwards">↓</button></div></div>
   <div class="field" id="trLenRow"><label for="trLen">Length</label><input id="trLen" type="range" min="0" step="1" data-def="3"><output></output></div>
   <div class="field" id="trPxRow"><label for="trPx">Pixel</label><input id="trPx" type="range" min="0" step="1" data-def="4" title="Block size for Dissolve and Glitch blocks / scramble, column width for Glitch melt"><output></output></div>
-  <div class="field" title="Turning a layer on or off (Shift+1–4, End, its LED, MIDI): straight away, with the armed transition, or always with one preset"><label for="trLayer">Layers</label><select id="trLayer" class="span"><option value="cut">Layer on / off: cut</option><option value="armed">Layer on / off: the armed preset</option>
-    <option value="0">Layer on / off: preset 1</option><option value="1">Layer on / off: preset 2</option><option value="2">Layer on / off: preset 3</option><option value="3">Layer on / off: preset 4</option><option value="4">Layer on / off: preset 5</option><option value="5">Layer on / off: preset 6</option><option value="6">Layer on / off: preset 7</option><option value="7">Layer on / off: preset 8</option><option value="8">Layer on / off: preset 9</option></select></div>
   <div class="field" id="trCurveRow"><label>Curve</label><div class="seg span" id="trCurve"><button data-v="0" title="Constant speed">Linear</button><button data-v="1" title="Eases in and out">Smooth</button></div></div>
 </section>
 
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><div id="musBar" hidden title="The Music player (Settings › Recording)"><button id="musPlay2" class="iconbtn" title="Play / pause the track">▶</button><span id="musName2" class="musName"></span><span id="musTime2" class="musTime"></span></div><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span>
 </div>
-  <div id="pvBar"><div class="grp" id="guideGrp"><button class="iconbtn" data-g="thirds" title="Guides — Thirds: lines at 1/3 and 2/3 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M5.8 2.5v11M10.2 2.5v11M1.5 6.2h13M1.5 9.8h13"/></svg></button><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2" /></svg></button><button class="iconbtn" data-g="centre" title="Guides — Centre cross (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M8 2.5v11M1.5 8h13"/></svg></button><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows">
-    <button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M4 2.5v5a4 4 0 0 0 8 0v-5"/><path d="M4 4.5h2.5M9.5 4.5H12"/><path d="M6.5 2.5v5a1.5 1.5 0 0 0 3 0v-5"/></svg></button>
-    <button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".8" fill="currentColor"/><circle cx="9.7" cy="7" r=".8" fill="currentColor"/></svg></button></div></div>
+  <div id="pvBar"><div class="grp" id="guideGrp"><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2" /></svg></button><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (2×2 = centre, 3×3 = thirds; preview only; click again to hide)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns — drag up / down, scroll, or click and type"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows — drag up / down, scroll, or click and type">
+    <input type="color" id="guideCol" value="#ffffff" title="Guide line colour (so they show on any picture)">
+    <button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M4 2.5v5.2a4 4 0 0 0 8 0V2.5" stroke-width="2.6"/><path d="M4 2.5v2.2M12 2.5v2.2" stroke="#ff5b5b" stroke-width="2.8"/><path d="M1.5 1.2l1 1M14.5 1.2l-1 1M8 13.6v1.6" stroke-width="1"/></svg></button>
+    <button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".9" fill="currentColor"/><circle cx="9.7" cy="7" r=".9" fill="currentColor"/></svg></button></div></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
       <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList"></span>
         <div class="seg" id="fxTgt" title="Where it plays: the whole output, or one layer (before the layer is blended)"><button data-v="out" title="The whole output">All</button><button data-v="0" title="Layer 1 only">1</button><button data-v="1" title="Layer 2 only">2</button><button data-v="2" title="Layer 3 only">3</button><button data-v="3" title="Layer 4 only">4</button></div></div>
       <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays at full for Length, then fades over Release (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
-        <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div>
+        <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0.05" max="1" step="0.01" data-def="1" data-pct><output></output></div>
         <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
         <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div></div>
-      <div class="fxrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Length (Hit: how long it stays), Release (fade out after the Length, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><label>Env</label><canvas id="fxEnv" class="scope"></canvas></div>
+      <div class="fxrow envrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Length (Hit: how long it stays at Sustain), Release (fade out after the Length, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><label>Env</label><div class="envtg"><button class="iconbtn" id="envView" title="Graph or sliders">≡</button><button class="iconbtn" id="envPrev" title="Preview: while you drag a point (or a slider), the effect plays its envelope over and over, so you can hear… see it">▶</button></div><canvas id="fxEnv" class="scope"></canvas>
+          <div id="fxEnvSl"><div class="sl"><span>A</span><input type="range" min="0" step="1" data-k="a"><output></output></div><div class="sl"><span>D</span><input type="range" min="0" step="1" data-k="d"><output></output></div><div class="sl"><span>S</span><input type="range" min="0" max="20" step="1" data-k="s"><output></output></div><div class="sl"><span>L</span><input type="range" min="0" step="1" data-k="l"><output></output></div><div class="sl"><span>R</span><input type="range" min="0" step="1" data-k="r"><output></output></div></div></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
     <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
@@ -406,7 +417,7 @@ output.mod{color:var(--env)}
     <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
     <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
     <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
-    <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
+    <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropAuto" title="Crop to what is drawn: trims the see-through border, over every frame">To content</button><button id="xCropReset">Uncrop</button></div></div>
     <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centred">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
@@ -512,9 +523,10 @@ output.mod{color:var(--env)}
     <div class="row"><span class="lbl recLbl"></span><span class="lbl" style="color:var(--muted)">Level</span><input id="musVol" type="range" min="0" max="1" step="0.01" value="0.8" title="Listening level (the recording isn't affected)" style="flex:1;min-width:0"><label class="tog" title="Start the track from the top when a recording starts (on the bar) and stop it when the recording stops"><input type="checkbox" id="musSync" checked>With Rec</label><label class="tog"><input type="checkbox" id="musLoop">Loop</label></div>
     <p class="note">Sound: an input, the Music player (straight from the file), or Tab audio (at Rec, Chrome asks which tab to share: tick "Also share tab audio"). H.264 at 30 fps is the safe choice for Facebook, Instagram and TikTok; a codec this browser can't encode falls back to H.264, with a message. WebM's frame rate is a maximum.</p>
     <div class="sub"><span>Interface</span><span class="line"></span></div>
-    <div class="row"><span class="lbl recLbl">Size</span><div class="seg" id="uiZoomSeg" title="Make the whole interface smaller for laptop screens (or bigger). VJif is made for 1280×720 and up"><button data-z="0.8">80%</button><button data-z="0.9">90%</button><button data-z="1">100%</button><button data-z="1.1">110%</button></div></div>
+    <div class="row"><span class="lbl recLbl">Size</span><input id="uiZoomR" type="range" min="0.7" max="1.3" step="0.05" value="1" style="flex:1;min-width:0" title="Make the whole interface smaller for laptop screens (or bigger). VJif is made for 1280×720 and up. Double-click: 100%"><output id="uiZoomV" style="width:44px;text-align:right;font:400 11px var(--mono)"></output></div>
+    <div class="row"><span class="lbl recLbl">Undo</span><label class="tog" title="Show what an undo or redo changed, in a short message"><input type="checkbox" id="undoToastChk">Say what undo / redo changed</label></div>
     <div class="sub"><span>Defaults</span><span class="line"></span></div>
-    <div class="row"><button id="defSave" title="Your current effects (settings and styles), effect presets and transition presets become what every new set starts with, and what a reset (double-click, Ctrl+click) goes back to">Save as my defaults</button><button id="defReset" title="Back to VJif's own defaults (your saved ones are forgotten)">VJif's defaults</button><button id="defExport" title="Save your defaults to a file (to move them to another computer)">Export…</button><button id="defImport" title="Load defaults from a file">Import…</button><input id="defFile" type="file" accept=".json,application/json" hidden></div>
+    <div class="row"><button id="defSave" title="Your current effects (settings and styles), effect presets and transition presets become what every new set starts with, and what a reset (double-click, Ctrl+click) goes back to">Save current settings</button><button id="defReset" title="Back to VJif's own defaults (your saved ones are forgotten)">Reset</button><button id="defExport" title="Save your defaults to a file (to move them to another computer)">Export…</button><button id="defImport" title="Load defaults from a file">Import…</button><input id="defFile" type="file" accept=".json,application/json" hidden></div>
     <p class="note" id="defNote"></p>
     <div class="sub"><span>Theme</span><span class="line"></span></div>
     <div id="themeBox"></div>
@@ -530,6 +542,7 @@ output.mod{color:var(--env)}
 <div id="aboutPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(720px,94vw)">
     <h2><span class="abrand">VJ<span>if</span></span><span class="tag">GIF VJ tool · <i id="tagline">actually, it's pronounced vjif</i></span><a id="aboutVer" class="tag" href="#" title="What's new in this version"></a><span class="line"></span><button id="aboutClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <p class="preview">THIS IS A PREVIEW VERSION, ACT ACCORDINGLY</p>
     <p class="aboutLead">Play GIFs to the beat: load them onto pads, trigger them with the keyboard, stack them on four layers, switch scenes with transitions and throw effects over it all. Everything runs in this browser tab — nothing is uploaded.</p>
     <div class="seg tabs" id="aboutTabs" style="margin-top:8px"><button data-v="start" class="on">Getting started</button><button data-v="log">What's new</button></div>
     <div id="aboutStart">
@@ -651,12 +664,12 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.29.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.30.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
 // interface size (Settings › Interface): the whole page is zoomed; pointer maths divides by it
-let uiZoom = (() => { try { const z = +localStorage.getItem('vjif-uizoom'); return [0.8, 0.9, 1, 1.1].includes(z) ? z : 1; } catch (e) { return 1; } })();
+let uiZoom = (() => { try { const z = +localStorage.getItem('vjif-uizoom'); return z >= 0.7 && z <= 1.3 ? z : 1; } catch (e) { return 1; } })();
 document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom);
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
@@ -729,7 +742,7 @@ const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: fal
 let clipSeq = 0, gifSeq = 0;
 // alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)
 const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, alpha: 1, env: null, ...newXf() });
-const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, row: null, fillOn: false, fill: '#1e2a3a' }));
+const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, row: null, fillOn: false, fill: '#1e2a3a', tr: 'cut' }));
 let target = 0, selPad = 0, snapMode = 'off', picking = false;
 const clock = { bpm: 120, beat: 0, last: performance.now(), src: 'internal', taps: [],
                 midiTicks: 0, midiRunning: false, midiTickTimes: [], lastTick: 0 };
@@ -759,23 +772,26 @@ const textName = sp => (sp.text || 'text').replace(/\s+/g, ' ').trim().slice(0, 
 const TEXT_DEF = { v: 1, text: 'VJif', font: 'Russo One', bold: false, ital: false, size: 0.2, track: 0, cut: false, color: '#ffffff', marquee: 0 };
 // one frame at the current canvas size. Letters: tight around the text. Cut-out: a matte the size of the output
 // (wider when it scrolls, so it always covers the screen) with the letters punched through.
-async function renderText(spec){
-  const S = { ...TEXT_DEF, ...spec }, px = Math.max(8, Math.round(S.size * H));
+async function renderText(spec, OW = W, OH = H){   // OW × OH: the frame it's drawn for (the Text window's preview draws it small)
+  const S = { ...TEXT_DEF, ...spec }, px = Math.max(4, Math.round(S.size * OH));
   const font = `${S.ital ? 'italic ' : ''}${S.bold ? 700 : 400} ${px}px "${S.font.replace(/"/g, '')}", sans-serif`;
   try { await document.fonts.load(font, S.text || 'x'); } catch (e) {}
   const lines = S.marquee ? [String(S.text).replace(/\s*\n\s*/g, '   ')] : String(S.text).split('\n');
   const cv = document.createElement('canvas'), x = cv.getContext('2d');
-  const setup = () => { x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle'; try { x.letterSpacing = (S.track * px).toFixed(1) + 'px'; } catch (e) {} };
+  const setup = () => { x.font = font; x.textAlign = 'center'; x.textBaseline = 'alphabetic'; try { x.letterSpacing = (S.track * px).toFixed(1) + 'px'; } catch (e) {} };
   setup();
-  const lh = px * 1.15, pad = Math.ceil(px * (S.ital ? 0.35 : 0.15));
-  const tw = Math.ceil(Math.max(1, ...lines.map(l => x.measureText(l).width))), th = Math.ceil(lines.length * lh);
+  // centred on the ink, not on the font's em box: the tallest letter's top to the lowest letter's bottom
+  const lh = px * 1.15, pad = Math.ceil(px * (S.ital ? 0.35 : 0.15)), ms = lines.map(l => x.measureText(l || ' '));
+  const asc = Math.max(px * 0.2, ...ms.map(m => m.actualBoundingBoxAscent || px * 0.7)), dsc = Math.max(0, ...ms.map(m => m.actualBoundingBoxDescent || 0));
+  const tw = Math.ceil(Math.max(1, ...ms.map(m => m.width))), th = Math.ceil((lines.length - 1) * lh + asc + dsc);
   let w, h;
-  if (S.cut){ w = S.marquee ? Math.min(16000, 2 * W + tw + 2 * pad) : W; h = H; }
+  if (S.cut){ w = Math.min(16000, S.marquee ? 2 * OW + tw + 2 * pad : Math.max(OW, tw + 2 * pad)); h = Math.max(OH, th + 2 * pad); }   // the matte grows when the text is bigger than the frame
   else { w = Math.min(16000, tw + 2 * pad); h = th + 2 * pad; }
   cv.width = w; cv.height = h; setup();
   if (S.cut){ x.fillStyle = S.color; x.fillRect(0, 0, w, h); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; }
   else x.fillStyle = S.color;
-  lines.forEach((l, i) => x.fillText(l, w / 2, h / 2 + (i - (lines.length - 1) / 2) * lh));
+  const y0 = h / 2 - ((lines.length - 1) * lh + dsc - asc) / 2;
+  lines.forEach((l, i) => x.fillText(l, w / 2, y0 + i * lh));
   const bmp = await createImageBitmap(cv);
   return { src: [bmp], durs: [1000], w, h, srcBytes: w * h * 4, textW: tw + 2 * pad };
 }
@@ -801,7 +817,7 @@ async function retextAll(){
   pads.forEach(p => p.gif && p.gif.media && p.gif.media.text && renderPad(p.i)); renderPool(); redraw.all = true;
 }
 // the Text window: new text onto a pad, or changing the text of the selected pad
-let txEdit = -1, txSpec = { ...TEXT_DEF }, txT = 0;
+let txEdit = -1, txSpec = { ...TEXT_DEF }, txT = 0, txPrevN = 0;
 function openText(edit = -1){
   txEdit = edit;
   const g = edit >= 0 && pads[edit].gif;
@@ -827,16 +843,17 @@ function txUI(){
   clearTimeout(txT); txT = setTimeout(txPreview, 60);
 }
 async function txPreview(){
-  const spec = { ...txSpec, text: txSpec.text || 'VJif' }, r = await renderText({ ...spec, marquee: 0 });   // the still picture (a marquee scrolls it)
-  const c = $('#txPrev'), x = c.getContext('2d'), f = r.src[0];
+  const c = $('#txPrev'), x = c.getContext('2d'), q = Math.min(1, 2 * c.width / W), FW = Math.round(W * q), FH = Math.round(H * q);   // drawn for a small frame: quick while dragging Size
+  const spec = { ...txSpec, text: txSpec.text || 'VJif' }, my = ++txPrevN, r = await renderText({ ...spec, marquee: 0 }, FW, FH);   // the still picture (a marquee scrolls it)
+  const f = r.src[0]; if (my !== txPrevN){ f.close(); return; }   // a newer one is on its way
   c.height = Math.round(c.width * H / W);
-  // the frame, zoomed out when the text is bigger than it, so the whole text shows
-  const zw = Math.max(W, spec.cut ? W : f.width), zh = Math.max(H, spec.cut ? H : f.height), k = Math.min(c.width / zw, c.height / zh);
-  const fx = (c.width - W * k) / 2, fy = (c.height - H * k) / 2;
+  // the frame, zoomed out when the text (or a cut-out's grown matte) is bigger than it, so the whole text shows
+  const zw = Math.max(FW, f.width), zh = Math.max(FH, f.height), k = Math.min(c.width / zw, c.height / zh);
+  const fx = (c.width - FW * k) / 2, fy = (c.height - FH * k) / 2;
   x.clearRect(0, 0, c.width, c.height);
-  if (spec.cut){ x.fillStyle = '#3a6'; x.fillRect(fx, fy, W * k, H * k); }   // what shows through the letters
+  if (spec.cut){ x.fillStyle = '#3a6'; x.fillRect((c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k); }   // what shows through the letters
   x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
-  if (k < c.width / W - 1e-6){ x.strokeStyle = '#ff5bb0'; x.setLineDash([4, 3]); x.strokeRect(fx + 0.5, fy + 0.5, W * k - 1, H * k - 1); x.setLineDash([]); }   // the output frame
+  if (k < c.width / FW - 1e-6){ x.strokeStyle = '#ff5bb0'; x.setLineDash([4, 3]); x.strokeRect(fx + 0.5, fy + 0.5, FW * k - 1, FH * k - 1); x.setLineDash([]); }   // the output frame
   f.close();
 }
 async function textOk(){
@@ -1898,7 +1915,7 @@ const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
 const sceneIds = Array.from({ length: N_SCENES }, (_, i) => i);   // which scene sits at each number (swapped with the scenes)
 let sceneIdx = 0, pendingScene = null, liveThumb = null, liveName = '';   // liveName: the current scene's name
-const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a' });
+const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a', tr: 'cut' });
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
@@ -1910,7 +1927,7 @@ function sceneThumb(){
   return c.toDataURL('image/jpeg', 0.7);
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)
-const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
+const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut' });
 const layerState = L => ({ i: L.i, ...layerProps(L) });
 const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: sceneThumb(), name: liveName, pick: { pad: selPad, target } });
 function gotoScene(i, beat = clock.beat, instant = false){
@@ -2097,7 +2114,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size });   // an effect as a preset holds it
+const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1 });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -2222,11 +2239,16 @@ function syncFxUI(){
   }
   segSet('#fxMode', C.mode);
   const A = E || C; $('#fxAmt').value = A.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(A.amt * 100) + '%';
-  drawFxEnv();
+  drawFxEnv(); syncEnvSl();
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
+    const alt = rateAlt(d, C.style || d.styles[0][0]); $('#fxRateRow').classList.toggle('altrow', !!alt);
+    $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
+    if (alt){ const L = alt.list, ai = optIdx(L, C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
+      $('#fxRateRow').title = alt.title(ai); $('#fxRateRow').classList.remove('dimmed'); }
+    else { $('#fxRate').max = FX_RATES.length - 1; $('#fxRateRow').title = 'Rate: how fast it moves (beats)';
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
-    $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate);
+    $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }
     const zi = optIdx(FX_SIZES, C.size || d.sizeDef || 64); $('#fxSize').value = zi; $('#fxSize').nextElementSibling.textContent = FX_SIZES[zi][1];
     $('#fxSize').dataset.def = optIdx(FX_SIZES, d.sizeDef || 64);
     $('#fxSizeRow').classList.toggle('dimmed', !!d.sizeFor && !d.sizeFor.includes(C.style || d.styles[0][0]));
@@ -2236,8 +2258,9 @@ function syncFxUI(){
 let fxFitT = 0; addEventListener('resize', () => { clearTimeout(fxFitT); fxFitT = setTimeout(syncFxUI, 150); });
 if (document.fonts) document.fonts.ready.then(() => setTimeout(syncFxUI, 50));
 $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
-  const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it
-  fxConf(selFx).mode = b.dataset.v; syncFxUI(); });
+  const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it…
+  fxConf(selFx).mode = b.dataset.v; if (b.dataset.v === 'latch'){ S.on = true; S.t0 = clock.beat; }   // …except Latch, which starts on
+  syncFxUI(); });
 const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NFX].fx[preEd] : null;   // what the effect-level controls change
 $('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
 $('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.style = b.dataset.v; syncFxUI(); } });
@@ -2247,7 +2270,8 @@ $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null;
 const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const envGeo = (C, w, h, d) => {
   const ia = optIdx(FX_ATTS, C.att || 0), id = optIdx(FX_ATTS, C.dec || 0), il = optIdx(FX_LENS, C.len || 0), ir = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode));
-  const base = 5 * d, u = (w - 4 * base - 4 * d) / (7 + 7 + 6 + 7), hit = C.mode === 'hit', sus = C.sus ?? 1;
+  const hit = C.mode === 'hit', sus = C.sus ?? 1, base = 7 * d, n = ia + id + (hit ? il : 3) + ir;
+  const u = fxEnvDrag && fxEnvDrag.u ? fxEnvDrag.u : (w - 4 * base - 4 * d) / Math.max(8, n + 6);   // zoomed to fit, with room to drag further
   const top = 4 * d, bot = h - 4 * d, ys = bot - (bot - top) * sus;
   const xA = 2 * d + base + ia * u, xD = xA + base + id * u, xL = xD + (hit ? base + il * u : base + 6 * u * 0.5), xR = xL + base + ir * u;
   return { ia, id, il, ir, base, u, top, bot, ys, xA, xD, xL, xR, hit, sus };
@@ -2284,7 +2308,7 @@ $('#fxEnv').addEventListener('pointerdown', e => {
   const px = (e.clientX - r.left) / r.width * cv.width, py = (e.clientY - r.top) / r.height * cv.height, G = envGeo(C, cv.width, cv.height, d);
   const pts = [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]];
   let best = null; for (const p of pts){ const dd = Math.abs(p[1] - px) + Math.abs(p[2] - py) * 0.3; if (!best || dd < best.dd) best = { k: p[0], dd }; }
-  fxEnvDrag = { k: best.k }; cv.setPointerCapture(e.pointerId); fxEnvMove(e);
+  fxEnvDrag = { k: best.k, u: G.u }; cv.setPointerCapture(e.pointerId); envPrevStart(); fxEnvMove(e);
 });
 function fxEnvMove(e){
   if (!fxEnvDrag) return; const C = fxEnvConf(); if (!C) return; const cv = $('#fxEnv'), r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
@@ -2294,21 +2318,52 @@ function fxEnvMove(e){
   else if (fxEnvDrag.k === 'd'){ C.dec = FX_ATTS[idx(G.xA, FX_ATTS.length - 1)][0]; C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; }
   else if (fxEnvDrag.k === 'l') C.len = FX_LENS[idx(G.xD, FX_LENS.length - 1)][0];
   else C.rel = FX_RELS[idx(G.xL, FX_RELS.length - 1)][0];
-  drawFxEnv(); paintFxPads(clock.beat);
+  envPrevChanged(C); drawFxEnv(); paintFxPads(clock.beat);
 }
 $('#fxEnv').addEventListener('pointermove', e => { if (fxEnvDrag) return fxEnvMove(e);
   const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
   const k = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
   if (k !== fxEnvHover){ fxEnvHover = k; drawFxEnv(); } });
 $('#fxEnv').addEventListener('pointerleave', () => { fxEnvHover = null; drawFxEnv(); });
-$('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; drawFxEnv(); });
+$('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; envPrevStop(); drawFxEnv(); });
+// preview while editing: the envelope plays as a hit, over and over, restarting when a value changes
+let envPrevOn = (() => { try { return localStorage.getItem('vjif-envprev') !== '0'; } catch (e) { return true; } })();
+let envSliders = (() => { try { return localStorage.getItem('vjif-envview') === 'sl'; } catch (e) { return false; } })();
+let fxPrev = null, fxPrevSig = '';
+function envPrevStart(){ if (envPrevOn && selFx < NFX) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }
+function envPrevChanged(C){ const sg = [C.att, C.dec, C.sus, C.len, C.rel].join(); if (fxPrev && sg !== fxPrevSig) fxPrev.b0 = clock.beat; fxPrevSig = sg; }
+function envPrevStop(){ if (fxPrev) fxPrev.loop = false; }
+// the preview's level: a hit (Hold / Latch get a 1-beat length so Sustain shows), looping with a short gap
+function fxPrevLevel(i, C, b){
+  if (!fxPrev || fxPrev.i !== i) return 0;
+  const len = C.mode === 'hit' ? (C.len || 0) : 1, rel = C.rel ?? fxRelDef(C.mode), top = (C.att || 0) + (C.dec || 0) + len, end = top + Math.max(rel, 0.01);
+  let t = b - fxPrev.b0; if (t > end + 0.5){ if (fxPrev.loop){ fxPrev.b0 = b; t = 0; } else { fxPrev = null; return 0; } }
+  if (t < top) return fxAD(C, t); const x = rel > 0 ? (t - top) / rel : 1; return x < 1 ? fxAD(C, top) * (1 - x) * (1 - x) : 0;
+}
+const syncEnvTg = () => { $('#envPrev').classList.toggle('on', envPrevOn); $('#fxEnvRow').classList.toggle('sliders', envSliders); $('#envView').textContent = envSliders ? '◿' : '≡'; $('#envView').title = envSliders ? 'Show the envelope as a graph' : 'Show the envelope as sliders'; };
+$('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; try { localStorage.setItem('vjif-envprev', envPrevOn ? '1' : '0'); } catch (e) {} syncEnvTg(); });
+$('#envView').addEventListener('click', () => { envSliders = !envSliders; try { localStorage.setItem('vjif-envview', envSliders ? 'sl' : 'g'); } catch (e) {} syncEnvTg(); syncEnvSl(); drawFxEnv(); });
+const ENV_SL = { a: [() => FX_ATTS, 'att'], d: [() => FX_ATTS, 'dec'], l: [() => FX_LENS, 'len'], r: [() => FX_RELS, 'rel'] };
+function syncEnvSl(){
+  const C = fxEnvConf(); if (!C || !envSliders) return;
+  document.querySelectorAll('#fxEnvSl input').forEach(el => { const k = el.dataset.k, o = el.nextElementSibling;
+    if (k === 's'){ el.value = Math.round((C.sus ?? 1) * 20); o.textContent = Math.round((C.sus ?? 1) * 100) + '%'; return; }
+    const [L, f] = ENV_SL[k], list = L(), v = k === 'r' ? (C.rel ?? fxRelDef(C.mode)) : (C[f] || 0), ix = optIdx(list, v); el.max = list.length - 1; el.value = ix; o.textContent = list[ix][1];
+    el.closest('.sl').classList.toggle('dimmed', k === 'l' && C.mode !== 'hit'); });
+}
+$('#fxEnvSl').addEventListener('input', e => { const el = e.target, C = fxEnvConf(); if (!C || !el.dataset.k) return; const k = el.dataset.k;
+  if (!fxPrev || !fxPrev.loop) envPrevStart();
+  if (k === 's') C.sus = +el.value / 20; else { const [L, f] = ENV_SL[k]; C[f] = L()[+el.value][0]; }
+  envPrevChanged(C); syncEnvSl(); drawFxEnv(); paintFxPads(clock.beat); });
+$('#fxEnvSl').addEventListener('change', envPrevStop);
+syncEnvTg();
 $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
   const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
   const near = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
   if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = 0; else C.rel = fxRelDef(C.mode);
   drawFxEnv(); });
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (X){ X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); } });
-$('#fxRate').addEventListener('input', e => { const X = fxEd(); if (X){ X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
+$('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (alt) X[alt.key] = alt.list[+e.target.value][0]; else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
   if (b){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); return; }
   const ch = e.target.closest('.pchip'); if (ch){ preEd = +ch.dataset.e; syncFxUI(); } });
@@ -2332,9 +2387,8 @@ $('#scEmpty').addEventListener('click', () => emptySceneAt(sceneIdx));
 let thumbKeep = null, thumbTick = 0;                 // the live tile's picture as saved: refreshed every 20 s (not every second), so autosave doesn't rewrite the set constantly
 setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb; } }, 1000);
 // a layer on / off can play a transition: the picture before the change is the leaving side, like a scene change
-let layerTr = 'cut';
 function toggleLayer(li){
-  const P = layerTr === 'cut' ? null : layerTr === 'armed' ? transCfg : trPresets[+layerTr];
+  const lt = layers[li].tr || 'cut', P = lt === 'cut' ? null : lt === 'armed' ? transCfg : trPresets[+lt];   // each layer's own on / off transition (its card)
   if (P && P.type !== 'cut' && !prep && layers[li].clips.length){
     let still = null;
     if (trans && transProgress() < 1){ still = document.createElement('canvas'); still.width = W; still.height = H; still.getContext('2d').drawImage(master, 0, 0); }
@@ -2344,7 +2398,7 @@ function toggleLayer(li){
   }
   layers[li].on = !layers[li].on; syncLayerUI(); redraw.all = true;
 }
-$('#trLayer').addEventListener('change', e => { layerTr = e.target.value; e.target.blur(); });
+
 function setTarget(li){ target = li; syncLayerUI(); syncXfUI(); }
 document.addEventListener('visibilitychange', () => { redraw.all = true; });
 
@@ -2702,21 +2756,32 @@ function composeTransition(e, T){
       if (gst === 'vhs'){                            // a tape switching channels: the picture rolls over to the new one through tracking noise
         const k = Math.sin(Math.PI * e), src = e < 0.5 ? A : B, t = performance.now() / 1000;
         const roll = e > 0.38 && e < 0.62 ? Math.round(((e - 0.38) / 0.24) * H) : 0;   // vertical hold lost through the switch
-        const band = ((t * 0.35) % 1.3 - 0.15) * H, bh = H * 0.07;   // the tracking band rolling down
+        // tracking lost: two bands rolling down at different speeds, torn hard sideways and full of white dropout streaks
+        const bands = [[((t * 0.35 + e * 0.8) % 1.3 - 0.15) * H, H * 0.16], [((t * 0.61 + 0.5 + e * 1.3) % 1.3 - 0.15) * H, H * 0.05]];
+        const fr = Math.floor(t * 30), flag = H * 0.09, head = H * 0.95;
         m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
-        const sh = 4;
+        const sh = 2, streaks = [];
         for (let y = 0; y < H; y += sh){
-          const sy = (y + roll) % H, inBand = Math.abs(y - band) < bh;
-          const ox = Math.round((Math.sin(y * 0.021 + t * 9) * 5 + (inBand ? (fxRand(y * 0.7 + Math.floor(t * 30)) - 0.5) * 120 : 0)) * k);
+          const sy = (y + roll) % H; let tear = 0;
+          for (const [bc, bh] of bands){ const d = Math.abs(y - bc); if (d < bh){ const q = 1 - d / bh; tear += (fxRand(y * 0.7 + fr) - 0.5) * 420 * q + 70 * q;
+            if (fxRand(y * 1.3 + fr * 3.1) < 0.35 * q) streaks.push(y); } }
+          if (y < flag) tear += (1 - y / flag) ** 2 * 60 * Math.sin(t * 3);        // flagging: the top of the picture bends
+          if (y > head) tear += 30 + fxRand(y * 0.9 + fr) * 50;                   // head-switching noise along the bottom
+          const ox = Math.round((Math.sin(y * 0.021 + t * 9) * 7 + tear) * k);
           m.drawImage(src, 0, sy, W, Math.min(sh, H - sy), ox, y, W, Math.min(sh, H - sy));
         }
+        if (k > 0.02){                                // dropouts: white dashes where the tape lost its signal
+          m.fillStyle = '#fff';
+          streaks.forEach((y, i) => { m.globalAlpha = (0.4 + fxRand(i + fr) * 0.6) * k; const x = fxRand(y + fr * 0.3) * W, w = 20 + fxRand(y * 2.1 + fr) * W * 0.4; m.fillRect(x, y, w, sh); });
+          m.globalAlpha = 1;
+        }
         if (k > 0.02){
-          m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.22 * k; m.drawImage(src, 0, roll, W, H - roll, Math.round(9 * k), 0, W, H - roll); m.globalAlpha = 1;   // colour bleed
+          m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.3 * k; m.drawImage(src, 0, roll, W, H - roll, Math.round(14 * k), 0, W, H - roll); m.globalAlpha = 1;   // colour bleed
           m.globalCompositeOperation = 'source-over';
           if (!vhsN.cv){ vhsN.cv = document.createElement('canvas'); vhsN.cv.width = 192; vhsN.cv.height = 108; vhsN.x = vhsN.cv.getContext('2d'); vhsN.img = vhsN.x.createImageData(192, 108); }
           const d = vhsN.img.data; for (let i = 0; i < d.length; i += 4){ const v = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
           vhsN.x.putImageData(vhsN.img, 0, 0);
-          m.globalCompositeOperation = 'screen'; m.globalAlpha = 0.18 * k; m.imageSmoothingEnabled = false; m.drawImage(vhsN.cv, 0, 0, W, H); m.imageSmoothingEnabled = true;
+          m.globalCompositeOperation = 'screen'; m.globalAlpha = 0.26 * k; m.imageSmoothingEnabled = false; m.drawImage(vhsN.cv, 0, 0, W, H); m.imageSmoothingEnabled = true;
           m.globalCompositeOperation = 'source-over'; m.globalAlpha = 0.25 * k; m.fillStyle = '#000';
           for (let y = 0; y < H; y += 3) m.fillRect(0, y, W, 1);   // scanlines
           m.globalAlpha = 1;
@@ -2739,12 +2804,14 @@ function composeTransition(e, T){
   m.globalAlpha = 1;
 }
 // fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
-const pvOpt = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('vjif-pvopt')) || {}; } catch (e) {} return { guides: o.guides || '', stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC }; })();
+const pvOpt = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('vjif-pvopt')) || {}; } catch (e) {} const r = { guides: o.guides || '', stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
+  if (r.guides === 'thirds'){ r.guides = 'grid'; r.gx = r.gy = 3; } else if (r.guides === 'centre'){ r.guides = 'grid'; r.gx = r.gy = 2; }   // thirds = grid 3×3, centre = 2×2
+  if (r.gx === 1 && r.gy === 1) r.gx = r.gy = 2; return r; })();
 // guide lines in output pixels: [xs, ys]
 function guideLines(kind = pvOpt.guides){
   const div = n => Array.from({ length: Math.max(0, n - 1) }, (_, i) => (i + 1) / n);
   if (kind === 'grid') return [div(pvOpt.gx).map(v => v * W), div(pvOpt.gy).map(v => v * H)];
-  const f = kind === 'thirds' ? [1 / 3, 2 / 3] : kind === 'golden' ? [0.382, 0.618] : kind === 'centre' ? [0.5] : [];
+  const f = kind === 'golden' ? [0.382, 0.618] : [];
   return [f.map(v => v * W), f.map(v => v * H)];
 }
 function ghostList(){
@@ -2780,14 +2847,14 @@ const FX_KEYS = Array.from({ length: 12 }, (_, i) => 'F' + (i + 1)), FX_LABELS =
 // { id, name, title, mode (default), rate (uses Rate), styles: [[value, label, title]] }
 const FX_DEFS = [
   { id: 'mono', name: 'Mono', title: 'Black and white', mode: 'hold', styles: [['grey', 'Grey', 'Shades of grey'], ['thresh', 'Threshold', 'Hard black and white'], ['dither', 'Dither', 'Black and white dots, ordered dither (1-bit, like an old Mac screen); Size = dot size']], size: true, sizeDef: 2, sizeFor: ['dither'] },
-  { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['flip', 'Flip', 'Hue turned halfway round'], ['invert', 'Invert', 'Negative colours'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)']] },
+  { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['flip', 'Flip', 'Hue turned halfway round'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)'], ['invert', 'Invert', 'Negative colours'], ['pal', 'Palette', 'Every colour snapped to the nearest of an old computer or console palette (pick it with Palette)']] },
   { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black']] },
   { id: 'poster', name: 'Posterize', title: 'Flat colours / outlines', mode: 'hold', styles: [['bands', 'Bands', 'Fewer colours, flat bands'], ['edges', 'Edges', 'Neon outlines on black']] },
   { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in, around the middle of the frame'], ['out', 'Out', 'Punches out, around the middle of the frame'], ['eachin', 'Each in', 'Every GIF punches in around its own centre'], ['eachout', 'Each out', 'Every GIF punches out around its own centre']] },
   { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']] },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
-  { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12)']] },
-  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down'], ['scramble', 'Scramble', 'Pixelated blocks with their colours scrambled (Size = biggest block)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'scramble'] },
+  { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
+  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['scramble', 'Scramble', 'Pixelated blocks with their colours scrambled (Size = biggest block)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'scramble'] },
   { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, degauss', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches (best as a Hit with a long Release)']], size: true, sizeDef: 3, sizeFor: ['scan'] },
 
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
@@ -2802,6 +2869,26 @@ function fxMigrate(c){ if (!c || c.rel !== undefined || !Object.keys(c).length) 
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
 const fxFactory = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, att: 0, dec: 0, sus: 1, len: 0, rel: fxRelDef(d.mode), rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: d.sizeDef || 64 }));
 const fxDefaults = () => userDef.fx ? JSON.parse(JSON.stringify(userDef.fx)) : fxFactory();   // your own defaults (Settings › Defaults) if saved
+// Colour › Palette: the old machines' colours (hex), nearest-colour match in the shader
+const FX_PALS = [
+  ['CGA 1', 'CGA, mode 4 palette 1 (bright): black, cyan, magenta, white', '000000 55ffff ff55ff ffffff'],
+  ['CGA 2', 'CGA, mode 4 palette 0 (bright): black, green, red, yellow', '000000 55ff55 ff5555 ffff55'],
+  ['CGA 3', 'CGA, mode 5: black, cyan, red, white', '000000 55ffff ff5555 ffffff'],
+  ['EGA', 'EGA / CGA text, the 16 colours', '000000 0000aa 00aa00 00aaaa aa0000 aa00aa aa5500 aaaaaa 555555 5555ff 55ff55 55ffff ff5555 ff55ff ffff55 ffffff'],
+  ['C64', 'Commodore 64, the 16 colours', '000000 ffffff 68372b 70a4b2 6f3d86 588d43 352879 b8c76f 6f4f25 433900 9a6759 444444 6c6c6c 9ad284 6c5eb5 959595'],
+  ['NES', 'Nintendo NES, its 55 colours', '7c7c7c 0000fc 0000bc 4428bc 940084 a80020 a81000 881400 503000 007800 006800 005800 004058 000000 bcbcbc 0078f8 0058f8 6844fc d800cc e40058 f83800 e45c10 ac7c00 00b800 00a800 00a844 008888 f8f8f8 3cbcfc 6888fc 9878f8 f878f8 f85898 f87858 fca044 f8b800 b8f818 58d854 58f898 00e8d8 787878 fcfcfc a4e4fc b8b8f8 d8b8f8 f8b8f8 f8a4c0 f0d0b0 fce0a8 f8d878 d8f878 b8f8b8 b8f8d8 00fcfc f8d8f8'],
+  ['GB', 'Game Boy (1989): four greens', '0f380f 306230 8bac0f 9bbc0f'],
+  ['GB Pocket', 'Game Boy Pocket: four olive greys', '1f1f1f 4d533c 8b956d c4cfa1'],
+  ['GB Light', 'Game Boy Light, backlight on: four blue-greens', '004f3b 00694a 009a71 00b581'],
+].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)); return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0) }; });
+// styles that use the Rate row for something else: Colour › Palette picks the palette, Mirror › Kaleido zooms in
+const FX_KZ = [[1, '1×'], [1.25, '1.25×'], [1.5, '1.5×'], [2, '2×'], [3, '3×'], [4, '4×'], [6, '6×']];
+function rateAlt(d, style){
+  if (!d) return null;
+  if (d.id === 'colour' && style === 'pal') return { label: 'Palette', key: 'pal', def: 0, list: FX_PALS.map((p, i) => [i, p.n]), title: i => 'Palette: ' + FX_PALS[i].t };
+  if (d.id === 'mirror' && style === 'kal') return { label: 'Zoom', key: 'kz', def: 1, list: FX_KZ, title: () => 'Zoom: into the middle of the kaleidoscope' };
+  return null;
+}
 const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px'], [128, '128 px'], [192, '192 px']];
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
 // effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate, style } })
@@ -2826,6 +2913,10 @@ function fxAD(C, t){
 function fxLevel(i, b, X = null){
   const C = X ? (i < NFX ? X.cfg[i] : X.pre[i - NFX]) : fxConf(i), S = (X ? X.st : fxSt)[i];
   const rel = C.rel ?? fxRelDef(C.mode);
+  if ((!X || X.st === fxSt) && fxPrev && fxPrev.i === i) return Math.max(fxPrevLevel(i, C, b), fxLevelRaw(C, S, b, rel));
+  return fxLevelRaw(C, S, b, rel);
+}
+function fxLevelRaw(C, S, b, rel){
   if (C.mode === 'hit'){
     const t = b - S.b0; if (t < 0) return 0;
     const top = (C.att || 0) + (C.dec || 0) + (C.len || 0); if (t < top) return fxAD(C, t);
@@ -2858,20 +2949,20 @@ const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; ret
 const FX_TARGETS = ['out', 0, 1, 2, 3];
 const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ const m = M.get(tgtKey(C.target)); m.lv[i] = v; m.env[i] = l; } });
   X.pre.forEach((P, k) => {
     const l = fxLevel(NFX + k, b, X) * P.amt; if (!(l > 0)) return;
     for (const [i, e] of Object.entries(P.fx)){
       const m = M.get(tgtKey(e.target)), v = l * e.amt;
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
-function fxU(b, { lv, env, amt, rate, style, size }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), st = i => Math.floor(b / rate[i]);
   const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
@@ -2880,7 +2971,7 @@ function fxU(b, { lv, env, amt, rate, style, size }){
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
     mirror: S(7) === 3 ? env[7] : lv[7], mirS: S(7), mirN: Math.round(3 + 9 * clamp(amt[7], 0, 1)),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: S(9), crtSz: size[9], monoSz: size[0],
-    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000 };
+    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, mirZ: kz ? kz[7] : 1 };
   const jit = S(5) === 1, sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
   return U;
@@ -2917,9 +3008,9 @@ function makePost(){
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
-      uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN,
+      uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ,
                     glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, shakeZ;
-      uniform vec3 shake; varying vec2 uv;
+      uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
       float bay2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }        // ordered (Bayer) dither thresholds
@@ -2949,10 +3040,14 @@ function makePost(){
         if (mirS < 0.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y);
         if (mirS < 1.5) return vec2(p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
         if (mirS < 2.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
-        vec2 a = A(), d = (p - 0.5) * a; float r = length(d), seg = 6.2831853 / max(mirN, 2.0), an = mod(atan(d.y, d.x) + time * 0.1, seg);
+        vec2 a = A(), d = (p - 0.5) * a / max(mirZ, 1.0); float r = length(d), seg = 6.2831853 / max(mirN, 2.0), an = mod(atan(d.y, d.x) + time * 0.1, seg);
         an = abs(an - seg * 0.5);
         return vec2(cos(an), sin(an)) * r / a + 0.5;
       }
+      vec3 palSnap(vec3 c){                          // nearest palette colour, weighted like the eye (green counts most)
+        vec3 best = pal[0]; float bd = 1e9;
+        for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = (c - pal[i]) * vec3(0.55, 0.75, 0.35); float e = dot(d, d); if (e < bd){ bd = e; best = pal[i]; } }
+        return best; }
       vec3 hueRot(vec3 c, float an){                 // rotate the hue in YIQ space
         vec3 y = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312) * c;
         float cs = cos(an), sn = sin(an); y.yz = vec2(y.y * cs - y.z * sn, y.y * sn + y.z * cs);
@@ -2974,7 +3069,7 @@ function makePost(){
             split += abs(g) * 0.3 + glitch * 0.004; p.x += g; }
           else if (glS < 1.5){ vec2 cell = floor(p * res / max(glSz, 2.0));
             if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
-          else if (glS < 2.5){ float col = floor(p.x * 80.0); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
+          else if (glS < 2.5){ float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
           else { vec2 bsz = vec2(max(2.0, glSz * (0.15 + 0.85 * glitch))) / res; scell = floor(p / bsz); p = (scell + 0.5) * bsz; scr = glitch; }
         }
         vec4 c4 = samp(geo(p), split);
@@ -3008,7 +3103,7 @@ function makePost(){
         }
         float y = dot(c, vec3(0.299, 0.587, 0.114));
         c = mix(c, monoS < 0.5 ? vec3(y) : monoS < 1.5 ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
-        if (colr > 0.001) c = mix(c, clamp(colrS > 0.5 && colrS < 1.5 ? 1.0 - c : hueRot(c, colrS < 0.5 ? 3.14159 : hue), 0.0, 1.0), colr);   // flip · invert · cycle
+        if (colr > 0.001) c = mix(c, colrS > 2.5 ? palSnap(c) : clamp(colrS > 1.5 ? 1.0 - c : hueRot(c, colrS < 0.5 ? 3.14159 : hue), 0.0, 1.0), colr);   // flip · cycle · invert · palette
         c = mix(c, vec3(strobeS < 0.5 ? 1.0 : 0.0), strobe); if (strobeS < 0.5) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
           vec2 q = uv;
@@ -3035,9 +3130,9 @@ function makePost(){
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); return { t, f }; };
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
-    const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN',
+    const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ',
                    'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'shakeZ', 'time'];
-    const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
+    const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
     gl.viewport(0, 0, W, H);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.clearColor(0, 0, 0, 0);
@@ -3088,6 +3183,7 @@ function makePost(){
       gl.uniform2f(u.res, W, H);
       for (const k of NAMES) gl.uniform1f(u[k], U[k] || 0);
       gl.uniform3fv(u.shake, U.shake);
+      { const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }
       const fbOn = U.fb > 0.001; gl.uniform1f(u.fbInit, fbOn && !S.fbWas ? 1 : 0); S.fbWas = fbOn;
       gl.uniform1f(u.blit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, rt[cur].f); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rt[cur].t);
@@ -3173,7 +3269,7 @@ function drawOverlay(gh = ghostList()){
   const k = view.w * dpr / W, L = layers[target], sel = selClip();
   if (gh.length) drawGhosts(gh, k, dpr);
   if (pvOpt.guides){                                    // guide lines (preview only)
-    const [xs, ys] = guideLines(); pctx.save(); pctx.strokeStyle = '#ffffff40'; pctx.lineWidth = dpr; pctx.setLineDash([4 * dpr, 4 * dpr]); pctx.beginPath();
+    const [xs, ys] = guideLines(); pctx.save(); pctx.strokeStyle = pvOpt.gcol + '80'; pctx.lineWidth = dpr; pctx.setLineDash([4 * dpr, 4 * dpr]); pctx.beginPath();
     xs.forEach(x => { const X = Math.round((view.x + x * view.w / W) * dpr) + 0.5; pctx.moveTo(X, view.y * dpr); pctx.lineTo(X, (view.y + view.h) * dpr); });
     ys.forEach(y => { const Y = Math.round((view.y + y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); });
     pctx.stroke(); pctx.restore();
@@ -3475,6 +3571,7 @@ function gifThumb(g, f = fxImage(g, g.startF)){
   return g.thumb = t.toDataURL();
 }
 function renderPad(i){
+  if (padFold) queueMicrotask(syncPadFold);   // the folded sections' GIF counts
   const p = pads[i], el = p.el, c = el.querySelector('canvas'), x = c.getContext('2d');
   x.fillStyle = TC.track; x.fillRect(0, 0, c.width, c.height);
   el.classList.toggle('empty', !p.gif);
@@ -3583,7 +3680,11 @@ function gifPalette(g){
     const d = x.getImageData(0, 0, m.w, m.h).data;
     for (let k = 0; k < d.length; k += 4) if (d[k + 3] > 127){ const c = (d[k] << 16) | (d[k + 1] << 8) | d[k + 2]; cnt.set(c, (cnt.get(c) || 0) + 1); }
   }
-  return m.palette = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 36).map(([c]) => [c >> 16, (c >> 8) & 255, c & 255]);
+  const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 36).map(([c]) => [c >> 16, (c >> 8) & 255, c & 255]);
+  const hsl = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 510, d = mx - mn; let h = 0;
+    if (d){ h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; } return [h, d / 255, l]; };
+  return m.palette = top.sort((a, b) => { const A = hsl(a), B = hsl(b), ga = A[1] < 0.12, gb = B[1] < 0.12;   // spectrum order: greys first (dark → light), then by hue
+    return ga !== gb ? (ga ? -1 : 1) : ga ? A[2] - B[2] : A[0] - B[0] || A[2] - B[2]; });
 }
 const rgbHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
@@ -3796,6 +3897,7 @@ function buildLayers(){
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow">      <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
       <input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity">
+      <select class="ltr" title="Turning this layer on / off (its number, Shift+${li+1}, End, MIDI): straight away, with the armed transition, or always with one preset"><option value="cut">On / off: cut</option><option value="armed">On / off: armed preset</option>${[1,2,3,4,5,6,7,8,9].map(k => `<option value="${k - 1}">On / off: preset ${k}</option>`).join('')}</select>
       <div class="clips"></div>`;
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
@@ -3807,6 +3909,7 @@ function buildLayers(){
     }
     row.querySelector('.lop').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
     row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
+    row.querySelector('.ltr').addEventListener('change', e => { L.tr = e.target.value; e.target.blur(); });
     row.querySelector('.clips').addEventListener('click', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
@@ -3872,7 +3975,7 @@ function syncLayerUI(){
     const r = L.row, sel = selClip(L.i);
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target);
     r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
-    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend;
+    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.ltr').value = L.tr || 'cut';
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
@@ -3913,6 +4016,21 @@ $('#xT').addEventListener('change', e => { const c = selClip(); if (c) c.tile = 
 $('#xReset').addEventListener('click', () => { const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); } });
 [['#xFitS', 'contain'], ['#xFill', 'cover'], ['#xStr', 'stretch']].forEach(([id, fit]) =>
   $(id).addEventListener('click', () => { const c = selClip(); if (c){ fitScreen(c, fit); syncXfUI(); } }));   // fits the cropped part
+// the bounds of the non-transparent pixels over all frames, as crop fractions (kept on the frame list)
+function contentCrop(src){
+  if (src._cc) return src._cc;
+  const w = src[0].width, h = src[0].height, cv = new OffscreenCanvas(w, h), x = cv.getContext('2d', { willReadFrequently: true });
+  let l = w, t = h, r = -1, b = -1;
+  for (const f of src){ x.clearRect(0, 0, w, h); x.drawImage(f, 0, 0); const d = x.getImageData(0, 0, w, h).data;
+    for (let y = 0; y < h; y++){ const row = y * w * 4; for (let i = 0; i < w; i++) if (d[row + i*4 + 3] > 8){ if (i < l) l = i; if (i > r) r = i; if (y < t) t = y; if (y > b) b = y; } } }
+  return src._cc = r < 0 ? null : { cl: l / w, ct: t / h, cr: (w - 1 - r) / w, cb: (h - 1 - b) / h };
+}
+$('#xCropAuto').addEventListener('click', () => {
+  const c = selClip(), g = c && pads[c.pad].gif; if (!g) return;
+  const k = contentCrop(g.src); if (!k) return toast('This GIF is fully transparent');
+  if (!(k.cl || k.ct || k.cr || k.cb)) return toast2('No see-through border to crop');
+  Object.assign(c, k); syncXfUI(); commit();
+});
 $('#xCropReset').addEventListener('click', () => {
   const c = selClip(); if (!c) return;
   const G = clipGeom(c); Object.assign(c, { cl: 0, ct: 0, cr: 0, cb: 0 }); placeVisible(c, G.cx, G.cy); syncXfUI();
@@ -4018,13 +4136,21 @@ pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.sty
 // preview tools: guides, stick, ghosts (per browser)
 const pvSave = () => { try { localStorage.setItem('vjif-pvopt', JSON.stringify(pvOpt)); } catch (e) {} redraw.all = true; };
 const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', b.dataset.g === pvOpt.guides));
-  $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
+  $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
 pvUI();
 $('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; pvOpt.guides = pvOpt.guides === b.dataset.g ? '' : b.dataset.g; pvUI(); pvSave(); });
 $('#stickBtn').addEventListener('click', () => { pvOpt.stick = !pvOpt.stick; pvUI(); pvSave(); });
 $('#ghostBtn').addEventListener('click', () => { pvOpt.ghosts = !pvOpt.ghosts; pvUI(); pvSave(); });
-[['#gridX', 'gx'], ['#gridY', 'gy']].forEach(([id, k]) => $(id).addEventListener('input', e => { const v = Math.round(+e.target.value); if (v >= 1 && v <= 24){ pvOpt[k] = v; pvOpt.guides = 'grid'; pvUI(); pvSave(); } }));
-['#gridX', '#gridY'].forEach(id => $(id).addEventListener('wheel', e => { e.preventDefault(); const el = e.target; el.value = clamp(+el.value + (e.deltaY < 0 ? 1 : -1), 1, 24); el.dispatchEvent(new Event('input')); }, { passive: false }));
+const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const o = k === 'gx' ? 'gy' : 'gx'; if (v === 1 && pvOpt[o] === 1) pvOpt[o] = 2;   // 1×1 draws nothing
+  pvOpt.guides = 'grid'; pvUI(); pvSave(); };
+[['#gridX', 'gx'], ['#gridY', 'gy']].forEach(([id, k]) => { const el = $(id);
+  el.addEventListener('input', e => { const v = +e.target.value; if (v >= 1 && v <= 24) setGrid(k, v); });
+  let dg = null;   // drag up / down to change, like the tempo; a click without moving types
+  el.addEventListener('pointerdown', e => { if (e.button) return; dg = { y: e.clientY, v: pvOpt[k], moved: false }; el.setPointerCapture(e.pointerId); e.preventDefault(); });
+  el.addEventListener('pointermove', e => { if (!dg) return; const dy = dg.y - e.clientY; if (Math.abs(dy) > 3) dg.moved = true; if (dg.moved) setGrid(k, dg.v + dy / 8); });
+  el.addEventListener('pointerup', () => { if (dg && !dg.moved){ el.focus(); el.select(); } dg = null; }); });
+$('#guideCol').addEventListener('input', e => { pvOpt.gcol = e.target.value; pvSave(); });
+[['#gridX', 'gx'], ['#gridY', 'gy']].forEach(([id, k]) => $(id).addEventListener('wheel', e => { e.preventDefault(); setGrid(k, pvOpt[k] + (e.deltaY < 0 ? 1 : -1)); }, { passive: false }));
 pv.addEventListener('pointercancel', () => drag = null);
 pv.addEventListener('wheel', e => {
   e.preventDefault();
@@ -4045,6 +4171,9 @@ function sizePreview(){
   view.x = (aw - view.w) / 2; view.y = (ah - view.h) / 2;
   Object.assign(pvScene.style, { left: view.x + 'px', top: view.y + 'px', width: view.w + 'px', height: view.h + 'px' });
   pvScene.width = Math.round(view.w * dpr); pvScene.height = Math.round(view.h * dpr);
+  const bar = $('#pvBar'); if (bar){ if (bar.parentElement !== wrap) wrap.appendChild(bar);   // the guides bar: halfway between the picture and the panel below
+    const bh = bar.offsetHeight || 32, below = ah - (view.y + view.h); bar.style.top = Math.max(view.y + view.h + 2, Math.min(ah - bh - 2, view.y + view.h + (below - bh) / 2)) + 'px'; }
+  const mb = $('#musBar'); if (mb && !mb.hidden){ const mh = mb.offsetHeight || 30; mb.style.top = Math.max(2, (view.y - mh) / 2) + 'px'; }   // halfway between the top and the picture
   redraw.all = true;
 }
 new ResizeObserver(sizePreview).observe($('#pvWrap'));
@@ -4214,11 +4343,22 @@ $('#recFpsSeg').addEventListener('click', e => { const b = e.target.closest('but
 $('#recMbpsSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recMbps = +b.dataset.m; recSave('vjif-recmbps', recMbps); });
 $('#recACodecSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; recACodec = b.dataset.a; recSave('vjif-recacodec', recACodec); });
 // interface size
-const syncZoomUI = () => document.querySelectorAll('#uiZoomSeg button').forEach(b => b.classList.toggle('on', +b.dataset.z === uiZoom));
+// pad sections fold away to give the space below more room; a folded one shows how many of its pads hold GIFs
+var padFold = (() => { try { return JSON.parse(localStorage.getItem('vjif-padfold')) || {}; } catch (e) { return {}; } })();
+function syncPadFold(){ document.querySelectorAll('.padsub').forEach(h => { const g = h.dataset.g, n = pads.slice(g === 'A' ? 0 : 9, g === 'A' ? 9 : 18).filter(p => p.gif).length;
+  h.classList.toggle('fold', !!padFold[g]); h.querySelector('.cnt').textContent = `· ${n} GIF${n === 1 ? '' : 's'}`; }); }
+syncPadFold();
+document.querySelectorAll('.padsub').forEach(h => h.addEventListener('click', () => { padFold[h.dataset.g] = !padFold[h.dataset.g]; try { localStorage.setItem('vjif-padfold', JSON.stringify(padFold)); } catch (e) {} syncPadFold(); }));
+const syncZoomUI = () => { $('#uiZoomR').value = uiZoom; $('#uiZoomV').textContent = Math.round(uiZoom * 100) + '%'; };
 syncZoomUI();
-$('#uiZoomSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; uiZoom = +b.dataset.z;
-  try { localStorage.setItem('vjif-uizoom', uiZoom); } catch (err) {} document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom); syncZoomUI(); sizeNotice();
-  setTimeout(() => { sizePreview(); syncFxUI(); }, 50); });
+let uiZoomT = 0;
+function setUiZoom(z){ uiZoom = Math.round(z * 100) / 100;
+  try { localStorage.setItem('vjif-uizoom', uiZoom); } catch (err) {} syncZoomUI();
+  clearTimeout(uiZoomT); uiZoomT = setTimeout(() => {   // applied when the slider rests (re-laying out the whole page is heavy)
+    document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom); sizeNotice();
+    setTimeout(() => { sizePreview(); syncFxUI(); }, 50); }, 150); }
+$('#uiZoomR').addEventListener('input', e => setUiZoom(+e.target.value));
+$('#uiZoomR').addEventListener('dblclick', () => setUiZoom(1));
 // screens below 1280×720: a note, until it's big enough (or the interface is made smaller)
 function sizeNotice(){
   let n = $('#sizeNote'); const small = innerWidth / uiZoom < 1260 || innerHeight / uiZoom < 690;
@@ -4230,10 +4370,10 @@ function sizeNotice(){
 }
 addEventListener('resize', sizeNotice); sizeNotice();
 // your defaults
-const DEF_KEYS = ['fx', 'fxPre', 'tr', 'layerTr'];
-function defNote(){ $('#defNote').textContent = userDef.saved ? `Your defaults (saved ${new Date(userDef.saved).toLocaleDateString()}): new sets start with your effects, effect presets and transition presets; resets go back to them.` : "Using VJif's own defaults. Set effects and presets the way you like them, then Save as my defaults: every new set starts like that."; }
+const DEF_KEYS = ['fx', 'fxPre', 'tr'];
+function defNote(){ $('#defNote').textContent = userDef.saved ? `Your defaults (saved ${new Date(userDef.saved).toLocaleDateString()}): new sets start with your effects, effect presets and transition presets; resets go back to them.` : "Using VJif's own defaults. Set effects and presets the way you like them, then Save current settings: every new set starts like that."; }
 function setUserDef(d){ userDef = d || {}; try { if (d) localStorage.setItem('vjif-userdef', JSON.stringify(d)); else localStorage.removeItem('vjif-userdef'); } catch (e) {} defNote(); }
-$('#defSave').addEventListener('click', () => { setUserDef({ v: 1, saved: Date.now(), fx: JSON.parse(JSON.stringify(fxCfg)), fxPre: JSON.parse(JSON.stringify(fxPre)), tr: trPresets.map(P => ({ ...P })), layerTr }); toast2('Saved as your defaults'); });
+$('#defSave').addEventListener('click', () => { setUserDef({ v: 1, saved: Date.now(), fx: JSON.parse(JSON.stringify(fxCfg)), fxPre: JSON.parse(JSON.stringify(fxPre)), tr: trPresets.map(P => ({ ...P })) }); toast2('Saved as your defaults'); });
 $('#defReset').addEventListener('click', () => { setUserDef(null); toast2("Back to VJif's defaults (for new sets and resets; this set is unchanged)"); });
 $('#defExport').addEventListener('click', () => { if (!userDef.saved) return toast('Save your defaults first');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ app: 'VJif', kind: 'defaults', ...userDef }, null, 1)], { type: 'application/json' })); a.download = 'vjif-defaults.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); });
@@ -4385,12 +4525,12 @@ const store = {
 // v4: `pool` = every GIF of the set; `pads` + `layers` = the current scene; `scenes` = all nine as { pads, layers }
 // (the current one null); `scene` = which is current. v3 had one set of pads for all scenes: upgradeSnap() gives
 // every stored scene its own copy of them.
-const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a',
+const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut',
   clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: 4, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, layerTr, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)),
+    v: 4, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)),
     pool: pool.map(m => ({ hash: m.hash, name: m.name, ...(m.scale && m.scale !== 1 ? { scale: m.scale } : {}) })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
@@ -4418,7 +4558,7 @@ function contentSig(snap){
 // saved layers → live layer states (only GIFs that loaded; a GIF lives on one layer: the topmost wins)
 function deserLayers(sls, now, gifs = pads.map(p => p.gif)){
   const out = sls.map(sl => { const clips = sl.clips.filter(c => gifs[c.pad]).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
-    return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null, fillOn: !!sl.fillOn, fill: sl.fill || '#1e2a3a' }; });
+    return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null, fillOn: !!sl.fillOn, fill: sl.fill || '#1e2a3a', tr: sl.tr || 'cut' }; });
   const seen = new Set();
   for (let li = out.length - 1; li >= 0; li--){ const L = out[li]; L.clips = L.clips.filter(c => !seen.has(c.pad) && seen.add(c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; }
   return out;
@@ -4488,7 +4628,7 @@ async function applySnapshot(st, { wait = true } = {}){
   trPresets = trDefaults(); trSel = st.transP && st.transP.length === 9 ? st.transSel ?? 1 : 1;
   if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => normTrans(Object.assign(trPresets[k], P)));
   else if (st.trans) normTrans(Object.assign(trPresets[trSel], st.trans));          // older sets: their transition on key 2
-  armTrans(trSel); layerTr = st.layerTr || 'cut'; $('#trLayer').value = layerTr;
+  armTrans(trSel);
   fxCfg = fxDefaults().map((d, i) => Object.assign(d, fxMigrate(st.fx && st.fx[i] || {}))); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
   fxPre = fxPreDefaults().map((d, k) => Object.assign(d, fxMigrate(st.fxPre && st.fxPre[k] || {}))); syncFxUI();   // older sets had six: they fill 1–6
   target = st.target || 0;
@@ -4543,7 +4683,7 @@ async function newEmptySet(){
   pads.forEach((p, i) => { p.gif = null; renderPad(i); }); renderPool();
   layers.forEach(L => Object.assign(L, emptyLayer()));
   scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; endTrans(); dropPrep(); renderScenes();
-  trPresets = trDefaults(); armTrans(1); layerTr = userDef.layerTr || 'cut'; $('#trLayer').value = layerTr;
+  trPresets = trDefaults(); armTrans(1);
   fxCfg = fxDefaults(); fxPre = fxPreDefaults(); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); heldPre = -1; syncFxUI();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
   session.setId = null; session.savedSig = '';
@@ -4654,7 +4794,11 @@ function musUI(){
   $('#musName').textContent = mus.name || 'no track'; $('#musPlay').disabled = !mus.el.src;
   $('#musPlay').textContent = mus.el.paused ? '▶' : '❚❚';
   $('#musTime').textContent = mus.el.src ? `${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : '';
+  const bar = $('#musBar'), was = bar.hidden; bar.hidden = !mus.el.src;   // the transport over the preview, while a track is loaded
+  $('#musPlay2').textContent = $('#musPlay').textContent; $('#musName2').textContent = mus.name || ''; $('#musTime2').textContent = $('#musTime').textContent;
+  if (was && !bar.hidden) sizePreview();
 }
+$('#musPlay2').addEventListener('click', () => mus.el.paused ? musPlay() : mus.el.pause());
 ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata'].forEach(ev => mus.el.addEventListener(ev, musUI));
 mus.el.addEventListener('error', () => { if (mus.el.src) toast(`Can't load ${mus.name}: ${mus.url ? 'not an audio format this browser plays' : "the link isn't an audio file, or the site doesn't allow it"}`); });
 $('#musLoad').addEventListener('click', () => $('#musFile').click());
@@ -5063,29 +5207,58 @@ function applyScn(E){
   E.data = cur; pending.clear();
   selectPad(selPad); syncLayerUI(); syncXfUI(); renderScenes(); updateMem(); renderPool(); redraw.all = true;
 }
+// what a step changes, in words, for the undo / redo toast
+const XF_WORDS = { x: 'position', y: 'position', sx: 'scale', sy: 'scale', rot: 'rotation', fit: 'fit', flipX: 'flip', flipY: 'flip', tile: 'tile', cl: 'crop', ct: 'crop', cr: 'crop', cb: 'crop', alpha: 'opacity' };
+const GIF_WORDS = { sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', trig: 'trigger', env: 'envelope', lfo: 'auto' };
+function histWhat(e, cur){
+  if (!e) return '';
+  if (e.clear) return `cleared pad ${pads[e.clear.pad] ? pads[e.clear.pad].label : ''}`;
+  if (e.reclear !== undefined) return `cleared pad ${pads[e.reclear.pad] ? pads[e.reclear.pad].label : ''}`;
+  if (e.swap) return `GIF on pad ${pads[e.swap.pad] ? pads[e.swap.pad].label : ''}`;
+  if (e.pswap) return 'pads swapped';
+  if (e.scn) return `scene ${e.scn.scene + 1}`;
+  if (typeof e !== 'string' || typeof cur !== 'string') return '';
+  let a, b; try { a = JSON.parse(e); b = JSON.parse(cur); } catch (err) { return ''; }
+  const out = new Set(), same = (x, y) => JSON.stringify(x) === JSON.stringify(y), pl = k => pads[k] ? pads[k].label : '?';
+  a.layers.forEach((la, li) => { const lb = b.layers[li]; if (!lb) return; const n = LNAMES[li];
+    if (la.opacity !== lb.opacity) out.add(`${n} opacity`); if (la.blend !== lb.blend) out.add(`${n} blend`);
+    if (la.fillOn !== lb.fillOn || la.fill !== lb.fill) out.add(`${n} fill`);
+    const ib = new Map(lb.clips.map(c => [c.id, c])), ia = new Set(la.clips.map(c => c.id));
+    la.clips.forEach(c => { const d = ib.get(c.id); if (!d) { out.add(`${pl(c.pad)} on ${n}`); return; }
+      Object.keys(XF_WORDS).forEach(k => { if (!same(c[k], d[k])) out.add(`${pl(c.pad)} ${XF_WORDS[k]}`); }); });
+    lb.clips.forEach(c => { if (!ia.has(c.id)) out.add(`${pl(c.pad)} on ${n}`); });
+    if (la.clips.length === lb.clips.length && !same(la.clips.map(c => c.id), lb.clips.map(c => c.id))) out.add(`${n} order`); });
+  (a.gifs || []).forEach((g, k) => { const h = b.gifs[k]; if (!g || !h) return; Object.keys(GIF_WORDS).forEach(key => { if (!same(g[key], h[key])) out.add(`${pl(k)} ${GIF_WORDS[key]}`); }); });
+  if (a.scene !== b.scene && !out.size) out.add(`scene ${a.scene + 1}`);
+  const l = [...out]; return l.length > 3 ? l.slice(0, 3).join(', ') + '…' : l.join(', ');
+}
+let undoToast = (() => { try { return localStorage.getItem('vjif-undotoast') !== '0'; } catch (e) { return true; } })();
+const histToast = (verb, what) => { if (undoToast) toast2(what ? `${verb}: ${what}` : verb); };
+$('#undoToastChk').checked = undoToast;
+$('#undoToastChk').addEventListener('change', e => { undoToast = e.target.checked; try { localStorage.setItem('vjif-undotoast', undoToast ? '1' : '0'); } catch (err) {} });
 function dropAll(list){ list.forEach(dropEntry); }
 function trimHist(){ while (hist.undo.length > 100) dropEntry(hist.undo.shift()); }
 function resetHist(){ dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0; hist.cur = histState(); updHistUI(); }
 // after applying, re-read the live state: GIFs loaded/cleared since a step was recorded aren't part of history
 function undo(){
   if (!hist.ready || drag) return; commit(); if (!hist.undo.length) return;
-  const e = hist.undo.pop();
+  const e = hist.undo.pop(), what = histWhat(e, hist.cur);
   if (e && e.clear){ if (restoreClear(e.clear)) hist.redo.push({ reclear: { pad: e.clear.pad, scene: e.clear.scene } }); else dropEntry(e); }
   else if (e && e.swap){ applySwap(e.swap); hist.redo.push(e); }
   else if (e && e.pswap){ applyPswap(e.pswap); hist.redo.push(e); }
   else if (e && e.scn){ applyScn(e.scn); hist.redo.push(e); }
   else { hist.redo.push(hist.cur); applyHist(e); }
-  hist.cur = histState(); updHistUI();
+  hist.cur = histState(); updHistUI(); histToast('Undo', what);
 }
 function redo(){
   if (!hist.ready || drag) return; commit(); if (!hist.redo.length) return;
-  const e = hist.redo.pop();
+  const e = hist.redo.pop(), what = histWhat(e, hist.cur);
   if (e && e.reclear !== undefined){ if (e.reclear.scene !== sceneIdx) gotoScene(e.reclear.scene, clock.beat, true); clearPad(e.reclear.pad, true); }
   else if (e && e.swap){ applySwap(e.swap); hist.undo.push(e); }
   else if (e && e.pswap){ applyPswap(e.pswap); hist.undo.push(e); }
   else if (e && e.scn){ applyScn(e.scn); hist.undo.push(e); }
   else { hist.undo.push(hist.cur); applyHist(e); }
-  hist.cur = histState(); updHistUI();
+  hist.cur = histState(); updHistUI(); histToast('Redo', what);
 }
 function applyHist(s){
   const st = JSON.parse(s);
