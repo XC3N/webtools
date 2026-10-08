@@ -4,6 +4,31 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.26.0 — 2026-10-07
+
+### Preview
+- Guides moved to the header as icons: thirds, golden ratio, centre and a grid with its own columns × rows (1–24 each; scroll over a number to change it). Click an active one to hide the guides. Stick (magnet) and Ghosts are next to them.
+- Drag a pad onto the preview: its GIF goes on the edit layer, centred where you drop it.
+
+### Transform
+- Link X / Y: Scale X and Y move together, on the sliders and the side handles.
+- From centre: the preview handles scale around the centre (Alt does the opposite).
+
+### Transitions
+- Glitch › VHS: a tape switching channels — tracking wobble, a noisy band rolling down, colour bleed, scanlines, and the picture rolls over to the new scene.
+- Layers on / off can play a transition (Transition › Layers): cut, the armed preset, or always one preset. Saved with the set.
+
+### Colour swap
+- One list, no separate editor: each swap is "colour → colour" with both swatches alike; click the right one to change it. Clicking a colour that isn't swapped yet adds a waiting row at the end whose right swatch pulses until you pick; clicking a swapped colour highlights its row. No more doubles or helper text.
+
+### Lettering
+- A new text starts from the defaults every time. The font list shows each font in itself. Size goes up to 150% of the height, and the preview zooms out (the output frame dotted in pink) so the whole text shows.
+
+### Fixes
+- The FPS / LOAD / MEM tooltips stay readable: they no longer reset every second while you read them.
+- About: "If it's useful to you…" starts on its own line.
+- In a preset, an effect's name is no longer cut off while you adjust it.
+
 ## 0.25.0 — 2026-10-07
 
 ### Preview

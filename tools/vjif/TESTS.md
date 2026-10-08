@@ -16,7 +16,11 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r2} **Upload the MP4 to Facebook / Instagram / TikTok** (0.19: standard MP4, 30 fps, H.264 + AAC) — Chrome writes MP4s in a slightly unusual layout.
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
-- {pvt} **Guides / Stick / Ghosts** (0.25) — lower right of the preview: each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {pvt} **Guides / Stick / Ghosts** (0.26: in the header) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {drop} **Pad onto the preview** (0.26) — drag a pad onto the preview: on the edit layer, centred where dropped.
+- {link} **Link X / Y, From centre** (0.26) — Transform: scale sliders together; preview handles from the centre.
+- {ltr} **Layer transitions** (0.26) — Transition › Layers: armed / a preset; Shift+1–4 fades / wipes a layer in and out.
+- {vhs} **Glitch › VHS** (0.26).
 - {pre} **Adjust an effect inside a preset** (0.25) — click a chip in a preset: change its style, layer, amount; ‹ name goes back.
 - {int} **Interrupted transition** (0.25) — a 1-bar fade from 1 to 2, back to 1 at once: no jump.
 - {glx} **Glitch styles** (0.24) — Transition › Glitch: Slices, Blocks, Melt, Scramble at a few Pixel sizes; F9 Glitch › Scramble.
