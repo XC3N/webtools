@@ -65,10 +65,10 @@ input[type=checkbox]:checked::before{left:16px;background:var(--sigtxt)}
 input[type=color]{-webkit-appearance:none;appearance:none;width:40px;height:var(--ch);padding:2px;border:1px solid var(--edge);border-radius:var(--r);background:var(--panel-2);cursor:pointer}
 input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:2px}
 /* segmented choices: joined cells, the chosen one signal-filled */
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1px;background:var(--edge);border:1px solid var(--edge);border-radius:var(--r);overflow:hidden}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:1px;background:var(--edge);border:1px solid var(--edge);border-radius:var(--r);overflow:hidden}
 .seg.grid4{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}
 .seg.grid5{grid-auto-flow:row;grid-template-columns:repeat(5,1fr)}
-.seg button{position:relative;border:0;border-radius:0;background:var(--panel-2);color:var(--muted);font:500 12px var(--sans);padding:0 2px;height:calc(var(--ch) - 2px)}
+.seg button{position:relative;border:0;border-radius:0;background:var(--panel-2);color:var(--muted);font:500 12px var(--sans);padding:0 2px;height:calc(var(--ch) - 2px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* too narrow: the text shortens (…), the button never disappears */
 .seg button:hover{color:var(--ink);background:var(--track)}
 .seg button.on{background:var(--sig);color:var(--sigtxt);font-weight:600}
 .seg button.act::after{content:"";position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--sig)}

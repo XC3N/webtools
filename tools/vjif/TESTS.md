@@ -21,6 +21,9 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {link} **Link X / Y, From centre** (0.26) — Transform: scale sliders together; preview handles from the centre.
 - {ltr} **Layer transitions** (0.26) — Transition › Layers: armed / a preset; Shift+1–4 fades / wipes a layer in and out.
 - {vhs} **Glitch › VHS** (0.26).
+- {crt} **CRT effect** (0.27) — F10: Scanlines, Phosphor, Degauss (as a Hit with a long Release).
+- {res} **GIF Resolution** (0.27) — Play › Resolution ½ / ¼ on a big GIF: same size on screen, MEM drops; save / reload keeps it.
+- {small} **Small window** (0.27) — at ~1280×720: nothing vanishes, cut text shows on hover, panels hint when they scroll.
 - {pre} **Adjust an effect inside a preset** (0.25) — click a chip in a preset: change its style, layer, amount; ‹ name goes back.
 - {int} **Interrupted transition** (0.25) — a 1-bar fade from 1 to 2, back to 1 at once: no jump.
 - {glx} **Glitch styles** (0.24) — Transition › Glitch: Slices, Blocks, Melt, Scramble at a few Pixel sizes; F9 Glitch › Scramble.

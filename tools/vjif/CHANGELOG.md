@@ -4,6 +4,21 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.27.0 — 2026-10-08
+
+### Effects
+- F10 is now CRT (was RGB), with five styles: Split, VHS, Scanlines (dark lines and an RGB aperture grille), Phosphor (bright parts glow and linger) and Degauss (the picture ripples through rainbow blotches; best as a Hit with a long Release).
+- Effect pads have three lines: key + mode, name, style. When a name doesn't fit it uses a short one (MN, CLR, STRB, PSTR, ZM, SHK, WBL, MIR, GLT, CRT, PIX, FDBK); presets spread their effects over two lines, short names when needed.
+
+### GIFs
+- Play › Resolution: keep a GIF's frames at full, ½ or ¼ resolution. It looks the same size; ½ uses a quarter of the memory, ¼ a sixteenth. Applies wherever the GIF is used, and is saved with the set.
+
+### Smaller screens
+- Buttons in a row never disappear any more when there's no room: their text shortens with "…" (hover shows the whole thing). Transition styles go on two rows when there are five.
+- Readouts and tags too narrow for their text show it all on hover.
+- The side panels show a shadow at the top / bottom edge while there's more to scroll to.
+- Transform: "Link" and "From centre" sit on a "Scale" row.
+
 ## 0.26.0 — 2026-10-07
 
 ### Preview
