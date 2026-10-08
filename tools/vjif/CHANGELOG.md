@@ -4,6 +4,31 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.28.1 — 2026-10-08
+
+Fixes from a code review, plus three of your test-bench notes.
+
+### GIFs
+- Pixel art saved blown up (every pixel an N×N block, like a 160×144 sprite exported at 1200×1056) is found on load and kept at its real pixels: same picture, N² times less memory (a 64th at ×8). The GIF info line says so. It only happens when every colour change sits on the grid, so nothing is lost.
+- The pool's × now shows on every GIF. On one that's still on pads, hold it (or Ctrl+click and hold): a red bar sweeps across, then the GIF leaves the pool and every pad and layer it was on, in every scene. Letting go early says where it is.
+- Loading many GIFs, or a big set, decodes three at a time instead of all at once (lower memory peaks).
+
+### Recording
+- Recording with no output window keeps going when the VJif tab is hidden (it used to freeze until you came back).
+- MP4: the sound is placed on the same clock as the picture, so it lines up from the first frame.
+- MP4: when the encoder can't keep up (AV1 or HEVC at 60 fps on a slow machine), frames are skipped and a message says so, instead of memory filling up.
+- A second Rec press while an MP4 take is getting ready no longer starts a second take.
+- Stopping a take before its first frame says nothing was saved, instead of an error.
+
+### Interface
+- Guides, Stick and Ghosts moved from the header to under the preview, centred.
+- Rec help pointed to Settings › Canvas; it's Settings › Recording. The ⚙ tooltip lists everything under it.
+
+### Under the hood
+- A graphics driver reset (lost WebGL context) no longer turns the output black when effects or a Luma transition are on: the picture passes through untouched and effects come back when the context does.
+- Changing the canvas format with lettering on the worker colour path no longer leaks frames.
+- Dead code and stale comments removed; "centre" spelled one way in the interface.
+
 ## 0.28.0 — 2026-10-08
 
 ### Interface

@@ -130,7 +130,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #gPrev{width:72px;height:72px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}
 
 /* ---------- stage: layer strip, preview, footer ---------- */
-#stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
+#stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
 #layers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
 #pvWrap{min-height:0;position:relative;overflow:hidden;background:var(--bg)}#pvWrap.dropzone{box-shadow:inset 0 0 0 2px var(--sig)}
 #pvScene{position:absolute;display:block;background:#000;outline:1px solid var(--edge)}
@@ -157,14 +157,14 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxEdit.pre #fxTgt{display:none}
 #fxEdit.pre.ent #fxTgt,#fxEdit.pre.ent #fxStyle{display:grid}#fxEdit.ent #fxPreList{display:none}#fxEdit.pre.ent.rated #fxRateRow,#fxEdit.pre.ent:not(.sized) #fxRateRow,#fxEdit.pre.ent.sized #fxSizeRow{display:grid}
 #fxEdit.ent #fxMode,#fxEdit.ent #fxLenRow,#fxEdit.ent #fxRelRow{opacity:.5}
-.pchip{cursor:pointer}.pchip:hover{border-color:var(--sig)}#fxName.back{cursor:pointer}#fxName.back::before{content:'‹ ';opacity:.6}
+.pchip:hover{border-color:var(--sig)}#fxName.back{cursor:pointer}#fxName.back::before{content:'‹ ';opacity:.6}
 #fxMode button{padding:0}
 @media (max-width:1760px){ .fxrow .field label{font-size:11px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
 .fxrow button{flex:none}
 #fxPreList{flex:1;min-width:0;display:flex;gap:4px;overflow:hidden;align-items:center}
-.pchip{display:inline-flex;align-items:center;gap:2px;flex:none;height:24px;padding:0 2px 0 7px;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);font:500 11px var(--sans);color:var(--ink)}
+.pchip{display:inline-flex;align-items:center;gap:2px;flex:none;height:24px;padding:0 2px 0 7px;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);font:500 11px var(--sans);color:var(--ink);cursor:pointer}
 .pchip button{width:18px;height:18px;padding:0;border:0;background:none;color:var(--muted);font:400 13px/1 var(--mono)}
 .pchip button:hover{color:var(--danger)}
 .pempty{font:400 11px var(--sans);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -190,6 +190,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #aboutVer:hover{color:var(--sig)}
 #sizeNote{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:20;background:#ffb000;color:#1a1200;font:600 12px var(--sans);padding:6px 6px 6px 12px;border-radius:var(--r);box-shadow:0 4px 16px #0008;display:flex;gap:8px;align-items:center}
 #sizeNote button{color:#1a1200}
+#pvBar{display:flex;justify-content:center}
 #guideGrp input[type=number]{width:34px;height:var(--ch);padding:0 2px;text-align:center;font:400 11px var(--mono);-moz-appearance:textfield}
 #guideGrp input[type=number]::-webkit-inner-spin-button{display:none}#guideGrp .dim{font-size:11px}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
@@ -239,7 +240,6 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip.insR{box-shadow:3px 0 0 -1px var(--bg),4px 0 0 0 var(--lc)}
 .chip b{position:absolute;right:1px;top:1px;width:18px;height:18px;border-radius:2px;background:#000d;font:400 14px/17px var(--mono);text-align:center;color:#ddd;visibility:hidden;cursor:pointer}
 .chip:hover b{visibility:visible}.chip b:hover{color:#fff;background:var(--danger)}
-/* Shift held: a click (or right-click any time) removes — the chips say so */
 /* Ctrl (⌘) held: what a click would delete turns red with a ✕ (pads, scenes, effect presets, layer chips, pool GIFs); what it would reset (effects, transition presets) gets a red outline */
 body.del{--clr:#ff3b3b}
 body.del .pad:not(.empty),body.del .scene:not(.empty),body.del .scene.padsOnly,body.del #fxPre .fxp:not(.empty),body.del .ptile,body.del .chip{box-shadow:0 0 0 2px var(--clr);cursor:pointer}
@@ -276,8 +276,11 @@ body.del #fxPads .fxp,body.del #trPre button{box-shadow:inset 0 0 0 2px var(--cl
 .ptile .pm{font:400 10px/1.35 var(--mono);color:var(--muted)}
 .ptile .pm.here{color:var(--sig)}
 .ptile.unused .pm.use{color:var(--faint)}
+/* a GIF that's on pads: removing it takes a held press, shown as a bar sweeping across the tile */
+.ptile .hold{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:var(--r);background:#ff3b3b59;pointer-events:none}
+.ptile.holding .hold{width:100%;transition:width var(--holdT, .9s) linear}
 .ptile .px{position:absolute;top:6px;right:6px;width:20px;height:20px;padding:0;line-height:18px;display:none}
-.ptile.unused:hover .px{display:block}
+.ptile:hover .px{display:block}
 .setRow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto;gap:4px;align-items:center;padding:8px 10px;border-radius:var(--r);margin-bottom:4px;background:var(--panel-2)}
 .setRow.cur{box-shadow:inset 3px 0 0 var(--sig)}
 .setRow .sname{display:block;font:600 13px var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.setRow .meta{display:block;font:400 11px var(--mono);color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -333,18 +336,15 @@ output.mod{color:var(--env)}
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
     <div id="beats" title="The beat within the bar (the first dot is the downbeat)"><i></i><i></i><i></i><i></i></div>
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
-  <div class="grp sect" id="guideGrp"><button class="iconbtn" data-g="thirds" title="Guides — Thirds: lines at 1/3 and 2/3 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M5.8 2.5v11M10.2 2.5v11M1.5 6.2h13M1.5 9.8h13"/></svg></button><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2" /></svg></button><button class="iconbtn" data-g="centre" title="Guides — Centre cross (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M8 2.5v11M1.5 8h13"/></svg></button><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows">
-    <button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M4 2.5v5a4 4 0 0 0 8 0v-5"/><path d="M4 4.5h2.5M9.5 4.5H12"/><path d="M6.5 2.5v5a1.5 1.5 0 0 0 3 0v-5"/></svg></button>
-    <button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".8" fill="currentColor"/><circle cx="9.7" cy="7" r=".8" fill="currentColor"/></svg></button></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="fsBtn" class="iconbtn" title="Full screen on / off for this window (F11 belongs to the effects)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="prepBtn" title="Prep (Enter): the output keeps playing what's live while you work on any scene · Enter again sends the scene you're on out, with the armed transition"><span class="led" id="prepLed"></span>Prep</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — canvas, recording, MIDI, interface, theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="fsBtn" class="iconbtn" title="Full screen on / off for this window (F11 belongs to the effects)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="prepBtn" title="Prep (Enter): the output keeps playing what's live while you work on any scene · Enter again sends the scene you're on out, with the armed transition"><span class="led" id="prepLed"></span>Prep</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
   <h2 class="padhead">Pads
     <input id="fileIn" type="file" accept="image/gif,image/webp,image/png,image/apng" multiple hidden>
-    <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><button id="textBtn" title="Lettering: type a text (an artist's name, a message) and use it like a GIF — plain, scrolling across (marquee) or cut out of a black matte">Text…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="urlBtn" hidden>Load</button><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
+    <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><button id="textBtn" title="Lettering: type a text (an artist's name, a message) and use it like a GIF — plain, scrolling across (marquee) or cut out of a black matte">Text…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
   <div class="sub padsub"><span>QWE / ASD / ZXC</span><span class="line"></span></div>
   <div class="padgrid" id="gridA"></div>
   <div class="sub padsub"><span>RTY / FGH / VBN</span><span class="line"></span></div>
@@ -371,6 +371,9 @@ output.mod{color:var(--env)}
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
   <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span>
 </div>
+  <div id="pvBar"><div class="grp" id="guideGrp"><button class="iconbtn" data-g="thirds" title="Guides — Thirds: lines at 1/3 and 2/3 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M5.8 2.5v11M10.2 2.5v11M1.5 6.2h13M1.5 9.8h13"/></svg></button><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2" /></svg></button><button class="iconbtn" data-g="centre" title="Guides — Centre cross (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M8 2.5v11M1.5 8h13"/></svg></button><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows">
+    <button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M4 2.5v5a4 4 0 0 0 8 0v-5"/><path d="M4 4.5h2.5M9.5 4.5H12"/><path d="M6.5 2.5v5a1.5 1.5 0 0 0 3 0v-5"/></svg></button>
+    <button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".8" fill="currentColor"/><circle cx="9.7" cy="7" r=".8" fill="currentColor"/></svg></button></div></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
@@ -404,7 +407,7 @@ output.mod{color:var(--env)}
     <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
     <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
     <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropReset">Uncrop</button></div></div>
-    <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centered">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
+    <div class="btnrow"><button id="xFitS" title="Whole GIF visible, centred">Fit</button><button id="xFill" title="Cover the whole frame, cropping the overflow">Fill</button><button id="xStr" title="Cover the whole frame, distorting">Stretch</button><button id="xReset">Reset</button></div>
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
   <div id="gifSettings" class="disabled">
@@ -434,7 +437,7 @@ output.mod{color:var(--env)}
           <canvas id="gPrev" width="96" height="96" title="Frame under the slider you last touched"></canvas>
         </div>
         <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
-        <div class="field" title="Keep this GIF's frames at full, half or quarter resolution. It looks the same size; ½ uses a quarter of the memory, ¼ a sixteenth. Applies to the GIF everywhere it's used (every pad and scene)"><label>Resolution</label><div class="seg span" id="gRes"><button data-v="1">Full</button><button data-v="0.5">½</button><button data-v="0.25">¼</button></div></div>
+        <div class="field" title="Keep this GIF's frames at full, half or quarter resolution. It looks the same size; ½ uses a quarter of the memory, ¼ a sixteenth. Applies to the GIF everywhere it's used (every pad and scene). Pixel art that was saved blown up (every pixel a block of N×N) is found on load and kept at its real pixels: same picture, N² times less memory"><label>Resolution</label><div class="seg span" id="gRes"><button data-v="1">Full</button><button data-v="0.5">½</button><button data-v="0.25">¼</button></div></div>
       </div>
       <div data-pane="colour" class="off">
         <div class="sub" style="margin-top:0"><span>Key</span><span class="line"></span><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
@@ -557,7 +560,7 @@ output.mod{color:var(--env)}
       <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · CRT · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt, scramble · CRT: split, VHS, scanlines, phosphor, degauss · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (full for Length, then fades over Release; with Snap it waits for the beat / bar) or Latch (on / off); Release also sets how Hold and Latch fade out; Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
-      <dt>Guides, Stick, Ghosts</dt><dd>Header, after Snap: guide lines over the preview (thirds, golden ratio, centre, or a grid of the columns × rows next to it; click again to hide; preview only), Stick (magnet: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges; hold Alt to place freely) and Ghosts (show or hide faded one-shot GIFs while they're invisible)</dd>
+      <dt>Guides, Stick, Ghosts</dt><dd>Under the preview: guide lines over the preview (thirds, golden ratio, centre, or a grid of the columns × rows next to it; click again to hide; preview only), Stick (magnet: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges; hold Alt to place freely) and Ghosts (show or hide faded one-shot GIFs while they're invisible)</dd>
       <dt>Drag a pad onto the preview</dt><dd>Its GIF goes on the edit layer, centred where you drop it</dd>
       <dt>Music & tab audio</dt><dd>Settings › Recording › Music: load a track (or drop an audio file on Settings, or paste a direct link) to play along; with Sound set to "Music player" the recording takes it straight from the file, and With Rec starts it from the top when the take starts (on the bar) and stops it with the take. Sound "Tab audio": when you press Rec, Chrome asks which tab to share (YouTube in another tab works; tick "Also share tab audio") and its sound is recorded with the video</dd>
       <dt>Text…</dt><dd>Lettering (button next to Add…): type a text, pick a font, size, spacing and colour, and it goes on the next empty pad as a one-frame "GIF". Letters: just the text. Cut-out: a matte with see-through letters, to put on a layer above others so they show through the text. Marquee: scrolls across from right to left, one pass per 1–16 bars from the hit (X automation in the Auto tab). Edit text (GIF panel) changes it and keeps the pad's settings. Texts are redrawn when the canvas format changes and saved with the set</dd>
@@ -575,17 +578,17 @@ output.mod{color:var(--env)}
       <dt>Ctrl+Z</dt><dd>Undo (Ctrl+Shift+Z / Ctrl+Y redo) — moves, resizes, crops, layer and GIF settings</dd>
       <dt>Enter</dt><dd>Prep: the output keeps playing the live scene, untouched, while you work on any scene here (switch scenes, load and place GIFs, try effects: the preview shows it, the output doesn't). The live scene's tile says LIVE. Enter again (or the Prep button) goes live: the scene you're on goes to the output with the armed transition, on the next beat / bar with Snap. Blackout, freeze and recording still act on the output</dd>
       <dt>Output</dt><dd>Opens the output window, where you left it last time (position and size are remembered). Drag anywhere in it to move it; double-click switches full screen on and off. Shift+click Output resets its position if it ends up somewhere unreachable</dd>
-      <dt>Rec</dt><dd>Records the output to an MP4 (H.264) or WebM video — Settings › Canvas picks which, and the size follows the canvas format. A length in bars (4–32) starts on the next bar and stops exactly on the bar, so the clip loops cleanly (good for Reels). Settings › Canvas › Sound records an audio input with it (your interface, or a loopback / virtual cable carrying the mix). Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
+      <dt>Rec</dt><dd>Records the output to an MP4 (H.264) or WebM video — Settings › Recording picks which, and the size follows the canvas format. A length in bars (4–32) starts on the next bar and stops exactly on the bar, so the clip loops cleanly (good for Reels). Settings › Recording › Sound records an audio input with it (your interface, or a loopback / virtual cable carrying the mix). Chrome asks where to save first and writes while recording (long sets don't fill memory). With Snap on it starts on the next bar; click again to stop</dd>
       <dt>MIDI learn</dt><dd>Settings › MIDI control › Learn: click a target (pad, scene, transition, effect, layer chip, opacity, effect amount, Tap, Sync, or Blackout/Freeze in the bar), then move a control on your controller. Faders need a knob/fader (CC). Esc or Done to finish; mappings are remembered</dd>
       <dt>Ctrl+S</dt><dd>Save the current set (first time: name it in Sets)</dd>
       <dt>Esc</dt><dd>Cancel a colour pick · close a panel</dd>
       <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
-      <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from center) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
+      <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from centre) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
       <dt>Dragging a pad</dt><dd>Onto another pad: they swap (onto an empty one: it moves there) — what plays keeps playing under its new key · onto a layer card: the GIF goes on that layer (on top), or starts there if it wasn't playing. Undoable</dd>
       <dt>Scene tiles</dt><dd>Click to go there · right-click to name it · drag one onto another to swap them</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, or Ctrl+click (with Ctrl held the chips turn red)</dd>
-      <dt>Ctrl+click</dt><dd>Deletes what you click (it turns red with a ✕ while Ctrl is held; ⌘ on a Mac): a pad, a scene (its name stays), a layer chip, an effect preset, a GIF in the pool (when no pad uses it). Effects and transition presets get a red outline: Ctrl+click puts them back to their defaults. Pads and scenes come back with Ctrl+Z</dd>
+      <dt>Ctrl+click</dt><dd>Deletes what you click (it turns red with a ✕ while Ctrl is held; ⌘ on a Mac): a pad, a scene (its name stays), a layer chip, an effect preset, a GIF in the pool (one that's on pads needs a held press: a bar sweeps across, then it leaves the pool and every pad it was on). Effects and transition presets get a red outline: Ctrl+click puts them back to their defaults. Pads and scenes come back with Ctrl+Z</dd>
     </dl>
   </div>
 </div>
@@ -633,7 +636,7 @@ output.mod{color:var(--env)}
 /* @include common/theme.js */
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.28.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.28.1';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -692,6 +695,11 @@ const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
 const KEY_MAX = 441.67;        // max RGB distance
 
 const $ = s => document.querySelector(s);
+// messages: toast() for problems (5 s), toast2() for confirmations (green, 2.5 s). Both timers live here, ahead of any
+// code that could show a message while the page starts.
+let toastT = 0, toast2T = 0;
+function toast(msg){ const t = $('#toast'); t.classList.remove('ok'); clearTimeout(toast2T); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 5000); }
+function toast2(msg){ const t = $('#toast'); t.classList.add('ok'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast2T); clearTimeout(toastT); toast2T = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); }, 2500); }
 const mod = (a, n) => ((a % n) + n) % n;
 // a tooltip that changes every second: the new text waits until the pointer leaves, so an open tooltip stays readable
 function setTip(el, t){ el.dataset.tip = t; if (!el.matches(':hover')) el.title = t; if (!el._tip){ el._tip = 1; el.addEventListener('pointerleave', () => { el.title = el.dataset.tip; }); } }
@@ -706,7 +714,7 @@ const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: fal
 let clipSeq = 0, gifSeq = 0;
 // alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)
 const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, alpha: 1, env: null, ...newXf() });
-const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, row: null, fillOn: false, fill: '#1e2a3a' }));
+const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, row: null, fillOn: false, fill: '#1e2a3a' }));
 let target = 0, selPad = 0, snapMode = 'off', picking = false;
 const clock = { bpm: 120, beat: 0, last: performance.now(), src: 'internal', taps: [],
                 midiTicks: 0, midiRunning: false, midiTickTimes: [], lastTick: 0 };
@@ -768,9 +776,11 @@ async function retextAll(){
     const old = m.src, r = await renderText(m.text);
     Object.assign(m, r);
     insts.forEach(g => { if (g.media !== m) return;
-      const fx = g.frames !== g.src; Object.assign(g, { src: m.src, frames: m.src, w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes, thumb: null, tileThumb: null });
+      // as in setMediaScale: frames pre-processed for colour (worker path) are freed, and masks / colour params are redone
+      const fx = g.frames !== g.src; if (fx) g.frames.forEach(f => f.close());
+      Object.assign(g, { src: m.src, frames: m.src, w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes, masks: null, thumb: null, tileThumb: null, fxP: null });
       if (m.text.marquee && g.lfo.x && g.lfo.x.on){ const sp = Math.round((W + m.textW) / 2); g.lfo.x.min = sp; g.lfo.x.max = -sp; }
-      rebuildSeq(g); if (fx) applyFx(g); });
+      rebuildSeq(g); if (fx || g.key.on || hsvOn(g) || (g.swap && g.swap.length)) applyFx(g); });
     old.forEach(f => f.close());
   }
   pads.forEach(p => p.gif && p.gif.media && p.gif.media.text && renderPad(p.i)); renderPool(); redraw.all = true;
@@ -861,7 +871,15 @@ $('#textPanel').addEventListener('pointerdown', e => { if (e.target.id === 'text
 // own 18 pads, so the same GIF can be set up differently in each scene while its frames stay shared.
 const pool = [];                                     // media: { hash, name, blob, type, src, durs, w, h, srcBytes }
 const insts = new Map();                             // uid → every instance alive (on a pad in any scene, or held by undo)
-async function decodeAnim(blob, name, scale = 1){
+// At most 3 files decode at once: loading a big set or many files doesn't hold every file's bytes and decoder in
+// memory at the same moment.
+const decodeQ = { n: 0, wait: [] };
+async function decodeAnim(...a){
+  while (decodeQ.n >= 3) await new Promise(r => decodeQ.wait.push(r));
+  decodeQ.n++;
+  try { return await decodeOne(...a); } finally { decodeQ.n--; const r = decodeQ.wait.shift(); if (r) r(); }
+}
+async function decodeOne(blob, name, scale = 1){
   if (isTextBlob(blob, name)){                       // lettering: a small text description, drawn into one frame
     const spec = JSON.parse(await blob.text()), r = await renderText(spec);
     return { name: name || textName(spec), blob, type: TEXT_MIME, text: spec, ...r };
@@ -872,12 +890,14 @@ async function decodeAnim(blob, name, scale = 1){
   const dec = new ImageDecoder({ data: await blob.arrayBuffer(), type });
   await dec.tracks.ready; await dec.completed;
   const n = Math.min(dec.tracks.selectedTrack.frameCount || 1, MAX_FRAMES);
+  const px = await pixelGrid(dec, n);               // pixel art blown up by a whole factor: kept at its real pixels
   const frames = [], durs = []; let w = 0, h = 0;
   for (let i = 0; i < n; i++){
     const { image } = await dec.decode({ frameIndex: i });
     w = image.displayWidth; h = image.displayHeight;
-    const sc = Math.min(1, MAX_DIM / Math.max(w, h)) * scale;   // scale: the GIF's Resolution setting (less memory)
-    const opts = sc < 1 ? { resizeWidth: Math.round(w*sc), resizeHeight: Math.round(h*sc), resizeQuality: 'high' } : {};
+    const nw = px ? w / px[0] : w, nh = px ? h / px[1] : h;
+    const sc = Math.min(1, MAX_DIM / Math.max(nw, nh)) * scale;   // scale: the GIF's Resolution setting (less memory)
+    const opts = px || sc < 1 ? { resizeWidth: Math.max(1, Math.round(nw * sc)), resizeHeight: Math.max(1, Math.round(nh * sc)), resizeQuality: px ? 'pixelated' : 'high' } : {};
     frames.push(await createImageBitmap(image, opts));
     let d = (image.duration ?? 100000) / 1000;      // µs → ms
     if (!(d > 10)) d = 100;                          // browsers treat 0–10 ms GIF delays as 100 ms
@@ -885,7 +905,47 @@ async function decodeAnim(blob, name, scale = 1){
   }
   dec.close();
   const srcBytes = frames.reduce((a, f) => a + f.width * f.height * 4, 0);
-  return { name: name || 'untitled', blob, type, src: frames, durs, w, h, srcBytes, scale };
+  return { name: name || 'untitled', blob, type, src: frames, durs, w, h, srcBytes, scale, px };
+}
+// Pixel art saved blown up (each real pixel drawn as an N×N block) wastes N² times the memory. This finds the block
+// size from where the colour changes: in true blown-up pixel art every change falls on a multiple of N, across and
+// down. Up to 8 frames spread through the GIF are checked; a single change off the grid in any of them, or a size that
+// isn't a whole number of blocks, means it's kept as it is. Returns [Nx, Ny] or null. The GIF still shows at the same size.
+async function pixelGrid(dec, n){
+  let nx = 0, ny = 0, fw = 0, fh = 0;
+  for (const i of [...new Set([...Array(Math.min(8, n))].map((_, k) => Math.round(k * (n - 1) / Math.max(1, Math.min(8, n) - 1))))]){
+    const { image } = await dec.decode({ frameIndex: i });
+    const w = fw = image.displayWidth, h = fh = image.displayHeight;
+    if (w < 32 || h < 32 || w * h > 4096 * 4096){ image.close(); return null; }
+    const cv = new OffscreenCanvas(w, h), x = cv.getContext('2d', { willReadFrequently: true });
+    x.drawImage(image, 0, 0); image.close();
+    const u = new Uint32Array(x.getImageData(0, 0, w, h).data.buffer);
+    for (let k = 0; k < u.length; k++) if (!(u[k] >>> 24)) u[k] = 0;   // every see-through pixel counts as the same colour
+    const cols = new Uint32Array(w), rows = new Uint32Array(h);       // how many colour changes start at each column / row
+    for (let y = 0; y < h; y++){ const r = y * w;
+      for (let xx = 1; xx < w; xx++) if (u[r + xx] !== u[r + xx - 1]) cols[xx]++;
+      if (y) for (let xx = 0; xx < w; xx++) if (u[r + xx] !== u[r - w + xx]) rows[y]++; }
+    const fx = gridOf(cols, w), fy = gridOf(rows, h);
+    if (fx === 1 || fy === 1) return null;
+    if (fx) nx = nx ? gcd(nx, fx) : fx;
+    if (fy) ny = ny ? gcd(ny, fy) : fy;
+  }
+  if (!nx && !ny) return null;
+  nx = nx || ny; ny = ny || nx;                      // one direction had no changes at all: assume square pixels
+  return nx * ny > 1 && !(fw % nx) && !(fh % ny) ? [nx, ny] : null;
+}
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+// the biggest block size N (2–32, a divisor of the size) that every colour change sits on (so nothing is lost); 1 when there's no grid,
+// 0 when there are too few changes to tell (a flat frame says nothing: it doesn't count either way)
+function gridOf(hist, len){
+  let total = 0; for (const c of hist) total += c;
+  if (total < 64) return 0;
+  for (let N = Math.min(32, len >> 3); N >= 2; N--){
+    if (len % N) continue;
+    let on = 0; for (let i = 0; i < len; i += N) on += hist[i];
+    if (on === total) return N;
+  }
+  return 1;
 }
 // a GIF's frames kept at ½ or ¼ of their pixels: same size on screen (drawn scaled up), a quarter / a sixteenth of the memory
 async function setMediaScale(m, sc){
@@ -1061,15 +1121,38 @@ function renderPool(){
       e.dataTransfer.setDragImage(NO_IMG, 0, 0);
       const gh = document.createElement('span'); gh.className = 'chip'; gh.style.backgroundImage = `url(${t.querySelector('canvas').toDataURL()})`; ghost.show(gh, e.clientX, e.clientY); });
     t.innerHTML = `<canvas width="120" height="80"></canvas><span class="pn"></span><span class="pm">${m.w}×${m.h} · ${m.src.length} fr · ${(m.srcBytes / 1048576).toFixed(m.srcBytes < 10485760 ? 1 : 0)} MB</span>`
-      + `<span class="pm use${u.here.length ? ' here' : ''}"></span><button class="px iconbtn" title="Remove from the pool">×</button>`;
+      + `<span class="pm use${u.here.length ? ' here' : ''}"></span><button class="px iconbtn" title="${u.sc.length ? 'Hold to remove it from the pool and from every pad it is on' : 'Remove from the pool'}">×</button><span class="hold"></span>`;
     t.querySelector('.pn').textContent = m.name;
     t.querySelector('.use').textContent = (u.here.length ? `pad ${u.here.join(' ')} here` + (u.sc.length > 1 ? ` · scenes ${u.sc.join(' ')}` : '') : u.sc.length ? `scene${u.sc.length > 1 ? 's' : ''} ${u.sc.join(' ')}` : 'unused');
     const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);
     x.imageSmoothingEnabled = false; x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
-    t.addEventListener('click', e => { if (e.target.closest('.px') || e.ctrlKey || e.metaKey) return poolUse(m).sc.length ? toast('Still on a pad — clear it there first') : removeMedia(m); pickPool(m); });   // Ctrl+click: remove
-    t.addEventListener('contextmenu', e => { if (!e.ctrlKey) return; e.preventDefault(); poolUse(m).sc.length ? toast('Still on a pad — clear it there first') : removeMedia(m); });   // (a Mac's Ctrl+click)
+    // × or Ctrl+click removes: at once when no pad uses it, after a held press when one does (see poolHold)
+    t.addEventListener('pointerdown', e => { if (e.button === 0 && (e.target.closest('.px') || e.ctrlKey || e.metaKey) && poolUse(m).sc.length) poolHold(t, m, e); });
+    t.addEventListener('click', e => { if (t._held){ t._held = false; return; }   // the end of a held press, not a click
+      if (e.target.closest('.px') || e.ctrlKey || e.metaKey){ if (!poolUse(m).sc.length) removeMedia(m); return; } pickPool(m); });
+    t.addEventListener('contextmenu', e => { if (!e.ctrlKey) return; e.preventDefault(); if (!poolUse(m).sc.length) removeMedia(m); });   // (a Mac's Ctrl+click)
     grid.appendChild(t);
   });
+}
+// removing a GIF that's still on pads: hold the press while the bar sweeps across; letting go early says where it is
+const POOL_HOLD = 900;
+function poolHold(t, m, e){
+  const u = poolUse(m);
+  if (u.air) return toast('That GIF is on the output — go live first');
+  t._held = true; t.style.setProperty('--holdT', POOL_HOLD + 'ms');
+  void t.offsetWidth; t.classList.add('holding');      // (the bar starts from empty)
+  const end = () => { clearTimeout(T); t.classList.remove('holding'); removeEventListener('pointerup', cancel); removeEventListener('pointercancel', cancel); };
+  const cancel = () => { end(); toast(`Hold to remove it — it's on ${u.here.length ? `pad ${u.here.join(' ')} here` : ''}${u.here.length && u.sc.length > 1 ? ', ' : ''}${u.sc.length > 1 || !u.here.length ? `scene${u.sc.length > 1 ? 's' : ''} ${u.sc.join(' ')}` : ''}`); };
+  const T = setTimeout(() => { end(); const name = m.name; unplaceMedia(m); removeMedia(m); toast2(`Removed ${name} from the pool and its pads`); }, POOL_HOLD);
+  addEventListener('pointerup', cancel); addEventListener('pointercancel', cancel);
+}
+// take a GIF off every pad and layer, in every scene
+function unplaceMedia(m){
+  pads.forEach((p, k) => { if (p.gif && p.gif.media === m) clearPad(k); });
+  scenes.forEach(sc => { if (!sc || !sc.pads) return;
+    sc.pads.forEach((g, k) => { if (!g || g.media !== m) return; sc.pads[k] = null;
+      sc.layers.forEach(L => { L.clips = L.clips.filter(c => c.pad !== k); if (L.sel && !L.clips.includes(L.sel)) L.sel = null; }); }); });
+  renderScenes();
 }
 function pickPool(m){
   const d = poolDest(); if (d < 0) return toast('All 18 pads of this scene are full — clear one first');
@@ -1079,6 +1162,7 @@ function pickPool(m){
 }
 // drop a GIF from the pool (only when no pad uses it); undo steps that could bring it back go too
 function removeMedia(m){
+  if (!pool.includes(m)) return;                     // already gone (a click after a held removal)
   const u = poolUse(m); if (u.sc.length) return;
   if (u.air){ toast('That GIF is on the output — go live first'); return; }
   const keep = e => !entryInsts(e).some(g => g && g.media === m);
@@ -1111,7 +1195,7 @@ const dtLink = dt => (dt.getData('text/uri-list') || dt.getData('text/plain') ||
 movable($('#poolPanel .modalBox'), 'vjif-poolpos');
 $('#poolPrune').addEventListener('click', () => { pool.filter(m => { const u = poolUse(m); return !u.sc.length && !u.air; }).forEach(removeMedia); toast2('Unused GIFs removed'); });
 
-// ---------- color key (pre-processed into a second frame set) ----------
+// ---------- colour key and adjustments: live in a WebGL shader at draw time (fallback: a worker pre-processes a second frame set) ----------
 // Live colour (key + HSV): each frame goes through a small WebGL shader right when it's drawn, so changes
 // show instantly and no second set of frames is kept. Same maths as fxColor/hsvShift below. Falls back to
 // pre-processing in the worker when WebGL isn't available.
@@ -1291,7 +1375,7 @@ onmessage = async e => {
     for (let i = 0; i < n; i++){
       if (latest.get(id) !== gen){ if (!maskOnly) out.forEach(b => b.close()); dec.close(); return; }   // superseded
       const { image } = await dec.decode({ frameIndex: i });
-      const resize = image.displayWidth !== w ? { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' } : {};
+      const resize = image.displayWidth !== w ? { resizeWidth: w, resizeHeight: h, resizeQuality: m.q || 'high' } : {};
       const bm = await createImageBitmap(image, resize); image.close();   // same scaling as the main decode
       x.clearRect(0, 0, w, h); x.drawImage(bm, 0, 0); bm.close();
       const img = x.getImageData(0, 0, w, h), u = new Uint32Array(img.data.buffer);
@@ -1343,7 +1427,7 @@ function applyFx(g){
     g.fxP = null; fxDone(g, g.src); return wait;
   }
   if (!p.doKey && !p.doHsv && !(p.sw && p.sw.length)){ if (fxWorker) fxWorker.postMessage({ id: g.uid, gen }); fxDone(g, g.src); }
-  else if (fxWorker) fxWorker.postMessage({ id: g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w: g.src[0].width, h: g.src[0].height, p });
+  else if (fxWorker) fxWorker.postMessage({ id: g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w: g.src[0].width, h: g.src[0].height, q: g.media && g.media.px ? 'pixelated' : 'high', p });
   else fxMain(g, gen, p);
   return wait;
 }
@@ -1355,7 +1439,7 @@ function requestMasks(g){
   g.maskT = setTimeout(() => {
     const gen = ++g.maskGen, p = fxParams(g), w = g.src[0].width, h = g.src[0].height;
     if (p.region === 'point' && !p.seed){ g.keyMsg = 'Region "From pick": click Pick, then the GIF'; if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg; return; }
-    if (fxWorker) fxWorker.postMessage({ kind: 'mask', id: 'm' + g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w, h, p });
+    if (fxWorker) fxWorker.postMessage({ kind: 'mask', id: 'm' + g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w, h, q: g.media && g.media.px ? 'pixelated' : 'high', p });
     else masksMain(g, gen, p, w, h);
   }, 120);
 }
@@ -1584,7 +1668,6 @@ async function startLearn(){
   document.body.classList.add('learning'); $('#learnBar').hidden = false; markLearn();
 }
 function endLearn(){ midiCtl.learning = false; midiCtl.target = null; document.body.classList.remove('learning'); $('#learnBar').hidden = true; markLearn(); renderMidiCtl(); }
-const sameT = (a, b) => a && b && a.t === b.t && (a.i ?? 0) === (b.i ?? 0);
 function elFor(T){
   switch (T.t){
     case 'pad': return pads[T.i] && pads[T.i].el;
@@ -1707,7 +1790,7 @@ function release(p){
   const g = pads[p].gif; if (!g || g.trig !== 'fade' || !g.env.gate) return;
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
-// Shift held: chips show they'd be removed by a click
+// Ctrl (⌘ on a Mac) held: what a click would delete or reset is marked
 const DEL_KEYS = ['Control', 'Meta'];   // Ctrl (⌘ on a Mac) + click deletes
 addEventListener('keydown', e => { if (DEL_KEYS.includes(e.key)) document.body.classList.add('del'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.add('alt'); } });
 addEventListener('keyup', e => { if (DEL_KEYS.includes(e.key)) document.body.classList.remove('del'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.remove('alt'); } });   // (no browser menu on Alt)
@@ -1796,7 +1879,7 @@ const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
 const sceneIds = Array.from({ length: N_SCENES }, (_, i) => i);   // which scene sits at each number (swapped with the scenes)
 let sceneIdx = 0, pendingScene = null, liveThumb = null, liveName = '';   // liveName: the current scene's name
-const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', mode: 'stack', clips: [], sel: null, fillOn: false, fill: '#1e2a3a' });
+const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a' });
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
@@ -1808,7 +1891,7 @@ function sceneThumb(){
   return c.toDataURL('image/jpeg', 0.7);
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)
-const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
+const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a' });
 const layerState = L => ({ i: L.i, ...layerProps(L) });
 const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: sceneThumb(), name: liveName, pick: { pad: selPad, target } });
 function gotoScene(i, beat = clock.beat, instant = false){
@@ -1986,7 +2069,7 @@ $('#scDup').addEventListener('click', () => {
   if (t < 0) return toast('No empty scene to copy into — clear one first');
   scenes[t] = { thumb: sceneThumb(), name: liveName, pads: pads.map(p => p.gif && cloneInst(p.gif)),   // its own copy of every pad's settings
     layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
-    return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
+    return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
   gotoScene(t, clock.beat, !!prep); toast2(`Copied to scene ${t + 1}`);
 });
 // ---- screen effect pads + editor ----
@@ -2060,7 +2143,6 @@ function buildFx(){
 const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
 // short names, for when the full one doesn't fit on a pad
 const FX_SHORT = { mono: 'MN', colour: 'CLR', strobe: 'STRB', poster: 'PSTR', zoom: 'ZM', shake: 'SHK', wobble: 'WBL', mirror: 'MIR', glitch: 'GLT', rgb: 'CRT', pixel: 'PIX', feedback: 'FDBK' };
-const fxPreShort = P => Object.keys(P.fx).map(i => FX_SHORT[FX_DEFS[i].id]).join('+');
 function fitText(el, full, short){ el.textContent = full; if (short && el.scrollWidth > el.clientWidth + 1) el.textContent = short; }
 const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${FX_DEFS[i].styles[styleIdx(i, P.fx[i].style)][1]}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
 // store the effects that are on right now (from their own keys) into preset slot k
@@ -2134,8 +2216,9 @@ function syncFxUI(){
     $('#fxSizeRow').classList.toggle('dimmed', !!d.sizeFor && !d.sizeFor.includes(C.style || d.styles[0][0]));
   }
 }
+// effect names refit (full or short) when the window changes, and are measured again once the fonts are in
 let fxFitT = 0; addEventListener('resize', () => { clearTimeout(fxFitT); fxFitT = setTimeout(syncFxUI, 150); });
-if (document.fonts) document.fonts.ready.then(() => setTimeout(syncFxUI, 50));   // names measured again once the fonts are in   // names refit (full or short) when the window changes
+if (document.fonts) document.fonts.ready.then(() => setTimeout(syncFxUI, 50));
 $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it
   fxConf(selFx).mode = b.dataset.v; syncFxUI(); });
@@ -2732,12 +2815,18 @@ live.black0 = 0; live.blackT = -1e9;
 const freezeCv = mkCanvas(), freezeCtx = freezeCv.getContext('2d');
 function setFreeze(on){ if (on && !live.freeze){ live.freezeReq = true; redraw.all = true; } if (!on){ live.freeze = false; live.freezeReq = false; redraw.all = true; } updLiveTag(); }
 function updLiveTag(){ const t = $('#liveTag'); if (!t) return; const b = live.blackOn, f = live.freeze || live.freezeReq; t.textContent = b && f ? 'BLACK · FREEZE' : b ? 'BLACKOUT' : f ? 'FREEZE' : ''; t.hidden = !b && !f; }
-const post = (() => {
+// Made by makePost(); if the graphics driver resets (a lost WebGL context), effects and the Luma transition pass the
+// picture through untouched until the context comes back, then everything is rebuilt.
+let post = makePost();
+function makePost(){
   try {
     const cv = new OffscreenCanvas(W, H);
     // alpha kept (straight, not premultiplied) so a layer's transparent parts stay transparent
     const gl = cv.getContext('webgl', { alpha: true, antialias: false, depth: false, premultipliedAlpha: false });
     if (!gl) return null;
+    let lost = false;
+    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; redraw.all = true; });
+    cv.addEventListener('webglcontextrestored', () => { const p = makePost(); if (p){ post = p; redraw.all = true; } });
     const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
@@ -2889,6 +2978,10 @@ const post = (() => {
       for (let v = 1; v < 256; v++) if (!hist[v] && rank[v] < rank[v - 1]) rank[v] = rank[v - 1];
     };
     return { luma(A, B, e){
+      if (lost || gl.isContextLost()){                 // no GPU: a plain crossfade
+        mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over';
+        mctx.globalAlpha = 1; mctx.drawImage(A, 0, 0); mctx.globalAlpha = Math.min(1, Math.max(0, e)); mctx.drawImage(B, 0, 0); mctx.globalAlpha = 1; return;
+      }
       gl.useProgram(lp); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(lpLoc); gl.vertexAttribPointer(lpLoc, 2, gl.FLOAT, false, 0, 0);
       gl.uniform1i(lu.a, 0); gl.uniform1i(lu.b, 1); gl.uniform1i(lu.c, 2); gl.uniform1f(lu.e, e);
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texC);
@@ -2899,6 +2992,11 @@ const post = (() => {
       gl.useProgram(prog); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
       mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(cv, 0, 0);
     }, run(U, from = master, to = mctx, slot = 0){
+      if (lost || gl.isContextLost()){                 // no GPU: the picture as it is
+        if (to.canvas !== from){ to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
+          if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, W, H); } else to.clearRect(0, 0, W, H); to.drawImage(from, 0, 0); }
+        return;
+      }
       const S = slotOf(slot), rt = S.rt, cur = S.cur;
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rt[1 - cur].t);
@@ -2919,7 +3017,7 @@ const post = (() => {
       slots.forEach(S => { if (!S) return; S.rt.forEach(r => { gl.bindTexture(gl.TEXTURE_2D, r.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }); S.fbWas = false; });
     } };
   } catch (e) { console.warn('screen effects unavailable:', e.message); return null; }
-})();
+}
 const NOFX = { out: null, layers: [null, null, null, null], any: false };
 // Prep: the output keeps playing the scene that was live (its own copy of the clips, GIFs and effects), while the
 // editor's picture goes to the preview only. Both are drawn every frame.
@@ -2948,7 +3046,7 @@ function drawFrame(now){
   const list = frameList(now);
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ endTrans(); redraw.all = true; } }
-  const fxF = post ? fxFrame(clock.beat) : { out: null, layers: [null, null, null, null], any: false }, fxU = fxF.out, bl = blackLevel(now);
+  const fxF = post ? fxFrame(clock.beat) : NOFX, fxU = fxF.out, bl = blackLevel(now);
   layerFxU = fxF.layers; layerFxU.forEach((U, li) => { if (!U && post) post.idle(li + 1); }); outZoomE = fxU && fxU.zoomE || 0;
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
   const sig = trans && !live.freeze ? 'T' + now : fxF.any || (bl > 0 && bl < 1) ? 'F' + now : (live.freeze ? 'Z' : sceneSig(list)) + (bl >= 1 ? 'B' : '');
@@ -3381,7 +3479,7 @@ function syncGifUI(){
   $('#tLenRow').classList.toggle('dimmed', g.env.gate);
   syncAutoUI(g);
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
-  $('#gInfo').textContent = g.keyMsg || `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
+  $('#gInfo').textContent = g.keyMsg || `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h}${g.media && g.media.px ? ` (pixel art ×${g.media.px[0]}${g.media.px[1] !== g.media.px[0] ? '×' + g.media.px[1] : ''}, kept at ${g.w / g.media.px[0]}×${g.h / g.media.px[1]})` : ''} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
 }
 const curGif = () => pads[selPad].gif;
 // readouts too narrow for their text: hovering shows all of it
@@ -3869,12 +3967,12 @@ new ResizeObserver(sizePreview).observe($('#pvWrap'));
 let fileTarget = -1;
 $('#addFiles').addEventListener('click', () => { fileTarget = -1; $('#fileIn').click(); });
 $('#fileIn').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) loadFiles(f, fileTarget); });
-$('#urlBtn').addEventListener('click', () => {
+function loadUrlField(){
   const u = $('#urlIn').value.trim(); if (!/^https?:\/\//.test(u)) return toast('Enter an http(s) URL');
   loadUrlInto(u, pads[selPad].gif ? nextEmpty(selPad) : selPad); $('#urlIn').value = '';
-});
-$('#urlIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#urlBtn').click(); });
-$('#urlIn').addEventListener('paste', () => setTimeout(() => { if (/^https?:\/\/\S+$/.test($('#urlIn').value.trim())) $('#urlBtn').click(); }, 0));   // a pasted link loads at once
+}
+$('#urlIn').addEventListener('keydown', e => { if (e.key === 'Enter') loadUrlField(); });
+$('#urlIn').addEventListener('paste', () => setTimeout(() => { if (/^https?:\/\/\S+$/.test($('#urlIn').value.trim())) loadUrlField(); }, 0));   // a pasted link loads at once
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => {
   e.preventDefault();
@@ -4094,8 +4192,6 @@ $('#gTabs').addEventListener('click', e => {
 // key reset
 $('#kReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.key, { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }); scheduleFx(g, 0); syncGifUI(); });
 
-let toastT = 0;
-function toast(msg){ const t = $('#toast'); t.classList.remove('ok'); clearTimeout(toast2T); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 5000); }
 
 // ---------- main loop ----------
 let lastBeatIdx = -1, fpsN = 0, fpsT = performance.now();
@@ -4117,6 +4213,24 @@ try { new PerformanceObserver(l => l.getEntries().forEach(en => { meter.longN++;
 let prevFrameT = 0, brbUIt = 0;
 function frame(gen){
   if (gen !== loopGen) return;                       // a stale loop: drop it
+  step();
+  schedule();
+}
+// Recording with no output window while this tab is hidden: the browser stops requestAnimationFrame and slows timers
+// to about once a second, so a worker's timer (not slowed) drives the frames instead, at the recording's frame rate.
+let bgTick = null;
+function bgTickSet(on){
+  if (on && !bgTick){
+    try {
+      const url = URL.createObjectURL(new Blob(['let t; onmessage = e => { clearInterval(t); if (e.data) t = setInterval(() => postMessage(0), e.data); };'], { type: 'text/javascript' }));
+      bgTick = new Worker(url); URL.revokeObjectURL(url);
+      bgTick.onmessage = () => { if (document.hidden && !(outWin && !outWin.closed) && rec.mr) step(); };
+      bgTick.postMessage(1000 / recFps);
+    } catch (e) { bgTick = null; }
+  } else if (!on && bgTick){ bgTick.terminate(); bgTick = null; }
+}
+// one frame of work: clock, triggers, drawing, recording, UI
+function step(){
   const now = performance.now();                     // own clock (the output window's rAF time has another origin)
   if (prevFrameT){ const gap = now - prevFrameT; meter.gaps.push(gap); }
   prevFrameT = now;
@@ -4162,7 +4276,6 @@ function frame(gen){
     Object.assign(meter, { busy: 0, peak: 0, gaps: [], longN: 0, longMs: 0 });
     fpsN = 0; drawn = 0; fpsT = now;
   }
-  schedule();
 }
 
 // ---------- persistence: GIF files + settings in IndexedDB (cookies cap at ~4 KB) ----------
@@ -4186,7 +4299,7 @@ const store = {
 // v4: `pool` = every GIF of the set; `pads` + `layers` = the current scene; `scenes` = all nine as { pads, layers }
 // (the current one null); `scene` = which is current. v3 had one set of pads for all scenes: upgradeSnap() gives
 // every stored scene its own copy of them.
-const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, mode: L.mode, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a',
+const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a',
   clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
@@ -4470,7 +4583,7 @@ $('#setPanel').addEventListener('dragover', e => { if ([...e.dataTransfer.items]
 $('#setPanel').addEventListener('drop', e => { const f = [...e.dataTransfer.files].find(f => f.type.startsWith('audio/')); if (!f) return; e.preventDefault(); e.stopPropagation(); musSet(f, f.name); });
 async function musRestore(){ try { const r = await store.get('music'); if (r) musSet(r.blob || r.url, r.name, false); } catch (e) {} }
 
-const rec = { mr: null, chunks: [], writer: null, t0: 0, wait: null, name: '', bytes: 0, pending: Promise.resolve() };
+const rec = { mr: null, writer: null, t0: 0, wait: null, name: '', bytes: 0, starting: false };   // starting: an MP4 take is getting its encoders ready
 // MP4 (H.264) uploads straight to Instagram / TikTok / YouTube; WebM (VP9) is the fallback where the browser has no H.264 encoder
 const REC_MIMES = { mp4: ['video/mp4;codecs=avc1.64002A', 'video/mp4;codecs=avc1.640028', 'video/mp4;codecs=avc1.4D0028', 'video/mp4;codecs=avc1'],
                     webm: ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'] };
@@ -4492,7 +4605,7 @@ const recExt = mime => mime.startsWith('video/mp4') || mime === WC_MP4 ? 'mp4' :
 async function recToggle(){
   if (rec.mr) return recStop();
   if (rec.wait) return recCancelWait();              // a second click cancels a waiting start
-  if (rec.busy) return;                              // the save dialog is still open
+  if (rec.busy || rec.starting) return;              // the save dialog is still open, or a take is getting ready
   rec.busy = true; try { await recPrepare(); } finally { rec.busy = false; }
 }
 function recDropAudio(){ if (rec.audio){ rec.audio.getTracks().forEach(t => t.stop()); rec.audio = null; } }
@@ -4553,7 +4666,7 @@ function recStart(mime, beat = clock.beat){
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${name} (downloads folder)`); }
   };
-  mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI();
+  mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI(); bgTickSet(true);
 }
 // ---- MP4 through WebCodecs: frames from the master canvas at a steady frame rate (Settings), sound from the chosen input ----
 // codec strings to try, best first. Levels cover 1080p (and 1080×1920) at the chosen frame rate
@@ -4562,6 +4675,10 @@ const WC_CODECS = { h264: H264, hevc: () => ['hvc1.1.6.L123.B0', 'hev1.1.6.L123.
                     av1: fps => fps > 30 ? ['av01.0.09M.08', 'av01.0.08M.08'] : ['av01.0.08M.08', 'av01.0.09M.08'] };   // AV1 Main 8-bit, level 4.0 / 4.1
 let wcCodecs = null;                                 // tests can force a codec list here
 async function wcStart(beat = clock.beat){
+  rec.starting = true;
+  try { return await wcSetup(beat); } finally { rec.starting = false; }
+}
+async function wcSetup(beat){
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   const writer = rec.writer, name = rec.name, audio = rec.audio; rec.audio = null;
   const w = W & ~1, h = H & ~1;                      // H.264 wants even sizes
@@ -4595,25 +4712,40 @@ async function wcStart(beat = clock.beat){
     else if (acfg.codec !== 'opus' && recACodec === 'opus') toast2('No Opus encoder here: the sound is AAC');
   }
   const target = writer ? new Mp4Muxer.FileSystemWritableFileStreamTarget(writer) : new Mp4Muxer.ArrayBufferTarget();
-  const muxer = new Mp4Muxer.Muxer({ target, fastStart: writer ? false : 'in-memory', firstTimestampBehavior: 'offset',
+  // both tracks share one time base: video frame n sits at n / fps from the bar the take started on (C.t0), and the sound
+  // is moved onto that clock (below), so 'cross-track-offset' leaves the two lined up instead of zeroing each one apart
+  const muxer = new Mp4Muxer.Muxer({ target, fastStart: writer ? false : 'in-memory', firstTimestampBehavior: 'cross-track-offset',
     video: { codec: vcfg.codec.startsWith('avc') ? 'avc' : vcfg.codec.startsWith('h') ? 'hevc' : vcfg.codec.startsWith('vp09') ? 'vp9' : 'av1', width: w, height: h, frameRate: fps },
     audio: acfg ? { codec: acfg.codec === 'opus' ? 'opus' : 'aac', sampleRate: acfg.sampleRate, numberOfChannels: acfg.numberOfChannels } : undefined });
   const fail = e => { toast('Recording failed: ' + (e && e.message || e)); recStop(); };
-  const venc = new VideoEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addVideoChunk(ch, meta); }, error: fail });
-  venc.configure(vcfg);
-  let aenc = null, reader = null;
-  if (acfg){
-    aenc = new AudioEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addAudioChunk(ch, meta); }, error: fail });
-    aenc.configure(acfg);
-    reader = new MediaStreamTrackProcessor({ track }).readable.getReader();
-    (async () => { for (;;){ const { value, done } = await reader.read().catch(() => ({ done: true })); if (done) break;
-      if (aenc.state === 'configured') aenc.encode(value); value.close(); } })();
-  } else if (audio) audio.getTracks().forEach(t => t.stop());
   // the clip's clock starts on the bar it was asked to start on (getting the encoders ready took a few ms), so a bar-length take is exactly that long
-  const C = { venc, aenc, reader, audio, muxer, target, writer, name, fps, us, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm, stopping: false };
+  const C = { venc: null, aenc: null, reader: null, audio, muxer, target, writer, name, fps, us, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm,
+              stopping: false, vOn: false, aHold: [], aOff: null, dropped: 0, warned: false };
+  C.venc = new VideoEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addVideoChunk(ch, meta);
+    if (!C.vOn){ C.vOn = true; C.aHold.forEach(a => muxer.addAudioChunkRaw(...a)); C.aHold = null; } }, error: fail });
+  C.venc.configure(vcfg);
+  if (acfg){
+    // sound chunks are re-stamped onto the video clock; any that arrive before the first video chunk wait for it, so the
+    // muxer sees the video track first (its first frame is time 0)
+    C.aenc = new AudioEncoder({ output: (ch, meta) => {
+      const t = ch.timestamp - C.aOff; if (t < 0) return;
+      const b = new Uint8Array(ch.byteLength); ch.copyTo(b); rec.bytes += b.byteLength;
+      const a = [b, ch.type, t, ch.duration ?? 0, meta];
+      if (C.vOn) muxer.addAudioChunkRaw(...a); else C.aHold.push(a); }, error: fail });
+    C.aenc.configure(acfg);
+    C.reader = new MediaStreamTrackProcessor({ track }).readable.getReader();
+    (async () => { for (;;){ const { value, done } = await C.reader.read().catch(() => ({ done: true })); if (done) break;
+      if (C.aOff === null){
+        // Chrome stamps captured sound on the page's own clock (µs since it opened): then it lines up exactly. If a source
+        // uses another clock, the first block is placed at the moment it arrived instead.
+        const ms = value.timestamp / 1000, wall = performance.now();
+        C.aOff = Math.abs(ms - wall) < 2000 ? C.t0 * 1000 : value.timestamp - (wall - C.t0 - (value.duration || 0) / 1000) * 1000;
+      }
+      if (C.aenc.state === 'configured') C.aenc.encode(value); value.close(); } })();
+  } else if (audio) audio.getTracks().forEach(t => t.stop());
   rec.wc = C;
   rec.mr = { stop: () => wcStop(C) };                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
-  rec.t0 = C.t0; redraw.all = true; recUI();
+  rec.t0 = C.t0; redraw.all = true; recUI(); bgTickSet(true);
 }
 // called every frame while recording: one encoded frame per frame slot of real time (a slow frame repeats the picture,
 // so the clip keeps its length and stays in sync with the sound)
@@ -4622,7 +4754,14 @@ function wcCapture(now){
   const due = Math.floor((now - C.t0) / (1000 / C.fps));
   if (due < C.n) return;
   if (due - C.n > C.fps * 2) C.n = due;              // stalled for over 2 s (window hidden…): jump rather than flood the encoder
-  for (; C.n <= due; C.n++){                         // every frame slot gets a frame, so the frame rate stays constant
+  for (; C.n <= due; C.n++){                         // every frame slot gets a frame, so the frame rate stays constant…
+    // …unless the encoder falls behind (a software encoder at 1080p60): then frames are skipped (the picture before stays
+    // up a little longer) rather than letting the queue, and the memory it holds, grow without end
+    if (C.venc.encodeQueueSize > C.fps){
+      C.dropped++;
+      if (!C.warned && C.dropped > C.fps){ C.warned = true; toast(`The video encoder can't keep up — frames are being skipped. Try H.264, a lower frame rate or bitrate (Settings › Recording)`); }
+      continue;
+    }
     const f = new VideoFrame(master, { timestamp: C.n * C.us, duration: C.us });
     C.venc.encode(f, { keyFrame: C.n % (C.fps * 2) === 0 }); f.close();   // a keyframe every 2 s
   }
@@ -4633,6 +4772,7 @@ async function wcStop(C){
     if (C.reader) await C.reader.cancel().catch(() => {});
     if (C.audio) C.audio.getTracks().forEach(t => t.stop());
     await C.venc.flush(); if (C.aenc) await C.aenc.flush();
+    if (!C.vOn){ C.venc.close(); if (C.aenc) C.aenc.close(); if (C.writer) await C.writer.abort().catch(() => {}); toast('The take stopped before its first frame — nothing was saved'); return; }
     C.muxer.finalize(); C.venc.close(); if (C.aenc) C.aenc.close();
     if (C.writer){ await C.writer.close(); toast2(`Recording saved: ${C.name}`); if (rec.writer === C.writer) rec.writer = null; }
     else { const blob = new Blob([C.target.buffer], { type: 'video/mp4' });
@@ -4640,7 +4780,7 @@ async function wcStop(C){
       setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${C.name} (downloads folder)`); }
   } catch (e) { toast('Saving the recording failed: ' + e.message); }
 }
-function recStop(){ if (!rec.mr) return; musRecStop(); const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
+function recStop(){ if (!rec.mr) return; musRecStop(); bgTickSet(false); const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
 function recUI(){
   const b = $('#recBtn'); $('#recLed').classList.toggle('on', !!rec.mr); $('#recLed').classList.toggle('wait', !!rec.wait);
   if (rec.mr){ const t = (performance.now() - rec.t0) / 1000, mb = rec.bytes / 1048576;
@@ -4767,8 +4907,6 @@ $('#newEmpty').addEventListener('click', () => {
   if (!dirty || !hasContent()) return newEmptySet();
   ask($('#setsFoot'), unsavedMsg(), [{ label: 'Discard & clear', cls: 'danger', fn: newEmptySet }]);
 });
-let toast2T = 0;
-function toast2(msg){ const t = $('#toast'); t.classList.add('ok'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast2T); clearTimeout(toastT); toast2T = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); }, 2500); }
 
 // ---- startup: reopen the working session (migrating the pre-sets storage layout) ----
 async function restore(){
@@ -4800,12 +4938,12 @@ async function restore(){
 }
 setInterval(autosave, 1000);
 
-// ---------- undo / redo: layer contents, placement, crop and per-GIF settings (not on/off or triggers) ----------
+// ---------- undo / redo: layer contents, placement, crop and per-GIF settings (not layer on/off; a hit only makes a step when it adds a GIF to a layer) ----------
 const hist = { ready: false, cur: '', undo: [], redo: [] };
 function histState(){
   return JSON.stringify({
     scene: sceneIdx,
-    layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, mode: L.mode, fillOn: !!L.fillOn, fill: L.fill,
+    layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, fillOn: !!L.fillOn, fill: L.fill,
       clips: L.clips.map(c => ({ id: c.id, pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
     gifs: pads.map(p => p.gif ? Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) : null),
   });

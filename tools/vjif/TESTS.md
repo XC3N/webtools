@@ -16,13 +16,17 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r2} **Upload the MP4 to Facebook / Instagram / TikTok** (0.19: standard MP4, 30 fps, H.264 + AAC) — Chrome writes MP4s in a slightly unusual layout.
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
-- {pvt} **Guides / Stick / Ghosts** (0.26: in the header) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {drop} **Pad onto the preview** (0.26) — drag a pad onto the preview: on the edit layer, centred where dropped.
 - {link} **Link X / Y, From centre** (0.26) — Transform: scale sliders together; preview handles from the centre.
 - {ltr} **Layer transitions** (0.26) — Transition › Layers: armed / a preset; Shift+1–4 fades / wipes a layer in and out.
 - {vhs} **Glitch › VHS** (0.26).
 - {crt} **CRT effect** (0.27) — F10: Scanlines, Phosphor, Degauss (as a Hit with a long Release).
 - {res} **GIF Resolution** (0.27) — Play › Resolution ½ / ¼ on a big GIF: same size on screen, MEM drops; save / reload keeps it.
+- {pix} **Pixel art kept small** (0.28.1) — load the 1200×1056 Game Boy GIF: the info line says pixel art ×8, MEM is a few MB instead of 600+, it looks identical (crisp). A photo-like GIF says nothing.
+- {phold} **Hold to remove from the pool** (0.28.1) — Pool: hover a GIF that's on pads, press and hold ×: the bar sweeps, then it's gone from the pool, its pads and layers (other scenes too). A quick click says where it is.
+- {rhid} **Recording while the tab is hidden** (0.28.1) — no output window, start a free take, switch to another tab for 20 s, come back, stop: the clip moves the whole time.
+- {rsync} **Sound in sync** (0.28.1) — an MP4 take with sound (music player, a track with a clear kick): the kick lines up with the beat flashes from the start.
 - {uiz} **Interface size** (0.28) — Settings › Interface › 80% / 90%: everything fits, dragging in the preview and the pads still lands where the pointer is.
 - {defs} **My defaults** (0.28) — tweak effects / presets, Save as my defaults, new set: they're there; Export / Import.
 - {fx28} **Effects** (0.28) — Zoom › Each in / out; Kaleido Amount = slices; Dither / Glitch / Scanlines Size; Latch off keeps the editor.
