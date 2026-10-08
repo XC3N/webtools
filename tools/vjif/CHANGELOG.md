@@ -4,6 +4,38 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.31.0 — 2026-10-08
+
+### Top bar
+- Music player in the top bar: play / pause, stop, loop, load (⏏) and a pop-up level slider. The track's name and time show on the play button's tooltip (and in Settings). Loop, level and With Rec are kept after a reload.
+- BRB is one button in the top bar (click: on / off) with a ▾ pop-up for bars, scene order and transition. The Scenes section gets its two rows back.
+- ≈ next to the tempo rounds it to the nearest whole BPM.
+- On narrower windows the top bar stays on one line (labels and the version step aside, the set name shortens).
+
+### Effects
+- Colour › Palette: the Amount slider picks the palette, the Rate slider becomes Dither (ordered dots between palette colours, for in-between shades). The palette is either on or off, so it no longer goes muddy halfway.
+- Mirror › Kaleido Zoom moves smoothly (1× to 6×, 0.05 steps).
+- Switching an effect to Latch starts it straight at Sustain (no Attack: it wasn't a hit). Switching away from a playing effect fades it out over its Release instead of cutting it.
+- Envelope: an Envelope heading above the graph, which takes the editor's whole width; the controls rows are a little tighter. With Attack at 0, the graph rises straight up. New icons for preview and graph / sliders.
+
+### Preview
+- Guides combine: golden ratio, grid, safe areas, diagonals and perspective (rays from the middle) can be on together.
+- Safe areas: action safe (93%) and title safe (90%) in landscape and square; the Reels / TikTok / Shorts zones in 9:16. They moved here from Settings.
+- Guides bar: colour swatch first, every control the same size, smaller icons, a new magnet, and an outline (not a fill) when something is on.
+
+### GIFs
+- Swap colours: colours too close to tell apart (ten slightly different blacks) are one swatch, and its swap covers all of them.
+
+### Lettering
+- A scrolling cut-out keeps only the letters as its picture and draws the rest of the matte around it, instead of a picture up to 16000 px wide. (the likely cause of horizontal bands at the end of a scroll).
+- Letter spacing no longer pushes the text off centre.
+
+### Interface
+- Interface size follows the slider as you drag.
+- Ctrl (⌘) held: only what's under the pointer turns red, instead of every pad, scene and chip (Ctrl+Z no longer flashes the whole screen).
+- Settings: the explanations moved into tooltips on each section's heading (the ⓘ).
+- "Verbose undo": the undo / redo message setting, renamed.
+
 ## 0.30.0 — 2026-10-08
 
 ### Effects

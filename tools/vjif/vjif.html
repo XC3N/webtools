@@ -95,8 +95,9 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .pad .dots b{width:14px;height:14px;font:600 9px/14px var(--mono);border-radius:2px;color:#000;text-align:center}
 .pad.loading::after{content:'decoding…';position:absolute;inset:0;display:grid;place-items:center;background:#000b;font:400 11px var(--mono);color:var(--ink)}
 .scgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.brb{display:flex;gap:4px;min-width:0;margin-top:4px}.brb .seg{flex:1;min-width:0}.brb .seg button{padding:0 4px;min-width:0}
-#brbBtn{flex:none;width:86px;font-variant-numeric:tabular-nums;padding:0 6px}#brbLed.on{background:var(--sigtxt)}#brbLed.wait{background:var(--sigtxt);animation:ledblink .25s steps(1) infinite}
+#brbPop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);padding:8px;box-shadow:0 6px 18px #0009;display:grid;gap:6px;width:250px}#brbPop[hidden]{display:none}
+.poph{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.poprow{display:flex}.poprow .seg{flex:1}#brbCfg{width:18px;margin-left:-1px}
+#brbBtn{flex:none;width:76px;font-variant-numeric:tabular-nums;padding:0 6px}#brbLed.on{background:var(--sigtxt)}#brbLed.wait{background:var(--sigtxt);animation:ledblink .25s steps(1) infinite}
 .scene{position:relative;height:40px;padding:0;border:0;border-radius:var(--r);background:var(--bg) center/cover no-repeat;cursor:pointer}
 .scene:hover{box-shadow:0 0 0 1px var(--edge-2)}
 .scene .k{position:absolute;left:3px;top:3px;font:600 11px/1 var(--mono);color:#fff;background:#000b;border-radius:2px;padding:2px 4px}
@@ -107,6 +108,10 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .scene.cur{box-shadow:0 0 0 2px var(--sig)}
 .scene.wait{animation:wait .25s steps(1) infinite}
 .padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
+.sub .info{display:inline-grid;place-items:center;width:13px;height:13px;border:1px solid var(--edge);border-radius:50%;font:600 9px var(--mono);color:var(--muted);cursor:help}.sub[title]{cursor:help}
+#musGrp .iconbtn.on{color:var(--sig);border-color:var(--sig)}.volwrap{position:relative;display:inline-flex}
+#musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);padding:10px 6px;box-shadow:0 6px 18px #0009}
+#musVolPop[hidden]{display:none}#musVol{writing-mode:vertical-lr;direction:rtl;width:22px;height:110px;margin:0}
 .padsub{cursor:pointer;user-select:none}.padsub:hover{color:var(--muted)}.padsub::before{content:'▾';width:10px;display:inline-block}.padsub.fold::before{content:'▸'}.padsub.fold+.padgrid{display:none}.padsub .cnt{display:none}.padsub.fold .cnt{display:inline}
 .padsub{margin:8px 0 5px;font:500 11px var(--mono);color:var(--faint)}.padsub .line{flex:1;height:1px;background:var(--edge)}
 
@@ -148,7 +153,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxPre .fxp .n{font-weight:500;color:var(--muted)}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
-.fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:36px}
+.fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:30px}
 .fxrow .lcd{flex:none;width:12ch;text-align:center;font-size:11px}
 .fxrow .seg{flex:1;min-width:0}
 #fxStyle button{flex:1 1 0;min-width:0;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* every style shrinks a little, rather than the last one vanishing */
@@ -158,15 +163,20 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxEdit.pre #fxTgt{display:none}
 #fxEdit.pre.ent #fxTgt,#fxEdit.pre.ent #fxStyle{display:grid}#fxEdit.ent #fxPreList{display:none}#fxEdit.pre.ent.rated #fxRateRow,#fxEdit.pre.ent:not(.sized) #fxRateRow,#fxEdit.pre.ent.sized #fxSizeRow{display:grid}
 #fxEdit.ent #fxMode,#fxEdit.ent #fxEnvRow{opacity:.5}
-.fxrow.envrow{height:auto}#fxEnvRow{flex:2.2!important;grid-template-columns:auto auto minmax(0,1fr)!important}#fxEnvRow>label{align-self:start;padding-top:4px}
-.envtg{display:flex;flex-direction:column;gap:3px}.envtg .iconbtn{width:24px;height:28px;padding:0;font-size:11px}.envtg .iconbtn.on{background:var(--sig);color:var(--sigtxt);border-color:var(--sig)}
-#fxEnvSl{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;align-items:center;height:60px;font:400 11px var(--mono);color:var(--muted)}
+.fxrow.envrow{height:auto;align-items:stretch}#fxEnvRow{flex:1 1 auto!important;display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto;gap:2px!important}
+.envhd{display:flex;align-items:center;gap:4px;font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.envhd .line{flex:1;height:1px;background:var(--edge)}
+.envhd .iconbtn{width:22px;height:18px;padding:0}.envrow>button{align-self:flex-end}.envhd .iconbtn.on{color:var(--sig);border-color:var(--sig)}
+#fxEnvSl{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;align-items:center;height:52px;font:400 11px var(--mono);color:var(--muted)}
 #fxEnvSl output{grid-column:2;grid-row:1;justify-self:end;padding-right:6px;pointer-events:none;color:var(--lcd);white-space:nowrap;position:relative;z-index:1}#fxEnvSl .sl{display:grid;grid-template-columns:10px minmax(0,1fr);gap:4px;align-items:center;min-width:0}#fxEnvSl .sl>input{grid-column:2;grid-row:1;width:100%}#fxEnvSl .sl.dimmed{opacity:.35}#fxEnvSl input{min-width:0;height:22px}
 #fxEnvRow.sliders #fxEnv{display:none}#fxEnvRow.sliders #fxEnvSl{display:grid}
-#fxEnv{width:100%;height:60px;min-width:120px;display:block;cursor:pointer;touch-action:none;background:var(--bg);border-radius:var(--r)}
+#fxEnv{width:100%;height:52px;min-width:120px;display:block;cursor:pointer;touch-action:none;background:var(--bg);border-radius:var(--r)}
 .pchip{cursor:pointer}.pchip:hover{border-color:var(--sig)}#fxName.back{cursor:pointer}#fxName.back::before{content:'‹ ';opacity:.6}
 #fxMode button{padding:0}
 @media (max-width:1760px){ .fxrow .field label{font-size:11px} }
+#musGrp{gap:2px}#musGrp .iconbtn{width:24px}
+/* narrower windows: the top bar keeps to one line (labels and the version go; the set name shortens) */
+@media (max-width:1560px){ #hdrVer,#clockGrp>label{display:none} #clockSrc{width:92px!important} #setLabel{width:64px} #brbBtn{width:62px} #musGrp .iconbtn{width:22px} #top{gap:6px} }
+@media (max-width:1340px){ #snap{width:56px!important} #clockSrc{width:78px!important} #undoBtn,#redoBtn{width:20px} #setLabel{width:52px} #top .grp.sect{gap:3px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
 .fxrow button{flex:none}
@@ -198,12 +208,12 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #sizeNote{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:20;background:#ffb000;color:#1a1200;font:600 12px var(--sans);padding:6px 6px 6px 12px;border-radius:var(--r);box-shadow:0 4px 16px #0008;display:flex;gap:8px;align-items:center}
 #sizeNote button{color:#1a1200}
 #pvBar{position:absolute;left:0;right:0;z-index:3;display:flex;justify-content:center;pointer-events:none}#pvBar .grp{pointer-events:auto;background:var(--panel);border-radius:var(--r);padding:2px 4px}
-#pvBar .iconbtn{width:30px;height:28px}#pvBar .iconbtn.on{background:var(--sig);color:var(--sigtxt);border-color:var(--sig)}
-#guideCol{width:28px;height:24px;padding:0;border:1px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}
+#guideGrp{display:flex;align-items:center;gap:3px}#pvBar .iconbtn{width:28px;height:26px}#pvBar .iconbtn.on{color:var(--sig);border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig);background:transparent}
+.gsep{width:1px;height:18px;background:var(--edge);margin:0 3px}#guideGrp .dim{color:var(--muted);font:400 11px var(--mono)}
+#guideCol{width:28px;height:26px;padding:3px;border:1px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}#guideCol::-webkit-color-swatch-wrapper{padding:0}#guideCol::-webkit-color-swatch{border:none;border-radius:2px}
 #guideGrp input[type=number]{cursor:ns-resize}
-#guideGrp input[type=number]{width:34px;height:var(--ch);padding:0 2px;text-align:center;font:400 11px var(--mono);-moz-appearance:textfield}
+#guideGrp input[type=number]{width:30px;height:26px;padding:0 2px;text-align:center;font:400 11px var(--mono);-moz-appearance:textfield}
 #guideGrp input[type=number]::-webkit-inner-spin-button{display:none}#guideGrp .dim{font-size:11px}
-#musBar{position:absolute;left:50%;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:var(--r);padding:2px 10px 2px 4px;max-width:60%}#musBar[hidden]{display:none}#musBar:not([hidden])~#prepTag{top:44px}#musBar .iconbtn{width:30px;height:26px}#musBar .musName{max-width:320px}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
 #prepTag{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#1a1200;background:#ffb000;padding:3px 10px;border-radius:2px;pointer-events:none;white-space:nowrap}
 body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
@@ -251,13 +261,13 @@ body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: 
 .chip.insR{box-shadow:3px 0 0 -1px var(--bg),4px 0 0 0 var(--lc)}
 .chip b{position:absolute;right:1px;top:1px;width:18px;height:18px;border-radius:2px;background:#000d;font:400 14px/17px var(--mono);text-align:center;color:#ddd;visibility:hidden;cursor:pointer}
 .chip:hover b{visibility:visible}.chip b:hover{color:#fff;background:var(--danger)}
-/* Ctrl (⌘) held: what a click would delete turns red with a ✕ (pads, scenes, effect presets, layer chips, pool GIFs); what it would reset (effects, transition presets) gets a red outline */
+/* Ctrl (⌘) held: what is under the pointer turns red if a click would delete it with a ✕ (pads, scenes, effect presets, layer chips, pool GIFs); what it would reset (effects, transition presets) gets a red outline */
 body.del{--clr:#ff3b3b}
-body.del .pad:not(.empty),body.del .scene:not(.empty),body.del .scene.padsOnly,body.del #fxPre .fxp:not(.empty),body.del .ptile,body.del .chip{box-shadow:0 0 0 2px var(--clr);cursor:pointer}
-body.del .pad:not(.empty)::after,body.del .scene:not(.empty)::after,body.del .scene.padsOnly::after,body.del #fxPre .fxp:not(.empty)::after,body.del .ptile::after,body.del .chip::after{
+body.del .pad:not(.empty):hover,body.del .scene:not(.empty):hover,body.del .scene.padsOnly:hover,body.del #fxPre .fxp:not(.empty):hover,body.del .ptile:hover,body.del .chip:hover{box-shadow:0 0 0 2px var(--clr);cursor:pointer}
+body.del .pad:not(.empty):hover::after,body.del .scene:not(.empty):hover::after,body.del .scene.padsOnly:hover::after,body.del #fxPre .fxp:not(.empty):hover::after,body.del .ptile:hover::after,body.del .chip:hover::after{
   content:"✕";position:absolute;inset:0;z-index:2;display:grid;place-items:center;border-radius:inherit;background:rgba(200,20,20,.42);color:#fff;font:700 20px/1 var(--sans);text-shadow:0 1px 3px #000;pointer-events:none}
-body.del .chip::after{font-size:16px}
-body.del #fxPads .fxp,body.del #trPre button{box-shadow:inset 0 0 0 2px var(--clr)}   /* reset (not delete): outline only */
+body.del .chip:hover::after{font-size:16px}
+body.del #fxPads .fxp:hover,body.del #trPre button:hover{box-shadow:inset 0 0 0 2px var(--clr)}   /* reset (not delete): outline only */
 
 /* ---------- transform ---------- */
 #xfTitle{width:100%}
@@ -344,13 +354,14 @@ output.mod{color:var(--env)}
   <div class="grp sect" id="clockGrp">
     <select id="clockSrc" style="width:112px" title="Where the tempo comes from"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
     <select id="midiIn" hidden style="width:150px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span>
-    <label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Drag up / down or use the mouse wheel over a digit to change that digit · click to type a tempo, then Enter"><i id="bpmMark"></i></span>
+    <label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Drag up / down or use the mouse wheel over a digit to change that digit · click to type a tempo, then Enter"><i id="bpmMark"></i></span><button id="bpmRound" class="iconbtn" title="Round the tempo to the nearest whole BPM (123.46 → 123)">≈</button>
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
     <div id="beats" title="The beat within the bar (the first dot is the downbeat)"><i></i><i></i><i></i><i></i></div>
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
+  <div class="grp sect" id="musGrp" title="Music player: a track to play along and record with (Settings › Recording › Music)"><button id="musPlay" class="iconbtn" title="Play / pause the track" disabled><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/></svg></button><button id="musStop" class="iconbtn" title="Stop (back to the start)" disabled><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><rect x="3.5" y="3.5" width="9" height="9" fill="currentColor"/></svg></button><button id="musLoop" class="iconbtn" title="Loop the track"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M3 9.5V7a3 3 0 0 1 3-3h7M11 2l2 2-2 2M13 6.5V9a3 3 0 0 1-3 3H3M5 14l-2-2 2-2"/></svg></button><button id="musEject" class="iconbtn" title="Load a track: MP3, WAV, FLAC, OGG, M4A… (or drop an audio file on Settings)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M8 3l5 6H3z" fill="currentColor"/><path d="M3 12.5h10" stroke-width="1.8"/></svg></button><span class="volwrap"><button id="musVolBtn" class="iconbtn" title="Listening level (the recording isn't affected)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z" fill="currentColor"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/></svg></button><span id="musVolPop" hidden><input id="musVol" type="range" min="0" max="1" step="0.01" value="0.8" title="Listening level (the recording isn't affected)"></span></span></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
   <div class="grp sect"><button id="setsBtn" title="Saved sets, import / export">Sets</button><span id="setLabel" class="lcd" title="Current set (• = unsaved changes)">Untitled</span><button id="saveBtn" title="Save the current set (Ctrl+S)">Save</button></div>
-  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — canvas, recording, MIDI, interface, theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="fsBtn" class="iconbtn" title="Full screen on / off for this window (F11 belongs to the effects)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="prepBtn" title="Prep (Enter): the output keeps playing what's live while you work on any scene · Enter again sends the scene you're on out, with the armed transition"><span class="led" id="prepLed"></span>Prep</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
+  <div class="grp sect"><button id="setBtn" class="iconbtn" title="Settings — canvas, recording, MIDI, interface, theme"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button id="helpBtn" class="iconbtn" title="Keys and mouse (?)">?</button><button id="fsBtn" class="iconbtn" title="Full screen on / off for this window (F11 belongs to the effects)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><span class="volwrap" id="brbWrap"><button id="brbBtn" title="BRB (be right back): change scene by itself every few bars, on the bar, while you step away · any scene key or click takes back control"><span class="led" id="brbLed"></span><span id="brbTxt">BRB</span></button><button id="brbCfg" class="iconbtn" title="BRB settings: bars between changes, which scene, which transition"><svg viewBox="0 0 16 16" width="10" height="10" style="display:block;margin:auto"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button><span id="brbPop" class="pop" hidden><span class="poph">BRB · autopilot</span><span class="poprow"><div class="seg" id="brbBars" title="BRB: bars between scene changes"><button data-v="4">4 bars</button><button data-v="8">8</button><button data-v="16">16</button><button data-v="32">32</button></div></span><span class="poprow"><div class="seg" id="brbScn" title="BRB: the next scene with GIFs playing, in order, or any of them at random"><button data-v="order">In order</button><button data-v="rand">Shuffle</button></div></span><span class="poprow"><div class="seg" id="brbTr" title="BRB: the armed transition every time, or a random preset each change"><button data-v="armed">Armed</button><button data-v="rand">Random</button></div></span></span></span><button id="prepBtn" title="Prep (Enter): the output keeps playing what's live while you work on any scene · Enter again sends the scene you're on out, with the armed transition"><span class="led" id="prepLed"></span>Prep</button><button id="recBtn" title="Record the output to a video file (MP4 or WebM, see Settings). With Snap on, recording starts on the next bar"><span class="led" id="recLed"></span><span id="recTxt">Rec</span></button><button id="outBtn" class="accent" title="Open the output window (it reopens where you left it) · Shift+click: reset its position"><span class="led" id="outLed"></span>Output</button></div>
 </header>
 
 <section id="bank" class="panel">
@@ -363,10 +374,6 @@ output.mod{color:var(--env)}
   <div class="padgrid" id="gridB"></div>
   <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
-  <div class="brb"><button id="brbBtn" title="BRB (be right back): change scene by itself every few bars, on the bar, while you step away · any scene key or click takes back control"><span class="led" id="brbLed"></span><span id="brbTxt">BRB</span></button>
-    <div class="seg" id="brbBars" title="BRB: bars between scene changes"><button data-v="4">4 bars</button><button data-v="8">8</button><button data-v="16">16</button><button data-v="32">32</button></div></div>
-  <div class="brb"><div class="seg" id="brbScn" title="BRB: the next scene with GIFs playing, in order, or any of them at random"><button data-v="order">In order</button><button data-v="rand">Shuffle</button></div>
-    <div class="seg" id="brbTr" title="BRB: the armed transition every time, or a random preset each change"><button data-v="armed">Armed</button><button data-v="rand">Random</button></div></div>
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
   <div class="field"><label>Preset</label><div class="seg span" id="trPre" title="Keys 1–9 arm a preset for the next scene change; the settings below edit the armed one"></div></div>
   <div class="field"><label>Type</label><div class="seg span grid4" id="trType"></div></div>
@@ -379,12 +386,9 @@ output.mod{color:var(--env)}
 
 <main id="stage" class="panel">
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
-  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><div id="musBar" hidden title="The Music player (Settings › Recording)"><button id="musPlay2" class="iconbtn" title="Play / pause the track">▶</button><span id="musName2" class="musName"></span><span id="musTime2" class="musTime"></span></div><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span>
+  <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span>
 </div>
-  <div id="pvBar"><div class="grp" id="guideGrp"><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; click again to hide)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2" /></svg></button><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (2×2 = centre, 3×3 = thirds; preview only; click again to hide)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns — drag up / down, scroll, or click and type"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows — drag up / down, scroll, or click and type">
-    <input type="color" id="guideCol" value="#ffffff" title="Guide line colour (so they show on any picture)">
-    <button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M4 2.5v5.2a4 4 0 0 0 8 0V2.5" stroke-width="2.6"/><path d="M4 2.5v2.2M12 2.5v2.2" stroke="#ff5b5b" stroke-width="2.8"/><path d="M1.5 1.2l1 1M14.5 1.2l-1 1M8 13.6v1.6" stroke-width="1"/></svg></button>
-    <button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".9" fill="currentColor"/><circle cx="9.7" cy="7" r=".9" fill="currentColor"/></svg></button></div></div>
+  <div id="pvBar"><div class="grp" id="guideGrp"><input type="color" id="guideCol" value="#ffffff" title="Guide line colour (so they show on any picture)"><span class="gsep"></span><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; guides combine, click again to hide)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2"/></svg></button><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (2×2 = centre, 3×3 = thirds)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns — drag up / down, scroll, or click and type"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows — drag up / down, scroll, or click and type"><button class="iconbtn" data-g="safe" title="Guides — Safe areas: action safe (93%) and title safe (90%) for landscape and square; in 9:16, where Reels / TikTok / Shorts put their buttons and captions"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><rect x="4" y="5" width="8" height="6" stroke-dasharray="1.6 1.2"/></svg></button><button class="iconbtn" data-g="diag" title="Guides — Diagonals: corner to corner"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M1.5 2.5l13 11M14.5 2.5l-13 11"/></svg></button><button class="iconbtn" data-g="persp" title="Guides — Perspective: lines running to a vanishing point in the middle"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M8 8L1.5 5.25M8 8L1.5 10.75M8 8l6.5-2.75M8 8l6.5 2.75M8 8L4.75 2.5M8 8l3.25-5.5M8 8l-3.25 5.5M8 8l3.25 5.5" stroke-width="1"/></svg></button><span class="gsep"></span><button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><g transform="rotate(45 8 8)"><path d="M4.5 6.2v2.6a3.5 3.5 0 0 0 7 0V6.2" stroke-width="2.4"/><path d="M4.5 2.4v2.2M11.5 2.4v2.2" stroke-width="2.4"/></g></svg></button><button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".9" fill="currentColor"/><circle cx="9.7" cy="7" r=".9" fill="currentColor"/></svg></button></div></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
@@ -394,7 +398,7 @@ output.mod{color:var(--env)}
         <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0.05" max="1" step="0.01" data-def="1" data-pct><output></output></div>
         <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
         <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div></div>
-      <div class="fxrow envrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Length (Hit: how long it stays at Sustain), Release (fade out after the Length, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><label>Env</label><div class="envtg"><button class="iconbtn" id="envView" title="Graph or sliders">≡</button><button class="iconbtn" id="envPrev" title="Preview: while you drag a point (or a slider), the effect plays its envelope over and over, so you can hear… see it">▶</button></div><canvas id="fxEnv" class="scope"></canvas>
+      <div class="fxrow envrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Length (Hit: how long it stays at Sustain), Release (fade out after the Length, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><div class="envhd"><span>Envelope</span><span class="line"></span><button class="iconbtn" id="envPrev" title="Preview: while you drag a point (or a slider), the effect plays its envelope over and over, so you can hear… see it"><svg viewBox="0 0 16 16" width="11" height="11" style="display:block;margin:auto"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button><button class="iconbtn" id="envView" title="Graph or sliders"></button></div><canvas id="fxEnv" class="scope"></canvas>
           <div id="fxEnvSl"><div class="sl"><span>A</span><input type="range" min="0" step="1" data-k="a"><output></output></div><div class="sl"><span>D</span><input type="range" min="0" step="1" data-k="d"><output></output></div><div class="sl"><span>S</span><input type="range" min="0" max="20" step="1" data-k="s"><output></output></div><div class="sl"><span>L</span><input type="range" min="0" step="1" data-k="l"><output></output></div><div class="sl"><span>R</span><input type="range" min="0" step="1" data-k="r"><output></output></div></div></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
@@ -503,10 +507,9 @@ output.mod{color:var(--env)}
 <div id="setPanel" class="modal" hidden>
   <div class="modalBox" style="width:min(520px,92vw)">
     <h2>Settings<span class="line"></span><button id="setClose" class="iconbtn" title="Close (Esc)">×</button></h2>
-    <div class="sub" style="margin-top:0"><span>Canvas</span><span class="line"></span></div>
-    <div class="row"><div class="seg" id="fmtSeg"></div><label class="tog" title="Vertical only: shade where Reels / TikTok / Shorts put their buttons and captions (preview only, not in the output)"><input type="checkbox" id="safeTog">Safe-zone guides</label></div>
-    <p class="note">The output's shape: landscape for screens and projectors, vertical for Reels / TikTok / Shorts / Stories, square or 4:5 for the feed. It's saved with the set; the output window and recordings follow it.</p>
-    <div class="sub"><span>Recording</span><span class="line"></span></div>
+    <div class="sub" style="margin-top:0" title="The output's shape: landscape for screens and projectors, vertical for Reels / TikTok / Shorts / Stories, square or 4:5 for the feed. It's saved with the set; the output window and recordings follow it."><span>Canvas</span><span class="info">i</span><span class="line"></span></div>
+    <div class="row"><div class="seg" id="fmtSeg"></div></div>
+    <div class="sub" title="Sound: an input, the Music player (top bar, straight from the file), or Tab audio (at Rec, Chrome asks which tab to share: tick &quot;Also share tab audio&quot;). H.264 at 30 fps is the safe choice for Facebook, Instagram and TikTok; a codec this browser can't encode falls back to H.264, with a message. WebM's frame rate is a maximum."><span>Recording</span><span class="info">i</span><span class="line"></span></div>
     <div class="row"><span class="lbl recLbl">Video</span><select id="recCodecSel" style="flex:1;min-width:0" title="Video codec and file type">
         <option value="h264">H.264 · MP4 — plays and uploads everywhere</option>
         <option value="hevc">HEVC (H.265) · MP4 — half the size, Apple / newer devices</option>
@@ -518,23 +521,19 @@ output.mod{color:var(--env)}
     <div class="row"><span class="lbl recLbl">Quality</span><div class="seg" id="recMbpsSeg" title="Video bit rate: higher is sharper on noisy, busy GIFs and makes bigger files. The upload sites re-encode anyway"><button data-m="6">6</button><button data-m="12">12</button><button data-m="20">20</button><button data-m="40">40</button></div><span class="lbl" style="color:var(--muted)">Mb/s</span></div>
     <div class="row"><span class="lbl recLbl">Sound</span><select id="recAudioSel" style="flex:1;min-width:0" title="Record a sound input with the video: your audio interface, a loopback / virtual cable carrying the DJ mix…"><option value="">No sound</option></select>
       <div class="seg" id="recACodecSeg" title="Sound codec in MP4: AAC is what the social sites expect; Opus sounds a little better for its size but some sites refuse it. WebM is always Opus"><button data-a="aac">AAC</button><button data-a="opus">Opus</button></div></div>
-    <div class="row"><span class="lbl recLbl">Music</span><button id="musLoad" title="Load a track: MP3, WAV, FLAC, OGG, M4A… (or drop an audio file here)">Load…</button><input id="musUrl" type="url" placeholder="…or a direct link to an audio file" style="flex:1;min-width:0" title="A direct link to an audio file (the site must allow it). YouTube / Spotify / SoundCloud pages can't be used: pick Tab audio as the sound instead"><input id="musFile" type="file" accept="audio/*" hidden></div>
-    <div class="row"><span class="lbl recLbl"></span><button id="musPlay" class="iconbtn" title="Play / pause the track (you hear it here; the recording takes it at full level)" disabled>▶</button><span id="musName" class="musName">no track</span><span id="musTime" class="musTime"></span></div>
-    <div class="row"><span class="lbl recLbl"></span><span class="lbl" style="color:var(--muted)">Level</span><input id="musVol" type="range" min="0" max="1" step="0.01" value="0.8" title="Listening level (the recording isn't affected)" style="flex:1;min-width:0"><label class="tog" title="Start the track from the top when a recording starts (on the bar) and stop it when the recording stops"><input type="checkbox" id="musSync" checked>With Rec</label><label class="tog"><input type="checkbox" id="musLoop">Loop</label></div>
-    <p class="note">Sound: an input, the Music player (straight from the file), or Tab audio (at Rec, Chrome asks which tab to share: tick "Also share tab audio"). H.264 at 30 fps is the safe choice for Facebook, Instagram and TikTok; a codec this browser can't encode falls back to H.264, with a message. WebM's frame rate is a maximum.</p>
+    <div class="row"><span class="lbl recLbl">Music</span><input id="musUrl" type="url" placeholder="A direct link to an audio file (or ⏏ in the top bar to load a file)" style="flex:1;min-width:0" title="A direct link to an audio file (the site must allow it). YouTube / Spotify / SoundCloud pages can't be used: pick Tab audio as the sound instead"><input id="musFile" type="file" accept="audio/*" hidden></div>
+    <div class="row"><span class="lbl recLbl"></span><span id="musName" class="musName">no track</span><span id="musTime" class="musTime"></span><label class="tog" title="Start the track from the top when a recording starts (on the bar) and stop it when the recording stops"><input type="checkbox" id="musSync" checked>With Rec</label></div>
     <div class="sub"><span>Interface</span><span class="line"></span></div>
-    <div class="row"><span class="lbl recLbl">Size</span><input id="uiZoomR" type="range" min="0.7" max="1.3" step="0.05" value="1" style="flex:1;min-width:0" title="Make the whole interface smaller for laptop screens (or bigger). VJif is made for 1280×720 and up. Double-click: 100%"><output id="uiZoomV" style="width:44px;text-align:right;font:400 11px var(--mono)"></output></div>
-    <div class="row"><span class="lbl recLbl">Undo</span><label class="tog" title="Show what an undo or redo changed, in a short message"><input type="checkbox" id="undoToastChk">Say what undo / redo changed</label></div>
+    <div class="row"><span class="lbl recLbl">Size</span><input id="uiZoomR" type="range" min="0.7" max="1.3" step="0.01" value="1" style="flex:1;min-width:0" title="Make the whole interface smaller for laptop screens (or bigger). VJif is made for 1280×720 and up. Double-click: 100%"><output id="uiZoomV" style="width:44px;text-align:right;font:400 11px var(--mono)"></output></div>
+    <div class="row"><label class="tog" title="Undo / redo show a short message saying what they changed"><input type="checkbox" id="undoToastChk">Verbose undo</label></div>
     <div class="sub"><span>Defaults</span><span class="line"></span></div>
     <div class="row"><button id="defSave" title="Your current effects (settings and styles), effect presets and transition presets become what every new set starts with, and what a reset (double-click, Ctrl+click) goes back to">Save current settings</button><button id="defReset" title="Back to VJif's own defaults (your saved ones are forgotten)">Reset</button><button id="defExport" title="Save your defaults to a file (to move them to another computer)">Export…</button><button id="defImport" title="Load defaults from a file">Import…</button><input id="defFile" type="file" accept=".json,application/json" hidden></div>
     <p class="note" id="defNote"></p>
-    <div class="sub"><span>Theme</span><span class="line"></span></div>
+    <div class="sub" title="Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black."><span>Theme</span><span class="info">i</span><span class="line"></span></div>
     <div id="themeBox"></div>
-    <p class="note">Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black.</p>
-    <div class="sub"><span>MIDI control</span><span class="line"></span></div>
+    <div class="sub" title="Pads, scenes, transition presets, effects and presets, layer on / off, blackout, freeze, tap and sync answer keys or buttons; layer opacity and effect amount follow a knob or fader. Mappings are kept in this browser (they belong to your controller, not to a set)."><span>MIDI control</span><span class="info">i</span><span class="line"></span></div>
     <div class="row"><select id="midiCtlIn" title="Which MIDI input controls VJif"><option value="all">All MIDI inputs</option></select><button id="midiLearn" class="accent" title="Click something, then press or move a control on your controller">Learn</button><button id="midiClear" title="Remove every mapping">Clear all</button></div>
     <div id="midiMap"></div>
-    <p class="note">Pads, scenes, transition presets, effects and presets, layer on / off, blackout, freeze, tap and sync answer keys or buttons; layer opacity and effect amount follow a knob or fader. Mappings are kept in this browser (they belong to your controller, not to a set).</p>
   </div>
 </div>
 <div id="learnBar" hidden><b>MIDI learn</b><span id="learnMsg"></span>
@@ -664,7 +663,7 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.30.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.31.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -685,7 +684,6 @@ let recFmt = recCodec.startsWith('vp') ? 'webm' : 'mp4';   // container, follows
 let recFps = [24, 25, 30, 50, 60].includes(+recLS('vjif-recfps', 30)) ? +recLS('vjif-recfps', 30) : 30;
 let recMbps = [6, 12, 20, 40].includes(+recLS('vjif-recmbps', 12)) ? +recLS('vjif-recmbps', 12) : 12;
 let recACodec = recLS('vjif-recacodec', 'aac') === 'opus' ? 'opus' : 'aac';
-let safeGuides = (() => { try { return localStorage.getItem('vjif-safe') !== '0'; } catch (e) { return true; } })();   // preview only, never in the output
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
 const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it flashes red)
@@ -783,15 +781,16 @@ async function renderText(spec, OW = W, OH = H){   // OW × OH: the frame it's d
   // centred on the ink, not on the font's em box: the tallest letter's top to the lowest letter's bottom
   const lh = px * 1.15, pad = Math.ceil(px * (S.ital ? 0.35 : 0.15)), ms = lines.map(l => x.measureText(l || ' '));
   const asc = Math.max(px * 0.2, ...ms.map(m => m.actualBoundingBoxAscent || px * 0.7)), dsc = Math.max(0, ...ms.map(m => m.actualBoundingBoxDescent || 0));
-  const tw = Math.ceil(Math.max(1, ...ms.map(m => m.width))), th = Math.ceil((lines.length - 1) * lh + asc + dsc);
+  const ls = x.letterSpacing ? S.track * px : 0;   // letter spacing also follows the last letter: left out, so the text stays centred
+  const tw = Math.ceil(Math.max(1, ...ms.map(m => m.width - ls))), th = Math.ceil((lines.length - 1) * lh + asc + dsc);
   let w, h;
-  if (S.cut){ w = Math.min(16000, S.marquee ? 2 * OW + tw + 2 * pad : Math.max(OW, tw + 2 * pad)); h = Math.max(OH, th + 2 * pad); }   // the matte grows when the text is bigger than the frame
+  if (S.cut){ w = Math.min(16000, S.marquee ? tw + 2 * pad : Math.max(OW, tw + 2 * pad)); h = Math.max(OH, th + 2 * pad); }   // the matte grows when the text is bigger than the frame; a scrolling one is only as wide as the text (drawClip fills the rest)
   else { w = Math.min(16000, tw + 2 * pad); h = th + 2 * pad; }
   cv.width = w; cv.height = h; setup();
   if (S.cut){ x.fillStyle = S.color; x.fillRect(0, 0, w, h); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; }
   else x.fillStyle = S.color;
   const y0 = h / 2 - ((lines.length - 1) * lh + dsc - asc) / 2;
-  lines.forEach((l, i) => x.fillText(l, w / 2, y0 + i * lh));
+  lines.forEach((l, i) => x.fillText(l, w / 2 + ls / 2, y0 + i * lh));
   const bmp = await createImageBitmap(cv);
   return { src: [bmp], durs: [1000], w, h, srcBytes: w * h * 4, textW: tw + 2 * pad };
 }
@@ -1241,7 +1240,7 @@ const fxGL = (() => {
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 swF[8], swT[8]; uniform int swN; varying vec2 uv;
+      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 swF[8], swT[8]; uniform float swR[8]; uniform int swN; varying vec2 uv;
       void main(){
         vec4 px = texture2D(tex, uv);
         if (px.a == 0.0){ gl_FragColor = vec4(0.0); return; }
@@ -1250,7 +1249,7 @@ const fxGL = (() => {
         else if (doKey){ vec3 d = c - key; float dsq = dot(d, d);
           if (dsq < t1sq){ float dist = sqrt(dsq); f = dist <= t0 ? 0.0 : floor((dist - t0) / span * 255.0 + 0.5) / 255.0; } }
         vec3 cs = c;                                   // colour swaps: an exact palette colour becomes another (the key still sees the original)
-        for (int i = 0; i < 8; i++){ if (i >= swN) break; vec3 e = abs(c - swF[i]); if (e.r < 1.5 && e.g < 1.5 && e.b < 1.5){ cs = swT[i]; break; } }
+        for (int i = 0; i < 8; i++){ if (i >= swN) break; vec3 e = abs(c - swF[i]); if (e.r < swR[i] && e.g < swR[i] && e.b < swR[i]){ cs = swT[i]; break; } }
         vec3 o = cs / 255.0;
         if (doHsv){
           vec3 c = cs;
@@ -1277,8 +1276,8 @@ const fxGL = (() => {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);            // mask rows are 1 byte per pixel, any width
-    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swN'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
-    const swF = new Float32Array(24), swT = new Float32Array(24);
+    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swR', 'swN'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const swF = new Float32Array(24), swT = new Float32Array(24), swR = new Float32Array(8);
     gl.uniform1i(U.tex, 0); gl.uniform1i(U.mtex, 1);
     let lost = false;
     cv.addEventListener('webglcontextlost', () => { lost = true; });
@@ -1293,8 +1292,8 @@ const fxGL = (() => {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
         gl.uniform3f(U.key, p.kr, p.kg, p.kb); gl.uniform1f(U.t0, p.t0); gl.uniform1f(U.t1sq, p.t1sq); gl.uniform1f(U.span, p.span);
         gl.uniform1f(U.H, p.H); gl.uniform1f(U.S, p.S); gl.uniform1f(U.V, p.V); gl.uniform1i(U.doKey, p.doKey); gl.uniform1i(U.doHsv, p.doHsv);
-        const sw = p.sw || []; swF.fill(0); swT.fill(0); sw.forEach((x, i) => { swF.set(x.slice(0, 3), i * 3); swT.set(x.slice(3), i * 3); });
-        gl.uniform3fv(U.swF, swF); gl.uniform3fv(U.swT, swT); gl.uniform1i(U.swN, sw.length);
+        const sw = p.sw || []; swF.fill(0); swT.fill(0); swR.fill(1.5); sw.forEach((x, i) => { swF.set(x.slice(0, 3), i * 3); swT.set(x.slice(3, 6), i * 3); swR[i] = x[6] || 1.5; });
+        gl.uniform3fv(U.swF, swF); gl.uniform3fv(U.swT, swT); gl.uniform1fv(U.swR, swR); gl.uniform1i(U.swN, sw.length);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         return cv;
@@ -1343,7 +1342,7 @@ function fxColor(c, p){
   if (p.doKey){ const dr = r - p.kr, dg = gr - p.kg, db = b - p.kb, dsq = dr*dr + dg*dg + db*db;
     if (dsq < p.t1sq){ const dist = Math.sqrt(dsq); f = dist <= p.t0 ? 0 : Math.round(255 * (dist - p.t0) / p.span); } }
   let rgb = c & 0xffffff, sr = r, sg = gr, sb = b;
-  if (p.sw) for (const x of p.sw) if (Math.abs(r - x[0]) < 1.5 && Math.abs(gr - x[1]) < 1.5 && Math.abs(b - x[2]) < 1.5){ sr = x[3]; sg = x[4]; sb = x[5]; rgb = sr | (sg << 8) | (sb << 16); break; }
+  if (p.sw) for (const x of p.sw){ const t = x[6] || 1.5; if (Math.abs(r - x[0]) < t && Math.abs(gr - x[1]) < t && Math.abs(b - x[2]) < t){ sr = x[3]; sg = x[4]; sb = x[5]; rgb = sr | (sg << 8) | (sb << 16); break; } }
   if (p.doHsv){ const o = hsvShift(sr, sg, sb, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
   return f * 16777216 + rgb;
 }
@@ -1389,7 +1388,7 @@ function fxParams(g, hsv = g.hsv){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
            region: g.key.region || 'all', seed: g.key.seed || null,
-           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, sw: (g.swap || []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to]) };
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, sw: (g.swap || []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5]) };   // tol: how close a pixel must be (covers near-identical colours)
 }
 // The worker gets the same functions as source text, so both paths run identical code.
 const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels].map(f => f.toString()).join('\n') + `
@@ -1590,7 +1589,7 @@ function onMidi(e){
 }
 function setClockSrc(v){
   clock.src = v; $('#clockSrc').value = v;
-  $('#bpm').disabled = v === 'midi'; $('#tapBtn').disabled = v === 'midi';
+  $('#bpm').disabled = v === 'midi'; $('#tapBtn').disabled = v === 'midi'; $('#bpmRound').disabled = v === 'midi';
   if (v === 'midi'){ clock.midiTicks = Math.round(clock.beat * 24); enableMidi(); }
   else { if (midiInput) midiInput.onmidimessage = null; $('#midiIn').hidden = true; $('#midiStat').textContent = ''; }
 }
@@ -2015,6 +2014,8 @@ function brbUI(){
   [['#brbBars', brb.bars], ['#brbScn', brb.scn], ['#brbTr', brb.tr]].forEach(([q, v]) => document.querySelectorAll(q + ' button').forEach(x => x.classList.toggle('on', x.dataset.v === String(v))));
 }
 $('#brbBtn').addEventListener('click', () => brb.on ? brbStop() : brbStart());
+$('#brbCfg').addEventListener('click', e => { e.stopPropagation(); $('#brbPop').hidden = !$('#brbPop').hidden; });
+document.addEventListener('pointerdown', e => { if (!$('#brbPop').hidden && !e.target.closest('#brbWrap')) $('#brbPop').hidden = true; });
 [['#brbBars', v => { brb.bars = +v; if (brb.on) brb.next = brbFirst(); }], ['#brbScn', v => { brb.scn = v; }], ['#brbTr', v => { brb.tr = v; }]].forEach(([q, f]) =>
   $(q).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; f(b.dataset.v); brbSave(); brbUI(); }));
 brbUI();
@@ -2114,7 +2115,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1 });   // an effect as a preset holds it
+const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, dith: fxCfg[i].dith || 0 });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -2238,7 +2239,12 @@ function syncFxUI(){
     segSet('#fxTgt', String(tgtKey(C.target)));
   }
   segSet('#fxMode', C.mode);
-  const A = E || C; $('#fxAmt').value = A.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(A.amt * 100) + '%';
+  const A = E || C, am = $('#fxAmt'), dd = E ? FX_DEFS[preEd] : selFx < NFX ? FX_DEFS[selFx] : null;
+  const palAmt = !!dd && dd.id === 'colour' && (A.style || dd.styles[0][0]) === 'pal';   // Colour › Palette: the Amount slider picks the palette
+  am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : 'Amt'; am.dataset.palAmt = palAmt ? '1' : '';
+  if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: FX_PALS.length - 1, step: 1 }); am.value = pi; am.dataset.def = 0; delete am.dataset.pct;
+    am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
+  else { Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = A.amt; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(A.amt * 100) + '%'; am.closest('.field').title = 'Amount: how strong'; }
   drawFxEnv(); syncEnvSl();
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
@@ -2258,23 +2264,27 @@ function syncFxUI(){
 let fxFitT = 0; addEventListener('resize', () => { clearTimeout(fxFitT); fxFitT = setTimeout(syncFxUI, 150); });
 if (document.fonts) document.fonts.ready.then(() => setTimeout(syncFxUI, 50));
 $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
-  const S = fxSt[selFx]; S.held = false; S.on = false; S.b0 = -1e9;     // switching mode stops it…
-  fxConf(selFx).mode = b.dataset.v; if (b.dataset.v === 'latch'){ S.on = true; S.t0 = clock.beat; }   // …except Latch, which starts on
+  const S = fxSt[selFx], C = fxConf(selFx), now = clock.beat, playing = fxLevel(selFx, now) > 0.001, v = b.dataset.v;
+  const ad = (C.att || 0) + (C.dec || 0);
+  S.held = false; S.on = false; S.b0 = -1e9; C.mode = v;
+  if (v === 'latch'){ S.on = true; S.t0 = now - ad - 1e-6; }               // Latch starts on, straight at Sustain (no Attack: it was a mode change, not a hit)
+  else if (playing){                                                       // Hold / Hit: what was playing fades out over Release
+    if (v === 'hit') S.b0 = now - ad - (C.len || 0) - 1e-6; else { S.t0 = now - ad - 1e-6; S.rel = now; } }
   syncFxUI(); });
 const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NFX].fx[preEd] : null;   // what the effect-level controls change
 $('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
 $('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.style = b.dataset.v; syncFxUI(); } });
-$('#fxAmt').addEventListener('input', e => { (fxEd() || fxConf(selFx)).amt = +e.target.value; syncFxUI(); });
+$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
 const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const envGeo = (C, w, h, d) => {
   const ia = optIdx(FX_ATTS, C.att || 0), id = optIdx(FX_ATTS, C.dec || 0), il = optIdx(FX_LENS, C.len || 0), ir = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode));
   const hit = C.mode === 'hit', sus = C.sus ?? 1, base = 7 * d, n = ia + id + (hit ? il : 3) + ir;
-  const u = fxEnvDrag && fxEnvDrag.u ? fxEnvDrag.u : (w - 4 * base - 4 * d) / Math.max(8, n + 6);   // zoomed to fit, with room to drag further
+  const u = fxEnvDrag && fxEnvDrag.u ? fxEnvDrag.u : (w - 7 * d - 4 * base - 4 * d) / Math.max(8, n + 6);   // zoomed to fit, with room to drag further
   const top = 4 * d, bot = h - 4 * d, ys = bot - (bot - top) * sus;
-  const xA = 2 * d + base + ia * u, xD = xA + base + id * u, xL = xD + (hit ? base + il * u : base + 6 * u * 0.5), xR = xL + base + ir * u;
-  return { ia, id, il, ir, base, u, top, bot, ys, xA, xD, xL, xR, hit, sus };
+  const x0 = 7 * d, xA = x0 + (ia ? base + ia * u : 0), xD = xA + base + id * u, xL = xD + (hit ? base + il * u : base + 6 * u * 0.5), xR = xL + base + ir * u;
+  return { ia, id, il, ir, base, u, top, bot, ys, x0, xA, xD, xL, xR, hit, sus };
 };
 let fxEnvDrag = null, fxEnvHover = null;
 function drawFxEnv(){
@@ -2282,11 +2292,11 @@ function drawFxEnv(){
   const C = fxEnvConf(); if (!C) return;
   const G = envGeo(C, w, h, d);
   x.fillStyle = `rgba(${TC.envRgb},.12)`; x.strokeStyle = TC.env; x.lineWidth = 1.5 * d;
-  x.beginPath(); x.moveTo(2 * d, G.bot); x.lineTo(G.xA, G.top); x.lineTo(G.xD, G.ys); x.lineTo(G.xL, G.ys);
+  x.beginPath(); x.moveTo(G.x0, G.bot); x.lineTo(G.xA, G.top); x.lineTo(G.xD, G.ys); x.lineTo(G.xL, G.ys);
   if (G.hit){ for (let k = 1; k <= 12; k++){ const q = k / 12; x.lineTo(G.xL + (G.xR - G.xL) * q, G.bot - (G.bot - G.ys) * (1 - q) * (1 - q)); } }
   else x.lineTo(G.xR, G.bot);
-  x.lineTo(2 * d, G.bot); x.closePath(); x.fill();
-  x.beginPath(); x.moveTo(2 * d, G.bot); x.lineTo(G.xA, G.top); x.lineTo(G.xD, G.ys);
+  x.lineTo(G.x0, G.bot); x.closePath(); x.fill();
+  x.beginPath(); x.moveTo(G.x0, G.bot); x.lineTo(G.xA, G.top); x.lineTo(G.xD, G.ys);
   if (!G.hit){ x.stroke(); x.setLineDash([3 * d, 3 * d]); x.beginPath(); x.moveTo(G.xD, G.ys); x.lineTo(G.xL, G.ys); x.stroke(); x.setLineDash([]); x.beginPath(); x.moveTo(G.xL, G.ys); x.lineTo(G.xR, G.bot); }
   else { x.lineTo(G.xL, G.ys); for (let k = 1; k <= 12; k++){ const q = k / 12; x.lineTo(G.xL + (G.xR - G.xL) * q, G.bot - (G.bot - G.ys) * (1 - q) * (1 - q)); } }
   x.stroke();
@@ -2314,7 +2324,7 @@ function fxEnvMove(e){
   if (!fxEnvDrag) return; const C = fxEnvConf(); if (!C) return; const cv = $('#fxEnv'), r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
   const px = (e.clientX - r.left) / r.width * cv.width, py = (e.clientY - r.top) / r.height * cv.height, G = envGeo(C, cv.width, cv.height, d);
   const idx = (from, n) => clamp(Math.round((px - from - G.base) / G.u), 0, n);
-  if (fxEnvDrag.k === 'a') C.att = FX_ATTS[idx(2 * d, FX_ATTS.length - 1)][0];
+  if (fxEnvDrag.k === 'a') C.att = FX_ATTS[px - G.x0 < G.base / 2 ? 0 : idx(G.x0, FX_ATTS.length - 1)][0];
   else if (fxEnvDrag.k === 'd'){ C.dec = FX_ATTS[idx(G.xA, FX_ATTS.length - 1)][0]; C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; }
   else if (fxEnvDrag.k === 'l') C.len = FX_LENS[idx(G.xD, FX_LENS.length - 1)][0];
   else C.rel = FX_RELS[idx(G.xL, FX_RELS.length - 1)][0];
@@ -2330,6 +2340,8 @@ $('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; envPrevStop(
 let envPrevOn = (() => { try { return localStorage.getItem('vjif-envprev') !== '0'; } catch (e) { return true; } })();
 let envSliders = (() => { try { return localStorage.getItem('vjif-envview') === 'sl'; } catch (e) { return false; } })();
 let fxPrev = null, fxPrevSig = '';
+const ENV_IC_SL = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6" fill="currentColor"/><circle cx="11" cy="8" r="1.6" fill="currentColor"/><circle cx="7.5" cy="12" r="1.6" fill="currentColor"/></svg>';
+const ENV_IC_GRAPH = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M1.5 13.5L4 3l3 5h4l3.5 5.5"/></svg>';
 function envPrevStart(){ if (envPrevOn && selFx < NFX) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }
 function envPrevChanged(C){ const sg = [C.att, C.dec, C.sus, C.len, C.rel].join(); if (fxPrev && sg !== fxPrevSig) fxPrev.b0 = clock.beat; fxPrevSig = sg; }
 function envPrevStop(){ if (fxPrev) fxPrev.loop = false; }
@@ -2340,7 +2352,7 @@ function fxPrevLevel(i, C, b){
   let t = b - fxPrev.b0; if (t > end + 0.5){ if (fxPrev.loop){ fxPrev.b0 = b; t = 0; } else { fxPrev = null; return 0; } }
   if (t < top) return fxAD(C, t); const x = rel > 0 ? (t - top) / rel : 1; return x < 1 ? fxAD(C, top) * (1 - x) * (1 - x) : 0;
 }
-const syncEnvTg = () => { $('#envPrev').classList.toggle('on', envPrevOn); $('#fxEnvRow').classList.toggle('sliders', envSliders); $('#envView').textContent = envSliders ? '◿' : '≡'; $('#envView').title = envSliders ? 'Show the envelope as a graph' : 'Show the envelope as sliders'; };
+const syncEnvTg = () => { $('#envPrev').classList.toggle('on', envPrevOn); $('#fxEnvRow').classList.toggle('sliders', envSliders); $('#envView').innerHTML = envSliders ? ENV_IC_GRAPH : ENV_IC_SL; $('#envView').title = envSliders ? 'Show the envelope as a graph' : 'Show the envelope as sliders'; };
 $('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; try { localStorage.setItem('vjif-envprev', envPrevOn ? '1' : '0'); } catch (e) {} syncEnvTg(); });
 $('#envView').addEventListener('click', () => { envSliders = !envSliders; try { localStorage.setItem('vjif-envview', envSliders ? 'sl' : 'g'); } catch (e) {} syncEnvTg(); syncEnvSl(); drawFxEnv(); });
 const ENV_SL = { a: [() => FX_ATTS, 'att'], d: [() => FX_ATTS, 'dec'], l: [() => FX_LENS, 'len'], r: [() => FX_RELS, 'rel'] };
@@ -2501,12 +2513,18 @@ function drawClip(ctx, c, g, img){
   } else if (c.cl || c.ct || c.cr || c.cb){
     const sw = 1 - c.cl - c.cr, sh = 1 - c.ct - c.cb;
     ctx.drawImage(img, c.cl * img.width, c.ct * img.height, sw * img.width, sh * img.height, -bw/2 + c.cl*bw, -bh/2 + c.ct*bh, sw*bw, sh*bh);
-  } else ctx.drawImage(img, -bw/2, -bh/2, bw, bh);
+  } else {
+    ctx.drawImage(img, -bw/2, -bh/2, bw, bh);
+    const T = g.media && g.media.text;
+    if (T && T.cut && T.marquee){                     // a scrolling cut-out: the matte carries on past the letters, to the frame's edges and beyond
+      ctx.fillStyle = T.color || '#000'; ctx.beginPath(); ctx.rect(-1e5, -1e5, 2e5, 2e5); ctx.rect(-bw/2 + 0.5, -bh/2 + 0.5, bw - 1, bh - 1); ctx.fill('evenodd'); }
+  }
   ctx.restore();
 }
 // false only when the clip's (rotated) box is certainly outside the frame; tiled clips always draw
 function onScreen(c, g){
   if (c.tile) return true;
+  const T = g && g.media && g.media.text; if (T && T.cut && T.marquee) return true;   // its matte reaches past its box
   const G = clipGeom(c, g); if (!G) return false;
   const r = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), q = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
   return G.cx + r > 0 && G.cx - r < W && G.cy + q > 0 && G.cy - q < H;
@@ -2804,16 +2822,19 @@ function composeTransition(e, T){
   m.globalAlpha = 1;
 }
 // fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
-const pvOpt = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('vjif-pvopt')) || {}; } catch (e) {} const r = { guides: o.guides || '', stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
+const pvOpt = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('vjif-pvopt')) || {}; } catch (e) {} const r = { guides: o.guides, stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
   if (r.guides === 'thirds'){ r.guides = 'grid'; r.gx = r.gy = 3; } else if (r.guides === 'centre'){ r.guides = 'grid'; r.gx = r.gy = 2; }   // thirds = grid 3×3, centre = 2×2
+  if (typeof r.guides !== 'object' || !r.guides){ const g = r.guides; r.guides = {}; if (g) r.guides[g] = true;   // one guide at a time before 0.31; they combine now
+  }
   if (r.gx === 1 && r.gy === 1) r.gx = r.gy = 2; return r; })();
 // guide lines in output pixels: [xs, ys]
-function guideLines(kind = pvOpt.guides){
-  const div = n => Array.from({ length: Math.max(0, n - 1) }, (_, i) => (i + 1) / n);
-  if (kind === 'grid') return [div(pvOpt.gx).map(v => v * W), div(pvOpt.gy).map(v => v * H)];
-  const f = kind === 'golden' ? [0.382, 0.618] : [];
-  return [f.map(v => v * W), f.map(v => v * H)];
+function guideLines(G = pvOpt.guides){   // the straight guides (golden, grid): what a dragged GIF can stick to
+  const div = n => Array.from({ length: Math.max(0, n - 1) }, (_, i) => (i + 1) / n), xs = [], ys = [];
+  if (G.grid){ xs.push(...div(pvOpt.gx)); ys.push(...div(pvOpt.gy)); }
+  if (G.golden){ xs.push(0.382, 0.618); ys.push(0.382, 0.618); }
+  return [xs.map(v => v * W), ys.map(v => v * H)];
 }
+const anyGuide = () => Object.values(pvOpt.guides).some(Boolean);
 function ghostList(){
   const out = []; if (!pvOpt.ghosts) return out;
   for (const L of layers){ if (!L.on) continue; for (const c of L.clips){ const g = pads[c.pad].gif; if (g && g.trig === 'fade' && !(envLevel(c, g, clock.beat) > 0)) out.push([c, g]); } }
@@ -2881,11 +2902,12 @@ const FX_PALS = [
   ['GB Pocket', 'Game Boy Pocket: four olive greys', '1f1f1f 4d533c 8b956d c4cfa1'],
   ['GB Light', 'Game Boy Light, backlight on: four blue-greens', '004f3b 00694a 009a71 00b581'],
 ].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)); return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0) }; });
+const FX_DITH = Array.from({ length: 21 }, (_, i) => [i / 20, i ? i * 5 + '%' : 'off']);
 // styles that use the Rate row for something else: Colour › Palette picks the palette, Mirror › Kaleido zooms in
-const FX_KZ = [[1, '1×'], [1.25, '1.25×'], [1.5, '1.5×'], [2, '2×'], [3, '3×'], [4, '4×'], [6, '6×']];
+const FX_KZ = Array.from({ length: 101 }, (_, i) => { const v = +(1 + i * 0.05).toFixed(2); return [v, v.toFixed(2).replace(/\.?0+$/, '') + '×']; });   // 1× to 6×, fine steps
 function rateAlt(d, style){
   if (!d) return null;
-  if (d.id === 'colour' && style === 'pal') return { label: 'Palette', key: 'pal', def: 0, list: FX_PALS.map((p, i) => [i, p.n]), title: i => 'Palette: ' + FX_PALS[i].t };
+  if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, title: () => 'Dither: ordered dots between the palette colours, for in-between shades (off = flat areas)' };
   if (d.id === 'mirror' && style === 'kal') return { label: 'Zoom', key: 'kz', def: 1, list: FX_KZ, title: () => 'Zoom: into the middle of the kaleidoscope' };
   return null;
 }
@@ -2949,20 +2971,20 @@ const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; ret
 const FX_TARGETS = ['out', 0, 1, 2, 3];
 const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), dith: X.cfg.map(c => c.dith || 0) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ const m = M.get(tgtKey(C.target)); m.lv[i] = v; m.env[i] = l; } });
   X.pre.forEach((P, k) => {
     const l = fxLevel(NFX + k, b, X) * P.amt; if (!(l > 0)) return;
     for (const [i, e] of Object.entries(P.fx)){
       const m = M.get(tgtKey(e.target)), v = l * e.amt;
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.dith != null) m.dith[i] = e.dith; }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
-function fxU(b, { lv, env, amt, rate, style, size, pal, kz }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), st = i => Math.floor(b / rate[i]);
   const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
@@ -2971,7 +2993,8 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz }){
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
     mirror: S(7) === 3 ? env[7] : lv[7], mirS: S(7), mirN: Math.round(3 + 9 * clamp(amt[7], 0, 1)),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: S(9), crtSz: size[9], monoSz: size[0],
-    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, mirZ: kz ? kz[7] : 1 };
+    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, mirZ: kz ? kz[7] : 1 };
+  if (U.colrS === 3) U.colr = env[1] > 0.001 ? 1 : 0;   // a palette is on or off (Amount picks the palette)
   const jit = S(5) === 1, sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
   return U;
@@ -3008,7 +3031,7 @@ function makePost(){
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
-      uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ,
+      uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD,
                     glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, shakeZ;
       uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
@@ -3044,7 +3067,10 @@ function makePost(){
         an = abs(an - seg * 0.5);
         return vec2(cos(an), sin(an)) * r / a + 0.5;
       }
+      float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+      float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
       vec3 palSnap(vec3 c){                          // nearest palette colour, weighted like the eye (green counts most)
+        if (palD > 0.001) c += (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0))) - 0.47) * palD * 0.9 / pow(palN, 0.333);   // ordered dither, in chunky dots
         vec3 best = pal[0]; float bd = 1e9;
         for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = (c - pal[i]) * vec3(0.55, 0.75, 0.35); float e = dot(d, d); if (e < bd){ bd = e; best = pal[i]; } }
         return best; }
@@ -3130,7 +3156,7 @@ function makePost(){
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); return { t, f }; };
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
-    const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ',
+    const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD',
                    'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'shakeZ', 'time'];
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
@@ -3258,7 +3284,7 @@ function drawFrame(now){
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
   paintFxPads(clock.beat);
   const L = layers[target], sel = selClip(), gh = ghostList();
-  const osig = `${format},${safeGuides},${pvOpt.guides}${pvOpt.gx}x${pvOpt.gy},${drag && drag.snap ? drag.snap.x + ':' + drag.snap.y : ''},${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
+  const osig = `${format},${JSON.stringify(pvOpt.guides)}${pvOpt.gcol}${pvOpt.gx}x${pvOpt.gy},${drag && drag.snap ? drag.snap.x + ':' + drag.snap.y : ''},${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
     + '|' + gh.map(([c, g]) => { const G = clipGeom(c); return `${c.id},${G.cx},${G.cy},${G.hw},${G.hh},${G.a},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb},${g.fxVer},${g.startF},${g.crisp}`; }).join(';');
   if (force || osig !== redraw.overlay){ redraw.overlay = osig; drawOverlay(gh); }
   redraw.all = false;
@@ -3268,11 +3294,20 @@ function drawOverlay(gh = ghostList()){
   pctx.clearRect(0, 0, pv.width, pv.height);
   const k = view.w * dpr / W, L = layers[target], sel = selClip();
   if (gh.length) drawGhosts(gh, k, dpr);
-  if (pvOpt.guides){                                    // guide lines (preview only)
-    const [xs, ys] = guideLines(); pctx.save(); pctx.strokeStyle = pvOpt.gcol + '80'; pctx.lineWidth = dpr; pctx.setLineDash([4 * dpr, 4 * dpr]); pctx.beginPath();
+  if (anyGuide()){                                      // guide lines (preview only)
+    const G = pvOpt.guides, [xs, ys] = guideLines(), P = (fx, fy) => [(view.x + fx * view.w) * dpr, (view.y + fy * view.h) * dpr];
+    pctx.save(); pctx.strokeStyle = pvOpt.gcol + '80'; pctx.lineWidth = dpr; pctx.setLineDash([4 * dpr, 4 * dpr]); pctx.beginPath();
     xs.forEach(x => { const X = Math.round((view.x + x * view.w / W) * dpr) + 0.5; pctx.moveTo(X, view.y * dpr); pctx.lineTo(X, (view.y + view.h) * dpr); });
     ys.forEach(y => { const Y = Math.round((view.y + y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); });
-    pctx.stroke(); pctx.restore();
+    if (G.diag){ pctx.moveTo(...P(0, 0)); pctx.lineTo(...P(1, 1)); pctx.moveTo(...P(1, 0)); pctx.lineTo(...P(0, 1)); }
+    if (G.persp){ const c = P(0.5, 0.5);   // one-point perspective: rays from the middle to points along the edges
+      for (let k = 0; k <= 4; k++){ const f = k / 4; for (const p of [P(f, 0), P(f, 1), P(0, f), P(1, f)]){ pctx.moveTo(...c); pctx.lineTo(...p); } } }
+    pctx.stroke();
+    if (G.safe && format !== '9:16'){                   // action safe 93% and title safe 90% (SMPTE ST 2046-1)
+      pctx.setLineDash([6 * dpr, 4 * dpr]); pctx.font = `${10 * dpr}px ui-monospace, monospace`; pctx.fillStyle = pvOpt.gcol + 'aa';
+      for (const [m, t] of [[0.035, 'action safe'], [0.05, 'title safe']]){ const [x0, y0] = P(m, m), [x1, y1] = P(1 - m, 1 - m); pctx.strokeRect(x0, y0, x1 - x0, y1 - y0); pctx.fillText(t, x0 + 4 * dpr, y0 + (m < 0.04 ? -4 : 13) * dpr); }
+    }
+    pctx.restore();
   }
   if (drag && drag.snap){                               // the line a dragged GIF sticks to
     pctx.save(); pctx.strokeStyle = '#ff5bb0'; pctx.lineWidth = dpr; pctx.beginPath();
@@ -3280,7 +3315,7 @@ function drawOverlay(gh = ghostList()){
     if (drag.snap.y != null){ const Y = Math.round((view.y + drag.snap.y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); }
     pctx.stroke(); pctx.restore();
   }
-  if (format === '9:16' && safeGuides){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
+  if (format === '9:16' && pvOpt.guides.safe){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
     const x0 = (view.x + view.w * 0.06) * dpr, y0 = (view.y + view.h * 0.14) * dpr, x1 = (view.x + view.w * 0.86) * dpr, y1 = (view.y + view.h * 0.78) * dpr;
     pctx.save(); pctx.fillStyle = '#ffffff10';
     pctx.fillRect(view.x * dpr, view.y * dpr, view.w * dpr, y0 - view.y * dpr); pctx.fillRect(view.x * dpr, y1, view.w * dpr, (view.y + view.h) * dpr - y1);
@@ -3680,7 +3715,14 @@ function gifPalette(g){
     const d = x.getImageData(0, 0, m.w, m.h).data;
     for (let k = 0; k < d.length; k += 4) if (d[k + 3] > 127){ const c = (d[k] << 16) | (d[k + 1] << 8) | d[k + 2]; cnt.set(c, (cnt.get(c) || 0) + 1); }
   }
-  const top = [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 36).map(([c]) => [c >> 16, (c >> 8) & 255, c & 255]);
+  // colours the eye can't tell apart (a GIF with ten slightly different blacks) count as one swatch: the most used one, with a radius that its swap covers
+  const CL = 10, cl = [];
+  for (const [c, n] of [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 4000)){
+    const r = c >> 16, gg = (c >> 8) & 255, b = c & 255;
+    const k = cl.find(q => Math.abs(q.c[0] - r) <= CL && Math.abs(q.c[1] - gg) <= CL && Math.abs(q.c[2] - b) <= CL);
+    if (k){ k.n += n; k.rad = Math.max(k.rad, Math.abs(k.c[0] - r), Math.abs(k.c[1] - gg), Math.abs(k.c[2] - b)); } else cl.push({ c: [r, gg, b], n, rad: 0 });
+  }
+  const top = cl.sort((a, b) => b.n - a.n).slice(0, 36).map(q => Object.assign(q.c, { rad: q.rad }));
   const hsl = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 510, d = mx - mn; let h = 0;
     if (d){ h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; } return [h, d / 255, l]; };
   return m.palette = top.sort((a, b) => { const A = hsl(a), B = hsl(b), ga = A[1] < 0.12, gb = B[1] < 0.12;   // spectrum order: greys first (dark → light), then by hue
@@ -3710,7 +3752,7 @@ $('#swPal').addEventListener('click', e => {
 $('#swList').addEventListener('input', e => {
   const g = curGif(); if (!g || !e.target.matches('input[type=color]')) return;
   let x;
-  if (e.target.dataset.i === 'new'){ if (!swSel) return; x = { from: swSel.slice(), to: swSel.slice() }; g.swap.push(x); e.target.dataset.i = g.swap.length - 1; e.target.closest('.swr').classList.remove('pending'); }
+  if (e.target.dataset.i === 'new'){ if (!swSel) return; const pc = gifPalette(g).find(c => sameRgb(c, swSel)); x = { from: swSel.slice(), to: swSel.slice(), tol: pc && pc.rad ? pc.rad + 1.5 : undefined }; g.swap.push(x); e.target.dataset.i = g.swap.length - 1; e.target.closest('.swr').classList.remove('pending'); }
   else x = g.swap[+e.target.dataset.i];
   if (!x) return; x.to = hexRgb(e.target.value); e.target.parentElement.style.background = e.target.value; scheduleFx(g, 60);
 });
@@ -4135,14 +4177,14 @@ pv.addEventListener('pointermove', e => {
 pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.style.cursor = 'grab'; drag = null; commit(); });
 // preview tools: guides, stick, ghosts (per browser)
 const pvSave = () => { try { localStorage.setItem('vjif-pvopt', JSON.stringify(pvOpt)); } catch (e) {} redraw.all = true; };
-const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', b.dataset.g === pvOpt.guides));
+const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', !!pvOpt.guides[b.dataset.g]));
   $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
 pvUI();
-$('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; pvOpt.guides = pvOpt.guides === b.dataset.g ? '' : b.dataset.g; pvUI(); pvSave(); });
+$('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; const k = b.dataset.g; pvOpt.guides[k] = !pvOpt.guides[k]; if (!pvOpt.guides[k]) delete pvOpt.guides[k]; pvUI(); pvSave(); });
 $('#stickBtn').addEventListener('click', () => { pvOpt.stick = !pvOpt.stick; pvUI(); pvSave(); });
 $('#ghostBtn').addEventListener('click', () => { pvOpt.ghosts = !pvOpt.ghosts; pvUI(); pvSave(); });
 const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const o = k === 'gx' ? 'gy' : 'gx'; if (v === 1 && pvOpt[o] === 1) pvOpt[o] = 2;   // 1×1 draws nothing
-  pvOpt.guides = 'grid'; pvUI(); pvSave(); };
+  pvOpt.guides.grid = true; pvUI(); pvSave(); };
 [['#gridX', 'gx'], ['#gridY', 'gy']].forEach(([id, k]) => { const el = $(id);
   el.addEventListener('input', e => { const v = +e.target.value; if (v >= 1 && v <= 24) setGrid(k, v); });
   let dg = null;   // drag up / down to change, like the tempo; a click without moving types
@@ -4173,7 +4215,6 @@ function sizePreview(){
   pvScene.width = Math.round(view.w * dpr); pvScene.height = Math.round(view.h * dpr);
   const bar = $('#pvBar'); if (bar){ if (bar.parentElement !== wrap) wrap.appendChild(bar);   // the guides bar: halfway between the picture and the panel below
     const bh = bar.offsetHeight || 32, below = ah - (view.y + view.h); bar.style.top = Math.max(view.y + view.h + 2, Math.min(ah - bh - 2, view.y + view.h + (below - bh) / 2)) + 'px'; }
-  const mb = $('#musBar'); if (mb && !mb.hidden){ const mh = mb.offsetHeight || 30; mb.style.top = Math.max(2, (view.y - mh) / 2) + 'px'; }   // halfway between the top and the picture
   redraw.all = true;
 }
 new ResizeObserver(sizePreview).observe($('#pvWrap'));
@@ -4219,6 +4260,7 @@ bank.addEventListener('drop', e => {
 
 // ---------- header UI ----------
 const bpmEl = $('#bpm');
+$('#bpmRound').addEventListener('click', () => { if (clock.src !== 'internal') return; setBpm(Math.round(clock.bpm)); bpmEl.value = clock.bpm.toFixed(2); });
 function commitBpm(){
   const v = parseFloat(bpmEl.value);
   if (clock.src === 'internal' && isFinite(v)) setBpm(v);
@@ -4309,7 +4351,6 @@ $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true;
 $('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<button data-f="${k}" title="${d} · ${w}×${h}">${k}</button>`).join('');
 $('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
 syncFormatUI();
-$('#safeTog').checked = safeGuides;
 const syncRecFmt = () => {
   $('#recCodecSel').value = recCodec;
   document.querySelectorAll('#recFpsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.f === recFps));
@@ -4352,12 +4393,19 @@ document.querySelectorAll('.padsub').forEach(h => h.addEventListener('click', ()
 const syncZoomUI = () => { $('#uiZoomR').value = uiZoom; $('#uiZoomV').textContent = Math.round(uiZoom * 100) + '%'; };
 syncZoomUI();
 let uiZoomT = 0;
-function setUiZoom(z){ uiZoom = Math.round(z * 100) / 100;
+let uiZoomRaf = 0;
+function setUiZoom(z){ uiZoom = Math.round(clamp(z, 0.7, 1.3) * 100) / 100;
   try { localStorage.setItem('vjif-uizoom', uiZoom); } catch (err) {} syncZoomUI();
-  clearTimeout(uiZoomT); uiZoomT = setTimeout(() => {   // applied when the slider rests (re-laying out the whole page is heavy)
-    document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom); sizeNotice();
-    setTimeout(() => { sizePreview(); syncFxUI(); }, 50); }, 150); }
-$('#uiZoomR').addEventListener('input', e => setUiZoom(+e.target.value));
+  cancelAnimationFrame(uiZoomRaf); uiZoomRaf = requestAnimationFrame(() => {   // live, once per frame
+    document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom); sizeNotice(); sizePreview(); });
+  clearTimeout(uiZoomT); uiZoomT = setTimeout(syncFxUI, 200); }   // names refit once it rests
+// dragged by hand rather than by the browser: the slider grows and shrinks with the interface, so its own maths would chase the pointer
+let uzDrag = null;
+$('#uiZoomR').addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect();
+  uzDrag = { x: e.clientX, z: uiZoom, w: r.width }; e.currentTarget.setPointerCapture(e.pointerId); });
+$('#uiZoomR').addEventListener('pointermove', e => { if (uzDrag) setUiZoom(uzDrag.z + (e.clientX - uzDrag.x) / uzDrag.w * 0.6); });
+$('#uiZoomR').addEventListener('pointerup', () => { uzDrag = null; });
+$('#uiZoomR').addEventListener('input', e => { if (!uzDrag) setUiZoom(+e.target.value); });   // keyboard arrows
 $('#uiZoomR').addEventListener('dblclick', () => setUiZoom(1));
 // screens below 1280×720: a note, until it's big enough (or the interface is made smaller)
 function sizeNotice(){
@@ -4383,7 +4431,7 @@ $('#defFile').addEventListener('change', async e => { const f = e.target.files[0
     const o = { v: 1, saved: d.saved || Date.now() }; DEF_KEYS.forEach(k => { if (d[k] !== undefined) o[k] = d[k]; }); setUserDef(o); toast2('Defaults loaded: new sets and resets use them');
   } catch (err) { toast("Couldn't load those defaults: " + err.message); } });
 defNote();
-$('#safeTog').addEventListener('change', e => { safeGuides = e.target.checked; try { localStorage.setItem('vjif-safe', safeGuides ? '1' : '0'); } catch (err) {} redraw.all = true; });
+
 $('#midiLearn').addEventListener('click', startLearn);
 $('#learnDone').addEventListener('click', endLearn);
 $('#midiClear').addEventListener('click', () => { midiCtl.map = []; saveMidiCtl(); renderMidiCtl(); });
@@ -4791,24 +4839,31 @@ function musRecStart(){ if (!musSyncOn()) return; mus.el.currentTime = 0; musPla
 function musRecStop(){ if (musSyncOn()){ mus.el.pause(); musUI(); } }
 const mmss = t => isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '–:––';
 function musUI(){
-  $('#musName').textContent = mus.name || 'no track'; $('#musPlay').disabled = !mus.el.src;
-  $('#musPlay').textContent = mus.el.paused ? '▶' : '❚❚';
+  $('#musName').textContent = mus.name || 'no track'; $('#musPlay').disabled = $('#musStop').disabled = !mus.el.src;
+  $('#musPlay').innerHTML = mus.el.paused ? MUS_IC_PLAY : MUS_IC_PAUSE; $('#musPlay').classList.toggle('on', !mus.el.paused);
+  $('#musPlay').title = mus.el.src ? `${mus.el.paused ? 'Play' : 'Pause'}: ${mus.name} · ${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : 'Play / pause (no track: load one with ⏏)';
   $('#musTime').textContent = mus.el.src ? `${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : '';
-  const bar = $('#musBar'), was = bar.hidden; bar.hidden = !mus.el.src;   // the transport over the preview, while a track is loaded
-  $('#musPlay2').textContent = $('#musPlay').textContent; $('#musName2').textContent = mus.name || ''; $('#musTime2').textContent = $('#musTime').textContent;
-  if (was && !bar.hidden) sizePreview();
 }
-$('#musPlay2').addEventListener('click', () => mus.el.paused ? musPlay() : mus.el.pause());
 ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata'].forEach(ev => mus.el.addEventListener(ev, musUI));
 mus.el.addEventListener('error', () => { if (mus.el.src) toast(`Can't load ${mus.name}: ${mus.url ? 'not an audio format this browser plays' : "the link isn't an audio file, or the site doesn't allow it"}`); });
-$('#musLoad').addEventListener('click', () => $('#musFile').click());
+const MUS_IC_PLAY = $('#musPlay').innerHTML, MUS_IC_PAUSE = '<svg viewBox="0 0 16 16" width="14" height="14" style="display:block;margin:auto"><rect x="3.5" y="3" width="3" height="10" fill="currentColor"/><rect x="9.5" y="3" width="3" height="10" fill="currentColor"/></svg>';
+// the player's settings stay in this browser: loop, level, With Rec
+const musOpt = (() => { try { return JSON.parse(localStorage.getItem('vjif-mus')) || {}; } catch (e) { return {}; } })();
+const musSave = () => { try { localStorage.setItem('vjif-mus', JSON.stringify({ loop: mus.el.loop, vol: +$('#musVol').value, sync: $('#musSync').checked })); } catch (e) {} };
+mus.el.loop = !!musOpt.loop; if (musOpt.vol != null) $('#musVol').value = musOpt.vol; if (musOpt.sync != null) $('#musSync').checked = musOpt.sync;
+$('#musLoop').classList.toggle('on', mus.el.loop);
+$('#musEject').addEventListener('click', () => $('#musFile').click());
+$('#musStop').addEventListener('click', () => { mus.el.pause(); mus.el.currentTime = 0; musUI(); });
+$('#musVolBtn').addEventListener('click', e => { e.stopPropagation(); $('#musVolPop').hidden = !$('#musVolPop').hidden; });
+document.addEventListener('pointerdown', e => { if (!$('#musVolPop').hidden && !e.target.closest('.volwrap')) $('#musVolPop').hidden = true; });
+$('#musSync').addEventListener('change', musSave);
 $('#musFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) musSet(f, f.name); });
 $('#musUrl').addEventListener('keydown', e => { if (e.key !== 'Enter') return; const u = e.target.value.trim(); if (!u) return;
   if (/youtube\.com|youtu\.be|spotify\.com|soundcloud\.com/i.test(u)) return toast('That page can\'t be played here: open it in another tab and pick Tab audio as the sound');
   musSet(u, decodeURIComponent(u.split(/[?#]/)[0].split('/').pop() || 'link')); e.target.value = ''; });
 $('#musPlay').addEventListener('click', () => mus.el.paused ? musPlay() : mus.el.pause());
-$('#musVol').addEventListener('input', e => { if (mus.gain) mus.gain.gain.value = +e.target.value; });
-$('#musLoop').addEventListener('change', e => { mus.el.loop = e.target.checked; });
+$('#musVol').addEventListener('input', e => { if (mus.gain) mus.gain.gain.value = +e.target.value; musSave(); });
+$('#musLoop').addEventListener('click', () => { mus.el.loop = !mus.el.loop; $('#musLoop').classList.toggle('on', mus.el.loop); musSave(); });
 $('#setPanel').addEventListener('dragover', e => { if ([...e.dataTransfer.items].some(i => i.type.startsWith('audio/'))) e.preventDefault(); });
 $('#setPanel').addEventListener('drop', e => { const f = [...e.dataTransfer.files].find(f => f.type.startsWith('audio/')); if (!f) return; e.preventDefault(); e.stopPropagation(); musSet(f, f.name); });
 async function musRestore(){ try { const r = await store.get('music'); if (r) musSet(r.blob || r.url, r.name, false); } catch (e) {} }

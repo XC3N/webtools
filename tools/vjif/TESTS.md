@@ -17,13 +17,18 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {topbar} **Top bar** (0.31) — music (play, stop, loop, ⏏, level pop-up; loop / level survive a reload), BRB button + ▾ pop-up, ≈ rounds the tempo; at 1280×720 it's still one line.
+- {pal2} **Palette + Dither** (0.31) — F2 › Palette: Amount picks the palette, Rate = Dither; on a photo-like GIF try GB with Dither 50%.
+- {modes} **Mode switching** (0.31) — a slow-Attack effect switched to Latch is on at once; switched back to Hold it fades over Release.
+- {guides2} **Guides combined** (0.31) — grid + diagonals + safe areas together; 9:16 safe zones come from the bar now.
+- {ctrl} **Ctrl hint** (0.31) — hold Ctrl: nothing turns red until you hover a pad / scene / chip; Ctrl+Z doesn't flash.
+- {clus} **Near-identical colours** (0.31) — a GIF with several blacks: one swatch, its swap changes all of them.
 - {pal} **Colour › Palette** (0.30) — F2, style Palette: step through the palettes with the slider (CGA, EGA, C64, NES, Game Boys); Mirror › Kaleido Zoom.
 - {envz} **Envelope editing** (0.30) — short envelopes are easy to grab; the ▶ preview plays while dragging (try Decay); ≡ switches to sliders.
 - {crop} **Crop to content** (0.30) — a GIF with a see-through border (a sprite): Transform › Crop › To content.
 - {utoast} **Undo says what changed** (0.30) — move a GIF, change opacity, crop: Ctrl+Z names it; Settings › Interface › Undo turns it off.
 - {fold} **Fold pad sections** (0.30) — click QWE / ASD / ZXC: folded, keys still play, the panels below get the room.
 - {txc} **Lettering centring and cut-out** (0.30) — Size 150%: text in the middle; Cut-out with big text zooms out; dragging Size is smooth.
-- {mbar} **Music transport over the preview** (0.30) — load a track: play / pause, name and time above the picture; Prep's tag moves below it.
 - {drop} **Pad onto the preview** (0.26) — drag a pad onto the preview: on the edit layer, centred where dropped.
 - {link} **Link X / Y, From centre** (0.26) — Transform: scale sliders together; preview handles from the centre.
 - {ltr} **Layer transitions** (0.30: per layer, the select under each layer's opacity) — cut / armed / a preset; Shift+1–4 fades / wipes a layer in and out.
@@ -50,7 +55,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 
 ## Canvas formats
 - {c1} **Switch formats with GIFs playing** — 16:9 → 9:16 → 1:1 → 4:5: preview, effects and output window follow.
-- {c2} **Safe-zone guides in 9:16** — preview only, never in the output.
+- {c2} **Safe-zone guides in 9:16** (0.31: the Safe guide in the bar under the preview) — preview only, never in the output.
 - {c3} **Format is saved with the set** — save a 9:16 set, load a 16:9 one, reload the first: back in 9:16.
 
 ## New in 0.9–0.13
