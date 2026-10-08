@@ -211,6 +211,7 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 .lhead{display:flex;align-items:center;gap:7px}
 .lhead .lname{flex:1;min-width:0}
 .lrow{display:flex;gap:4px;margin-top:6px}
+.lbl{width:92px;flex:none}
 .lrow .lbl{flex:1;min-width:0;width:auto}
 .layer .lop{display:block;margin:6px 0 0}
 .lon{width:var(--ch);height:var(--ch);padding:0;font:600 12px var(--mono);color:var(--muted);flex:none}
@@ -220,7 +221,6 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: a hit swaps */
 .lclr{width:var(--ch);padding:0;flex:none;font:400 14px/1 var(--mono);color:var(--muted)}
 .lclr:hover{color:var(--danger);border-color:var(--danger)}
-.lbl{width:92px;flex:none}
 .lfillw{display:flex;align-items:center;gap:4px;flex:none}
 .lfillw input[type=color]{width:24px;padding:2px}
 .clips{display:flex;flex-wrap:nowrap;gap:3px;margin-top:6px;height:38px;overflow:visible}
@@ -634,9 +634,24 @@ output.mod{color:var(--env)}
 'use strict';
 /* @include common/controls.js */
 /* @include common/theme.js */
+// ---------- how VJif is put together ----------
+// Data, from the file up:
+//   media    one decoded file in the set's pool (frames, timing, size); shared, never edited (pool[], decodeAnim)
+//   instance a media on a pad, with that pad's own settings: timing, colour, trigger, automation (pads[i].gif, insts)
+//   clip     an instance placed on a layer: position, scale, crop, its own start beat (layers[l].clips[])
+//   layer    four of them, 1 Background … 4 Overlay: on/off, opacity, blend, its clips
+//   scene    what the 18 pads and 4 layers hold; nine per set, the live one *is* pads[] + layers[] (scenes[] holds the rest)
+//   set      the scenes, pool, effects and presets, saved in IndexedDB or exported as a .vjif ZIP
+// Three clocks:
+//   beats             clock.beat, from tap / internal tempo or MIDI clock; triggers, Snap, automation and transitions use it
+//   performance.now() ms; frame timing, clip start times (c.startTime) and Free-timing playback; beats ↔ ms use the current BPM
+//   encoder µs        MP4 recording: frame n is n / fps after the bar the take started on (sound is moved onto it)
+// The loop: frame() → step() each screen refresh (on the output window's rAF while it's open): clock, pending hits,
+// drawing into the master canvas, recording, then the UI.
+
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.28.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.28.2';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -997,7 +1012,8 @@ function rebuildSeq(g){
 // an instance goes away: its processed frames are freed; the decoded GIF stays in the pool
 function freeGif(g){
   g.keyGen++; g.maskGen++; clearTimeout(g.keyT); clearTimeout(g.maskT);
-  if (fxWorker){ fxWorker.postMessage({ id: g.uid, gen: g.keyGen }); fxWorker.postMessage({ id: 'm' + g.uid, gen: g.maskGen }); }   // stop any work on it
+  if (fxWorker){ fxWorker.postMessage({ id: g.uid, gen: g.keyGen }); fxWorker.postMessage({ id: 'm' + g.uid, gen: g.maskGen });   // stop any work on it…
+    fxWorker.postMessage({ id: g.uid, drop: true }); fxWorker.postMessage({ id: 'm' + g.uid, drop: true }); }   // …and forget it
   if (g.frames !== g.src) g.frames.forEach(f => f.close());
   g.frames = g.src; g.masks = null; insts.delete(g.uid);
 }
@@ -1291,7 +1307,7 @@ function scheduleFx(g, ms){
 }
 
 const hsvOn = g => g.hsv.h !== 0 || g.hsv.s !== 1 || g.hsv.v !== 1;
-// shift a color in HSV space; returns packed 0xRRGGBB
+// shift a colour in HSV space; returns packed 0xRRGGBB
 function hsvShift(r, gr, b, H, S, V){
   const mx = Math.max(r, gr, b), mn = Math.min(r, gr, b), d = mx - mn;
   let h = 0;
@@ -1303,7 +1319,7 @@ function hsvShift(r, gr, b, H, S, V){
   return (Math.round((rr + m) * 255) << 16) | (Math.round((gg + m) * 255) << 8) | Math.round((bb + m) * 255);
 }
 const yieldNow = () => (window.scheduler && scheduler.yield) ? scheduler.yield() : new Promise(r => setTimeout(r, 0));
-// result for one source color (0xBBGGRR): alpha factor 0..255 in the top byte, new color below (same byte order)
+// result for one source colour (0xBBGGRR): alpha factor 0..255 in the top byte, new colour below (same byte order)
 function fxColor(c, p){
   const r = c & 255, gr = (c >> 8) & 255, b = c >> 16;
   let f = 255;
@@ -1315,7 +1331,7 @@ function fxColor(c, p){
   return f * 16777216 + rgb;
 }
 // one frame in place: u = Uint32 view of RGBA pixels (0xAABBGGRR). GIFs have few distinct colors and long runs
-// of the same one, so each color is worked out once (cache) and repeats are copied.
+// of the same one, so each colour is worked out once (cache) and repeats are copied.
 // Connected key ("magic wand"): only key-coloured pixels joined to the seed are removed — the frame edges
 // (region 'edges') or the picked point (region 'point'). 4-way flood fill through pixels within tolerance + softness
 // (and through already-transparent ones). Returns one byte per pixel: 0 = removed … 255 = kept.
@@ -1363,7 +1379,9 @@ const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColo
 const latest = new Map(), pause = () => new Promise(r => setTimeout(r, 0));
 // The worker decodes its own copy from the original file, so the main thread never copies frames across.
 onmessage = async e => {
-  const m = e.data; latest.set(m.id, m.gen);
+  const m = e.data;
+  if (m.drop){ latest.delete(m.id); return; }              // the instance is gone: forget it
+  latest.set(m.id, m.gen);
   if (!m.blob) return;                                     // a cancel
   const { id, gen, blob, type, n, w, h, p } = m, maskOnly = m.kind === 'mask';
   let dec = null; const out = [];
@@ -1394,7 +1412,8 @@ onmessage = async e => {
 };`;
 let fxWorker = null;
 try {
-  fxWorker = new Worker(URL.createObjectURL(new Blob([FX_WORKER_SRC], { type: 'text/javascript' })));
+  const url = URL.createObjectURL(new Blob([FX_WORKER_SRC], { type: 'text/javascript' }));
+  fxWorker = new Worker(url); URL.revokeObjectURL(url);   // the worker has its script once it's made
   fxWorker.onmessage = e => {
     if (e.data.kind === 'mask') return maskMsg(e.data);
     const m = e.data, g = insts.get(m.id);
@@ -2314,7 +2333,7 @@ function fitScreen(c, fit){
 function toLocal(G, px, py){ const dx = px - G.cx, dy = py - G.cy, co = Math.cos(G.a), si = Math.sin(G.a); return [dx*co + dy*si, -dx*si + dy*co]; }
 function toWorld(G, lx, ly){ const co = Math.cos(G.a), si = Math.sin(G.a); return [G.cx + lx*co - ly*si, G.cy + lx*si + ly*co]; }
 function inClip(c, px, py){ const G = clipGeom(c); if (!G) return false; const [lx, ly] = toLocal(G, px, py); return Math.abs(lx) <= G.hw && Math.abs(ly) <= G.hh; }
-// RGBA of the clip's current frame under an output-space point (src = before color key)
+// RGBA of the clip's current frame under an output-space point (src = before colour key)
 const probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
 function sampleClip(c, px, py, src = false){
   const g = pads[c.pad].gif, G = clipGeom(c), [lx, ly] = toLocal(G, px, py);
