@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.29.0 — 2026-10-08
+
+### Effects
+- Full envelope (ADSR) for effects and effect presets: Attack (rise to full), Decay (fall to Sustain), Sustain (the level it rests at), Length (Hit only: how long it rests) and Release. Edited as a small graph (Env): drag the points; the value shows next to the point; double-click one for its default. A bar on the right shows the level right now.
+- Defaults sound as before (Attack 0, Decay 0, Sustain 100%).
+- Rate and Size moved up next to Amount, so the envelope gets the whole bottom row.
+
 ## 0.28.2 — 2026-10-08
 
 Last of the small code-review items; the bigger ones are on the test bench (Backlog, tagged "review").

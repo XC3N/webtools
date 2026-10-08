@@ -156,8 +156,9 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxTgt button[data-v]:not([data-v=out]){box-shadow:inset 0 -2px 0 var(--lc)}
 #fxEdit.pre #fxTgt{display:none}
 #fxEdit.pre.ent #fxTgt,#fxEdit.pre.ent #fxStyle{display:grid}#fxEdit.ent #fxPreList{display:none}#fxEdit.pre.ent.rated #fxRateRow,#fxEdit.pre.ent:not(.sized) #fxRateRow,#fxEdit.pre.ent.sized #fxSizeRow{display:grid}
-#fxEdit.ent #fxMode,#fxEdit.ent #fxLenRow,#fxEdit.ent #fxRelRow{opacity:.5}
-.pchip:hover{border-color:var(--sig)}#fxName.back{cursor:pointer}#fxName.back::before{content:'‹ ';opacity:.6}
+#fxEdit.ent #fxMode,#fxEdit.ent #fxEnvRow{opacity:.5}
+#fxEnvRow{flex:2.2!important}#fxEnv{width:100%;height:32px;min-width:120px;display:block;cursor:pointer;touch-action:none;background:var(--bg);border-radius:var(--r)}
+.pchip{cursor:pointer}.pchip:hover{border-color:var(--sig)}#fxName.back{cursor:pointer}#fxName.back::before{content:'‹ ';opacity:.6}
 #fxMode button{padding:0}
 @media (max-width:1760px){ .fxrow .field label{font-size:11px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
@@ -380,11 +381,10 @@ output.mod{color:var(--env)}
       <div class="fxrow"><span class="lcd" id="fxName">Mono</span><div class="seg" id="fxStyle"></div><span id="fxPreList"></span>
         <div class="seg" id="fxTgt" title="Where it plays: the whole output, or one layer (before the layer is blended)"><button data-v="out" title="The whole output">All</button><button data-v="0" title="Layer 1 only">1</button><button data-v="1" title="Layer 2 only">2</button><button data-v="2" title="Layer 3 only">3</button><button data-v="3" title="Layer 4 only">4</button></div></div>
       <div class="fxrow"><div class="seg" id="fxMode"><button data-v="hold" title="On while the key is held">Hold</button><button data-v="hit" title="Each hit plays at full for Length, then fades over Release (with Snap, it waits for the beat / bar)">Hit</button><button data-v="latch" title="Each hit switches it on / off">Latch</button></div>
-        <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div></div>
-      <div class="fxrow"><div class="field" id="fxLenRow" title="Length: how long a Hit stays at full before its release"><label for="fxLen">Len</label><input id="fxLen" type="range" min="0" step="1" data-def="0"><output></output></div>
-        <div class="field" id="fxRelRow" title="Release: how long it takes to fade out — after a Hit's length, or after letting go of Hold / switching off Latch"><label for="fxRel">Rel</label><input id="fxRel" type="range" min="0" step="1"><output></output></div>
+        <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0" max="1" step="0.01" data-def="1" data-pct><output></output></div>
         <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
-        <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div>
+        <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div></div>
+      <div class="fxrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Length (Hit: how long it stays), Release (fade out after the Length, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><label>Env</label><canvas id="fxEnv" class="scope"></canvas></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
     <div id="fxPre" title="Effect presets — with Caps Lock on, numpad 1–9 play a stored mix of effects · Caps+Shift+numpad or Store: store the effects that are on right now"></div>
@@ -557,7 +557,7 @@ output.mod{color:var(--env)}
       <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (up to 6 — a full layer flashes red and refuses). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
       <dt>Alt+pad key · Alt+click</dt><dd>Swap: the GIF takes its layer for itself — the others there go, and it takes over the selected one's placement (pads get a frame while Alt is held). If a Chrome extension uses the same Alt shortcut, the extension wins: change it at chrome://extensions/shortcuts</dd>
       <dt>Shift+pad key</dt><dd>Select that pad without playing it (same as right-click). Remove a GIF from its layer with Del or the × on its chip</dd>
-      <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · CRT · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt, scramble · CRT: split, VHS, scanlines, phosphor, degauss · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (full for Length, then fades over Release; with Snap it waits for the beat / bar) or Latch (on / off); Release also sets how Hold and Latch fade out; Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
+      <dt>F1–F12</dt><dd>Screen effects, on the whole output or on one layer (All / 1–4 in the effect settings) — Mono · Colour · Strobe · Poster / Zoom · Shake · Wobble · Mirror / Glitch · CRT · Pixel · Feedback, each with a few styles (e.g. Glitch: slices, blocks, melt, scramble · CRT: split, VHS, scanlines, phosphor, degauss · Feedback: trails, tunnel, spiral). Each is Hold (while held), Hit (with Snap it waits for the beat / bar) or Latch (on / off), shaped by its envelope (Env: drag the points): Attack rises to full, Decay falls to Sustain, a Hit stays there for Length, then Release fades it out (Hold and Latch fade out over Release when let go / switched off); Rate sets how fast the moving ones move, in beats. Right-click or Shift+F-key edits one without playing it</dd>
       <dt>0 · Ins</dt><dd>Hold 0: blackout (fades the output to black) · hold Ins: freeze the output on the current frame (effects still play over it)</dd>
       <dt>Numpad 1–9</dt><dd>Go to scene 1–9 (with Snap, on the next beat / bar; the tiles are laid out like the numpad). A scene is its own 18 pads (GIF settings included) and what the four layers hold; a new scene starts empty (Duplicate copies one); a set has nine</dd>
       <dt>Guides, Stick, Ghosts</dt><dd>Under the preview: guide lines over the preview (thirds, golden ratio, centre, or a grid of the columns × rows next to it; click again to hide; preview only), Stick (magnet: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges; hold Alt to place freely) and Ghosts (show or hide faded one-shot GIFs while they're invisible)</dd>
@@ -651,7 +651,7 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.28.2';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.29.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -2156,7 +2156,7 @@ function buildFx(){
   $('#fxPads').innerHTML = FX_DEFS.map((d, i) => fxTileHTML(i, FX_LABELS[i])).join('');
   $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, k + 1)).join('');
   document.querySelectorAll('#fxStrip .fxp').forEach(wireFxTile);
-  $('#fxLen').max = FX_LENS.length - 1; $('#fxRel').max = FX_RELS.length - 1; $('#fxRate').max = FX_RATES.length - 1; $('#fxSize').max = FX_SIZES.length - 1;
+  $('#fxRate').max = FX_RATES.length - 1; $('#fxSize').max = FX_SIZES.length - 1;
   document.querySelectorAll('#fxTgt button').forEach(b => { if (b.dataset.v !== 'out') b.style.setProperty('--lc', LCOL[+b.dataset.v]); });
 }
 const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
@@ -2222,10 +2222,7 @@ function syncFxUI(){
   }
   segSet('#fxMode', C.mode);
   const A = E || C; $('#fxAmt').value = A.amt; $('#fxAmt').nextElementSibling.textContent = Math.round(A.amt * 100) + '%';
-  const li = optIdx(FX_LENS, C.len); $('#fxLen').value = li; $('#fxLen').nextElementSibling.textContent = FX_LENS[li][1];
-  $('#fxLenRow').classList.toggle('dimmed', C.mode !== 'hit');
-  const ri = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode)); $('#fxRel').value = ri; $('#fxRel').nextElementSibling.textContent = FX_RELS[ri][1];
-  $('#fxRel').dataset.def = optIdx(FX_RELS, fxRelDef(C.mode));     // double-click: this mode's usual release
+  drawFxEnv();
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
@@ -2246,8 +2243,70 @@ $('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'
 $('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.style = b.dataset.v; syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { (fxEd() || fxConf(selFx)).amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
-$('#fxLen').addEventListener('input', e => { fxConf(selFx).len = FX_LENS[+e.target.value][0]; syncFxUI(); });
-$('#fxRel').addEventListener('input', e => { fxConf(selFx).rel = FX_RELS[+e.target.value][0]; syncFxUI(); });
+// ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
+const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
+const envGeo = (C, w, h, d) => {
+  const ia = optIdx(FX_ATTS, C.att || 0), id = optIdx(FX_ATTS, C.dec || 0), il = optIdx(FX_LENS, C.len || 0), ir = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode));
+  const base = 5 * d, u = (w - 4 * base - 4 * d) / (7 + 7 + 6 + 7), hit = C.mode === 'hit', sus = C.sus ?? 1;
+  const top = 4 * d, bot = h - 4 * d, ys = bot - (bot - top) * sus;
+  const xA = 2 * d + base + ia * u, xD = xA + base + id * u, xL = xD + (hit ? base + il * u : base + 6 * u * 0.5), xR = xL + base + ir * u;
+  return { ia, id, il, ir, base, u, top, bot, ys, xA, xD, xL, xR, hit, sus };
+};
+let fxEnvDrag = null, fxEnvHover = null;
+function drawFxEnv(){
+  const cv = $('#fxEnv'); if (!cv) return; const S = scopeCtx(cv); if (!S) return; const [x, w, h, d] = S;
+  const C = fxEnvConf(); if (!C) return;
+  const G = envGeo(C, w, h, d);
+  x.fillStyle = `rgba(${TC.envRgb},.12)`; x.strokeStyle = TC.env; x.lineWidth = 1.5 * d;
+  x.beginPath(); x.moveTo(2 * d, G.bot); x.lineTo(G.xA, G.top); x.lineTo(G.xD, G.ys); x.lineTo(G.xL, G.ys);
+  if (G.hit){ for (let k = 1; k <= 12; k++){ const q = k / 12; x.lineTo(G.xL + (G.xR - G.xL) * q, G.bot - (G.bot - G.ys) * (1 - q) * (1 - q)); } }
+  else x.lineTo(G.xR, G.bot);
+  x.lineTo(2 * d, G.bot); x.closePath(); x.fill();
+  x.beginPath(); x.moveTo(2 * d, G.bot); x.lineTo(G.xA, G.top); x.lineTo(G.xD, G.ys);
+  if (!G.hit){ x.stroke(); x.setLineDash([3 * d, 3 * d]); x.beginPath(); x.moveTo(G.xD, G.ys); x.lineTo(G.xL, G.ys); x.stroke(); x.setLineDash([]); x.beginPath(); x.moveTo(G.xL, G.ys); x.lineTo(G.xR, G.bot); }
+  else { x.lineTo(G.xL, G.ys); for (let k = 1; k <= 12; k++){ const q = k / 12; x.lineTo(G.xL + (G.xR - G.xL) * q, G.bot - (G.bot - G.ys) * (1 - q) * (1 - q)); } }
+  x.stroke();
+  const pts = [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]];
+  for (const [k, px, py] of pts){ x.fillStyle = fxEnvDrag && fxEnvDrag.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); }
+  const lab = `A ${FX_ATTS[G.ia][1]} · D ${FX_ATTS[G.id][1]} · S ${Math.round(G.sus * 100)}%${G.hit ? ' · L ' + FX_LENS[G.il][1] : ''} · R ${FX_RELS[G.ir][1]}`;
+  const k = fxEnvDrag ? fxEnvDrag.k : fxEnvHover;      // the value of the point under the pointer, next to it
+  if (k){ const P = pts.find(p => p[0] === k); if (P){
+    const t = k === 'a' ? `Attack ${FX_ATTS[G.ia][1]}` : k === 'd' ? `Decay ${FX_ATTS[G.id][1]} · Sustain ${Math.round(G.sus * 100)}%` : k === 'l' ? `Length ${FX_LENS[G.il][1]}` : `Release ${FX_RELS[G.ir][1]}`;
+    x.font = `600 ${10 * d}px ui-monospace, monospace`; const tw = x.measureText(t).width + 8 * d, tx = clamp(P[1] + 6 * d, 2 * d, w - tw - 2 * d), ty = 3 * d;
+    x.fillStyle = 'rgba(0,0,0,.75)'; x.fillRect(tx, ty, tw, 13 * d); x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText(t, tx + 4 * d, ty + 10 * d); } }
+  if (cv.dataset.lab !== lab){ cv.dataset.lab = lab; cv.title = 'Envelope: ' + lab + ' — drag a point; double-click: its default'; }
+  const lv = selFx < NFX || preEd == null ? fxLevel(selFx, clock.beat) : 0;   // where it is now
+  if (lv > 0.001){ x.fillStyle = '#fff'; x.fillRect(w - 5 * d, G.bot - (G.bot - G.top) * lv, 3 * d, (G.bot - G.top) * lv); }
+}
+const fxEnvConf = () => fxConf(selFx);              // the envelope belongs to the effect / preset (not to one effect inside a preset)
+$('#fxEnv').addEventListener('pointerdown', e => {
+  const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  const px = (e.clientX - r.left) / r.width * cv.width, py = (e.clientY - r.top) / r.height * cv.height, G = envGeo(C, cv.width, cv.height, d);
+  const pts = [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]];
+  let best = null; for (const p of pts){ const dd = Math.abs(p[1] - px) + Math.abs(p[2] - py) * 0.3; if (!best || dd < best.dd) best = { k: p[0], dd }; }
+  fxEnvDrag = { k: best.k }; cv.setPointerCapture(e.pointerId); fxEnvMove(e);
+});
+function fxEnvMove(e){
+  if (!fxEnvDrag) return; const C = fxEnvConf(); if (!C) return; const cv = $('#fxEnv'), r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  const px = (e.clientX - r.left) / r.width * cv.width, py = (e.clientY - r.top) / r.height * cv.height, G = envGeo(C, cv.width, cv.height, d);
+  const idx = (from, n) => clamp(Math.round((px - from - G.base) / G.u), 0, n);
+  if (fxEnvDrag.k === 'a') C.att = FX_ATTS[idx(2 * d, FX_ATTS.length - 1)][0];
+  else if (fxEnvDrag.k === 'd'){ C.dec = FX_ATTS[idx(G.xA, FX_ATTS.length - 1)][0]; C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; }
+  else if (fxEnvDrag.k === 'l') C.len = FX_LENS[idx(G.xD, FX_LENS.length - 1)][0];
+  else C.rel = FX_RELS[idx(G.xL, FX_RELS.length - 1)][0];
+  drawFxEnv(); paintFxPads(clock.beat);
+}
+$('#fxEnv').addEventListener('pointermove', e => { if (fxEnvDrag) return fxEnvMove(e);
+  const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
+  const k = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
+  if (k !== fxEnvHover){ fxEnvHover = k; drawFxEnv(); } });
+$('#fxEnv').addEventListener('pointerleave', () => { fxEnvHover = null; drawFxEnv(); });
+$('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; drawFxEnv(); });
+$('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
+  const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
+  const near = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
+  if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = 0; else C.rel = fxRelDef(C.mode);
+  drawFxEnv(); });
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (X){ X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); } });
 $('#fxRate').addEventListener('input', e => { const X = fxEd(); if (X){ X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); } });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
@@ -2741,7 +2800,7 @@ const fxRelDef = mode => mode === 'hit' ? 1 : FX_REL;
 function fxMigrate(c){ if (!c || c.rel !== undefined || !Object.keys(c).length) return c;
   if (c.mode === 'hit'){ c.rel = c.len ?? 1; c.len = 0; } else c.rel = FX_REL; return c; }
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
-const fxFactory = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, len: 0, rel: fxRelDef(d.mode), rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: d.sizeDef || 64 }));
+const fxFactory = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, att: 0, dec: 0, sus: 1, len: 0, rel: fxRelDef(d.mode), rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: d.sizeDef || 64 }));
 const fxDefaults = () => userDef.fx ? JSON.parse(JSON.stringify(userDef.fx)) : fxFactory();   // your own defaults (Settings › Defaults) if saved
 const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px'], [128, '128 px'], [192, '192 px']];
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
@@ -2751,21 +2810,28 @@ const FXP_KEYS = Array.from({ length: 9 }, (_, i) => 'Numpad' + (i + 1)), FXP_LA
 let capsOn = false;                                   // Caps Lock: the numpad plays effect presets instead of scenes
 function setCaps(on){ if (on === capsOn) return; capsOn = on; $('#scenes').classList.toggle('fxmode', on); $('#fxPre').classList.toggle('armed', on); $('#capsTag').hidden = !on; $('#npTag').hidden = on; }
 ['keydown', 'keyup', 'pointerdown', 'pointermove'].forEach(t => addEventListener(t, e => { if (e.getModifierState) setCaps(e.getModifierState('CapsLock')); }, true));
-const fxPreDefaults = () => userDef.fxPre ? JSON.parse(JSON.stringify(userDef.fxPre)) : FXP_KEYS.map(() => ({ mode: 'hold', amt: 1, len: 0, rel: FX_REL, fx: {} }));
+const fxPreDefaults = () => userDef.fxPre ? JSON.parse(JSON.stringify(userDef.fxPre)) : FXP_KEYS.map(() => ({ mode: 'hold', amt: 1, att: 0, dec: 0, sus: 1, len: 0, rel: FX_REL, fx: {} }));
 let fxCfg = fxDefaults(), fxPre = fxPreDefaults(), selFx = 0;
 const NFX = FX_DEFS.length;
 const fxSt = [...FX_DEFS, ...FXP_KEYS].map(() => ({ held: false, on: false, b0: -1e9, rel: -1e9 }));
 const fxConf = i => i < NFX ? fxCfg[i] : fxPre[i - NFX];
 // effect state: the editor's own, or (in Prep) the copy the output keeps playing
 const fxLive = () => ({ cfg: fxCfg, pre: fxPre, st: fxSt });
+// envelope: Attack rises to full, Decay falls to Sustain; a Hit stays there for Length, Hold / Latch while on; then Release
+function fxAD(C, t){
+  const a = C.att || 0, dc = C.dec || 0, s = C.sus ?? 1;
+  if (t < 0) return 0; if (t < a) return t / a;
+  const u = t - a; return u < dc ? 1 - (1 - s) * (u / dc) : s;
+}
 function fxLevel(i, b, X = null){
   const C = X ? (i < NFX ? X.cfg[i] : X.pre[i - NFX]) : fxConf(i), S = (X ? X.st : fxSt)[i];
   const rel = C.rel ?? fxRelDef(C.mode);
-  if (C.mode === 'hit'){                             // full for Length, then fades over Release
-    const t = b - S.b0; if (t < 0) return 0; if (t < (C.len || 0)) return 1;
-    const x = rel > 0 ? (t - (C.len || 0)) / rel : 1; return x < 1 ? (1 - x) * (1 - x) : 0; }
-  if (C.mode === 'hold' ? S.held : S.on) return 1;
-  const x = rel > 0 ? (b - S.rel) / rel : 1; return x >= 0 && x < 1 ? 1 - x : 0;
+  if (C.mode === 'hit'){
+    const t = b - S.b0; if (t < 0) return 0;
+    const top = (C.att || 0) + (C.dec || 0) + (C.len || 0); if (t < top) return fxAD(C, t);
+    const from = fxAD(C, top), x = rel > 0 ? (t - top) / rel : 1; return x < 1 ? from * (1 - x) * (1 - x) : 0; }
+  if (C.mode === 'hold' ? S.held : S.on) return fxAD(C, b - (S.t0 ?? -1e9));
+  const from = fxAD(C, (S.rel ?? b) - (S.t0 ?? -1e9)), x = rel > 0 ? (b - S.rel) / rel : 1; return x >= 0 && x < 1 ? from * (1 - x) : 0;
 }
 // with Snap on, a Hit waits for the next beat / bar (a hit just after one counts as on it); Hold and Latch are instant
 // beats per snap step; 0 when Snap is off or a MIDI clock is stopped (nothing to wait for)
@@ -2780,8 +2846,8 @@ function snapBeat(b){
 function fxDown(i){
   const C = fxConf(i), S = fxSt[i], b = clock.beat;
   if (C.mode === 'hit') S.b0 = snapBeat(b);
-  else if (C.mode === 'hold') S.held = true;
-  else { S.on = !S.on; if (!S.on){ S.rel = b; return; } }   // switching a Latch off leaves the editor where it is
+  else if (C.mode === 'hold'){ S.held = true; S.t0 = b; }
+  else { S.on = !S.on; if (!S.on){ S.rel = b; return; } S.t0 = b; }   // switching a Latch off leaves the editor where it is
   if (selFx !== i){ selFx = i; syncFxUI(); }
 }
 function fxUp(i){ const S = fxSt[i]; if (S.held){ S.held = false; S.rel = clock.beat; } }
@@ -3624,6 +3690,7 @@ function scopeCtx(cv){
 }
 const clipOf = p => { for (const L of layers){ const c = L.clips.find(c => c.pad === p); if (c) return c; } return null; };
 function drawScopes(){
+  if (fxSt.some((S, i) => fxLevel(i, clock.beat) > 0) || fxEnvDrag) drawFxEnv();
   const g = curGif(); if (!g) return;
   if (gTab === 'auto') drawLfoScope(g); else if (gTab === 'trig') drawEnvScope(g);
 }

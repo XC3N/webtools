@@ -23,6 +23,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {vhs} **Glitch › VHS** (0.26).
 - {crt} **CRT effect** (0.27) — F10: Scanlines, Phosphor, Degauss (as a Hit with a long Release).
 - {res} **GIF Resolution** (0.27) — Play › Resolution ½ / ¼ on a big GIF: same size on screen, MEM drops; save / reload keeps it.
+- {adsr} **Effect envelope** (0.29) — Env graph: Zoom as a Hit with Attack 1/8, Decay 1/4, Sustain 40%, Length 1 bar; Mono Hold with a slow Attack and Release; a preset with its own envelope.
 - {pix} **Pixel art kept small** (0.28.1) — load the 1200×1056 Game Boy GIF: the info line says pixel art ×8, MEM is a few MB instead of 600+, it looks identical (crisp). A photo-like GIF says nothing.
 - {phold} **Hold to remove from the pool** (0.28.1) — Pool: hover a GIF that's on pads, press and hold ×: the bar sweeps, then it's gone from the pool, its pads and layers (other scenes too). A quick click says where it is.
 - {rhid} **Recording while the tab is hidden** (0.28.1) — no output window, start a free take, switch to another tab for 20 s, come back, stop: the clip moves the whole time.
