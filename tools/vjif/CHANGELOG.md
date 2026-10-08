@@ -4,6 +4,29 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.32.0 — 2026-10-08
+
+### Tempo and MIDI
+- MIDI clock is a MIDI button in the top bar (on / off) instead of a menu that widened the bar. The clock input is chosen in Settings › MIDI (the last one used, or the only one plugged in, is picked by itself).
+- While MIDI waits, "no clock" or "no input" shows where the beat dots are, and the button's light blinks; it lights up steadily once the clock runs. MIDI on with no input chosen: the settings gear flashes red and a message says so.
+
+### BRB
+- The light on BRB glows when it's on (and blinks in the last bar before a change); before, it was dark on dark.
+- BRB and its ▾ are one split button.
+- In order follows the numpad's reading order: 7 8 9, 4 5 6, 1 2 3.
+
+### Layers
+- On / off transition per layer is a row of buttons instead of a menu: ✕ cut, ★ the armed preset, 1–9 a fixed preset.
+
+### Preview
+- Shift while dragging a GIF: only its centre sticks, to the guides, the middle and the edges (works with Stick off too).
+- Guides bar: colour, then grid and its size, then golden, safe, diagonals, perspective; Stick and Ghosts stay at the end. The on state is a quieter outline.
+
+### Interface
+- Settings › Defaults: tick which parts (effects, effect presets, transitions) Save, Reset, Export and Import work on, e.g. export only your transitions.
+- Text window: Enter puts the text on the pad, Shift+Enter starts a new line (Enter confirms everywhere).
+- Performance: the screen rate (FPS x / 60) is measured from a whole second and snapped to real refresh rates; it could read 360 after one short frame gap.
+
 ## 0.31.0 — 2026-10-08
 
 ### Top bar

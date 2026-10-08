@@ -55,7 +55,9 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #bpm::-webkit-outer-spin-button,#bpm::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 #bpm.pending{border-color:var(--sig);outline:1px solid var(--sig)}
 #recBtn{min-width:62px;font-variant-numeric:tabular-nums}#recLed.on{background:#ff4040;box-shadow:0 0 0 2px rgba(255,64,64,.25)}#recLed.wait{background:#ff4040;animation:wait .5s steps(1) infinite}
-#beats{display:flex;gap:4px}#beats i{width:8px;height:8px;border-radius:50%;background:var(--track)}
+#beats{display:flex;gap:4px;position:relative;align-items:center;min-height:12px}#midiStat{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:600 9px var(--mono);letter-spacing:.04em;color:#ffb000;white-space:nowrap;text-transform:uppercase}#beats.wait i{visibility:hidden}#beats.wait #midiStat{display:block}
+#midiLed.on{background:var(--sig);box-shadow:0 0 6px var(--sig)}#midiLed.wait{background:#ffb000;animation:ledblink .5s steps(1) infinite}
+#setBtn.alert{animation:gearAlert .6s steps(1) infinite}@keyframes gearAlert{50%{color:#ff3b3b;border-color:#ff3b3b}}#beats i{width:8px;height:8px;border-radius:50%;background:var(--track)}
 #beats i.on{background:var(--sig)}
 #beats i:first-child.on{background:var(--ink)}
 /* meters: memory and load, one LCD strip in the header */
@@ -97,7 +99,8 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .scgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 #brbPop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);padding:8px;box-shadow:0 6px 18px #0009;display:grid;gap:6px;width:250px}#brbPop[hidden]{display:none}
 .poph{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.poprow{display:flex}.poprow .seg{flex:1}#brbCfg{width:18px;margin-left:-1px}
-#brbBtn{flex:none;width:76px;font-variant-numeric:tabular-nums;padding:0 6px}#brbLed.on{background:var(--sigtxt)}#brbLed.wait{background:var(--sigtxt);animation:ledblink .25s steps(1) infinite}
+#brbBtn{flex:none;width:76px;font-variant-numeric:tabular-nums;padding:0 6px}#brbLed.on{background:var(--sig);box-shadow:0 0 6px var(--sig)}#brbLed.wait{animation:ledblink .25s steps(1) infinite}
+#brbWrap{display:inline-flex}#brbWrap>#brbBtn{border-top-right-radius:0;border-bottom-right-radius:0}#brbWrap>#brbCfg{border-top-left-radius:0;border-bottom-left-radius:0;border-left:1px solid var(--edge);margin-left:0}
 .scene{position:relative;height:40px;padding:0;border:0;border-radius:var(--r);background:var(--bg) center/cover no-repeat;cursor:pointer}
 .scene:hover{box-shadow:0 0 0 1px var(--edge-2)}
 .scene .k{position:absolute;left:3px;top:3px;font:600 11px/1 var(--mono);color:#fff;background:#000b;border-radius:2px;padding:2px 4px}
@@ -175,8 +178,8 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 @media (max-width:1760px){ .fxrow .field label{font-size:11px} }
 #musGrp{gap:2px}#musGrp .iconbtn{width:24px}
 /* narrower windows: the top bar keeps to one line (labels and the version go; the set name shortens) */
-@media (max-width:1560px){ #hdrVer,#clockGrp>label{display:none} #clockSrc{width:92px!important} #setLabel{width:64px} #brbBtn{width:62px} #musGrp .iconbtn{width:22px} #top{gap:6px} }
-@media (max-width:1340px){ #snap{width:56px!important} #clockSrc{width:78px!important} #undoBtn,#redoBtn{width:20px} #setLabel{width:52px} #top .grp.sect{gap:3px} }
+@media (max-width:1560px){ #hdrVer,#clockGrp>label{display:none} #setLabel{width:64px} #brbBtn{width:62px} #musGrp .iconbtn{width:22px} #top{gap:6px} }
+@media (max-width:1340px){ #snap{width:56px!important} #undoBtn,#redoBtn{width:20px} #setLabel{width:52px} #top .grp.sect{gap:3px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
 .fxrow button{flex:none}
@@ -208,7 +211,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #sizeNote{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:20;background:#ffb000;color:#1a1200;font:600 12px var(--sans);padding:6px 6px 6px 12px;border-radius:var(--r);box-shadow:0 4px 16px #0008;display:flex;gap:8px;align-items:center}
 #sizeNote button{color:#1a1200}
 #pvBar{position:absolute;left:0;right:0;z-index:3;display:flex;justify-content:center;pointer-events:none}#pvBar .grp{pointer-events:auto;background:var(--panel);border-radius:var(--r);padding:2px 4px}
-#guideGrp{display:flex;align-items:center;gap:3px}#pvBar .iconbtn{width:28px;height:26px}#pvBar .iconbtn.on{color:var(--sig);border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig);background:transparent}
+#guideGrp{display:flex;align-items:center;gap:3px}#pvBar .iconbtn{width:28px;height:26px}#pvBar .iconbtn.on{color:var(--sig);border-color:var(--sig);background:transparent}
 .gsep{width:1px;height:18px;background:var(--edge);margin:0 3px}#guideGrp .dim{color:var(--muted);font:400 11px var(--mono)}
 #guideCol{width:28px;height:26px;padding:3px;border:1px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}#guideCol::-webkit-color-swatch-wrapper{padding:0}#guideCol::-webkit-color-swatch{border:none;border-radius:2px}
 #guideGrp input[type=number]{cursor:ns-resize}
@@ -234,7 +237,7 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 .lrow{display:flex;gap:4px;margin-top:6px}
 .lbl{width:92px;flex:none}
 .lrow .lbl{flex:1;min-width:0;width:auto}
-.layer .lop{display:block;margin:6px 0 0}.layer .ltr{display:block;width:100%;margin:5px 0 0;height:22px;font-size:11px}
+.layer .lop{display:block;margin:6px 0 0}.layer .ltr{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);width:100%;margin:5px 0 0;height:20px}.layer .ltr button{padding:0;min-width:0;font:500 10px var(--mono);height:20px}
 .lon{width:var(--ch);height:var(--ch);padding:0;font:600 12px var(--mono);color:var(--muted);flex:none}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#111}
 .lname{font:600 13px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -352,11 +355,10 @@ output.mod{color:var(--env)}
 <header id="top">
   <div class="brand" title="About VJif & getting started (actually, it's pronounced vjif)">VJ<span>if</span></div><button id="hdrVer" title="What's new in this version"></button>
   <div class="grp sect" id="clockGrp">
-    <select id="clockSrc" style="width:112px" title="Where the tempo comes from"><option value="internal">Internal / tap</option><option value="midi">MIDI clock</option></select>
-    <select id="midiIn" hidden style="width:150px"></select><span id="midiStat" class="dim small" style="white-space:nowrap"></span>
+    <button id="midiClk" title="Tempo from MIDI clock (a DAW, a drum machine…) · off: internal tempo / tap. The input is chosen in Settings › MIDI"><span class="led" id="midiLed"></span>MIDI</button>
     <label for="bpm">BPM</label><span class="bpmwrap"><input id="bpm" type="number" min="20" max="300" step="0.01" value="120.00" title="Drag up / down or use the mouse wheel over a digit to change that digit · click to type a tempo, then Enter"><i id="bpmMark"></i></span><button id="bpmRound" class="iconbtn" title="Round the tempo to the nearest whole BPM (123.46 → 123)">≈</button>
     <button id="tapBtn" title="Tap tempo (Space)">Tap</button><button id="syncBtn" title="Shift+Space: now is beat 1 — restart every GIF in time">Sync</button>
-    <div id="beats" title="The beat within the bar (the first dot is the downbeat)"><i></i><i></i><i></i><i></i></div>
+    <div id="beats" title="The beat within the bar (the first dot is the downbeat)"><i></i><i></i><i></i><i></i><span id="midiStat"></span></div>
     <label for="snap">Snap</label><select id="snap" style="width:66px" title="Snap triggers, Hit effects and scene changes to the beat or bar"><option value="off">off</option><option value="beat">beat</option><option value="bar">bar</option></select></div>
   <div class="grp sect" id="musGrp" title="Music player: a track to play along and record with (Settings › Recording › Music)"><button id="musPlay" class="iconbtn" title="Play / pause the track" disabled><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/></svg></button><button id="musStop" class="iconbtn" title="Stop (back to the start)" disabled><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><rect x="3.5" y="3.5" width="9" height="9" fill="currentColor"/></svg></button><button id="musLoop" class="iconbtn" title="Loop the track"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M3 9.5V7a3 3 0 0 1 3-3h7M11 2l2 2-2 2M13 6.5V9a3 3 0 0 1-3 3H3M5 14l-2-2 2-2"/></svg></button><button id="musEject" class="iconbtn" title="Load a track: MP3, WAV, FLAC, OGG, M4A… (or drop an audio file on Settings)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M8 3l5 6H3z" fill="currentColor"/><path d="M3 12.5h10" stroke-width="1.8"/></svg></button><span class="volwrap"><button id="musVolBtn" class="iconbtn" title="Listening level (the recording isn't affected)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" style="display:block;margin:auto"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z" fill="currentColor"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/></svg></button><span id="musVolPop" hidden><input id="musVol" type="range" min="0" max="1" step="0.01" value="0.8" title="Listening level (the recording isn't affected)"></span></span></div>
   <div class="grp sect right"><button id="undoBtn" class="iconbtn" title="Undo (Ctrl+Z)" disabled>↶</button><button id="redoBtn" class="iconbtn" title="Redo (Ctrl+Shift+Z / Ctrl+Y)" disabled>↷</button></div>
@@ -388,7 +390,7 @@ output.mod{color:var(--env)}
   <div id="layers" title="Layers: 1 is at the bottom, 4 on top"></div>
   <div id="pvWrap"><canvas id="pvScene"></canvas><canvas id="pv"></canvas><span id="liveTag" hidden></span><span id="prepTag" hidden>PREP · output locked to the last live scene</span><span id="fmtTag" hidden title="Canvas format (Settings › Canvas)"></span>
 </div>
-  <div id="pvBar"><div class="grp" id="guideGrp"><input type="color" id="guideCol" value="#ffffff" title="Guide line colour (so they show on any picture)"><span class="gsep"></span><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; guides combine, click again to hide)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2"/></svg></button><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (2×2 = centre, 3×3 = thirds)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns — drag up / down, scroll, or click and type"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows — drag up / down, scroll, or click and type"><button class="iconbtn" data-g="safe" title="Guides — Safe areas: action safe (93%) and title safe (90%) for landscape and square; in 9:16, where Reels / TikTok / Shorts put their buttons and captions"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><rect x="4" y="5" width="8" height="6" stroke-dasharray="1.6 1.2"/></svg></button><button class="iconbtn" data-g="diag" title="Guides — Diagonals: corner to corner"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M1.5 2.5l13 11M14.5 2.5l-13 11"/></svg></button><button class="iconbtn" data-g="persp" title="Guides — Perspective: lines running to a vanishing point in the middle"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M8 8L1.5 5.25M8 8L1.5 10.75M8 8l6.5-2.75M8 8l6.5 2.75M8 8L4.75 2.5M8 8l3.25-5.5M8 8l-3.25 5.5M8 8l3.25 5.5" stroke-width="1"/></svg></button><span class="gsep"></span><button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><g transform="rotate(45 8 8)"><path d="M4.5 6.2v2.6a3.5 3.5 0 0 0 7 0V6.2" stroke-width="2.4"/><path d="M4.5 2.4v2.2M11.5 2.4v2.2" stroke-width="2.4"/></g></svg></button><button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".9" fill="currentColor"/><circle cx="9.7" cy="7" r=".9" fill="currentColor"/></svg></button></div></div>
+  <div id="pvBar"><div class="grp" id="guideGrp"><input type="color" id="guideCol" value="#ffffff" title="Guide line colour (so they show on any picture)"><span class="gsep"></span><button class="iconbtn" data-g="grid" title="Guides — Grid: the columns × rows set next to it (2×2 = centre, 3×3 = thirds)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M4.75 2.5v11M8 2.5v11M11.25 2.5v11M1.5 5.25h13M1.5 8h13M1.5 10.75h13"/></svg></button><input id="gridX" type="number" min="1" max="24" value="4" title="Grid columns — drag up / down, scroll, or click and type"><span class="dim">×</span><input id="gridY" type="number" min="1" max="24" value="4" title="Grid rows — drag up / down, scroll, or click and type"><span class="gsep"></span><button class="iconbtn" data-g="golden" title="Guides — Golden ratio: lines at 0.382 and 0.618 (preview only; guides combine, click again to hide)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M6.5 2.5v11M1.5 6.7h5"/><path d="M6.5 6.7a4.2 4.2 0 0 1 4.2-4.2"/></svg></button><button class="iconbtn" data-g="safe" title="Guides — Safe areas: action safe (93%) and title safe (90%) for landscape and square; in 9:16, where Reels / TikTok / Shorts put their buttons and captions"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><rect x="4" y="5" width="8" height="6" stroke-dasharray="1.6 1.2"/></svg></button><button class="iconbtn" data-g="diag" title="Guides — Diagonals: corner to corner"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M1.5 2.5l13 11M14.5 2.5l-13 11"/></svg></button><button class="iconbtn" data-g="persp" title="Guides — Perspective: lines running to a vanishing point in the middle"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><rect x="1.5" y="2.5" width="13" height="11"/><path d="M8 8L1.5 5.25M8 8L1.5 10.75M8 8l6.5-2.75M8 8l6.5 2.75M8 8L4.75 2.5M8 8l3.25-5.5M8 8l-3.25 5.5M8 8l3.25 5.5" stroke-width="1"/></svg></button><span class="gsep"></span><button class="iconbtn" id="stickBtn" title="Stick: a dragged GIF's edges or centre stick to the guides, the centre and the frame edges · Shift while dragging: only its centre sticks (even with Stick off) · Alt: place freely"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><g transform="rotate(45 8 8)"><path d="M4.5 6.2v2.6a3.5 3.5 0 0 0 7 0V6.2" stroke-width="2.4"/><path d="M4.5 2.4v2.2M11.5 2.4v2.2" stroke-width="2.4"/></g></svg></button><button class="iconbtn" id="ghostBtn" title="Ghosts: show faded one-shot GIFs as dotted outlines while they're invisible (preview only)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M3.5 14V7a4.5 4.5 0 0 1 9 0v7l-1.5-1.3-1.5 1.3-1.5-1.3L6.5 14 5 12.7z"/><circle cx="6.3" cy="7" r=".9" fill="currentColor"/><circle cx="9.7" cy="7" r=".9" fill="currentColor"/></svg></button></div></div>
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
@@ -527,11 +529,13 @@ output.mod{color:var(--env)}
     <div class="row"><span class="lbl recLbl">Size</span><input id="uiZoomR" type="range" min="0.7" max="1.3" step="0.01" value="1" style="flex:1;min-width:0" title="Make the whole interface smaller for laptop screens (or bigger). VJif is made for 1280×720 and up. Double-click: 100%"><output id="uiZoomV" style="width:44px;text-align:right;font:400 11px var(--mono)"></output></div>
     <div class="row"><label class="tog" title="Undo / redo show a short message saying what they changed"><input type="checkbox" id="undoToastChk">Verbose undo</label></div>
     <div class="sub"><span>Defaults</span><span class="line"></span></div>
+    <div class="row" id="defParts" title="Which parts Save, Reset, Export and Import work on"><label class="tog"><input type="checkbox" data-k="fx" checked>Effects</label><label class="tog"><input type="checkbox" data-k="fxPre" checked>Effect presets</label><label class="tog"><input type="checkbox" data-k="tr" checked>Transitions</label></div>
     <div class="row"><button id="defSave" title="Your current effects (settings and styles), effect presets and transition presets become what every new set starts with, and what a reset (double-click, Ctrl+click) goes back to">Save current settings</button><button id="defReset" title="Back to VJif's own defaults (your saved ones are forgotten)">Reset</button><button id="defExport" title="Save your defaults to a file (to move them to another computer)">Export…</button><button id="defImport" title="Load defaults from a file">Import…</button><input id="defFile" type="file" accept=".json,application/json" hidden></div>
     <p class="note" id="defNote"></p>
     <div class="sub" title="Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black."><span>Theme</span><span class="info">i</span><span class="line"></span></div>
     <div id="themeBox"></div>
     <div class="sub" title="Pads, scenes, transition presets, effects and presets, layer on / off, blackout, freeze, tap and sync answer keys or buttons; layer opacity and effect amount follow a knob or fader. Mappings are kept in this browser (they belong to your controller, not to a set)."><span>MIDI control</span><span class="info">i</span><span class="line"></span></div>
+    <div class="row"><span class="lbl recLbl">Clock from</span><select id="midiIn" style="flex:1;min-width:0" title="The MIDI input the tempo follows when MIDI is on in the top bar"><option value="">(MIDI off: turn it on to list inputs)</option></select></div>
     <div class="row"><select id="midiCtlIn" title="Which MIDI input controls VJif"><option value="all">All MIDI inputs</option></select><button id="midiLearn" class="accent" title="Click something, then press or move a control on your controller">Learn</button><button id="midiClear" title="Remove every mapping">Clear all</button></div>
     <div id="midiMap"></div>
   </div>
@@ -619,7 +623,7 @@ output.mod{color:var(--env)}
     <div class="field"><label>Look</label><div class="txRow"><div class="seg" id="txCut"><button data-v="0" title="Letters in the colour, on nothing">Letters</button><button data-v="1" title="A matte in the colour with see-through letters: put it on a layer above the others and they show through the text only">Cut-out</button></div><input type="color" id="txCol" value="#ffffff" title="The letters' colour (Cut-out: the matte's colour)"></div></div>
     <div class="field"><label>Marquee</label><div class="seg" id="txMarq" title="Scrolls across the output from right to left, on the beat: one pass per this many bars (from when the pad is hit). It's X automation in the Auto tab, so you can change it there"><button data-v="0">Off</button><button data-v="1">1 bar</button><button data-v="2">2</button><button data-v="4">4</button><button data-v="8">8</button><button data-v="16">16</button></div></div>
     <div class="row" style="justify-content:flex-end"><button id="txCancel">Cancel</button><button id="txOk" class="accent">Put on pad</button></div>
-    <p class="note">The text is made for the canvas format and redrawn when it changes. It's saved with the set like a GIF file. Ctrl+Enter puts it on the pad.</p>
+    <p class="note">The text is made for the canvas format and redrawn when it changes. It's saved with the set like a GIF file. Enter puts it on the pad; Shift+Enter starts a new line.</p>
   </div>
 </div>
 <div id="poolPanel" class="modal" hidden>
@@ -663,7 +667,7 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.31.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.32.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -1565,17 +1569,22 @@ async function enableMidi(){
   catch { toast('MIDI access was denied'); return setClockSrc('internal'); }
   fillMidi();
 }
+const midiClkPick = (() => { try { return JSON.parse(localStorage.getItem('vjif-midiclk')) || {}; } catch (e) { return {}; } })();   // { id, name } of the clock input
 function fillMidi(){
-  const sel = $('#midiIn'), prev = sel.value, ins = [...midiAccess.inputs.values()];
-  sel.innerHTML = ins.length ? ins.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('') : '<option value="">no MIDI inputs</option>';
-  if (ins.some(i => i.id === prev)) sel.value = prev;
-  sel.hidden = false; bindMidiInput();
+  const sel = $('#midiIn'), ins = [...midiAccess.inputs.values()];
+  sel.innerHTML = '<option value="">— choose the clock input —</option>' + ins.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
+  const hit = ins.find(i => i.id === midiClkPick.id) || ins.find(i => i.name === midiClkPick.name) || (ins.length === 1 ? ins[0] : null);   // the last one used, or the only one there is
+  sel.value = hit ? hit.id : ''; bindMidiInput();
 }
 function bindMidiInput(){
   if (midiInput) midiInput.onmidimessage = null;
   midiInput = midiAccess && $('#midiIn').value ? midiAccess.inputs.get($('#midiIn').value) : null;
+  if (midiInput){ midiClkPick.id = midiInput.id; midiClkPick.name = midiInput.name; try { localStorage.setItem('vjif-midiclk', JSON.stringify(midiClkPick)); } catch (e) {} }
   if (midiInput && clock.src === 'midi') midiInput.onmidimessage = onMidi;
+  midiAlert();
 }
+// MIDI on with no input to follow: the settings gear flashes until one is chosen
+function midiAlert(){ $('#setBtn').classList.toggle('alert', clock.src === 'midi' && !midiInput); }
 function onMidi(e){
   const s = e.data[0];
   if (s === 0xF8){
@@ -1588,10 +1597,11 @@ function onMidi(e){
   else if (s === 0xFC){ clock.midiRunning = false; }
 }
 function setClockSrc(v){
-  clock.src = v; $('#clockSrc').value = v;
+  clock.src = v; $('#midiClk').classList.toggle('on', v === 'midi');
   $('#bpm').disabled = v === 'midi'; $('#tapBtn').disabled = v === 'midi'; $('#bpmRound').disabled = v === 'midi';
-  if (v === 'midi'){ clock.midiTicks = Math.round(clock.beat * 24); enableMidi(); }
-  else { if (midiInput) midiInput.onmidimessage = null; $('#midiIn').hidden = true; $('#midiStat').textContent = ''; }
+  if (v === 'midi'){ clock.midiTicks = Math.round(clock.beat * 24); enableMidi().then(() => { if (clock.src === 'midi' && !midiInput) toast('No MIDI clock input selected: pick one in Settings › MIDI'); }); }
+  else { if (midiInput) midiInput.onmidimessage = null; $('#beats').classList.remove('wait'); $('#midiLed').className = 'led'; }
+  midiAlert();
 }
 
 // ---------- MIDI control: notes / CCs from a controller drive VJif (MIDI learn) ----------
@@ -1605,7 +1615,7 @@ async function getMidi(){
   if (midiAccess) return midiAccess;
   if (!navigator.requestMIDIAccess) throw new Error('Web MIDI is not available in this browser');
   midiAccess = await navigator.requestMIDIAccess();
-  midiAccess.onstatechange = () => { if (clock.src === 'midi') fillMidi(); bindCtlInputs(); };
+  midiAccess.onstatechange = () => { fillMidi(); bindCtlInputs(); };
   return midiAccess;
 }
 function bindCtlInputs(){
@@ -1991,7 +2001,9 @@ const brbChoices = () => Array.from({ length: N_SCENES }, (_, i) => i).filter(i 
 function brbPick(){
   const c = brbChoices(); if (!c.length) return -1;
   if (brb.scn === 'rand') return c[Math.floor(Math.random() * c.length)];
-  for (let k = 1; k <= N_SCENES; k++){ const i = (sceneIdx + k) % N_SCENES; if (c.includes(i)) return i; }
+  // in order = the numpad's reading order: 7 8 9, 4 5 6, 1 2 3
+  const ord = Array.from({ length: N_SCENES }, (_, k) => k).sort((a, b) => (Math.floor(b / 3) - Math.floor(a / 3)) || (a % 3 - b % 3)), at = ord.indexOf(sceneIdx);
+  for (let k = 1; k <= N_SCENES; k++){ const i = ord[(at + k) % N_SCENES]; if (c.includes(i)) return i; }
   return -1;
 }
 function brbTick(){
@@ -3425,7 +3437,7 @@ function isTyping(e){
 }
 function onKey(e){
   if (midiCtl.learning){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); endLearn(); } return; }
-  if (!$('#textPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closeText(); } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); textOk(); } return; }
+  if (!$('#textPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closeText(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); textOk(); } return; }   // Enter: put it on the pad · Shift+Enter: a new line (as everywhere)
   if (!$('#aboutPanel').hidden){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); closeAbout(); } return; }
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
@@ -3939,7 +3951,7 @@ function buildLayers(){
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow">      <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
       <input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity">
-      <select class="ltr" title="Turning this layer on / off (its number, Shift+${li+1}, End, MIDI): straight away, with the armed transition, or always with one preset"><option value="cut">On / off: cut</option><option value="armed">On / off: armed preset</option>${[1,2,3,4,5,6,7,8,9].map(k => `<option value="${k - 1}">On / off: preset ${k}</option>`).join('')}</select>
+      <div class="seg ltr" title="Turning this layer on / off (its number, Shift+${li+1}, End, MIDI): ✕ straight away, ★ with the armed transition, 1–9 always with that preset"><button data-v="cut" title="On / off: straight away (cut)">✕</button><button data-v="armed" title="On / off: with the armed transition">★</button>${[1,2,3,4,5,6,7,8,9].map(k => `<button data-v="${k - 1}" title="On / off: always with transition preset ${k}">${k}</button>`).join('')}</div>
       <div class="clips"></div>`;
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
@@ -3951,7 +3963,7 @@ function buildLayers(){
     }
     row.querySelector('.lop').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
     row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
-    row.querySelector('.ltr').addEventListener('change', e => { L.tr = e.target.value; e.target.blur(); });
+    row.querySelector('.ltr').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; L.tr = b.dataset.v; syncLayerUI(); });
     row.querySelector('.clips').addEventListener('click', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
@@ -4017,7 +4029,7 @@ function syncLayerUI(){
     const r = L.row, sel = selClip(L.i);
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target);
     r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
-    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelector('.ltr').value = L.tr || 'cut';
+    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
     r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
@@ -4141,12 +4153,12 @@ pv.addEventListener('pointermove', e => {
   } else if (drag.type === 'move'){
     c.x = clamp(drag.x0 + px - drag.px, -W, W); c.y = clamp(drag.y0 + py - drag.py, -H, H);
     drag.snap = null;
-    if (pvOpt.stick && !e.altKey){                       // stick: the GIF's edges or centre onto a guide, the centre or an edge, within ~8 screen px
-      const G = clipGeom(c);
-      if (G){ const tol = 8 * W / view.w, rx = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), ry = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
+    if ((pvOpt.stick || e.shiftKey) && !e.altKey){       // stick: the GIF's edges or centre onto a guide, the centre or an edge, within ~8 screen px · Shift: its centre only (Stick on or off)
+      const G = clipGeom(c), co = e.shiftKey;
+      if (G){ const tol = (co ? 14 : 8) * W / view.w, rx = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), ry = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
         const [gx, gy] = guideLines(), LX = [0, W / 2, W, ...gx], LY = [0, H / 2, H, ...gy];
         const best = (pts, lines) => { let b = null; for (const p of pts) for (const l of lines){ const d = l - p; if (Math.abs(d) <= tol && (!b || Math.abs(d) < Math.abs(b.d))) b = { d, l }; } return b; };
-        const bx = best([G.cx - rx, G.cx, G.cx + rx], LX), by = best([G.cy - ry, G.cy, G.cy + ry], LY);
+        const bx = best(co ? [G.cx] : [G.cx - rx, G.cx, G.cx + rx], LX), by = best(co ? [G.cy] : [G.cy - ry, G.cy, G.cy + ry], LY);
         if (bx || by){ drag.snap = { x: bx ? bx.l : null, y: by ? by.l : null }; if (bx) c.x += bx.d; if (by) c.y += by.d; } }
     }
   } else {
@@ -4315,8 +4327,9 @@ bpmEl.addEventListener('wheel', e => {
 }
 $('#tapBtn').addEventListener('click', tap);
 $('#syncBtn').addEventListener('click', resync);
-$('#clockSrc').addEventListener('change', e => setClockSrc(e.target.value));
+$('#midiClk').addEventListener('click', () => setClockSrc(clock.src === 'midi' ? 'internal' : 'midi'));
 $('#midiIn').addEventListener('change', bindMidiInput);
+$('#midiIn').addEventListener('pointerdown', async () => { if (midiAccess) return; try { await getMidi(); fillMidi(); } catch (e) {} });   // list the inputs before MIDI is on
 $('#snap').addEventListener('change', e => snapMode = e.target.value);
 $('#outBtn').addEventListener('click', openOutput);   // Shift+click: reset its position and size
 $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
@@ -4419,16 +4432,26 @@ function sizeNotice(){
 addEventListener('resize', sizeNotice); sizeNotice();
 // your defaults
 const DEF_KEYS = ['fx', 'fxPre', 'tr'];
-function defNote(){ $('#defNote').textContent = userDef.saved ? `Your defaults (saved ${new Date(userDef.saved).toLocaleDateString()}): new sets start with your effects, effect presets and transition presets; resets go back to them.` : "Using VJif's own defaults. Set effects and presets the way you like them, then Save current settings: every new set starts like that."; }
+function defNote(){ const ks = DEF_KEYS.filter(k => userDef[k] !== undefined); $('#defNote').textContent = ks.length ? `Your defaults (saved ${new Date(userDef.saved).toLocaleDateString()}): new sets start with your ${ks.map(k => DEF_NAMES[k]).join(', ')}; resets go back to them.` : "Using VJif's own defaults. Set effects and presets the way you like them, then Save current settings: every new set starts like that."; }
 function setUserDef(d){ userDef = d || {}; try { if (d) localStorage.setItem('vjif-userdef', JSON.stringify(d)); else localStorage.removeItem('vjif-userdef'); } catch (e) {} defNote(); }
-$('#defSave').addEventListener('click', () => { setUserDef({ v: 1, saved: Date.now(), fx: JSON.parse(JSON.stringify(fxCfg)), fxPre: JSON.parse(JSON.stringify(fxPre)), tr: trPresets.map(P => ({ ...P })) }); toast2('Saved as your defaults'); });
-$('#defReset').addEventListener('click', () => { setUserDef(null); toast2("Back to VJif's defaults (for new sets and resets; this set is unchanged)"); });
-$('#defExport').addEventListener('click', () => { if (!userDef.saved) return toast('Save your defaults first');
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ app: 'VJif', kind: 'defaults', ...userDef }, null, 1)], { type: 'application/json' })); a.download = 'vjif-defaults.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); });
+// the ticked parts: Save, Reset, Export and Import only touch those
+const DEF_NAMES = { fx: 'effects', fxPre: 'effect presets', tr: 'transitions' };
+const defParts = () => [...document.querySelectorAll('#defParts input:checked')].map(i => i.dataset.k);
+const partsTxt = ks => ks.length === 3 ? 'all' : ks.map(k => DEF_NAMES[k]).join(' + ');
+$('#defSave').addEventListener('click', () => { const ks = defParts(); if (!ks.length) return toast('Tick at least one part');
+  const cur = { fx: () => JSON.parse(JSON.stringify(fxCfg)), fxPre: () => JSON.parse(JSON.stringify(fxPre)), tr: () => trPresets.map(P => ({ ...P })) };
+  const o = { ...userDef, v: 1, saved: Date.now() }; ks.forEach(k => o[k] = cur[k]()); setUserDef(o); toast2(`Saved as your defaults (${partsTxt(ks)})`); });
+$('#defReset').addEventListener('click', () => { const ks = defParts(); if (!ks.length) return toast('Tick at least one part');
+  const o = { ...userDef }; ks.forEach(k => delete o[k]); setUserDef(DEF_KEYS.some(k => o[k] !== undefined) ? o : null);
+  toast2(`Back to VJif's defaults (${partsTxt(ks)}; for new sets and resets, this set is unchanged)`); });
+$('#defExport').addEventListener('click', () => { const ks = defParts().filter(k => userDef[k] !== undefined); if (!ks.length) return toast('Save your defaults first (for the ticked parts)');
+  const out = { app: 'VJif', kind: 'defaults', v: 1, saved: userDef.saved }; ks.forEach(k => out[k] = userDef[k]);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' })); a.download = ks.length === 3 ? 'vjif-defaults.json' : `vjif-defaults-${ks.join('-').toLowerCase()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); });
 $('#defImport').addEventListener('click', () => $('#defFile').click());
 $('#defFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { const d = JSON.parse(await f.text()); if (d.app !== 'VJif' || d.kind !== 'defaults') throw new Error('not a VJif defaults file');
-    const o = { v: 1, saved: d.saved || Date.now() }; DEF_KEYS.forEach(k => { if (d[k] !== undefined) o[k] = d[k]; }); setUserDef(o); toast2('Defaults loaded: new sets and resets use them');
+    const ks = defParts().filter(k => d[k] !== undefined); if (!ks.length) throw new Error('it has none of the ticked parts');
+    const o = { ...userDef, v: 1, saved: Date.now() }; ks.forEach(k => o[k] = d[k]); setUserDef(o); toast2(`Defaults loaded (${partsTxt(ks)}): new sets and resets use them`);
   } catch (err) { toast("Couldn't load those defaults: " + err.message); } });
 defNote();
 
@@ -4438,7 +4461,7 @@ $('#midiClear').addEventListener('click', () => { midiCtl.map = []; saveMidiCtl(
 $('#midiMap').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ midiCtl.map.splice(+b.dataset.k, 1); saveMidiCtl(); renderMidiCtl(); } });
 $('#midiCtlIn').addEventListener('change', e => { midiCtl.input = e.target.value; midiCtl.inputName = e.target.selectedOptions[0].textContent.replace(/ \(not connected\)$/, ''); saveMidiCtl(); bindCtlInputs(); });
 renderMidiCtl();
-if (midiCtl.map.length && navigator.requestMIDIAccess) getMidi().then(bindCtlInputs).catch(() => {});   // mappings exist: listen from the start
+if (midiCtl.map.length && navigator.requestMIDIAccess) getMidi().then(() => { bindCtlInputs(); fillMidi(); }).catch(() => {});   // mappings exist: listen from the start
 // About & getting started: opens by itself the first time (and every start while its box is ticked)
 const TAGLINES = ["actually, it's pronounced vjif", 'Vanks Jod It\'s Friday', 'VJing, with a hard G'];
 function openAbout(tab = 'start'){ $('#tagline').textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)]; $('#helpPanel').hidden = true; $('#aboutPanel').hidden = false; aboutTab(tab); }
@@ -4520,9 +4543,11 @@ function step(){
   if (bi !== lastBeatIdx){
     lastBeatIdx = bi; const k = mod(bi, 4);
     dots.forEach((d, j) => d.classList.toggle('on', j === k));
-    if (clock.src === 'midi'){ setBpm(clock.bpm); $('#midiStat').textContent = clock.midiRunning ? 'running' : 'waiting'; }
+    if (clock.src === 'midi') setBpm(clock.bpm);
   }
-  if (clock.src === 'midi' && !clock.midiRunning){ const t = midiInput ? 'waiting for clock' : 'no input'; if ($('#midiStat').textContent !== t) $('#midiStat').textContent = t; }
+  if (clock.src === 'midi'){ const w = !clock.midiRunning, t = midiInput ? 'no clock' : 'no input', B = $('#beats');   // waiting: a word where the beat dots were
+    if (B.classList.contains('wait') !== w) B.classList.toggle('wait', w); if (w && $('#midiStat').textContent !== t) $('#midiStat').textContent = t;
+    const lc = 'led ' + (w ? 'wait' : 'on'); if ($('#midiLed').className !== lc) $('#midiLed').className = lc; }
   fpsN++;
   const work = performance.now() - now; meter.busy += work; if (work > meter.peak) meter.peak = work;
   if (now - fpsT > 1000){
@@ -4533,7 +4558,10 @@ function step(){
     meter.drops = g.filter(x => x > slot * 1.5).reduce((a, x) => a + Math.round(x / slot) - 1, 0);
     const load = Math.round(meter.busy / (s * 1000) * 100), heap = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(0) + ' MB JS heap' : '';
     // the screen's own rate: the shortest gaps seen (remembered — a busy second can't lower it)
-    const fast = g.length ? g[Math.floor(g.length * 0.05)] : 16.7; meter.hz = Math.max(meter.hz || 0, Math.min(360, Math.round(1000 / fast)));
+    // the screen's own rate: the median gap of a full second (one odd short gap can't fake it), snapped to the usual refresh rates and remembered (a busy second can't lower it)
+    if (g.length > 20){ const hz = 1000 / g[Math.floor(g.length * 0.5)], R = [30, 48, 50, 60, 72, 75, 85, 90, 100, 120, 144, 165, 170, 180, 200, 240, 280, 360];
+      const near = R.reduce((a, r) => Math.abs(r - hz) < Math.abs(a - hz) ? r : a); if (Math.abs(near - hz) / near < 0.08) meter.hz = Math.max(meter.hz || 0, near); }
+    meter.hz = meter.hz || 60;
     const fps = Math.round(fpsN / s), hz = meter.hz, lo = $('#load');
     el.innerHTML = `<i>FPS</i>${fps}/${hz}`;
     const goal = Math.min(hz, 60);                     // smooth enough = 60 fps (or the screen's rate if lower)
