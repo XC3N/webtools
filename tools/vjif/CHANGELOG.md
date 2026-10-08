@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.33.0 — 2026-10-08
+
+### Lettering
+- Logo Lab's looks for Letters, one choice per row: Fill (solid, chrome, gradient, stripes, hollow), Outline (thin, thick), Shadow (drop, long, lift), Glow (soft, neon), with a second colour for the gradient's end, the outline, the shadow and the glow. They're saved with the text and redrawn for each canvas format. A cut-out stays a plain matte.
+
 ## 0.32.0 — 2026-10-08
 
 ### Tempo and MIDI

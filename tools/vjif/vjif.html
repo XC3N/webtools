@@ -115,6 +115,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #musGrp .iconbtn.on{color:var(--sig);border-color:var(--sig)}.volwrap{position:relative;display:inline-flex}
 #musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);padding:10px 6px;box-shadow:0 6px 18px #0009}
 #musVolPop[hidden]{display:none}#musVol{writing-mode:vertical-lr;direction:rtl;width:22px;height:110px;margin:0}
+#txLooks.dimmed{opacity:.4;pointer-events:none}#txLooks .field{margin-bottom:5px}#txCol2{width:34px;height:24px;padding:2px;flex:none}
 .padsub{cursor:pointer;user-select:none}.padsub:hover{color:var(--muted)}.padsub::before{content:'▾';width:10px;display:inline-block}.padsub.fold::before{content:'▸'}.padsub.fold+.padgrid{display:none}.padsub .cnt{display:none}.padsub.fold .cnt{display:inline}
 .padsub{margin:8px 0 5px;font:500 11px var(--mono);color:var(--faint)}.padsub .line{flex:1;height:1px;background:var(--edge)}
 
@@ -621,6 +622,7 @@ output.mod{color:var(--env)}
     <div class="field"><label for="txSize">Size</label><input type="range" id="txSize" min="0.04" max="1.5" step="0.01" value="0.2"><output></output></div>
     <div class="field"><label for="txTrack">Spacing</label><input type="range" id="txTrack" min="-0.1" max="0.5" step="0.01" value="0"><output></output></div>
     <div class="field"><label>Look</label><div class="txRow"><div class="seg" id="txCut"><button data-v="0" title="Letters in the colour, on nothing">Letters</button><button data-v="1" title="A matte in the colour with see-through letters: put it on a layer above the others and they show through the text only">Cut-out</button></div><input type="color" id="txCol" value="#ffffff" title="The letters' colour (Cut-out: the matte's colour)"></div></div>
+    <div id="txLooks"></div>
     <div class="field"><label>Marquee</label><div class="seg" id="txMarq" title="Scrolls across the output from right to left, on the beat: one pass per this many bars (from when the pad is hit). It's X automation in the Auto tab, so you can change it there"><button data-v="0">Off</button><button data-v="1">1 bar</button><button data-v="2">2</button><button data-v="4">4</button><button data-v="8">8</button><button data-v="16">16</button></div></div>
     <div class="row" style="justify-content:flex-end"><button id="txCancel">Cancel</button><button id="txOk" class="accent">Put on pad</button></div>
     <p class="note">The text is made for the canvas format and redrawn when it changes. It's saved with the set like a GIF file. Enter puts it on the pad; Shift+Enter starts a new line.</p>
@@ -667,7 +669,7 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.32.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.33.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -771,7 +773,12 @@ function guessType(name){ const m = /\.(gif|webp|png|apng)$/i.exec(name||''); if
 const TEXT_MIME = 'application/vnd.vjif.text+json';
 const isTextBlob = (blob, name) => blob.type === TEXT_MIME || /\.vjtext$/i.test(name || '');
 const textName = sp => (sp.text || 'text').replace(/\s+/g, ' ').trim().slice(0, 24) + '.vjtext';
-const TEXT_DEF = { v: 1, text: 'VJif', font: 'Russo One', bold: false, ital: false, size: 0.2, track: 0, cut: false, color: '#ffffff', marquee: 0 };
+const TEXT_DEF = { v: 1, text: 'VJif', font: 'Russo One', bold: false, ital: false, size: 0.2, track: 0, cut: false, color: '#ffffff', marquee: 0, fill: 'solid', line: 'none', shadow: 'none', glow: 'none', col2: '#ff5bb0' };
+// Logo Lab's treatments, drawn on a canvas: one choice per layer (Letters only; a cut-out is a plain matte)
+const TX_LOOKS = [['fill', 'Fill', [['solid', 'Solid'], ['chrome', 'Chrome'], ['gradient', 'Gradient'], ['stripes', 'Stripes'], ['hollow', 'Hollow']]],
+  ['line', 'Outline', [['none', 'None'], ['thin', 'Thin'], ['thick', 'Thick']]], ['shadow', 'Shadow', [['none', 'None'], ['drop', 'Drop'], ['long', 'Long'], ['lift', 'Lift']]],
+  ['glow', 'Glow', [['none', 'None'], ['soft', 'Soft'], ['neon', 'Neon']]]];
+const mixHex = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return rgbHex(A.map((v, i) => Math.round(v + (B[i] - v) * t))); };
 // one frame at the current canvas size. Letters: tight around the text. Cut-out: a matte the size of the output
 // (wider when it scrolls, so it always covers the screen) with the letters punched through.
 async function renderText(spec, OW = W, OH = H){   // OW × OH: the frame it's drawn for (the Text window's preview draws it small)
@@ -783,7 +790,8 @@ async function renderText(spec, OW = W, OH = H){   // OW × OH: the frame it's d
   const setup = () => { x.font = font; x.textAlign = 'center'; x.textBaseline = 'alphabetic'; try { x.letterSpacing = (S.track * px).toFixed(1) + 'px'; } catch (e) {} };
   setup();
   // centred on the ink, not on the font's em box: the tallest letter's top to the lowest letter's bottom
-  const lh = px * 1.15, pad = Math.ceil(px * (S.ital ? 0.35 : 0.15)), ms = lines.map(l => x.measureText(l || ' '));
+  const fancy = !S.cut, extra = fancy ? (S.glow === 'neon' ? 0.3 : S.glow === 'soft' ? 0.18 : 0) + (S.shadow === 'none' ? 0 : 0.15) + (S.line === 'thick' ? 0.06 : S.line === 'thin' ? 0.03 : 0) : 0;   // room for glow, shadow and outline
+  const lh = px * 1.15, pad = Math.ceil(px * ((S.ital ? 0.35 : 0.15) + extra)), ms = lines.map(l => x.measureText(l || ' '));
   const asc = Math.max(px * 0.2, ...ms.map(m => m.actualBoundingBoxAscent || px * 0.7)), dsc = Math.max(0, ...ms.map(m => m.actualBoundingBoxDescent || 0));
   const ls = x.letterSpacing ? S.track * px : 0;   // letter spacing also follows the last letter: left out, so the text stays centred
   const tw = Math.ceil(Math.max(1, ...ms.map(m => m.width - ls))), th = Math.ceil((lines.length - 1) * lh + asc + dsc);
@@ -791,12 +799,41 @@ async function renderText(spec, OW = W, OH = H){   // OW × OH: the frame it's d
   if (S.cut){ w = Math.min(16000, S.marquee ? tw + 2 * pad : Math.max(OW, tw + 2 * pad)); h = Math.max(OH, th + 2 * pad); }   // the matte grows when the text is bigger than the frame; a scrolling one is only as wide as the text (drawClip fills the rest)
   else { w = Math.min(16000, tw + 2 * pad); h = th + 2 * pad; }
   cv.width = w; cv.height = h; setup();
-  if (S.cut){ x.fillStyle = S.color; x.fillRect(0, 0, w, h); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; }
-  else x.fillStyle = S.color;
-  const y0 = h / 2 - ((lines.length - 1) * lh + dsc - asc) / 2;
-  lines.forEach((l, i) => x.fillText(l, w / 2 + ls / 2, y0 + i * lh));
+  const y0 = h / 2 - ((lines.length - 1) * lh + dsc - asc) / 2, X = w / 2 + ls / 2;
+  if (S.cut){ x.fillStyle = S.color; x.fillRect(0, 0, w, h); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; lines.forEach((l, i) => x.fillText(l, X, y0 + i * lh)); }
+  else drawLook(x, S, lines, X, y0, lh, px, asc, dsc, w);
   const bmp = await createImageBitmap(cv);
   return { src: [bmp], durs: [1000], w, h, srcBytes: w * h * 4, textW: tw + 2 * pad };
+}
+// the Letters look: glow and shadow behind, then the outline, then the fill (like paint-order: stroke fill)
+function drawLook(x, S, lines, X, y0, lh, px, asc, dsc, w){
+  const col = S.color, c2 = S.col2 || '#ff5bb0', em = px;
+  const each = fn => lines.forEach((l, i) => fn(l, y0 + i * lh, i));
+  const lw = S.line === 'thick' ? 0.055 : S.line === 'thin' ? 0.028 : S.fill === 'hollow' ? 0.035 : 0;
+  const lineCol = S.fill === 'hollow' && S.line === 'none' ? col : c2;
+  const solidPass = (style, dx = 0, dy = 0) => { x.fillStyle = style; each((l, y) => x.fillText(l, X + dx, y + dy));
+    if (lw){ x.strokeStyle = style; x.lineWidth = 2 * lw * em; x.lineJoin = 'round'; each((l, y) => x.strokeText(l, X + dx, y + dy)); } };
+  x.save();
+  if (S.glow !== 'none'){                              // a blurred copy in the second colour, under everything
+    const passes = S.glow === 'neon' ? [[0.04, 1], [0.22, 1], [0.22, 0.8]] : [[0.12, 0.55]];
+    for (const [r, a] of passes){ x.shadowColor = c2; x.shadowBlur = r * em * 2; x.globalAlpha = a; solidPass(c2); }
+    x.shadowBlur = 0; x.globalAlpha = 1; }
+  const sc = mixHex(c2, '#000000', 0.25);
+  if (S.shadow === 'drop') solidPass(sc, 0.07 * em, 0.07 * em);
+  else if (S.shadow === 'long') for (let k = 6; k >= 1; k--) solidPass(sc, 0.02 * k * em, 0.02 * k * em);
+  else if (S.shadow === 'lift'){ x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowOffsetY = 0.08 * em; x.shadowBlur = 0.2 * em; solidPass(S.fill === 'hollow' ? 'rgba(0,0,0,0)' : col); x.shadowColor = 'transparent'; x.shadowOffsetY = 0; x.shadowBlur = 0; }
+  if (lw){ x.strokeStyle = lineCol; x.lineWidth = 2 * lw * em; x.lineJoin = 'round'; each((l, y) => x.strokeText(l, X, y)); }
+  if (S.fill !== 'hollow'){
+    each((l, y) => {
+      let st = col;
+      if (S.fill === 'chrome'){ st = x.createLinearGradient(0, y - asc, 0, y + dsc);   // light top, a hard horizon, dark below rising back to light
+        st.addColorStop(0, mixHex(col, '#ffffff', 0.75)); st.addColorStop(0.48, col); st.addColorStop(0.5, mixHex(col, '#000000', 0.45)); st.addColorStop(1, mixHex(col, '#ffffff', 0.35)); }
+      else if (S.fill === 'gradient'){ st = x.createLinearGradient(0, 0, w, 0); st.addColorStop(0.15, col); st.addColorStop(0.85, c2); }
+      else if (S.fill === 'stripes'){ const p = Math.max(3, Math.round(0.13 * em)), t = new OffscreenCanvas(1, p), tx = t.getContext('2d');
+        tx.fillStyle = col; tx.fillRect(0, 0, 1, Math.max(2, Math.round(0.085 * em))); st = x.createPattern(t, 'repeat'); st.setTransform(new DOMMatrix().translate(0, y - asc)); }
+      x.fillStyle = st; x.fillText(l, X, y); });
+  }
+  x.restore();
 }
 // a new text instance: scrolling text gets X automation (right to left, one pass per N bars, from the hit)
 function textDefaults(g){
@@ -827,7 +864,7 @@ function openText(edit = -1){
   txSpec = { ...TEXT_DEF, ...(g && g.media.text ? g.media.text : {}) };   // a new text starts from the defaults
   if (!g) txSpec.text = '';
   $('#txText').value = txSpec.text; txFontSet(txSpec.font); $('#txBold').checked = txSpec.bold; $('#txItal').checked = txSpec.ital;
-  $('#txSize').value = txSpec.size; $('#txTrack').value = txSpec.track; $('#txCol').value = txSpec.color;
+  $('#txSize').value = txSpec.size; $('#txTrack').value = txSpec.track; $('#txCol').value = txSpec.color; $('#txCol2').value = txSpec.col2 || TEXT_DEF.col2;
   const d = edit >= 0 ? edit : nextEmpty(selPad);
   $('#txTo').textContent = edit >= 0 ? `pad ${pads[edit].label}` : d >= 0 ? `→ pad ${pads[d].label}` : 'all pads full: pool only';
   $('#txOk').textContent = edit >= 0 ? 'Update' : d >= 0 ? 'Put on pad' : 'Add to pool';
@@ -836,13 +873,15 @@ function openText(edit = -1){
 function closeText(){ $('#textPanel').hidden = true; }
 function txRead(){
   Object.assign(txSpec, { text: $('#txText').value, font: $('#txFont').value === '?local' ? txSpec.font : $('#txFont').value || 'Russo One', bold: $('#txBold').checked, ital: $('#txItal').checked,
-    size: +$('#txSize').value, track: +$('#txTrack').value, color: $('#txCol').value });
+    size: +$('#txSize').value, track: +$('#txTrack').value, color: $('#txCol').value, col2: $('#txCol2').value });
 }
 function txUI(){
   $('#txSize').nextElementSibling.textContent = Math.round(txSpec.size * 100) + '% of height';
   $('#txTrack').nextElementSibling.textContent = (txSpec.track >= 0 ? '+' : '') + Math.round(txSpec.track * 100) + '%';
   document.querySelectorAll('#txCut button').forEach(b => b.classList.toggle('on', +b.dataset.v === +txSpec.cut));
   document.querySelectorAll('#txMarq button').forEach(b => b.classList.toggle('on', +b.dataset.v === txSpec.marquee));
+  document.querySelectorAll('#txLooks .seg').forEach(sg => sg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === (txSpec[sg.dataset.k] || TEXT_DEF[sg.dataset.k]))));
+  $('#txLooks').classList.toggle('dimmed', !!txSpec.cut); $('#txLooks').title = txSpec.cut ? 'Fill, outline, shadow and glow are for Letters (a cut-out is a plain matte)' : '';
   clearTimeout(txT); txT = setTimeout(txPreview, 60);
 }
 async function txPreview(){
@@ -897,6 +936,9 @@ $('#txCut').addEventListener('click', e => { const b = e.target.closest('button'
   const cut = b.dataset.v === '1'; if (cut !== txSpec.cut){ const c = txSpec.color.toLowerCase();   // white letters ↔ a black matte, the usual pairs
     if (cut && c === '#ffffff') txSpec.color = '#000000'; else if (!cut && c === '#000000') txSpec.color = '#ffffff'; $('#txCol').value = txSpec.color; }
   txSpec.cut = cut; txUI(); });
+// the Logo Lab rows (Letters only) and the second colour
+$('#txLooks').innerHTML = TX_LOOKS.map(([k, n, opts]) => `<div class="field txlook"><label>${n}</label><div class="txRow"><div class="seg" data-k="${k}">${opts.map(([v, t]) => `<button data-v="${v}">${t}</button>`).join('')}</div>${k === 'fill' ? '<input type="color" id="txCol2" value="#ff5bb0" title="Second colour: gradient end, outline, shadow and glow">' : ''}</div></div>`).join('');
+$('#txLooks').addEventListener('click', e => { const b = e.target.closest('.seg button'); if (!b) return; txSpec[b.closest('.seg').dataset.k] = b.dataset.v; txUI(); });
 $('#txMarq').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ txSpec.marquee = +b.dataset.v; txUI(); } });
 $('#textPanel').addEventListener('pointerdown', e => { if (e.target.id === 'textPanel') closeText(); });
 

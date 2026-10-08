@@ -17,6 +17,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {llook} **Lettering looks** (0.33) — Text… › Fill / Outline / Shadow / Glow and the second colour: chrome + neon, stripes + long shadow; they survive a reload and a format change.
 - {midi2} **MIDI button** (0.32) — MIDI on: "no input" / "no clock" in place of the dots, gear flashes until Settings › MIDI › Clock from is set; DAW playing: the light is steady and the tempo follows.
 - {defparts} **Defaults by part** (0.32) — untick Effects and Effect presets, Export: a transitions-only file; Import it elsewhere.
 - {topbar} **Top bar** (0.31) — music (play, stop, loop, ⏏, level pop-up; loop / level survive a reload), BRB button + ▾ pop-up, ≈ rounds the tempo; at 1280×720 it's still one line.
