@@ -23,6 +23,10 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {vhs} **Glitch › VHS** (0.26).
 - {crt} **CRT effect** (0.27) — F10: Scanlines, Phosphor, Degauss (as a Hit with a long Release).
 - {res} **GIF Resolution** (0.27) — Play › Resolution ½ / ¼ on a big GIF: same size on screen, MEM drops; save / reload keeps it.
+- {uiz} **Interface size** (0.28) — Settings › Interface › 80% / 90%: everything fits, dragging in the preview and the pads still lands where the pointer is.
+- {defs} **My defaults** (0.28) — tweak effects / presets, Save as my defaults, new set: they're there; Export / Import.
+- {fx28} **Effects** (0.28) — Zoom › Each in / out; Kaleido Amount = slices; Dither / Glitch / Scanlines Size; Latch off keeps the editor.
+- {thumbs} **Scene tiles after reload** (0.28).
 - {small} **Small window** (0.27) — at ~1280×720: nothing vanishes, cut text shows on hover, panels hint when they scroll.
 - {pre} **Adjust an effect inside a preset** (0.25) — click a chip in a preset: change its style, layer, amount; ‹ name goes back.
 - {int} **Interrupted transition** (0.25) — a 1-bar fade from 1 to 2, back to 1 at once: no jump.

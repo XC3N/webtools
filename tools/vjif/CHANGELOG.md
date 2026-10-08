@@ -4,6 +4,24 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.28.0 — 2026-10-08
+
+### Interface
+- Settings › Interface › Size: 80, 90, 100 or 110%, for laptop screens (or big ones). Everything scales, pointer work included.
+- Below 1280×720 a note says so and points to the Size setting (it can be hidden).
+- Settings › Defaults: Save as my defaults (your effects, effect presets, transition presets and layer transition become what new sets start with and what resets go back to), VJif's defaults, Export / Import as a file.
+
+### Effects
+- Zoom › Each in / Each out: every GIF punches around its own centre instead of the frame's.
+- Mirror › Kaleido: Amount sets how many slices (3 to 12) instead of fading it.
+- Size for more effects: Mono › Dither (dot size), Glitch › Slices / Blocks / Scramble (slice height, block size), CRT › Scanlines (line spacing). It's next to Rate when the effect has both; dimmed for styles that don't use it.
+- Colour: Flip comes first and is the default (then Invert, Cycle).
+- Poster is now called Posterize.
+- Switching a Latch effect off no longer moves the effect editor to it.
+
+### Scenes
+- Scene tiles keep their pictures after a reload (saved with the set; the live one is refreshed every 20 seconds).
+
 ## 0.27.0 — 2026-10-08
 
 ### Effects
