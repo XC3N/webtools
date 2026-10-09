@@ -112,7 +112,7 @@ $('#xFromC').addEventListener('change', e => { pvOpt.fromC = e.target.checked; p
 // right-click a transform or colour setting → its LFO opens in GIF › Auto
 const AUTO_OF = { '#xX': 'x', '#xY': 'y', '#xSX': 'sx', '#xSY': 'sy', '#xR': 'rot', '#xO': 'op', '#hH': 'h', '#hS': 's', '#hV': 'v' };
 Object.entries(AUTO_OF).forEach(([id, k]) => {
-  const f = $(id).closest('.field'), lb = f.querySelector('label'); lb.title = 'Right-click: automate this (GIF › Auto)';
+  const f = $(id).closest('.field'), lb = f; lb.title = 'Right-click: automate this (GIF › Auto)';
   f.addEventListener('contextmenu', e => { e.preventDefault(); showAuto(k); });
 });
 function showAuto(k){

@@ -350,4 +350,7 @@ kbd{display:inline-block;min-width:1.5em;padding:1px 4px;margin:0 1px;border:1px
 .keys dt{font:600 11px var(--mono);color:var(--sig);white-space:nowrap}.keys dd{margin:0;color:var(--ink);line-height:1.45}
 output.mod{color:var(--env)}
 /* @include common/controls.css */
-/* @include common/theme.css */
+/* @include common/theme.css *//* sliders: the label sits inside the bar on the left, the value on the right (clicks pass through both to the slider) */
+.field:has(> input[type=range]){grid-template-columns:minmax(0,1fr)!important}
+.field:has(> input[type=range]) > label{grid-column:1;grid-row:1;position:relative;z-index:1;pointer-events:none;padding-left:8px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58%;text-shadow:0 0 2px var(--bg),0 0 2px var(--bg)}
+.field:has(> input[type=range]) > input[type=range],.field:has(> input[type=range]) > input[type=range] + output{grid-column:1}

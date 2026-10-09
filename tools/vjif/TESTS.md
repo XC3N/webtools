@@ -20,6 +20,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {fbk} **Feedback Length** (0.44) — F12 › Trails, Tunnel, Spiral: Length 100% leaves long smears, 20% only short ones.
+- {inlab} **Labels inside sliders** (0.45) — Transform, GIF › Colour / Auto, the effect editor, Settings: labels readable over the fill, nothing cut off at 1280×720, drag and double-click still work where the label is.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

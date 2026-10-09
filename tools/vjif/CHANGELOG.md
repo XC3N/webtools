@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.45.0 — 2026-10-09
+
+### Interface
+- Slider labels sit inside the slider, on the left (the value stays on the right), so every slider gets the full width of its row. Clicks go through the label to the slider; the right-click hint for automation is on the whole row.
+
 ## 0.44.0 — 2026-10-09
 
 ### Effects
