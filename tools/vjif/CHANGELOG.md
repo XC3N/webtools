@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.49.0 — 2026-10-09
+
+### Effects
+- Colour › Palette: a Pattern row (where Size usually is) picks how in-between shades are drawn. Scatter is the look so far (noise, then the nearest colour). Ordered: each pixel is one of the two nearest palette colours, chosen by a 4×4 Bayer pattern, like DOS-era and 8-bit art. Checker: those two colours only as a 50% checkerboard, flat everywhere else (the hand-pixelled look). Dither still sets how much of the picture gets the pattern.
+
 ## 0.48.0 — 2026-10-09
 
 ### MIDI
