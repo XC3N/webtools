@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.39.1 — 2026-10-08
+
+### Fixes
+- An empty pad's GIF panel showed Speed and Loop length on top of each other.
+
+### Under the hood
+- The source is split into 20 files in `tools/vjif/src/` (core, lettering, pool, colour, clock-midi, playback, scenes, render, effects, output, keyboard, the UI panels, main-loop, persist, record, undo, and the stylesheet). `build.js` stitches them back into the same single vjif.html: the built file was byte-identical before and after the split.
+
 ## 0.39.0 — 2026-10-08
 
 ### GIFs

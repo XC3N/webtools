@@ -14,6 +14,7 @@ VibeCoded Browser tools for music and visuals. While AI was used for the totalit
 
 ```
 tools/<tool>/      a tool's source + tool.json (name, entry file, output file, description)
+tools/vjif/src/    VJif's code in parts (core, pool, scenes, effects, record…), included by vjif.html
 common/            code shared between tools (see common/README.md)
 build.js           inlines includes → dist/<tool>.html + dist/index.html
 .github/workflows  builds and publishes dist/ to GitHub Pages on every push to main
