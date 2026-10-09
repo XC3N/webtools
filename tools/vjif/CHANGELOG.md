@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.41.1 — 2026-10-09
+
+### Fixes
+- Effect editor: each style button is as wide as its name (the row shares out the rest and wraps when needed), so Mono's Threshold isn't cut short.
+
 ## 0.41.0 — 2026-10-09
 
 ### Effects
