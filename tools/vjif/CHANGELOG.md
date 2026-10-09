@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.39.0 — 2026-10-08
+
+### GIFs
+- Swap colours: ∅ on a swap makes that colour transparent (with Merge, its near-identical shades too). Click again to bring it back.
+
+### Interface
+- Effect pads and preset pads grow to fill the bottom panel, so the gaps between them are the same 4 px across and down.
+
 ## 0.38.0 — 2026-10-08
 
 ### Effects
