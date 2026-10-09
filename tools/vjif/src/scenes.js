@@ -209,7 +209,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, dith: fxCfg[i].dith || 0 });   // an effect as a preset holds it
+const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, wear: fxCfg[i].wear ?? 0.5, dith: fxCfg[i].dith || 0 });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -275,7 +275,8 @@ function buildFx(){
 const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
 // short names, for when the full one doesn't fit on a pad
 const FX_SHORT = { mono: 'MN', colour: 'CLR', strobe: 'STRB', poster: 'PSTR', zoom: 'ZM', shake: 'SHK', wobble: 'WBL', mirror: 'MIR', glitch: 'GLT', rgb: 'CRT', pixel: 'PIX', feedback: 'FDBK' };
-function fitText(el, full, short){ el.textContent = full; if (short && el.scrollWidth > el.clientWidth + 1) el.textContent = short; }
+// the full text, else the short one, else (for style names) its first letters: whichever fits first
+function fitText(el, full, short, tiny){ el.textContent = full; for (const t of [short, tiny]) if (t && el.scrollWidth > el.clientWidth + 1) el.textContent = t; }
 const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${FX_DEFS[i].styles[styleIdx(i, P.fx[i].style)][1]}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
 // store the effects that are on right now (from their own keys) into preset slot k
 function storeFxPre(k){
@@ -305,7 +306,7 @@ function syncFxUI(){
     if (el._sig === sig) return; el._sig = sig;
     el.querySelector('.md').textContent = (i < NFX && tgtKey(c.target) !== 'out' ? `L${tgtKey(c.target) + 1} ` : '') + c.mode;
     if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
-      fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); el.querySelector('.s').textContent = D.styles.length > 1 ? st[1] : '';
+      fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); fitText(el.querySelector('.s'), D.styles.length > 1 ? st[1] : '', STYLE_SHORT[st[0]], D.styles.length > 1 && st[1].length > 4 ? st[1].slice(0, 3) + '.' : null);
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
     else { const k = i - NFX, P = fxPre[k], e = !Object.keys(P.fx).length;
       if (e){ el.querySelector('.n').textContent = 'empty'; el.querySelector('.s').textContent = ''; }
@@ -340,9 +341,12 @@ function syncFxUI(){
   segSet('#fxMode', C.mode);
   const A = E || C, am = $('#fxAmt'), dd = E ? FX_DEFS[preEd] : selFx < NFX ? FX_DEFS[selFx] : null;
   const palAmt = !!dd && dd.id === 'colour' && (A.style || dd.styles[0][0]) === 'pal';   // Colour › Palette: the Amount slider picks the palette
-  am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : 'Amt'; am.dataset.palAmt = palAmt ? '1' : '';
+  const kal = !!dd && dd.id === 'mirror' && (A.style || dd.styles[0][0]) === 'kal';        // Mirror › Kaleido: it sets the number of slices
+  am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : 'Amt'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
   if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: FX_PALS.length - 1, step: 1 }); am.value = pi; am.dataset.def = 0; delete am.dataset.pct;
     am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
+  else if (kal){ const n = kalSlices(A.amt); Object.assign(am, { min: 3, max: 12, step: 1 }); am.value = n; am.dataset.def = 12; delete am.dataset.pct;
+    am.nextElementSibling.textContent = n; am.closest('.field').title = 'Slices: how many wedges the kaleidoscope has'; }
   else { Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = A.amt; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(A.amt * 100) + '%'; am.closest('.field').title = 'Amount: how strong'; }
   drawFxEnv(); syncEnvSl();
   if (!pre || E){
@@ -373,7 +377,7 @@ onSeg($('#fxMode'), (b, e) => {
 const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NFX].fx[preEd] : null;   // what the effect-level controls change
 onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ X.target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (X){ X.style = b.dataset.v; syncFxUI(); } });
-$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else X.amt = +e.target.value; syncFxUI(); });
+$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
 const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
@@ -435,6 +439,9 @@ function fxEnvMove(e){
   else if (fxEnvDrag.k === 'd'){ C.dec = FX_ATTS[idx(G.xA, FX_ATTS.length - 1)][0]; C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; }
   else if (fxEnvDrag.k === 'l') C.len = FX_LENS[idx(G.xD, FX_LENS.length - 1)][0];
   else C.rel = FX_RELS[idx(G.xL, FX_RELS.length - 1)][0];
+  // the dragged point would leave the box: zoom out now (not on letting go), keeping the steps steady from here on
+  const G2 = envGeo(C, cv.width, cv.height, d), xk = { a: G2.xA, d: G2.xD, l: G2.xL, r: G2.xR }[fxEnvDrag.k];
+  if (G2.xR > cv.width - 6 * d || xk > cv.width - 6 * d){ fxEnvDrag.u = 0; envZoom.delete(C); fxEnvDrag.u = envGeo(C, cv.width, cv.height, d).u; }
   envPrevChanged(C); drawFxEnv(); paintFxPads(clock.beat);
 }
 $('#fxEnv').addEventListener('pointermove', e => { if (fxEnvDrag) return fxEnvMove(e);
@@ -447,8 +454,9 @@ $('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; envPrevStop(
 let envPrevOn = Prefs.get('vjif-envprev') !== '0';
 let envSliders = Prefs.get('vjif-envview') === 'sl';
 let fxPrev = null, fxPrevSig = '';
-const ENV_IC_SL = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M2 4h12M2 8h12M2 12h12" stroke-width="1"/><rect x="4" y="3" width="2" height="2" fill="currentColor" stroke="none"/><rect x="10" y="7" width="2" height="2" fill="currentColor" stroke="none"/><rect x="6.5" y="11" width="2" height="2" fill="currentColor" stroke="none"/></svg>';
-const ENV_IC_GRAPH = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M1.5 13.5L4 3l3 5h4l3.5 5.5"/></svg>';
+// drawn on the pixel grid at 1:1 (14 px, half-pixel lines) so they stay sharp
+const ENV_IC_SL = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1" shape-rendering="crispEdges" style="display:block;margin:auto"><path d="M1 3.5h12M1 7.5h12M1 11.5h12"/><rect x="3" y="2" width="3" height="3" fill="currentColor" stroke="none"/><rect x="8" y="6" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="10" width="3" height="3" fill="currentColor" stroke="none"/></svg>';
+const ENV_IC_GRAPH = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.2" style="display:block;margin:auto"><path d="M1.5 12.5L3.5 2.5l3 5h3.5l2.5 5"/></svg>';
 function envPrevStart(){ if (envPrevOn && selFx < NFX) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }
 function envPrevChanged(C){ const sg = [C.att, C.dec, C.sus, C.len, C.rel].join(); if (fxPrev && sg !== fxPrevSig) fxPrev.b0 = clock.beat; fxPrevSig = sg; }
 function envPrevStop(){ if (fxPrev) fxPrev.loop = false; }

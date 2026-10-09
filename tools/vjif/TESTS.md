@@ -17,6 +17,8 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {mus41} **Music level** (0.41) — the speaker in the top bar: drag the level up and down while a track plays; you hear it change.
+- {vhs41} **VHS Wear** (0.41) — CRT › VHS, Wear from 0% to 100% on a busy GIF: does it read as a worn tape?
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.
 - {oldset} **An old set still loads** (0.40) — open one of your oldest saved sets: transitions and effects as before.

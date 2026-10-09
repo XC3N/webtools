@@ -103,8 +103,9 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
 .sub .info{display:inline-grid;place-items:center;width:13px;height:13px;border:1px solid var(--edge);border-radius:50%;font:600 9px var(--mono);color:var(--muted);cursor:help}.sub[title]{cursor:help}
 #musGrp .iconbtn.on{color:var(--sig);border-color:var(--sig)}.volwrap{position:relative;display:inline-flex}
-#musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);padding:10px 6px;box-shadow:0 6px 18px #0009}
-#musVolPop[hidden]{display:none}#musVol{writing-mode:vertical-lr;direction:rtl;width:22px;height:110px;margin:0}
+#musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:34px;height:130px;box-shadow:0 6px 18px #0009}
+/* a normal (horizontal) slider turned upright: the app's slider styling only works sideways, a vertical writing-mode slider ignored clicks */
+#musVolPop[hidden]{display:none}#musVol{position:absolute;left:50%;top:50%;width:110px;height:22px;margin:0;transform:translate(-50%,-50%) rotate(-90deg);cursor:ns-resize}
 #txLooks .txlook.dimmed{opacity:.4;pointer-events:none}#txPreset{flex:1;min-width:0}#txLooks .field{margin-bottom:5px}#txCol2{width:34px;height:24px;padding:2px;flex:none}
 .swTo.clear{background:repeating-conic-gradient(#666 0 25%,#333 0 50%) 0 0/8px 8px!important}.swr .iconbtn.on{color:var(--sig);border-color:var(--sig)}
 .padsub{cursor:pointer;user-select:none}.padsub:hover{color:var(--muted)}.padsub::before{content:'▾';width:10px;display:inline-block}.padsub.fold::before{content:'▸'}.padsub.fold+.padgrid{display:none}.padsub .cnt{display:none}.padsub.fold .cnt{display:inline}
@@ -161,8 +162,8 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxEdit.ent #fxMode,#fxEdit.ent #fxEnvRow{opacity:.5}
 .fxrow.envrow{height:auto;align-items:stretch}#fxEnvRow{flex:1 1 auto!important;display:grid;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto;gap:2px!important}
 .envhd{display:flex;align-items:center;gap:4px;font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.envhd .line{flex:1;height:1px;background:var(--edge)}
-.envhd .iconbtn{width:22px;height:18px;padding:0}.envrow>button{align-self:flex-end}.envhd .iconbtn.on{color:var(--sig);border-color:var(--sig)}
-#fxEnvSl{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;align-items:center;height:52px;font:400 11px var(--mono);color:var(--muted)}
+.envhd .iconbtn{width:22px;height:18px;padding:0;display:inline-flex;align-items:center;justify-content:center}.envrow>button{align-self:flex-end}.envhd .iconbtn.on{color:var(--sig);border-color:var(--sig)}
+#fxEnvSl{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;align-items:center;height:52px;margin-top:2px;font:400 11px var(--mono);color:var(--muted)}
 #fxEnvSl output{grid-column:2;grid-row:1;justify-self:end;padding-right:6px;pointer-events:none;color:var(--lcd);white-space:nowrap;position:relative;z-index:1}#fxEnvSl .sl{display:grid;grid-template-columns:10px minmax(0,1fr);gap:4px;align-items:center;min-width:0}#fxEnvSl .sl>input{grid-column:2;grid-row:1;width:100%}#fxEnvSl .sl.dimmed{opacity:.35}#fxEnvSl input{min-width:0;height:22px}
 #fxEnvRow.sliders #fxEnv{display:none}#fxEnvRow.sliders #fxEnvSl{display:grid}
 #fxEnv{width:100%;height:52px;min-width:120px;display:block;cursor:pointer;touch-action:none;background:var(--bg);border-radius:var(--r)}
@@ -194,6 +195,7 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .fxp .t>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fxp .n{font:600 11.5px/13px var(--sans);letter-spacing:-.01em;color:var(--ink)}
 .fxp .s{font:400 10px/12px var(--sans);color:var(--muted);min-height:12px}
+#fxPre .fxp .s{font:500 11.5px/13px var(--sans);letter-spacing:-.01em}   /* a preset's second line carries names too: same size as the first */
 .fxp.sel{border-color:var(--sig);box-shadow:inset 0 0 0 1px var(--sig)}
 .fxp.on .n,.fxp.on .hd,.fxp.on .s{color:var(--sigtxt)}
 #fmtSeg button,#recBarsSeg button,#recFpsSeg button,#recMbpsSeg button,#recACodecSeg button{padding:0 10px;min-width:40px}

@@ -86,7 +86,7 @@ function syncSwapUI(g){
   const pal = gifPalette(g);
   if (swSel && !pal.some(c => sameRgb(c, swSel))) swSel = null;
   $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}${swSel && sameRgb(swSel, c) ? ' sel' : ''}" style="background:${rgbHex(c)}" title="${rgbHex(c)}"></button>`).join('');
-  if ($('#swList').contains(document.activeElement)) return;   // a colour picker is open in the list: leave it alone
+  const ae = document.activeElement; if (ae && ae.type === 'color' && $('#swList').contains(ae)) return;   // a colour picker is open in the list: leave it alone (a clicked × or ∅ still has focus: not that)
   const row = (from, to, i, pend, clr = pend ? false : !!(g.swap[i] && g.swap[i].clear)) => `<div class="swr${pend ? ' pending' : ''}${swSel && sameRgb(swSel, from) ? ' sel' : ''}" data-r="${i}"><i style="background:${rgbHex(from)}"></i>→<label class="swTo${clr ? ' clear' : ''}" style="background:${clr ? '' : rgbHex(to)}" title="${pend ? 'Click: pick what this colour becomes' : 'Click to change'}"><input type="color" data-i="${i}" value="${rgbHex(to)}"></label><button class="iconbtn${clr ? ' on' : ''}" data-k="${i}" title="Transparent: this colour disappears (click again to bring it back)">∅</button>${pend ? '' : `<button class="iconbtn" data-x="${i}" title="Remove this swap">×</button>`}</div>`;
   const pend = swSel && !g.swap.some(x => sameRgb(x.from, swSel));
   $('#swList').innerHTML = g.swap.map((x, i) => row(x.from, x.to, i, false)).join('') + (pend ? row(swSel, swSel, 'new', true) : '');

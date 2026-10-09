@@ -4,6 +4,19 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.41.0 — 2026-10-09
+
+### Effects
+- CRT › VHS has **Wear** (on the Rate row): how worn the tape is. Tracking bands rolling down torn hard sideways, colour bleeding to the right of shapes, white dropout dashes, the top of the picture bending, snowy switching noise along the bottom, and the odd vertical hop. At 0% it's the old VHS look.
+- Mirror › Kaleido: the Amount row is now **Slices** (3–12).
+- Effect tiles: a style name that doesn't fit is shortened (Threshold → Thresh → Thr.) instead of cut off.
+- Envelope: dragging a point past the right edge zooms the graph out while you drag, so the point never leaves the box. Graph and sliders views are the same height (nothing below moves when you switch), and the sliders / graph icons are drawn on the pixel grid (no more blur).
+
+### Fixes
+- Music player: the level slider in the top bar ignored clicks and drags (an upright slider the app's slider styling doesn't support) and could be left at 0, so nothing was heard. It's a normal slider turned upright now, and a level saved at 0 starts at the default.
+- Colour › Swap colours: × (and ∅) didn't refresh the list, so a removed swap stayed on screen.
+- Effect presets: the second line of names is the same size as the first.
+
 ## 0.40.0 — 2026-10-08
 
 ### Faster (code review)
