@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.34.0 — 2026-10-08
+
+### Transitions
+- Stutter (the free slot): hard cuts back and forth between the scenes on the beat grid, landing on the new one. Ramp speeds up (1/8, then 1/16, then 1/32 notes); Even cuts every 1/16.
+
+### Effects
+- Colour › Palette follows the envelope again, as a dissolve: pixels switch to the palette in a dither pattern as it rises, and back as it releases, so a latched palette with a Release fades out without going muddy.
+- Envelope: each point has its own tooltip (and each slider); the graph keeps clear of the top edge like it does of the left; the zoom only changes when the envelope outgrows it or uses under half of it, so letting go of a point no longer shifts the graph; smaller, square knobs on the sliders icon.
+
 ## 0.33.0 — 2026-10-08
 
 ### Lettering

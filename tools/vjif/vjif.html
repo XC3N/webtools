@@ -401,7 +401,7 @@ output.mod{color:var(--env)}
         <div class="field" title="Amount: how strong"><label for="fxAmt">Amt</label><input id="fxAmt" type="range" min="0.05" max="1" step="0.01" data-def="1" data-pct><output></output></div>
         <div class="field" id="fxRateRow" title="Rate: how fast it moves (beats)"><label for="fxRate">Rate</label><input id="fxRate" type="range" min="0" step="1" data-def="1"><output></output></div>
         <div class="field" id="fxSizeRow" title="Size: the pixel block size at full amount"><label for="fxSize">Size</label><input id="fxSize" type="range" min="0" step="1" data-def="8"><output></output></div></div>
-      <div class="fxrow envrow"><div class="field" id="fxEnvRow" title="Envelope — drag the points: Attack (rise), Decay (fall to Sustain, its height), Gate (Hit: how long it stays at Sustain, as if the key were held), Release (fade out after the Gate, or after letting go of Hold / switching off Latch). Double-click a point: back to its default"><div class="envhd"><span>Envelope</span><span class="line"></span><button class="iconbtn" id="envPrev" title="Preview: while you drag a point (or a slider), the effect plays its envelope over and over, so you can hear… see it"><svg viewBox="0 0 16 16" width="11" height="11" style="display:block;margin:auto"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button><button class="iconbtn" id="envView" title="Graph or sliders"></button></div><canvas id="fxEnv" class="scope"></canvas>
+      <div class="fxrow envrow"><div class="field" id="fxEnvRow"><div class="envhd"><span>Envelope</span><span class="line"></span><button class="iconbtn" id="envPrev" title="Preview: while you drag a point (or a slider), the effect plays its envelope over and over, so you can hear… see it"><svg viewBox="0 0 16 16" width="11" height="11" style="display:block;margin:auto"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button><button class="iconbtn" id="envView" title="Graph or sliders"></button></div><canvas id="fxEnv" class="scope"></canvas>
           <div id="fxEnvSl"><div class="sl"><span>A</span><input type="range" min="0" step="1" data-k="a"><output></output></div><div class="sl"><span>D</span><input type="range" min="0" step="1" data-k="d"><output></output></div><div class="sl"><span>S</span><input type="range" min="0" max="20" step="1" data-k="s"><output></output></div><div class="sl"><span>G</span><input type="range" min="0" step="1" data-k="l"><output></output></div><div class="sl"><span>R</span><input type="range" min="0" step="1" data-k="r"><output></output></div></div></div>
         <button id="fxStore" title="Store the effects that are on right now into this preset (or Caps+Shift+its numpad key)">Store</button><button id="fxClear" title="Empty this preset">Clear</button></div>
     </div>
@@ -669,7 +669,7 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.33.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.34.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -2332,11 +2332,18 @@ $('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); 
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
 const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
+const ENV_TIPS = { a: 'Attack: how long it takes to rise to full. Drag sideways · double-click: 0',
+  d: 'Decay: how long it takes to fall to Sustain (sideways); Sustain: the level it rests at (up / down) · double-click: 0 and 100%',
+  l: 'Gate (Hit only): how long it stays at Sustain, as if the key were held · double-click: 0',
+  r: 'Release: the fade out after the Gate, or after letting go of Hold / switching off Latch · double-click: its default' };
+const envZoom = new WeakMap();   // per envelope: how many steps the graph's width shows
 const envGeo = (C, w, h, d) => {
   const ia = optIdx(FX_ATTS, C.att || 0), id = optIdx(FX_ATTS, C.dec || 0), il = optIdx(FX_LENS, C.len || 0), ir = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode));
   const hit = C.mode === 'hit', sus = C.sus ?? 1, base = 7 * d, n = ia + id + (hit ? il : 3) + ir;
-  const u = fxEnvDrag && fxEnvDrag.u ? fxEnvDrag.u : (w - 7 * d - 4 * base - 4 * d) / Math.max(8, n + 6);   // zoomed to fit, with room to drag further
-  const top = 4 * d, bot = h - 4 * d, ys = bot - (bot - top) * sus;
+  // the zoom only moves when it has to (the envelope outgrows it, or uses under half of it), so letting go of a point doesn't shift the graph
+  let z = envZoom.get(C) || 0; if (!z || n + 2 > z || (n + 6 < z / 2 && z > 8)) envZoom.set(C, z = Math.max(8, n + 6));
+  const u = fxEnvDrag && fxEnvDrag.u ? fxEnvDrag.u : (w - 7 * d - 4 * base - 4 * d) / z;
+  const top = 7 * d, bot = h - 4 * d, ys = bot - (bot - top) * sus;   // clear of the top edge by as much as the start is from the left
   const x0 = 7 * d, xA = x0 + (ia ? base + ia * u : 0), xD = xA + base + id * u, xL = xD + (hit ? base + il * u : base + 6 * u * 0.5), xR = xL + base + ir * u;
   return { ia, id, il, ir, base, u, top, bot, ys, x0, xA, xD, xL, xR, hit, sus };
 };
@@ -2362,7 +2369,8 @@ function drawFxEnv(){
     const t = k === 'a' ? `Attack ${FX_ATTS[G.ia][1]}` : k === 'd' ? `Decay ${FX_ATTS[G.id][1]} · Sustain ${Math.round(G.sus * 100)}%` : k === 'l' ? `Gate ${FX_LENS[G.il][1]}` : `Release ${FX_RELS[G.ir][1]}`;
     x.font = `600 ${10 * d}px ui-monospace, monospace`; const tw = x.measureText(t).width + 8 * d, tx = clamp(P[1] + 6 * d, 2 * d, w - tw - 2 * d), ty = 3 * d;
     x.fillStyle = 'rgba(0,0,0,.75)'; x.fillRect(tx, ty, tw, 13 * d); x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText(t, tx + 4 * d, ty + 10 * d); } }
-  if (cv.dataset.lab !== lab){ cv.dataset.lab = lab; cv.title = 'Envelope: ' + lab + ' — drag a point; double-click: its default'; }
+  const tip = !k ? 'Drag a point · double-click: its default' : ENV_TIPS[k];   // the hovered point's own explanation
+  if (cv.title !== tip) cv.title = tip;
   const lv = selFx < NFX || preEd == null ? fxLevel(selFx, clock.beat) : 0;   // where it is now
   if (lv > 0.001){ x.fillStyle = '#fff'; x.fillRect(w - 5 * d, G.bot - (G.bot - G.top) * lv, 3 * d, (G.bot - G.top) * lv); }
 }
@@ -2394,7 +2402,7 @@ $('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; envPrevStop(
 let envPrevOn = (() => { try { return localStorage.getItem('vjif-envprev') !== '0'; } catch (e) { return true; } })();
 let envSliders = (() => { try { return localStorage.getItem('vjif-envview') === 'sl'; } catch (e) { return false; } })();
 let fxPrev = null, fxPrevSig = '';
-const ENV_IC_SL = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6" fill="currentColor"/><circle cx="11" cy="8" r="1.6" fill="currentColor"/><circle cx="7.5" cy="12" r="1.6" fill="currentColor"/></svg>';
+const ENV_IC_SL = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M2 4h12M2 8h12M2 12h12" stroke-width="1"/><rect x="4" y="3" width="2" height="2" fill="currentColor" stroke="none"/><rect x="10" y="7" width="2" height="2" fill="currentColor" stroke="none"/><rect x="6.5" y="11" width="2" height="2" fill="currentColor" stroke="none"/></svg>';
 const ENV_IC_GRAPH = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M1.5 13.5L4 3l3 5h4l3.5 5.5"/></svg>';
 function envPrevStart(){ if (envPrevOn && selFx < NFX) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }
 function envPrevChanged(C){ const sg = [C.att, C.dec, C.sus, C.len, C.rel].join(); if (fxPrev && sg !== fxPrevSig) fxPrev.b0 = clock.beat; fxPrevSig = sg; }
@@ -2423,6 +2431,7 @@ $('#fxEnvSl').addEventListener('input', e => { const el = e.target, C = fxEnvCon
   envPrevChanged(C); syncEnvSl(); drawFxEnv(); paintFxPads(clock.beat); });
 $('#fxEnvSl').addEventListener('change', envPrevStop);
 syncEnvTg();
+document.querySelectorAll('#fxEnvSl input').forEach(el => { el.closest('.sl').title = { a: 'Attack: how long it takes to rise to full', d: 'Decay: how long it takes to fall to Sustain', s: 'Sustain: the level it rests at after Decay', l: 'Gate (Hit only): how long it stays at Sustain', r: 'Release: the fade out at the end' }[el.dataset.k]; });
 $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
   const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
   const near = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
@@ -2642,8 +2651,9 @@ function render(list, ctx = mctx, slotOff = null, LUs = layerFxU){
 }
 // ---------- scene transitions: the scene being left and the new one are each drawn whole, then combined ----------
 // transition families, each with its styles (like the effects); a preset = family + style + its settings
-const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch']];
+const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['stutter', 'Stutter']];
 const TR_STYLES = {
+  stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes on the beat grid, faster and faster (1/8, 1/16, 1/32), landing on the new one'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
   wipe: [['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)']],
@@ -2767,6 +2777,12 @@ function composeTransition(e, T){
       if (trStyleOf(T) === 'iris') m.arc(W / 2, H / 2, e * Math.hypot(W, H) / 2, 0, Math.PI * 2);
       else if (dx) m.rect(dx < 0 ? W * (1 - e) : 0, 0, W * e, H); else m.rect(0, dy < 0 ? H * (1 - e) : 0, W, H * e);
       m.clip(); m.drawImage(B, 0, 0); m.restore(); break; }
+    case 'stutter': {                                // hard cuts between the two scenes on the beat grid, ending on the new one
+      const L = trans ? trans.len : 4, t = e * L, ramp = trStyleOf(T) !== 'even';
+      let step = 0.25, t0 = 0;                         // beats per cut (0.25 = a 1/16 note)
+      if (ramp){ if (t < L / 2){ step = 0.5; } else if (t < L * 0.75){ step = 0.25; t0 = L / 2; } else { step = 0.125; t0 = L * 0.75; } }
+      const k = Math.floor((t - t0) / step + 1e-6), last = e >= 1 - step / L / 2;
+      m.drawImage(last || k % 2 ? B : A, 0, 0); break; }
     case 'zoom': {                                   // the old scene grows and fades; the new one grows in from smaller
       m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
       const z = (img, k, a) => { m.globalAlpha = a; m.drawImage(img, W / 2 - W * k / 2, H / 2 - H * k / 2, W * k, H * k); };
@@ -3048,7 +3064,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith }){
     mirror: S(7) === 3 ? env[7] : lv[7], mirS: S(7), mirN: Math.round(3 + 9 * clamp(amt[7], 0, 1)),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: S(9), crtSz: size[9], monoSz: size[0],
     pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, mirZ: kz ? kz[7] : 1 };
-  if (U.colrS === 3) U.colr = env[1] > 0.001 ? 1 : 0;   // a palette is on or off (Amount picks the palette)
+  if (U.colrS === 3) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = S(5) === 1, sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
   return U;
@@ -3183,7 +3199,8 @@ function makePost(){
         }
         float y = dot(c, vec3(0.299, 0.587, 0.114));
         c = mix(c, monoS < 0.5 ? vec3(y) : monoS < 1.5 ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
-        if (colr > 0.001) c = mix(c, colrS > 2.5 ? palSnap(c) : clamp(colrS > 1.5 ? 1.0 - c : hueRot(c, colrS < 0.5 ? 3.14159 : hue), 0.0, 1.0), colr);   // flip · cycle · invert · palette
+        if (colr > 0.001){ if (colrS > 2.5){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
+          else c = mix(c, clamp(colrS > 1.5 ? 1.0 - c : hueRot(c, colrS < 0.5 ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
         c = mix(c, vec3(strobeS < 0.5 ? 1.0 : 0.0), strobe); if (strobeS < 0.5) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
           vec2 q = uv;
