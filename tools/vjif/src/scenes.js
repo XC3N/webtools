@@ -209,7 +209,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, dith: fxCfg[i].dith || 0 });   // an effect as a preset holds it
+const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, dith: fxCfg[i].dith || 0 });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);

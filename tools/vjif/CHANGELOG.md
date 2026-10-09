@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.44.0 — 2026-10-09
+
+### Effects
+- Feedback: the Rate row is now Length, how long the trails / echoes last before they fade (all three styles; 70% is the old look).
+
+### Interface
+- Beat counter: the downbeat is lit in the theme colour, the other beats white (was the other way round).
+
 ## 0.43.0 — 2026-10-09
 
 ### Performance

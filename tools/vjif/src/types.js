@@ -92,7 +92,7 @@
  * @property {number} amt @property {number} att @property {number} dec @property {number} sus @property {number} len @property {number} rel   envelope (beats; sus 0–1)
  * @property {number} [rate] @property {string} [style] @property {number} [size]
  * @property {'out'|number} [target]   the whole output or a layer (0–3)
- * @property {number} [pal] @property {number} [dith] @property {number} [kz]   Colour › Palette, its dither; Mirror › Kaleido zoom
+ * @property {number} [pal] @property {number} [dith] @property {number} [kz] @property {number} [fbk]   Colour › Palette, its dither; Mirror › Kaleido zoom; Feedback length
  * @property {Object<number, FxSettings>} [fx]   a preset slot: the effects it plays (by effect index), each with its own settings
  */
 

@@ -50,8 +50,8 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #beats{display:flex;gap:4px;position:relative;align-items:center;min-height:12px}#midiStat{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:600 9px var(--mono);letter-spacing:.04em;color:#ffb000;white-space:nowrap;text-transform:uppercase}#beats.wait i{visibility:hidden}#beats.wait #midiStat{display:block}
 #midiLed.on{background:var(--sig);box-shadow:0 0 6px var(--sig)}#midiLed.wait{background:#ffb000;animation:ledblink .5s steps(1) infinite}
 #setBtn.alert{animation:gearAlert .6s steps(1) infinite}@keyframes gearAlert{50%{color:#ff3b3b;border-color:#ff3b3b}}#beats i{width:8px;height:8px;border-radius:50%;background:var(--track)}
-#beats i.on{background:var(--sig)}
-#beats i:first-child.on{background:var(--ink)}
+#beats i.on{background:var(--ink)}
+#beats i:first-child.on{background:var(--sig)}
 /* meters: memory and load, one LCD strip in the header */
 #perf{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 12px}
 #perf .ptitle{font:600 12px var(--sans);color:var(--muted)}
