@@ -216,10 +216,16 @@ pv.addEventListener('pointermove', e => {
     if ((pvOpt.stick || e.shiftKey) && !e.altKey){       // stick: the GIF's edges or centre onto a guide, the centre or an edge, within ~8 screen px · Shift: its centre only (Stick on or off)
       const G = clipGeom(c), co = e.shiftKey;
       if (G){ const tol = (co ? 14 : 8) * W / view.w, rx = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), ry = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
-        const [gx, gy] = guideLines(), LX = [0, W / 2, W, ...gx], LY = [0, H / 2, H, ...gy];
+        const [gx, gy] = guideLines(), [sx, sy] = safeLines(), LX = [0, W / 2, W, ...gx, ...sx], LY = [0, H / 2, H, ...gy, ...sy];
         const best = (pts, lines) => { let b = null; for (const p of pts) for (const l of lines){ const d = l - p; if (Math.abs(d) <= tol && (!b || Math.abs(d) < Math.abs(b.d))) b = { d, l }; } return b; };
         const bx = best(co ? [G.cx] : [G.cx - rx, G.cx, G.cx + rx], LX), by = best(co ? [G.cy] : [G.cy - ry, G.cy, G.cy + ry], LY);
-        if (bx || by){ drag.snap = { x: bx ? bx.l : null, y: by ? by.l : null }; if (bx) c.x += bx.d; if (by) c.y += by.d; } }
+        // slanted guides: the centre slides onto the nearest diagonal / perspective ray (closest point on it)
+        let sl = null; for (const [x0, y0, x1, y1] of guideSlants()){ const dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy; if (!L2) continue;
+          const t = clamp(((G.cx - x0) * dx + (G.cy - y0) * dy) / L2, 0, 1), qx = x0 + t * dx, qy = y0 + t * dy, d = Math.hypot(qx - G.cx, qy - G.cy);
+          if (d <= tol && (!sl || d < sl.d)) sl = { d, mx: qx - G.cx, my: qy - G.cy, line: [x0, y0, x1, y1] }; }
+        const sd = Math.min(bx ? Math.abs(bx.d) : Infinity, by ? Math.abs(by.d) : Infinity);
+        if (sl && sl.d < sd){ drag.snap = { x: null, y: null, line: sl.line }; c.x += sl.mx; c.y += sl.my; }
+        else if (bx || by){ drag.snap = { x: bx ? bx.l : null, y: by ? by.l : null }; if (bx) c.x += bx.d; if (by) c.y += by.d; } }
     }
   } else {
     const { G0, h } = drag, [lx, ly] = toLocal(G0, px, py), center = e.altKey !== !!pvOpt.fromC;

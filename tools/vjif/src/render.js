@@ -459,6 +459,16 @@ function guideLines(G = pvOpt.guides){   // the straight guides (golden, grid): 
   if (G.golden){ xs.push(0.382, 0.618); ys.push(0.382, 0.618); }
   return [xs.map(v => v * W), ys.map(v => v * H)];
 }
+// the slanted guides (diagonals, perspective rays) as segments in output pixels: a dragged GIF's centre sticks to them
+function guideSlants(G = pvOpt.guides){
+  if (pvOpt.gHide) return [];
+  const out = [];
+  if (G.diag) out.push([0, 0, W, H], [W, 0, 0, H]);
+  if (G.persp) for (let k = 0; k <= 4; k++){ const f = k / 4; for (const [x, y] of [[f, 0], [f, 1], [0, f], [1, f]]) out.push([W / 2, H / 2, x * W, y * H]); }
+  return out;
+}
+// the safe-area frames as straight lines (x, y in output pixels)
+const safeLines = () => pvOpt.gHide || !pvOpt.guides.safe || format === '9:16' ? [[], []] : [[0.035, 0.05, 0.95, 0.965].map(v => v * W), [0.035, 0.05, 0.95, 0.965].map(v => v * H)];
 const anyGuide = () => !pvOpt.gHide && Object.values(pvOpt.guides).some(Boolean);
 function ghostList(){
   const out = []; if (!pvOpt.ghosts) return out;

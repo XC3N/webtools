@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.51.0 — 2026-10-09
+
+### Scenes and presets
+- Drag a scene onto another: they swap, as before. Hold Ctrl (⌘) while dragging: a copy instead, onto an empty scene (the empty ones show a +). Duplicate uses the same copy.
+- Effect presets drag too: onto another preset they swap; with Ctrl held, a copy onto an empty preset. While dragging, the red ✕ doesn't show.
+
+### Preview
+- Stick works with the slanted guides: a dragged GIF's centre sticks to the diagonals and the perspective rays (the line it's on lights up). The safe-area frames are stick lines too.
+
 ## 0.50.0 — 2026-10-09
 
 ### Effects

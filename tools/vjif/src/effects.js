@@ -519,7 +519,7 @@ function drawFrame(now){
   paintFxPads(clock.beat);
   const L = layers[target], sel = selClip(), gh = ghostList();
   const O = overlaySig, Gd = pvOpt.guides; O.start();
-  [format, pvOpt.gcol, pvOpt.gx, pvOpt.gy, drag && drag.snap ? drag.snap.x : null, drag && drag.snap ? drag.snap.y : null, target, sel && sel.id, view.w, view.h].forEach(O.add);
+  [format, pvOpt.gcol, pvOpt.gx, pvOpt.gy, drag && drag.snap ? drag.snap.x : null, drag && drag.snap ? drag.snap.y : null, drag && drag.snap && drag.snap.line ? drag.snap.line.join() : null, target, sel && sel.id, view.w, view.h].forEach(O.add);
   for (const k of GUIDE_KEYS) O.add(!!Gd[k]); O.add(!!pvOpt.gHide);
   for (const c of L.clips){ const G = clipGeom(c); O.add('|'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }
   for (const [c, g] of gh){ const G = clipGeom(c); O.add(';'); [c.id, G.cx, G.cy, G.hw, G.hh, G.a, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, g.fxVer, g.startF, g.crisp].forEach(O.add); }
@@ -550,6 +550,7 @@ function drawOverlay(gh = ghostList()){
     pctx.save(); pctx.strokeStyle = '#ff5bb0'; pctx.lineWidth = dpr; pctx.beginPath();
     if (drag.snap.x != null){ const X = Math.round((view.x + drag.snap.x * view.w / W) * dpr) + 0.5; pctx.moveTo(X, view.y * dpr); pctx.lineTo(X, (view.y + view.h) * dpr); }
     if (drag.snap.y != null){ const Y = Math.round((view.y + drag.snap.y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); }
+    if (drag.snap.line){ const [x0, y0, x1, y1] = drag.snap.line, Q = (x, y) => [(view.x + x * view.w / W) * dpr, (view.y + y * view.h / H) * dpr]; pctx.moveTo(...Q(x0, y0)); pctx.lineTo(...Q(x1, y1)); }
     pctx.stroke(); pctx.restore();
   }
   if (format === '9:16' && pvOpt.guides.safe && !pvOpt.gHide){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)

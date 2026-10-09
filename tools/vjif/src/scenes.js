@@ -138,24 +138,28 @@ $('#scenes').addEventListener('contextmenu', e => {
   inp.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') end(true); else if (ev.key === 'Escape') end(false); });
   inp.addEventListener('blur', () => end(true));
 });
-// drag a scene onto another: they swap places (the playing one keeps playing, under its new number)
+// drag a scene onto another: they swap places (the playing one keeps playing, under its new number); hold Ctrl (⌘)
+// while dragging to copy it instead, onto an empty scene (the empty ones show a +)
 const SCENE_MIME = 'application/x-vjif-scene';
-$('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.scene'); if (!b) return; e.dataTransfer.setData(SCENE_MIME, b.dataset.i); e.dataTransfer.effectAllowed = 'move';
+$('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.scene'); if (!b) return; e.dataTransfer.setData(SCENE_MIME, b.dataset.i); e.dataTransfer.effectAllowed = 'copyMove';
   e.dataTransfer.setDragImage(NO_IMG, 0, 0);
   const g = document.createElement('span'); g.className = 'chip scghost'; g.innerHTML = `<span>${+b.dataset.i + 1}</span>`; g.style.backgroundImage = b.style.backgroundImage;
   ghost.show(g, e.clientX, e.clientY); });
 $('#scenes').addEventListener('dragover', e => {
   if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
-  e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
-  const b = e.target.closest('.scene'); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b));
+  e.preventDefault(); e.stopPropagation(); const cp = isDel(e); e.dataTransfer.dropEffect = cp ? 'copy' : 'move'; $('#scenes').classList.toggle('copying', cp);
+  const b = e.target.closest('.scene'); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b && (!cp || x.classList.contains('empty'))));
 });
-$('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)) document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); });
+$('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)){ document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); } });
 $('#scenes').addEventListener('drop', e => {
   if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
-  e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
-  const b = e.target.closest('.scene'); if (b) swapScenes(+e.dataTransfer.getData(SCENE_MIME), +b.dataset.i);
+  e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying');
+  const b = e.target.closest('.scene'); if (!b) return;
+  const a = +e.dataTransfer.getData(SCENE_MIME), t = +b.dataset.i;
+  if (isDel(e)){ if (a === t) return; if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); scenes[t] = sceneCopy(a); renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
+  swapScenes(a, t);
 });
-$('#scenes').addEventListener('dragend', () => document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')));
+$('#scenes').addEventListener('dragend', () => { document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); });
 function swapScenes(a, b){
   if (a === b || !(a >= 0 && b >= 0)) return;
   const map = i => i === a ? b : i === b ? a : i;
@@ -194,13 +198,19 @@ onSeg($('#trDir'), (b, e) => { transCfg.dir = b.dataset.v; syncTransUI(); });
 onSeg($('#trCurve'), (b, e) => { transCfg.smooth = b.dataset.v === '1'; syncTransUI(); });
 $('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
 $('#trPx').addEventListener('input', e => { transCfg.px = TR_PX[+e.target.value][0]; syncTransUI(); });
+// a stored copy of scene i (the live one or a stored one): its own copy of every pad's settings, new clip ids, same placement
+function sceneCopy(i){
+  const live = i === sceneIdx, sc = live ? null : scenes[i];
+  const P = live ? pads.map(p => p.gif) : (sc && sc.pads) || [], Ls = live ? layers : (sc && sc.layers) || [];
+  return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, pads: P.map(g => g && cloneInst(g)),
+    layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
+      return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
+}
 // copy the current scene into the next empty one (new clip ids, same placement) and go there
 $('#scDup').addEventListener('click', () => {
   let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i) && !scenePads(i)) t = i; }
   if (t < 0) return toast('No empty scene to copy into — clear one first');
-  scenes[t] = { thumb: sceneThumb(), name: liveName, pads: pads.map(p => p.gif && cloneInst(p.gif)),   // its own copy of every pad's settings
-    layers: layers.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
-    return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
+  scenes[t] = sceneCopy(sceneIdx);
   gotoScene(t, clock.beat, !!prep); toast2(`Copied to scene ${t + 1}`);
 });
 // ---- screen effect pads + editor ----
@@ -215,8 +225,22 @@ function togglePreFx(k, i){
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
   syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(P)}`);
 }
+// dragging a preset tile onto another: they swap; Ctrl (⌘) held at the drop: a copy, onto an empty preset only
+const preEmpty = k => !Object.keys(fxPre[k].fx).length;
+function fxDropMark(cp){
+  const d = fxDrag; if (!d || !d.moved) return; const pre = d.i >= NFX; d.copy = pre && cp; document.body.classList.toggle('precopy', d.copy);
+  const t = d.lastE && document.elementFromPoint(d.lastE.clientX, d.lastE.clientY), o = t && t.closest('#fxPre .fxp');
+  document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === o && (!pre || (+x.dataset.i !== d.i && (!d.copy || preEmpty(+x.dataset.i - NFX))))));
+}
+addEventListener('keydown', e => { if (fxDrag && DEL_KEYS.includes(e.key)) fxDropMark(true); });
+addEventListener('keyup', e => { if (fxDrag && DEL_KEYS.includes(e.key)) fxDropMark(false); });
+function movePre(a, b, copy){
+  if (copy){ if (!preEmpty(b)) return toast('Ctrl+drag onto an empty preset to copy'); fxPre[b] = JSON.parse(JSON.stringify(fxPre[a])); toast2(`Preset ${a + 1} copied to ${b + 1}`); }
+  else { [fxPre[a], fxPre[b]] = [fxPre[b], fxPre[a]]; toast2(`Presets ${a + 1} and ${b + 1} swapped`); }
+  selFx = NFX + b; syncFxUI();
+}
 function addPreFx(k, i){ fxPre[k].fx[i] = fxEntry(i); selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`); }
-function fxGhost(i){ const el = document.createElement('span'); el.className = 'fxghost'; el.textContent = FX_DEFS[i].name; ghost.show(el); }
+function fxGhost(i){ const el = document.createElement('span'); el.className = 'fxghost'; el.textContent = i < NFX ? FX_DEFS[i].name : 'Preset ' + (i - NFX + 1); ghost.show(el); }
 function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
@@ -227,22 +251,21 @@ function wireFxTile(el){
       selFx = i; syncFxUI(); return; }
     if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); el._edit = true; return; }     // a preset is held: this click edits it
     el.setPointerCapture(e.pointerId); fxDown(i);
-    if (i < NFX) fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; else heldPre = i - NFX;   // holding a preset tile: F keys edit it
+    fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; if (i >= NFX) heldPre = i - NFX;   // holding a preset tile: F keys edit it; dragging it moves / copies it
   });
   el.addEventListener('pointermove', e => {
     if (!fxDrag || fxDrag.i !== i) return;
-    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; fxUp(i); document.body.classList.add('fxdragging'); fxGhost(i); }
-    if (fxDrag.moved) ghost.move(e.clientX, e.clientY);
-    if (fxDrag.moved){ const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp');
-      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === d)); }
+    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; fxUp(i); if (i >= NFX) heldPre = -1; document.body.classList.add('fxdragging'); fxGhost(i); }
+    if (fxDrag.moved){ ghost.move(e.clientX, e.clientY); fxDrag.lastE = e; fxDropMark(isDel(e)); }
   });
   const end = e => {
     if (el._edit){ el._edit = false; return; }       // that click edited a preset: nothing was started
     fxUp(i); if (i >= NFX && heldPre === i - NFX) heldPre = -1;
     if (fxDrag && fxDrag.i === i && fxDrag.moved){
-      const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp');
-      if (d) addPreFx(+d.dataset.i - NFX, i);
-      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging');
+      const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp'), cp = fxDrag.copy;
+      if (d && i < NFX) addPreFx(+d.dataset.i - NFX, i);
+      else if (d && +d.dataset.i !== i) movePre(i - NFX, +d.dataset.i - NFX, cp);
+      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging', 'precopy');
     }
     if (fxDrag && fxDrag.moved) ghost.hide();
     fxDrag = null;
