@@ -4,6 +4,26 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.42.0 — 2026-10-09
+
+### Recording
+- Every take starts on the next downbeat, Snap or not (Rec shows Wait until then; click again to cancel).
+- Settings › Recording › Save to: choose a folder once and each take is written there under its date and time, no save dialog.
+- Tab audio: Pick the tab… in Settings chooses the tab ahead of time (it stays shared), so Rec doesn't open Chrome's picker.
+
+### Effects
+- CRT › VHS: Amount is now Wear (the separate Wear control is gone), and the tape looks more analog: a softer picture with a faint edge ring, colour noise line by line, dropouts with a soft head trailing off instead of hard dashes.
+- Effect editor: Hold / Hit / Latch stand beside the envelope, so Amount, Rate and Size get the whole row; their labels share one width (Amt is spelled Amount).
+
+### Transitions
+- Glitch › VHS: the picture tears up and dissolves into tape snow, and the new scene comes out of it (no more roll). Pixel is dimmed for it (it has no block size).
+
+### Top bar
+- Tempo ×2 and ÷2 (stacked next to ≈).
+- The music player sits in the middle of the free space.
+- MIDI learn button next to MIDI. While learning, each mapped object carries a tag with its control (N36, CC7…), a new assignment flashes there instead of a message, and pads show their dotted outline (it was hidden under the picture).
+- With MIDI clock, Sync puts every GIF back in line with the DAW's bar (the bar itself belongs to the DAW).
+
 ## 0.41.1 — 2026-10-09
 
 ### Fixes

@@ -12,7 +12,7 @@ const FX_DEFS = [
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
   { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['scramble', 'Scramble', 'Pixelated blocks with their colours scrambled (Size = biggest block)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'scramble'] },
-  { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, degauss', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; Wear adds tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches (best as a Hit with a long Release)'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
+  { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, degauss', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches (best as a Hit with a long Release)'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
 
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
@@ -42,10 +42,8 @@ function rateAlt(d, style){
   if (!d) return null;
   if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, title: () => 'Dither: ordered dots between the palette colours, for in-between shades (off = flat areas)' };
   if (d.id === 'mirror' && style === 'kal') return { label: 'Zoom', key: 'kz', def: 1, list: FX_KZ, title: () => 'Zoom: into the middle of the kaleidoscope' };
-  if (d.id === 'rgb' && style === 'vhs') return { label: 'Wear', key: 'wear', def: 0.5, list: FX_WEAR, title: () => 'Wear: how worn the tape is: tracking bands, dropouts, a bending top, noise along the bottom' };
   return null;
 }
-const FX_WEAR = Array.from({ length: 21 }, (_, i) => [i / 20, i * 5 + '%']);   // CRT › VHS: how worn the tape is
 const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px'], [128, '128 px'], [192, '192 px']];
 // Mirror › Kaleido: its Amount is the number of slices, 3–12 (Amount's 5–100%)
 const kalSlices = amt => Math.round(3 + 9 * clamp((amt - 0.05) / 0.95, 0, 1)), kalAmt = n => 0.05 + (n - 3) / 9 * 0.95;
@@ -114,20 +112,20 @@ const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; ret
 const FX_TARGETS = ['out', 0, 1, 2, 3];
 const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), wear: X.cfg.map(c => c.wear ?? 0.5), kz: X.cfg.map(c => c.kz || 1), dith: X.cfg.map(c => c.dith || 0) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), dith: X.cfg.map(c => c.dith || 0) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ const m = M.get(tgtKey(C.target)); m.lv[i] = v; m.env[i] = l; } });
   X.pre.forEach((P, k) => {
     const l = fxLevel(NFX + k, b, X) * P.amt; if (!(l > 0)) return;
     for (const [i, e] of Object.entries(P.fx)){
       const m = M.get(tgtKey(e.target)), v = l * e.amt;
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.wear != null) m.wear[i] = e.wear; if (e.kz) m.kz[i] = e.kz; if (e.dith != null) m.dith[i] = e.dith; }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.dith != null) m.dith[i] = e.dith; }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
-function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith, wear }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
   const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
@@ -136,7 +134,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith, wear }){
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
     mirror: nm(7) === 'kal' ? env[7] : lv[7], mirS: S(7), mirN: kalSlices(amt[7]),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: S(9), crtSz: size[9], monoSz: size[0],
-    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, mirZ: kz ? kz[7] : 1, vhsW: wear ? wear[9] : 0.5 };
+    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, mirZ: kz ? kz[7] : 1 };
   if (U.colrS === FXS.colour.pal) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(5) === 'jitter', sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
@@ -180,7 +178,7 @@ function makePost(){
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
       uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD,
-                    glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, shakeZ, vhsW;
+                    glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, shakeZ;
       uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -252,7 +250,7 @@ ${FX_GLSL}
         if (rgb > 0.001 && IS(rgbS, S_rgb_degauss)){ // degauss: the picture ripples
           p += vec2(sin(p.y * 18.0 + time * 35.0), cos(p.x * 14.0 + time * 29.0)) * 0.006 * rgb; }
         if (rgb > 0.001 && IS(rgbS, S_rgb_vhs)){ // VHS tracking: a gentle sway and a torn band rolling down; with Wear: more of the tape's faults
-          float fr = floor(time * 30.0), ln = floor(p.y * res.y / 2.0), w = vhsW * rgb;
+          float fr = floor(time * 30.0), ln = floor(p.y * res.y / 2.0), w = rgb;   // Amount is the wear
           p.x += sin(p.y * 30.0 + time * 6.0) * 0.0015 * rgb;
           float ty = fract(time * 0.23); if (abs(p.y - ty) < 0.025) p.x += (h1(floor(p.y * 200.0) + fr) - 0.5) * 0.03 * rgb;
           float bq = vhsBand(p.y); p.x += ((h1(ln * 0.7 + fr) - 0.5) * 0.22 + 0.035) * bq * w;   // tracking lost: bands torn hard sideways
@@ -303,13 +301,22 @@ ${FX_GLSL}
         if (rgb > 0.001 && IS(rgbS, S_rgb_degauss)){ // degauss: rainbow blotches swirling out
           float r = length((uv - 0.5) * a); c = mix(c, clamp(hueRot(c, sin(r * 12.0 - time * 18.0 + sin(uv.x * 7.0) * 2.0) * 3.0), 0.0, 1.0), 0.75 * rgb); }
         if (rgb > 0.001 && IS(rgbS, S_rgb_vhs)){ // VHS picture: washed colour, scanlines, noise; with Wear: colour bleeding right, dropouts
-          float w = vhsW * rgb, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
+          float w = rgb, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
           if (w > 0.001){                            // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
-            vec2 q = geo(p); vec3 sm = (raw(q - vec2(0.004, 0.0)) + raw(q - vec2(0.008, 0.0)) + raw(q - vec2(0.012, 0.0))) / 3.0;
+            vec2 q = geo(p), px1 = vec2(1.5 / res.x, 0.0);
+            vec3 lu = (raw(q - px1) + c * 2.0 + raw(q + px1)) / 4.0;                // tape's soft picture: brightness a little blurred sideways…
+            c = mix(c, lu + (c - lu) * 0.6, 0.7 * w);                              // …with a faint edge ring (the sharpening VCRs added)
+            vec3 sm = (raw(q - vec2(0.004, 0.0)) + raw(q - vec2(0.008, 0.0)) + raw(q - vec2(0.012, 0.0)) + raw(q - vec2(0.016, 0.0))) / 4.0;
             float yl = dot(c, vec3(0.299, 0.587, 0.114)); vec3 ch = sm - dot(sm, vec3(0.299, 0.587, 0.114));
-            c = mix(c, vec3(yl) + ch, 0.8 * w);
-            float bq = vhsBand(uv.y), seg = h1(ln * 1.3 + fr * 3.1);   // dropouts: white dashes where the tape lost its signal, mostly in the bands
-            if (seg < (0.02 + 0.3 * bq) * w){ float x0 = h1(ln + fr * 0.3), x1 = x0 + 0.02 + h1(ln * 2.1 + fr) * 0.3; if (uv.x > x0 && uv.x < x1) c = mix(c, vec3(1.0), 0.5 + 0.5 * h1(ln + fr)); }
+            c = mix(c, vec3(yl) + ch, 0.8 * w);                                     // colour at a fraction of the sharpness, smeared to the right
+            c += (vec3(h1(ln * 3.7 + fr), h1(ln * 5.1 + fr * 1.7), h1(ln * 2.3 + fr * 0.7)) - 0.5) * 0.06 * w;   // chroma noise, line by line
+            float bq = vhsBand(uv.y), seg = h1(ln * 1.3 + fr * 3.1);   // dropouts: where the tape lost its oxide, mostly in the bands
+            if (seg < (0.02 + 0.3 * bq) * w){
+              float x0 = h1(ln + fr * 0.3), x1 = x0 + 0.02 + h1(ln * 2.1 + fr) * 0.3;
+              float k = smoothstep(x0, x0 + 0.008, uv.x) * (1.0 - smoothstep(x0 + 0.01, x1, uv.x));   // a soft head that trails off
+              k *= 0.55 + 0.45 * h1(floor(uv.x * res.x / 3.0) + ln);              // grainy along its length
+              c = mix(c, vec3(0.85) + (h2(gl_FragCoord.xy + fr) - 0.5) * 0.3, k * (0.5 + 0.4 * h1(ln + fr)));
+            }
             if (uv.y > 0.955) c = mix(c, vec3(h2(gl_FragCoord.xy + fr)), 0.5 * w);   // the switching noise is snowy
           }
           c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rgb);
@@ -347,7 +354,7 @@ ${FX_GLSL}
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD',
-                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'shakeZ', 'time', 'vhsW'];
+                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'shakeZ', 'time'];
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
     gl.viewport(0, 0, W, H);

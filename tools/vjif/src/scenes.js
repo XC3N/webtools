@@ -177,7 +177,7 @@ function syncTransUI(){
   $('#trStyle').classList.toggle('wrap3', sts.length > 4);   // five styles: two rows, so none is squeezed out
   $('#trStyleRow').classList.toggle('dimmed', !sts.length);
   const pi = optIdx(TR_PX, T.px || 12); $('#trPx').value = pi; $('#trPx').nextElementSibling.textContent = TR_PX[pi][1];
-  $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || T.type === 'glitch'));
+  $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || T.type === 'glitch') || (T.type === 'glitch' && trStyleOf(T) === 'vhs'));   // VHS has no block size
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
   $('#trDirRow').classList.toggle('dimmed', !(T.type === 'slide' || (T.type === 'wipe' && stl === 'line')));
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || (T.type === 'glitch' && trStyleOf(T) === 'melt'));   // the melt keeps Doom's own timing
@@ -209,7 +209,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, wear: fxCfg[i].wear ?? 0.5, dith: fxCfg[i].dith || 0 });   // an effect as a preset holds it
+const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, dith: fxCfg[i].dith || 0 });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -342,12 +342,13 @@ function syncFxUI(){
   const A = E || C, am = $('#fxAmt'), dd = E ? FX_DEFS[preEd] : selFx < NFX ? FX_DEFS[selFx] : null;
   const palAmt = !!dd && dd.id === 'colour' && (A.style || dd.styles[0][0]) === 'pal';   // Colour › Palette: the Amount slider picks the palette
   const kal = !!dd && dd.id === 'mirror' && (A.style || dd.styles[0][0]) === 'kal';        // Mirror › Kaleido: it sets the number of slices
-  am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : 'Amt'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
+  const wear = !!dd && dd.id === 'rgb' && (A.style || dd.styles[0][0]) === 'vhs';         // CRT › VHS: Amount is how worn the tape is
+  am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : wear ? 'Wear' : 'Amount'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
   if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: FX_PALS.length - 1, step: 1 }); am.value = pi; am.dataset.def = 0; delete am.dataset.pct;
     am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
   else if (kal){ const n = kalSlices(A.amt); Object.assign(am, { min: 3, max: 12, step: 1 }); am.value = n; am.dataset.def = 12; delete am.dataset.pct;
     am.nextElementSibling.textContent = n; am.closest('.field').title = 'Slices: how many wedges the kaleidoscope has'; }
-  else { Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = A.amt; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(A.amt * 100) + '%'; am.closest('.field').title = 'Amount: how strong'; }
+  else { Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = A.amt; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(A.amt * 100) + '%'; am.closest('.field').title = wear ? 'Wear: how worn the tape is (tracking, colour bleed, dropouts, noise)' : 'Amount: how strong'; }
   drawFxEnv(); syncEnvSl();
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;

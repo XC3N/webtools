@@ -85,17 +85,52 @@ function recCancelWait(){
   rec.wait = null; recDropAudio(); if (rec.writer){ try { rec.writer.abort(); } catch (e) {} rec.writer = null; }   // the chosen file is dropped, not left empty
   recUI();
 }
+// ---- choosing the sound tab and the save folder ahead of time, so a take starts the moment you ask (on the bar) ----
+const recTabLive = () => rec.tab && rec.tab.getAudioTracks().some(t => t.readyState === 'live');
+async function recTabAsk(){
+  rec.tabAsked = false;
+  try {
+    const st = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, preferCurrentTab: false, selfBrowserSurface: 'exclude', systemAudio: 'include', surfaceSwitching: 'exclude' });
+    rec.tabAsked = true;
+    if (!st.getAudioTracks().length){ st.getTracks().forEach(t => t.stop()); toast('That share had no sound: tick "Also share tab audio" in Chrome\'s picker'); syncRecSrc(); return; }
+    st.getVideoTracks().forEach(t => t.stop());       // only the sound is used
+    if (rec.tab) rec.tab.getTracks().forEach(t => t.stop());
+    rec.tab = st; rec.tabName = (st.getAudioTracks()[0].label || 'a tab').replace(/^Tab audio:?\s*/i, '');
+    st.getAudioTracks()[0].addEventListener('ended', () => { rec.tab = null; syncRecSrc(); });   // the tab was closed or sharing stopped
+  } catch (e) { rec.tabAsked = e.name !== 'NotAllowedError'; if (e.name === 'NotAllowedError') toast('No tab shared'); else toast(`Tab audio didn't start (${e.name === 'InvalidStateError' ? 'it needs a click, not a MIDI or key trigger' : e.message || e.name})`); }
+  syncRecSrc();
+}
+function syncRecSrc(){
+  const tab = recAudio && recAudio.id === 'tab'; $('#recTabRow').hidden = !tab;
+  $('#recTabName').textContent = recTabLive() ? rec.tabName : 'no tab yet: asked at Rec';
+  $('#recTabPick').textContent = recTabLive() ? 'Pick another…' : 'Pick the tab…';
+  $('#recDirName').textContent = rec.dir ? rec.dir.name : 'ask for each take'; $('#recDirClear').hidden = !rec.dir;
+}
+$('#recTabPick').addEventListener('click', recTabAsk);
+$('#recDirPick').addEventListener('click', async () => {
+  if (!window.showDirectoryPicker) return toast('This browser can\'t pick a folder (use Chrome or Edge)');
+  try { rec.dir = await showDirectoryPicker({ id: 'vjif-rec', mode: 'readwrite' }); store.put('recdir', rec.dir); syncRecSrc(); } catch (e) {}
+});
+$('#recDirClear').addEventListener('click', () => { rec.dir = null; store.del('recdir'); syncRecSrc(); });
+(async () => { await new Promise(r => { const t = setInterval(() => { if (store.ready){ clearInterval(t); r(); } }, 200); });   // the folder chosen last time
+  try { rec.dir = await store.get('recdir') || null; } catch (e) {} syncRecSrc(); })();
+// a file in the chosen folder (permission is asked again once per session, on this click)
+async function recDirFile(name){
+  if (!rec.dir) return null;
+  try {
+    if ((await rec.dir.queryPermission({ mode: 'readwrite' })) !== 'granted' && (await rec.dir.requestPermission({ mode: 'readwrite' })) !== 'granted') return null;
+    const h = await rec.dir.getFileHandle(name, { create: true }); return await h.createWritable();
+  } catch (e) { toast(`Couldn't write in ${rec.dir.name} (${e.message || e.name}) — asking where to save instead`); return null; }
+}
 async function recPrepare(){
   rec.audio = null;
   if (recAudio && recAudio.id === 'music'){          // the music player, straight from the file
     if (!mus.el.src) toast('No track loaded (Settings › Recording › Music) — recording without sound');
     else { musGraph(); try { await mus.ctx.resume(); } catch (e) {} rec.audio = new MediaStream(mus.dest.stream.getAudioTracks().map(t => t.clone())); }
-  } else if (recAudio && recAudio.id === 'tab'){     // another tab's sound: Chrome asks which tab (its picture is captured too, then ignored)
-    try {
-      const st = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, preferCurrentTab: false, selfBrowserSurface: 'exclude', systemAudio: 'include', surfaceSwitching: 'include' });
-      if (!st.getAudioTracks().length){ st.getTracks().forEach(t => t.stop()); toast('That share had no sound: tick "Also share tab audio" in Chrome\'s picker — recording without sound'); }
-      else rec.audio = st;
-    } catch (e) { if (e.name === 'NotAllowedError') return toast('Recording cancelled (no tab shared)'); toast(`Tab audio didn't start (${e.name === 'InvalidStateError' ? 'it needs a click on Rec, not a MIDI or key trigger' : e.message || e.name}) — recording without sound`); }
+  } else if (recAudio && recAudio.id === 'tab'){     // another tab's sound: the tab picked in Settings, else Chrome asks now
+    if (!recTabLive()) await recTabAsk();
+    if (recTabLive()) rec.audio = new MediaStream(rec.tab.getAudioTracks().map(t => t.clone()));   // a copy per take: the picked tab stays shared
+    else if (!rec.tabAsked) return;                  // the picker was cancelled
   } else if (recAudio){                              // the chosen sound input, raw (no echo cancelling / noise gate / level riding)
     try { rec.audio = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: recAudio.id }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
     catch (e) { toast(`Can't open the sound input (${recAudio.label || 'chosen input'}) — recording without sound`); }
@@ -107,15 +142,14 @@ async function recPrepare(){
   const ext = recExt(mime), type = ext === 'mp4' ? 'video/mp4' : 'video/webm';
   const d = new Date(), pad2 = n => String(n).padStart(2, '0');
   rec.name = `vjif-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.${ext}`;
-  rec.writer = null;
-  if (window.showSaveFilePicker){
+  rec.writer = await recDirFile(rec.name);
+  if (!rec.writer && window.showSaveFilePicker){
     try { const h = await showSaveFilePicker({ suggestedName: rec.name, types: [{ description: `${ext.toUpperCase()} video`, accept: { [type]: ['.' + ext] } }] });
       rec.writer = await h.createWritable(); rec.name = h.name; }
     catch (e) { if (e.name === 'AbortError'){ recDropAudio(); return; } rec.writer = null; }
   }
-  // a bar-length take always starts on a bar: with a stopped MIDI clock it waits for the clock to start
-  if (snapUnit() || recBars){ rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; rec.last = clock.beat; recUI(); }
-  else recStart(mime);
+  // every take starts on the next downbeat (Snap or not), so you know when it begins; with a stopped MIDI clock it waits for the clock
+  rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; rec.last = clock.beat; recUI();
 }
 function recStart(mime, beat = clock.beat){
   musRecStart();
@@ -256,7 +290,7 @@ function recUI(){
     $('#recTxt').textContent = rec.stopAt ? `${Math.max(1, Math.ceil((rec.stopAt - clock.beat) / 4))} bar${Math.ceil((rec.stopAt - clock.beat) / 4) > 1 ? 's' : ''}` : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
   else { $('#recTxt').textContent = rec.wait ? 'Wait' : 'Rec';
-    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${W}×${H}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). With Snap on, recording starts on the next bar`; }
+    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${W}×${H}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
 }
 function recTick(){
   const b = clock.beat, back = b < (rec.last ?? b) - 0.5; rec.last = b;   // the beat count jumps back on Sync or a MIDI Start

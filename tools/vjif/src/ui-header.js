@@ -40,6 +40,7 @@ bank.addEventListener('drop', e => {
 // ---------- header UI ----------
 const bpmEl = $('#bpm');
 $('#bpmRound').addEventListener('click', () => { if (clock.src !== 'internal') return; setBpm(Math.round(clock.bpm)); bpmEl.value = clock.bpm.toFixed(2); });
+[['#bpmDbl', 2], ['#bpmHalf', 0.5]].forEach(([id, k]) => $(id).addEventListener('click', () => { if (clock.src !== 'internal') return; setBpm(clock.bpm * k); bpmEl.value = clock.bpm.toFixed(2); }));   // (the beat count carries on: GIFs stay in place)
 function commitBpm(){
   const v = parseFloat(bpmEl.value);
   if (clock.src === 'internal' && isFinite(v)) setBpm(v);
@@ -155,7 +156,7 @@ $('#recAudioSel').addEventListener('change', async e => {
   const v = e.target.value;
   if (v === '?'){ await fillRecAudio(true); return; }
   recAudio = v ? { id: v, label: e.target.selectedOptions[0].textContent } : null;
-  Prefs.setJson('vjif-recaudio', recAudio);
+  Prefs.setJson('vjif-recaudio', recAudio); syncRecSrc();
 });
 $('#setBtn').addEventListener('click', () => fillRecAudio());
 const recSave = (k, v) => { Prefs.set(k, v); syncRecFmt(); recUI(); };

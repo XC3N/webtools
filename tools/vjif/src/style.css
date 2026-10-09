@@ -39,6 +39,8 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .grp{display:flex;align-items:center;gap:6px}.grp.right{margin-left:auto}
 .vsep{width:1px;height:20px;background:var(--edge);flex:none}
 .bpmwrap{position:relative;display:inline-block}
+.bpmx{display:inline-flex;flex-direction:column;gap:1px;height:calc(var(--ch) - 2px)}.bpmx button{flex:1;width:22px;min-height:0;padding:0;font:600 8.5px/1 var(--mono);border-radius:2px}   /* ×2 over ÷2 */
+#musGrp{margin-left:auto}   /* the player sits in the middle of the free space (the next group pushes right too) */
 #bpm{cursor:ns-resize}#bpm:focus{cursor:text}body.bpmdrag,body.bpmdrag *{cursor:ns-resize !important}
 #bpmMark{position:absolute;bottom:3px;height:2px;background:var(--lcd-ink);pointer-events:none;display:none}
 #bpm{width:80px;text-align:center;font:500 12px var(--mono);color:var(--lcd-ink);background:var(--lcd-bg);border-color:color-mix(in srgb,var(--lcd-ink) 22%,transparent);font-variant-numeric:tabular-nums;-moz-appearance:textfield}
@@ -154,7 +156,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .fxrow .lcd{flex:none;width:12ch;text-align:center;font-size:11px}
 .fxrow .seg{flex:1;min-width:0}
 #fxStyle button{flex:1 1 0;min-width:0;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* every style shrinks a little, rather than the last one vanishing */
-#fxMode{flex:none;width:120px}
+#fxMode{flex:none;width:52px;align-self:stretch;grid-auto-flow:row;grid-auto-rows:1fr}#fxMode button{height:auto}   /* Hold / Hit / Latch stacked beside the envelope */
 #fxTgt{flex:none;width:118px}#fxTgt button{padding:0}
 #fxTgt button[data-v]:not([data-v=out]){box-shadow:inset 0 -2px 0 var(--lc)}
 #fxEdit.pre #fxTgt{display:none}
@@ -175,6 +177,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 @media (max-width:1560px){ #hdrVer,#clockGrp>label{display:none} #setLabel{width:64px} #brbBtn{width:62px} #musGrp .iconbtn{width:22px} #top{gap:6px} }
 @media (max-width:1340px){ #snap{width:56px!important} #undoBtn,#redoBtn{width:20px} #setLabel{width:52px} #top .grp.sect{gap:3px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
+.fxrow:not(.envrow) .field{grid-template-columns:50px minmax(0,1fr)}   /* Amount / Rate / Size (and what stands in for them) labels all the same width */
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
 .fxrow button{flex:none}
 #fxPreList{flex:1;min-width:0;display:flex;gap:4px;overflow:hidden;align-items:center}
@@ -313,6 +316,9 @@ body.del #fxPads .fxp:hover,body.del #trPre button:hover{box-shadow:inset 0 0 0 
 #learnBar{position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;background:var(--panel);border:1px solid var(--sig);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12px;max-width:92vw}
 #learnBar b{color:var(--sig)}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.learning .learnMapped{outline:2px dotted var(--sig);outline-offset:-2px}
+body.learning .pad.learnMapped::before{content:"";position:absolute;inset:0;border:2px dotted var(--sig);border-radius:inherit;z-index:6;pointer-events:none}   /* a pad's picture covers its own outline */
+.midiHost{position:relative}.midiTag{position:absolute;right:2px;bottom:2px;z-index:7;pointer-events:none;font:600 9px/1 var(--mono);color:var(--sigtxt);background:var(--sig);border-radius:2px;padding:2px 3px;white-space:nowrap;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis}
+.midiTag.new{animation:wait .25s steps(1) 6}
 body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px;animation:wait .5s steps(1) infinite}
 #midiMap{display:flex;flex-direction:column;gap:3px;max-height:220px;overflow:auto}
 .mrow{display:grid;grid-template-columns:12ch 1fr auto;gap:8px;align-items:center;padding:3px 6px;background:var(--panel-2);border-radius:var(--r);font-size:12px}

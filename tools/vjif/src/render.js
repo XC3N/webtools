@@ -196,7 +196,7 @@ const TR_STYLES = {
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
            ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)'], ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)'],
-           ['vhs', 'VHS', 'A tape switching channels: tracking wobble, a noisy band rolling down, colour bleed, the picture rolls over to the new scene']] };
+           ['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it']] };
 const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
 // a preset made valid: a known type and style, a block size
 function normTrans(P){
@@ -381,36 +381,40 @@ const TR_DRAW = {
         pxCtx.putImageData(im, 0, 0);
       }
       m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return; }
-    if (gst === 'vhs'){                            // a tape switching channels: the picture rolls over to the new one through tracking noise
+    if (gst === 'vhs'){                            // a tape switching channels: the picture tears up, dissolves into snow, and the new one comes out of it
       const k = Math.sin(Math.PI * e), src = e < 0.5 ? A : B, t = performance.now() / 1000;
-      const roll = e > 0.38 && e < 0.62 ? Math.round(((e - 0.38) / 0.24) * H) : 0;   // vertical hold lost through the switch
-      // tracking lost: two bands rolling down at different speeds, torn hard sideways and full of white dropout streaks
+      const nz = Math.min(1, Math.max(0, 1 - Math.abs(e - 0.5) / 0.3)) ** 1.5;   // snow: none at the ends, all of it around the middle
+      // tracking lost: two bands rolling down at different speeds, torn sideways, where most dropouts happen
       const bands = [[((t * 0.35 + e * 0.8) % 1.3 - 0.15) * H, H * 0.16], [((t * 0.61 + 0.5 + e * 1.3) % 1.3 - 0.15) * H, H * 0.05]];
       const fr = Math.floor(t * 30), flag = H * 0.09, head = H * 0.95;
       m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
       const sh = 2, streaks = [];
       for (let y = 0; y < H; y += sh){
-        const sy = (y + roll) % H; let tear = 0;
-        for (const [bc, bh] of bands){ const d = Math.abs(y - bc); if (d < bh){ const q = 1 - d / bh; tear += (fxRand(y * 0.7 + fr) - 0.5) * 420 * q + 70 * q;
-          if (fxRand(y * 1.3 + fr * 3.1) < 0.35 * q) streaks.push(y); } }
+        let tear = 0;
+        for (const [bc, bh] of bands){ const d = Math.abs(y - bc); if (d < bh){ const q = 1 - d / bh; tear += (fxRand(y * 0.7 + fr) - 0.5) * 300 * q + 50 * q;
+          if (fxRand(y * 1.3 + fr * 3.1) < 0.3 * q) streaks.push(y); } }
+        if (fxRand(y * 2.9 + fr * 1.7) < 0.004) streaks.push(y);                 // a few anywhere
         if (y < flag) tear += (1 - y / flag) ** 2 * 60 * Math.sin(t * 3);        // flagging: the top of the picture bends
         if (y > head) tear += 30 + fxRand(y * 0.9 + fr) * 50;                   // head-switching noise along the bottom
         const ox = Math.round((Math.sin(y * 0.021 + t * 9) * 7 + tear) * k);
-        m.drawImage(src, 0, sy, W, Math.min(sh, H - sy), ox, y, W, Math.min(sh, H - sy));
-      }
-      if (k > 0.02){                                // dropouts: white dashes where the tape lost its signal
-        m.fillStyle = '#fff';
-        streaks.forEach((y, i) => { m.globalAlpha = (0.4 + fxRand(i + fr) * 0.6) * k; const x = fxRand(y + fr * 0.3) * W, w = 20 + fxRand(y * 2.1 + fr) * W * 0.4; m.fillRect(x, y, w, sh); });
-        m.globalAlpha = 1;
+        m.drawImage(src, 0, y, W, Math.min(sh, H - y), ox, y, W, Math.min(sh, H - y));
       }
       if (k > 0.02){
-        m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.3 * k; m.drawImage(src, 0, roll, W, H - roll, Math.round(14 * k), 0, W, H - roll); m.globalAlpha = 1;   // colour bleed
+        m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.3 * k; m.drawImage(src, Math.round(14 * k), 0); m.globalAlpha = 1;   // colour bleed
         m.globalCompositeOperation = 'source-over';
-        if (!vhsN.cv){ vhsN.cv = document.createElement('canvas'); vhsN.cv.width = 192; vhsN.cv.height = 108; vhsN.x = vhsN.cv.getContext('2d'); vhsN.img = vhsN.x.createImageData(192, 108); }
-        const d = vhsN.img.data; for (let i = 0; i < d.length; i += 4){ const v = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+        // snow: streaky (each value leans on the one to its left, like tape noise), drawn up soft so it isn't a pixel grid
+        if (!vhsN.cv){ vhsN.cv = document.createElement('canvas'); vhsN.cv.width = 320; vhsN.cv.height = 180; vhsN.x = vhsN.cv.getContext('2d'); vhsN.img = vhsN.x.createImageData(320, 180);
+          const g = document.createElement('canvas'); g.width = 96; g.height = 1; const gx = g.getContext('2d'), gr = gx.createLinearGradient(0, 0, 96, 0);
+          gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.06, 'rgba(255,255,255,.95)'); gr.addColorStop(0.35, 'rgba(235,235,235,.6)'); gr.addColorStop(1, 'rgba(220,220,220,0)');
+          gx.fillStyle = gr; gx.fillRect(0, 0, 96, 1); vhsN.dash = g; }                // a dropout: a sharp head trailing off to the right
+        const d = vhsN.img.data; let prev = 128;
+        for (let i = 0; i < d.length; i += 4){ if ((i >> 2) % 320 === 0) prev = 128; const v = prev = prev * 0.55 + Math.random() * 255 * 0.45; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
         vhsN.x.putImageData(vhsN.img, 0, 0);
-        m.globalCompositeOperation = 'screen'; m.globalAlpha = 0.26 * k; m.imageSmoothingEnabled = false; m.drawImage(vhsN.cv, 0, 0, W, H); m.imageSmoothingEnabled = true;
-        m.globalCompositeOperation = 'source-over'; m.globalAlpha = 0.25 * k; m.fillStyle = '#000';
+        m.imageSmoothingEnabled = true;
+        m.globalAlpha = Math.min(1, 0.12 * k + nz); m.drawImage(vhsN.cv, 0, 0, W, H);
+        m.globalCompositeOperation = 'screen'; m.globalAlpha = 0.18 * k; m.drawImage(vhsN.cv, 0, 0, W, H); m.globalCompositeOperation = 'source-over';
+        streaks.forEach((y, i) => { m.globalAlpha = (0.35 + fxRand(i + fr) * 0.6) * k; const x = fxRand(y + fr * 0.3) * W, w = 30 + fxRand(y * 2.1 + fr) * W * 0.35; m.drawImage(vhsN.dash, x, y, w, sh); });
+        m.globalAlpha = 0.22 * k; m.fillStyle = '#000';
         for (let y = 0; y < H; y += 3) m.fillRect(0, y, W, 1);   // scanlines
         m.globalAlpha = 1;
       }

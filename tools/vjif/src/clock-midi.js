@@ -18,11 +18,14 @@ function tap(){
 }
 
 // global reset: now is beat 1 of bar 1 (internal clock), and every GIF on every layer restarts from its start frame
+// With MIDI clock the bar belongs to the DAW: Sync can't move it, so every GIF is put back in line with the DAW's
+// bar instead (as if it had started on the last downbeat)
 function resync(){
   const now = performance.now();
   if (clock.src === 'internal'){ clock.beat = 0; clock.taps.length = 0; }
-  layers.forEach(L => L.clips.forEach(c => { c.startTime = now; c.startBeat = clock.beat; }));
-  if (prep) prep.layers.forEach(L => L.clips.forEach(c => { c.startTime = now; c.startBeat = clock.beat; }));   // the output follows Sync too
+  const b0 = clock.src === 'midi' ? Math.floor(clock.beat / 4 + 1e-9) * 4 : clock.beat, t0 = now - (clock.beat - b0) * 60000 / clock.bpm;
+  layers.forEach(L => L.clips.forEach(c => { c.startTime = t0; c.startBeat = b0; }));
+  if (prep) prep.layers.forEach(L => L.clips.forEach(c => { c.startTime = t0; c.startBeat = b0; }));   // the output follows Sync too
   if (pendingLive !== null) pendingLive = clock.beat;
   const b = $('#syncBtn'); b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 120);
 }
@@ -76,7 +79,7 @@ function onMidi(e){
 let midiShown = null;                                // what the MIDI clock status shows now (null = to be written; main loop)
 function setClockSrc(v){
   clock.src = v; midiShown = null; $('#midiClk').classList.toggle('on', v === 'midi');
-  $('#bpm').disabled = v === 'midi'; $('#tapBtn').disabled = v === 'midi'; $('#bpmRound').disabled = v === 'midi';
+  ['#bpm', '#tapBtn', '#bpmRound', '#bpmDbl', '#bpmHalf'].forEach(q => $(q).disabled = v === 'midi');
   if (v === 'midi'){ clock.midiTicks = Math.round(clock.beat * 24); enableMidi().then(() => { if (clock.src === 'midi' && !midiInput) toast('No MIDI clock input selected: pick one in Settings › MIDI'); }); }
   else { if (midiInput) midiInput.onmidimessage = null; $('#beats').classList.remove('wait'); $('#midiLed').className = 'led'; }
   midiAlert();
@@ -105,6 +108,8 @@ function bindCtlInputs(){
   renderMidiCtl();
 }
 const FADERS = new Set(['opacity', 'amount']);
+// short, for the tag on a mapped object: N36, CC7 (+ the channel when it isn't 1)
+const ctlShort = k => { const [ch, n] = k.slice(1).split('.').map(Number); return (k[0] === 'n' ? 'N' : 'CC') + n + (ch ? '/' + (ch + 1) : ''); };
 const ctlName = k => { const [ty, rest] = [k[0], k.slice(1)], [ch, n] = rest.split('.').map(Number); return `${ty === 'n' ? 'Note ' + n : 'CC ' + n} · ch ${ch + 1}`; };
 function targetName(T){
   switch (T.t){
@@ -133,8 +138,7 @@ function onCtl(e){
     if (FADERS.has(T.t) && kind !== 'cc') return toast2('Faders need a knob or fader (a CC), not a key');
     midiCtl.map = midiCtl.map.filter(m => m.key !== key);              // one job per control
     midiCtl.map.push({ key, t: T.t, i: T.i ?? 0 }); saveMidiCtl();
-    toast2(`${ctlName(key)} → ${targetName(T)}`);
-    midiCtl.target = null; markLearn(); renderMidiCtl(); return;
+    midiCtl.target = null; markLearn(T); renderMidiCtl(); return;   // the new control's name shows on the object itself
   }
   for (const m of midiCtl.map) if (m.key === key) ctlApply(m, kind, val, key);
 }
@@ -192,6 +196,7 @@ async function startLearn(){
   document.body.classList.add('learning'); $('#learnBar').hidden = false; markLearn();
 }
 function endLearn(){ midiCtl.learning = false; midiCtl.target = null; document.body.classList.remove('learning'); $('#learnBar').hidden = true; markLearn(); renderMidiCtl(); }
+$('#learnBtn').addEventListener('click', () => midiCtl.learning ? endLearn() : startLearn());
 function elFor(T){
   switch (T.t){
     case 'pad': return pads[T.i] && pads[T.i].el;
@@ -205,22 +210,29 @@ function elFor(T){
     default: return $(`#learnBar [data-learn="${T.t}"]`);
   }
 }
-// while learning: mapped targets are outlined, the one waiting for a control is lit
-function markLearn(){
-  document.querySelectorAll('.learnMapped, .learnSel').forEach(x => x.classList.remove('learnMapped', 'learnSel'));
+// while learning: mapped targets are outlined and carry their control's name (a tag drawn over them, so a pad's
+// picture can't hide it); the one waiting for a control is lit; the one just assigned flashes
+function markLearn(fresh = null){
+  document.querySelectorAll('.learnMapped, .learnSel, .learnNew').forEach(x => x.classList.remove('learnMapped', 'learnSel', 'learnNew'));
+  document.querySelectorAll('.midiTag').forEach(x => x.remove());
+  $('#learnBtn').classList.toggle('on', midiCtl.learning);
   if (!midiCtl.learning) return;
-  midiCtl.map.forEach(m => { const el = elFor(m); if (el) el.classList.add('learnMapped'); });
+  const tags = new Map();                            // element → its controls' names
+  midiCtl.map.forEach(m => { const el = elFor(m); if (!el) return; el.classList.add('learnMapped'); if (!tags.has(el)) tags.set(el, []); tags.get(el).push(ctlShort(m.key)); });
+  tags.forEach((names, el) => { const host = el.tagName === 'INPUT' ? el.parentElement : el, t = document.createElement('span');
+    t.className = 'midiTag'; t.textContent = names.join(' · '); host.classList.add('midiHost'); host.appendChild(t);
+    if (fresh && el === elFor(fresh)){ el.classList.add('learnNew'); t.classList.add('new'); } });
   const s = midiCtl.target && elFor(midiCtl.target); if (s) s.classList.add('learnSel');
   $('#learnMsg').textContent = midiCtl.target ? `${targetName(midiCtl.target)}: now press or move a control on your controller` : 'Click what you want to control (pad, scene, transition, effect, layer button or opacity, effect amount…)';
 }
 document.addEventListener('pointerdown', e => {
-  if (!midiCtl.learning || e.target.closest('#learnDone, #setPanel')) return;
+  if (!midiCtl.learning || e.target.closest('#learnDone, #learnBtn, #setPanel')) return;
   const T = learnTargetAt(e.target);
   e.preventDefault(); e.stopPropagation();
   if (!T) return;
   midiCtl.target = T; markLearn();
 }, true);
-['click', 'dblclick', 'contextmenu', 'dragstart'].forEach(t => document.addEventListener(t, e => { if (midiCtl.learning && !e.target.closest('#learnDone, #setPanel')){ e.preventDefault(); e.stopPropagation(); } }, true));
+['click', 'dblclick', 'contextmenu', 'dragstart'].forEach(t => document.addEventListener(t, e => { if (midiCtl.learning && !e.target.closest('#learnDone, #learnBtn, #setPanel')){ e.preventDefault(); e.stopPropagation(); } }, true));
 function renderMidiCtl(){
   const box = $('#midiMap'); if (!box) return;
   const sel = $('#midiCtlIn'), ins = midiAccess ? [...midiAccess.inputs.values()] : [];
