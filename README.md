@@ -47,7 +47,7 @@ Apart from the vendored library above, the code is written for these tools rathe
 
 - Typefaces, loaded from Google Fonts: Instrument Sans, JetBrains Mono (JetBrains), and for VJif's Lettering Russo One, Anton, Bebas Neue, Bungee, Monoton, Orbitron, Press Start 2P, Rubik Mono One, Righteous (all SIL Open Font License) and Permanent Marker (Apache License 2.0).
 - VJif Colour › Palette data: the C64 colours are Philip "Pepto" Timmermann's palette (pepto.de); the CGA, EGA, NES and Game Boy colours as listed in Wikipedia's "List of video game console palettes".
-- Ideas, not code: the Glitch › Melt transition follows the Doom screen wipe (id Software, 1993); Pay-TV follows Videocrypt's cut-and-rotate and Nagravision Syster's line shuffling; ordered dithering uses Bayer's matrix (Bryce Bayer, 1973).
+- Ideas, not code: the Glitch › Melt transition follows the Doom screen wipe (id Software, 1993); Pay-TV follows analogue cable sync suppression, Crypt follows Videocrypt's cut-and-rotate and Nagravision Syster's line shuffling; ordered dithering uses Bayer's matrix (Bryce Bayer, 1973).
 
 If these tools are useful to you, consider supporting the music at [xc3n.bandcamp.com](https://xc3n.bandcamp.com).
 

@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.38.0 — 2026-10-08
+
+### Effects
+- CRT › Pay-TV is now the cable-box look (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing inside it, the vertical hold drifts, a smeared echo, the colour decoded wrong and now and then a negative field.
+- CRT › Crypt: the 0.37 version (Videocrypt cut-and-rotate + Nagravision line shuffle) as its own style.
+- Effect editor: the effect's name and its layer buttons share the first row, the styles get a row of their own (wrapping onto a second line when there are many), so nothing is cut short. The bottom panel is a little taller.
+
 ## 0.37.0 — 2026-10-08
 
 ### Effects
