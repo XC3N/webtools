@@ -42,7 +42,12 @@ and a Markdown file as HTML with `<!-- @markdown tools/vjif/CHANGELOG.md -->` (V
 ## Credits
 
 UX & features design by XC3N · implementation & coding by Claude.
-Typefaces: Instrument Sans and JetBrains Mono (JetBrains), SIL Open Font License, loaded from Google Fonts.
+
+Apart from the vendored library above, the code is written for these tools rather than copied from other projects. What they borrow is listed here, and the list is updated in the same commit as whatever adds to it.
+
+- Typefaces, loaded from Google Fonts: Instrument Sans, JetBrains Mono (JetBrains), and for VJif's Lettering Russo One, Anton, Bebas Neue, Bungee, Monoton, Orbitron, Press Start 2P, Rubik Mono One, Righteous (all SIL Open Font License) and Permanent Marker (Apache License 2.0).
+- VJif Colour › Palette data: the C64 colours are Philip "Pepto" Timmermann's palette (pepto.de); the CGA, EGA, NES and Game Boy colours as listed in Wikipedia's "List of video game console palettes".
+- Ideas, not code: the Glitch › Melt transition follows the Doom screen wipe (id Software, 1993); Pay-TV follows Videocrypt's cut-and-rotate and Nagravision Syster's line shuffling; ordered dithering uses Bayer's matrix (Bryce Bayer, 1973).
 
 If these tools are useful to you, consider supporting the music at [xc3n.bandcamp.com](https://xc3n.bandcamp.com).
 

@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.37.0 — 2026-10-08
+
+### Effects
+- CRT › Pay-TV: a scrambled pay channel. Lines are shuffled within blocks (like Nagravision Syster) and each one is cut at a random point with its halves swapped (like Videocrypt), re-keyed 4 times a second; the colour drains and the blacks lift. Amount = how many lines are scrambled, Size = line height.
+
+### About
+- Credits: mp4-muxer, the fonts and their licences, the palette sources and the ideas borrowed (hover the line; the full list is in the README).
+
 ## 0.36.1 — 2026-10-08
 
 ### Fixes
