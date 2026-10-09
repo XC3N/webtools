@@ -9,7 +9,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {g2} **MIDI mappings survive a reload** — reload VJif: mappings work again without re-learning.
 - {g3} **Controller unplugged at load** — Settings shows your input as "(not connected)".
 - {g4} **MIDI clock from the DAW** (0.32: MIDI button in the top bar, input in Settings › MIDI) — a bar-length recording starts when the DAW starts and stops when it stops.
-- {g5} **Performance on your GPU** — Feedback, Glitch and Luma especially, full screen in the output window.
+- {g5} **Performance on your GPU** — Feedback, Glitch and Luma especially, full screen in the output window. 0.40: LOAD should be lower, and pad hits / scene changes shouldn't hitch.
 
 ## Recording
 - {r1} **MP4 recording** — Settings › Recording › Video: H.264 · MP4. The file is .mp4, not a WebM fallback.
@@ -17,7 +17,6 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
-- {perf40} **Hits and scene changes on your GPU** (0.40) — a set with coloured GIFs (hue, key, swaps) and effects on: hammer pads and scene keys; no hitch on the beat, LOAD lower than with 0.39.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.
 - {oldset} **An old set still loads** (0.40) — open one of your oldest saved sets: transitions and effects as before.
