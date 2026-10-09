@@ -348,7 +348,7 @@ function syncFxUI(){
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
-    styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
+    styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2); $('#fxStyle').classList.toggle('rows2', d.styles.length > 5); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));
     tgtSet(E.target);
   }
   else if (pre){
@@ -359,6 +359,7 @@ function syncFxUI(){
   else {
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
     styleSet(FX_DEFS.indexOf(d), C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
+    $('#fxStyle').classList.toggle('rows2', d.styles.length > 5); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));   // many styles: two even rows (CRT: 4 + 3), not 6 + 1
     tgtSet(C.target);
   }
   segSet('#fxMode', C.mode);
