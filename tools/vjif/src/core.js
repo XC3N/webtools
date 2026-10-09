@@ -24,8 +24,13 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.42.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.43.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
+// Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
+// into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
+// for older or weaker graphics. The output window scales it up; recordings are made at the render size.
+let RS = [1, 2 / 3, 0.5].includes(+Prefs.get('vjif-rscale')) ? +Prefs.get('vjif-rscale') : 1;
+let CW = Math.round(W * RS), CH = Math.round(H * RS);
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = Prefs.json('vjif-userdef', {});
 // interface size (Settings › Interface): the whole page is zoomed; pointer maths divides by it
@@ -93,7 +98,7 @@ const isDel = e => e.ctrlKey || e.metaKey;
 // the clock time (performance.now) at which `beat` fell / will fall, at the current tempo
 const beatTime = beat => performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
 // a copy of what the output shows right now (a transition interrupted mid-way starts from it)
-function stillOf(src = master){ const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(src, 0, 0); return c; }
+function stillOf(src = master){ const c = document.createElement('canvas'); c.width = CW; c.height = CH; c.getContext('2d').drawImage(src, 0, 0); return c; }
 const mod = (a, n) => ((a % n) + n) % n;
 // a tooltip that changes every second: the new text waits until the pointer leaves, so an open tooltip stays readable
 function setTip(el, t){ el.dataset.tip = t; if (!el.matches(':hover')) el.title = t; if (!el._tip){ el._tip = 1; el.addEventListener('pointerleave', () => { el.title = el.dataset.tip; }); } }
@@ -124,7 +129,7 @@ function selClip(li = target){
 }
 
 // ---------- canvases ----------
-const mkCanvas = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+const mkCanvas = () => { const c = document.createElement('canvas'); c.width = CW; c.height = CH; return c; };
 const master = mkCanvas(), mctx = master.getContext('2d', { alpha: false });
 const lbufs = layers.map(() => mkCanvas().getContext('2d'));   // per-layer group buffers
 const pv = $('#pv'), pctx = pv.getContext('2d');                       // overlay: handles and outlines only

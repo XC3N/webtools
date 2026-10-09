@@ -185,7 +185,7 @@ async function wcStart(beat = clock.beat){
 async function wcSetup(beat){
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   const writer = rec.writer, name = rec.name, audio = rec.audio; rec.audio = null;
-  const w = W & ~1, h = H & ~1;                      // H.264 wants even sizes
+  const w = CW & ~1, h = CH & ~1;                    // H.264 wants even sizes (recorded at the render size)
   const fps = recFps, us = 1e6 / fps;
   const tryList = async list => { for (const codec of list){
     const c = { codec, width: w, height: h, bitrate: recMbps * 1e6, framerate: fps,
@@ -290,7 +290,7 @@ function recUI(){
     $('#recTxt').textContent = rec.stopAt ? `${Math.max(1, Math.ceil((rec.stopAt - clock.beat) / 4))} bar${Math.ceil((rec.stopAt - clock.beat) / 4) > 1 ? 's' : ''}` : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
   else { $('#recTxt').textContent = rec.wait ? 'Wait' : 'Rec';
-    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${W}×${H}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
+    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${CW}×${CH}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
 }
 function recTick(){
   const b = clock.beat, back = b < (rec.last ?? b) - 0.5; rec.last = b;   // the beat count jumps back on Sync or a MIDI Start

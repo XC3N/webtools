@@ -23,7 +23,7 @@ function openOutput(e){
 canvas{width:100vw;height:100vh;object-fit:contain;display:block;cursor:move}
 html:fullscreen,html:fullscreen *{cursor:none}
 #h{position:fixed;left:8px;top:6px;font:12px monospace;color:#888;transition:opacity 1s}</style>
-<canvas width="${W}" height="${H}"></canvas><div id="h">drag to move · double-click: full screen on / off</div>`);
+<canvas width="${CW}" height="${CH}"></canvas><div id="h">drag to move · double-click: full screen on / off</div>`);
   d.close();
   outCtx = d.querySelector('canvas').getContext('2d', { alpha: false });
   setTimeout(() => { const h = d.getElementById('h'); if (h) h.style.opacity = 0; }, 2500);
@@ -47,9 +47,22 @@ function saveOutGeo(){
 setInterval(saveOutGeo, 2000);                       // catches moves and resizes made with the window's own frame too
 function updateOutStat(){
   $('#outLed').classList.toggle('on', !!outCtx);
-  $('#outBtn').title = outCtx ? `Output window is live (${W}×${H}) — click to bring it to the front · Shift+click: reset its position` : 'Open the output window (it reopens where you left it) · Shift+click: reset its position';
+  $('#outBtn').title = outCtx ? `Output window is live (${CW}×${CH}) — click to bring it to the front · Shift+click: reset its position` : 'Open the output window (it reopens where you left it) · Shift+click: reset its position';
 }
 // ---------- canvas format ----------
+// the drawing canvases follow the format and the render size
+function sizeCanvases(){
+  CW = Math.round(W * RS); CH = Math.round(H * RS);
+  [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = CW; c.height = CH; });
+  if (post) post.resize();
+  if (outCtx){ outCtx.canvas.width = CW; outCtx.canvas.height = CH; }
+}
+function setRenderSize(r){
+  if (r === RS) return;
+  if (rec.mr || rec.wait) return toast('Stop recording before changing the render size');
+  RS = r; Prefs.set('vjif-rscale', r); sizeCanvases(); live.freeze = false; live.freezeReq = false; updLiveTag(); endTrans(); redraw.all = true; updateOutStat();
+  toast2(`Render size ${CW}×${CH}`);
+}
 function setFormat(k, { quiet = false, force = false } = {}){
   if (!FORMATS[k]) k = '16:9';
   if (k === format) return syncFormatUI();
@@ -59,9 +72,7 @@ function setFormat(k, { quiet = false, force = false } = {}){
     recCancelWait(); recStop(); toast('Recording stopped: the loaded set has another canvas format');   // a set's format wins (it's part of the set)
   }
   format = k; [W, H] = FORMATS[k]; retextAll();
-  [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = W; c.height = H; });
-  if (post) post.resize();
-  if (outCtx){ outCtx.canvas.width = W; outCtx.canvas.height = H; }
+  sizeCanvases();
   live.freeze = false; live.freezeReq = false; updLiveTag(); endTrans();
   if (outWin && !outWin.closed && !outWin.document.fullscreenElement){ const k2 = 960 / Math.max(W, H);
     try { outWin.resizeTo(Math.round(W * k2) + outWin.outerWidth - outWin.innerWidth, Math.round(H * k2) + outWin.outerHeight - outWin.innerHeight); } catch (e) {} }
@@ -70,6 +81,7 @@ function setFormat(k, { quiet = false, force = false } = {}){
   if (!quiet) toast(`Canvas ${W}×${H} — ${FORMATS[k][2]}`);
 }
 function syncFormatUI(){
+  syncRS();
   document.querySelectorAll('#fmtSeg button').forEach(b => b.classList.toggle('on', b.dataset.f === format));
   const t = $('#fmtTag'); if (t){ t.textContent = format === '16:9' ? '' : format; t.hidden = format === '16:9'; }
 }

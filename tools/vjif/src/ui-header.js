@@ -257,3 +257,8 @@ onSeg($('#gTabs'), b => {
 // key reset
 $('#kReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.key, { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }); scheduleFx(g, 0); syncGifUI(); });
 
+
+// render size (Settings › Interface)
+function syncRS(){ document.querySelectorAll('#rsSeg button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - RS) < 0.01)); $('#rsInfo').textContent = `${CW}×${CH}`; }
+onSeg($('#rsSeg'), b => { setRenderSize(+b.dataset.v > 0.6 && +b.dataset.v < 0.7 ? 2 / 3 : +b.dataset.v); syncRS(); });
+syncRS();

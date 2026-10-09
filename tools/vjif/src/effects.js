@@ -164,7 +164,7 @@ function updLiveTag(){ const t = $('#liveTag'); if (!t) return; const b = live.b
 let post = makePost();
 function makePost(){
   try {
-    const cv = new OffscreenCanvas(W, H);
+    const cv = new OffscreenCanvas(CW, CH);
     // alpha kept (straight, not premultiplied) so a layer's transparent parts stay transparent
     const gl = cv.getContext('webgl', { alpha: true, antialias: false, depth: false, premultipliedAlpha: false });
     if (!gl) return null;
@@ -348,16 +348,17 @@ ${FX_GLSL}
     const src = mkTex();
     // per target (output, layers 1–4): two render targets swapped each frame — one is drawn into, the other holds
     // that target's previous result (for Feedback). Made the first time a target gets an effect.
-    const mkRT = () => { const t = mkTex(); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    const mkRT = () => { const t = mkTex(); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, CW, CH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); return { t, f }; };
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
+    const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz']);   // sizes given in canvas pixels
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD',
                    'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'shakeZ', 'time'];
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
-    gl.viewport(0, 0, W, H);
+    gl.viewport(0, 0, CW, CH);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.clearColor(0, 0, 0, 0);
     // run(U, from, to, slot): the effects in U applied to canvas `from`, the result drawn into context `to`
     // (slot 0 = the output, 1–4 = layers; each keeps its own Feedback history)
@@ -397,12 +398,12 @@ ${FX_GLSL}
     }, run(U, from = master, to = mctx, slot = 0){
       if (lost || gl.isContextLost()){                 // no GPU: the picture as it is
         if (to.canvas !== from){ to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
-          if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, W, H); } else to.clearRect(0, 0, W, H); to.drawImage(from, 0, 0); }
+          if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, CW, CH); } else to.clearRect(0, 0, CW, CH); to.drawImage(from, 0, 0); }
         return;
       }
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
-      gl.uniform2f(u.res, W, H);
-      for (const k of NAMES) gl.uniform1f(u[k], U[k] || 0);
+      gl.uniform2f(u.res, CW, CH);
+      for (const k of NAMES) gl.uniform1f(u[k], (U[k] || 0) * (PX_NAMES.has(k) ? RS : 1));   // sizes in canvas pixels → real pixels
       gl.uniform3fv(u.shake, U.shake);
       { const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }
       gl.uniform1f(u.blit, 0);
@@ -422,12 +423,12 @@ ${FX_GLSL}
         S.cur = 1 - cur;
       }
       to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
-      if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, W, H); } else to.clearRect(0, 0, W, H);   // what moved away is black / see-through
+      if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, CW, CH); } else to.clearRect(0, 0, CW, CH);   // what moved away is black / see-through
       to.drawImage(cv, 0, 0);
     }, idle(slot){ const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; } },   // nothing on it: the trail starts over next time
     resize(){                                        // new canvas format: the render targets follow (feedback history starts over)
-      cv.width = W; cv.height = H; gl.viewport(0, 0, W, H);
-      slots.forEach(S => { if (!S) return; S.rt.forEach(r => { gl.bindTexture(gl.TEXTURE_2D, r.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }); S.fbWas = false; });
+      cv.width = CW; cv.height = CH; gl.viewport(0, 0, CW, CH);
+      slots.forEach(S => { if (!S) return; S.rt.forEach(r => { gl.bindTexture(gl.TEXTURE_2D, r.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, CW, CH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }); S.fbWas = false; S.stale = true; });
     } };
   } catch (e) { console.warn('screen effects unavailable:', e.message); return null; }
 }
@@ -442,7 +443,7 @@ function drawPrep(now, hidden, quiet){
   else render(frameList(now, P.layers, P.gifs), mctx, SLOT.LAYERS, oF.layers, zoomEOf(oF.out));
   if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }
   if (oF.out) post.run(oF.out); else if (post) post.idle(SLOT.OUT);
-  if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
+  if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
   if (outCtx) outCtx.drawImage(master, 0, 0);
   if (hidden || quiet) return;
   const eF = post ? fxFrame(b) : NOFX;
@@ -483,7 +484,7 @@ function drawFrame(now){
     } else render(list, mctx, SLOT.LAYERS, LUs, zE);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
     if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);
-    if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
+    if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
   }
@@ -493,7 +494,7 @@ function drawFrame(now){
   const L = layers[target], sel = selClip(), gh = ghostList();
   const O = overlaySig, Gd = pvOpt.guides; O.start();
   [format, pvOpt.gcol, pvOpt.gx, pvOpt.gy, drag && drag.snap ? drag.snap.x : null, drag && drag.snap ? drag.snap.y : null, target, sel && sel.id, view.w, view.h].forEach(O.add);
-  for (const k of GUIDE_KEYS) O.add(!!Gd[k]);
+  for (const k of GUIDE_KEYS) O.add(!!Gd[k]); O.add(!!pvOpt.gHide);
   for (const c of L.clips){ const G = clipGeom(c); O.add('|'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }
   for (const [c, g] of gh){ const G = clipGeom(c); O.add(';'); [c.id, G.cx, G.cy, G.hw, G.hh, G.a, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, g.fxVer, g.startF, g.crisp].forEach(O.add); }
   if (O.changed() || force) drawOverlay(gh);
@@ -525,7 +526,7 @@ function drawOverlay(gh = ghostList()){
     if (drag.snap.y != null){ const Y = Math.round((view.y + drag.snap.y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); }
     pctx.stroke(); pctx.restore();
   }
-  if (format === '9:16' && pvOpt.guides.safe){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
+  if (format === '9:16' && pvOpt.guides.safe && !pvOpt.gHide){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
     const x0 = (view.x + view.w * 0.06) * dpr, y0 = (view.y + view.h * 0.14) * dpr, x1 = (view.x + view.w * 0.86) * dpr, y1 = (view.y + view.h * 0.78) * dpr;
     pctx.save(); pctx.fillStyle = '#ffffff10';
     pctx.fillRect(view.x * dpr, view.y * dpr, view.w * dpr, y0 - view.y * dpr); pctx.fillRect(view.x * dpr, y1, view.w * dpr, (view.y + view.h) * dpr - y1);

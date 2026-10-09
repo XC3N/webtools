@@ -12,9 +12,9 @@ function sceneThumb(){
   // the scene itself, drawn apart from the output (no screen or layer effects, transition, blackout or freeze), straight at tile size
   const c = document.createElement('canvas'); c.width = 96; c.height = 54; const x = c.getContext('2d'), k = Math.min(96 / W, 54 / H);
   x.imageSmoothingQuality = 'high'; x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54);
-  x.setTransform(k, 0, 0, k, (96 - W * k) / 2, (54 - H * k) / 2);   // other formats letterboxed
-  x.save(); x.beginPath(); x.rect(0, 0, W, H); x.clip();
-  render(frameList(performance.now()), x, null, NO_LAYER_FX, 0); x.restore();
+  const xf = [k, 0, 0, k, (96 - W * k) / 2, (54 - H * k) / 2];   // other formats letterboxed
+  x.setTransform(...xf); x.save(); x.beginPath(); x.rect(0, 0, W, H); x.clip();
+  render(frameList(performance.now()), x, null, NO_LAYER_FX, 0, xf); x.restore();
   return c.toDataURL('image/jpeg', 0.7);
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)

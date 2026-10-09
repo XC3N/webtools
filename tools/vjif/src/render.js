@@ -154,8 +154,9 @@ function sceneChanged(list, frozen, black){
   }
   return S.changed();
 }
-function render(list, ctx, slot0, LUs, zoomE = 0){
-  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+// xf: the context's transform from canvas pixels (W×H) to its real pixels (default: the render size)
+function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0]){
+  ctx.setTransform(...xf); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (let { L, items } of list){
     const LU = post && LUs[L.i];
@@ -165,11 +166,11 @@ function render(list, ctx, slot0, LUs, zoomE = 0){
       ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     }
     if (LU){                                         // effects on this layer: flatten it (its colour too), run them, then blend
-      const b = lbufs[L.i]; b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
+      const b = lbufs[L.i]; b.setTransform(RS, 0, 0, RS, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
       if (L.i === 0 && L.fillOn && L.fill){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
       for (const { g, e, fi } of items) drawClip(b, e, g, fxImage(g, fi, e));
       post.run(LU, b.canvas, b, slot0 + L.i);   // the scene being left (and Prep's preview) keep their own Feedback history
-      ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend; ctx.drawImage(b.canvas, 0, 0); ctx.restore();
+      ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend; ctx.drawImage(b.canvas, 0, 0, W, H); ctx.restore();
       continue;
     }
     const vis = items.filter(it => onScreen(it.e, it.g));
@@ -179,9 +180,9 @@ function render(list, ctx, slot0, LUs, zoomE = 0){
       // one GIF, or Normal at full opacity: identical result drawn straight onto the target (no buffer clear + composite)
       for (const { g, e, fi } of vis) drawClip(ctx, e, g, fxImage(g, fi, e));
     } else {                                       // several: flatten into the layer buffer, then blend once
-      const b = lbufs[L.i]; b.clearRect(0, 0, W, H);
+      const b = lbufs[L.i]; b.setTransform(RS, 0, 0, RS, 0, 0); b.clearRect(0, 0, W, H);
       for (const { g, e, fi } of vis) drawClip(b, e, g, fxImage(g, fi, e));
-      ctx.drawImage(b.canvas, 0, 0);
+      ctx.drawImage(b.canvas, 0, 0, W, H);
     }
     ctx.restore();
   }
@@ -271,7 +272,7 @@ function syncPrepUI(){
 const trA = mkCanvas().getContext('2d', { alpha: false }), trB = mkCanvas().getContext('2d', { alpha: false }), trM = mkCanvas().getContext('2d');
 const TR_PX = [[2, '2 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px']];
 // Dissolve: a random order for blocks of `px` pixels, made when the transition starts
-const pxCv = new OffscreenCanvas(W, H), pxCtx = pxCv.getContext('2d');   // Pixelate: the scene shrunk, then drawn back up blocky
+const pxCv = new OffscreenCanvas(CW, CH), pxCtx = pxCv.getContext('2d');   // Pixelate: the scene shrunk, then drawn back up blocky
 function dissolveGrid(px){
   const w = Math.ceil(W / px), h = Math.ceil(H / px), cv = new OffscreenCanvas(w, h), ctx = cv.getContext('2d');
   return { cv, ctx, img: ctx.createImageData(w, h), noise: new Float32Array(w * h).map(() => Math.random()) };
@@ -434,26 +435,31 @@ const TR_DRAW = {
   cut(m, A, B, e, T, dx, dy){ m.drawImage(B, 0, 0);
   },
 };
+// Transitions combine whole pictures, so they work in real pixels: W / H stand for the canvases' real size while they
+// draw (block / slice sizes shrink with the render size so they look the same)
 function composeTransition(e, T){
   const m = mctx; m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
-  const A = trA.canvas, B = trB.canvas, [dx, dy] = TR_DIRS[T.dir] || TR_DIRS.left;
-  (TR_DRAW[T.type] || TR_DRAW.cut)(m, A, B, e, T, dx, dy);
+  const A = trA.canvas, B = trB.canvas, [dx, dy] = TR_DIRS[T.dir] || TR_DIRS.left, w0 = W, h0 = H;
+  const T2 = RS === 1 ? T : { ...T, px: Math.max(1, Math.round((T.px || 12) * RS)) };
+  W = CW; H = CH;
+  try { (TR_DRAW[T.type] || TR_DRAW.cut)(m, A, B, e, T2, dx, dy); } finally { W = w0; H = h0; }
   m.globalAlpha = 1;
 }
 // fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
-const pvOpt = (() => { const o = Prefs.json('vjif-pvopt', {}), r = { guides: o.guides, stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
+const pvOpt = (() => { const o = Prefs.json('vjif-pvopt', {}), r = { guides: o.guides, gHide: !!o.gHide, stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
   if (r.guides === 'thirds'){ r.guides = 'grid'; r.gx = r.gy = 3; } else if (r.guides === 'centre'){ r.guides = 'grid'; r.gx = r.gy = 2; }   // thirds = grid 3×3, centre = 2×2
   if (typeof r.guides !== 'object' || !r.guides){ const g = r.guides; r.guides = {}; if (g) r.guides[g] = true;   // one guide at a time before 0.31; they combine now
   }
   if (r.gx === 1 && r.gy === 1) r.gx = r.gy = 2; return r; })();
 // guide lines in output pixels: [xs, ys]
 function guideLines(G = pvOpt.guides){   // the straight guides (golden, grid): what a dragged GIF can stick to
+  if (pvOpt.gHide) return [[], []];                  // hidden guides aren't stuck to either
   const div = n => Array.from({ length: Math.max(0, n - 1) }, (_, i) => (i + 1) / n), xs = [], ys = [];
   if (G.grid){ xs.push(...div(pvOpt.gx)); ys.push(...div(pvOpt.gy)); }
   if (G.golden){ xs.push(0.382, 0.618); ys.push(0.382, 0.618); }
   return [xs.map(v => v * W), ys.map(v => v * H)];
 }
-const anyGuide = () => Object.values(pvOpt.guides).some(Boolean);
+const anyGuide = () => !pvOpt.gHide && Object.values(pvOpt.guides).some(Boolean);
 function ghostList(){
   const out = []; if (!pvOpt.ghosts) return out;
   for (const L of layers){ if (!L.on) continue; for (const c of L.clips){ const g = pads[c.pad].gif; if (g && g.trig === 'fade' && !(envLevel(c, g, clock.beat) > 0)) out.push([c, g]); } }

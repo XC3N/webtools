@@ -4,6 +4,21 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.43.0 — 2026-10-09
+
+### Performance
+- Settings › Interface › Render: Full, 2/3 or 1/2. Everything is drawn at that fraction of the canvas size and scaled up, so effects and layers cost about half (2/3) or a quarter (1/2) of the work on slower machines. Recordings are made at that size.
+
+### MIDI
+- Lights on a Launchpad (Pro MK3, X, Mini MK3), in Settings › MIDI control: every mapped pad and button lights up for what it does — pads in their GIF's colour (bright while playing, blinking while waiting for the beat), the live scene white, the armed transition, effects that are on, layers in their colours, Blackout, Freeze, the beat on Tap and the downbeat on Sync. Chrome asks once for MIDI SysEx access.
+- Launchpad layout: maps the 8×8 grid in one click — the 18 pads as on the keyboard, layers, Blackout, Freeze, scenes as on the numpad, F1–F12, Tap / Sync / BRB, transitions 1–9 and effect presets 1–9. Your other mappings are kept.
+
+### Preview
+- An eye button by the guides hides them all and brings them back as they were.
+
+### Interface
+- About: the credits are on the GitHub page (link).
+
 ## 0.42.1 — 2026-10-09
 
 ### Interface

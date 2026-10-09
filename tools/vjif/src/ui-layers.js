@@ -249,10 +249,11 @@ pv.addEventListener('pointermove', e => {
 pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.style.cursor = 'grab'; drag = null; commit(); });
 // preview tools: guides, stick, ghosts (per browser)
 const pvSave = () => { Prefs.setJson('vjif-pvopt', pvOpt); redraw.all = true; };
-const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', !!pvOpt.guides[b.dataset.g]));
+const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', !!pvOpt.guides[b.dataset.g])); $('#guideGrp').classList.toggle('ghidden', !!pvOpt.gHide); $('#guideEye').classList.toggle('on', !pvOpt.gHide && anyGuide());
   $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
 pvUI();
-$('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; const k = b.dataset.g; pvOpt.guides[k] = !pvOpt.guides[k]; if (!pvOpt.guides[k]) delete pvOpt.guides[k]; pvUI(); pvSave(); });
+$('#guideEye').addEventListener('click', () => { pvOpt.gHide = !pvOpt.gHide; pvUI(); pvSave(); });
+$('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; const k = b.dataset.g; if (pvOpt.gHide){ pvOpt.gHide = false; if (pvOpt.guides[k]){ pvUI(); pvSave(); return; } } pvOpt.guides[k] = !pvOpt.guides[k]; if (!pvOpt.guides[k]) delete pvOpt.guides[k]; pvUI(); pvSave(); });
 $('#stickBtn').addEventListener('click', () => { pvOpt.stick = !pvOpt.stick; pvUI(); pvSave(); });
 $('#ghostBtn').addEventListener('click', () => { pvOpt.ghosts = !pvOpt.ghosts; pvUI(); pvSave(); });
 const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const o = k === 'gx' ? 'gy' : 'gx'; if (v === 1 && pvOpt[o] === 1) pvOpt[o] = 2;   // 1×1 draws nothing
