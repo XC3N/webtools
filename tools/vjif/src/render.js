@@ -128,22 +128,38 @@ function frameList(now, ls = layers, gifs = null){
   }
   return out;
 }
-// everything that changes the picture this frame, as one string; equal to last frame's → nothing to redraw
-function sceneSig(list){
-  let s = '';
-  for (const { L, items } of list){
-    s += `|${L.i},${L.opacity},${L.blend},${L.fillOn && L.fill}`;
-    for (const { g, e, fi } of items)
-      s += `;${e.id},${fi},${g.fxVer},${g.crisp},${e.x},${e.y},${e.sx},${e.sy},${e.rot},${e.fit},${e.flipX},${e.flipY},${e.tile},${e.cl},${e.ct},${e.cr},${e.cb},${e.alpha},${e.H},${e.S},${e.V}`;
-  }
-  return s;
+// "did anything that changes the picture change since last frame?": the values are compared one by one with last
+// frame's (two arrays, reused), so the per-frame check builds no string
+function sigTracker(){
+  let prev = [], cur = [], n = 0;
+  return {
+    start(){ n = 0; },
+    add(x){ cur[n++] = x; },
+    forget(){ prev.length = 0; },                    // the next check reports a change
+    changed(){
+      cur.length = n; let same = n === prev.length;
+      for (let i = 0; same && i < n; i++){ const a = cur[i], b = prev[i]; if (a !== b && !(a !== a && b !== b)) same = false; }   // (NaN counts as equal)
+      const t = prev; prev = cur; cur = t; return !same;
+    },
+  };
 }
-function render(list, ctx = mctx, slotOff = null, LUs = layerFxU){
+const sceneSig = sigTracker(), overlaySig = sigTracker();
+// the picture: frozen / black, and each visible layer and GIF as drawn
+function sceneChanged(list, frozen, black){
+  const S = sceneSig; S.start(); S.add(frozen); S.add(black);
+  if (!frozen) for (const { L, items } of list){
+    S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill);
+    for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit);
+      S.add(e.flipX); S.add(e.flipY); S.add(e.tile); S.add(e.cl); S.add(e.ct); S.add(e.cr); S.add(e.cb); S.add(e.alpha); S.add(e.H); S.add(e.S); S.add(e.V); }
+  }
+  return S.changed();
+}
+function render(list, ctx, slot0, LUs, zoomE = 0){
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   for (let { L, items } of list){
     const LU = post && LUs[L.i];
-    const ek = (1 + outZoomE) * (1 + (LU && LU.zoomE || 0));   // Zoom › Each: every GIF scaled around its own centre
+    const ek = (1 + zoomE) * (1 + (LU && LU.zoomE || 0));   // Zoom › Each: every GIF scaled around its own centre
     if (Math.abs(ek - 1) > 1e-4) items = items.map(it => ({ ...it, e: { ...it.e, sx: it.e.sx * ek, sy: it.e.sy * ek } }));
     if (L.i === 0 && L.fillOn && L.fill && !LU){       // the Background layer's colour, under its GIFs
       ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
@@ -152,7 +168,7 @@ function render(list, ctx = mctx, slotOff = null, LUs = layerFxU){
       const b = lbufs[L.i]; b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
       if (L.i === 0 && L.fillOn && L.fill){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
       for (const { g, e, fi } of items) drawClip(b, e, g, fxImage(g, fi, e));
-      post.run(LU, b.canvas, b, L.i + 1 + (slotOff ?? (ctx === trA ? 4 : 0)));   // the scene being left (and Prep's preview) keep their own Feedback history
+      post.run(LU, b.canvas, b, slot0 + L.i);   // the scene being left (and Prep's preview) keep their own Feedback history
       ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend; ctx.drawImage(b.canvas, 0, 0); ctx.restore();
       continue;
     }
@@ -182,10 +198,8 @@ const TR_STYLES = {
            ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)'], ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)'],
            ['vhs', 'VHS', 'A tape switching channels: tracking wobble, a noisy band rolling down, colour bleed, the picture rolls over to the new scene']] };
 const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
-// presets from before the families: dip / flash were their own types
+// a preset made valid: a known type and style, a block size
 function normTrans(P){
-  if (P.type === 'dip' || P.type === 'flash'){ P.style = P.type; P.type = 'fade'; }
-  if (P.type === 'melt'){ P.type = 'glitch'; P.style = 'melt'; }   // Melt became a Glitch style (0.24)
   if (!TR_TYPES.some(t => t[0] === P.type)) P.type = 'cut';
   P.style = trStyleOf(P); if (!P.px) P.px = 12;
   return P;
@@ -206,7 +220,9 @@ function makeTrans(from, gifs, beat, free = null){
   if (transCfg.type === 'cut') return null;
   return { cfg: { ...transCfg }, from, gifs, b0: beat, len: transCfg.len, free, melt: transCfg.type === 'glitch' && trStyleOf(transCfg) === 'melt' ? meltTable(transCfg.px) : null, dis: transCfg.type === 'dissolve' ? dissolveGrid(transCfg.px || 12) : null };
 }
-function endTrans(){ if (trans && trans.free) trans.free.forEach(freeGif); trans = null; }
+function endTrans(){ if (trans && trans.free) trans.free.forEach(freeGif); if (trans && trans.gifs) dropFxCache(trans.gifs); trans = null; }
+// GIFs no longer on screen let go of their kept coloured frames (fxImage)
+function dropFxCache(gifs){ gifs.forEach(g => { if (g && g.fxC && !pads.some(p => p.gif === g)) g.fxC = null; }); }
 // ---------- Prep: the output keeps playing what's live while you work on any scene ----------
 // prep = { layers, gifs, free, fx, scene }: copies of the live scene's layers and clips, of the GIFs they play
 // (own settings, same frames) and of the effects' state. Nothing the editor does reaches them.
@@ -239,7 +255,7 @@ function goLive(){
 function doGoLive(beat = clock.beat){
   const P = prep; pendingLive = null; if (!P) return;
   prep = null; endTrans();
-  const t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
+  const t0 = beatTime(beat);
   if (P.scene !== sceneIdx) layers.forEach(L => L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; if (c.env) c.env = { ...c.env, t0: beat, from: 0, rel: null }; }));   // another scene starts from the top (fades too)
   trans = makeTrans(P.layers, P.gifs, beat, P.free); if (trans) trans.fx = P.fx;   // the leaving scene keeps the output's own effects while it fades out
   if (!trans) P.free.forEach(freeGif);
@@ -280,140 +296,148 @@ function meltTable(px = 12){
   return ticks;
 }
 const vhsN = {};                                     // the VHS transition's noise canvas
+// what each transition type draws into the master canvas: e = progress 0…1 (eased if Smooth), T = the preset,
+// A / B = the scene being left / arriving (drawn whole into trA / trB), [dx, dy] = the direction
+const TR_DRAW = {
+  fade(m, A, B, e, T, dx, dy){ const st = trStyleOf(T);
+    if (st === 'dip' || st === 'flash'){          // through black (dip) or white (flash): out, then in
+      m.drawImage(e < 0.5 ? A : B, 0, 0); m.fillStyle = st === 'dip' ? '#000' : '#fff';
+      m.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2; m.fillRect(0, 0, W, H); return; }
+    if (st === 'luma' && post){ post.luma(A, B, e); return; }   // the brightest parts of the old scene give way first
+    m.drawImage(A, 0, 0); m.globalAlpha = e; m.drawImage(B, 0, 0);
+  },
+  slide(m, A, B, e, T, dx, dy){ // the new scene pushes the old one out
+    m.drawImage(A, dx * e * W, dy * e * H); m.drawImage(B, dx * (e - 1) * W, dy * (e - 1) * H);
+  },
+  wipe(m, A, B, e, T, dx, dy){ // an edge sweeps across (or a circle opens), revealing the new scene
+    m.drawImage(A, 0, 0); m.save(); m.beginPath();
+    if (trStyleOf(T) === 'iris') m.arc(W / 2, H / 2, e * Math.hypot(W, H) / 2, 0, Math.PI * 2);
+    else if (dx) m.rect(dx < 0 ? W * (1 - e) : 0, 0, W * e, H); else m.rect(0, dy < 0 ? H * (1 - e) : 0, W, H * e);
+    m.clip(); m.drawImage(B, 0, 0); m.restore();
+  },
+  stutter(m, A, B, e, T, dx, dy){ // hard cuts between the two scenes on the beat grid, ending on the new one
+    const L = trans ? trans.len : 4, t = e * L, ramp = trStyleOf(T) !== 'even';
+    let step = 0.25, t0 = 0;                         // beats per cut (0.25 = a 1/16 note)
+    if (ramp){ if (t < L / 2){ step = 0.5; } else if (t < L * 0.75){ step = 0.25; t0 = L / 2; } else { step = 0.125; t0 = L * 0.75; } }
+    const k = Math.floor((t - t0) / step + 1e-6), last = e >= 1 - step / L / 2;
+    m.drawImage(last || k % 2 ? B : A, 0, 0);
+  },
+  zoom(m, A, B, e, T, dx, dy){ // the old scene grows and fades; the new one grows in from smaller
+    m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
+    const z = (img, k, a) => { m.globalAlpha = a; m.drawImage(img, W / 2 - W * k / 2, H / 2 - H * k / 2, W * k, H * k); };
+    z(A, 1 + 0.8 * e, 1 - e); z(B, 0.6 + 0.4 * e, e);
+  },
+  dissolve(m, A, B, e, T, dx, dy){ // blocks of the new scene appear in random order
+    if (trStyleOf(T) === 'pixelate'){              // the old scene breaks into ever bigger blocks, the new one resolves out of them
+      const big = Math.max(2, T.px || 48), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
+      const w = Math.ceil(W / bs), h = Math.ceil(H / bs);
+      pxCtx.imageSmoothingEnabled = true; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(e < 0.5 ? A : B, 0, 0, w, h);
+      m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return;
+    }
+    const D = trans && trans.dis || (trans && (trans.dis = dissolveGrid(T.px || 12))); if (!D){ m.drawImage(B, 0, 0); return; }
+    const d = D.img.data; for (let i = 0; i < D.noise.length; i++) d[i * 4 + 3] = D.noise[i] < e ? 255 : 0;
+    D.ctx.putImageData(D.img, 0, 0);
+    m.drawImage(A, 0, 0);
+    trM.globalCompositeOperation = 'source-over'; trM.clearRect(0, 0, W, H); trM.drawImage(B, 0, 0);
+    trM.globalCompositeOperation = 'destination-in'; trM.imageSmoothingEnabled = false; trM.drawImage(D.cv, 0, 0, W, H);
+    m.drawImage(trM.canvas, 0, 0);
+  },
+  glitch(m, A, B, e, T, dx, dy){ const gst = trStyleOf(T);
+    if (gst === 'melt'){                           // the old scene's columns slide down, revealing the new one
+      const tk = trans && trans.melt; if (!tk){ m.drawImage(B, 0, 0); return; }
+      const t = transProgress() * (tk.length - 1), t0 = Math.floor(t), t1 = Math.min(tk.length - 1, t0 + 1), f = t - t0, N = tk[0].length;
+      m.drawImage(B, 0, 0); m.imageSmoothingEnabled = false;
+      for (let i = 0; i < N; i++){
+        const x0 = Math.round(i * W / N), cw = Math.round((i + 1) * W / N) - x0;
+        const oy = Math.round((tk[t0][i] * (1 - f) + tk[t1][i] * f) / 200 * H); if (oy >= H) continue;
+        m.drawImage(A, x0, 0, cw, H - oy, x0, oy, cw, H - oy);
+      }
+      m.imageSmoothingEnabled = true; return; }
+    if (gst === 'blocks'){                         // blocks of both scenes, shuffled and displaced, re-torn ~20 times, settling on the new one
+      const bs = Math.max(24, (T.px || 12) * 6), cols = Math.ceil(W / bs), rows = Math.ceil(H / bs), step = Math.floor(e * 20), tear = Math.sin(Math.PI * e);
+      const seed = trans ? (trans.seed ?? (trans.seed = Math.random() * 1000)) : 0;
+      m.drawImage(e < 0.5 ? A : B, 0, 0);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){
+        const k = r * cols + c, src = fxRand(k * 1.7 + seed) < e ? B : A;
+        if (fxRand(k * 3.1 + step * 11.3 + seed) > 0.25 + 0.6 * tear){ if (src !== (e < 0.5 ? A : B)) m.drawImage(src, c * bs, r * bs, bs, bs, c * bs, r * bs, bs, bs); continue; }
+        const sc = Math.floor(fxRand(k * 5.3 + step + seed) * cols), sr = Math.floor(fxRand(k * 7.9 + step + seed) * rows);   // a block from somewhere else
+        const ox = Math.round((fxRand(k * 2.3 + step) - 0.5) * bs * tear);
+        m.drawImage(src, sc * bs, sr * bs, bs, bs, c * bs + ox, r * bs, bs, bs);
+      }
+      return; }
+    if (gst === 'scramble'){                       // pixelate up, colours scrambled block by block while the scenes swap, then resolve
+      const big = Math.max(4, (T.px || 12) * 4), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
+      const w = Math.ceil(W / bs), h = Math.ceil(H / bs), mixB = Math.min(1, Math.max(0, (e - 0.35) / 0.3));
+      pxCtx.imageSmoothingEnabled = true; pxCtx.globalAlpha = 1; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(A, 0, 0, w, h);
+      if (mixB > 0){ pxCtx.globalAlpha = mixB; pxCtx.drawImage(B, 0, 0, w, h); pxCtx.globalAlpha = 1; }
+      if (bs >= 3){                                // the scramble: each block's channels rotated / swapped / inverted, re-rolled ~30 times
+        const im = pxCtx.getImageData(0, 0, w, h), d = im.data, step = Math.floor(e * 30), pr = k * 0.9;
+        for (let i = 0, n = 0; i < d.length; i += 4, n++){
+          const q = fxRand(n * 0.37 + step * 17.1); if (q > pr) continue;
+          const r = d[i], g = d[i + 1], b = d[i + 2], s = (q / pr * 4) | 0;
+          if (s === 0){ d[i] = g; d[i + 1] = b; d[i + 2] = r; } else if (s === 1){ d[i] = b; d[i + 1] = r; d[i + 2] = g; }
+          else if (s === 2){ if (r > 20 || g > 20 || b > 20){ d[i] = 255 - r; d[i + 1] = 255 - g; d[i + 2] = 255 - b; } } else { d[i] = r; d[i + 1] = b; d[i + 2] = g; }
+        }
+        pxCtx.putImageData(im, 0, 0);
+      }
+      m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return; }
+    if (gst === 'vhs'){                            // a tape switching channels: the picture rolls over to the new one through tracking noise
+      const k = Math.sin(Math.PI * e), src = e < 0.5 ? A : B, t = performance.now() / 1000;
+      const roll = e > 0.38 && e < 0.62 ? Math.round(((e - 0.38) / 0.24) * H) : 0;   // vertical hold lost through the switch
+      // tracking lost: two bands rolling down at different speeds, torn hard sideways and full of white dropout streaks
+      const bands = [[((t * 0.35 + e * 0.8) % 1.3 - 0.15) * H, H * 0.16], [((t * 0.61 + 0.5 + e * 1.3) % 1.3 - 0.15) * H, H * 0.05]];
+      const fr = Math.floor(t * 30), flag = H * 0.09, head = H * 0.95;
+      m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
+      const sh = 2, streaks = [];
+      for (let y = 0; y < H; y += sh){
+        const sy = (y + roll) % H; let tear = 0;
+        for (const [bc, bh] of bands){ const d = Math.abs(y - bc); if (d < bh){ const q = 1 - d / bh; tear += (fxRand(y * 0.7 + fr) - 0.5) * 420 * q + 70 * q;
+          if (fxRand(y * 1.3 + fr * 3.1) < 0.35 * q) streaks.push(y); } }
+        if (y < flag) tear += (1 - y / flag) ** 2 * 60 * Math.sin(t * 3);        // flagging: the top of the picture bends
+        if (y > head) tear += 30 + fxRand(y * 0.9 + fr) * 50;                   // head-switching noise along the bottom
+        const ox = Math.round((Math.sin(y * 0.021 + t * 9) * 7 + tear) * k);
+        m.drawImage(src, 0, sy, W, Math.min(sh, H - sy), ox, y, W, Math.min(sh, H - sy));
+      }
+      if (k > 0.02){                                // dropouts: white dashes where the tape lost its signal
+        m.fillStyle = '#fff';
+        streaks.forEach((y, i) => { m.globalAlpha = (0.4 + fxRand(i + fr) * 0.6) * k; const x = fxRand(y + fr * 0.3) * W, w = 20 + fxRand(y * 2.1 + fr) * W * 0.4; m.fillRect(x, y, w, sh); });
+        m.globalAlpha = 1;
+      }
+      if (k > 0.02){
+        m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.3 * k; m.drawImage(src, 0, roll, W, H - roll, Math.round(14 * k), 0, W, H - roll); m.globalAlpha = 1;   // colour bleed
+        m.globalCompositeOperation = 'source-over';
+        if (!vhsN.cv){ vhsN.cv = document.createElement('canvas'); vhsN.cv.width = 192; vhsN.cv.height = 108; vhsN.x = vhsN.cv.getContext('2d'); vhsN.img = vhsN.x.createImageData(192, 108); }
+        const d = vhsN.img.data; for (let i = 0; i < d.length; i += 4){ const v = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+        vhsN.x.putImageData(vhsN.img, 0, 0);
+        m.globalCompositeOperation = 'screen'; m.globalAlpha = 0.26 * k; m.imageSmoothingEnabled = false; m.drawImage(vhsN.cv, 0, 0, W, H); m.imageSmoothingEnabled = true;
+        m.globalCompositeOperation = 'source-over'; m.globalAlpha = 0.25 * k; m.fillStyle = '#000';
+        for (let y = 0; y < H; y += 3) m.fillRect(0, y, W, 1);   // scanlines
+        m.globalAlpha = 1;
+      }
+      return; }
+    // slices: torn horizontal slices from both scenes, settling on the new one
+    const G = trans && (trans.gl || (trans.gl = Array.from({ length: Math.max(4, Math.min(120, Math.round(H / ((T.px || 12) * 4)))) }, () => [Math.random(), Math.random(), Math.random()])));   // Pixel = slice height ÷ 4
+    if (!G){ m.drawImage(B, 0, 0); return; }
+    const tear = Math.sin(Math.PI * e), step = Math.floor(e * 24);   // re-torn a couple dozen times over the transition
+    m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
+    G.forEach(([r, o, j], i) => {
+      const y = Math.round(i * H / G.length), h = Math.round((i + 1) * H / G.length) - y;
+      const src = r < e ? B : A, jit = fxRand(i * 7.1 + step) - 0.5, ox = Math.round(((o - 0.5) * 0.3 + jit * 0.12) * W * tear);
+      m.drawImage(src, 0, y, W, h, ox, y, W, h); m.drawImage(src, 0, y, W, h, ox - Math.sign(ox || 1) * W, y, W, h);
+      if (j < 0.25 * tear){ m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.5; m.drawImage(src, 0, y, W, h, ox + 14, y, W, h); m.globalAlpha = 1; m.globalCompositeOperation = 'source-over'; }
+    });
+  },
+  cut(m, A, B, e, T, dx, dy){ m.drawImage(B, 0, 0);
+  },
+};
 function composeTransition(e, T){
   const m = mctx; m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
   const A = trA.canvas, B = trB.canvas, [dx, dy] = TR_DIRS[T.dir] || TR_DIRS.left;
-  switch (T.type){
-    case 'fade': {
-      const st = trStyleOf(T);
-      if (st === 'dip' || st === 'flash'){          // through black (dip) or white (flash): out, then in
-        m.drawImage(e < 0.5 ? A : B, 0, 0); m.fillStyle = st === 'dip' ? '#000' : '#fff';
-        m.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2; m.fillRect(0, 0, W, H); break; }
-      if (st === 'luma' && post){ post.luma(A, B, e); break; }   // the brightest parts of the old scene give way first
-      m.drawImage(A, 0, 0); m.globalAlpha = e; m.drawImage(B, 0, 0); break; }
-    case 'slide':                                    // the new scene pushes the old one out
-      m.drawImage(A, dx * e * W, dy * e * H); m.drawImage(B, dx * (e - 1) * W, dy * (e - 1) * H); break;
-    case 'wipe': {                                   // an edge sweeps across (or a circle opens), revealing the new scene
-      m.drawImage(A, 0, 0); m.save(); m.beginPath();
-      if (trStyleOf(T) === 'iris') m.arc(W / 2, H / 2, e * Math.hypot(W, H) / 2, 0, Math.PI * 2);
-      else if (dx) m.rect(dx < 0 ? W * (1 - e) : 0, 0, W * e, H); else m.rect(0, dy < 0 ? H * (1 - e) : 0, W, H * e);
-      m.clip(); m.drawImage(B, 0, 0); m.restore(); break; }
-    case 'stutter': {                                // hard cuts between the two scenes on the beat grid, ending on the new one
-      const L = trans ? trans.len : 4, t = e * L, ramp = trStyleOf(T) !== 'even';
-      let step = 0.25, t0 = 0;                         // beats per cut (0.25 = a 1/16 note)
-      if (ramp){ if (t < L / 2){ step = 0.5; } else if (t < L * 0.75){ step = 0.25; t0 = L / 2; } else { step = 0.125; t0 = L * 0.75; } }
-      const k = Math.floor((t - t0) / step + 1e-6), last = e >= 1 - step / L / 2;
-      m.drawImage(last || k % 2 ? B : A, 0, 0); break; }
-    case 'zoom': {                                   // the old scene grows and fades; the new one grows in from smaller
-      m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
-      const z = (img, k, a) => { m.globalAlpha = a; m.drawImage(img, W / 2 - W * k / 2, H / 2 - H * k / 2, W * k, H * k); };
-      z(A, 1 + 0.8 * e, 1 - e); z(B, 0.6 + 0.4 * e, e); break; }
-    case 'dissolve': {                               // blocks of the new scene appear in random order
-      if (trStyleOf(T) === 'pixelate'){              // the old scene breaks into ever bigger blocks, the new one resolves out of them
-        const big = Math.max(2, T.px || 48), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
-        const w = Math.ceil(W / bs), h = Math.ceil(H / bs);
-        pxCtx.imageSmoothingEnabled = true; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(e < 0.5 ? A : B, 0, 0, w, h);
-        m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; break;
-      }
-      const D = trans && trans.dis || (trans && (trans.dis = dissolveGrid(T.px || 12))); if (!D){ m.drawImage(B, 0, 0); break; }
-      const d = D.img.data; for (let i = 0; i < D.noise.length; i++) d[i * 4 + 3] = D.noise[i] < e ? 255 : 0;
-      D.ctx.putImageData(D.img, 0, 0);
-      m.drawImage(A, 0, 0);
-      trM.globalCompositeOperation = 'source-over'; trM.clearRect(0, 0, W, H); trM.drawImage(B, 0, 0);
-      trM.globalCompositeOperation = 'destination-in'; trM.imageSmoothingEnabled = false; trM.drawImage(D.cv, 0, 0, W, H);
-      m.drawImage(trM.canvas, 0, 0); break; }
-    case 'glitch': {
-      const gst = trStyleOf(T);
-      if (gst === 'melt'){                           // the old scene's columns slide down, revealing the new one
-        const tk = trans && trans.melt; if (!tk){ m.drawImage(B, 0, 0); break; }
-        const t = transProgress() * (tk.length - 1), t0 = Math.floor(t), t1 = Math.min(tk.length - 1, t0 + 1), f = t - t0, N = tk[0].length;
-        m.drawImage(B, 0, 0); m.imageSmoothingEnabled = false;
-        for (let i = 0; i < N; i++){
-          const x0 = Math.round(i * W / N), cw = Math.round((i + 1) * W / N) - x0;
-          const oy = Math.round((tk[t0][i] * (1 - f) + tk[t1][i] * f) / 200 * H); if (oy >= H) continue;
-          m.drawImage(A, x0, 0, cw, H - oy, x0, oy, cw, H - oy);
-        }
-        m.imageSmoothingEnabled = true; break; }
-      if (gst === 'blocks'){                         // blocks of both scenes, shuffled and displaced, re-torn ~20 times, settling on the new one
-        const bs = Math.max(24, (T.px || 12) * 6), cols = Math.ceil(W / bs), rows = Math.ceil(H / bs), step = Math.floor(e * 20), tear = Math.sin(Math.PI * e);
-        const seed = trans ? (trans.seed ?? (trans.seed = Math.random() * 1000)) : 0;
-        m.drawImage(e < 0.5 ? A : B, 0, 0);
-        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){
-          const k = r * cols + c, src = fxRand(k * 1.7 + seed) < e ? B : A;
-          if (fxRand(k * 3.1 + step * 11.3 + seed) > 0.25 + 0.6 * tear){ if (src !== (e < 0.5 ? A : B)) m.drawImage(src, c * bs, r * bs, bs, bs, c * bs, r * bs, bs, bs); continue; }
-          const sc = Math.floor(fxRand(k * 5.3 + step + seed) * cols), sr = Math.floor(fxRand(k * 7.9 + step + seed) * rows);   // a block from somewhere else
-          const ox = Math.round((fxRand(k * 2.3 + step) - 0.5) * bs * tear);
-          m.drawImage(src, sc * bs, sr * bs, bs, bs, c * bs + ox, r * bs, bs, bs);
-        }
-        break; }
-      if (gst === 'scramble'){                       // pixelate up, colours scrambled block by block while the scenes swap, then resolve
-        const big = Math.max(4, (T.px || 12) * 4), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
-        const w = Math.ceil(W / bs), h = Math.ceil(H / bs), mixB = Math.min(1, Math.max(0, (e - 0.35) / 0.3));
-        pxCtx.imageSmoothingEnabled = true; pxCtx.globalAlpha = 1; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(A, 0, 0, w, h);
-        if (mixB > 0){ pxCtx.globalAlpha = mixB; pxCtx.drawImage(B, 0, 0, w, h); pxCtx.globalAlpha = 1; }
-        if (bs >= 3){                                // the scramble: each block's channels rotated / swapped / inverted, re-rolled ~30 times
-          const im = pxCtx.getImageData(0, 0, w, h), d = im.data, step = Math.floor(e * 30), pr = k * 0.9;
-          for (let i = 0, n = 0; i < d.length; i += 4, n++){
-            const q = fxRand(n * 0.37 + step * 17.1); if (q > pr) continue;
-            const r = d[i], g = d[i + 1], b = d[i + 2], s = (q / pr * 4) | 0;
-            if (s === 0){ d[i] = g; d[i + 1] = b; d[i + 2] = r; } else if (s === 1){ d[i] = b; d[i + 1] = r; d[i + 2] = g; }
-            else if (s === 2){ if (r > 20 || g > 20 || b > 20){ d[i] = 255 - r; d[i + 1] = 255 - g; d[i + 2] = 255 - b; } } else { d[i] = r; d[i + 1] = b; d[i + 2] = g; }
-          }
-          pxCtx.putImageData(im, 0, 0);
-        }
-        m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; break; }
-      if (gst === 'vhs'){                            // a tape switching channels: the picture rolls over to the new one through tracking noise
-        const k = Math.sin(Math.PI * e), src = e < 0.5 ? A : B, t = performance.now() / 1000;
-        const roll = e > 0.38 && e < 0.62 ? Math.round(((e - 0.38) / 0.24) * H) : 0;   // vertical hold lost through the switch
-        // tracking lost: two bands rolling down at different speeds, torn hard sideways and full of white dropout streaks
-        const bands = [[((t * 0.35 + e * 0.8) % 1.3 - 0.15) * H, H * 0.16], [((t * 0.61 + 0.5 + e * 1.3) % 1.3 - 0.15) * H, H * 0.05]];
-        const fr = Math.floor(t * 30), flag = H * 0.09, head = H * 0.95;
-        m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
-        const sh = 2, streaks = [];
-        for (let y = 0; y < H; y += sh){
-          const sy = (y + roll) % H; let tear = 0;
-          for (const [bc, bh] of bands){ const d = Math.abs(y - bc); if (d < bh){ const q = 1 - d / bh; tear += (fxRand(y * 0.7 + fr) - 0.5) * 420 * q + 70 * q;
-            if (fxRand(y * 1.3 + fr * 3.1) < 0.35 * q) streaks.push(y); } }
-          if (y < flag) tear += (1 - y / flag) ** 2 * 60 * Math.sin(t * 3);        // flagging: the top of the picture bends
-          if (y > head) tear += 30 + fxRand(y * 0.9 + fr) * 50;                   // head-switching noise along the bottom
-          const ox = Math.round((Math.sin(y * 0.021 + t * 9) * 7 + tear) * k);
-          m.drawImage(src, 0, sy, W, Math.min(sh, H - sy), ox, y, W, Math.min(sh, H - sy));
-        }
-        if (k > 0.02){                                // dropouts: white dashes where the tape lost its signal
-          m.fillStyle = '#fff';
-          streaks.forEach((y, i) => { m.globalAlpha = (0.4 + fxRand(i + fr) * 0.6) * k; const x = fxRand(y + fr * 0.3) * W, w = 20 + fxRand(y * 2.1 + fr) * W * 0.4; m.fillRect(x, y, w, sh); });
-          m.globalAlpha = 1;
-        }
-        if (k > 0.02){
-          m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.3 * k; m.drawImage(src, 0, roll, W, H - roll, Math.round(14 * k), 0, W, H - roll); m.globalAlpha = 1;   // colour bleed
-          m.globalCompositeOperation = 'source-over';
-          if (!vhsN.cv){ vhsN.cv = document.createElement('canvas'); vhsN.cv.width = 192; vhsN.cv.height = 108; vhsN.x = vhsN.cv.getContext('2d'); vhsN.img = vhsN.x.createImageData(192, 108); }
-          const d = vhsN.img.data; for (let i = 0; i < d.length; i += 4){ const v = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
-          vhsN.x.putImageData(vhsN.img, 0, 0);
-          m.globalCompositeOperation = 'screen'; m.globalAlpha = 0.26 * k; m.imageSmoothingEnabled = false; m.drawImage(vhsN.cv, 0, 0, W, H); m.imageSmoothingEnabled = true;
-          m.globalCompositeOperation = 'source-over'; m.globalAlpha = 0.25 * k; m.fillStyle = '#000';
-          for (let y = 0; y < H; y += 3) m.fillRect(0, y, W, 1);   // scanlines
-          m.globalAlpha = 1;
-        }
-        break; }
-      // slices: torn horizontal slices from both scenes, settling on the new one
-      const G = trans && (trans.gl || (trans.gl = Array.from({ length: Math.max(4, Math.min(120, Math.round(H / ((T.px || 12) * 4)))) }, () => [Math.random(), Math.random(), Math.random()])));   // Pixel = slice height ÷ 4
-      if (!G){ m.drawImage(B, 0, 0); break; }
-      const tear = Math.sin(Math.PI * e), step = Math.floor(e * 24);   // re-torn a couple dozen times over the transition
-      m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
-      G.forEach(([r, o, j], i) => {
-        const y = Math.round(i * H / G.length), h = Math.round((i + 1) * H / G.length) - y;
-        const src = r < e ? B : A, jit = fxRand(i * 7.1 + step) - 0.5, ox = Math.round(((o - 0.5) * 0.3 + jit * 0.12) * W * tear);
-        m.drawImage(src, 0, y, W, h, ox, y, W, h); m.drawImage(src, 0, y, W, h, ox - Math.sign(ox || 1) * W, y, W, h);
-        if (j < 0.25 * tear){ m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.5; m.drawImage(src, 0, y, W, h, ox + 14, y, W, h); m.globalAlpha = 1; m.globalCompositeOperation = 'source-over'; }
-      });
-      break; }
-    default: m.drawImage(B, 0, 0);
-  }
+  (TR_DRAW[T.type] || TR_DRAW.cut)(m, A, B, e, T, dx, dy);
   m.globalAlpha = 1;
 }
 // fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
-const pvOpt = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('vjif-pvopt')) || {}; } catch (e) {} const r = { guides: o.guides, stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
+const pvOpt = (() => { const o = Prefs.json('vjif-pvopt', {}), r = { guides: o.guides, stick: o.stick !== false, ghosts: o.ghosts !== false, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
   if (r.guides === 'thirds'){ r.guides = 'grid'; r.gx = r.gy = 3; } else if (r.guides === 'centre'){ r.guides = 'grid'; r.gx = r.gy = 2; }   // thirds = grid 3×3, centre = 2×2
   if (typeof r.guides !== 'object' || !r.guides){ const g = r.guides; r.guides = {}; if (g) r.guides[g] = true;   // one guide at a time before 0.31; they combine now
   }
@@ -448,7 +472,8 @@ function outline(G, k){
   [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a, b], j) => { const [x, y] = toWorld(G, a*G.hw, b*G.hh); j ? pctx.lineTo(x*k, y*k) : pctx.moveTo(x*k, y*k); });
   pctx.closePath(); pctx.stroke();
 }
-const redraw = { all: true, scene: '', overlay: '' };
+const redraw = { all: true };
+const GUIDE_KEYS = ['golden', 'grid', 'safe', 'diag', 'persp'];
 // While theme colours are being dragged, the control window skips its preview, overlay, scopes and scene thumbnails
 // (every colour change restyles the whole page; those redraws would compete with it). The output is unaffected.
 let uiQuiet = 0, quietT = 0;

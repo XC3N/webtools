@@ -112,7 +112,7 @@ function movable(box, key){
     hd.setPointerCapture(e.pointerId);
     const mv = ev => moveBox(box, ev.clientX - ox, ev.clientY - oy);
     const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up);
-      try { localStorage.setItem(key, JSON.stringify([parseFloat(box.style.left), parseFloat(box.style.top)])); } catch (err) {} };
+      Prefs.setJson(key, [parseFloat(box.style.left), parseFloat(box.style.top)]); };
     hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up);
   });
 }
@@ -120,7 +120,7 @@ function moveBox(box, x, y){
   const w = box.offsetWidth;
   Object.assign(box.style, { position: 'fixed', margin: '0', left: clamp(x, 0, innerWidth - w * uiZoom) / uiZoom + 'px', top: clamp(y, 0, innerHeight - 48) / uiZoom + 'px' });
 }
-function placeMovable(box, key){ let p = null; try { p = JSON.parse(localStorage.getItem(key)); } catch (e) {} if (p) moveBox(box, p[0], p[1]); }
+function placeMovable(box, key){ const p = Prefs.json(key); if (p) moveBox(box, p[0], p[1]); }
 movable($('#setPanel .modalBox'), 'vjif-setpos');
 const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos');
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
@@ -129,7 +129,7 @@ $('#aboutVer').textContent = $('#hdrVer').textContent = 'v' + APP_VERSION;
 $('#hdrVer').addEventListener('click', () => openAbout('log'));
 $('#helpClose').addEventListener('click', () => { $('#helpPanel').hidden = true; });
 $('#fmtSeg').innerHTML = Object.entries(FORMATS).map(([k, [w, h, d]]) => `<button data-f="${k}" title="${d} · ${w}×${h}">${k}</button>`).join('');
-$('#fmtSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFormat(b.dataset.f); });
+onSeg($('#fmtSeg'), (b, e) => { setFormat(b.dataset.f); });
 syncFormatUI();
 const syncRecFmt = () => {
   $('#recCodecSel').value = recCodec;
@@ -140,7 +140,7 @@ const syncRecFmt = () => {
 syncRecFmt();
 const syncRecBars = () => document.querySelectorAll('#recBarsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.b === recBars));
 syncRecBars();
-$('#recBarsSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recBars = +b.dataset.b; try { localStorage.setItem('vjif-recbars', recBars); } catch (err) {} syncRecBars(); });
+onSeg($('#recBarsSeg'), (b, e) => { recBars = +b.dataset.b; Prefs.set('vjif-recbars', recBars); syncRecBars(); });
 // sound inputs: names only show once the browser has been allowed to use audio input (asked the first time you pick one)
 async function fillRecAudio(ask = false){
   const sel = $('#recAudioSel'); if (!sel || !navigator.mediaDevices) return;
@@ -155,30 +155,30 @@ $('#recAudioSel').addEventListener('change', async e => {
   const v = e.target.value;
   if (v === '?'){ await fillRecAudio(true); return; }
   recAudio = v ? { id: v, label: e.target.selectedOptions[0].textContent } : null;
-  try { localStorage.setItem('vjif-recaudio', JSON.stringify(recAudio)); } catch (err) {}
+  Prefs.setJson('vjif-recaudio', recAudio);
 });
 $('#setBtn').addEventListener('click', () => fillRecAudio());
-const recSave = (k, v) => { try { localStorage.setItem(k, v); } catch (err) {} syncRecFmt(); recUI(); };
+const recSave = (k, v) => { Prefs.set(k, v); syncRecFmt(); recUI(); };
 $('#recCodecSel').addEventListener('change', e => { recCodec = e.target.value; recFmt = recCodec.startsWith('vp') ? 'webm' : 'mp4'; recSave('vjif-reccodec', recCodec); });
-$('#recFpsSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recFps = +b.dataset.f; recSave('vjif-recfps', recFps); });
-$('#recMbpsSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; recMbps = +b.dataset.m; recSave('vjif-recmbps', recMbps); });
-$('#recACodecSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; recACodec = b.dataset.a; recSave('vjif-recacodec', recACodec); });
+onSeg($('#recFpsSeg'), (b, e) => { recFps = +b.dataset.f; recSave('vjif-recfps', recFps); });
+onSeg($('#recMbpsSeg'), (b, e) => { recMbps = +b.dataset.m; recSave('vjif-recmbps', recMbps); });
+onSeg($('#recACodecSeg'), (b, e) => { recACodec = b.dataset.a; recSave('vjif-recacodec', recACodec); });
 // interface size
 // pad sections fold away to give the space below more room; a folded one shows how many of its pads hold GIFs
-var padFold = (() => { try { return JSON.parse(localStorage.getItem('vjif-padfold')) || {}; } catch (e) { return {}; } })();
+var padFold = Prefs.json('vjif-padfold', {});
 function syncPadFold(){ document.querySelectorAll('.padsub').forEach(h => { const g = h.dataset.g, n = pads.slice(g === 'A' ? 0 : 9, g === 'A' ? 9 : 18).filter(p => p.gif).length;
   h.classList.toggle('fold', !!padFold[g]); h.querySelector('.cnt').textContent = `· ${n} GIF${n === 1 ? '' : 's'}`; }); }
 syncPadFold();
-document.querySelectorAll('.padsub').forEach(h => h.addEventListener('click', () => { padFold[h.dataset.g] = !padFold[h.dataset.g]; try { localStorage.setItem('vjif-padfold', JSON.stringify(padFold)); } catch (e) {} syncPadFold(); }));
+document.querySelectorAll('.padsub').forEach(h => h.addEventListener('click', () => { padFold[h.dataset.g] = !padFold[h.dataset.g]; Prefs.setJson('vjif-padfold', padFold); syncPadFold(); }));
 const syncZoomUI = () => { $('#uiZoomR').value = uiZoom; $('#uiZoomV').textContent = Math.round(uiZoom * 100) + '%'; };
 syncZoomUI();
 let uiZoomT = 0;
 let uiZoomRaf = 0;
 function setUiZoom(z){ uiZoom = Math.round(clamp(z, 0.7, 1.3) * 100) / 100;
-  try { localStorage.setItem('vjif-uizoom', uiZoom); } catch (err) {} syncZoomUI();
+  Prefs.set('vjif-uizoom', uiZoom); syncZoomUI();
   cancelAnimationFrame(uiZoomRaf); uiZoomRaf = requestAnimationFrame(() => {   // live, once per frame
     document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom); sizeNotice(); sizePreview(); });
-  clearTimeout(uiZoomT); uiZoomT = setTimeout(syncFxUI, 200); }   // names refit once it rests
+  clearTimeout(uiZoomT); uiZoomT = setTimeout(() => { fxFitGen++; syncFxUI(); }, 200); }   // names refit once it rests
 // dragged by hand rather than by the browser: the slider grows and shrinks with the interface, so its own maths would chase the pointer
 let uzDrag = null;
 $('#uiZoomR').addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect();
@@ -200,7 +200,7 @@ addEventListener('resize', sizeNotice); sizeNotice();
 // your defaults
 const DEF_KEYS = ['fx', 'fxPre', 'tr'];
 function defNote(){ const ks = DEF_KEYS.filter(k => userDef[k] !== undefined); $('#defNote').textContent = ks.length ? `Your defaults (saved ${new Date(userDef.saved).toLocaleDateString()}): new sets start with your ${ks.map(k => DEF_NAMES[k]).join(', ')}; resets go back to them.` : "Using VJif's own defaults. Set effects and presets the way you like them, then Save current settings: every new set starts like that."; }
-function setUserDef(d){ userDef = d || {}; try { if (d) localStorage.setItem('vjif-userdef', JSON.stringify(d)); else localStorage.removeItem('vjif-userdef'); } catch (e) {} defNote(); }
+function setUserDef(d){ userDef = d || {}; Prefs.set('vjif-userdef', d ? JSON.stringify(d) : null); defNote(); }
 // the ticked parts: Save, Reset, Export and Import only touch those
 const DEF_NAMES = { fx: 'effects', fxPre: 'effect presets', tr: 'transitions' };
 const defParts = () => [...document.querySelectorAll('#defParts input:checked')].map(i => i.dataset.k);
@@ -213,7 +213,7 @@ $('#defReset').addEventListener('click', () => { const ks = defParts(); if (!ks.
   toast2(`Back to VJif's defaults (${partsTxt(ks)}; for new sets and resets, this set is unchanged)`); });
 $('#defExport').addEventListener('click', () => { const ks = defParts().filter(k => userDef[k] !== undefined); if (!ks.length) return toast('Save your defaults first (for the ticked parts)');
   const out = { app: 'VJif', kind: 'defaults', v: 1, saved: userDef.saved }; ks.forEach(k => out[k] = userDef[k]);
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' })); a.download = ks.length === 3 ? 'vjif-defaults.json' : `vjif-defaults-${ks.join('-').toLowerCase()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); });
+  saveFile(JSON.stringify(out, null, 1), ks.length === 3 ? 'vjif-defaults.json' : `vjif-defaults-${ks.join('-').toLowerCase()}.json`, 'application/json'); });
 $('#defImport').addEventListener('click', () => $('#defFile').click());
 $('#defFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { const d = JSON.parse(await f.text()); if (d.app !== 'VJif' || d.kind !== 'defaults') throw new Error('not a VJif defaults file');
@@ -225,7 +225,7 @@ defNote();
 $('#midiLearn').addEventListener('click', startLearn);
 $('#learnDone').addEventListener('click', endLearn);
 $('#midiClear').addEventListener('click', () => { midiCtl.map = []; saveMidiCtl(); renderMidiCtl(); });
-$('#midiMap').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ midiCtl.map.splice(+b.dataset.k, 1); saveMidiCtl(); renderMidiCtl(); } });
+onSeg($('#midiMap'), b => { midiCtl.map.splice(+b.dataset.k, 1); saveMidiCtl(); renderMidiCtl(); });
 $('#midiCtlIn').addEventListener('change', e => { midiCtl.input = e.target.value; midiCtl.inputName = e.target.selectedOptions[0].textContent.replace(/ \(not connected\)$/, ''); saveMidiCtl(); bindCtlInputs(); });
 renderMidiCtl();
 if (midiCtl.map.length && navigator.requestMIDIAccess) getMidi().then(() => { bindCtlInputs(); fillMidi(); }).catch(() => {});   // mappings exist: listen from the start
@@ -234,21 +234,20 @@ const TAGLINES = ["actually, it's pronounced vjif", 'Vanks Jod It\'s Friday', 'V
 function openAbout(tab = 'start'){ $('#tagline').textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)]; $('#helpPanel').hidden = true; $('#aboutPanel').hidden = false; aboutTab(tab); }
 function aboutTab(v){ $('#aboutTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('#aboutStart').hidden = v !== 'start'; $('#aboutLog').hidden = v !== 'log'; $(v === 'log' ? '#aboutLog' : '#aboutStart').scrollTop = 0; }
-$('#aboutTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) aboutTab(b.dataset.v); });
+onSeg($('#aboutTabs'), b => aboutTab(b.dataset.v));
 $('#aboutVer').addEventListener('click', e => { e.preventDefault(); aboutTab('log'); });
-function closeAbout(){ $('#aboutPanel').hidden = true; try { localStorage.setItem('vjif-about', $('#aboutAgain').checked ? 'show' : 'seen'); } catch (e) {} }
+function closeAbout(){ $('#aboutPanel').hidden = true; Prefs.set('vjif-about', $('#aboutAgain').checked ? 'show' : 'seen'); }
 $('.brand').addEventListener('click', () => openAbout());
 $('#helpAbout').addEventListener('click', () => openAbout());
 $('#aboutClose').addEventListener('click', closeAbout); $('#aboutGo').addEventListener('click', closeAbout);
 $('#aboutPanel').addEventListener('pointerdown', e => { if (e.target.id === 'aboutPanel') closeAbout(); });
-{ let a = null, v = null; try { a = localStorage.getItem('vjif-about'); v = localStorage.getItem('vjif-ver'); localStorage.setItem('vjif-ver', APP_VERSION); } catch (e) {}
+{ const a = Prefs.get('vjif-about'), v = Prefs.get('vjif-ver'); Prefs.set('vjif-ver', APP_VERSION);
   $('#aboutAgain').checked = a === 'show';
   if (a !== 'seen') openAbout(v && v !== APP_VERSION ? 'log' : 'start');
   else if (v && v !== APP_VERSION) openAbout('log'); }   // updated since last time: show what's new once
 $('#helpPanel').addEventListener('pointerdown', e => { if (e.target.id === 'helpPanel') $('#helpPanel').hidden = true; });
 // GIF tabs: all panes share one grid cell (rule 3), so switching never moves anything below
-$('#gTabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
+onSeg($('#gTabs'), b => {
   segSet('#gTabs', b.dataset.v); gTab = b.dataset.v;
   document.querySelectorAll('#gPanes > [data-pane]').forEach(p => p.classList.toggle('off', p.dataset.pane !== b.dataset.v));
   if (gTab === 'colour') syncSwapUI(curGif());   // the palette is worked out when the tab is first opened

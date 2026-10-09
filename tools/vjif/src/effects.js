@@ -20,9 +20,6 @@ const FX_LENS = [[0, '0'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'],
 const FX_REL = 0.125;                                // default release of Hold / Latch effects (beats)
 const FX_RELS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const fxRelDef = mode => mode === 'hit' ? 1 : FX_REL;
-// sets from before Release: a Hit faded over its whole Length — that becomes the release (held for 0)
-function fxMigrate(c){ if (!c || c.rel !== undefined || !Object.keys(c).length) return c;
-  if (c.mode === 'hit'){ c.rel = c.len ?? 1; c.len = 0; } else c.rel = FX_REL; return c; }
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
 const fxFactory = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, att: 0, dec: 0, sus: 1, len: 0, rel: fxRelDef(d.mode), rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: d.sizeDef || 64 }));
 const fxDefaults = () => userDef.fx ? JSON.parse(JSON.stringify(userDef.fx)) : fxFactory();   // your own defaults (Settings › Defaults) if saved
@@ -49,6 +46,10 @@ function rateAlt(d, style){
 }
 const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'], [12, '12 px'], [16, '16 px'], [24, '24 px'], [32, '32 px'], [48, '48 px'], [64, '64 px'], [96, '96 px'], [128, '128 px'], [192, '192 px']];
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
+// style numbers by name (FXS.rgb.phos …), and the same as GLSL constants (S_rgb_phos …) for the effects shader: the shader
+// tests styles by name, so adding or reordering styles in FX_DEFS can't shift the ones after them
+const FXS = Object.fromEntries(FX_DEFS.map(d => [d.id, Object.fromEntries(d.styles.map((s, i) => [s[0], i]))]));
+const FX_GLSL = Object.entries(FXS).flatMap(([id, st]) => Object.entries(st).map(([k, i]) => `#define S_${id}_${k} ${i}.0`)).join('\n') + '\n#define IS(v, s) (abs((v) - (s)) < 0.5)';
 // effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate, style } })
 // played together with the slot's own mode / length / amount. Index 12–20 in the shared selection / state arrays.
 const FXP_KEYS = Array.from({ length: 9 }, (_, i) => 'Numpad' + (i + 1)), FXP_LABELS = FXP_KEYS.map((_, i) => 'Num ' + (i + 1));
@@ -119,20 +120,19 @@ function fxMix(b, X = fxLive()){
   });
   return M;
 }
-const MIR_CODE = { lr: 0, tb: 1, quad: 2, kal: 3, rl: 4, bt: 5 };
 // one target's shader settings; null when nothing plays on it
 function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith }){
   if (!lv.some(v => v > 0.001)) return null;
-  const S = i => styleIdx(i, style[i]), st = i => Math.floor(b / rate[i]);
+  const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
   const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
     strobe: lv[2] * ((b / rate[2]) % 1 < 0.5 ? 1 : 0), strobeS: S(2), poster: lv[3], posterS: S(3),
-    zoom: S(4) < 2 ? lv[4] * (S(4) ? -0.3 : 0.5) : 0, zoomE: S(4) >= 2 ? lv[4] * (S(4) === 3 ? -0.3 : 0.5) : 0,   // Each: done per GIF in render()
+    zoom: nm(4) === 'in' ? lv[4] * 0.5 : nm(4) === 'out' ? lv[4] * -0.3 : 0, zoomE: nm(4) === 'eachin' ? lv[4] * 0.5 : nm(4) === 'eachout' ? lv[4] * -0.3 : 0,   // Each: done per GIF in render()
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
-    mirror: style[7] === 'kal' ? env[7] : lv[7], mirS: MIR_CODE[style[7]] ?? 0,   // the shader's numbers (kept when styles were added) mirN: Math.round(3 + 9 * clamp(amt[7], 0, 1)),   // kaleido: Amount = how many slices
+    mirror: nm(7) === 'kal' ? env[7] : lv[7], mirS: S(7), mirN: Math.round(3 + 9 * clamp(amt[7], 0, 1)),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: S(9), crtSz: size[9], monoSz: size[0],
     pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, mirZ: kz ? kz[7] : 1 };
-  if (U.colrS === 3) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
-  const jit = S(5) === 1, sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
+  if (U.colrS === FXS.colour.pal) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
+  const jit = nm(5) === 'jitter', sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
   return U;
 }
@@ -141,7 +141,11 @@ function fxFrame(b, X){
   const M = fxMix(b, X), out = fxU(b, M.get('out')), layers = [0, 1, 2, 3].map(t => fxU(b, M.get(t)));
   return { out, layers, any: !!out || layers.some(Boolean) };
 }
-let layerFxU = [null, null, null, null], outZoomE = 0;   // outZoomE: Zoom › Each on the whole output, applied per GIF             // read by render(): effects playing on each layer this frame
+const NO_LAYER_FX = [null, null, null, null];
+// Effect-history slots of the GPU pass (each keeps its own Feedback / Phosphor trail): the output, its layers (+0…3),
+// the scene being left during a transition (its layers, then the whole), and Prep's preview of the scene being edited.
+const SLOT = { OUT: 0, LAYERS: 1, LEAVING_LAYERS: 5, PREP_LAYERS: 10, PREP_OUT: 14, ARRIVING_OUT: 14, LEAVING_OUT: 15 };   // going live ends Prep: the arriving scene carries on its preview's trail
+const zoomEOf = U => U && U.zoomE || 0;
 // ---- blackout (0, held) and freeze (Ins, held): applied to whatever is on the output, effects included ----
 const live = { black: 0, blackOn: false, blackT: 0, freeze: false, freezeReq: false };
 const BLACK_MS = 120;
@@ -167,6 +171,7 @@ function makePost(){
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
+${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
       uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD,
                     glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, shakeZ;
@@ -182,10 +187,10 @@ function makePost(){
         float c = cos(shake.z), s = sin(shake.z); d = mat2(c, s, -s, c) * d + shake.xy;
         p = d / a + 0.5;
         if (wob > 0.001){
-          if (wobS < 0.5){ p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wob; p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wob; }
+          if (IS(wobS, S_wobble_wave)){ p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wob; p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wob; }
           else { vec2 q = (p - 0.5) * a; float r = length(q); p += q / max(r, 1e-4) / a * sin(r * 40.0 - wobPh) * 0.012 * wob; }
         }
-        if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (pixS > 0.5) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
+        if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (IS(pixS, S_pixel_wide)) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
         return p;
       }
       bool offs(vec2 p){ return p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0; }
@@ -197,11 +202,11 @@ function makePost(){
         return vec4(r.r, m.g, b.b, max(m.a, max(r.a, b.a) * step(0.0001, split)));
       }
       vec2 fold(vec2 p){
-        if (mirS > 4.5) return vec2(p.x, p.y > 0.5 ? p.y : 1.0 - p.y);          // B→T
-        if (mirS > 3.5) return vec2(p.x > 0.5 ? p.x : 1.0 - p.x, p.y);          // R→L
-        if (mirS < 0.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y);
-        if (mirS < 1.5) return vec2(p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
-        if (mirS < 2.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
+        if (IS(mirS, S_mirror_bt)) return vec2(p.x, p.y > 0.5 ? p.y : 1.0 - p.y);
+        if (IS(mirS, S_mirror_rl)) return vec2(p.x > 0.5 ? p.x : 1.0 - p.x, p.y);
+        if (IS(mirS, S_mirror_lr)) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y);
+        if (IS(mirS, S_mirror_tb)) return vec2(p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
+        if (IS(mirS, S_mirror_quad)) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
         vec2 a = A(), d = (p - 0.5) * a / max(mirZ, 1.0); float r = length(d), seg = 6.2831853 / max(mirN, 2.0), an = mod(atan(d.y, d.x) + time * 0.1, seg);
         an = abs(an - seg * 0.5);
         return vec2(cos(an), sin(an)) * r / a + 0.5;
@@ -221,33 +226,33 @@ function makePost(){
       void main(){
         if (blit > 0.5){ gl_FragColor = texture2D(tex, vec2(uv.x, 1.0 - uv.y)); return; }
         vec2 p = uv, a = A(), scell = vec2(0.0); float scr = 0.0;
-        float split = rgb > 0.001 ? (rgbS < 0.5 ? rgb * 0.025 : rgbS < 1.5 ? rgb * 0.006 : rgbS < 2.5 ? rgb * 0.0015 : rgbS < 3.5 ? rgb * 0.002 : rgbS < 4.5 ? rgb * 0.008 : 0.0) : 0.0;
+        float split = rgb > 0.001 ? (IS(rgbS, S_rgb_split) ? rgb * 0.025 : IS(rgbS, S_rgb_vhs) ? rgb * 0.006 : IS(rgbS, S_rgb_scan) ? rgb * 0.0015 : IS(rgbS, S_rgb_phos) ? rgb * 0.002 : IS(rgbS, S_rgb_degauss) ? rgb * 0.008 : 0.0) : 0.0;
         float payU = 1.0;                              // pay-TV: where this pixel falls across the line (0 = the blanking bar's edge)
-        if (rgb > 0.001 && rgbS > 5.5){              // crypt: lines shuffled within blocks of 32 (Nagravision Syster), then each cut at a random point and its halves swapped (Videocrypt)
+        if (rgb > 0.001 && IS(rgbS, S_rgb_crypt)){              // crypt: lines shuffled within blocks of 32 (Nagravision Syster), then each cut at a random point and its halves swapped (Videocrypt)
           float lh = max(crtSz, 1.0) / res.y, line = floor(p.y / lh), key = floor(time * 4.0);
           if (h1(line * 0.37 + key * 1.91) < rgb){
             float blk = floor(line / 32.0), idx = mod(line, 32.0), k = 1.0 + 2.0 * floor(h1(blk + key * 1.3) * 16.0), off = floor(h1(blk * 2.1 + key) * 32.0);
             p.y = min((blk * 32.0 + mod(idx * k + off, 32.0) + 0.5) * lh, 1.0 - lh * 0.5);   // odd k: a different line for every line of the block
             p.x = fract(p.x + h1(line * 1.7 + key * 3.1)); } }
-        if (rgb > 0.001 && rgbS > 4.5 && rgbS < 5.5){ // pay-TV, cable-box style (sync suppressed): no horizontal sync, so every line starts late by an amount
+        if (rgb > 0.001 && IS(rgbS, S_rgb_paytv)){ // pay-TV, cable-box style (sync suppressed): no horizontal sync, so every line starts late by an amount
           float y = p.y, t = time;                    // that wobbles down the picture; the picture wraps, the blanking bar shows inside it and bends
           float off = rgb * (0.24 + 0.15 * sin(y * 3.2 + t * 0.9) + 0.035 * sin(y * 9.0 - t * 1.7) + 0.005 * sin(y * 61.0 + t * 11.0));
           p.y = fract(p.y + fract(t * 0.031) * rgb * 0.6);   // and the vertical hold drifts
           payU = fract(p.x + off); p.x = payU; }
-        if (rgb > 0.001 && rgbS > 3.5 && rgbS < 4.5){ // degauss: the picture ripples
+        if (rgb > 0.001 && IS(rgbS, S_rgb_degauss)){ // degauss: the picture ripples
           p += vec2(sin(p.y * 18.0 + time * 35.0), cos(p.x * 14.0 + time * 29.0)) * 0.006 * rgb; }
-        if (rgb > 0.001 && rgbS > 0.5 && rgbS < 1.5){ // VHS tracking: a gentle sway and a torn band rolling down
+        if (rgb > 0.001 && IS(rgbS, S_rgb_vhs)){ // VHS tracking: a gentle sway and a torn band rolling down
           p.x += sin(p.y * 30.0 + time * 6.0) * 0.0015 * rgb;
           float ty = fract(time * 0.23); if (abs(p.y - ty) < 0.025) p.x += (h1(floor(p.y * 200.0) + floor(time * 30.0)) - 0.5) * 0.03 * rgb;
         }
         if (glitch > 0.001){
-          if (glS < 0.5){ float nb = res.y / max(glSz, 2.0), band = floor(p.y * nb + h1(gseed) * nb), g = 0.0;
+          if (IS(glS, S_glitch_slices)){ float nb = res.y / max(glSz, 2.0), band = floor(p.y * nb + h1(gseed) * nb), g = 0.0;
             if (h1(band + gseed) < glitch * 0.55) g = (h1(band * 1.7 + gseed) - 0.5) * 0.25 * glitch;
             split += abs(g) * 0.3 + glitch * 0.004; p.x += g; }
-          else if (glS < 1.5){ vec2 cell = floor(p * res / max(glSz, 2.0));
+          else if (IS(glS, S_glitch_blocks)){ vec2 cell = floor(p * res / max(glSz, 2.0));
             if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
-          else if (glS < 2.5){ float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
-          else { vec2 bsz = vec2(max(2.0, glSz * (0.15 + 0.85 * glitch))) / res; scell = floor(p / bsz); p = (scell + 0.5) * bsz; scr = glitch; }
+          else if (IS(glS, S_glitch_melt)){ float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
+          else if (IS(glS, S_glitch_scramble)){ vec2 bsz = vec2(max(2.0, glSz * (0.15 + 0.85 * glitch))) / res; scell = floor(p / bsz); p = (scell + 0.5) * bsz; scr = glitch; }
         }
         vec4 c4 = samp(geo(p), split);
         if (scr > 0.0){ float q = h2(scell + gseed);   // scramble: some blocks get their channels rotated, swapped or inverted
@@ -256,23 +261,23 @@ function makePost(){
         if (mirror > 0.001) c4 = mix(c4, samp(geo(fold(p)), split), mirror);
         vec3 c = c4.rgb; float al = c4.a;
         if (poster > 0.001){
-          if (posterS < 0.5){ float lv = mix(24.0, 2.0, poster); c = floor(c * lv + 0.5) / lv; }
+          if (IS(posterS, S_poster_bands)){ float lv = mix(24.0, 2.0, poster); c = floor(c * lv + 0.5) / lv; }
           else { vec2 t = 1.5 / res, q = geo(p); vec3 w = vec3(0.333);
             float e = length(vec2(dot(raw(q + vec2(t.x, 0.0)), w) - dot(raw(q - vec2(t.x, 0.0)), w), dot(raw(q + vec2(0.0, t.y)), w) - dot(raw(q - vec2(0.0, t.y)), w))) * 4.0;
             vec3 neon = c / max(max(c.r, max(c.g, c.b)), 0.15) * smoothstep(0.05, 0.5, e);
             c = mix(c, neon, poster); }
         }
-        if (rgb > 0.001 && rgbS > 1.5 && rgbS < 2.5){ // scanlines + aperture grille
+        if (rgb > 0.001 && IS(rgbS, S_rgb_scan)){ // scanlines + aperture grille
           float ln = 0.5 + 0.5 * cos(gl_FragCoord.y * 6.2831853 / max(crtSz, 2.0));   // a dark line every Size px
           float col = mod(floor(gl_FragCoord.x), 3.0); vec3 tri = vec3(col < 0.5 ? 1.0 : 0.7, col > 0.5 && col < 1.5 ? 1.0 : 0.7, col > 1.5 ? 1.0 : 0.7);
           c = c * mix(vec3(1.0), tri * (0.55 + 0.45 * ln), rgb) * (1.0 + 0.25 * rgb); }
-        if (rgb > 0.001 && rgbS > 2.5 && rgbS < 3.5){ // phosphor: bright parts bloom and linger
+        if (rgb > 0.001 && IS(rgbS, S_rgb_phos)){ // phosphor: bright parts bloom and linger
           vec2 q = geo(p), t = vec2(5.0) / res; vec3 bl = vec3(0.0);
           for (int i = 0; i < 8; i++){ float an = float(i) * 0.785398; bl += raw(q + vec2(cos(an), sin(an)) * t * 1.6) + raw(q + vec2(cos(an), sin(an)) * t * 3.4); }
           bl /= 16.0; c += max(bl - 0.35, 0.0) * 1.6 * rgb;
           vec4 pv = texture2D(prev, vec2(uv.x, 1.0 - uv.y)); c = max(c, pv.rgb * 0.82 * rgb); }
-        if (rgb > 0.001 && rgbS > 5.5) c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))) * 0.85 + 0.06, 0.45 * rgb);   // crypt: colour lost, the black level lifted
-        if (rgb > 0.001 && rgbS > 4.5 && rgbS < 5.5){ // pay-TV picture: a smeared echo, the colour decoded wrong (hue turned round, oversaturated), now and then a negative field
+        if (rgb > 0.001 && IS(rgbS, S_rgb_crypt)) c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))) * 0.85 + 0.06, 0.45 * rgb);   // crypt: colour lost, the black level lifted
+        if (rgb > 0.001 && IS(rgbS, S_rgb_paytv)){ // pay-TV picture: a smeared echo, the colour decoded wrong (hue turned round, oversaturated), now and then a negative field
           vec3 gh = raw(geo(vec2(fract(p.x - 0.022), p.y)));
           vec3 d = mix(c, gh, 0.38);
           d = clamp(hueRot(d, 3.14159), 0.0, 1.0); float l = dot(d, vec3(0.299, 0.587, 0.114)); d = clamp(mix(vec3(l), d, 1.7), 0.0, 1.0);
@@ -280,23 +285,23 @@ function makePost(){
           float e = payU / 0.11;                      // the blanking bar: a bright sync edge, dark purple, a pale edge where the picture starts
           if (e < 1.0) d = e < 0.12 ? mix(vec3(0.95, 0.92, 1.0), vec3(0.55, 0.35, 0.75), e / 0.12) : e > 0.88 ? mix(vec3(0.16, 0.05, 0.24), vec3(0.75, 0.62, 0.95), (e - 0.88) / 0.12) : mix(vec3(0.30, 0.12, 0.42), vec3(0.14, 0.04, 0.22), (e - 0.12) / 0.76);
           c = mix(c, d, rgb); }
-        if (rgb > 0.001 && rgbS > 3.5 && rgbS < 4.5){ // degauss: rainbow blotches swirling out
+        if (rgb > 0.001 && IS(rgbS, S_rgb_degauss)){ // degauss: rainbow blotches swirling out
           float r = length((uv - 0.5) * a); c = mix(c, clamp(hueRot(c, sin(r * 12.0 - time * 18.0 + sin(uv.x * 7.0) * 2.0) * 3.0), 0.0, 1.0), 0.75 * rgb); }
-        if (rgb > 0.001 && rgbS > 0.5 && rgbS < 1.5){ // VHS picture: washed colour, scanlines, noise
+        if (rgb > 0.001 && IS(rgbS, S_rgb_vhs)){ // VHS picture: washed colour, scanlines, noise
           c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rgb);
           c *= 1.0 - 0.28 * rgb * step(0.5, fract(gl_FragCoord.y / 3.0));
           c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * rgb;
         }
         float y = dot(c, vec3(0.299, 0.587, 0.114));
-        c = mix(c, monoS < 0.5 ? vec3(y) : monoS < 1.5 ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
-        if (colr > 0.001){ if (colrS > 2.5){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
-          else c = mix(c, clamp(colrS > 1.5 ? 1.0 - c : hueRot(c, colrS < 0.5 ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
-        c = mix(c, vec3(strobeS < 0.5 ? 1.0 : 0.0), strobe); if (strobeS < 0.5) al = mix(al, 1.0, strobe);
+        c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
+        if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
+          else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
+        c = mix(c, vec3(IS(strobeS, S_strobe_white) ? 1.0 : 0.0), strobe); if (IS(strobeS, S_strobe_white)) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
           vec2 q = uv;
-          if (fbS > 0.5){ vec2 d = (q - 0.5) * a * 1.06; if (fbS > 1.5){ float cs = cos(0.06), sn = sin(0.06); d = mat2(cs, sn, -sn, cs) * d; } q = d / a + 0.5; }
+          if (!IS(fbS, S_feedback_trails)){ vec2 d = (q - 0.5) * a * 1.06; if (IS(fbS, S_feedback_spiral)){ float cs = cos(0.06), sn = sin(0.06); d = mat2(cs, sn, -sn, cs) * d; } q = d / a + 0.5; }
           vec4 pv = fbInit > 0.5 || offs(q) ? vec4(0.0) : texture2D(prev, vec2(q.x, 1.0 - q.y));
-          float k = fbS < 0.5 ? 0.72 + 0.16 * fb : 0.86;                     // older copies fade as they repeat
+          float k = IS(fbS, S_feedback_trails) ? 0.72 + 0.16 * fb : 0.86;                     // older copies fade as they repeat
           c = mix(c, max(c, pv.rgb * k), fb); al = mix(al, max(al, pv.a * k), fb);
         }
         gl_FragColor = vec4(clamp(c, 0.0, 1.0), clamp(al, 0.0, 1.0));
@@ -364,22 +369,31 @@ function makePost(){
           if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, W, H); } else to.clearRect(0, 0, W, H); to.drawImage(from, 0, 0); }
         return;
       }
-      const S = slotOf(slot), rt = S.rt, cur = S.cur;
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
-      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rt[1 - cur].t);
       gl.uniform2f(u.res, W, H);
       for (const k of NAMES) gl.uniform1f(u[k], U[k] || 0);
       gl.uniform3fv(u.shake, U.shake);
       { const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }
-      const fbOn = U.fb > 0.001; gl.uniform1f(u.fbInit, fbOn && !S.fbWas ? 1 : 0); S.fbWas = fbOn;
-      gl.uniform1f(u.blit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, rt[cur].f); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rt[cur].t);
-      gl.clear(gl.COLOR_BUFFER_BIT); gl.uniform1f(u.blit, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      S.cur = 1 - cur;
+      gl.uniform1f(u.blit, 0);
+      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && U.rgbS === FXS.rgb.phos);   // only Feedback and Phosphor read the previous frame
+      if (!trail){                                   // straight onto the canvas: no render target, no second pass
+        const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; }
+        gl.uniform1f(u.fbInit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      } else {                                       // into this slot's render target (kept as the next frame's "previous"), then onto the canvas
+        const S = slotOf(slot), rt = S.rt, cur = S.cur;
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src);   // (making a slot's targets binds them)
+        if (S.stale){ gl.bindFramebuffer(gl.FRAMEBUFFER, rt[1 - cur].f); gl.clear(gl.COLOR_BUFFER_BIT); S.stale = false; }   // frames drawn straight left no trail
+        gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rt[1 - cur].t);
+        gl.uniform1f(u.fbInit, fbOn && !S.fbWas ? 1 : 0); S.fbWas = fbOn;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, rt[cur].f); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rt[cur].t);
+        gl.clear(gl.COLOR_BUFFER_BIT); gl.uniform1f(u.blit, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        S.cur = 1 - cur;
+      }
       to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
       if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, W, H); } else to.clearRect(0, 0, W, H);   // what moved away is black / see-through
       to.drawImage(cv, 0, 0);
-    }, idle(slot){ if (slots[slot]) slots[slot].fbWas = false; },
+    }, idle(slot){ const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; } },   // nothing on it: the trail starts over next time
     resize(){                                        // new canvas format: the render targets follow (feedback history starts over)
       cv.width = W; cv.height = H; gl.viewport(0, 0, W, H);
       slots.forEach(S => { if (!S) return; S.rt.forEach(r => { gl.bindTexture(gl.TEXTURE_2D, r.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }); S.fbWas = false; });
@@ -392,18 +406,18 @@ const NOFX = { out: null, layers: [null, null, null, null], any: false };
 function drawPrep(now, hidden, quiet){
   const P = prep, b = clock.beat, bl = blackLevel(now); drawn++;
   const oF = post ? fxFrame(b, P.fx) : NOFX;
-  oF.layers.forEach((U, li) => { if (!U && post) post.idle(li + 1); });
+  oF.layers.forEach((U, li) => { if (!U && post) post.idle(SLOT.LAYERS + li); });
   if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
-  else render(frameList(now, P.layers, P.gifs), mctx, 0, oF.layers);
+  else render(frameList(now, P.layers, P.gifs), mctx, SLOT.LAYERS, oF.layers, zoomEOf(oF.out));
   if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }
-  if (oF.out) post.run(oF.out); else if (post) post.idle(0);
+  if (oF.out) post.run(oF.out); else if (post) post.idle(SLOT.OUT);
   if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
   if (outCtx) outCtx.drawImage(master, 0, 0);
   if (hidden || quiet) return;
-  const eF = post ? fxFrame(b) : NOFX; layerFxU = eF.layers;
-  eF.layers.forEach((U, li) => { if (!U && post) post.idle(li + 10); });
-  render(frameList(now), trB, 9, eF.layers);
-  if (eF.out) post.run(eF.out, trB.canvas, trB, 14); else if (post) post.idle(14);
+  const eF = post ? fxFrame(b) : NOFX;
+  eF.layers.forEach((U, li) => { if (!U && post) post.idle(SLOT.PREP_LAYERS + li); });
+  render(frameList(now), trB, SLOT.PREP_LAYERS, eF.layers, zoomEOf(eF.out));
+  if (eF.out) post.run(eF.out, trB.canvas, trB, SLOT.PREP_OUT); else if (post) post.idle(SLOT.PREP_OUT);
   sctx.drawImage(trB.canvas, 0, 0, pvScene.width, pvScene.height);
 }
 function drawFrame(now){
@@ -415,28 +429,29 @@ function drawFrame(now){
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ endTrans(); redraw.all = true; } }
   const fxF = post ? fxFrame(clock.beat) : NOFX, fxU = fxF.out, bl = blackLevel(now);
-  layerFxU = fxF.layers; layerFxU.forEach((U, li) => { if (!U && post) post.idle(li + 1); }); outZoomE = fxU && fxU.zoomE || 0;
+  const LUs = fxF.layers, zE = zoomEOf(fxU); LUs.forEach((U, li) => { if (!U && post) post.idle(SLOT.LAYERS + li); });
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
-  const sig = trans && !live.freeze ? 'T' + now : fxF.any || (bl > 0 && bl < 1) ? 'F' + now : (live.freeze ? 'Z' : sceneSig(list)) + (bl >= 1 ? 'B' : '');
-  if (force || sig !== redraw.scene){
-    redraw.scene = sig; drawn++; let sideFx = false;
+  const moving = (trans && !live.freeze) || fxF.any || (bl > 0 && bl < 1);
+  if (moving) sceneSig.forget();
+  if (moving || sceneChanged(list, live.freeze, bl >= 1) || force){
+    drawn++; let sideFx = false;
     if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
     else if (trans && trans.still){                   // from a still of the interrupted transition
-      trA.setTransform(1, 0, 0, 1, 0, 0); trA.globalAlpha = 1; trA.globalCompositeOperation = 'source-over'; trA.drawImage(trans.still, 0, 0); render(list, trB);
+      trA.setTransform(1, 0, 0, 1, 0, 0); trA.globalAlpha = 1; trA.globalCompositeOperation = 'source-over'; trA.drawImage(trans.still, 0, 0); render(list, trB, SLOT.LAYERS, LUs, zE);
       composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
     }
     else if (trans && trans.fx && post){                 // going live from Prep: each side with its own effects, then combined
       const aF = fxFrame(clock.beat, trans.fx);
-      render(frameList(now, trans.from, trans.gifs), trA, 4, aF.layers); if (aF.out) post.run(aF.out, trA.canvas, trA, 15); else post.idle(15);
-      render(list, trB); if (fxU) post.run(fxU, trB.canvas, trB, 14); else post.idle(14);
+      render(frameList(now, trans.from, trans.gifs), trA, SLOT.LEAVING_LAYERS, aF.layers, zoomEOf(aF.out)); if (aF.out) post.run(aF.out, trA.canvas, trA, SLOT.LEAVING_OUT); else post.idle(SLOT.LEAVING_OUT);
+      render(list, trB, SLOT.LAYERS, LUs, zE); if (fxU) post.run(fxU, trB.canvas, trB, SLOT.ARRIVING_OUT); else post.idle(SLOT.ARRIVING_OUT);
       composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg); sideFx = true;
     }
     else if (trans){
-      render(frameList(now, trans.from, trans.gifs), trA); render(list, trB);
+      render(frameList(now, trans.from, trans.gifs), trA, SLOT.LEAVING_LAYERS, LUs, zE); render(list, trB, SLOT.LAYERS, LUs, zE);
       composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
-    } else render(list);
+    } else render(list, mctx, SLOT.LAYERS, LUs, zE);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
-    if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(0);
+    if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, W, H); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
@@ -445,9 +460,12 @@ function drawFrame(now){
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
   paintFxPads(clock.beat);
   const L = layers[target], sel = selClip(), gh = ghostList();
-  const osig = `${format},${JSON.stringify(pvOpt.guides)}${pvOpt.gcol}${pvOpt.gx}x${pvOpt.gy},${drag && drag.snap ? drag.snap.x + ':' + drag.snap.y : ''},${target},${sel && sel.id},${view.w},${view.h},` + L.clips.map(c => { const G = clipGeom(c); return G ? `${G.cx},${G.cy},${G.hw},${G.hh},${G.a}` : '-'; }).join(';')
-    + '|' + gh.map(([c, g]) => { const G = clipGeom(c); return `${c.id},${G.cx},${G.cy},${G.hw},${G.hh},${G.a},${c.flipX},${c.flipY},${c.tile},${c.cl},${c.ct},${c.cr},${c.cb},${g.fxVer},${g.startF},${g.crisp}`; }).join(';');
-  if (force || osig !== redraw.overlay){ redraw.overlay = osig; drawOverlay(gh); }
+  const O = overlaySig, Gd = pvOpt.guides; O.start();
+  [format, pvOpt.gcol, pvOpt.gx, pvOpt.gy, drag && drag.snap ? drag.snap.x : null, drag && drag.snap ? drag.snap.y : null, target, sel && sel.id, view.w, view.h].forEach(O.add);
+  for (const k of GUIDE_KEYS) O.add(!!Gd[k]);
+  for (const c of L.clips){ const G = clipGeom(c); O.add('|'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }
+  for (const [c, g] of gh){ const G = clipGeom(c); O.add(';'); [c.id, G.cx, G.cy, G.hw, G.hh, G.a, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, g.fxVer, g.startF, g.crisp].forEach(O.add); }
+  if (O.changed() || force) drawOverlay(gh);
   redraw.all = false;
 }
 function drawOverlay(gh = ghostList()){

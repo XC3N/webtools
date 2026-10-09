@@ -17,6 +17,10 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {perf40} **Hits and scene changes on your GPU** (0.40) — a set with coloured GIFs (hue, key, swaps) and effects on: hammer pads and scene keys; no hitch on the beat, LOAD lower than with 0.39.
+- {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
+- {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.
+- {oldset} **An old set still loads** (0.40) — open one of your oldest saved sets: transitions and effects as before.
 - {padcopy} **Copy a pad** (0.36) — Ctrl+drag a pad onto an empty one: a copy with its own settings; MEM barely moves. Ctrl+click still clears.
 - {merge} **Swap merge** (0.36) — a compressed GIF: raise Merge until the near-identical colours become one swatch.
 - {trslot} **Stutter** (0.34) — Transition › Stutter, Ramp and Even, 1-bar and 2-bar: cuts land on the beat grid and end on the new scene.

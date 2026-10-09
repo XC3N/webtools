@@ -78,15 +78,26 @@ const fxActive = g => g.key.on || hsvOn(g) || !!(g.swap && g.swap.length);
 // the image to draw for frame `fi` of GIF `g`: run through the colour shader when live colour is on.
 // e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
 // Connected key: the frame's mask (from the flood fill) replaces the per-pixel colour test.
+// The result is kept per GIF (two frames' worth: the playing one and the preview / ghost's) until its frame or colour changes: a 10 fps GIF on a 60 Hz screen
+// goes through the shader (and is copied back from the GPU) 10 times a second, not 60.
 function fxImage(g, fi, e){
   const img = g.frames[fi];
   if (!liveFx() || g.frames !== g.src) return img;
-  const mask = g.key.on && g.key.region !== 'all' && g.masks ? g.masks[fi] : null;
-  if (e && (e.H !== undefined || e.S !== undefined || e.V !== undefined))
-    return fxGL.render(img, fxParams(g, { h: g.hsv.h + (e.H ?? 0), s: g.hsv.s * (e.S ?? 1), v: g.hsv.v * (e.V ?? 1) }), mask);
-  if (!fxActive(g)) return img;
-  if (!g.fxP) g.fxP = fxParams(g);
-  return fxGL.render(img, g.fxP, mask);
+  const auto = e && (e.H !== undefined || e.S !== undefined || e.V !== undefined);
+  if (!auto && !fxActive(g)) return img;
+  const base = g.fxP || (g.fxP = fxParams(g)), mask = g.key.on && g.key.region !== 'all' && g.masks ? g.masks[fi] : null;
+  if (auto){                                         // automated colour changes every frame: nothing worth keeping
+    const h = g.hsv.h + (e.H ?? 0), s = g.hsv.s * (e.S ?? 1), v = g.hsv.v * (e.V ?? 1);
+    return fxGL.render(img, Object.assign({}, base, { doHsv: h !== 0 || s !== 1 || v !== 1, H: h, S: s, V: v }), mask);
+  }
+  let C = g.fxC; if (!C || C.p !== base || C.m !== g.masks) C = g.fxC = { p: base, m: g.masks, list: [] };   // new colour settings or masks: start over
+  const hit = C.list.find(x => x.k === fi); if (hit) return hit.cv;
+  const out = fxGL.render(img, base, mask);
+  const ent = C.list.length >= 2 ? C.list.shift() : { cv: new OffscreenCanvas(1, 1) };   // the older slot is reused
+  if (!ent.x) ent.x = ent.cv.getContext('2d');
+  if (ent.cv.width !== out.width || ent.cv.height !== out.height){ ent.cv.width = out.width; ent.cv.height = out.height; } else ent.x.clearRect(0, 0, out.width, out.height);
+  ent.x.drawImage(out, 0, 0); ent.k = fi; C.list.push(ent);
+  return ent.cv;
 }
 function scheduleFx(g, ms){
   if (liveFx()){ applyFx(g); return; }               // live: nothing to wait for

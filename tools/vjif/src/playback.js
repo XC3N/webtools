@@ -60,7 +60,7 @@ function fire(p, beat, released = false, swap = false){
   const g = pads[p].gif; if (!g) return;
   // a GIF lives on one layer at most: if it's on any layer, restart it there; otherwise add it to the edited layer
   let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[target];
-  let c = L.clips.find(c => c.pad === p);
+  let c = L.clips.find(c => c.pad === p); const n0 = L.clips.length;
   if (swap){                                         // alone on the layer, where the selected GIF was
     if (!c){ c = selClip(L.i) || L.clips[0] || newClip(p); c.pad = p; c.env = null; }
     L.clips = [c];
@@ -68,11 +68,12 @@ function fire(p, beat, released = false, swap = false){
     if (L.clips.length >= MAX_CLIPS) return refuse(L);
     c = newClip(p); L.clips.push(c);
   }
-  c.startBeat = beat; c.startTime = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
+  if (swap || L.clips.length !== n0) touched.edit = true;   // a GIF added to a layer (or taking it over) is an undo step
+  c.startBeat = beat; c.startTime = beatTime(beat);
   // fade one-shot: start from wherever the last fade is now, so a fast retrigger doesn't flicker
   if (g.trig === 'fade') c.env = { t0: beat, from: envLevel(c, g, clock.beat), rel: null, noGate: released };
   L.sel = c; L.on = true;
-  selectPad(p); syncLayerUI(); syncXfUI();
+  selectPad(p, true); uiLater(UI.LAYERS | UI.XF);   // the panels follow after the frame is drawn
 }
 // pad / key released: ends a gated fade (a release before a snapped hit fires turns that hit into a plain one-shot)
 function release(p){

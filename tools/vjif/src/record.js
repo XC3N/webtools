@@ -34,8 +34,8 @@ function musUI(){
 mus.el.addEventListener('error', () => { if (mus.el.src) toast(`Can't load ${mus.name}: ${mus.url ? 'not an audio format this browser plays' : "the link isn't an audio file, or the site doesn't allow it"}`); });
 const MUS_IC_PLAY = $('#musPlay').innerHTML, MUS_IC_PAUSE = '<svg viewBox="0 0 16 16" width="14" height="14" style="display:block;margin:auto"><rect x="3.5" y="3" width="3" height="10" fill="currentColor"/><rect x="9.5" y="3" width="3" height="10" fill="currentColor"/></svg>';
 // the player's settings stay in this browser: loop, level, With Rec
-const musOpt = (() => { try { return JSON.parse(localStorage.getItem('vjif-mus')) || {}; } catch (e) { return {}; } })();
-const musSave = () => { try { localStorage.setItem('vjif-mus', JSON.stringify({ loop: mus.el.loop, vol: +$('#musVol').value, sync: $('#musSync').checked })); } catch (e) {} };
+const musOpt = Prefs.json('vjif-mus', {});
+const musSave = () => Prefs.setJson('vjif-mus', { loop: mus.el.loop, vol: +$('#musVol').value, sync: $('#musSync').checked });
 mus.el.loop = !!musOpt.loop; if (musOpt.vol != null) $('#musVol').value = musOpt.vol; if (musOpt.sync != null) $('#musSync').checked = musOpt.sync;
 $('#musLoop').classList.toggle('on', mus.el.loop);
 $('#musEject').addEventListener('click', () => $('#musFile').click());
@@ -134,8 +134,7 @@ function recStart(mime, beat = clock.beat){
     stream.getTracks().forEach(t => t.stop()); if (audio) audio.getTracks().forEach(t => t.stop());
     if (writer){ await pend; try { await writer.close(); toast2(`Recording saved: ${name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } if (rec.writer === writer) rec.writer = null; }
     else { const blob = new Blob(chunks, { type: mime.split(';')[0] });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${name} (downloads folder)`); }
+      saveFile(blob, name); toast2(`Recording saved: ${name} (downloads folder)`); }
   };
   mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI(); bgTickSet(true);
 }
@@ -247,8 +246,7 @@ async function wcStop(C){
     C.muxer.finalize(); C.venc.close(); if (C.aenc) C.aenc.close();
     if (C.writer){ await C.writer.close(); toast2(`Recording saved: ${C.name}`); if (rec.writer === C.writer) rec.writer = null; }
     else { const blob = new Blob([C.target.buffer], { type: 'video/mp4' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = C.name; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast2(`Recording saved: ${C.name} (downloads folder)`); }
+      saveFile(blob, C.name); toast2(`Recording saved: ${C.name} (downloads folder)`); }
   } catch (e) { toast('Saving the recording failed: ' + e.message); }
 }
 function recStop(){ if (!rec.mr) return; musRecStop(); bgTickSet(false); const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
@@ -277,15 +275,15 @@ $('#recBtn').addEventListener('click', recToggle);
 $('#fsBtn').addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => toast('Full screen was refused by the browser')));
 document.addEventListener('fullscreenchange', () => $('#fsBtn').classList.toggle('on', !!document.fullscreenElement));
 $('#prepBtn').addEventListener('click', () => prep ? goLive() : startPrep());
-async function saveFile(blob, filename){
+// a .vjif set: where you choose (when the browser can ask), else to the downloads folder
+async function saveSetFile(blob, filename){
   if (window.showSaveFilePicker){
     try {
       const h = await showSaveFilePicker({ suggestedName: filename, types: [{ description: 'VJif set', accept: { 'application/zip': ['.vjif'] } }] });
       const w = await h.createWritable(); await w.write(blob); await w.close(); toast2(`Exported ${h.name}`); return;
     } catch (e) { if (e.name === 'AbortError') return; }   // other errors: fall back to a download
   }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  saveFile(blob, filename);
   toast2(`Exported ${filename} (downloads folder)`);
 }
 async function importVjif(file){

@@ -9,39 +9,43 @@ const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', clips: 
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
-  // the scene itself, drawn apart from the output: no screen or layer effects, transition, blackout or freeze
-  const fx = layerFxU; layerFxU = [null, null, null, null];
-  try { render(frameList(performance.now()), trB); } finally { layerFxU = fx; }
+  // the scene itself, drawn apart from the output (no screen or layer effects, transition, blackout or freeze), straight at tile size
   const c = document.createElement('canvas'); c.width = 96; c.height = 54; const x = c.getContext('2d'), k = Math.min(96 / W, 54 / H);
-  x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54); x.drawImage(trB.canvas, (96 - W * k) / 2, (54 - H * k) / 2, W * k, H * k);   // other formats letterboxed
+  x.imageSmoothingQuality = 'high'; x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54);
+  x.setTransform(k, 0, 0, k, (96 - W * k) / 2, (54 - H * k) / 2);   // other formats letterboxed
+  x.save(); x.beginPath(); x.rect(0, 0, W, H); x.clip();
+  render(frameList(performance.now()), x, null, NO_LAYER_FX, 0); x.restore();
   return c.toDataURL('image/jpeg', 0.7);
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)
 const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut' });
 const layerState = L => ({ i: L.i, ...layerProps(L) });
-const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: sceneThumb(), name: liveName, pick: { pad: selPad, target } });
+// the tile keeps the live picture made in the last second (drawing a new one here would stall the scene change);
+// with the control window hidden that picture isn't refreshed, so then it's drawn
+const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   if (hist.ready) commit();                          // an edit still waiting for its undo step gets it now, in its own scene
   // keep what's on screen for the transition (its clips keep playing while it fades / slides out)
   // changing again mid-transition: the new one starts from what's on screen right now (a still of it), so nothing jumps
   let still = null;
-  if (!instant && trans && transProgress() < 1 && transCfg.type !== 'cut'){ still = document.createElement('canvas'); still.width = W; still.height = H; still.getContext('2d').drawImage(master, 0, 0); }
+  if (!instant && trans && transProgress() < 1 && transCfg.type !== 'cut'){ still = stillOf(); }
   endTrans(); if (!instant){ trans = makeTrans(layers.map(layerState), pads.map(p => p.gif), beat); if (trans && still) trans.still = still; }
-  scenes[sceneIdx] = captureScene(); sceneIdx = i;
-  const sc = scenes[i], t0 = performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
+  const left = pads.map(p => p.gif); scenes[sceneIdx] = captureScene(); sceneIdx = i;
+  const sc = scenes[i], t0 = beatTime(beat);
   layers.forEach((L, li) => {
     const s = sc ? sc.layers[li] : emptyLayer();
     Object.assign(L, layerProps(s));
     L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; });   // the scene starts from the top
   });
   pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
+  if (!trans) dropFxCache(left);                     // (with a transition: when it ends)
   scenes[i] = null; liveThumb = sc && sc.thumb; thumbKeep = liveThumb; liveName = sc && sc.name || '';
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
   // what's selected: as you left this scene; else the edit layer stays and the GIF panel shows that layer's selected GIF
   if (sc && sc.pick){ target = sc.pick.target; selPad = sc.pick.pad; }
   else { const c = selClip(); if (c) selPad = c.pad; }
-  selectPad(selPad); syncLayerUI(); syncXfUI(); renderScenes(); renderPool(); redraw.all = true;
+  selectPad(selPad, true); uiLater(UI.LAYERS | UI.XF | UI.SCENES | UI.POOL); redraw.all = true;
   if (hist.ready) hist.cur = histState();             // switching isn't an undo step
 }
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
@@ -69,11 +73,11 @@ function renderScenes(){
     b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
   });
 }
-$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; (e.ctrlKey || e.metaKey) ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
+$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; isDel(e) ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
 // ---- BRB: scene changes by themselves every few bars, on the bar, while you step away ----
-const brb = (() => { let s = {}; try { s = JSON.parse(localStorage.getItem('vjif-brb')) || {}; } catch (e) {}
+const brb = (() => { const s = Prefs.json('vjif-brb', {});
   return { on: false, next: 0, bars: [4, 8, 16, 32].includes(s.bars) ? s.bars : 8, scn: s.scn === 'rand' ? 'rand' : 'order', tr: s.tr === 'rand' ? 'rand' : 'armed', lastTr: -1 }; })();
-const brbSave = () => { try { localStorage.setItem('vjif-brb', JSON.stringify({ bars: brb.bars, scn: brb.scn, tr: brb.tr })); } catch (e) {} };
+const brbSave = () => Prefs.setJson('vjif-brb', { bars: brb.bars, scn: brb.scn, tr: brb.tr });
 const brbFirst = () => (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4 + (brb.bars - 1) * 4;   // counted from the next bar
 function brbStart(){ brb.on = true; brb.next = brbFirst(); brbUI(); }
 function brbStop(){ brb.on = false; brbUI(); }
@@ -99,18 +103,21 @@ function brbTick(){
     const keep = transCfg; transCfg = trPresets[k]; try { gotoScene(i, at); } finally { transCfg = keep; }
   } else gotoScene(i, at);
 }
+// called every 100 ms while BRB runs: the elements are kept, and touched only when what they show changes
+const brbEl = { led: $('#brbLed'), btn: $('#brbBtn'), txt: $('#brbTxt'), segs: ['#brbBars', '#brbScn', '#brbTr'].map(q => [...document.querySelectorAll(q + ' button')]), shown: '' };
 function brbUI(){
-  const left = brb.on ? Math.max(1, Math.ceil((brb.next - clock.beat) / 4 - 1e-9)) : 0;
-  $('#brbLed').classList.toggle('on', brb.on); $('#brbLed').classList.toggle('wait', brb.on && left <= 1);
-  $('#brbBtn').classList.toggle('on', brb.on);
-  const t = brb.on ? `${left} bar${left > 1 ? 's' : ''}` : 'BRB'; if ($('#brbTxt').textContent !== t) $('#brbTxt').textContent = t;
-  [['#brbBars', brb.bars], ['#brbScn', brb.scn], ['#brbTr', brb.tr]].forEach(([q, v]) => document.querySelectorAll(q + ' button').forEach(x => x.classList.toggle('on', x.dataset.v === String(v))));
+  const left = brb.on ? Math.max(1, Math.ceil((brb.next - clock.beat) / 4 - 1e-9)) : 0, E = brbEl;
+  const sig = `${brb.on}|${left}|${brb.bars}|${brb.scn}|${brb.tr}`; if (sig === E.shown) return; E.shown = sig;
+  E.led.classList.toggle('on', brb.on); E.led.classList.toggle('wait', brb.on && left <= 1);
+  E.btn.classList.toggle('on', brb.on);
+  E.txt.textContent = brb.on ? `${left} bar${left > 1 ? 's' : ''}` : 'BRB';
+  [brb.bars, brb.scn, brb.tr].forEach((v, k) => E.segs[k].forEach(x => x.classList.toggle('on', x.dataset.v === String(v))));
 }
 $('#brbBtn').addEventListener('click', () => brb.on ? brbStop() : brbStart());
 $('#brbCfg').addEventListener('click', e => { e.stopPropagation(); $('#brbPop').hidden = !$('#brbPop').hidden; });
 document.addEventListener('pointerdown', e => { if (!$('#brbPop').hidden && !e.target.closest('#brbWrap')) $('#brbPop').hidden = true; });
 [['#brbBars', v => { brb.bars = +v; if (brb.on) brb.next = brbFirst(); }], ['#brbScn', v => { brb.scn = v; }], ['#brbTr', v => { brb.tr = v; }]].forEach(([q, f]) =>
-  $(q).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; f(b.dataset.v); brbSave(); brbUI(); }));
+  onSeg($(q), (b, e) => { f(b.dataset.v); brbSave(); brbUI(); }));
 brbUI();
 // scene names: right-click a tile to type one (a click would go to the scene) (Enter or clicking away keeps it, Esc cancels, empty = no name)
 const sceneName = i => i === sceneIdx ? liveName : scenes[i] && scenes[i].name || '';
@@ -157,13 +164,7 @@ function swapScenes(a, b){
     scenes[sceneIdx] = scenes[other]; scenes[other] = null; sceneIdx = other;
   } else [scenes[a], scenes[b]] = [scenes[b], scenes[a]];
   pendingScene = null; [sceneIds[a], sceneIds[b]] = [sceneIds[b], sceneIds[a]]; if (prep) prep.scene = map(prep.scene);
-  // undo steps name their scene by number: follow the move
-  const fix = e => {
-    if (typeof e === 'string'){ const o = JSON.parse(e); if (o.scene !== undefined) o.scene = map(o.scene); return JSON.stringify(o); }
-    for (const k of ['clear', 'swap', 'scn', 'reclear', 'pswap']) if (e && e[k] && e[k].scene !== undefined) e[k].scene = map(e[k].scene);
-    return e;
-  };
-  hist.undo = hist.undo.map(fix); hist.redo = hist.redo.map(fix); if (hist.cur) hist.cur = fix(hist.cur);
+  // (undo steps name their scene by its id, which moved with it)
   renderScenes(); toast2(`Scenes ${a + 1} and ${b + 1} swapped`);
 }
 function syncTransUI(){
@@ -182,15 +183,15 @@ function syncTransUI(){
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || (T.type === 'glitch' && trStyleOf(T) === 'melt'));   // the melt keeps Doom's own timing
   $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
-$('#trPre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = +b.dataset.v;
-  if (e.ctrlKey || e.metaKey){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Ctrl+click: reset it
+onSeg($('#trPre'), (b, e) => { const k = +b.dataset.v;
+  if (isDel(e)){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Ctrl+click: reset it
 $('#trPre').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || !e.ctrlKey) return; e.preventDefault(); const k = +b.dataset.v; trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); armTrans(k); });
-$('#trType').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); } });
-$('#trStyle').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
+onSeg($('#trType'), (b, e) => { transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); });
+onSeg($('#trStyle'), (b, e) => {
   transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
   syncTransUI(); });
-$('#trDir').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.dir = b.dataset.v; syncTransUI(); } });
-$('#trCurve').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ transCfg.smooth = b.dataset.v === '1'; syncTransUI(); } });
+onSeg($('#trDir'), (b, e) => { transCfg.dir = b.dataset.v; syncTransUI(); });
+onSeg($('#trCurve'), (b, e) => { transCfg.smooth = b.dataset.v === '1'; syncTransUI(); });
 $('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
 $('#trPx').addEventListener('input', e => { transCfg.px = TR_PX[+e.target.value][0]; syncTransUI(); });
 // copy the current scene into the next empty one (new clip ids, same placement) and go there
@@ -220,7 +221,7 @@ function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
     if (e.button) return;
-    if ((e.ctrlKey || e.metaKey) && heldPre < 0){ el._edit = true;                        // Ctrl+click: reset an effect / empty a preset
+    if (isDel(e) && heldPre < 0){ el._edit = true;                        // Ctrl+click: reset an effect / empty a preset
       if (i < NFX){ fxUp(i); fxCfg[i] = fxDefaults()[i]; toast2(`${FX_DEFS[i].name} back to its defaults`); }
       else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
       selFx = i; syncFxUI(); return; }
@@ -263,10 +264,11 @@ function wireFxTile(el){
     document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging'); if (d.moved) ghost.hide(); d = null; };
   chip.addEventListener('pointerup', end); chip.addEventListener('pointercancel', end);
 }
+let fxTiles = [], fxFitGen = 0;                      // the effect / preset tiles; fxFitGen: bumped when names must be measured again
 function buildFx(){
   $('#fxPads').innerHTML = FX_DEFS.map((d, i) => fxTileHTML(i, FX_LABELS[i])).join('');
   $('#fxPre').innerHTML = NP_ORDER.map(k => fxTileHTML(NFX + k, k + 1)).join('');
-  document.querySelectorAll('#fxStrip .fxp').forEach(wireFxTile);
+  fxTiles = [...document.querySelectorAll('#fxStrip .fxp')]; fxTiles.forEach(wireFxTile);
   $('#fxRate').max = FX_RATES.length - 1; $('#fxSize').max = FX_SIZES.length - 1;
   document.querySelectorAll('#fxTgt button').forEach(b => { if (b.dataset.v !== 'out') b.style.setProperty('--lc', LCOL[+b.dataset.v]); });
 }
@@ -284,7 +286,7 @@ function storeFxPre(k){
 }
 const fxPadLv = [];
 function paintFxPads(b){
-  document.querySelectorAll('#fxStrip .fxp').forEach(el => { const i = +el.dataset.i;
+  fxTiles.forEach(el => { const i = +el.dataset.i;
     const v = Math.round(fxLevel(i, b) * 100); if (fxPadLv[i] === v) return; fxPadLv[i] = v;
     el.firstChild.style.height = v + '%'; el.classList.toggle('on', v > 50);
   });
@@ -295,9 +297,13 @@ function syncFxUI(){
   const pre = selFx >= NFX, C = fxConf(selFx);
   if (pre && preEd != null && !C.fx[preEd]) preEd = null;
   const E = pre && preEd != null ? C.fx[preEd] : null, d = pre ? (E ? FX_DEFS[preEd] : null) : FX_DEFS[selFx];
-  document.querySelectorAll('#fxStrip .fxp').forEach(el => {
+  fxTiles.forEach(el => {
     const i = +el.dataset.i, c = fxConf(i);
-    el.classList.toggle('sel', i === selFx); el.querySelector('.md').textContent = (i < NFX && tgtKey(c.target) !== 'out' ? `L${tgtKey(c.target) + 1} ` : '') + c.mode;
+    if (el.classList.contains('sel') !== (i === selFx)) el.classList.toggle('sel', i === selFx);
+    // names are measured (forces a layout) only when what the tile shows changed: pressing an effect key just moves the highlight
+    const sig = i < NFX ? `${c.mode}|${c.target}|${c.style}|${fxFitGen}` : `${c.mode}|${JSON.stringify(fxPre[i - NFX].fx)}|${fxFitGen}`;
+    if (el._sig === sig) return; el._sig = sig;
+    el.querySelector('.md').textContent = (i < NFX && tgtKey(c.target) !== 'out' ? `L${tgtKey(c.target) + 1} ` : '') + c.mode;
     if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
       fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); el.querySelector('.s').textContent = D.styles.length > 1 ? st[1] : '';
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
@@ -317,17 +323,17 @@ function syncFxUI(){
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
-    $('#fxStyle').innerHTML = d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join('');
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
     segSet('#fxStyle', E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     segSet('#fxTgt', String(tgtKey(E.target)));
   }
   else if (pre){
     const ks = Object.keys(C.fx);
-    $('#fxPreList').innerHTML = ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtKey(C.fx[i].target) !== 'out' ? ` <small>L${tgtKey(C.fx[i].target) + 1}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
-      : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>';
+    setHTML($('#fxPreList'), ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtKey(C.fx[i].target) !== 'out' ? ` <small>L${tgtKey(C.fx[i].target) + 1}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
+      : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>');
   }
   else {
-    $('#fxStyle').innerHTML = d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join('');
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
     segSet('#fxStyle', C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     segSet('#fxTgt', String(tgtKey(C.target)));
   }
@@ -354,9 +360,9 @@ function syncFxUI(){
   }
 }
 // effect names refit (full or short) when the window changes, and are measured again once the fonts are in
-let fxFitT = 0; addEventListener('resize', () => { clearTimeout(fxFitT); fxFitT = setTimeout(syncFxUI, 150); });
-if (document.fonts) document.fonts.ready.then(() => setTimeout(syncFxUI, 50));
-$('#fxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+let fxFitT = 0; addEventListener('resize', () => { clearTimeout(fxFitT); fxFitT = setTimeout(() => { fxFitGen++; syncFxUI(); }, 150); });
+if (document.fonts) document.fonts.ready.then(() => setTimeout(() => { fxFitGen++; syncFxUI(); }, 50));
+onSeg($('#fxMode'), (b, e) => {
   const S = fxSt[selFx], C = fxConf(selFx), now = clock.beat, playing = fxLevel(selFx, now) > 0.001, v = b.dataset.v;
   const ad = (C.att || 0) + (C.dec || 0);
   S.held = false; S.on = false; S.b0 = -1e9; C.mode = v;
@@ -365,8 +371,8 @@ $('#fxMode').addEventListener('click', e => { const b = e.target.closest('button
     if (v === 'hit') S.b0 = now - ad - (C.len || 0) - 1e-6; else { S.t0 = now - ad - 1e-6; S.rel = now; } }
   syncFxUI(); });
 const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NFX].fx[preEd] : null;   // what the effect-level controls change
-$('#fxTgt').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
-$('#fxStyle').addEventListener('click', e => { const b = e.target.closest('button'), X = fxEd(); if (b && X){ X.style = b.dataset.v; syncFxUI(); } });
+onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ X.target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
+onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (X){ X.style = b.dataset.v; syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
@@ -438,8 +444,8 @@ $('#fxEnv').addEventListener('pointermove', e => { if (fxEnvDrag) return fxEnvMo
 $('#fxEnv').addEventListener('pointerleave', () => { fxEnvHover = null; drawFxEnv(); });
 $('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; envPrevStop(); drawFxEnv(); });
 // preview while editing: the envelope plays as a hit, over and over, restarting when a value changes
-let envPrevOn = (() => { try { return localStorage.getItem('vjif-envprev') !== '0'; } catch (e) { return true; } })();
-let envSliders = (() => { try { return localStorage.getItem('vjif-envview') === 'sl'; } catch (e) { return false; } })();
+let envPrevOn = Prefs.get('vjif-envprev') !== '0';
+let envSliders = Prefs.get('vjif-envview') === 'sl';
 let fxPrev = null, fxPrevSig = '';
 const ENV_IC_SL = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M2 4h12M2 8h12M2 12h12" stroke-width="1"/><rect x="4" y="3" width="2" height="2" fill="currentColor" stroke="none"/><rect x="10" y="7" width="2" height="2" fill="currentColor" stroke="none"/><rect x="6.5" y="11" width="2" height="2" fill="currentColor" stroke="none"/></svg>';
 const ENV_IC_GRAPH = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" style="display:block;margin:auto"><path d="M1.5 13.5L4 3l3 5h4l3.5 5.5"/></svg>';
@@ -454,8 +460,8 @@ function fxPrevLevel(i, C, b){
   if (t < top) return fxAD(C, t); const x = rel > 0 ? (t - top) / rel : 1; return x < 1 ? fxAD(C, top) * (1 - x) * (1 - x) : 0;
 }
 const syncEnvTg = () => { $('#envPrev').classList.toggle('on', envPrevOn); $('#fxEnvRow').classList.toggle('sliders', envSliders); $('#envView').innerHTML = envSliders ? ENV_IC_GRAPH : ENV_IC_SL; $('#envView').title = envSliders ? 'Show the envelope as a graph' : 'Show the envelope as sliders'; };
-$('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; try { localStorage.setItem('vjif-envprev', envPrevOn ? '1' : '0'); } catch (e) {} syncEnvTg(); });
-$('#envView').addEventListener('click', () => { envSliders = !envSliders; try { localStorage.setItem('vjif-envview', envSliders ? 'sl' : 'g'); } catch (e) {} syncEnvTg(); syncEnvSl(); drawFxEnv(); });
+$('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; Prefs.set('vjif-envprev', envPrevOn ? '1' : '0'); syncEnvTg(); });
+$('#envView').addEventListener('click', () => { envSliders = !envSliders; Prefs.set('vjif-envview', envSliders ? 'sl' : 'g'); syncEnvTg(); syncEnvSl(); drawFxEnv(); });
 const ENV_SL = { a: [() => FX_ATTS, 'att'], d: [() => FX_ATTS, 'dec'], l: [() => FX_LENS, 'len'], r: [() => FX_RELS, 'rel'] };
 function syncEnvSl(){
   const C = fxEnvConf(); if (!C || !envSliders) return;
@@ -491,10 +497,10 @@ function emptySceneAt(i){
   commit();
   const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null) };
   let E;
-  if (i === sceneIdx){ E = { scene: i, data: blank }; applyScn(E); liveThumb = null; }
-  else { const sc = scenes[i]; E = { scene: i, data: { layers: sc.layers, pads: sc.pads } };   // undo swaps these back in (and goes there)
+  if (i === sceneIdx){ E = { kind: 'scn', sid: sceneIds[i], data: blank }; applyScn(E); liveThumb = null; }
+  else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads } };   // undo swaps these back in (and goes there)
     scenes[i] = Object.assign(emptyScene(), { name: sc.name || '' }); if (pendingScene && pendingScene.i === i) pendingScene = null; renderScenes(); renderPool(); updateMem(); }
-  hist.undo.push({ scn: E }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; hist.cur = histState(); updHistUI();
+  pushStep(E); hist.cur = histState(); updHistUI();
   toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);
 }
 $('#scEmpty').addEventListener('click', () => emptySceneAt(sceneIdx));
@@ -505,7 +511,7 @@ function toggleLayer(li){
   const lt = layers[li].tr || 'cut', P = lt === 'cut' ? null : lt === 'armed' ? transCfg : trPresets[+lt];   // each layer's own on / off transition (its card)
   if (P && P.type !== 'cut' && !prep && layers[li].clips.length){
     let still = null;
-    if (trans && transProgress() < 1){ still = document.createElement('canvas'); still.width = W; still.height = H; still.getContext('2d').drawImage(master, 0, 0); }
+    if (trans && transProgress() < 1) still = stillOf();
     const from = layers.map(layerState), keep = transCfg; endTrans();
     transCfg = P; try { trans = makeTrans(from, pads.map(p => p.gif), clock.beat); } finally { transCfg = keep; }
     if (trans && still) trans.still = still;

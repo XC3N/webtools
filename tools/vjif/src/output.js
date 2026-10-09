@@ -1,11 +1,11 @@
 // ---------- output window ----------
 // where the output window was last time (screen position and size); Shift+click Output forgets it
 const OUT_KEY = 'vjif-outwin';
-const outGeo = () => { try { return JSON.parse(localStorage.getItem(OUT_KEY)); } catch (e) { return null; } };
+const outGeo = () => Prefs.json(OUT_KEY);
 function outDefault(){ const k = 960 / Math.max(W, H); return { w: Math.round(W * k), h: Math.round(H * k) }; }
 function openOutput(e){
   if (e && e.shiftKey){                              // reset: back to the default size, near the top left of this screen
-    try { localStorage.removeItem(OUT_KEY); } catch (err) {}
+    Prefs.set(OUT_KEY, null);
     const D = outDefault();
     if (outWin && !outWin.closed){ try { outWin.document.exitFullscreen && outWin.document.fullscreenElement && outWin.document.exitFullscreen(); outWin.moveTo(screen.availLeft || 0, screen.availTop || 0);
       outWin.resizeTo(D.w + outWin.outerWidth - outWin.innerWidth, D.h + outWin.outerHeight - outWin.innerHeight); } catch (err) {} outWin.focus(); }
@@ -42,7 +42,7 @@ html:fullscreen,html:fullscreen *{cursor:none}
 }
 function saveOutGeo(){
   if (!outWin || outWin.closed || outWin.document.fullscreenElement) return;
-  try { localStorage.setItem(OUT_KEY, JSON.stringify({ x: outWin.screenX, y: outWin.screenY, w: outWin.innerWidth, h: outWin.innerHeight })); } catch (e) {}
+  Prefs.setJson(OUT_KEY, { x: outWin.screenX, y: outWin.screenY, w: outWin.innerWidth, h: outWin.innerHeight });
 }
 setInterval(saveOutGeo, 2000);                       // catches moves and resizes made with the window's own frame too
 function updateOutStat(){

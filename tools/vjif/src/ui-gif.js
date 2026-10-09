@@ -6,8 +6,7 @@ $('#gRestart').innerHTML = segHTML(RESTART_OPTS);
 const segSet = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - v) < 1e-6 || b.dataset.v === v));
 // one handler per button group: sets the GIF's field from the clicked button
 [['#gSync', 'sync', false], ['#gLoop', 'loop', false], ['#gBeats', 'beats', true], ['#gSub', 'subdiv', true], ['#gRestart', 'restart', true]].forEach(([id, key, num]) =>
-  $(id).addEventListener('click', e => {
-    const b = e.target.closest('button'); const g = curGif(); if (!b || !g) return;
+  onSeg($(id), (b, e) => { const g = curGif(); if (!g) return;
     g[key] = num ? +b.dataset.v : b.dataset.v; syncGifUI();
   }));
 // two fixed lines: what one cycle is, and what to watch out for (blank when nothing)
@@ -51,7 +50,7 @@ const curGif = () => pads[selPad].gif;
 // readouts too narrow for their text: hovering shows all of it
 document.addEventListener('pointerover', e => { const el = e.target.closest && e.target.closest('.lcd, .tag, output, .seg button, .fxp .t>span');
   if (el && el.scrollWidth > el.clientWidth + 1 && (!el.title || el.dataset.autoTip)){ el.title = el.textContent.trim(); el.dataset.autoTip = 1; } });
-$('#gRes').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (!b || !g || g.media.text) return;
+onSeg($('#gRes'), (b, e) => { const g = curGif(); if (!g || g.media.text) return;
   const sc = +b.dataset.v, m = g.media, was = m.srcBytes; segSet('#gRes', b.dataset.v);
   setMediaScale(m, sc).then(() => toast2(`${m.name}: ${(was / 1048576).toFixed(0)} → ${(m.srcBytes / 1048576).toFixed(0)} MB`)); });
 // ---- colour swaps: the GIF's palette (most used colours first), each swap = one palette colour → another ----
@@ -92,8 +91,7 @@ function syncSwapUI(g){
   const pend = swSel && !g.swap.some(x => sameRgb(x.from, swSel));
   $('#swList').innerHTML = g.swap.map((x, i) => row(x.from, x.to, i, false)).join('') + (pend ? row(swSel, swSel, 'new', true) : '');
 }
-$('#swPal').addEventListener('click', e => {
-  const b = e.target.closest('button'), g = curGif(); if (!b || !g) return;
+onSeg($('#swPal'), (b, e) => { const g = curGif(); if (!g) return;
   const c = gifPalette(g)[+b.dataset.i];
   if (swSel && sameRgb(swSel, c)) swSel = null;      // again: deselect
   else { if (!g.swap.some(x => sameRgb(x.from, c)) && g.swap.length >= SWAP_MAX) return toast(`Up to ${SWAP_MAX} swaps per GIF`); swSel = c.slice(); }
@@ -134,13 +132,12 @@ $('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) retur
 const ENV_UI = [['#tA', 'a'], ['#tH', 'h'], ['#tR', 'r']];
 ENV_UI.forEach(([id, k]) => { const el = $(id); el.max = ENV_OPTS.length - 1;
   el.addEventListener('input', e => { const g = curGif(); if (!g) return; const o = ENV_OPTS[+e.target.value]; g.env[k] = o[0]; e.target.nextElementSibling.textContent = o[1]; }); });
-$('#tMode').addEventListener('click', e => {
-  const b = e.target.closest('button'), g = curGif(); if (!b || !g) return;
+onSeg($('#tMode'), (b, e) => { const g = curGif(); if (!g) return;
   g.trig = b.dataset.v; layers.forEach(L => L.clips.forEach(c => { if (c.pad === selPad) c.env = null; }));   // switching hides / shows it at once
   syncGifUI(); redraw.all = true;
 });
-$('#tLen').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (b && g){ g.env.len = b.dataset.v; syncGifUI(); } });
-$('#tCurve').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (b && g){ g.env.curve = b.dataset.v; syncGifUI(); } });
+onSeg($('#tLen'), (b, e) => { const g = curGif(); if (g){ g.env.len = b.dataset.v; syncGifUI(); } });
+onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.dataset.v; syncGifUI(); } });
 $('#tGate').addEventListener('change', e => { const g = curGif(); if (g){ g.env.gate = e.target.checked; syncGifUI(); } });
 
 // ---- auto tab: one LFO per target ----
@@ -170,10 +167,10 @@ function editLfo(fn, turnOn = true){
   fn(A); if (turnOn) A.on = true;
   syncAutoUI(g); syncXfUI();
 }
-$('#aTgt').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (!b) return; aSel = b.dataset.v; if (g) syncAutoUI(g); });
+onSeg($('#aTgt'), (b, e) => { const g = curGif(); aSel = b.dataset.v; if (g) syncAutoUI(g); });
 $('#aOn').addEventListener('change', e => editLfo(A => A.on = e.target.checked, false));
-$('#aShape').addEventListener('click', e => { const b = e.target.closest('button'); if (b) editLfo(A => A.shape = b.dataset.v); });
-$('#aSync').addEventListener('click', e => { const b = e.target.closest('button'); if (b) editLfo(A => A.sync = b.dataset.v); });
+onSeg($('#aShape'), (b, e) => { editLfo(A => A.shape = b.dataset.v); });
+onSeg($('#aSync'), (b, e) => { editLfo(A => A.sync = b.dataset.v); });
 $('#aMin').addEventListener('input', e => editLfo(A => A.min = +e.target.value));
 $('#aMax').addEventListener('input', e => editLfo(A => A.max = +e.target.value));
 $('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0]));
@@ -240,7 +237,7 @@ function drawPrev(g, f){
   });
   $(id).addEventListener('change', () => { const g = curGif(); if (g){ syncGifUI(); renderPad(selPad); } });
 });
-$('#kRegion').addEventListener('click', e => { const b = e.target.closest('button'), g = curGif(); if (!b || !g) return;
+onSeg($('#kRegion'), (b, e) => { const g = curGif(); if (!g) return;
   g.key.region = b.dataset.v; if (g.key.region !== 'all') g.key.on = true; syncGifUI(); scheduleFx(g, 0); });
 $('#kOn').addEventListener('change', e => { const g = curGif(); if (g){ g.key.on = e.target.checked; scheduleFx(g, 0); } });
 $('#kCol').addEventListener('input', e => { const g = curGif(); if (g){ g.key.color = hex2rgb(e.target.value); if (g.key.on) scheduleFx(g, 200); } });
@@ -269,12 +266,11 @@ function clearPad(i, fromRedo = false){
   layers.forEach((l, li) => { for (let k = l.clips.length - 1; k >= 0; k--) if (l.clips[k].pad === i){ removed.push([li, k, l.clips[k], l.sel === l.clips[k]]); l.clips.splice(k, 1); }
     if (!l.clips.includes(l.sel)) l.sel = null; });
   p.gif = null; pending.delete(i); p.el.classList.remove('wait');
-  hist.undo.push({ clear: { pad: i, g, removed: removed.reverse(), scene: sceneIdx } }); trimHist();
-  if (!fromRedo){ dropAll(hist.redo); hist.redo.length = 0; }
+  pushStep({ kind: 'clear', pad: i, g, removed: removed.reverse(), sid: sidNow() }, fromRedo);
   afterPadChange(i); hist.cur = histState(); updHistUI();
 }
 function restoreClear(E){
-  if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true);   // a step from another scene: go there first
+  toScene(E.sid);
   const p = pads[E.pad]; if (p.gif) return false;    // the pad was refilled since: nothing to put back
   p.gif = E.g;
   for (const [li, k, c, sel] of E.removed){ const L = layers[li]; L.clips.splice(Math.min(k, L.clips.length), 0, c); if (sel) L.sel = c; }

@@ -7,14 +7,14 @@ function buildPads(){
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
     el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return;
       el.setPointerCapture(e.pointerId);
-      if (e.ctrlKey || e.metaKey){ padDrag = { i, x: e.clientX, y: e.clientY, moved: false, copy: true, had: true, on: layers.map(L => L.on) }; el._shift = true; return; }   // Ctrl+click: clear · Ctrl+drag: copy (decided on let go)
+      if (isDel(e)){ padDrag = { i, x: e.clientX, y: e.clientY, moved: false, copy: true, had: true, on: layers.map(L => L.on) }; el._shift = true; return; }   // Ctrl+click: clear · Ctrl+drag: copy (decided on let go)
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
       trigger(i, e.altKey); });   // Alt+click: swap
     el.addEventListener('contextmenu', e => { e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
     el.addEventListener('pointerup', e => { const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
-    el.addEventListener('click', e => { if (el._shift || e.ctrlKey || e.metaKey){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
+    el.addEventListener('click', e => { if (el._shift || isDel(e)){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
     p.el = el;
   });
@@ -76,7 +76,7 @@ function copyPad(a, b){
   if (a === b || !pads[a].gif) return;
   if (pads[b].gif || pads[b].loading) return toast('Ctrl+drag onto an empty pad to copy');
   commit(); pads[b].gif = cloneInst(pads[a].gif);
-  hist.undo.push({ swap: { pad: b, g: null, scene: sceneIdx } }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; hist.cur = histState(); updHistUI();
+  pushStep({ kind: 'swap', pad: b, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI();
   afterPadChange(b); toast2(`Pad ${pads[a].label} copied to ${pads[b].label} (same frames, its own settings)`);
 }
 function swapPads(a, b, record = true){
@@ -87,11 +87,11 @@ function swapPads(a, b, record = true){
   layers.forEach(L => L.clips.forEach(c => c.pad = map(c.pad)));
   const pend = [...pending]; pending.clear(); pend.forEach(([k, q]) => pending.set(map(k), q));
   pads.forEach(p => p.el.classList.toggle('wait', pending.has(p.i)));
-  if (record){ hist.undo.push({ pswap: { a, b, scene: sceneIdx } }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; hist.cur = histState(); updHistUI();
+  if (record){ pushStep({ kind: 'pswap', a, b, sid: sidNow() }); hist.cur = histState(); updHistUI();
     toast2(pads[a].gif ? `Pads ${pads[a].label} and ${pads[b].label} swapped` : `Moved to pad ${pads[b].label}`); }
   renderPad(a); renderPad(b); selectPad(map(selPad)); syncLayerUI(); syncXfUI(); renderPool(); renderScenes(); redraw.all = true;
 }
-function applyPswap(E){ if (E.scene !== sceneIdx) gotoScene(E.scene, clock.beat, true); swapPads(E.a, E.b, false); }
+function applyPswap(E){ toScene(E.sid); swapPads(E.a, E.b, false); }
 // a pad dropped on a layer: its GIF moves there (on top), or starts there if it wasn't playing
 function padToLayer(p, li){
   if (li < 0 || !pads[p].gif) return;
@@ -120,7 +120,12 @@ function gifThumb(g, f = fxImage(g, g.startF)){
 }
 function renderPad(i){
   if (padFold) queueMicrotask(syncPadFold);   // the folded sections' GIF counts
-  const p = pads[i], el = p.el, c = el.querySelector('canvas'), x = c.getContext('2d');
+  const p = pads[i], el = p.el, c = el.querySelector('canvas'), g = p.gif;
+  // the picture only changes with the GIF, its colour version, start frame, smoothing, key or the theme: otherwise keep it (scene changes redo all 18 pads)
+  const sig = g ? `${g.fxVer}|${g.startF}|${g.crisp}|${g.key.on}|${g.name}|${TC.track}|${TC.edge2}|${c.width}x${c.height}` : `-|${TC.track}`;
+  if (el._g === g && el._sig === sig && (!g || g.thumb)) return;
+  el._g = g; el._sig = sig;
+  const x = c.getContext('2d');
   x.fillStyle = TC.track; x.fillRect(0, 0, c.width, c.height);
   el.classList.toggle('empty', !p.gif);
   el.querySelector('.nm').textContent = p.gif ? p.gif.name : '';
@@ -135,7 +140,16 @@ function renderPad(i){
   p.gif.thumb = p.gif.tileThumb = null; gifThumb(p.gif, f);
   document.querySelectorAll(`.chip[data-pad="${i}"]`).forEach(ch => ch.style.backgroundImage = `url(${p.gif.thumb})`);
 }
-function selectPad(i){ selPad = i; pads.forEach(p => p.el.classList.toggle('sel', p.i === i)); syncGifUI(); }
+// later: the GIF panel is brought up to date after the frame is drawn (a pad hit or scene change inside the frame)
+function selectPad(i, later = false){ selPad = i; pads.forEach(p => { if (p.el.classList.contains('sel') !== (p.i === i)) p.el.classList.toggle('sel', p.i === i); }); if (later) uiLater(UI.GIF); else { uiDue &= ~UI.GIF; syncGifUI(); } }
+// ---- panel updates wanted by something that happened inside a frame: done once, after drawing ----
+const UI = { GIF: 1, LAYERS: 2, XF: 4, SCENES: 8, POOL: 16 };
+let uiDue = 0;
+const uiLater = f => { uiDue |= f; };
+function flushUI(){
+  const f = uiDue; if (!f) return; uiDue = 0;
+  if (f & UI.GIF) syncGifUI(); if (f & UI.LAYERS) syncLayerUI(); if (f & UI.XF) syncXfUI(); if (f & UI.SCENES) renderScenes(); if (f & UI.POOL) renderPool();
+}
 // select a pad to edit it, without playing it: its GIF settings, and its sprite in Transform if it's on a layer
 function focusPad(i){
   selectPad(i);

@@ -1,6 +1,6 @@
 // ---------- main loop ----------
 let lastBeatIdx = -1, fpsN = 0, fpsT = performance.now();
-const dots = [...document.querySelectorAll('#beats i')];
+const dots = [...document.querySelectorAll('#beats i')], beatsEl = $('#beats'), midiStatEl = $('#midiStat'), midiLedEl = $('#midiLed');
 // The loop runs on the output window's requestAnimationFrame while it's open, so the output keeps
 // playing when this control window is minimized or hidden (a hidden window's own rAF stops).
 // A watchdog restarts the loop on this window if the output closes mid-frame.
@@ -45,6 +45,7 @@ function step(){
   if (rec.wait || rec.stopAt) recTick();
   if (brb.on){ brbTick(); if (now - brbUIt > 100){ brbUIt = now; brbUI(); } }
   drawFrame(now);
+  if (uiDue && now >= uiQuiet) flushUI();             // panels a hit or scene change asked for, once the frame is out
   if (rec.wc) wcCapture(now);
   if (!document.hidden && now >= uiQuiet && now - scopeT > 33){ scopeT = now; drawScopes(); }
   const bi = Math.floor(clock.beat);
@@ -53,9 +54,9 @@ function step(){
     dots.forEach((d, j) => d.classList.toggle('on', j === k));
     if (clock.src === 'midi') setBpm(clock.bpm);
   }
-  if (clock.src === 'midi'){ const w = !clock.midiRunning, t = midiInput ? 'no clock' : 'no input', B = $('#beats');   // waiting: a word where the beat dots were
-    if (B.classList.contains('wait') !== w) B.classList.toggle('wait', w); if (w && $('#midiStat').textContent !== t) $('#midiStat').textContent = t;
-    const lc = 'led ' + (w ? 'wait' : 'on'); if ($('#midiLed').className !== lc) $('#midiLed').className = lc; }
+  if (clock.src === 'midi'){ const w = !clock.midiRunning, t = w ? (midiInput ? 'no clock' : 'no input') : '';   // waiting: a word where the beat dots were
+    if (t !== midiShown){ midiShown = t; beatsEl.classList.toggle('wait', w); if (w) midiStatEl.textContent = t; midiLedEl.className = 'led ' + (w ? 'wait' : 'on'); } }
+  else midiShown = null;
   fpsN++;
   const work = performance.now() - now; meter.busy += work; if (work > meter.peak) meter.peak = work;
   if (now - fpsT > 1000){

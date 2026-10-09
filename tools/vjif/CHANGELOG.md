@@ -4,6 +4,30 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.40.0 — 2026-10-08
+
+### Faster (code review)
+- A pad hit or a scene change no longer rebuilds the GIF, layer and Transform panels inside the frame: they're brought up to date once, right after it's drawn. A scene change also stops re-rendering a full-size picture for its tile (the live tile's last picture is reused) and redrawing all 18 pad pictures (only the ones whose GIF or colour changed).
+- Pressing an effect key moves the highlight without rebuilding the style buttons or measuring all 21 tile names again.
+- The effect pads, BRB countdown, MIDI clock status and tempo field keep their elements and only write when what they show changes (MIDI clock set the tempo field ~48 times a second).
+- A coloured GIF (key, swaps, HSV) goes through the colour shader once per new frame, not once per screen refresh: a 10 fps GIF on a 60 Hz screen did the work 6×. (Colour automation still runs every frame.)
+- Screen effects draw straight to the canvas unless Feedback or Phosphor needs the previous frame (one GPU pass and one copy fewer).
+- The scene tile picture is drawn at tile size (96×54), not 1920×1080 once a second.
+- Undo, autosave and the redraw check: cheap "something changed" flags in front of the full comparisons, and the per-frame checks compare values instead of building strings.
+
+### Fixes
+- Mirror › Kaleido: Amount sets the number of slices again (stuck at 2 since 0.36).
+- Prep: Zoom › Each on the output used the editor's value instead of the output's own; going live, the scene leaving now keeps its own Zoom › Each too.
+- Undo steps follow their scene when scenes are dragged to new numbers (no more rewriting the history on each move).
+- Phosphor switched on after other effects starts its glow from that moment.
+
+### Under the hood
+- Effect styles are tested by name in the shader (constants generated from the style list), so adding a style can't shift the others. Transitions are a table (one function per type). Effect-history slots have names. The layer effects are passed to `render()` explicitly.
+- Old-set conversions in one numbered list (`SNAP_STEPS`, persist.js); sets now save as step 5.
+- Undo's special steps are kinds with their own undo / redo / held GIFs / name (`STEPS`, undo.js).
+- Shared helpers: `Prefs` (guarded localStorage) and `saveFile` in `common/util.js`, now used by VJif, Logo Lab and Bad MOPHO; `onSeg` (button rows), `isDel` (Ctrl/⌘+click), `beatTime`, `stillOf`, one toast function.
+- `src/types.js`: notes on the main objects (media, instance, clip, layer, scene, effect and transition settings) and the short names used for them.
+
 ## 0.39.1 — 2026-10-08
 
 ### Fixes

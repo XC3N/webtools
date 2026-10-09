@@ -133,7 +133,7 @@ function freeGif(g){
   if (fxWorker){ fxWorker.postMessage({ id: g.uid, gen: g.keyGen }); fxWorker.postMessage({ id: 'm' + g.uid, gen: g.maskGen });   // stop any work on it…
     fxWorker.postMessage({ id: g.uid, drop: true }); fxWorker.postMessage({ id: 'm' + g.uid, drop: true }); }   // …and forget it
   if (g.frames !== g.src) g.frames.forEach(f => f.close());
-  g.frames = g.src; g.masks = null; insts.delete(g.uid);
+  g.frames = g.src; g.masks = null; g.fxC = null; insts.delete(g.uid);
 }
 // instances on a pad somewhere: the live pads and every stored scene's
 function padInsts(){ const u = new Set(); pads.forEach(p => p.gif && u.add(p.gif)); scenes.forEach(sc => sc && sc.pads.forEach(g => g && u.add(g))); return u; }
@@ -182,7 +182,7 @@ function putMedia(m, p, si = sceneIdx){
   }
   const pad = pads[p];
   if (pad.gif){                                      // replacing: one undo step that swaps the old one back
-    if (hist.ready){ commit(); hist.undo.push({ swap: { pad: p, scene: sceneIdx, g: pad.gif } }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; }
+    if (hist.ready){ commit(); pushStep({ kind: 'swap', pad: p, sid: sidNow(), g: pad.gif }); }
     else freeGif(pad.gif);
   }
   pad.gif = g; renderPad(p); selectPad(p); updateMem(); syncLayerUI(); renderScenes(); renderPool(); redraw.all = true;
@@ -261,9 +261,9 @@ function renderPool(){
     const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);
     x.imageSmoothingEnabled = false; x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
     // × or Ctrl+click removes: at once when no pad uses it, after a held press when one does (see poolHold)
-    t.addEventListener('pointerdown', e => { if (e.button === 0 && (e.target.closest('.px') || e.ctrlKey || e.metaKey) && poolUse(m).sc.length) poolHold(t, m, e); });
+    t.addEventListener('pointerdown', e => { if (e.button === 0 && (e.target.closest('.px') || isDel(e)) && poolUse(m).sc.length) poolHold(t, m, e); });
     t.addEventListener('click', e => { if (t._held){ t._held = false; return; }   // the end of a held press, not a click
-      if (e.target.closest('.px') || e.ctrlKey || e.metaKey){ if (!poolUse(m).sc.length) removeMedia(m); return; } pickPool(m); });
+      if (e.target.closest('.px') || isDel(e)){ if (!poolUse(m).sc.length) removeMedia(m); return; } pickPool(m); });
     t.addEventListener('contextmenu', e => { if (!e.ctrlKey) return; e.preventDefault(); if (!poolUse(m).sc.length) removeMedia(m); });   // (a Mac's Ctrl+click)
     grid.appendChild(t);
   });

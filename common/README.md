@@ -11,6 +11,8 @@ A tool's source file that uses includes doesn't run on its own: open the built f
 
 In use:
 
+- `util.js` — `Prefs` (per-browser settings in localStorage, every access guarded) and `saveFile(data, name, type)` (a download).
+  Used by VJif, Logo Lab and Bad MOPHO (and by `theme.js` for theme export, so include it first).
 - `controls.js` + `controls.css` — the control behaviour standard from Bad MOPHO, for sliders:
   double-click resets to default (`data-def`), mouse wheel (dwell-gated) and hover + arrow keys adjust,
   double-click the number to type a value (single clicks and drags on it go to the slider). Dropdowns (`<select>`) and `.seg` button groups (not `.tabs`) get the

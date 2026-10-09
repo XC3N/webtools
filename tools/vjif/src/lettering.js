@@ -213,7 +213,7 @@ $('#txClose').addEventListener('click', closeText); $('#txCancel').addEventListe
 $('#txOk').addEventListener('click', textOk);
 $('#textPanel').addEventListener('input', () => { txRead(); txUI(); });
 $('#textPanel').addEventListener('change', () => { txRead(); txUI(); });
-$('#txCut').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+onSeg($('#txCut'), (b, e) => {
   const cut = b.dataset.v === '1'; if (cut !== txSpec.cut){ const c = txSpec.color.toLowerCase();   // white letters ↔ a black matte, the usual pairs
     if (cut && c === '#ffffff') txSpec.color = '#000000'; else if (!cut && c === '#000000') txSpec.color = '#ffffff'; $('#txCol').value = txSpec.color; }
   txSpec.cut = cut; txUI(); });
@@ -226,5 +226,5 @@ $('#txLooks').addEventListener('click', e => { const b = e.target.closest('.seg 
 $('#txPreset').addEventListener('change', e => { const p = TX_PRESETS[+e.target.value]; if (!p) return;
   Object.assign(txSpec, TX_LOOK0, p[1], { cut: false }); txFontSet(txSpec.font); $('#txBold').checked = txSpec.bold; $('#txItal').checked = txSpec.ital; $('#txTrack').value = txSpec.track;
   $('#txCol').value = txSpec.color; $('#txCol2').value = txSpec.col2; e.target.value = ''; txUI(); });
-$('#txMarq').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ txSpec.marquee = +b.dataset.v; txUI(); } });
+onSeg($('#txMarq'), (b, e) => { txSpec.marquee = +b.dataset.v; txUI(); });
 $('#textPanel').addEventListener('pointerdown', e => { if (e.target.id === 'textPanel') closeText(); });

@@ -1,7 +1,10 @@
 // ---------- clock ----------
+// the field is written only when the number it shows changes (MIDI clock sets the tempo ~48 times a second)
+let bpmField = null;
 function setBpm(v){
   clock.bpm = Math.round(clamp(+v || 120, 20, 300) * 100) / 100;
-  if (document.activeElement !== $('#bpm')) $('#bpm').value = clock.bpm.toFixed(2);
+  const t = clock.bpm.toFixed(2), el = bpmField || (bpmField = $('#bpm'));
+  if (document.activeElement !== el && el.value !== t) el.value = t;
 }
 
 function tap(){
@@ -43,7 +46,7 @@ async function enableMidi(){
   catch { toast('MIDI access was denied'); return setClockSrc('internal'); }
   fillMidi();
 }
-const midiClkPick = (() => { try { return JSON.parse(localStorage.getItem('vjif-midiclk')) || {}; } catch (e) { return {}; } })();   // { id, name } of the clock input
+const midiClkPick = Prefs.json('vjif-midiclk', {});   // { id, name } of the clock input
 function fillMidi(){
   const sel = $('#midiIn'), ins = [...midiAccess.inputs.values()];
   sel.innerHTML = '<option value="">— choose the clock input —</option>' + ins.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('');
@@ -53,7 +56,7 @@ function fillMidi(){
 function bindMidiInput(){
   if (midiInput) midiInput.onmidimessage = null;
   midiInput = midiAccess && $('#midiIn').value ? midiAccess.inputs.get($('#midiIn').value) : null;
-  if (midiInput){ midiClkPick.id = midiInput.id; midiClkPick.name = midiInput.name; try { localStorage.setItem('vjif-midiclk', JSON.stringify(midiClkPick)); } catch (e) {} }
+  if (midiInput){ midiClkPick.id = midiInput.id; midiClkPick.name = midiInput.name; Prefs.setJson('vjif-midiclk', midiClkPick); }
   if (midiInput && clock.src === 'midi') midiInput.onmidimessage = onMidi;
   midiAlert();
 }
@@ -70,8 +73,9 @@ function onMidi(e){
   else if (s === 0xFB){ clock.lastTick = performance.now(); clock.midiRunning = true; }
   else if (s === 0xFC){ clock.midiRunning = false; }
 }
+let midiShown = null;                                // what the MIDI clock status shows now (null = to be written; main loop)
 function setClockSrc(v){
-  clock.src = v; $('#midiClk').classList.toggle('on', v === 'midi');
+  clock.src = v; midiShown = null; $('#midiClk').classList.toggle('on', v === 'midi');
   $('#bpm').disabled = v === 'midi'; $('#tapBtn').disabled = v === 'midi'; $('#bpmRound').disabled = v === 'midi';
   if (v === 'midi'){ clock.midiTicks = Math.round(clock.beat * 24); enableMidi().then(() => { if (clock.src === 'midi' && !midiInput) toast('No MIDI clock input selected: pick one in Settings › MIDI'); }); }
   else { if (midiInput) midiInput.onmidimessage = null; $('#beats').classList.remove('wait'); $('#midiLed').className = 'led'; }
@@ -83,8 +87,8 @@ function setClockSrc(v){
 // presets, effects, layers, blackout, freeze, tap, sync) react to notes, or to a CC crossing 64; faders (layer opacity,
 // effect amount) follow a CC. Mappings belong to this browser (they describe the controller, not the set).
 const midiCtl = { map: [], input: 'all', learning: false, target: null, inputs: [], cc: {} };
-try { const o = JSON.parse(localStorage.getItem('vjif-midi')); if (o){ midiCtl.map = o.map || []; midiCtl.input = o.input || 'all'; midiCtl.inputName = o.inputName || ''; } } catch (e) {}
-const saveMidiCtl = () => { try { localStorage.setItem('vjif-midi', JSON.stringify({ map: midiCtl.map, input: midiCtl.input, inputName: midiCtl.inputName || '' })); } catch (e) {} };
+{ const o = Prefs.json('vjif-midi'); if (o){ midiCtl.map = o.map || []; midiCtl.input = o.input || 'all'; midiCtl.inputName = o.inputName || ''; } }
+const saveMidiCtl = () => Prefs.setJson('vjif-midi', { map: midiCtl.map, input: midiCtl.input, inputName: midiCtl.inputName || '' });
 async function getMidi(){
   if (midiAccess) return midiAccess;
   if (!navigator.requestMIDIAccess) throw new Error('Web MIDI is not available in this browser');
@@ -117,6 +121,7 @@ function targetName(T){
 }
 function onCtl(e){
   const [st, d1, d2 = 0] = e.data; if (st >= 0xF0) return;
+  touch();                                           // faders move layer opacity (an undo step)
   const ty = st & 0xF0, ch = st & 15;
   let key, val, kind;
   if (ty === 0x90 || ty === 0x80){ key = `n${ch}.${d1}`; kind = 'note'; val = ty === 0x90 && d2 > 0 ? d2 : 0; }

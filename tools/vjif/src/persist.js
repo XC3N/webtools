@@ -16,15 +16,14 @@ const store = {
   keys(prefix){ return this.req('readonly', s => s.getAllKeys(IDBKeyRange.bound(prefix, prefix + '￿'))); },
   all(prefix){ return this.req('readonly', s => s.getAll(IDBKeyRange.bound(prefix, prefix + '￿'))); },
 };
-// v4: `pool` = every GIF of the set; `pads` + `layers` = the current scene; `scenes` = all nine as { pads, layers }
-// (the current one null); `scene` = which is current. v3 had one set of pads for all scenes: upgradeSnap() gives
-// every stored scene its own copy of them.
+// `pool` = every GIF of the set; `pads` + `layers` = the current scene; `scenes` = all nine as { pads, layers }
+// (the current one null); `scene` = which is current; `v` = the format's step (SNAP_STEPS).
 const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut',
   clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: 4, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0),
+    v: SNAP_V, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0),
     pool: pool.map(m => ({ hash: m.hash, name: m.name, ...(m.scale && m.scale !== 1 ? { scale: m.scale } : {}) })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
@@ -33,12 +32,30 @@ function snapshot(){
     thumbs: scenes.map((sc, i) => i === sceneIdx ? thumbKeep || liveThumb || null : sc && sc.thumb || null),   // the scene tiles' pictures, so they survive a reload
   });
 }
+// ---- set conversions: every change to the saved format, in one numbered list. A snapshot saved at step v goes
+// through the steps after it, in order. Sets from before 1.0 aren't promised to load: at 1.0 these steps go and
+// the list starts again from 1.0's format.
+const SNAP_STEPS = {
+  // 2: GIF files moved from 'pad:<i>' to 'gif:<hash>' in storage — needs the store, so it runs in restore()
+  4: o => {                                          // one set of pads for all scenes → each scene its own copy; the pool
+    const ps = o.pads || [], seen = new Set();
+    o.pool = []; ps.forEach(p => { if (p && !seen.has(p.hash)){ seen.add(p.hash); o.pool.push({ hash: p.hash, name: p.name }); } });
+    o.scenes = Array.from({ length: N_SCENES }, (_, i) => o.scenes && o.scenes[i] ? { pads: JSON.parse(JSON.stringify(ps)), layers: o.scenes[i] } : null);
+  },
+  5: o => {
+    const tr = P => { if (!P) return;                // transition families (0.24): Dip / Flash became Fade styles, Melt a Glitch style
+      if (P.type === 'dip' || P.type === 'flash'){ P.style = P.type; P.type = 'fade'; } if (P.type === 'melt'){ P.type = 'glitch'; P.style = 'melt'; } };
+    (o.transP || []).forEach(tr); tr(o.trans);
+    if (!(o.transP && o.transP.length === 9) && o.trans){ const k = 1; o.transP = trDefaults().map((P, i) => i === k ? { ...P, ...o.trans } : P); o.transSel = k; }   // one transition → key 2
+    const rel = c => { if (!c || c.rel !== undefined || !Object.keys(c).length) return;   // Release: a Hit faded over its whole Length — that becomes the release (held for 0)
+      if (c.mode === 'hit'){ c.rel = c.len ?? 1; c.len = 0; } else c.rel = FX_REL; };
+    (o.fx || []).forEach(rel); (o.fxPre || []).forEach(rel);
+  },
+};
+const SNAP_V = Math.max(...Object.keys(SNAP_STEPS).map(Number));
 function upgradeSnap(o){
-  if ((o.v || 1) >= 4) return o;
-  const ps = o.pads || [], seen = new Set();
-  o.pool = []; ps.forEach(p => { if (p && !seen.has(p.hash)){ seen.add(p.hash); o.pool.push({ hash: p.hash, name: p.name }); } });
-  o.scenes = Array.from({ length: N_SCENES }, (_, i) => o.scenes && o.scenes[i] ? { pads: JSON.parse(JSON.stringify(ps)), layers: o.scenes[i] } : null);
-  o.v = 4; return o;
+  for (let v = (o.v || 1) + 1; v <= SNAP_V; v++) if (SNAP_STEPS[v]) SNAP_STEPS[v](o);
+  o.v = Math.max(o.v || 1, SNAP_V); return o;
 }
 // what counts as "changed" for the unsaved-changes dot: everything except which layer / GIF / scene is selected
 function contentSig(snap){
@@ -69,8 +86,11 @@ function updSetLabel(){
   el.textContent = rec ? rec.name : 'Untitled'; el.classList.toggle('dirty', dirty);
 }
 
-async function autosave(){
+let saveSeen = -1, saveIdle = 0;
+async function autosave(force = false){
   if (!store.ready || setsBusy) return;
+  if (!force && touched.save === saveSeen && ++saveIdle < 10) return;   // nothing touched: build the snapshot only every 10 s (things that change by themselves: BRB, MIDI tempo)
+  saveSeen = touched.save; saveIdle = 0;
   const snap = snapshot(); if (snap === store.last) return;
   store.last = snap; await store.put('state', snap); updSetLabel();
 }
@@ -121,10 +141,9 @@ async function applySnapshot(st, { wait = true } = {}){
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait')); heldPre = -1;
   trPresets = trDefaults(); trSel = st.transP && st.transP.length === 9 ? st.transSel ?? 1 : 1;
   if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => normTrans(Object.assign(trPresets[k], P)));
-  else if (st.trans) normTrans(Object.assign(trPresets[trSel], st.trans));          // older sets: their transition on key 2
   armTrans(trSel);
-  fxCfg = fxDefaults().map((d, i) => Object.assign(d, fxMigrate(st.fx && st.fx[i] || {}))); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
-  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, fxMigrate(st.fxPre && st.fxPre[k] || {})));   // older sets had six: they fill 1–6
+  fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
+  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {}));   // older sets had six: they fill 1–6
   if (Array.isArray(st.fxOn)) st.fxOn.forEach((on, i) => { if (on && fxSt[i] && fxConf(i).mode === 'latch'){ const C = fxConf(i); Object.assign(fxSt[i], { on: true, t0: clock.beat - (C.att || 0) - (C.dec || 0) - 1e-6 }); } });   // latched effects come back on (at Sustain)
   syncFxUI();
   target = st.target || 0;
@@ -258,5 +277,5 @@ async function exportSet(name, snap){
     sp.file = byHash.get(sp.hash);
   }
   files.unshift({ name: 'set.json', data: enc.encode(JSON.stringify({ app: 'VJif', format: 1, name, exported: new Date().toISOString(), set: st }, null, 1)) });
-  await saveFile(buildZip(files), (name || 'set').replace(/[^\w .-]+/g, '_').trim() + '.vjif');
+  await saveSetFile(buildZip(files), (name || 'set').replace(/[^\w .-]+/g, '_').trim() + '.vjif');
 }

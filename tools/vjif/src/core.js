@@ -13,36 +13,37 @@
 // The loop: frame() → step() each screen refresh (on the output window's rAF while it's open): clock, pending hits,
 // drawing into the master canvas, recording, then the UI.
 // Source files (tools/vjif/src/, stitched into one script in this order by build.js; one shared scope, order matters):
-//   core          constants, state, canvases          lettering    text → a one-frame GIF          pool       decoding, the GIF pool
+//   core          constants, state, canvases, helpers   types      the main objects and their short names (notes only)
+//   lettering     text → a one-frame GIF              pool         decoding, the GIF pool
 //   colour        key / swaps / HSV (shader + worker) clock-midi   tempo, MIDI clock, MIDI learn   playback   timing, envelopes, LFOs
 //   scenes        scenes, BRB, transitions setup      render       geometry, drawing, transitions  effects    screen effects (WebGL)
 //   output        output window, canvas format        keyboard     keys                            ui-*       panels
 //   main-loop     the frame loop, load meter          persist      IndexedDB, sets, import/export  record     MP4 / WebM recording
 //   undo          undo / redo
+// Shared with the other tools (common/): util (Prefs, saveFile), controls (slider / dropdown behaviour), theme.
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.39.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.40.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
-let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
+let userDef = Prefs.json('vjif-userdef', {});
 // interface size (Settings › Interface): the whole page is zoomed; pointer maths divides by it
-let uiZoom = (() => { try { const z = +localStorage.getItem('vjif-uizoom'); return z >= 0.7 && z <= 1.3 ? z : 1; } catch (e) { return 1; } })();
+let uiZoom = (() => { const z = +Prefs.get('vjif-uizoom'); return z >= 0.7 && z <= 1.3 ? z : 1; })();
 document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom);
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
 let format = '16:9';
-let recBars = (() => { try { return +localStorage.getItem('vjif-recbars') || 0; } catch (e) { return 0; } })();   // 0 = until stopped
-let recAudio = (() => { try { return JSON.parse(localStorage.getItem('vjif-recaudio')) || null; } catch (e) { return null; } })();   // { id, label } of the sound input recorded with the video, or null
+let recBars = +Prefs.get('vjif-recbars') || 0;   // 0 = until stopped
+let recAudio = Prefs.json('vjif-recaudio');   // { id, label } of the sound input recorded with the video, or null
 // recording settings (Settings › Recording), kept per browser
-const recLS = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
 const REC_CODECS = ['h264', 'hevc', 'av1', 'vp9', 'vp8'];
 const WC_NAMES = { h264: 'H.264', hevc: 'HEVC', av1: 'AV1', vp9: 'VP9', vp8: 'VP8' };
-let recCodec = REC_CODECS.includes(recLS('vjif-reccodec', '')) ? recLS('vjif-reccodec', '') : 'h264';
+let recCodec = REC_CODECS.includes(Prefs.get('vjif-reccodec', '')) ? Prefs.get('vjif-reccodec', '') : 'h264';
 let recFmt = recCodec.startsWith('vp') ? 'webm' : 'mp4';   // container, follows the codec
-let recFps = [24, 25, 30, 50, 60].includes(+recLS('vjif-recfps', 30)) ? +recLS('vjif-recfps', 30) : 30;
-let recMbps = [6, 12, 20, 40].includes(+recLS('vjif-recmbps', 12)) ? +recLS('vjif-recmbps', 12) : 12;
-let recACodec = recLS('vjif-recacodec', 'aac') === 'opus' ? 'opus' : 'aac';
+let recFps = [24, 25, 30, 50, 60].includes(+Prefs.get('vjif-recfps', 30)) ? +Prefs.get('vjif-recfps', 30) : 30;
+let recMbps = [6, 12, 20, 40].includes(+Prefs.get('vjif-recmbps', 12)) ? +Prefs.get('vjif-recmbps', 12) : 12;
+let recACodec = Prefs.get('vjif-recacodec', 'aac') === 'opus' ? 'opus' : 'aac';
 const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
 const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it flashes red)
@@ -82,13 +83,25 @@ const KEY_MAX = 441.67;        // max RGB distance
 const $ = s => document.querySelector(s);
 // messages: toast() for problems (5 s), toast2() for confirmations (green, 2.5 s). Both timers live here, ahead of any
 // code that could show a message while the page starts.
-let toastT = 0, toast2T = 0;
-function toast(msg){ const t = $('#toast'); t.classList.remove('ok'); clearTimeout(toast2T); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 5000); }
-function toast2(msg){ const t = $('#toast'); t.classList.add('ok'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast2T); clearTimeout(toastT); toast2T = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); }, 2500); }
+// the message strip: toast() for problems (stays 5 s), toast2() for confirmations (green, 2.5 s)
+let toastT = 0;
+function showToast(msg, ok){ const t = $('#toast'); t.classList.toggle('ok', ok); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); }, ok ? 2500 : 5000); }
+const toast = msg => showToast(msg, false), toast2 = msg => showToast(msg, true);
+// Ctrl+click (⌘+click on a Mac) deletes / resets
+const isDel = e => e.ctrlKey || e.metaKey;
+// the clock time (performance.now) at which `beat` fell / will fall, at the current tempo
+const beatTime = beat => performance.now() - (clock.beat - beat) * 60000 / clock.bpm;
+// a copy of what the output shows right now (a transition interrupted mid-way starts from it)
+function stillOf(src = master){ const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(src, 0, 0); return c; }
 const mod = (a, n) => ((a % n) + n) % n;
 // a tooltip that changes every second: the new text waits until the pointer leaves, so an open tooltip stays readable
 function setTip(el, t){ el.dataset.tip = t; if (!el.matches(':hover')) el.title = t; if (!el._tip){ el._tip = 1; el.addEventListener('pointerleave', () => { el.title = el.dataset.tip; }); } }
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+// a row of buttons (segmented control): fn(button, event) for a click on one of them (not on a disabled one)
+const onSeg = (el, fn) => el.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled && el.contains(b)) fn(b, e); });
+// innerHTML only when it differs from what was last put there (rebuilding buttons / images costs a layout)
+const setHTML = (el, html) => { if (el._html !== html){ el.innerHTML = html; el._html = html; } };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const hex2rgb = h => [1,3,5].map(i => parseInt(h.substr(i, 2), 16));
 const rgb2hex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');

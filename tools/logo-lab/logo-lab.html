@@ -187,11 +187,12 @@ output{display:block;font:500 11px/1 var(--mono);font-variant-numeric:tabular-nu
 
 <script>
 'use strict';
+/* @include common/util.js */
 /* @include common/controls.js */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const clone = o => JSON.parse(JSON.stringify(o));
-const store = { get(k, d){ try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const store = { get: (k, d) => Prefs.json(k, d), set: (k, v) => Prefs.setJson(k, v) };
 function toast(m, err){ const t = $('#toast'); t.textContent = m; t.classList.toggle('err', !!err); t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200); }
 
 // ---------------- colour ----------------
@@ -508,9 +509,7 @@ async function offline(f){
       css = css.split(u).join(`data:font/woff2;base64,${btoa(bin)}`);
     }
     css = `/* ${f.family} ${f.w} — from Google Fonts, embedded for offline use. Check the font's licence (most are SIL OFL 1.1). */\n` + css;
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([css], { type: 'text/css' }));
-    a.download = `${f.family.replace(/\s+/g, '-').toLowerCase()}-${f.w}.css`; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast(`Saved ${a.download}`);
+    const fn = `${f.family.replace(/\s+/g, '-').toLowerCase()}-${f.w}.css`; saveFile(css, fn, 'text/css'); toast(`Saved ${fn}`);
   } catch (e) { toast(`Couldn't download ${f.family}: ${e.message}`, true); }
 }
 $('#resetFonts').addEventListener('click', () => { fonts = clone(DEFAULT_FONTS); saveFonts(); renderMine(); renderSugg(); syncControls(); renderStage(); toast('Fonts back to defaults'); });

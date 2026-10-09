@@ -23,11 +23,11 @@ function buildLayers(){
     }
     row.querySelector('.lop').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
     row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
-    row.querySelector('.ltr').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; L.tr = b.dataset.v; syncLayerUI(); });
+    onSeg(row.querySelector('.ltr'), (b, e) => { L.tr = b.dataset.v; syncLayerUI(); });
     row.querySelector('.clips').addEventListener('click', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
-      if (e.target.tagName === 'B' || e.ctrlKey || e.metaKey) removeClip(li, c);
+      if (e.target.tagName === 'B' || isDel(e)) removeClip(li, c);
       else { L.sel = c; selectPad(c.pad); setTarget(li); }
     });
     row.querySelector('.clips').addEventListener('contextmenu', e => {   // right-click a chip: select it (a Mac's Ctrl+click arrives here: delete)
@@ -91,10 +91,10 @@ function syncLayerUI(){
     r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
     r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
-    r.querySelector('.clips').innerHTML = L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
+    setHTML(r.querySelector('.clips'), L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
       const p = pads[c.pad];
       return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · Ctrl+click to remove"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
-    }).join('');
+    }).join(''));
   }
 
   updatePadDots();
@@ -248,7 +248,7 @@ pv.addEventListener('pointermove', e => {
 });
 pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.style.cursor = 'grab'; drag = null; commit(); });
 // preview tools: guides, stick, ghosts (per browser)
-const pvSave = () => { try { localStorage.setItem('vjif-pvopt', JSON.stringify(pvOpt)); } catch (e) {} redraw.all = true; };
+const pvSave = () => { Prefs.setJson('vjif-pvopt', pvOpt); redraw.all = true; };
 const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', !!pvOpt.guides[b.dataset.g]));
   $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
 pvUI();

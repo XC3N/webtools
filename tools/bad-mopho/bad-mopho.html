@@ -804,14 +804,15 @@
 <script>
 (function(){
 'use strict';
+/* @include common/util.js */
 /* @include common/controls.js */
 /* @include common/theme.js */
 const APP_VERSION='0.9.204', APP_BUILD='2026-06-09';   // bump on each release; shown in header for cache checks
 /* ---- preferences: persisted to localStorage, all access guarded so a blocked store just disables persistence ---- */
 const PREFS_KEY='mopho-programmer-prefs';
-function readPrefs(){ try{ return JSON.parse(localStorage.getItem(PREFS_KEY))||{}; }catch(e){ return {}; } }
+function readPrefs(){ return Prefs.json(PREFS_KEY,{}); }
 let prefs=readPrefs();
-function savePrefs(){ try{ localStorage.setItem(PREFS_KEY,JSON.stringify(prefs)); }catch(e){} }
+function savePrefs(){ Prefs.setJson(PREFS_KEY,prefs); }
 /* =========================================================================
    SHARED LISTS  (defined once; reused by LFO dest, Env3 dest, Seq dest,
    Mod slots & MIDI mods when those sections are built)
@@ -1402,9 +1403,7 @@ function saveSyx(){
   if(unmuted) flash('MUTES CLEARED','restored before saving');
   const bytes=Uint8Array.from([0xF0,DSI_ID,MOPHO_ID,0x03,...packMSB(buildDump()),0xF7]);
   const nm=(dumpName(buildDump())||'mopho-patch').trim().replace(/[^A-Za-z0-9 _-]+/g,'').replace(/\s+/g,'_')||'mopho-patch';
-  const a=document.createElement('a'),url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
-  a.href=url;a.download=nm+'.syx';document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  saveFile(bytes,nm+'.syx');
   flash("SAVED .syx",nm+'.syx · '+bytes.length+' bytes');
 }
 // split a raw .syx blob into individual F0..F7 messages (a file may hold several)

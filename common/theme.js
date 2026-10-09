@@ -140,8 +140,7 @@ const Theme = (() => {
     host.querySelector('.thm-preset').addEventListener('change', e => { const p = PRESETS[e.target.value]; if (p){ apply(p); sync(); changed(); } else sync(); });
     host.querySelector('.thm-exp').addEventListener('click', () => {
       const m = match(), name = `${opts.app || 'xc3n'}-theme${m === 'Custom' ? '' : '-' + m.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ app: opts.app || 'xc3n', kind: 'theme', theme: get() }, null, 2)], { type: 'application/json' }));
-      a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      saveFile(JSON.stringify({ app: opts.app || 'xc3n', kind: 'theme', theme: get() }, null, 2), name, 'application/json');
       say(`Theme exported: ${name}`);
     });
     const file = host.querySelector('input[type=file]');
