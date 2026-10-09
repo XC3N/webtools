@@ -300,7 +300,7 @@ const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map
 const FX_SHORT = { mono: 'MN', colour: 'CLR', strobe: 'STRB', poster: 'PSTR', zoom: 'ZM', shake: 'SHK', wobble: 'WBL', mirror: 'MIR', glitch: 'GLT', rgb: 'CRT', pixel: 'PIX', feedback: 'FDBK' };
 // the full text, else the short one, else (for style names) its first letters: whichever fits first
 function fitText(el, full, short, tiny){ el.textContent = full; for (const t of [short, tiny]) if (t && el.scrollWidth > el.clientWidth + 1) el.textContent = t; }
-const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${FX_DEFS[i].styles[styleIdx(i, P.fx[i].style)][1]}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
+const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${styleLabel(i, P.fx[i].style)}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
 // store the effects that are on right now (from their own keys) into preset slot k
 function storeFxPre(k){
   const b = clock.beat, fx = {};
@@ -329,7 +329,7 @@ function syncFxUI(){
     if (el._sig === sig) return; el._sig = sig;
     el.querySelector('.md').textContent = (i < NFX && tgtLabel(c.target) ? tgtLabel(c.target) + ' ' : '') + c.mode;
     if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
-      fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); fitText(el.querySelector('.s'), D.styles.length > 1 ? st[1] : '', STYLE_SHORT[st[0]], D.styles.length > 1 && st[1].length > 4 ? st[1].slice(0, 3) + '.' : null);
+      fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); const many = styleParts(i, c.style).length > 1; fitText(el.querySelector('.s'), D.styles.length > 1 ? (many ? styleLabel(i, c.style) : st[1]) : '', many ? styleLabel(i, c.style, true) : STYLE_SHORT[st[0]], D.styles.length > 1 && st[1].length > 4 ? (many ? styleParts(i, c.style).length + ' styles' : st[1].slice(0, 3) + '.') : null);
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
     else { const k = i - NFX, P = fxPre[k], e = !Object.keys(P.fx).length;
       if (e){ el.querySelector('.n').textContent = 'empty'; el.querySelector('.s').textContent = ''; }
@@ -348,24 +348,24 @@ function syncFxUI(){
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
-    segSet('#fxStyle', E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
+    styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     tgtSet(E.target);
   }
   else if (pre){
     const ks = Object.keys(C.fx);
-    setHTML($('#fxPreList'), ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtLabel(C.fx[i].target) ? ` <small>${tgtLabel(C.fx[i].target)}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
+    setHTML($('#fxPreList'), ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${styleLabel(i, C.fx[i].style)} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtLabel(C.fx[i].target) ? ` <small>${tgtLabel(C.fx[i].target)}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>');
   }
   else {
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
-    segSet('#fxStyle', C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
+    styleSet(FX_DEFS.indexOf(d), C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     tgtSet(C.target);
   }
   segSet('#fxMode', C.mode);
   const A = E || C, am = $('#fxAmt'), dd = E ? FX_DEFS[preEd] : selFx < NFX ? FX_DEFS[selFx] : null;
   const palAmt = !!dd && dd.id === 'colour' && (A.style || dd.styles[0][0]) === 'pal';   // Colour › Palette: the Amount slider picks the palette
   const kal = !!dd && dd.id === 'mirror' && (A.style || dd.styles[0][0]) === 'kal';        // Mirror › Kaleido: it sets the number of slices
-  const wear = !!dd && dd.id === 'rgb' && (A.style || dd.styles[0][0]) === 'vhs';         // CRT › VHS: Amount is how worn the tape is
+  const wear = !!dd && dd.id === 'rgb' && styleNorm(9, A.style) === 'vhs';         // CRT › VHS: Amount is how worn the tape is
   am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : wear ? 'Wear' : 'Amount'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
   if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: FX_PALS.length - 1, step: 1 }); am.value = pi; am.dataset.def = 0; delete am.dataset.pct;
     am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
@@ -408,7 +408,8 @@ const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NF
 const tgtSet = t => { const L = tgtList(t); $('#fxTgt').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === 'out' ? L[0] === 'out' : L[0] === 'out' || L.includes(+b.dataset.v))); };
 onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ X.target = b.dataset.v === 'out' ? 'out' : tgtToggle(X.target, +b.dataset.v, false); syncFxUI(); } });
 $('#fxTgt').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === 'out') return; e.preventDefault(); const X = fxEd(); if (X){ X.target = +b.dataset.v; syncFxUI(); } });
-onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (X){ X.style = b.dataset.v; syncFxUI(); } });
+const styleSet = (i, v) => { const P = styleParts(i, v); $('#fxStyle').querySelectorAll('button').forEach(b => b.classList.toggle('on', P.includes(b.dataset.v))); };
+onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (X){ X.style = styleToggle(selFx < NFX ? selFx : preEd, X.style || FX_DEFS[selFx < NFX ? selFx : preEd].styles[0][0], b.dataset.v); syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----

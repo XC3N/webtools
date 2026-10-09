@@ -56,11 +56,23 @@ const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'
 const kalSlices = amt => Math.round(3 + 9 * clamp((amt - 0.05) / 0.95, 0, 1)), kalAmt = n => 0.05 + (n - 3) / 9 * 0.95;
 // a style's name on an effect tile, when the whole word doesn't fit
 const STYLE_SHORT = { thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', scramble: 'Scramb.', kal: 'Kaleid.', square: 'Square' };
-const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === v));
+const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === String(v).split('+')[0]));
+// CRT can stack styles ('vhs+scan'): they run as separate stages in a fixed order. Degauss stays on its own (a one-off hit)
+const FX_MULTI = { rgb: true }, FX_SOLO = { degauss: true };
+const styleParts = (i, v) => { const L = String(v || '').split('+').filter(p => FX_DEFS[i].styles.some(s => s[0] === p)); return L.length ? L : [FX_DEFS[i].styles[0][0]]; };
+const styleNorm = (i, v) => { const P = styleParts(i, v); return FX_DEFS[i].styles.map(s => s[0]).filter(k => P.includes(k)).join('+'); };   // valid parts, in the styles' order
+const styleMask = (i, v) => styleParts(i, v).reduce((m, p) => m | (1 << FX_DEFS[i].styles.findIndex(s => s[0] === p)), 0);
+const styleLabel = (i, v, short) => styleParts(i, v).map(p => { const s = FX_DEFS[i].styles.find(x => x[0] === p); return short ? STYLE_SHORT[p] || s[1] : s[1]; }).join('+');
+function styleToggle(i, cur, v){                // a click on a style button: the one style, or (CRT) in / out of the stack
+  if (!FX_MULTI[FX_DEFS[i].id] || FX_SOLO[v]) return v;
+  const P = styleParts(i, cur).filter(p => !FX_SOLO[p]), k = P.indexOf(v);
+  if (k >= 0){ if (P.length > 1) P.splice(k, 1); } else P.push(v);
+  return styleNorm(i, P.join('+'));
+}
 // style numbers by name (FXS.rgb.phos …), and the same as GLSL constants (S_rgb_phos …) for the effects shader: the shader
 // tests styles by name, so adding or reordering styles in FX_DEFS can't shift the ones after them
 const FXS = Object.fromEntries(FX_DEFS.map(d => [d.id, Object.fromEntries(d.styles.map((s, i) => [s[0], i]))]));
-const FX_GLSL = Object.entries(FXS).flatMap(([id, st]) => Object.entries(st).map(([k, i]) => `#define S_${id}_${k} ${i}.0`)).join('\n') + '\n#define IS(v, s) (abs((v) - (s)) < 0.5)';
+const FX_GLSL = Object.entries(FXS).flatMap(([id, st]) => Object.entries(st).map(([k, i]) => `#define S_${id}_${k} ${i}.0`)).join('\n') + '\n#define IS(v, s) (abs((v) - (s)) < 0.5)\n#define HAS(v, s) (mod(floor((v) / exp2(s) + 0.001), 2.0) > 0.5)';   // HAS: CRT's styles are a bit mask (several at once)
 // effect presets: nine slots on the numpad while Caps Lock is on, each a stored mix of effects ({ effect index: { amt, rate, style } })
 // played together with the slot's own mode / length / amount. Index 12–20 in the shared selection / state arrays.
 const FXP_KEYS = Array.from({ length: 9 }, (_, i) => 'Numpad' + (i + 1)), FXP_LABELS = FXP_KEYS.map((_, i) => 'Num ' + (i + 1));
@@ -152,7 +164,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, dith, dpat }){
     zoom: nm(4) === 'in' ? lv[4] * 0.5 : nm(4) === 'out' ? lv[4] * -0.3 : 0, zoomE: nm(4) === 'eachin' ? lv[4] * 0.5 : nm(4) === 'eachout' ? lv[4] * -0.3 : 0,   // Each: done per GIF in render()
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
     mirror: nm(7) === 'kal' ? env[7] : lv[7], mirS: S(7), mirN: kalSlices(amt[7]),   // kaleido: Amount = how many slices
-    glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: S(9), crtSz: size[9], monoSz: size[0],
+    glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: styleMask(9, style[9]), crtSz: size[9], monoSz: size[0],
     pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, palP: dpat ? dpat[1] : 0, mirZ: kz ? kz[7] : 1, fbK: fbk ? fbk[11] : 0.7 };
   if (U.colrS === FXS.colour.pal) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(5) === 'jitter', sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
@@ -260,22 +272,22 @@ ${FX_GLSL}
       void main(){
         if (blit > 0.5){ gl_FragColor = texture2D(tex, vec2(uv.x, 1.0 - uv.y)); return; }
         vec2 p = uv, a = A(), scell = vec2(0.0); float scr = 0.0;
-        float split = rgb > 0.001 ? (IS(rgbS, S_rgb_split) ? rgb * 0.025 : IS(rgbS, S_rgb_vhs) ? rgb * 0.006 : IS(rgbS, S_rgb_scan) ? rgb * 0.0015 : IS(rgbS, S_rgb_phos) ? rgb * 0.002 : IS(rgbS, S_rgb_degauss) ? rgb * 0.008 : 0.0) : 0.0;
+        float split = rgb > 0.001 ? rgb * max(max(HAS(rgbS, S_rgb_split) ? 0.025 : 0.0, HAS(rgbS, S_rgb_vhs) ? 0.006 : 0.0), max(max(HAS(rgbS, S_rgb_scan) ? 0.0015 : 0.0, HAS(rgbS, S_rgb_phos) ? 0.002 : 0.0), HAS(rgbS, S_rgb_degauss) ? 0.008 : 0.0)) : 0.0;   // stacked styles: the widest colour split
         float payU = 1.0;                              // pay-TV: where this pixel falls across the line (0 = the blanking bar's edge)
-        if (rgb > 0.001 && IS(rgbS, S_rgb_crypt)){              // crypt: lines shuffled within blocks of 32 (Nagravision Syster), then each cut at a random point and its halves swapped (Videocrypt)
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_crypt)){              // crypt: lines shuffled within blocks of 32 (Nagravision Syster), then each cut at a random point and its halves swapped (Videocrypt)
           float lh = max(crtSz, 1.0) / res.y, line = floor(p.y / lh), key = floor(time * 4.0);
           if (h1(line * 0.37 + key * 1.91) < rgb){
             float blk = floor(line / 32.0), idx = mod(line, 32.0), k = 1.0 + 2.0 * floor(h1(blk + key * 1.3) * 16.0), off = floor(h1(blk * 2.1 + key) * 32.0);
             p.y = min((blk * 32.0 + mod(idx * k + off, 32.0) + 0.5) * lh, 1.0 - lh * 0.5);   // odd k: a different line for every line of the block
             p.x = fract(p.x + h1(line * 1.7 + key * 3.1)); } }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_paytv)){ // pay-TV, cable-box style (sync suppressed): no horizontal sync, so every line starts late by an amount
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_paytv)){ // pay-TV, cable-box style (sync suppressed): no horizontal sync, so every line starts late by an amount
           float y = p.y, t = time;                    // that wobbles down the picture; the picture wraps, the blanking bar shows inside it and bends
           float off = rgb * (0.24 + 0.15 * sin(y * 3.2 + t * 0.9) + 0.035 * sin(y * 9.0 - t * 1.7) + 0.005 * sin(y * 61.0 + t * 11.0));
           p.y = fract(p.y + fract(t * 0.031) * rgb * 0.6);   // and the vertical hold drifts
           payU = fract(p.x + off); p.x = payU; }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_degauss)){ // degauss: the picture ripples
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_degauss)){ // degauss: the picture ripples
           p += vec2(sin(p.y * 18.0 + time * 35.0), cos(p.x * 14.0 + time * 29.0)) * 0.006 * rgb; }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_vhs)){ // VHS tracking: a gentle sway and a torn band rolling down; with Wear: more of the tape's faults
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ // VHS tracking: a gentle sway and a torn band rolling down; with Wear: more of the tape's faults
           float fr = floor(time * 30.0), ln = floor(p.y * res.y / 2.0), w = rgb;   // Amount is the wear
           p.x += sin(p.y * 30.0 + time * 6.0) * 0.0015 * rgb;
           float ty = fract(time * 0.23); if (abs(p.y - ty) < 0.025) p.x += (h1(floor(p.y * 200.0) + fr) - 0.5) * 0.03 * rgb;
@@ -306,17 +318,17 @@ ${FX_GLSL}
             vec3 neon = c / max(max(c.r, max(c.g, c.b)), 0.15) * smoothstep(0.05, 0.5, e);
             c = mix(c, neon, poster); }
         }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_scan)){ // scanlines + aperture grille
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_scan)){ // scanlines + aperture grille
           float ln = 0.5 + 0.5 * cos(gl_FragCoord.y * 6.2831853 / max(crtSz, 2.0));   // a dark line every Size px
           float col = mod(floor(gl_FragCoord.x), 3.0); vec3 tri = vec3(col < 0.5 ? 1.0 : 0.7, col > 0.5 && col < 1.5 ? 1.0 : 0.7, col > 1.5 ? 1.0 : 0.7);
           c = c * mix(vec3(1.0), tri * (0.55 + 0.45 * ln), rgb) * (1.0 + 0.25 * rgb); }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_phos)){ // phosphor: bright parts bloom and linger
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_phos)){ // phosphor: bright parts bloom and linger
           vec2 q = geo(p), t = vec2(5.0) / res; vec3 bl = vec3(0.0);
           for (int i = 0; i < 8; i++){ float an = float(i) * 0.785398; bl += raw(q + vec2(cos(an), sin(an)) * t * 1.6) + raw(q + vec2(cos(an), sin(an)) * t * 3.4); }
           bl /= 16.0; c += max(bl - 0.35, 0.0) * 1.6 * rgb;
           vec4 pv = texture2D(prev, vec2(uv.x, 1.0 - uv.y)); c = max(c, pv.rgb * 0.82 * rgb); }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_crypt)) c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))) * 0.85 + 0.06, 0.45 * rgb);   // crypt: colour lost, the black level lifted
-        if (rgb > 0.001 && IS(rgbS, S_rgb_paytv)){ // pay-TV picture: a smeared echo, the colour decoded wrong (hue turned round, oversaturated), now and then a negative field
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_crypt)) c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))) * 0.85 + 0.06, 0.45 * rgb);   // crypt: colour lost, the black level lifted
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_paytv)){ // pay-TV picture: a smeared echo, the colour decoded wrong (hue turned round, oversaturated), now and then a negative field
           vec3 gh = raw(geo(vec2(fract(p.x - 0.022), p.y)));
           vec3 d = mix(c, gh, 0.38);
           d = clamp(hueRot(d, 3.14159), 0.0, 1.0); float l = dot(d, vec3(0.299, 0.587, 0.114)); d = clamp(mix(vec3(l), d, 1.7), 0.0, 1.0);
@@ -324,9 +336,9 @@ ${FX_GLSL}
           float e = payU / 0.11;                      // the blanking bar: a bright sync edge, dark purple, a pale edge where the picture starts
           if (e < 1.0) d = e < 0.12 ? mix(vec3(0.95, 0.92, 1.0), vec3(0.55, 0.35, 0.75), e / 0.12) : e > 0.88 ? mix(vec3(0.16, 0.05, 0.24), vec3(0.75, 0.62, 0.95), (e - 0.88) / 0.12) : mix(vec3(0.30, 0.12, 0.42), vec3(0.14, 0.04, 0.22), (e - 0.12) / 0.76);
           c = mix(c, d, rgb); }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_degauss)){ // degauss: rainbow blotches swirling out
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_degauss)){ // degauss: rainbow blotches swirling out
           float r = length((uv - 0.5) * a); c = mix(c, clamp(hueRot(c, sin(r * 12.0 - time * 18.0 + sin(uv.x * 7.0) * 2.0) * 3.0), 0.0, 1.0), 0.75 * rgb); }
-        if (rgb > 0.001 && IS(rgbS, S_rgb_vhs)){ // VHS picture: washed colour, scanlines, noise; with Wear: colour bleeding right, dropouts
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ // VHS picture: washed colour, scanlines, noise; with Wear: colour bleeding right, dropouts
           float w = rgb, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
           if (w > 0.001){                            // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
             vec2 q = geo(p), px1 = vec2(1.5 / res.x, 0.0);
@@ -433,7 +445,7 @@ ${FX_GLSL}
       gl.uniform3fv(u.shake, U.shake);
       { const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }
       gl.uniform1f(u.blit, 0);
-      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && U.rgbS === FXS.rgb.phos);   // only Feedback and Phosphor read the previous frame
+      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1));   // only Feedback and Phosphor read the previous frame
       if (!trail){                                   // straight onto the canvas: no render target, no second pass
         const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; }
         gl.uniform1f(u.fbInit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.52.0 — 2026-10-09
+
+### Effects
+- CRT styles stack: click several (Split + VHS + Scanlines + Phosphor…) and they play together, each as its own stage in a fixed order, one Amount for all; click a lit one to take it out. Degauss stays on its own (it's a one-off hit): picking it clears the others, picking another replaces it. The tile shows the stack (VHS+Scan+Phos).
+
 ## 0.51.0 — 2026-10-09
 
 ### Scenes and presets
