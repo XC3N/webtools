@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.35.0 — 2026-10-08
+
+### Lettering
+- The rest of Logo Lab's looks: Box (badge, split, LCD, frame), an accent part (type VJ|if: the part before or after the | takes the second colour), Slant (−20° to 20°) and UPPER. Slant and UPPER work on cut-outs too.
+- Presets: Logo Lab's looks in one pick (Chrome + neon, Retro stack, Framed, Lifted badge, Neon sign, LCD, Synthwave, Split block, Drop shadow, Outline, Arcade, Gradient, Condensed italic). They set the font, look and colours; the text, size and marquee stay.
+
 ## 0.34.0 — 2026-10-08
 
 ### Transitions
