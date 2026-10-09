@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.47.0 — 2026-10-09
+
+### MIDI
+- Launchpad lights: each kind of control has its own solid colour (pads amber, scenes blue, effects pink, effect presets violet, transitions teal, layers in their colours…), instead of each GIF's average colour. Brighter: full when playing / on, 35% when loaded, 10% when empty, so the regions show even in daylight.
+- Launchpad map: a picture of the Launchpad (Pro MK3 layout) with what each pad and button is mapped to, in the same colours. Settings › MIDI control › Map, or Launchpad map in the help (?).
+
 ## 0.46.0 — 2026-10-09
 
 ### Pads

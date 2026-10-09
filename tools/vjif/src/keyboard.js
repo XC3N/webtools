@@ -9,6 +9,7 @@ function onKey(e){
   if (midiCtl.learning){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); endLearn(); } return; }
   if (!$('#textPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closeText(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); textOk(); } return; }   // Enter: put it on the pad · Shift+Enter: a new line (as everywhere)
   if (!$('#aboutPanel').hidden){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); closeAbout(); } return; }
+  if (!$('#lpMapPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); $('#lpMapPanel').hidden = true; } return; }
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
   if (!$('#poolPanel').hidden && e.key === 'Escape'){ e.preventDefault(); closePool(); return; }   // a floating window: keys keep working

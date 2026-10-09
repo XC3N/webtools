@@ -358,3 +358,10 @@ output.mod{color:var(--env)}
 .field:has(> input[type=range]){grid-template-columns:minmax(0,1fr)!important}
 .field:has(> input[type=range]) > label{grid-column:1;grid-row:1;position:relative;z-index:1;pointer-events:none;padding-left:8px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58%;text-shadow:0 0 2px var(--bg),0 0 2px var(--bg)}
 .field:has(> input[type=range]) > input[type=range],.field:has(> input[type=range]) > input[type=range] + output{grid-column:1}
+/* Launchpad map: the 10 × 11 layout of a Pro MK3 (grid pads square, buttons round-cornered and darker) */
+.lpgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:480px;margin:6px auto 10px}
+.lpgrid .lpx{aspect-ratio:1;border-radius:3px;background:var(--track);display:grid;place-items:center;font:600 10px/1.05 var(--mono);font-style:normal;color:#000;text-align:center;overflow:hidden;padding:1px}
+.lpgrid .lpx.btn{border-radius:50%;transform:scale(.82)}.lpgrid .lpx.none{visibility:hidden}
+.lpgrid .lpx.on{background:var(--c);box-shadow:0 0 8px color-mix(in srgb,var(--c) 45%,transparent)}
+.lpleg{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;font-size:11px;color:var(--muted)}.lpleg span{display:inline-flex;align-items:center;gap:5px}.lpleg i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.lpnote{font-size:11px;color:var(--muted);margin:10px 0 0}

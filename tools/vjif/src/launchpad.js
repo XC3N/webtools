@@ -1,6 +1,6 @@
 // ---------- controller lights: Novation Launchpads (Pro MK3, X, Mini MK3) show VJif's state on their pads ----------
-// Every mapped control lights up for what it does: a pad in its GIF's colour (bright while it plays, dim when loaded,
-// off when empty), the live scene white, the armed transition, effects that are on, layers in their colours…
+// Every mapped control lights up in its region's colour (pads amber, scenes blue, effects pink…): bright while it
+// plays / is on, half-lit when loaded, faint when empty. Launchpad map shows what is where.
 // Mechanically: the Launchpad is put in Programmer mode (a SysEx message), where each pad / button is one note or CC
 // whose number is also its LED's number; colours go out as RGB SysEx (0–127 per channel), only for LEDs that changed.
 const LP_MODELS = [[/LPProMK3|Launchpad Pro MK3/i, 0x0E, 'Launchpad Pro MK3'], [/LPX|Launchpad X/i, 0x0C, 'Launchpad X'], [/LPMiniMK3|Launchpad Mini MK3/i, 0x0D, 'Launchpad Mini MK3']];
@@ -39,46 +39,39 @@ function lpUI(){
   const c = $('#lpOn'); if (!c) return; c.checked = lp.on;
   $('#lpStat').textContent = !lp.on ? '' : lp.out ? lp.name : 'no Launchpad found (plug it in)';
 }
-// a GIF's own colour: the average of its first frame's thumbnail, lifted so dark GIFs still light up
-function lpGifCol(g){
-  if (g.ledCol && g.ledFx === g.fxVer) return g.ledCol;
-  let r = 0, gr = 0, b = 0;
-  try { const f = fxImage(g, g.startF), c = new OffscreenCanvas(8, 8), x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(f, 0, 0, 8, 8);
-    const d = x.getImageData(0, 0, 8, 8).data; let n = 0;
-    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 32){ r += d[i]; gr += d[i + 1]; b += d[i + 2]; n++; }
-    if (n){ r /= n; gr /= n; b /= n; } } catch (e) {}
-  const mx = Math.max(r, gr, b, 1), k = 255 / mx;    // full brightness, same hue
-  g.ledFx = g.fxVer; return g.ledCol = mx < 8 ? [255, 255, 255] : [r * k, gr * k, b * k];
-}
+// every kind of control has its own solid colour, so the grid reads as regions; brightness says the state:
+// full = playing / on / live, LP_MID = loaded / has something, LP_LOW = empty (still shows where the region is)
+const LP_MID = 0.35, LP_LOW = 0.1;
+const LP_REG = { pad: [255, 160, 0], scene: [0, 110, 255], trans: [0, 220, 190], fx: [255, 30, 170], pre: [150, 60, 255],
+  black: [255, 0, 0], freeze: [190, 225, 255], tap: [255, 255, 255], sync: [255, 90, 0], brb: [255, 220, 0], opacity: [120, 120, 120], amount: [120, 120, 120] };
 const lpCx = new OffscreenCanvas(1, 1).getContext('2d');
 const hexRgb3 = css => { lpCx.fillStyle = '#000'; lpCx.fillStyle = css; const h = lpCx.fillStyle; return h[0] === '#' ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : [255, 255, 255]; };   // any CSS colour → r, g, b
+const lpRegion = m => m.t === 'layer' ? hexRgb3(LCOL[m.i]) : m.t === 'fx' && m.i >= NFX ? LP_REG.pre : LP_REG[m.t] || [120, 120, 120];
 const lpDim = (c, k) => c.map(v => v * k);
 // what one mapped control should show now (r, g, b 0–255)
 function lpColour(m, t){
-  const blink = (t / 250 | 0) % 2 === 0, OFF = [0, 0, 0], SIG = lp.sig;
+  const blink = (t / 250 | 0) % 2 === 0, R = lpRegion(m), at = k => lpDim(R, k);
   switch (m.t){
-    case 'pad': { const g = pads[m.i] && pads[m.i].gif; if (!g) return OFF;
-      if (pending.has(m.i)) return blink ? [255, 255, 255] : lpDim(lpGifCol(g), 0.3);
-      const live = layers.some(L => L.on && L.clips.some(c => c.pad === m.i));
-      return live ? lpGifCol(g) : lpDim(lpGifCol(g), 0.15); }
-    case 'scene': if (pendingScene && pendingScene.i === m.i) return blink ? [255, 255, 255] : OFF;
-      if (m.i === sceneIdx) return [255, 255, 255];
-      return sceneCount(m.i) || scenePads(m.i) ? [40, 70, 110] : OFF;
-    case 'trans': return m.i === trSel ? SIG : [30, 30, 30];
-    case 'fx': return fxLevel(m.i, clock.beat) > 0.05 ? (m.i < NFX ? SIG : [255, 60, 200]) : (m.i < NFX ? lpDim(SIG, 0.12) : [40, 8, 30]);
-    case 'layer': { const c = hexRgb3(LCOL[m.i]); return layers[m.i].on ? c : lpDim(c, 0.12); }
-    case 'black': return live.blackOn ? [255, 0, 0] : [40, 0, 0];
-    case 'freeze': return live.freeze || live.freezeReq ? [80, 160, 255] : [10, 20, 40];
-    case 'tap': return (clock.beat % 1) < 0.15 ? [255, 255, 255] : [30, 30, 30];   // the beat
-    case 'sync': return (clock.beat % 4) < 0.15 ? [255, 160, 0] : [40, 25, 0];      // the downbeat
-    case 'brb': return brb.on ? (blink ? [255, 160, 0] : [60, 40, 0]) : [30, 20, 0];
+    case 'pad': { const g = pads[m.i] && pads[m.i].gif; if (!g) return at(LP_LOW);
+      if (pending.has(m.i)) return blink ? [255, 255, 255] : at(LP_MID);
+      return layers.some(L => L.on && L.clips.some(c => c.pad === m.i)) ? R : at(LP_MID); }
+    case 'scene': if (pendingScene && pendingScene.i === m.i) return blink ? [255, 255, 255] : at(LP_MID);
+      if (m.i === sceneIdx) return R;
+      return sceneCount(m.i) || scenePads(m.i) ? at(LP_MID) : at(LP_LOW);
+    case 'trans': return m.i === trSel ? R : at(LP_MID);
+    case 'fx': return fxLevel(m.i, clock.beat) > 0.05 ? R : at(LP_MID);
+    case 'layer': return layers[m.i].on ? R : at(LP_MID);
+    case 'black': return live.blackOn ? R : at(LP_MID);
+    case 'freeze': return live.freeze || live.freezeReq ? R : at(LP_MID);
+    case 'tap': return (clock.beat % 1) < 0.15 ? R : at(LP_MID);     // the beat
+    case 'sync': return (clock.beat % 4) < 0.15 ? R : at(LP_MID);    // the downbeat
+    case 'brb': return brb.on ? (blink ? R : at(LP_MID)) : at(LP_MID);
     default: return null;                             // faders: nothing to light
   }
 }
 function lpTick(){
   if (!lp.on || !lp.out) return;
   const t = performance.now(), want = new Map();
-  if (!lp.sig || t - lp.sigT > 1000){ lp.sig = hexRgb3(Theme.color('--sig') || '#5fd3b0'); lp.sigT = t; }   // the theme's signal colour
   for (const m of midiCtl.map){
     const n = +m.key.split('.')[1]; if (!(n >= 1 && n <= 108)) continue;   // the LED with the control's number
     const c = lpColour(m, t); if (c) want.set(n, c.map(v => Math.max(0, Math.min(127, Math.round(v / 2)))));
@@ -106,6 +99,39 @@ function lpLayout(){
   if (!midiAccess) getMidi().then(() => { bindCtlInputs(); fillMidi(); renderMidiCtl(); }).catch(() => {});
   toast2(`Launchpad layout loaded: ${map.length} pads and buttons mapped (your other mappings are kept)`);
 }
+// ---- Launchpad map: the Pro MK3's pads and buttons in Programmer mode, with what each one is mapped to ----
+// grid pads send notes 11–88 (row·10 + column, row 1 at the bottom); the buttons around it send CCs: top row 91–98,
+// left 10–80, right 19–89, the two bottom rows 101–108 and 1–8 (the X and the Mini have only the top row and the right column)
+function lpShort(m){
+  switch (m.t){
+    case 'pad': return PAD_LABELS[m.i]; case 'scene': return 'S' + (m.i + 1); case 'trans': return 'T' + (m.i + 1);
+    case 'fx': return m.i < NFX ? FX_LABELS[m.i] : 'P' + (m.i - NFX + 1); case 'layer': return 'L' + (m.i + 1);
+    case 'opacity': return 'L' + (m.i + 1) + '%'; case 'amount': return 'amt';
+    case 'black': return 'BLK'; case 'freeze': return 'FRZ'; case 'tap': return 'TAP'; case 'sync': return 'SYNC'; case 'brb': return 'BRB';
+  }
+  return '?';
+}
+function lpMapHTML(){
+  const find = (kind, n) => midiCtl.map.filter(m => { const [k, v] = m.key.split('.'); return k[0] === kind && +v === n; });
+  const css = c => `rgb(${c.map(v => v | 0).join()})`;
+  const cell = (kind, n, btn) => { if (n == null) return '<i class="lpx none"></i>';
+    const ms = find(kind, n), m = ms[0];
+    if (!m) return `<i class="lpx${btn ? ' btn' : ''}" title="${kind === 'n' ? 'Note' : 'CC'} ${n}: not mapped"></i>`;
+    const c = lpRegion(m), lab = ms.map(lpShort).join(' ');
+    return `<i class="lpx on${btn ? ' btn' : ''}" style="--c:${css(c)}" title="${ms.map(targetName).join(' · ')} (${kind === 'n' ? 'note' : 'CC'} ${n})">${lab}</i>`; };
+  let h = '<div class="lpgrid">';
+  h += cell('c', null) + [1, 2, 3, 4, 5, 6, 7, 8].map(c => cell('c', 90 + c, 1)).join('') + cell('c', null);
+  for (let r = 8; r >= 1; r--) h += cell('c', r * 10, 1) + [1, 2, 3, 4, 5, 6, 7, 8].map(c => cell('n', r * 10 + c)).join('') + cell('c', r * 10 + 9, 1);
+  h += cell('c', null) + [1, 2, 3, 4, 5, 6, 7, 8].map(c => cell('c', 100 + c, 1)).join('') + cell('c', null);
+  h += cell('c', null) + [1, 2, 3, 4, 5, 6, 7, 8].map(c => cell('c', c, 1)).join('') + cell('c', null);
+  h += '</div><div class="lpleg">' + [['pad', 'GIF pads'], ['scene', 'Scenes'], ['fx', 'Effects'], ['pre', 'Effect presets'], ['trans', 'Transitions'], ['black', 'Blackout'], ['freeze', 'Freeze'], ['tap', 'Tap'], ['sync', 'Sync'], ['brb', 'BRB']]
+    .map(([k, n]) => `<span><i style="background:${css(LP_REG[k])}"></i>${n}</span>`).join('') + '<span><i style="background:linear-gradient(90deg,' + LCOL.join(',') + ')"></i>Layers</span></div>';
+  return h;
+}
+function lpMapOpen(){ $('#lpMapBody').innerHTML = lpMapHTML(); document.body.appendChild($('#lpMapPanel')); $('#lpMapPanel').hidden = false; }   // last in the page: over Settings or Help, whichever opened it
+$('#lpMapClose').addEventListener('click', () => { $('#lpMapPanel').hidden = true; });
+$('#lpMapPanel').addEventListener('pointerdown', e => { if (e.target.id === 'lpMapPanel') $('#lpMapPanel').hidden = true; });
+document.querySelectorAll('.lpMapBtn').forEach(b => b.addEventListener('click', lpMapOpen));
 $('#lpOn').addEventListener('change', e => lpSetOn(e.target.checked));
 $('#lpLayout').addEventListener('click', lpLayout);
 if (lp.on){ lp.on = false; setTimeout(() => lpSetOn(true), 500); }   // lights were on last time: back on once VJif is up

@@ -10,6 +10,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {g3} **Controller unplugged at load** — Settings shows your input as "(not connected)".
 - {g4} **MIDI clock from the DAW** (0.32: MIDI button in the top bar, input in Settings › MIDI) — a bar-length recording starts when the DAW starts and stops when it stops.
 - {lp1} **Launchpad lights** (0.43) — Settings › MIDI control › Lights on a Launchpad, then Launchpad layout: pads light in their GIF's colour, the live scene is white, effects light when on, Tap blinks on the beat. Untick: the Launchpad goes back to its own mode.
+- {lpmap} **Launchpad map** (0.47) — Settings › MIDI control › Map (or ? › Launchpad map): the picture matches where things are on your Launchpad and the colours match its lights.
 - {g5} **Performance on your GPU** — Feedback, Glitch and Luma especially, full screen in the output window. 0.40: LOAD should be lower, and pad hits / scene changes shouldn't hitch.
 
 - {rs1} **Render size on an older machine** (0.43) — Settings › Interface › Render 2/3 then 1/2: LOAD drops, the picture is softer but placed the same; a recording comes out at that size.

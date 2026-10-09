@@ -203,7 +203,7 @@
     <div class="row"><span class="lbl recLbl">Clock from</span><select id="midiIn" style="flex:1;min-width:0" title="The MIDI input the tempo follows when MIDI is on in the top bar"><option value="">(MIDI off: turn it on to list inputs)</option></select></div>
     <div class="row"><select id="midiCtlIn" title="Which MIDI input controls VJif"><option value="all">All MIDI inputs</option></select><button id="midiLearn" class="accent" title="Click something, then press or move a control on your controller">Learn</button><button id="midiClear" title="Remove every mapping">Clear all</button></div>
     <div id="midiMap"></div>
-    <div class="row"><label class="tog" title="Light a Novation Launchpad (Pro MK3, X or Mini MK3) to show what each mapped pad does: GIFs in their colours, the live scene, effects that are on… (puts it in Programmer mode)"><input type="checkbox" id="lpOn"> Lights on a Launchpad</label><span id="lpStat" class="musName"></span><button id="lpLayout" title="Map the whole 8×8 grid in one go: the 18 GIF pads, layers, blackout / freeze, scenes, the 12 effects, tap / sync / BRB, transition and effect presets (your other mappings are kept)">Launchpad layout</button></div>
+    <div class="row"><label class="tog" title="Light a Novation Launchpad (Pro MK3, X or Mini MK3) to show what each mapped pad does: each kind of control in its own colour, bright when playing / on, half-lit when loaded, faint when empty (puts it in Programmer mode)"><input type="checkbox" id="lpOn"> Lights on a Launchpad</label><span id="lpStat" class="musName"></span><button id="lpLayout" title="Map the whole 8×8 grid in one go: the 18 GIF pads, layers, blackout / freeze, scenes, the 12 effects, tap / sync / BRB, transition and effect presets (your other mappings are kept)">Launchpad layout</button><button class="lpMapBtn" title="See what is mapped where on the Launchpad">Map</button></div>
   </div>
 </div>
 <div id="learnBar" hidden><b>MIDI learn</b><span id="learnMsg"></span>
@@ -232,9 +232,16 @@
     <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
   </div>
 </div>
+<div id="lpMapPanel" class="modal" hidden>
+  <div class="modalBox" style="width:min(560px,94vw)">
+    <h2>Launchpad map<span class="line"></span><button id="lpMapClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <div id="lpMapBody"></div>
+    <p class="lpnote">Launchpad Pro MK3 in Programmer mode. The X and the Mini MK3 only have the top row and the right-hand column of buttons. Hover a pad for its full name; Settings › MIDI control › Launchpad layout fills it, Learn changes any of it.</p>
+  </div>
+</div>
 <div id="helpPanel" class="modal" hidden>
   <div class="modalBox">
-    <h2>Keys &amp; mouse<span class="line"></span><button id="helpAbout" title="About VJif and getting started">About &amp; getting started</button><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <h2>Keys &amp; mouse<span class="line"></span><button class="lpMapBtn" title="What is mapped where on a Launchpad">Launchpad map</button><button id="helpAbout" title="About VJif and getting started">About &amp; getting started</button><button id="helpClose" class="iconbtn" title="Close (Esc)">×</button></h2>
     <dl class="keys">
       <dt>Loading</dt><dd>Drop GIFs or links onto a pad, or anywhere in the pads panel to fill empty pads; click an empty pad to pick from the GIF pool (or browse, while the pool is empty); <b>Pool</b> lists every GIF of the set; drop a .vjif anywhere to import a set</dd>
       <dt>QWE ASD ZXC · RTY FGH VBN</dt><dd>Trigger a pad: restarts the GIF on whichever layer it's on; if it's on none, adds it to the edited layer (up to 6 — a full layer flashes red and refuses). With Snap on, a hit waits for the next beat / bar (the pad blinks); a hit just after one counts as on it. Fade one-shot GIFs (GIF › Trigger) fade in and out on each hit</dd>
