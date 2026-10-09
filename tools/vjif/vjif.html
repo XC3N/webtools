@@ -670,7 +670,7 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.36.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.36.1';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -4742,7 +4742,7 @@ const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.bl
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: 4, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)),
+    v: 4, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0),
     pool: pool.map(m => ({ hash: m.hash, name: m.name, ...(m.scale && m.scale !== 1 ? { scale: m.scale } : {}) })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
@@ -4764,7 +4764,7 @@ function contentSig(snap){
   const all = o.scenes.slice(); all[o.scene || 0] = { pads: o.pads, layers: o.layers, name: o.sceneName || '' };
   const blank = sc => !sc || (!sc.name && !(sc.pads || []).some(Boolean) && !sc.layers.some(l => l.clips.length));
   o.scenes = all.map(sc => { if (blank(sc)) return null; sc.layers.forEach(l => delete l.sel); return sc; });   // visiting an empty scene changes nothing
-  delete o.target; delete o.scene; delete o.layers; delete o.pads; delete o.sceneName; delete o.transSel; delete o.trans; delete o.thumbs;   // which transition is armed is a choice, not content
+  delete o.target; delete o.scene; delete o.layers; delete o.pads; delete o.sceneName; delete o.transSel; delete o.trans; delete o.thumbs; delete o.fxOn;   // which transition is armed, which effects are latched: a moment, not content
   return JSON.stringify(o);
 }
 // saved layers → live layer states (only GIFs that loaded; a GIF lives on one layer: the topmost wins)
@@ -4842,7 +4842,9 @@ async function applySnapshot(st, { wait = true } = {}){
   else if (st.trans) normTrans(Object.assign(trPresets[trSel], st.trans));          // older sets: their transition on key 2
   armTrans(trSel);
   fxCfg = fxDefaults().map((d, i) => Object.assign(d, fxMigrate(st.fx && st.fx[i] || {}))); fxCfg.forEach((c, i) => { c.style = FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
-  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, fxMigrate(st.fxPre && st.fxPre[k] || {}))); syncFxUI();   // older sets had six: they fill 1–6
+  fxPre = fxPreDefaults().map((d, k) => Object.assign(d, fxMigrate(st.fxPre && st.fxPre[k] || {})));   // older sets had six: they fill 1–6
+  if (Array.isArray(st.fxOn)) st.fxOn.forEach((on, i) => { if (on && fxSt[i] && fxConf(i).mode === 'latch'){ const C = fxConf(i); Object.assign(fxSt[i], { on: true, t0: clock.beat - (C.att || 0) - (C.dec || 0) - 1e-6 }); } });   // latched effects come back on (at Sustain)
+  syncFxUI();
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
   selectPad(Math.max(0, pads.findIndex(p => p.gif))); syncLayerUI(); syncXfUI(); updateMem(); renderPool();
