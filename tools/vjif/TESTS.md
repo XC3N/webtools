@@ -17,6 +17,8 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
+- {padcopy} **Copy a pad** (0.36) — Ctrl+drag a pad onto an empty one: a copy with its own settings; MEM barely moves. Ctrl+click still clears.
+- {merge} **Swap merge** (0.36) — a compressed GIF: raise Merge until the near-identical colours become one swatch.
 - {trslot} **Stutter** (0.34) — Transition › Stutter, Ramp and Even, 1-bar and 2-bar: cuts land on the beat grid and end on the new scene.
 - {llook} **Lettering looks** (0.33, 0.35: box, accent with |, slant, UPPER, presets) — Text… › Preset, Fill / Outline / Shadow / Glow / Box and the second colour: chrome + neon, stripes + long shadow; they survive a reload and a format change.
 - {midi2} **MIDI button** (0.32) — MIDI on: "no input" / "no clock" in place of the dots, gear flashes until Settings › MIDI › Clock from is set; DAW playing: the light is steady and the tempo follows.

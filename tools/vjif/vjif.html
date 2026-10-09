@@ -464,13 +464,14 @@ output.mod{color:var(--env)}
           <button data-v="all" title="Every pixel of the key colour, anywhere">Everywhere</button>
           <button data-v="edges" title="Only key-coloured areas that touch the frame edges — the colour inside the subject stays">From edges</button>
           <button data-v="point" title="Magic wand: only the key-coloured area joined to the point you picked">From pick</button></div></div>
-        <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" data-def="0.15" data-pct min="0" max="0.6" step="0.005"><output></output></div>
-        <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" data-def="0.08" data-pct min="0" max="0.4" step="0.005"><output></output></div>
+        <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" data-def="0" data-pct min="0" max="0.6" step="0.005"><output></output></div>
+        <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" data-def="0" data-pct min="0" max="0.4" step="0.005"><output></output></div>
         <div class="sub"><span>Adjust</span><span class="line"></span><button id="hReset" title="Hue, saturation and brightness back to normal">Reset</button></div>
         <div class="field"><label for="hH">Hue</label><input id="hH" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
         <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
         <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
         <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" title="Remove every swap">Clear</button></div>
+        <div class="field" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="10"><output></output></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>
         <div id="swList"></div>
       </div>
@@ -669,7 +670,7 @@ output.mod{color:var(--env)}
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.35.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.36.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = (() => { try { return JSON.parse(localStorage.getItem('vjif-userdef')) || {}; } catch (e) { return {}; } })();
@@ -1100,7 +1101,7 @@ function makeInst(m, saved = null){
   const g = { uid: ++gifSeq, fxWaits: [], media: m, hash: m.hash, name: m.name, blob: m.blob, type: m.type, src: m.src, frames: m.src, durs: m.durs,
            w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
-           key: { on: false, color: [0, 255, 0], tol: 0.15, soft: 0.08, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, swap: [], fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, swap: [], swapMerge: 10, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free' }, lfo: {} };
   insts.set(g.uid, g); rebuildSeq(g);
@@ -3002,7 +3003,7 @@ const FX_DEFS = [
   { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in, around the middle of the frame'], ['out', 'Out', 'Punches out, around the middle of the frame'], ['eachin', 'Each in', 'Every GIF punches in around its own centre'], ['eachout', 'Each out', 'Every GIF punches out around its own centre']] },
   { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']] },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
-  { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
+  { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
   { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['scramble', 'Scramble', 'Pixelated blocks with their colours scrambled (Size = biggest block)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'scramble'] },
   { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, degauss', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches (best as a Hit with a long Release)']], size: true, sizeDef: 3, sizeFor: ['scan'] },
 
@@ -3111,6 +3112,7 @@ function fxMix(b, X = fxLive()){
   });
   return M;
 }
+const MIR_CODE = { lr: 0, tb: 1, quad: 2, kal: 3, rl: 4, bt: 5 };
 // one target's shader settings; null when nothing plays on it
 function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith }){
   if (!lv.some(v => v > 0.001)) return null;
@@ -3119,7 +3121,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, dith }){
     strobe: lv[2] * ((b / rate[2]) % 1 < 0.5 ? 1 : 0), strobeS: S(2), poster: lv[3], posterS: S(3),
     zoom: S(4) < 2 ? lv[4] * (S(4) ? -0.3 : 0.5) : 0, zoomE: S(4) >= 2 ? lv[4] * (S(4) === 3 ? -0.3 : 0.5) : 0,   // Each: done per GIF in render()
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
-    mirror: S(7) === 3 ? env[7] : lv[7], mirS: S(7), mirN: Math.round(3 + 9 * clamp(amt[7], 0, 1)),   // kaleido: Amount = how many slices
+    mirror: style[7] === 'kal' ? env[7] : lv[7], mirS: MIR_CODE[style[7]] ?? 0,   // the shader's numbers (kept when styles were added) mirN: Math.round(3 + 9 * clamp(amt[7], 0, 1)),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: S(9), crtSz: size[9], monoSz: size[0],
     pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, mirZ: kz ? kz[7] : 1 };
   if (U.colrS === 3) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
@@ -3188,6 +3190,8 @@ function makePost(){
         return vec4(r.r, m.g, b.b, max(m.a, max(r.a, b.a) * step(0.0001, split)));
       }
       vec2 fold(vec2 p){
+        if (mirS > 4.5) return vec2(p.x, p.y > 0.5 ? p.y : 1.0 - p.y);          // B→T
+        if (mirS > 3.5) return vec2(p.x > 0.5 ? p.x : 1.0 - p.x, p.y);          // R→L
         if (mirS < 0.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y);
         if (mirS < 1.5) return vec2(p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
         if (mirS < 2.5) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
@@ -3633,13 +3637,13 @@ function buildPads(){
     el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
     el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return;
-      if (e.ctrlKey || e.metaKey){ clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); el._shift = true; return; }   // Ctrl+click: clear
       el.setPointerCapture(e.pointerId);
+      if (e.ctrlKey || e.metaKey){ padDrag = { i, x: e.clientX, y: e.clientY, moved: false, copy: true, had: true, on: layers.map(L => L.on) }; el._shift = true; return; }   // Ctrl+click: clear · Ctrl+drag: copy (decided on let go)
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
       trigger(i, e.altKey); });   // Alt+click: swap
     el.addEventListener('contextmenu', e => { e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
-    el.addEventListener('pointerup', e => { if (!padDragEnd(e, i)) release(i); });
+    el.addEventListener('pointerup', e => { const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
     el.addEventListener('click', e => { if (el._shift || e.ctrlKey || e.metaKey){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
@@ -3668,11 +3672,13 @@ function padDragMove(e, i){
   const d = padDrag; if (!d || d.i !== i) return;
   if (!d.moved){
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return;
-    d.moved = true; release(i);
+    d.moved = true;
+    if (d.copy){ document.body.classList.add('paddragging'); ghost.chip(i); d.ghost = true; }   // a copy: nothing was hit, nothing to take back
+    else { release(i);
     if (!d.wasPending && pending.has(i)){ pending.delete(i); pads[i].el.classList.remove('wait'); }
     if (!d.had) layers.forEach((L, li) => { L.clips = L.clips.filter(c => c.pad !== i); if (!L.clips.includes(L.sel)) L.sel = null; L.on = d.on[li]; });
     syncLayerUI(); redraw.all = true; document.body.classList.add('paddragging');
-    ghost.chip(i); d.ghost = true; pads[i].el.classList.add('lifted');      // the chip you're carrying
+    ghost.chip(i); d.ghost = true; pads[i].el.classList.add('lifted'); }     // the chip you're carrying
   }
   if (d.ghost) ghost.move(e.clientX, e.clientY);
   const o = padDropAt(e);
@@ -3686,6 +3692,7 @@ function padDragEnd(e, i){
   if (!d || d.i !== i || !d.moved) return false;
   pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
   const o = e && padDropAt(e); if (!o) return true;
+  if (d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i); return true; }   // Ctrl+drag onto a pad: a copy
   if (o.classList.contains('pad')){ const j = +o.dataset.i; if (j !== i) swapPads(i, j); }
   else if (o.id === 'pvWrap'){                       // dropped on the preview: onto the edit layer, centred where it was dropped
     const [px, py] = evtToOut(e); padToLayer(i, target);
@@ -3694,6 +3701,14 @@ function padDragEnd(e, i){
   }
   else padToLayer(i, layers.findIndex(L => L.row === o));
   return true;
+}
+// a copy of a pad's GIF onto an empty pad: its own settings, the same decoded frames (no extra memory for the picture)
+function copyPad(a, b){
+  if (a === b || !pads[a].gif) return;
+  if (pads[b].gif || pads[b].loading) return toast('Ctrl+drag onto an empty pad to copy');
+  commit(); pads[b].gif = cloneInst(pads[a].gif);
+  hist.undo.push({ swap: { pad: b, g: null, scene: sceneIdx } }); trimHist(); dropAll(hist.redo); hist.redo.length = 0; hist.cur = histState(); updHistUI();
+  afterPadChange(b); toast2(`Pad ${pads[a].label} copied to ${pads[b].label} (same frames, its own settings)`);
 }
 function swapPads(a, b, record = true){
   if (a === b || pads[a].loading || pads[b].loading) return;
@@ -3836,7 +3851,7 @@ $('#gRes').addEventListener('click', e => { const b = e.target.closest('button')
   setMediaScale(m, sc).then(() => toast2(`${m.name}: ${(was / 1048576).toFixed(0)} → ${(m.srcBytes / 1048576).toFixed(0)} MB`)); });
 // ---- colour swaps: the GIF's palette (most used colours first), each swap = one palette colour → another ----
 function gifPalette(g){
-  const m = g.media; if (m.palette) return m.palette;
+  const m = g.media, CL = g.swapMerge ?? 10; m.palettes = m.palettes || {}; if (m.palettes[CL]) return m.palettes[CL];
   const cnt = new Map(), step = Math.max(1, Math.floor(m.src.length / 8));
   const cv = new OffscreenCanvas(m.w, m.h), x = cv.getContext('2d', { willReadFrequently: true });
   for (let i = 0; i < m.src.length; i += step){
@@ -3845,7 +3860,7 @@ function gifPalette(g){
     for (let k = 0; k < d.length; k += 4) if (d[k + 3] > 127){ const c = (d[k] << 16) | (d[k + 1] << 8) | d[k + 2]; cnt.set(c, (cnt.get(c) || 0) + 1); }
   }
   // colours the eye can't tell apart (a GIF with ten slightly different blacks) count as one swatch: the most used one, with a radius that its swap covers
-  const CL = 10, cl = [];
+  const cl = [];
   for (const [c, n] of [...cnt].sort((a, b) => b[1] - a[1]).slice(0, 4000)){
     const r = c >> 16, gg = (c >> 8) & 255, b = c & 255;
     const k = cl.find(q => Math.abs(q.c[0] - r) <= CL && Math.abs(q.c[1] - gg) <= CL && Math.abs(q.c[2] - b) <= CL);
@@ -3854,7 +3869,7 @@ function gifPalette(g){
   const top = cl.sort((a, b) => b.n - a.n).slice(0, 36).map(q => Object.assign(q.c, { rad: q.rad }));
   const hsl = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 510, d = mx - mn; let h = 0;
     if (d){ h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; } return [h, d / 255, l]; };
-  return m.palette = top.sort((a, b) => { const A = hsl(a), B = hsl(b), ga = A[1] < 0.12, gb = B[1] < 0.12;   // spectrum order: greys first (dark → light), then by hue
+  return m.palettes[CL] = top.sort((a, b) => { const A = hsl(a), B = hsl(b), ga = A[1] < 0.12, gb = B[1] < 0.12;   // spectrum order: greys first (dark → light), then by hue
     return ga !== gb ? (ga ? -1 : 1) : ga ? A[2] - B[2] : A[0] - B[0] || A[2] - B[2]; });
 }
 const rgbHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
@@ -3863,6 +3878,7 @@ const sameRgb = (a, b) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 let swSel = null;                                     // the palette colour picked ([r,g,b]) or null; not yet swapped = a waiting row at the end
 function syncSwapUI(g){
   if (!g) return;
+  $('#swMerge').value = g.swapMerge ?? 10; $('#swMerge').nextElementSibling.textContent = (g.swapMerge ?? 10) ? (g.swapMerge ?? 10) + '' : 'off';
   const pal = gifPalette(g);
   if (swSel && !pal.some(c => sameRgb(c, swSel))) swSel = null;
   $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}${swSel && sameRgb(swSel, c) ? ' sel' : ''}" style="background:${rgbHex(c)}" title="${rgbHex(c)}"></button>`).join('');
@@ -3890,6 +3906,9 @@ $('#swList').addEventListener('click', e => {
   const g = curGif(); if (!g) return;
   const b = e.target.closest('[data-x]'); if (b){ const x = g.swap[+b.dataset.x]; if (x && swSel && sameRgb(x.from, swSel)) swSel = null; g.swap.splice(+b.dataset.x, 1); scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); }
 });
+$('#swMerge').addEventListener('input', e => { const g = curGif(); if (!g) return; g.swapMerge = +e.target.value;
+  const pal = gifPalette(g); g.swap.forEach(x => { const c = pal.find(c => sameRgb(c, x.from)); if (c) x.tol = c.rad + 1.5; });   // existing swaps follow their new swatch
+  scheduleFx(g, 150); syncSwapUI(g); clearTimeout(e.target._t); e.target._t = setTimeout(commit, 400); });
 $('#swClear').addEventListener('click', () => { const g = curGif(); if (!g || !g.swap.length) return; g.swap = []; scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
 
 $('#gSmooth').addEventListener('change', e => { const c = selClip(), g = c && pads[c.pad].gif; if (g){ g.crisp = !e.target.checked; renderPad(c.pad); } });
@@ -4698,7 +4717,7 @@ function step(){
 }
 
 // ---------- persistence: GIF files + settings in IndexedDB (cookies cap at ~4 KB) ----------
-const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'swap', 'trig', 'env', 'lfo'];
+const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'swap', 'swapMerge', 'trig', 'env', 'lfo'];
 const XF_KEYS = [...Object.keys(newXf()), 'alpha'];
 // IndexedDB 'kv' store:
 //   'gif:<hash>' → { name, blob }               original files, stored once (content hash), shared by sets
@@ -5409,7 +5428,7 @@ function applyScn(E){
 }
 // what a step changes, in words, for the undo / redo toast
 const XF_WORDS = { x: 'position', y: 'position', sx: 'scale', sy: 'scale', rot: 'rotation', fit: 'fit', flipX: 'flip', flipY: 'flip', tile: 'tile', cl: 'crop', ct: 'crop', cr: 'crop', cb: 'crop', alpha: 'opacity' };
-const GIF_WORDS = { sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', trig: 'trigger', env: 'envelope', lfo: 'auto' };
+const GIF_WORDS = { sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', swapMerge: 'colour merge', trig: 'trigger', env: 'envelope', lfo: 'auto' };
 function histWhat(e, cur){
   if (!e) return '';
   if (e.clear) return `cleared pad ${pads[e.clear.pad] ? pads[e.clear.pad].label : ''}`;

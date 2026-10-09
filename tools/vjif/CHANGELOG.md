@@ -4,6 +4,18 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.36.0 — 2026-10-08
+
+### Pads
+- Ctrl+drag a pad onto an empty pad: a copy. It shares the decoded frames (no extra memory for the picture) and gets its own settings. Ctrl+click still clears; Ctrl+Z undoes either.
+
+### GIFs
+- Swap colours › Merge: how close colours must be to count as one swatch (0 = exact, up to 48 for heavy compression noise). Existing swaps follow. Saved per GIF.
+- Key: Tolerance and Softness start at 0% (exactly the picked colour).
+
+### Effects
+- Mirror: R→L and B→T, next to L→R and T→B.
+
 ## 0.35.0 — 2026-10-08
 
 ### Lettering
