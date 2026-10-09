@@ -25,7 +25,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.
 - {oldset} **An old set still loads** (0.40) — open one of your oldest saved sets: transitions and effects as before.
-- {padcopy} **Copy a pad** (0.36) — Ctrl+drag a pad onto an empty one: a copy with its own settings; MEM barely moves. Ctrl+click still clears.
+- {padcopy} **Copy a pad** (0.46) — drag a pad, then hold Ctrl (⌘): empty pads show a +, drop on one: a copy with its own settings, MEM barely moves. Release Ctrl before dropping: a move. Ctrl+click still clears.
 - {merge} **Swap merge** (0.36) — a compressed GIF: raise Merge until the near-identical colours become one swatch.
 - {trslot} **Stutter** (0.34) — Transition › Stutter, Ramp and Even, 1-bar and 2-bar: cuts land on the beat grid and end on the new scene.
 - {llook} **Lettering looks** (0.33, 0.35: box, accent with |, slant, UPPER, presets) — Text… › Preset, Fill / Outline / Shadow / Glow / Box and the second colour: chrome + neon, stripes + long shadow; they survive a reload and a format change.

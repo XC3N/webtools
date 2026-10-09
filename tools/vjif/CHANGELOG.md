@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.46.0 — 2026-10-09
+
+### Pads
+- Copying a pad: hold Ctrl (⌘) at any point while dragging it. The empty pads (the only places a copy can go) show a +, the one under the pointer lights up, and the original stays where it is. Let go of Ctrl before dropping and it's an ordinary move / swap again. While dragging, the red ✕ no longer shows on the pad you're carrying; Ctrl+click still clears.
+
 ## 0.45.0 — 2026-10-09
 
 ### Interface

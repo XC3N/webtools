@@ -20,6 +20,7 @@ function buildPads(){
   });
 }
 // ---- dragging a pad: onto another pad swaps them (an empty one: moves there), onto a layer puts the GIF on it ----
+// Holding Ctrl (⌘) while dragging makes it a copy instead: the empty pads show a + and only they take the drop.
 // The press already hit the pad; once the pointer leaves it that hit is taken back (a GIF it added to a layer goes,
 // a snapped hit waiting for the beat is cancelled), so dragging only rearranges.
 let padDrag = null;
@@ -50,18 +51,26 @@ function padDragMove(e, i){
     ghost.chip(i); d.ghost = true; pads[i].el.classList.add('lifted'); }     // the chip you're carrying
   }
   if (d.ghost) ghost.move(e.clientX, e.clientY);
-  const o = padDropAt(e);
-  pads.forEach(p => p.el.classList.toggle('drop', p.el === o && p.i !== i));
-  layers.forEach(L => L.row.classList.toggle('dropzone', L.row === o)); $('#pvWrap').classList.toggle('dropzone', o && o.id === 'pvWrap');
+  d.lastE = e; padCopyMode(isDel(e));
 }
+// what the drop would do now: Ctrl held = copy (empty pads only), otherwise move / swap / onto a layer
+function padCopyMode(on){
+  const d = padDrag; if (!d || !d.moved) return;
+  d.copyNow = on; document.body.classList.toggle('padcopy', on); pads[d.i].el.classList.toggle('lifted', !on && !d.copy);   // a copy leaves the original where it is
+  const o = d.lastE ? padDropAt(d.lastE) : null, i = d.i;
+  pads.forEach(p => p.el.classList.toggle('drop', p.el === o && p.i !== i && (!on || !p.gif)));
+  layers.forEach(L => L.row.classList.toggle('dropzone', !on && L.row === o)); $('#pvWrap').classList.toggle('dropzone', !on && !!o && o.id === 'pvWrap');
+}
+addEventListener('keydown', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCopyMode(true); });
+addEventListener('keyup', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCopyMode(false); });
 function padDragEnd(e, i){
   const d = padDrag; padDrag = null;
   if (d && d.ghost){ ghost.hide(); pads[d.i].el.classList.remove('lifted'); }
-  pads.forEach(p => p.el.classList.remove('drop')); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging');
+  pads.forEach(p => p.el.classList.remove('drop')); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging', 'padcopy');
   if (!d || d.i !== i || !d.moved) return false;
   pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
   const o = e && padDropAt(e); if (!o) return true;
-  if (d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i); return true; }   // Ctrl+drag onto a pad: a copy
+  if (d.copyNow ?? d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i); return true; }   // Ctrl held at the drop: a copy
   if (o.classList.contains('pad')){ const j = +o.dataset.i; if (j !== i) swapPads(i, j); }
   else if (o.id === 'pvWrap'){                       // dropped on the preview: onto the edit layer, centred where it was dropped
     const [px, py] = evtToOut(e); padToLayer(i, target);
