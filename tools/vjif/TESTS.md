@@ -23,6 +23,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {fbk} **Feedback Length** (0.44) — F12 › Trails, Tunnel, Spiral: Length 100% leaves long smears, 20% only short ones.
 - {inlab} **Labels inside sliders** (0.45) — Transform, GIF › Colour / Auto, the effect editor, Settings: labels readable over the fill, nothing cut off at 1280×720, drag and double-click still work where the label is.
 - {dpat} **Palette patterns** (0.49) — F2 › Palette, Dither 100%, on a photo or a gradient: Scatter, Ordered, Checker each look different; Ordered reads like a DOS game.
+- {mtgt} **Effect on several layers** (0.50) — GIFs on layers 1–3, Mirror: click 2 (from All): layers 1, 3, 4 mirrored each on their own; right-click 3: only layer 3; lit buttons in the layers' colours.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.50.0 — 2026-10-09
+
+### Effects
+- An effect can play on several layers: in the effect editor, a layer button takes that layer in or out (from All: every layer but that one), right-click a layer button for that layer alone. Lit layer buttons take their layer's colour. All is still the whole output after blending; chosen layers each get the effect on their own, before blending. Tiles and preset chips show it as L1+3.
+- Feedback › Length starts at 5% (0% wasn't "off", only the shortest trails).
+
 ## 0.49.0 — 2026-10-09
 
 ### Effects

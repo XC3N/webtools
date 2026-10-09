@@ -304,7 +304,7 @@ function syncFxUI(){
     // names are measured (forces a layout) only when what the tile shows changed: pressing an effect key just moves the highlight
     const sig = i < NFX ? `${c.mode}|${c.target}|${c.style}|${fxFitGen}` : `${c.mode}|${JSON.stringify(fxPre[i - NFX].fx)}|${fxFitGen}`;
     if (el._sig === sig) return; el._sig = sig;
-    el.querySelector('.md').textContent = (i < NFX && tgtKey(c.target) !== 'out' ? `L${tgtKey(c.target) + 1} ` : '') + c.mode;
+    el.querySelector('.md').textContent = (i < NFX && tgtLabel(c.target) ? tgtLabel(c.target) + ' ' : '') + c.mode;
     if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
       fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); fitText(el.querySelector('.s'), D.styles.length > 1 ? st[1] : '', STYLE_SHORT[st[0]], D.styles.length > 1 && st[1].length > 4 ? st[1].slice(0, 3) + '.' : null);
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
@@ -326,17 +326,17 @@ function syncFxUI(){
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
     segSet('#fxStyle', E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
-    segSet('#fxTgt', String(tgtKey(E.target)));
+    tgtSet(E.target);
   }
   else if (pre){
     const ks = Object.keys(C.fx);
-    setHTML($('#fxPreList'), ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtKey(C.fx[i].target) !== 'out' ? ` <small>L${tgtKey(C.fx[i].target) + 1}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
+    setHTML($('#fxPreList'), ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${FX_DEFS[i].styles[styleIdx(i, C.fx[i].style)][1]} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtLabel(C.fx[i].target) ? ` <small>${tgtLabel(C.fx[i].target)}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>');
   }
   else {
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
     segSet('#fxStyle', C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
-    segSet('#fxTgt', String(tgtKey(C.target)));
+    tgtSet(C.target);
   }
   segSet('#fxMode', C.mode);
   const A = E || C, am = $('#fxAmt'), dd = E ? FX_DEFS[preEd] : selFx < NFX ? FX_DEFS[selFx] : null;
@@ -380,7 +380,11 @@ onSeg($('#fxMode'), (b, e) => {
     if (v === 'hit') S.b0 = now - ad - (C.len || 0) - 1e-6; else { S.t0 = now - ad - 1e-6; S.rel = now; } }
   syncFxUI(); });
 const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NFX].fx[preEd] : null;   // what the effect-level controls change
-onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ X.target = b.dataset.v === 'out' ? 'out' : +b.dataset.v; syncFxUI(); } });
+// target buttons: All = the whole output; a layer button takes that layer in or out of the mask (from All: every layer
+// but that one), right-click = that layer alone. Lit layer buttons take their layer's colour
+const tgtSet = t => { const L = tgtList(t); $('#fxTgt').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === 'out' ? L[0] === 'out' : L[0] === 'out' || L.includes(+b.dataset.v))); };
+onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ X.target = b.dataset.v === 'out' ? 'out' : tgtToggle(X.target, +b.dataset.v, false); syncFxUI(); } });
+$('#fxTgt').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === 'out') return; e.preventDefault(); const X = fxEd(); if (X){ X.target = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (X){ X.style = b.dataset.v; syncFxUI(); } });
 $('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });

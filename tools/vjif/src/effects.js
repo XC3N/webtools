@@ -43,7 +43,7 @@ const FX_DPAT = [[0, 'Scatter'], [1, 'Ordered'], [2, 'Checker']];
 function sizeAlt(d, style){ return d && d.id === 'colour' && style === 'pal' ? { label: 'Pattern', key: 'dpat', def: 0, list: FX_DPAT, title: () => 'Pattern: how in-between shades are drawn with the palette (Scatter: soft noise · Ordered: two colours in a Bayer pattern, DOS / 8-bit style · Checker: two colours as a 50% checkerboard)' } : null; }
 // styles that use the Rate row for something else: Colour › Palette picks the palette, Mirror › Kaleido zooms in, Feedback: how long the echoes last
 const FX_KZ = Array.from({ length: 101 }, (_, i) => { const v = +(1 + i * 0.05).toFixed(2); return [v, v.toFixed(2).replace(/\.?0+$/, '') + '×']; });   // 1× to 6×, fine steps
-const FX_FBK = Array.from({ length: 21 }, (_, i) => [i / 20, i * 5 + '%']);
+const FX_FBK = Array.from({ length: 20 }, (_, i) => [(i + 1) / 20, (i + 1) * 5 + '%']);   // no 0%: it isn't "off", only the shortest trails
 function rateAlt(d, style){
   if (!d) return null;
   if (d.id === 'feedback') return { label: 'Length', key: 'fbk', def: 0.7, list: FX_FBK, title: () => 'Length: how long the trails / echoes last before they fade' };
@@ -118,15 +118,27 @@ const fxRand = n => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; ret
 // strongest of its own key and the presets playing it on that target (whose rate and style then count).
 const FX_TARGETS = ['out', 0, 1, 2, 3];
 const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
+// an effect's target: 'out' (the whole output, after the layers are blended), one layer (0–3), or several layers
+// ([0, 2]: each of them gets the effect on its own, before blending)
+const tgtList = t => Array.isArray(t) ? t : [tgtKey(t)];
+const tgtLabel = t => { const L = tgtList(t); return L[0] === 'out' ? '' : 'L' + L.map(i => i + 1).join('+'); };
+function tgtToggle(t, li, solo){               // a click on a layer button: in / out of the mask (right-click: that layer alone)
+  if (solo) return li;
+  const S = new Set(tgtList(t)[0] === 'out' ? [0, 1, 2, 3] : tgtList(t));
+  S.has(li) ? S.delete(li) : S.add(li);
+  if (!S.size || S.size === 4) return 'out';
+  const L = [...S].sort(); return L.length === 1 ? L[0] : L;
+}
 function fxMix(b, X = fxLive()){
   const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
-  FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ const m = M.get(tgtKey(C.target)); m.lv[i] = v; m.env[i] = l; } });
+  FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ for (const k of tgtList(C.target)){ const m = M.get(k); m.lv[i] = v; m.env[i] = l; } } });
   X.pre.forEach((P, k) => {
     const l = fxLevel(NFX + k, b, X) * P.amt; if (!(l > 0)) return;
     for (const [i, e] of Object.entries(P.fx)){
-      const m = M.get(tgtKey(e.target)), v = l * e.amt;
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; }
+      const v = l * e.amt;
+      for (const k of tgtList(e.target)){ const m = M.get(k);
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; } }
     }
   });
   return M;
