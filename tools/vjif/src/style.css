@@ -236,7 +236,7 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 .lrow{display:flex;gap:4px;margin-top:6px}
 .lbl{width:92px;flex:none}
 .lrow .lbl{flex:1;min-width:0;width:auto}
-.layer .lop{display:block;margin:6px 0 0}.layer .ltr{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);width:100%;margin:5px 0 0;height:20px}.layer .ltr button{padding:0;min-width:0;font:500 10px var(--mono);height:20px}
+.layer .lopw{display:block;position:relative;margin:6px 0 0}.layer .lop{display:block;margin:0}.layer .ltr{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);width:100%;margin:5px 0 0;height:20px}.layer .ltr button{padding:0;min-width:0;font:500 10px var(--mono);height:20px}
 .lon{width:var(--ch);height:var(--ch);padding:0;font:600 12px var(--mono);color:var(--muted);flex:none}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#111}
 .lname{font:600 13px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -318,8 +318,8 @@ body.padcopy .pad.empty.drop::after{content:"+";opacity:1;background:var(--sig-s
 .ask span{flex:1;min-width:0;font:500 12px var(--sans);color:#ffd6d6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ask button{width:auto}
 #setList:empty::before{content:'No saved sets yet.';font:400 12px var(--sans);color:var(--faint)}
-#learnBar{position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;background:var(--panel);border:1px solid var(--sig);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12px;max-width:92vw}
-#learnBar b{color:var(--sig)}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#learnBar{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:20;max-width:calc(100% - 12px)!important;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;background:var(--panel);border:1px solid var(--sig);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12px;max-width:92vw}
+#learnBar b{color:var(--sig);white-space:nowrap}#learnBar{padding:3px 4px 3px 10px!important}#learnBar button{height:24px;padding-block:0}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.learning .learnMapped{outline:2px dotted var(--sig);outline-offset:-2px}
 body.learning .pad.learnMapped::before{content:"";position:absolute;inset:0;border:2px dotted var(--sig);border-radius:inherit;z-index:6;pointer-events:none}   /* a pad's picture covers its own outline */
 .midiHost{position:relative}.midiTag{position:absolute;right:2px;bottom:2px;z-index:7;pointer-events:none;font:600 9px/1 var(--mono);color:var(--sigtxt);background:var(--sig);border-radius:2px;padding:2px 3px;white-space:nowrap;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis}

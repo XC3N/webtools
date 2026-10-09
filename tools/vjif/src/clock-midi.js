@@ -28,6 +28,7 @@ function resync(){
   if (prep) prep.layers.forEach(L => L.clips.forEach(c => { c.startTime = t0; c.startBeat = b0; }));   // the output follows Sync too
   if (pendingLive !== null) pendingLive = clock.beat;
   const b = $('#syncBtn'); b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 120);
+  if (clock.src === 'midi') toast2(clock.midiRunning ? `GIFs lined up with the DAW's bar (it's on beat ${Math.floor(clock.beat % 4) + 1} of 4)` : 'GIFs lined up with the DAW\'s last bar (the DAW is stopped)');   // with MIDI clock nothing jumps if they already were
 }
 function updateClock(now){
   const dt = now - clock.last; clock.last = now;

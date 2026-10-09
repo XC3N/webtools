@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.48.0 — 2026-10-09
+
+### MIDI
+- MIDI learn: the top-bar button is a target now (the old one read as a clock next to the tempo). The learn bar sits over the top of the preview, under the layer cards, so it no longer hides their on / off buttons.
+- A layer's opacity mapping shows its tag on the opacity slider itself.
+- Sync with MIDI clock says what it did ("GIFs lined up with the DAW's bar"): when the GIFs were already in line nothing visibly moves, which looked like it did nothing.
+
 ## 0.47.0 — 2026-10-09
 
 ### MIDI

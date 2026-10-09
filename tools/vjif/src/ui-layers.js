@@ -10,7 +10,7 @@ function buildLayers(){
       ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow">      <select class="lbl" title="Layer blend mode">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
-      <input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity">
+      <span class="lopw"><input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity"></span>
       <div class="seg ltr" title="Turning this layer on / off (its number, Shift+${li+1}, End, MIDI): ✕ straight away, ★ with the armed transition, 1–9 always with that preset"><button data-v="cut" title="On / off: straight away (cut)">✕</button><button data-v="armed" title="On / off: with the armed transition">★</button>${[1,2,3,4,5,6,7,8,9].map(k => `<button data-v="${k - 1}" title="On / off: always with transition preset ${k}">${k}</button>`).join('')}</div>
       <div class="clips"></div>`;
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
