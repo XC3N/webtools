@@ -4,6 +4,18 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.52.2 — 2026-10-09
+
+### Fixes (from a code review)
+- Ctrl-dragging an empty scene onto another made a broken copy: going to it failed halfway, leaving the output half-switched. Empty scenes now say there's nothing to copy.
+- BRB after a long Prep hold (or a jump in the beat count) changed scene every tenth of a second until it caught up; it now changes once and gets back on its grid.
+- Smooth no longer bends Stutter's beat grid or the Doom melt's timing.
+- A layer switched off while it has Feedback / Phosphor on starts its trail fresh when it comes back (no stale ghost).
+- The same GIF dropped on several pads at once is decoded once. A load still decoding when another set is opened no longer lands in the new set's pool.
+- A broken GIF frees its decoder and the frames read so far.
+- A link whose file name contains % (100%.gif) loads instead of failing silently.
+- Scene tiles no longer rewrite their pictures every second.
+
 ## 0.52.1 — 2026-10-09
 
 ### Effects

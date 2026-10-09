@@ -20,11 +20,11 @@ async function decodeOne(blob, name, scale = 1){
   if (!('ImageDecoder' in window)) throw new Error('this browser has no ImageDecoder (use Chrome)');
   const type = (blob.type && blob.type.startsWith('image/')) ? blob.type : guessType(name);
   if (!(await ImageDecoder.isTypeSupported(type))) throw new Error('unsupported type ' + type);
-  const dec = new ImageDecoder({ data: await blob.arrayBuffer(), type });
+  const dec = new ImageDecoder({ data: await blob.arrayBuffer(), type }), frames = [], durs = []; let w = 0, h = 0, px = null;
+  try {                                               // a broken file: the decoder and the frames done so far are let go
   await dec.tracks.ready; await dec.completed;
   const n = Math.min(dec.tracks.selectedTrack.frameCount || 1, MAX_FRAMES);
-  const px = await pixelGrid(dec, n);               // pixel art blown up by a whole factor: kept at its real pixels
-  const frames = [], durs = []; let w = 0, h = 0;
+  px = await pixelGrid(dec, n);               // pixel art blown up by a whole factor: kept at its real pixels
   for (let i = 0; i < n; i++){
     const { image } = await dec.decode({ frameIndex: i });
     w = image.displayWidth; h = image.displayHeight;
@@ -36,7 +36,8 @@ async function decodeOne(blob, name, scale = 1){
     if (!(d > 10)) d = 100;                          // browsers treat 0–10 ms GIF delays as 100 ms
     durs.push(d); image.close();
   }
-  dec.close();
+  } catch (err){ frames.forEach(f => f.close()); throw err; }
+  finally { dec.close(); }
   const srcBytes = frames.reduce((a, f) => a + f.width * f.height * 4, 0);
   return { name: name || 'untitled', blob, type, src: frames, durs, w, h, srcBytes, scale, px };
 }
@@ -110,10 +111,14 @@ const gifSettings = g => JSON.parse(JSON.stringify(Object.fromEntries(GIF_KEYS.m
 function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); c.seed = g.seed ?? g.uid; if (g.masks) c.masks = g.masks; if (c.key.on || hsvOn(c)) applyFx(c); return c; }
 function freeMedia(m){ const i = pool.indexOf(m); if (i >= 0) pool.splice(i, 1); m.src.forEach(f => f.close()); }
 // a GIF file → its media in the pool (decoded and stored the first time it's seen)
-async function mediaFor(blob, name){
+const decoding = new Map();                           // hash → the decode in progress (the same file dropped twice decodes once)
+async function mediaFor(blob, name, gen = setGen){
   const hash = await hashBlob(blob);
   let m = pool.find(m => m.hash === hash); if (m) return m;
-  m = await decodeAnim(blob, name); m.hash = hash;
+  if (decoding.has(hash)){ await decoding.get(hash).catch(() => {}); return mediaFor(blob, name, gen); }   // wait for that one, then take it from the pool (or decode again if it was dropped)
+  const p = (async () => { try { return await decodeAnim(blob, name); } finally { decoding.delete(hash); } })(); decoding.set(hash, p);
+  m = await p; m.hash = hash;
+  if (gen !== setGen){ m.src.forEach(f => f.close()); throw new Error('another set was loaded meanwhile'); }   // the set it was for is gone: not into the new one's pool
   if (pool.find(x => x.hash === hash)){ m.src.forEach(f => f.close()); return pool.find(x => x.hash === hash); }   // decoded twice at once
   pool.push(m); store.put('gif:' + hash, { name: m.name, blob }); renderPool();
   return m;
@@ -168,8 +173,8 @@ let setGen = 0;                                       // bumped when a set is lo
 async function loadInto(p, blob, name){
   const pad = pads[p], gen = setGen, tag = sceneIds[sceneIdx];   // the scene's identity survives renumbering (drag-swap)
   pad.loading = true; pad.el.classList.add('loading');
-  try { const m = await mediaFor(blob, name); if (gen === setGen) putMedia(m, p, sceneIds.indexOf(tag)); }
-  catch (err) { toast(`Couldn't load ${name}: ${err.message}`); }
+  try { const m = await mediaFor(blob, name, gen); if (gen === setGen) putMedia(m, p, sceneIds.indexOf(tag)); }
+  catch (err) { if (gen === setGen) toast(`Couldn't load ${name}: ${err.message}`); }   // (a load for a set that was replaced just stops)
   finally { pad.loading = false; pad.el.classList.remove('loading'); }
 }
 // a pool GIF onto pad p of scene `si` (default: the current one), as a fresh instance; replaces what was there
@@ -194,7 +199,8 @@ function putMedia(m, p, si = sceneIdx){
 
 async function loadUrlInto(url, p){
   if (p < 0 && p !== POOL_ONLY) return toast('All 18 pads are full — clear one first');
-  const name = decodeURIComponent(url.split(/[?#]/)[0].split('/').pop() || 'url.gif');
+  const raw = url.split(/[?#]/)[0].split('/').pop() || 'url.gif';
+  let name = raw; try { name = decodeURIComponent(raw); } catch (e) {}   // a name like 100%.gif isn't valid escaping: keep it as it is
   let blob;
   try {
     const r = await fetch(url, { mode: 'cors' });

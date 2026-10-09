@@ -499,7 +499,7 @@ function drawFrame(now){
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ endTrans(); redraw.all = true; } }
   const fxF = post ? fxFrame(clock.beat) : NOFX, fxU = fxF.out, bl = blackLevel(now);
-  const LUs = fxF.layers, zE = zoomEOf(fxU); LUs.forEach((U, li) => { if (!U && post) post.idle(SLOT.LAYERS + li); });
+  const LUs = fxF.layers, zE = zoomEOf(fxU); LUs.forEach((U, li) => { if ((!U || !layers[li].on) && post) post.idle(SLOT.LAYERS + li); });   // off: its trail starts over when it comes back
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
   const moving = (trans && !live.freeze) || fxF.any || (bl > 0 && bl < 1);
   if (moving) sceneSig.forget();
@@ -508,17 +508,17 @@ function drawFrame(now){
     if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
     else if (trans && trans.still){                   // from a still of the interrupted transition
       trA.setTransform(1, 0, 0, 1, 0, 0); trA.globalAlpha = 1; trA.globalCompositeOperation = 'source-over'; trA.drawImage(trans.still, 0, 0); render(list, trB, SLOT.LAYERS, LUs, zE);
-      composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
+      composeTransition(trEase(tp, trans.cfg), trans.cfg);
     }
     else if (trans && trans.fx && post){                 // going live from Prep: each side with its own effects, then combined
       const aF = fxFrame(clock.beat, trans.fx);
       render(frameList(now, trans.from, trans.gifs), trA, SLOT.LEAVING_LAYERS, aF.layers, zoomEOf(aF.out)); if (aF.out) post.run(aF.out, trA.canvas, trA, SLOT.LEAVING_OUT); else post.idle(SLOT.LEAVING_OUT);
       render(list, trB, SLOT.LAYERS, LUs, zE); if (fxU) post.run(fxU, trB.canvas, trB, SLOT.ARRIVING_OUT); else post.idle(SLOT.ARRIVING_OUT);
-      composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg); sideFx = true;
+      composeTransition(trEase(tp, trans.cfg), trans.cfg); sideFx = true;
     }
     else if (trans){
       render(frameList(now, trans.from, trans.gifs), trA, SLOT.LEAVING_LAYERS, LUs, zE); render(list, trB, SLOT.LAYERS, LUs, zE);
-      composeTransition(trans.cfg.smooth ? tp * tp * (3 - 2 * tp) : tp, trans.cfg);
+      composeTransition(trEase(tp, trans.cfg), trans.cfg);
     } else render(list, mctx, SLOT.LAYERS, LUs, zE);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
     if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);

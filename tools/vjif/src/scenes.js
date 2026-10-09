@@ -66,7 +66,7 @@ function renderScenes(){
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
     const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
-    const bg = n && th ? `url(${th})` : pg ? `url(${gifTile(pg)})` : ''; if (b.style.backgroundImage !== bg) b.style.backgroundImage = bg;
+    const bg = n && th ? `url(${th})` : pg ? `url(${gifTile(pg)})` : ''; if (b._bg !== bg){ b._bg = bg; b.style.backgroundImage = bg; }   // (the browser rewrites url(...) with quotes: comparing with it never matched)
     b.classList.toggle('padsOnly', !!pg);
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
     const nm = sceneName(i), ne = b.querySelector('.nm'); if (ne.textContent !== nm) ne.textContent = nm;
@@ -95,7 +95,7 @@ function brbTick(){
   const b = clock.beat;
   if (b < brb.next - brb.bars * 4 - 4) brb.next = brbFirst();   // the beat count jumped back (Sync, MIDI Start): count again
   if (prep || b < brb.next - 1e-9) return;           // Prep holds the output still: BRB waits for go-live
-  const at = brb.next; brb.next += brb.bars * 4;
+  const at = brb.next; while (brb.next <= b + 1e-9) brb.next += brb.bars * 4;   // after a long Prep hold / a jump: one change, then back on the grid (not one per tick)
   const i = brbPick(); if (i < 0) return;            // nothing else to play: stay
   if (brb.tr === 'rand'){                            // a random preset (not the same twice in a row), without re-arming it
     const all = trPresets.map((_, k) => k).filter(k => k !== brb.lastTr && trPresets[k].type !== 'cut');
@@ -156,7 +156,7 @@ $('#scenes').addEventListener('drop', e => {
   e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying');
   const b = e.target.closest('.scene'); if (!b) return;
   const a = +e.dataTransfer.getData(SCENE_MIME), t = +b.dataset.i;
-  if (isDel(e)){ if (a === t) return; if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); scenes[t] = sceneCopy(a); renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
+  if (isDel(e)){ if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy'); if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); scenes[t] = sceneCopy(a); renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
   swapScenes(a, t);
 });
 $('#scenes').addEventListener('dragend', () => { document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); });
@@ -201,6 +201,7 @@ $('#trPx').addEventListener('input', e => { transCfg.px = TR_PX[+e.target.value]
 // a stored copy of scene i (the live one or a stored one): its own copy of every pad's settings, new clip ids, same placement
 function sceneCopy(i){
   const live = i === sceneIdx, sc = live ? null : scenes[i];
+  if (!live && !sc) return emptyScene();             // never opened: a copy of nothing is an empty scene (not a shell without layers)
   const P = live ? pads.map(p => p.gif) : (sc && sc.pads) || [], Ls = live ? layers : (sc && sc.layers) || [];
   return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, pads: P.map(g => g && cloneInst(g)),
     layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));

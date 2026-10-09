@@ -277,6 +277,8 @@ function dissolveGrid(px){
   const w = Math.ceil(W / px), h = Math.ceil(H / px), cv = new OffscreenCanvas(w, h), ctx = cv.getContext('2d');
   return { cv, ctx, img: ctx.createImageData(w, h), noise: new Float32Array(w * h).map(() => Math.random()) };
 }
+// Smooth eases the progress, except for the transitions with their own timing: Stutter's beat grid and Doom's melt
+const trEase = (p, T) => T.smooth && T.type !== 'stutter' && !(T.type === 'glitch' && trStyleOf(T) === 'melt') ? p * p * (3 - 2 * p) : p;
 function transProgress(){ if (!trans) return 1; const p = (clock.beat - trans.b0) / trans.len; return p < 0 ? 0 : p > 1 ? 1 : p; }
 // combine trA (leaving) and trB (arriving) on the master at progress e (0 → 1)
 // The screen melt from Doom (1993), same rules: 160 columns, each starting up to 15 ticks late (neighbours differ by
