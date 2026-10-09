@@ -104,7 +104,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .scene.wait{animation:wait .25s steps(1) infinite}
 .padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
 .sub .info{display:inline-grid;place-items:center;width:13px;height:13px;border:1px solid var(--edge);border-radius:50%;font:600 9px var(--mono);color:var(--muted);cursor:help}.sub[title]{cursor:help}
-#musGrp .iconbtn.on{color:var(--sig);border-color:var(--sig)}.volwrap{position:relative;display:inline-flex}
+#musGrp .iconbtn.on,#setBtn.on,#learnBtn.on{color:var(--sig);border-color:var(--sig)}.volwrap{position:relative;display:inline-flex}
 #musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:34px;height:130px;box-shadow:0 6px 18px #0009}
 /* a normal (horizontal) slider turned upright: the app's slider styling only works sideways, a vertical writing-mode slider ignored clicks */
 #musVolPop[hidden]{display:none}#musVol{position:absolute;left:50%;top:50%;width:110px;height:22px;margin:0;transform:translate(-50%,-50%) rotate(-90deg);cursor:ns-resize}

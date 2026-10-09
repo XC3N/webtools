@@ -125,6 +125,7 @@ function placeMovable(box, key){ const p = Prefs.json(key); if (p) moveBox(box, 
 movable($('#setPanel .modalBox'), 'vjif-setpos');
 const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos');
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
+new MutationObserver(() => $('#setBtn').classList.toggle('on', !$('#setPanel').hidden)).observe($('#setPanel'), { attributes: true, attributeFilter: ['hidden'] });   // the gear stays lit while Settings is open
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#aboutVer').textContent = $('#hdrVer').textContent = 'v' + APP_VERSION;
 $('#hdrVer').addEventListener('click', () => openAbout('log'));
