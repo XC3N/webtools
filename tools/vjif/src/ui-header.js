@@ -262,3 +262,5 @@ $('#kReset').addEventListener('click', () => { const g = curGif(); if (!g) retur
 function syncRS(){ document.querySelectorAll('#rsSeg button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - RS) < 0.01)); $('#rsInfo').textContent = `${CW}×${CH}`; }
 onSeg($('#rsSeg'), b => { setRenderSize(+b.dataset.v > 0.6 && +b.dataset.v < 0.7 ? 2 / 3 : +b.dataset.v); syncRS(); });
 syncRS();
+// no browser menu on right-click anywhere in VJif (right-click means "select / edit" here); text boxes keep theirs (copy / paste)
+document.addEventListener('contextmenu', e => { if (!e.target.closest('textarea, input:not([type]), input[type=text], input[type=search], input[type=url], [contenteditable]')) e.preventDefault(); });
