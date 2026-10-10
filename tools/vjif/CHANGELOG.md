@@ -4,6 +4,17 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.58.0 — 2026-10-10
+
+### Interface
+- VJif's own colour picker replaces the browser's: Hue / Sat / Bright and R / G / B sliders that drag, scroll, take arrow keys and typed numbers like every other slider, plus a hex field. Esc or a click elsewhere closes it.
+- GIF › Auto: while you set Min or Max, the GIF jumps to that end (for as long as you hold the slider), wherever the cycle is.
+
+### Fixes
+- Sync no longer drops the effects that are on: everything timed in beats (effects, GIF fades, a transition, the envelope preview) moves with the clock when it jumps back to beat 1. GIFs and scenes waiting for the next beat / bar start at once.
+- New and emptied scenes start with their four layers on (they were all off: a layer only came on when a GIF played on it).
+- Stacked CRT: Amount reads Wear when VHS is the style in focus.
+
 ## 0.57.1 — 2026-10-10
 
 ### Effects

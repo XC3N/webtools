@@ -5,7 +5,7 @@ const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
 const sceneIds = Array.from({ length: N_SCENES }, (_, i) => i);   // which scene sits at each number (swapped with the scenes)
 let sceneIdx = 0, pendingScene = null, liveThumb = null, liveName = '';   // liveName: the current scene's name
-const emptyLayer = () => ({ on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a', tr: 'cut' });
+const emptyLayer = () => ({ on: true, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a', tr: 'cut' });
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 function sceneThumb(){
   if (!layers.some(L => L.clips.length)) return null;
@@ -367,7 +367,7 @@ function syncFxUI(){
   const A = E || C, am = $('#fxAmt'), dd = E ? FX_DEFS[preEd] : selFx < NFX ? FX_DEFS[selFx] : null;
   const palAmt = !!dd && dd.id === 'colour' && (A.style || dd.styles[0][0]) === 'pal';   // Colour › Palette: the Amount slider picks the palette
   const kal = !!dd && dd.id === 'mirror' && (A.style || dd.styles[0][0]) === 'kal';        // Mirror › Kaleido: it sets the number of slices
-  const wear = !!dd && dd.id === 'rgb' && styleNorm(9, A.style) === 'vhs';         // CRT › VHS: Amount is how worn the tape is
+  const wear = !!dd && dd.id === 'rgb' && styleParts(9, A.style).includes('vhs') && (styleParts(9, A.style).length === 1 || fxFocus.rgb === 'vhs');   // CRT › VHS (alone, or in focus in a stack): Amount is how worn the tape is
   am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : wear ? 'Wear' : 'Amount'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
   if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: FX_PALS.length - 1, step: 1 }); am.value = pi; am.dataset.def = 0; delete am.dataset.pct;
     am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }

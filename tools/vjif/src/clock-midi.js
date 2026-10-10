@@ -20,9 +20,19 @@ function tap(){
 // global reset: now is beat 1 of bar 1 (internal clock), and every GIF on every layer restarts from its start frame
 // With MIDI clock the bar belongs to the DAW: Sync can't move it, so every GIF is put back in line with the DAW's
 // bar instead (as if it had started on the last downbeat)
+// the internal clock jumps back to beat 0: everything timed in beats moves with it, so effects that are on stay on
+// (and fades, transitions, the envelope preview carry on where they were)
+function shiftBeats(d){
+  const mv = (o, ...ks) => { if (o) ks.forEach(k => { if (Number.isFinite(o[k]) && o[k] > -1e8) o[k] += d; }); };
+  fxSt.forEach(S => mv(S, 'b0', 't0', 'rel')); if (prep) prep.fx.st.forEach(S => mv(S, 'b0', 't0', 'rel'));
+  const envs = L => L.clips.forEach(c => mv(c.env, 't0', 'rel'));
+  layers.forEach(envs); if (prep) prep.layers.forEach(envs);
+  mv(trans, 'b0'); mv(fxPrev, 'b0');
+  pending.forEach(q => q.beat = 0); if (pendingScene) pendingScene.beat = 0;   // queued for the next beat / bar: Sync is that downbeat
+}
 function resync(){
   const now = performance.now();
-  if (clock.src === 'internal'){ clock.beat = 0; clock.taps.length = 0; }
+  if (clock.src === 'internal'){ shiftBeats(-clock.beat); clock.beat = 0; clock.taps.length = 0; }
   const b0 = clock.src === 'midi' ? Math.floor(clock.beat / 4 + 1e-9) * 4 : clock.beat, t0 = now - (clock.beat - b0) * 60000 / clock.bpm;
   layers.forEach(L => L.clips.forEach(c => { c.startTime = t0; c.startBeat = b0; }));
   if (prep) prep.layers.forEach(L => L.clips.forEach(c => { c.startTime = t0; c.startBeat = b0; }));   // the output follows Sync too

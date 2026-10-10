@@ -137,6 +137,7 @@ function lfoShape(A, pos, seed){
     default: return 0.5 - 0.5 * Math.cos(2 * Math.PI * f);        // sine, starting at Min
   }
 }
+let lfoPeek = null;   // { g, k, end: 'min' | 'max', t }: set while Min / Max are dragged in GIF › Auto
 const lfoSeed = (g, i) => (g.seed ?? g.uid) * 16 + i;   // a copy keeps its original's random automation
 const lfoAny = g => LFO_T.some(t => g.lfo[t[0]] && g.lfo[t[0]].on);
 // the clip as drawn right now: automation and the fade envelope applied on a copy (the clip itself keeps its settings)
@@ -145,7 +146,8 @@ function effClip(c, g){
   for (let i = 0; i < LFO_T.length; i++){
     const k = LFO_T[i][0], A = g.lfo[k]; if (!A || !A.on) continue;
     if (!e) e = Object.assign({}, c);
-    const v = A.min + (A.max - A.min) * lfoShape(A, lfoPos(A, c), lfoSeed(g, i));
+    const pk = lfoPeek && lfoPeek.g === g && lfoPeek.k === k && performance.now() - lfoPeek.t < 700 ? lfoPeek.end : null;   // Min / Max being set: show that end, wherever the cycle is
+    const v = pk ? A[pk] : A.min + (A.max - A.min) * lfoShape(A, lfoPos(A, c), lfoSeed(g, i));
     switch (k){
       case 'x': e.x += v; break;          case 'y': e.y += v; break;
       case 'zoom': e.sx *= v; e.sy *= v; break;

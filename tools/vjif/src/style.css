@@ -384,3 +384,9 @@ input[type=checkbox]:hover{border-color:var(--ink)}
 [data-pane=play] .tnote{display:none;margin:0 0 8px;font-size:11px;color:var(--muted)}[data-pane=play].textpad .tnote{display:block}[data-pane=play].textpad>:not(.tkeep):not(.tnote){opacity:.3;pointer-events:none}
 #textPanel.dragging{visibility:hidden}   /* dragging the text: the window steps aside so the pads show */
 .txchip{cursor:grab;padding:6px 12px;border:1px dashed var(--sig);border-radius:var(--r);color:var(--sig);font:600 12px var(--sans);user-select:none;touch-action:none}.txchip:hover{background:var(--sig-soft,rgba(95,211,176,.15))}
+
+/* VJif's colour picker (cpick.js): sliders like everywhere else, under the swatch that opened it */
+#cpk{position:fixed;z-index:200;width:220px;padding:8px;background:var(--panel);border:1px solid var(--edge-2);border-radius:var(--r);box-shadow:0 6px 24px #0008}
+#cpk .cpkTop{display:flex;gap:6px;margin-bottom:6px}#cpk .cpkSw{flex:1;border:1px solid var(--edge);border-radius:var(--r);height:var(--ch)}
+#cpk .cpkHex{width:84px;font:400 12px var(--mono);text-transform:lowercase}#cpk .field{margin-bottom:4px}#cpk .field:last-child{margin-bottom:0}
+input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
