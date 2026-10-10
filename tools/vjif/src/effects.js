@@ -173,7 +173,9 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, dith, dpat }){
 }
 // this frame's settings for every target: { out: U | null, layers: [U | null ×4], any }
 function fxFrame(b, X){
-  const M = fxMix(b, X), out = fxU(b, M.get('out')), layers = [0, 1, 2, 3].map(t => fxU(b, M.get(t)));
+  const XX = X || fxLive();                          // nothing playing (the usual case): no mixes built, nothing allocated
+  if (!FX_DEFS.some((d, i) => fxLevel(i, b, XX) * XX.cfg[i].amt > 0) && !XX.pre.some((P, k) => Object.keys(P.fx).length && fxLevel(NFX + k, b, XX) * P.amt > 0)) return NOFX;
+  const M = fxMix(b, XX), out = fxU(b, M.get('out')), layers = [0, 1, 2, 3].map(t => fxU(b, M.get(t)));
   return { out, layers, any: !!out || layers.some(Boolean) };
 }
 const NO_LAYER_FX = [null, null, null, null];
@@ -394,6 +396,7 @@ ${FX_GLSL}
     const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz']);   // sizes given in canvas pixels
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP',
                    'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'shakeZ', 'time'];
+    const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
     gl.viewport(0, 0, CW, CH);
@@ -419,6 +422,61 @@ ${FX_GLSL}
       let below = 0; for (let v = 0; v < 256; v++){ rank[v] = Math.round(255 * (below + hist[v] / 2) / n); below += hist[v]; }   // mid-rank: a flat scene sits at 0.5
       for (let v = 1; v < 256; v++) if (!hist[v] && rank[v] < rank[v - 1]) rank[v] = rank[v - 1];
     };
+    // Transitions that used to be drawn bit by bit on the CPU (hundreds of drawImage / fillRect calls, or a loop over
+    // every block): Dissolve, Glitch › Scramble and Glitch › VHS, as one shader pass over the two scenes.
+    // mode 1 dissolve · 2 scramble · 3 vhs. Pixels: P (y down, like the canvases).
+    const tp = gl.createProgram();
+    gl.attachShader(tp, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
+    gl.attachShader(tp, sh(gl.FRAGMENT_SHADER, `
+      #ifdef GL_FRAGMENT_PRECISION_HIGH
+      precision highp float;
+      #else
+      precision mediump float;
+      #endif
+      uniform sampler2D a, b; uniform vec2 res; uniform float mode, e, bs, seed, stp, t, fr, k, nz, mixB, pr, useB; uniform vec4 bands; varying vec2 uv;
+      float rnd(float n){ return fract(sin(n * 12.9898 + 78.233) * 43758.5453); }          // the same hash as fxRand
+      vec3 tex(sampler2D s, vec2 P){ return texture2D(s, clamp(P, vec2(0.5), res - 0.5) / res).rgb; }
+      vec3 src(vec2 P){ return useB > 0.5 ? tex(b, P) : tex(a, P); }
+      // tape snow: streaky along each line (each value leans on the ones to its left), 320 × 180 cells drawn up soft
+      float cellN(float ix, float iy){ float v = 0.0, w = 0.45;
+        for (int j = 0; j < 6; j++){ float x = ix - float(j); if (x < 0.0){ v += w / 0.45 * 0.55 * 0.5; break; } v += w * rnd(x * 1.31 + iy * 317.7 + fr * 7.7); w *= 0.55; }
+        return v; }
+      float snow(vec2 P){ vec2 q = P / res * vec2(320.0, 180.0) - 0.5, i = floor(q), f = q - i; i = clamp(i, vec2(0.0), vec2(319.0, 179.0));
+        vec2 j = min(i + 1.0, vec2(319.0, 179.0));
+        return mix(mix(cellN(i.x, i.y), cellN(j.x, i.y), f.x), mix(cellN(i.x, j.y), cellN(j.x, j.y), f.x), f.y); }
+      void main(){
+        vec2 P = floor(uv * res) + 0.5; vec3 c;
+        if (mode < 1.5){                                  // dissolve: each block switches to the new scene at its own random moment
+          vec2 cell = floor(P / bs); c = rnd(cell.x * 1.37 + cell.y * 91.7 + seed) < e ? tex(b, P) : tex(a, P);
+        } else if (mode < 2.5){                           // scramble: big blocks (a = the scenes already shrunk, one pixel per block), colours rotated / swapped / inverted
+          vec2 cell = floor(P / bs); c = tex(a, cell + 0.5);
+          if (bs >= 3.0){ float n = cell.y * ceil(res.x / bs) + cell.x, q = rnd(n * 0.37 + stp * 17.1);
+            if (q <= pr){ float s = floor(q / pr * 4.0);
+              if (s < 0.5) c = c.gbr; else if (s < 1.5) c = c.brg; else if (s < 2.5){ if (any(greaterThan(c, vec3(20.0 / 255.0)))) c = 1.0 - c; } else c = c.rbg; } }
+        } else {                                          // VHS: torn lines, colour bleed, snow, dropouts, scanlines
+          float y = floor(P.y / 2.0) * 2.0, tear = 0.0, st = 0.0;
+          for (int i = 0; i < 2; i++){ float bc = i == 0 ? bands.x : bands.z, bh = i == 0 ? bands.y : bands.w, d = abs(y - bc);
+            if (d < bh){ float q = 1.0 - d / bh; tear += (rnd(y * 0.7 + fr) - 0.5) * 300.0 * q + 50.0 * q; if (rnd(y * 1.3 + fr * 3.1) < 0.3 * q) st = 1.0; } }
+          if (rnd(y * 2.9 + fr * 1.7) < 0.004) st = 1.0;
+          float flag = res.y * 0.09; if (y < flag) tear += pow(1.0 - y / flag, 2.0) * 60.0 * sin(t * 3.0);
+          if (y > res.y * 0.95) tear += 30.0 + rnd(y * 0.9 + fr) * 50.0;
+          float ox = floor((sin(y * 0.021 + t * 9.0) * 7.0 + tear) * k + 0.5), sx = P.x - ox;
+          c = sx < 0.0 || sx >= res.x ? vec3(0.0) : src(vec2(sx, P.y));
+          if (k > 0.02){
+            c = min(c + 0.3 * k * src(vec2(P.x - floor(14.0 * k + 0.5), P.y)) * step(floor(14.0 * k + 0.5), P.x), vec3(1.0));   // colour bleed
+            float n = snow(P); c = mix(c, vec3(n), min(1.0, 0.12 * k + nz)); c = mix(c, 1.0 - (1.0 - c) * (1.0 - n), 0.18 * k);
+            if (st > 0.5){ float xs = rnd(y + fr * 0.3) * res.x, w = 30.0 + rnd(y * 2.1 + fr) * res.x * 0.35, f = (P.x - xs) / w;
+              if (f >= 0.0 && f < 1.0){                   // a dropout: a sharp head trailing off to the right
+                float ga = f < 0.06 ? f / 0.06 * 0.95 : f < 0.35 ? mix(0.95, 0.6, (f - 0.06) / 0.29) : mix(0.6, 0.0, (f - 0.35) / 0.65);
+                float gv = f < 0.35 ? mix(1.0, 235.0 / 255.0, max(0.0, f - 0.06) / 0.29) : mix(235.0, 220.0, (f - 0.35) / 0.65) / 255.0;
+                c = mix(c, vec3(gv), ga * (0.35 + rnd(y + fr) * 0.6) * k); } }
+            if (mod(floor(P.y), 3.0) < 0.5) c *= 1.0 - 0.22 * k;   // scanlines
+          }
+        }
+        gl_FragColor = vec4(c, 1.0); }`));
+    gl.linkProgram(tp); if (!gl.getProgramParameter(tp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(tp));
+    const tu = {}; ['a', 'b', 'res', 'mode', 'e', 'bs', 'seed', 'stp', 't', 'fr', 'k', 'nz', 'mixB', 'pr', 'useB', 'bands'].forEach(n => tu[n] = gl.getUniformLocation(tp, n));
+    const tpLoc = gl.getAttribLocation(tp, 'p');
     return { luma(A, B, e){
       if (lost || gl.isContextLost()){                 // no GPU: a plain crossfade
         mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over';
@@ -433,6 +491,19 @@ ${FX_GLSL}
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       gl.useProgram(prog); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
       mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(cv, 0, 0);
+    }, trans(mode, A, B, P){                        // a GPU transition onto the master; false = no GPU (the CPU version draws it)
+      if (lost || gl.isContextLost()) return false;
+      gl.useProgram(tp); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(tpLoc); gl.vertexAttribPointer(tpLoc, 2, gl.FLOAT, false, 0, 0);
+      gl.uniform1i(tu.a, 0); gl.uniform1i(tu.b, 1); gl.uniform2f(tu.res, CW, CH); gl.uniform1f(tu.mode, mode);
+      for (const k of ['e', 'bs', 'seed', 'stp', 't', 'fr', 'k', 'nz', 'mixB', 'pr', 'useB']) gl.uniform1f(tu[k], P[k] || 0);
+      gl.uniform4fv(tu.bands, P.bands || [0, 0, 0, 0]);
+      const needA = mode !== 3 || !P.useB, needB = mode === 1 || (mode === 3 && P.useB);
+      if (needA){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, A); }
+      if (needB){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texB); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, B); }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.useProgram(prog); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0); gl.activeTexture(gl.TEXTURE0);
+      mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(cv, 0, 0);
+      return true;
     }, run(U, from = master, to = mctx, slot = 0){
       if (lost || gl.isContextLost()){                 // no GPU: the picture as it is
         if (to.canvas !== from){ to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
@@ -441,9 +512,9 @@ ${FX_GLSL}
       }
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
       gl.uniform2f(u.res, CW, CH);
-      for (const k of NAMES) gl.uniform1f(u[k], (U[k] || 0) * (PX_NAMES.has(k) ? RS : 1));   // sizes in canvas pixels → real pixels
-      gl.uniform3fv(u.shake, U.shake);
-      { const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }
+      for (const k of NAMES){ const v = (U[k] || 0) * (PX_NAMES.has(k) ? RS : 1); if (last[k] !== v){ last[k] = v; gl.uniform1f(u[k], v); } }   // sizes in canvas pixels → real pixels; only what changed is sent
+      if (String(U.shake) !== last.shake){ last.shake = String(U.shake); gl.uniform3fv(u.shake, U.shake); }
+      if (U.palI !== last.palI){ last.palI = U.palI; const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }   // the 64-colour palette only when it changes
       gl.uniform1f(u.blit, 0);
       const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1));   // only Feedback and Phosphor read the previous frame
       if (!trail){                                   // straight onto the canvas: no render target, no second pass
@@ -474,19 +545,26 @@ const NOFX = { out: null, layers: [null, null, null, null], any: false };
 // Prep: the output keeps playing the scene that was live (its own copy of the clips, GIFs and effects), while the
 // editor's picture goes to the preview only. Both are drawn every frame.
 function drawPrep(now, hidden, quiet){
-  const P = prep, b = clock.beat, bl = blackLevel(now); drawn++;
+  const P = prep, b = clock.beat, bl = blackLevel(now), force = redraw.all;
   const oF = post ? fxFrame(b, P.fx) : NOFX;
   oF.layers.forEach((U, li) => { if (!U && post) post.idle(SLOT.LAYERS + li); });
+  // each picture is redrawn only when something in it moves or changed (a still scene under Prep cost every pass, every frame)
+  const oList = frameList(now, P.layers, P.gifs), oMoving = oF.any || (bl > 0 && bl < 1);
+  if (oMoving) prepOutSig.forget();
+  if (oMoving || sceneChanged(oList, live.freeze, bl >= 1, prepOutSig) || force){ drawn++;
   if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
-  else render(frameList(now, P.layers, P.gifs), mctx, SLOT.LAYERS, oF.layers, zoomEOf(oF.out));
+  else render(oList, mctx, SLOT.LAYERS, oF.layers, zoomEOf(oF.out));
   if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }
   if (oF.out) post.run(oF.out); else if (post) post.idle(SLOT.OUT);
   if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
   if (outCtx) outCtx.drawImage(master, 0, 0);
+  }
   if (hidden || quiet) return;
-  const eF = post ? fxFrame(b) : NOFX;
+  const eF = post ? fxFrame(b) : NOFX, eList = frameList(now);
   eF.layers.forEach((U, li) => { if (!U && post) post.idle(SLOT.PREP_LAYERS + li); });
-  render(frameList(now), trB, SLOT.PREP_LAYERS, eF.layers, zoomEOf(eF.out));
+  if (eF.any) prepEdSig.forget();
+  if (!eF.any && !sceneChanged(eList, false, false, prepEdSig) && !force) return;
+  render(eList, trB, SLOT.PREP_LAYERS, eF.layers, zoomEOf(eF.out));
   if (eF.out) post.run(eF.out, trB.canvas, trB, SLOT.PREP_OUT); else if (post) post.idle(SLOT.PREP_OUT);
   sctx.drawImage(trB.canvas, 0, 0, pvScene.width, pvScene.height);
 }

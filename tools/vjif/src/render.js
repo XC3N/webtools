@@ -143,10 +143,10 @@ function sigTracker(){
     },
   };
 }
-const sceneSig = sigTracker(), overlaySig = sigTracker();
+const sceneSig = sigTracker(), overlaySig = sigTracker(), prepOutSig = sigTracker(), prepEdSig = sigTracker();   // (Prep: the output and the editor's picture, each its own)
 // the picture: frozen / black, and each visible layer and GIF as drawn
-function sceneChanged(list, frozen, black){
-  const S = sceneSig; S.start(); S.add(frozen); S.add(black);
+function sceneChanged(list, frozen, black, S = sceneSig){
+  S.start(); S.add(frozen); S.add(black);
   if (!frozen) for (const { L, items } of list){
     S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill);
     for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit);
@@ -219,7 +219,7 @@ function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
 let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt, free: GIF copies to let go after }
 function makeTrans(from, gifs, beat, free = null){
   if (transCfg.type === 'cut') return null;
-  return { cfg: { ...transCfg }, from, gifs, b0: beat, len: transCfg.len, free, melt: transCfg.type === 'glitch' && trStyleOf(transCfg) === 'melt' ? meltTable(transCfg.px) : null, dis: transCfg.type === 'dissolve' ? dissolveGrid(transCfg.px || 12) : null };
+  return { cfg: { ...transCfg }, from, gifs, b0: beat, len: transCfg.len, free, melt: transCfg.type === 'glitch' && trStyleOf(transCfg) === 'melt' ? meltTable(transCfg.px) : null, dis: null };   // (Dissolve's CPU grid is made when it's first needed: only without WebGL)
 }
 function endTrans(){ if (trans && trans.free) trans.free.forEach(freeGif); if (trans && trans.gifs) dropFxCache(trans.gifs); trans = null; }
 // GIFs no longer on screen let go of their kept coloured frames (fxImage)
@@ -337,6 +337,8 @@ const TR_DRAW = {
       pxCtx.imageSmoothingEnabled = true; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(e < 0.5 ? A : B, 0, 0, w, h);
       m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return;
     }
+    const seed = trans ? (trans.seed ?? (trans.seed = Math.random() * 1000)) : 0;
+    if (post && post.trans(1, A, B, { e, bs: Math.max(1, T.px || 12), seed })) return;   // on the GPU (below: the CPU version, without WebGL)
     const D = trans && trans.dis || (trans && (trans.dis = dissolveGrid(T.px || 12))); if (!D){ m.drawImage(B, 0, 0); return; }
     const d = D.img.data; for (let i = 0; i < D.noise.length; i++) d[i * 4 + 3] = D.noise[i] < e ? 255 : 0;
     D.ctx.putImageData(D.img, 0, 0);
@@ -373,6 +375,7 @@ const TR_DRAW = {
       const w = Math.ceil(W / bs), h = Math.ceil(H / bs), mixB = Math.min(1, Math.max(0, (e - 0.35) / 0.3));
       pxCtx.imageSmoothingEnabled = true; pxCtx.globalAlpha = 1; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(A, 0, 0, w, h);
       if (mixB > 0){ pxCtx.globalAlpha = mixB; pxCtx.drawImage(B, 0, 0, w, h); pxCtx.globalAlpha = 1; }
+      if (post && post.trans(2, pxCv, null, { e, bs, stp: Math.floor(e * 30), pr: k * 0.9 })) return;   // the scramble and blow-up on the GPU (the shrinking stays a drawImage)
       if (bs >= 3){                                // the scramble: each block's channels rotated / swapped / inverted, re-rolled ~30 times
         const im = pxCtx.getImageData(0, 0, w, h), d = im.data, step = Math.floor(e * 30), pr = k * 0.9;
         for (let i = 0, n = 0; i < d.length; i += 4, n++){
@@ -390,6 +393,7 @@ const TR_DRAW = {
       // tracking lost: two bands rolling down at different speeds, torn sideways, where most dropouts happen
       const bands = [[((t * 0.35 + e * 0.8) % 1.3 - 0.15) * H, H * 0.16], [((t * 0.61 + 0.5 + e * 1.3) % 1.3 - 0.15) * H, H * 0.05]];
       const fr = Math.floor(t * 30), flag = H * 0.09, head = H * 0.95;
+      if (post && post.trans(3, A, B, { e, t: t % 1000, fr: fr % 100000, k, nz, useB: e < 0.5 ? 0 : 1, bands: [bands[0][0], bands[0][1], bands[1][0], bands[1][1]] })) return;
       m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
       const sh = 2, streaks = [];
       for (let y = 0; y < H; y += sh){

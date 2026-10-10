@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.53.0 — 2026-10-09
+
+### Performance
+- Transitions Glitch › VHS, Glitch › Scramble and Dissolve run on the GPU, in one shader pass, instead of hundreds of separate draws (VHS) or a loop over every block with a read-back from the GPU (Scramble). They look the same. Without WebGL the old way still draws them.
+- Prep: the output and the scene you're working on are only redrawn when something in them moves or changes. A still scene under Prep cost every effect pass, every frame.
+- With no effect playing, no effect mix is built each frame. The effect shader only receives the settings that changed, and the 64-colour palette only when it changes.
+
 ## 0.52.2 — 2026-10-09
 
 ### Fixes (from a code review)

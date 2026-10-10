@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.52.2';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.53.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
