@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.58.1 — 2026-10-10
+
+### Interface
+- Toggles are flat lamps (16 × 8 px): outlined when off, filled edge to edge in the signal colour when on (style G from the mockup, as a rectangle). Their text labels stay clickable too.
+
 ## 0.58.0 — 2026-10-10
 
 ### Interface
