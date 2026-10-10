@@ -5,6 +5,7 @@ function isTyping(e){
   if (t.isContentEditable || t.tagName === 'TEXTAREA') return true;
   return t.tagName === 'INPUT' && ['text','number','url','search'].includes(t.type);
 }
+let heldFxKey = -1;   // an F-key effect held down: 1–5 then set its layers
 function onKey(e){
   if (midiCtl.learning){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); endLearn(); } return; }
   if (!$('#textPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closeText(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); textOk(); } return; }   // Enter: put it on the pad · Shift+Enter: a new line (as everywhere)
@@ -38,7 +39,7 @@ function onKey(e){
   }
   if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat && !(e.target && e.target.closest && e.target.closest('button, select, a, input, textarea'))){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // Enter: Prep / go live (a focused control keeps its own Enter)
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
-  if (xi >= 0){ e.preventDefault(); if (!e.repeat) heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxDown(xi); return; }
+  if (xi >= 0){ e.preventDefault(); if (!e.repeat){ if (heldPre < 0 && !e.shiftKey) heldFxKey = xi; heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxDown(xi); } return; }
   const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
   if (np){
     e.preventDefault(); if (e.repeat) return;
@@ -53,6 +54,12 @@ function onKey(e){
   if (e.code === 'Digit0'){ e.preventDefault(); if (!e.repeat){ setBlack(true); updLiveTag(); } return; }   // 0: blackout while held
   if (e.code === 'Insert'){ e.preventDefault(); if (!e.repeat) setFreeze(true); return; }                  // Ins: freeze while held
   const ti = TR_KEYS.indexOf(e.code);                // 1–9: arm a transition preset · Shift+1–4: layer on / off
+  if (ti >= 0 && heldFxKey >= 0 && !e.shiftKey){     // an effect key held + 1–4: that layer in / out of the effect's layers · + 5: All (again: the set back)
+    e.preventDefault(); if (e.repeat || ti > 4) return;
+    const C = fxCfg[heldFxKey]; if (ti === 4) allToggle(C); else C.target = tgtToggle(C.target, ti, false);
+    const L = tgtList(C.target); toast2(`${FX_DEFS[heldFxKey].name}: ${L[0] === 'out' ? 'All' : 'layer' + (L.length > 1 ? 's ' : ' ') + L.map(i => i + 1).join(' + ')}`);
+    if (selFx === heldFxKey) syncFxUI(); return;
+  }
   if (ti >= 0){ e.preventDefault(); if (e.shiftKey){ if (ti < 4) toggleLayer(ti); } else armTrans(ti); return; }
   if (e.code === 'Space') e.preventDefault();
   const pi = PAD_KEYS.indexOf(e.code);
@@ -68,7 +75,7 @@ function onKey(e){
 function onKeyUp(e){                                // releases always count, even if focus moved into a text field meanwhile
   if (e.code === 'Space' && !isTyping(e)) e.preventDefault();
   const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0) release(pi);
-  const xi = FX_KEYS.indexOf(e.code); if (xi >= 0) fxUp(xi);
+  const xi = FX_KEYS.indexOf(e.code); if (xi >= 0){ fxUp(xi); if (heldFxKey === xi) heldFxKey = -1; }
   const qi = FXP_KEYS.indexOf(e.code); if (qi >= 0){ fxUp(NFX + qi); if (heldPre === qi) heldPre = -1; }
   if (e.code === 'Digit0' && live.blackOn){ setBlack(false); updLiveTag(); }
   if (e.code === 'Insert') setFreeze(false);

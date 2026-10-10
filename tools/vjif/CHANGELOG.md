@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.60.0 — 2026-10-10
+
+### Effects
+- Effect layers from the keyboard: hold an effect's F-key and press 1–4 to put layers in or out of the layers it works on, 5 for All (5 again: the layers it had). A note shows the result. Without an F-key held, 1–9 still arm transitions.
+- The All button remembers: from a set of layers, All switches to the whole picture; All again brings that set back.
+
+### Transitions
+- Channel: the number is drawn with a built-in 5 × 7 pixel font (no font file, the same on every computer, crisp at any size).
+
 ## 0.59.0 — 2026-10-10
 
 ### Transitions

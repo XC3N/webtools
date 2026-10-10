@@ -4,7 +4,7 @@
 import subprocess, sys, pathlib, time
 HERE = pathlib.Path(__file__).resolve().parent
 TESTS = ['smoke', 'undo', 'golden', 'render_size', 'copy_pads', 'copy_scenes_presets', 'fx_targets', 'crt_stack',
-         'stick_diagonal', 'key_regions', 'slider_labels', 'midi_learn', 'launchpad', 'review_fixes', 'gif_palette', 'text_drag', 'colour_picker']
+         'stick_diagonal', 'key_regions', 'slider_labels', 'midi_learn', 'launchpad', 'review_fixes', 'gif_palette', 'text_drag', 'colour_picker', 'fx_layer_keys']
 only = [a for a in sys.argv[1:] if not a.startswith('-')]   # test names to run (default: all); -v prints every test's output
 bad = []
 for t in TESTS:

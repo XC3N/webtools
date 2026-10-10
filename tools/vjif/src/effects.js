@@ -149,6 +149,12 @@ const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
 const tgtList = t => Array.isArray(t) ? t : [tgtKey(t)];
 const tgtLabel = t => { const L = tgtList(t); return L[0] === 'out' ? '' : 'L' + L.map(i => i + 1).join('+'); };
 // All and the layer buttons are two separate modes: All on (no layer lit), or All off and a set of layers.
+// All: from a set of layers → All (the set is remembered); All again → that set back
+const tgtPrev = new WeakMap();
+function allToggle(C){
+  if (tgtList(C.target)[0] !== 'out'){ tgtPrev.set(C, C.target); C.target = 'out'; }
+  else if (tgtPrev.has(C)){ C.target = tgtPrev.get(C); tgtPrev.delete(C); }
+}
 function tgtToggle(t, li, solo){               // a click on a layer button: in / out of the set (right-click: that layer alone)
   if (solo || tgtList(t)[0] === 'out') return li;    // from All: the set starts with this layer
   const S = new Set(tgtList(t));

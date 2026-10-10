@@ -408,7 +408,7 @@ const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NF
 // target buttons: All = the whole output (alone); or a set of layers: a layer button takes its layer in or out (from All:
 // just that one), right-click = that layer alone. Lit layer buttons take their layer's colour
 const tgtSet = t => { const L = tgtList(t); $('#fxTgt').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === 'out' ? L[0] === 'out' : L.includes(+b.dataset.v))); };
-onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ X.target = b.dataset.v === 'out' ? 'out' : tgtToggle(X.target, +b.dataset.v, false); syncFxUI(); } });
+onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ if (b.dataset.v === 'out') allToggle(X); else X.target = tgtToggle(X.target, +b.dataset.v, false); syncFxUI(); } });
 $('#fxTgt').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === 'out') return; e.preventDefault(); const X = fxEd(); if (X){ X.target = +b.dataset.v; syncFxUI(); } });
 const styleSet = (i, v) => { const P = styleParts(i, v), f = fxFocus[FX_DEFS[i].id], multi = FX_MULTI[FX_DEFS[i].id] && P.length > 1;
   $('#fxStyle').querySelectorAll('button').forEach(b => { b.classList.toggle('on', P.includes(b.dataset.v)); b.classList.toggle('focus', !!multi && b.dataset.v === f && P.includes(f)); }); };

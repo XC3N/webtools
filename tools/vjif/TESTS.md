@@ -41,6 +41,8 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {sclayers} **Empty scene layers on** (0.58) — empty a scene, or go to a new one: the four layer switches are on.
 - {lamps} **Flat toggles** (0.58.1) — every on / off toggle is a flat lamp: easy enough to hit? (Clicking its label works too.)
 - {chan} **Channel transition** (0.59) — Transitions › Glitch › Channel, 1/2 to 1 bar: snow, the new scene rolls in, a green number top right (a new one each time).
+- {fxkeys} **Effect layers by key** (0.60) — hold F1, press 1 and 3: Mono works on layers 1 + 3; 5: All; 5 again: 1 + 3 back. Let go of F1: 1–9 arm transitions again.
+- {allback} **All remembers** (0.60) — effect on layers 2 + 4, click All, click All again: 2 + 4 again.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

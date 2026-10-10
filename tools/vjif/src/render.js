@@ -299,6 +299,12 @@ function meltTable(px = 12){
   }
   return ticks;
 }
+// a built-in 5 × 7 pixel font for on-screen-display numbers (no font file needed, crisp at any size)
+const OSD_GLYPHS = { 0: '01110100011001110101110011000101110', 1: '00100011000010000100001000010001110', 2: '01110100010000100010001000100011111', 3: '11111000100010000010000011000101110',
+  4: '00010001100101010010111110001000010', 5: '11111100001111000001000011000101110', 6: '00110010001000011110100011000101110', 7: '11111000010001000100010000100001000',
+  8: '01110100011000101110100011000101110', 9: '01110100011000101111000010001001100', '-': '00000000000000011111000000000000000' };
+function osdText(m, txt, x, y, p, col){ m.fillStyle = col;
+  [...txt].forEach((c, k) => { const g = OSD_GLYPHS[c]; if (g) for (let i = 0; i < 35; i++) if (g[i] === '1') m.fillRect(x + k * 6 * p + (i % 5) * p, y + Math.floor(i / 5) * p, p, p); }); }
 const vhsN = {}, chN = {};   // the VHS / Channel transitions' noise canvases
 // what each transition type draws into the master canvas: e = progress 0…1 (eased if Smooth), T = the preset,
 // A / B = the scene being left / arriving (drawn whole into trA / trB), [dx, dy] = the direction
@@ -409,11 +415,8 @@ const TR_DRAW = {
         m.globalAlpha = (1 - q) ** 2 * 0.8; m.drawImage(chN.cv, 0, 0, W, H); m.globalAlpha = 1;
       }
       if (e >= inA){                                // the channel number, OSD green, top right (it stays until the transition ends)
-        const fs = Math.round(H * 0.1), x = W - H * 0.06, y = H * 0.06 + fs;
-        m.font = `${fs}px "Press Start 2P", "Courier New", monospace`; m.textAlign = 'right'; m.textBaseline = 'alphabetic';
-        const txt = String(ch).padStart(2, '0');
-        m.fillStyle = 'rgba(0,0,0,.6)'; m.fillText(txt, x + fs * 0.08, y + fs * 0.08);
-        m.fillStyle = '#3cff4e'; m.fillText(txt, x, y); m.textAlign = 'start';
+        const txt = String(ch).padStart(2, '0'), p = Math.max(2, Math.round(H * 0.013)), cw = 6 * p, x0 = Math.round(W - H * 0.06 - txt.length * cw + p), y0 = Math.round(H * 0.06);
+        osdText(m, txt, x0 + p, y0 + p, p, 'rgba(0,0,0,.6)'); osdText(m, txt, x0, y0, p, '#3cff4e');   // shadow, then the digits
       }
       return; }
     if (gst === 'vhs'){                            // a tape switching channels: the picture tears up, dissolves into snow, and the new one comes out of it
