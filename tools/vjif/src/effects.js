@@ -44,9 +44,12 @@ const FX_DPAT = [[0, 'Noise'], [1, 'Bayer'], [2, 'Check']];   // short: the name
 const FX_DITHP = [[0, 'off'], ...FX_DPAT.flatMap(([k, n]) => Array.from({ length: 10 }, (_, j) => [k * 2 + (j + 1) / 10, `${n} ${(j + 1) * 10}%`]))];
 // CRT › VHS alone (no Scanlines / Crypt, which own the Size row): the Size row sets how many dropouts the tape has
 const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   // 0–200 %
+// With several CRT styles stacked, the one in focus (right-click a style, or the last one switched on) decides: VHS → Dropouts, Scanlines / Crypt → Size
+const fxFocus = {};   // effect id → style in focus (editor state, not saved)
 function sizeAlt(d, style){
-  if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+');
-  if (!P.includes('vhs') || P.includes('scan') || P.includes('crypt')) return null;
+  if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+'), f = P.includes(fxFocus[d.id]) ? fxFocus[d.id] : null;
+  if (f === 'scan' || f === 'crypt') return null;
+  if (f !== 'vhs' && (!P.includes('vhs') || P.includes('scan') || P.includes('crypt'))) return null;
   return { label: 'Dropouts', key: 'vdrop', def: 1, list: FX_DROP, title: () => 'Dropouts: how often the tape loses its picture in streaks (they also grow with Wear)' };
 }
 // styles that use the Rate row for something else: Colour › Palette picks the palette, Mirror › Kaleido zooms in, Feedback: how long the echoes last
@@ -65,6 +68,7 @@ const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'
 // Mirror › Kaleido: its Amount is the number of slices, 3–12 (Amount's 5–100%)
 const kalSlices = amt => Math.round(3 + 9 * clamp((amt - 0.05) / 0.95, 0, 1)), kalAmt = n => 0.05 + (n - 3) / 9 * 0.95;
 // a style's name on an effect tile, when the whole word doesn't fit
+const STYLE_BTN = { scan: 'Scan', phos: 'Phos' };   // style buttons: short enough for one row (the tooltip has the full name)
 const STYLE_SHORT = { thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', scramble: 'Scramb.', kal: 'Kaleid.', square: 'Square' };
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === String(v).split('+')[0]));
 // CRT can stack styles ('vhs+scan'): they run as separate stages in a fixed order. Degauss stays on its own (a one-off hit)
@@ -245,6 +249,10 @@ ${FX_GLSL}
         float b1 = fract(time * 0.35) * 1.3 - 0.15, b2 = fract(time * 0.61 + 0.5) * 1.3 - 0.15;
         return max(max(0.0, 1.0 - abs(y - b1) / 0.11), max(0.0, 1.0 - abs(y - b2) / 0.035));
       }
+      vec2 vhsEdges(float y){                       // VHS: x = the colour trailing below the wide band (1 at its edge, fading), y = the thin magenta fringe above it
+        float b1 = fract(time * 0.35) * 1.3 - 0.15, d = y - (b1 + 0.11), u = (b1 - 0.11) - y;
+        return vec2(d > 0.0 ? max(0.0, 1.0 - d / 0.14) : 0.0, step(0.0, u) * step(u, 0.008));
+      }
       bool offs(vec2 p){ return p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0; }
       vec3 raw(vec2 p){ return offs(p) ? vec3(0.0) : texture2D(tex, p).rgb; }
       vec4 samp(vec2 p, float split){
@@ -360,7 +368,7 @@ ${FX_GLSL}
         if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ // VHS picture: washed colour, scanlines, noise; with Wear: colour bleeding right, dropouts
           float w = rgb, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
           if (w > 0.001){                            // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
-            vec2 q = geo(p), px1 = vec2(1.5 / res.x, 0.0);
+            vec2 q = geo(p), px1 = vec2((1.5 + 2.0 * w) / res.x, 0.0);         // softer as the tape wears
             vec3 lu = (raw(q - px1) + c * 2.0 + raw(q + px1)) / 4.0;                // tape's soft picture: brightness a little blurred sideways…
             c = mix(c, lu + (c - lu) * 0.6, 0.7 * w);                              // …with a faint edge ring (the sharpening VCRs added)
             vec3 sm = (raw(q - vec2(0.004, 0.0)) + raw(q - vec2(0.008, 0.0)) + raw(q - vec2(0.012, 0.0)) + raw(q - vec2(0.016, 0.0))) / 4.0;
@@ -375,6 +383,16 @@ ${FX_GLSL}
               c = mix(c, vec3(0.85) + (h2(gl_FragCoord.xy + fr) - 0.5) * 0.3, k * (0.5 + 0.4 * h1(ln + fr)) * (0.45 + 0.55 * w));
             }
             if (uv.y > 0.955) c = mix(c, vec3(h2(gl_FragCoord.xy + fr), h2(gl_FragCoord.xy + fr + 17.3), h2(gl_FragCoord.xy + fr + 41.9)) * 0.7 + h2(gl_FragCoord.xy + fr) * 0.3, 0.5 * w);   // the switching noise is snowy, in colour
+            float wb = max(0.0, 1.0 - abs(uv.y - (fract(time * 0.35) * 1.3 - 0.15)) / 0.11) * smoothstep(0.35, 1.0, w);   // heavy wear: the wide band loses the picture
+            if (wb > 0.001){                         // …to a dark band of streaks: white and coloured lines of different lengths
+              float s1 = h1(ln * 4.3 + fr * 1.9), sx = h1(ln * 7.1 + fr), sl = 0.05 + h1(ln * 2.9 + fr * 0.5) * 0.5;
+              float st = step(0.55, s1) * step(sx, uv.x) * step(uv.x, sx + sl) * (0.6 + 0.4 * h2(gl_FragCoord.xy + fr));
+              vec3 sc = mix(vec3(1.0), vec3(h1(ln + 3.0), h1(ln + 7.0), h1(ln + 11.0)), step(0.75, s1));
+              c = mix(c, c * 0.25 + sc * st, wb * 0.85);
+            }
+            vec2 ed = vhsEdges(uv.y); ed.y *= w;
+            c = mix(c, c * vec3(0.45, 1.2, 0.5) + vec3(0.0, 0.15, 0.03), sqrt(ed.x) * min(1.0, 1.3 * w));   // the colour lock comes back late: a green cast trails below the band
+            c = mix(c, vec3(0.8, 0.15, 0.85), ed.y * 0.6);                                 // a magenta line at its top edge
           }
           c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rgb);
           c *= 1.0 - 0.28 * rgb * step(0.5, fract(gl_FragCoord.y / 3.0));
@@ -483,6 +501,9 @@ ${FX_GLSL}
                 float ga = f < 0.06 ? f / 0.06 * 0.95 : f < 0.35 ? mix(0.95, 0.6, (f - 0.06) / 0.29) : mix(0.6, 0.0, (f - 0.35) / 0.65);
                 float gv = f < 0.35 ? mix(1.0, 235.0 / 255.0, max(0.0, f - 0.06) / 0.29) : mix(235.0, 220.0, (f - 0.35) / 0.65) / 255.0;
                 c = mix(c, vec3(gv), ga * (0.35 + rnd(y + fr) * 0.6) * k); } }
+            float gd = P.y - (bands.x + bands.y), gu = (bands.x - bands.y) - P.y;   // below the wide band a green cast trails off; a magenta line tops it
+            if (gd > 0.0 && gd < res.y * 0.14) c = mix(c, c * vec3(0.55, 1.15, 0.6) + vec3(0.0, 0.12, 0.02), (1.0 - gd / (res.y * 0.14)) * 0.7 * k);
+            if (gu >= 0.0 && gu < res.y * 0.008) c = mix(c, vec3(0.8, 0.15, 0.85), 0.6 * k);
             if (mod(floor(P.y), 3.0) < 0.5) c *= 1.0 - 0.22 * k;   // scanlines
           }
         }

@@ -348,8 +348,8 @@ function syncFxUI(){
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
-    styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2); $('#fxStyle').classList.toggle('rows2', d.styles.length > 1); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${STYLE_BTN[s[0]] || s[1]}</button>`).join(''));
+    styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     tgtSet(E.target);
   }
   else if (pre){
@@ -358,9 +358,9 @@ function syncFxUI(){
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>');
   }
   else {
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${STYLE_BTN[s[0]] || s[1]}</button>`).join(''));
     styleSet(FX_DEFS.indexOf(d), C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
-    $('#fxStyle').classList.toggle('rows2', d.styles.length > 1); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));   // styles always in two even rows (CRT 4 + 3, Strobe 1 + 1): the editor keeps the same height for every effect
+      // styles always in two even rows (CRT 4 + 3, Strobe 1 + 1): the editor keeps the same height for every effect
     tgtSet(C.target);
   }
   segSet('#fxMode', C.mode);
@@ -390,7 +390,7 @@ function syncFxUI(){
     else { $('#fxSize').max = FX_SIZES.length - 1; $('#fxSizeRow').title = 'Size: the pixel block size at full amount';
     const zi = optIdx(FX_SIZES, C.size || d.sizeDef || 64); $('#fxSize').value = zi; $('#fxSize').nextElementSibling.textContent = FX_SIZES[zi][1];
     $('#fxSize').dataset.def = optIdx(FX_SIZES, d.sizeDef || 64);
-    $('#fxSizeRow').classList.toggle('dimmed', !!d.sizeFor && !d.sizeFor.includes(C.style || d.styles[0][0])); }
+    $('#fxSizeRow').classList.toggle('dimmed', !!d.sizeFor && !styleParts(di, C.style).some(p => d.sizeFor.includes(p))); }
   }
 }
 // effect names refit (full or short) when the window changes, and are measured again once the fonts are in
@@ -410,8 +410,14 @@ const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NF
 const tgtSet = t => { const L = tgtList(t); $('#fxTgt').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === 'out' ? L[0] === 'out' : L.includes(+b.dataset.v))); };
 onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ X.target = b.dataset.v === 'out' ? 'out' : tgtToggle(X.target, +b.dataset.v, false); syncFxUI(); } });
 $('#fxTgt').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === 'out') return; e.preventDefault(); const X = fxEd(); if (X){ X.target = +b.dataset.v; syncFxUI(); } });
-const styleSet = (i, v) => { const P = styleParts(i, v); $('#fxStyle').querySelectorAll('button').forEach(b => b.classList.toggle('on', P.includes(b.dataset.v))); };
-onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (X){ X.style = styleToggle(selFx < NFX ? selFx : preEd, X.style || FX_DEFS[selFx < NFX ? selFx : preEd].styles[0][0], b.dataset.v); syncFxUI(); } });
+const styleSet = (i, v) => { const P = styleParts(i, v), f = fxFocus[FX_DEFS[i].id], multi = FX_MULTI[FX_DEFS[i].id] && P.length > 1;
+  $('#fxStyle').querySelectorAll('button').forEach(b => { b.classList.toggle('on', P.includes(b.dataset.v)); b.classList.toggle('focus', !!multi && b.dataset.v === f && P.includes(f)); }); };
+onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (!X) return; const i = selFx < NFX ? selFx : preEd, id = FX_DEFS[i].id;
+  X.style = styleToggle(i, X.style || FX_DEFS[i].styles[0][0], b.dataset.v);
+  if (FX_MULTI[id]) fxFocus[id] = styleParts(i, X.style).includes(b.dataset.v) ? b.dataset.v : undefined;   // switched on: its settings show
+  syncFxUI(); });
+$('#fxStyle').addEventListener('contextmenu', e => { const b = e.target.closest('button'), X = fxEd(); if (!b || !X) return; e.preventDefault();   // right-click: that style's settings, without switching it
+  const i = selFx < NFX ? selFx : preEd, id = FX_DEFS[i].id; if (!FX_MULTI[id] || !styleParts(i, X.style).includes(b.dataset.v)) return; fxFocus[id] = b.dataset.v; syncFxUI(); });
 $('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----

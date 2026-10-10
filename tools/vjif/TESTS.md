@@ -32,6 +32,9 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {fxorder} **Palette, then VHS** (0.54) — F2 › Palette + F10 › VHS: the tape noise and colour bleed show over the palette.
 - {shiftlock} **Shift slides along a guide** (0.56) — Stick on, drag a GIF onto a third line, hold Shift: it only moves along that line (also on a diagonal).
 - {txdrag} **Text onto a pad** (0.56) — Text…, type, drag the chip onto any pad: the window steps aside, the text lands there.
+- {vhsref} **VHS like the footage** (0.57) — CRT › VHS at Wear above ~50%: the wide band rolling down turns dark and streaky, with a green cast under it and a magenta line on top. Same trail in the Glitch › VHS transition.
+- {crtfocus} **Stacked CRT settings** (0.57) — CRT with VHS + Scan on: right-click VHS → the Size row reads Dropouts, right-click Scan → Size; neither switches off. One row of styles.
+- {picker} **File picker speed** (0.57) — + Add / an empty pad: does the system picker open faster than before?
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

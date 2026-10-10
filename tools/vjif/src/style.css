@@ -366,8 +366,8 @@ output.mod{color:var(--env)}
 .lpgrid .lpx.on{background:var(--c);box-shadow:0 0 8px color-mix(in srgb,var(--c) 45%,transparent)}
 .lpleg{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;font-size:11px;color:var(--muted)}.lpleg span{display:inline-flex;align-items:center;gap:5px}.lpleg i{width:10px;height:10px;border-radius:2px;display:inline-block}
 .lpnote{font-size:11px;color:var(--muted);margin:10px 0 0}
-#fxStyleRow #fxStyle.rows2 button{flex:1 0 calc(100% / var(--per) - 1px);min-width:0}   /* two even rows */
-#fxStyleRow #fxStyle{min-height:48px;align-content:flex-start}   /* two rows' height for every effect (one style: the row stays where it is) */
+#fxStyleRow #fxStyle{flex-wrap:nowrap}#fxStyleRow #fxStyle button{flex:1 1 auto;min-width:0;padding:0 4px}   /* one row for every effect: each style as wide as its name, sharing out the rest */
+#fxStyle button.focus{box-shadow:inset 0 -2px 0 currentColor}   /* stacked CRT: the style whose settings show */
 
 :root{--learn:#ffb000}   /* MIDI learn has its own colour (amber), so learn mode can't be mistaken for the normal accent */
 body.padcopy .pad.drop,#scenes.copying .scene.drop,body.precopy #fxPre .fxp.drop{outline:2px solid var(--sig);outline-offset:-2px}

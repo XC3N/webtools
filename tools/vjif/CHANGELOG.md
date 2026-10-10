@@ -4,6 +4,20 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.57.0 — 2026-10-10
+
+### Effects
+- CRT › VHS, from real tracking-glitch footage: at high Wear the wide tracking band loses the picture to a dark band of white and coloured streaks, a green cast trails below it (the colour lock coming back late), and a thin magenta line tops it. The picture also softens as Wear rises.
+- Glitch › VHS transition: the same green trail and magenta line under and over its wide band.
+- Effect styles always fit on one row (CRT's buttons read Scan and Phos; the tooltips keep the full names). The editor is one row shorter for every effect.
+- Stacked CRT: right-click a style that's on to show its settings (VHS → Dropouts, Scanlines / Crypt → Size) without switching it off; switching a style on also brings up its settings. The style in focus is underlined.
+
+### Fixes
+- Stacked CRT: the Size row was greyed out whenever Scanlines or Crypt were stacked with another style.
+
+### Interface
+- The file pickers list extensions (.gif, .webp…) instead of file types, which some systems open faster.
+
 ## 0.56.0 — 2026-10-10
 
 ### Effects
