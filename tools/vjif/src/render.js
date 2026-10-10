@@ -197,7 +197,8 @@ const TR_STYLES = {
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
            ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)'], ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)'],
-           ['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it']] };
+           ['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
+           ['channel', 'Channel', 'A TV changing channels: a flick of snow, then the new scene rolls into place, with a green channel number in the top right corner']] };
 const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
 // a preset made valid: a known type and style, a block size
 function normTrans(P){
@@ -298,7 +299,7 @@ function meltTable(px = 12){
   }
   return ticks;
 }
-const vhsN = {};                                     // the VHS transition's noise canvas
+const vhsN = {}, chN = {};   // the VHS / Channel transitions' noise canvases
 // what each transition type draws into the master canvas: e = progress 0…1 (eased if Smooth), T = the preset,
 // A / B = the scene being left / arriving (drawn whole into trA / trB), [dx, dy] = the direction
 const TR_DRAW = {
@@ -387,6 +388,34 @@ const TR_DRAW = {
         pxCtx.putImageData(im, 0, 0);
       }
       m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return; }
+    if (gst === 'channel'){                        // a TV changing channels: the old picture collapses into snow, the new one rolls in, the channel number shows
+      if (trans && trans.ch == null) trans.ch = 2 + Math.floor(Math.random() * 98);
+      const ch = trans ? trans.ch : 12, inA = 0.12, outB = 0.5;                  // snow from 12 % to 50 % of the way
+      if (!chN.cv){ chN.cv = document.createElement('canvas'); chN.cv.width = 240; chN.cv.height = 135; chN.x = chN.cv.getContext('2d'); chN.img = chN.x.createImageData(240, 135); }
+      const d = chN.img.data;                       // TV snow: fine grey speckle, new every frame
+      for (let i = 0; i < d.length; i += 4){ const v = Math.random() ** 1.6 * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+      chN.x.putImageData(chN.img, 0, 0);
+      if (e < inA){                                 // the old picture: a quick squash and brighten as the tuner lets go
+        const q = e / inA, sq = 1 - 0.35 * q * q; m.fillStyle = '#000'; m.fillRect(0, 0, W, H);
+        m.filter = `brightness(${1 + q})`; m.drawImage(A, 0, (H - H * sq) / 2, W, H * sq); m.filter = 'none';
+        m.globalAlpha = q * q; m.drawImage(chN.cv, 0, 0, W, H); m.globalAlpha = 1;
+      } else if (e < outB){                         // snow, with the hum bar drifting through it
+        m.imageSmoothingEnabled = false; m.drawImage(chN.cv, 0, 0, W, H); m.imageSmoothingEnabled = true;
+        const hy = ((e - inA) / (outB - inA) * 1.4 - 0.2) * H; m.fillStyle = 'rgba(0,0,0,.35)'; m.fillRect(0, hy, W, H * 0.12);
+      } else {                                      // the new picture rolls down into place (vertical hold catching), snow fading out
+        const q = (e - outB) / (1 - outB), roll = Math.round((1 - q) ** 3 * H * 1.2) % H;
+        m.drawImage(B, 0, roll - H); m.drawImage(B, 0, roll);
+        if (roll > 0){ m.fillStyle = '#000'; m.fillRect(0, roll - H * 0.03, W, H * 0.03); }   // the blanking bar between two frames
+        m.globalAlpha = (1 - q) ** 2 * 0.8; m.drawImage(chN.cv, 0, 0, W, H); m.globalAlpha = 1;
+      }
+      if (e >= inA){                                // the channel number, OSD green, top right (it stays until the transition ends)
+        const fs = Math.round(H * 0.1), x = W - H * 0.06, y = H * 0.06 + fs;
+        m.font = `${fs}px "Press Start 2P", "Courier New", monospace`; m.textAlign = 'right'; m.textBaseline = 'alphabetic';
+        const txt = String(ch).padStart(2, '0');
+        m.fillStyle = 'rgba(0,0,0,.6)'; m.fillText(txt, x + fs * 0.08, y + fs * 0.08);
+        m.fillStyle = '#3cff4e'; m.fillText(txt, x, y); m.textAlign = 'start';
+      }
+      return; }
     if (gst === 'vhs'){                            // a tape switching channels: the picture tears up, dissolves into snow, and the new one comes out of it
       const k = Math.sin(Math.PI * e), src = e < 0.5 ? A : B, t = performance.now() / 1000;
       const nz = Math.min(1, Math.max(0, 1 - Math.abs(e - 0.5) / 0.3)) ** 1.5;   // snow: none at the ends, all of it around the middle

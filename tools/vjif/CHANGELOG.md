@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.59.0 — 2026-10-10
+
+### Transitions
+- Glitch › Channel: a TV changing channels. The old picture squashes and flares into snow, a hum bar drifts through, the new scene rolls down into place as the vertical hold catches, and a random two-digit channel number shows in green in the top right corner until the transition ends.
+
 ## 0.58.1 — 2026-10-10
 
 ### Interface
