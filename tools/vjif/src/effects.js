@@ -385,13 +385,13 @@ ${FX_GLSL}
             if (uv.y > 0.955) c = mix(c, vec3(h2(gl_FragCoord.xy + fr), h2(gl_FragCoord.xy + fr + 17.3), h2(gl_FragCoord.xy + fr + 41.9)) * 0.7 + h2(gl_FragCoord.xy + fr) * 0.3, 0.5 * w);   // the switching noise is snowy, in colour
             float wb = max(0.0, 1.0 - abs(uv.y - (fract(time * 0.35) * 1.3 - 0.15)) / 0.11) * smoothstep(0.35, 1.0, w);   // heavy wear: the wide band loses the picture
             if (wb > 0.001){                         // …to a dark band of streaks: white and coloured lines of different lengths
-              float s1 = h1(ln * 4.3 + fr * 1.9), sx = h1(ln * 7.1 + fr), sl = 0.05 + h1(ln * 2.9 + fr * 0.5) * 0.5;
-              float st = step(0.55, s1) * step(sx, uv.x) * step(uv.x, sx + sl) * (0.6 + 0.4 * h2(gl_FragCoord.xy + fr));
+              float seg = floor(uv.x * 24.0), s1 = h1(ln * 4.3 + seg * 13.7 + fr * 1.9), sx = (seg + h1(ln * 7.1 + seg + fr)) / 24.0, sl = 0.004 + h1(ln * 2.9 + seg + fr * 0.5) * 0.03;
+              float st = step(0.6, s1) * step(sx, uv.x) * step(uv.x, sx + sl) * (0.6 + 0.4 * h2(gl_FragCoord.xy + fr));   // dense short specks, like the footage
               vec3 sc = mix(vec3(1.0), vec3(h1(ln + 3.0), h1(ln + 7.0), h1(ln + 11.0)), step(0.75, s1));
               c = mix(c, c * 0.25 + sc * st, wb * 0.85);
             }
             vec2 ed = vhsEdges(uv.y); ed.y *= w;
-            c = mix(c, c * vec3(0.45, 1.2, 0.5) + vec3(0.0, 0.15, 0.03), sqrt(ed.x) * min(1.0, 1.3 * w));   // the colour lock comes back late: a green cast trails below the band
+            c = mix(c, c * vec3(0.45, 1.2, 0.5) + vec3(0.0, 0.15, 0.03) * (0.4 + 1.2 * h2(floor(gl_FragCoord.xy / vec2(4.0, 2.0)) + fr)), sqrt(ed.x) * min(1.0, 1.3 * w));   // grainy green   // the colour lock comes back late: a green cast trails below the band
             c = mix(c, vec3(0.8, 0.15, 0.85), ed.y * 0.6);                                 // a magenta line at its top edge
           }
           c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rgb);
@@ -502,7 +502,7 @@ ${FX_GLSL}
                 float gv = f < 0.35 ? mix(1.0, 235.0 / 255.0, max(0.0, f - 0.06) / 0.29) : mix(235.0, 220.0, (f - 0.35) / 0.65) / 255.0;
                 c = mix(c, vec3(gv), ga * (0.35 + rnd(y + fr) * 0.6) * k); } }
             float gd = P.y - (bands.x + bands.y), gu = (bands.x - bands.y) - P.y;   // below the wide band a green cast trails off; a magenta line tops it
-            if (gd > 0.0 && gd < res.y * 0.14) c = mix(c, c * vec3(0.55, 1.15, 0.6) + vec3(0.0, 0.12, 0.02), (1.0 - gd / (res.y * 0.14)) * 0.7 * k);
+            if (gd > 0.0 && gd < res.y * 0.14) c = mix(c, c * vec3(0.55, 1.15, 0.6) + vec3(0.0, 0.12, 0.02) * (0.4 + 1.2 * rnd(floor(P.x / 4.0) * 1.7 + floor(P.y / 2.0) * 31.3 + fr)), (1.0 - gd / (res.y * 0.14)) * 0.7 * k);
             if (gu >= 0.0 && gu < res.y * 0.008) c = mix(c, vec3(0.8, 0.15, 0.85), 0.6 * k);
             if (mod(floor(P.y), 3.0) < 0.5) c *= 1.0 - 0.22 * k;   // scanlines
           }

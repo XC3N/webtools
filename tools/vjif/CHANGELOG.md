@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.57.1 — 2026-10-10
+
+### Effects
+- CRT › VHS, closer to the footage: the dark tracking band holds dense short specks instead of long streaks, and the green under it is grainy instead of a flat tint (in the VHS transition too).
+
 ## 0.57.0 — 2026-10-10
 
 ### Effects
