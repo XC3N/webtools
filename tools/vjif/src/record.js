@@ -20,9 +20,10 @@ function musSet(src, name, save = true){
   mus.name = name; musUI();
 }
 async function musPlay(){ musGraph(); try { await mus.ctx.resume(); await mus.el.play(); } catch (e) { toast("Can't play that track: " + (e.message || e.name)); } musUI(); }
-const musSyncOn = () => recAudio && recAudio.id === 'music' && $('#musSync').checked && mus.el.src;
-function musRecStart(){ if (!musSyncOn()) return; mus.el.currentTime = 0; musPlay(); }
-function musRecStop(){ if (musSyncOn()){ mus.el.pause(); musUI(); } }
+// With Sync: Sync (beat 1) also starts the track from the top, so the song and the beat grid start together. Recording
+// never touches the track: a take records whatever is playing, and the track carries on when the take ends.
+// (To record a song from its start: Rec, then Sync. The waiting take starts on Sync's downbeat, with the song.)
+function musOnSync(){ if ($('#musSync').checked && mus.el.src && clock.src === 'internal'){ mus.el.currentTime = 0; musPlay(); } }
 const mmss = t => isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '–:––';
 function musUI(){
   $('#musName').textContent = mus.name || 'no track'; $('#musPlay').disabled = $('#musStop').disabled = !mus.el.src;
@@ -33,7 +34,7 @@ function musUI(){
 ['play', 'pause', 'ended', 'timeupdate', 'loadedmetadata'].forEach(ev => mus.el.addEventListener(ev, musUI));
 mus.el.addEventListener('error', () => { if (mus.el.src) toast(`Can't load ${mus.name}: ${mus.url ? 'not an audio format this browser plays' : "the link isn't an audio file, or the site doesn't allow it"}`); });
 const MUS_IC_PLAY = $('#musPlay').innerHTML, MUS_IC_PAUSE = '<svg viewBox="0 0 16 16" width="14" height="14" style="display:block;margin:auto"><rect x="3.5" y="3" width="3" height="10" fill="currentColor"/><rect x="9.5" y="3" width="3" height="10" fill="currentColor"/></svg>';
-// the player's settings stay in this browser: loop, level, With Rec
+// the player's settings stay in this browser: loop, level, With Sync
 const musOpt = Prefs.json('vjif-mus', {});
 const musSave = () => Prefs.setJson('vjif-mus', { loop: mus.el.loop, vol: +$('#musVol').value, sync: $('#musSync').checked });
 mus.el.loop = !!musOpt.loop; if (musOpt.vol > 0.02) $('#musVol').value = musOpt.vol;   // a level saved at 0 (the old upright slider could get stuck there) starts at the default if (musOpt.sync != null) $('#musSync').checked = musOpt.sync;
@@ -152,7 +153,6 @@ async function recPrepare(){
   rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; rec.last = clock.beat; recUI();
 }
 function recStart(mime, beat = clock.beat){
-  musRecStart();
   if (mime === WC_MP4) return wcStart(beat);
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   // this take owns its writer, chunks, name and sound input: a quick next take can't step on them while this one saves
@@ -205,10 +205,15 @@ async function wcSetup(beat){
     rec.audio = audio; return recStart(m, beat);
   }
   const track = audio && audio.getAudioTracks()[0], set = track ? track.getSettings() : null;
-  let acfg = null;
+  let acfg = null, reader = null, first = null;
   if (track && typeof AudioEncoder === 'function' && typeof MediaStreamTrackProcessor === 'function'){
+    // a deep buffer (~2 s of sound) so a busy frame doesn't make the browser drop sound blocks (heard as crackle / garble)
+    reader = new MediaStreamTrackProcessor({ track, maxBufferSize: 200 }).readable.getReader();
+    // the encoder is set up from the sound as it really arrives (rate, channels), not from what the track claims
+    first = await Promise.race([reader.read().then(r => r.done ? null : r.value).catch(() => null), new Promise(r => setTimeout(() => r(null), 600))]);
+    const sr = first ? first.sampleRate : set.sampleRate || 48000, nch = first ? first.numberOfChannels : set.channelCount || 2;
     for (const codec of recACodec === 'opus' ? ['opus', 'mp4a.40.2'] : ['mp4a.40.2', 'opus']){   // AAC is what the social sites expect; Opus in MP4 plays in browsers and VLC
-      const c = { codec, sampleRate: set.sampleRate || 48000, numberOfChannels: Math.min(2, set.channelCount || 2), bitrate: 192000 };
+      const c = { codec, sampleRate: sr, numberOfChannels: Math.min(2, nch), bitrate: 192000 };
       try { if ((await AudioEncoder.isConfigSupported(c)).supported){ acfg = c; break; } } catch (e) {}
     }
     if (!acfg) toast('This browser can\'t encode sound for MP4 — recording without sound');
@@ -224,7 +229,7 @@ async function wcSetup(beat){
   const fail = e => { toast('Recording failed: ' + (e && e.message || e)); recStop(); };
   // the clip's clock starts on the bar it was asked to start on (getting the encoders ready took a few ms), so a bar-length take is exactly that long
   const C = { venc: null, aenc: null, reader: null, audio, muxer, target, writer, name, fps, us, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm,
-              stopping: false, vOn: false, aHold: [], aOff: null, dropped: 0, warned: false };
+              stopping: false, vOn: false, aHold: [], aOff: null, aNext: null, dropped: 0, warned: false };
   C.venc = new VideoEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addVideoChunk(ch, meta);
     if (!C.vOn){ C.vOn = true; C.aHold.forEach(a => muxer.addAudioChunkRaw(...a)); C.aHold = null; } }, error: fail });
   C.venc.configure(vcfg);
@@ -232,13 +237,16 @@ async function wcSetup(beat){
     // sound chunks are re-stamped onto the video clock; any that arrive before the first video chunk wait for it, so the
     // muxer sees the video track first (its first frame is time 0)
     C.aenc = new AudioEncoder({ output: (ch, meta) => {
-      const t = ch.timestamp - C.aOff; if (t < 0) return;
+      // the first block is placed on the video clock; every next one follows straight on (by its length), so the sound
+      // stays one unbroken stream even when blocks arrive with jittery time stamps
+      let t = ch.timestamp - C.aOff; if (C.aNext === null){ if (t < 0) return; } else t = C.aNext;
+      C.aNext = t + (ch.duration || 0);
       const b = new Uint8Array(ch.byteLength); ch.copyTo(b); rec.bytes += b.byteLength;
       const a = [b, ch.type, t, ch.duration ?? 0, meta];
       if (C.vOn) muxer.addAudioChunkRaw(...a); else C.aHold.push(a); }, error: fail });
     C.aenc.configure(acfg);
-    C.reader = new MediaStreamTrackProcessor({ track }).readable.getReader();
-    (async () => { for (;;){ const { value, done } = await C.reader.read().catch(() => ({ done: true })); if (done) break;
+    C.reader = reader;
+    (async () => { for (;;){ let value, done; if (first){ value = first; first = null; } else ({ value, done } = await C.reader.read().catch(() => ({ done: true }))); if (done) break;
       if (C.aOff === null){
         // Chrome stamps captured sound on the page's own clock (µs since it opened): then it lines up exactly. If a source
         // uses another clock, the first block is placed at the moment it arrived instead.
@@ -246,7 +254,7 @@ async function wcSetup(beat){
         C.aOff = Math.abs(ms - wall) < 2000 ? C.t0 * 1000 : value.timestamp - (wall - C.t0 - (value.duration || 0) / 1000) * 1000;
       }
       if (C.aenc.state === 'configured') C.aenc.encode(value); value.close(); } })();
-  } else if (audio) audio.getTracks().forEach(t => t.stop());
+  } else { if (first) first.close(); if (reader) reader.cancel().catch(() => {}); if (audio) audio.getTracks().forEach(t => t.stop()); }
   rec.wc = C;
   rec.mr = { stop: () => wcStop(C) };                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
   rec.t0 = C.t0; redraw.all = true; recUI(); bgTickSet(true);
@@ -283,7 +291,7 @@ async function wcStop(C){
       saveFile(blob, C.name); toast2(`Recording saved: ${C.name} (downloads folder)`); }
   } catch (e) { toast('Saving the recording failed: ' + e.message); }
 }
-function recStop(){ if (!rec.mr) return; musRecStop(); bgTickSet(false); const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
+function recStop(){ if (!rec.mr) return; bgTickSet(false); const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
 function recUI(){
   const b = $('#recBtn'); $('#recLed').classList.toggle('on', !!rec.mr); $('#recLed').classList.toggle('wait', !!rec.wait);
   if (rec.mr){ const t = (performance.now() - rec.t0) / 1000, mb = rec.bytes / 1048576;

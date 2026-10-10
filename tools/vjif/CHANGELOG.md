@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.61.0 — 2026-10-10
+
+### Recording
+- Music player: With Rec is now With Sync. Sync (beat 1) starts the track from the top, so the song and the beat grid line up. Recording never starts, restarts or stops the track: a take records whatever is playing, and the track carries on when a timed take ends. To record a song from its start: Rec, then Sync (the waiting take starts on Sync's downbeat, with the song).
+- MP4 sound (garbled with long takes / long tracks): the sound is read with a ~2 s buffer, so a busy frame no longer makes the browser drop sound blocks; the encoder is set up from the sound as it really arrives (rate, channels); and the sound is written as one unbroken stream instead of following jittery time stamps.
+
+### Transitions
+- Channel: the number is soft like an analog TV (blurred shadow, green glow, digits slightly out of focus), drawn once per transition and reused.
+
 ## 0.60.0 — 2026-10-10
 
 ### Effects

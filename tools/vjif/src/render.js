@@ -305,6 +305,16 @@ const OSD_GLYPHS = { 0: '01110100011001110101110011000101110', 1: '0010001100001
   8: '01110100011000101110100011000101110', 9: '01110100011000101111000010001001100', '-': '00000000000000011111000000000000000' };
 function osdText(m, txt, x, y, p, col){ m.fillStyle = col;
   [...txt].forEach((c, k) => { const g = OSD_GLYPHS[c]; if (g) for (let i = 0; i < 35; i++) if (g[i] === '1') m.fillRect(x + k * 6 * p + (i % 5) * p, y + Math.floor(i / 5) * p, p, p); }); }
+// the number soft like an analog TV: a blurred shadow, a green glow, then the digits slightly out of focus (made once, kept)
+const osdCache = { key: '', cv: null };
+function osdImage(txt, p){
+  const key = txt + '/' + p; if (osdCache.key === key) return osdCache.cv;
+  const cv = document.createElement('canvas'); cv.width = (txt.length * 6 + 4) * p; cv.height = 12 * p; const x = cv.getContext('2d'), o = 2 * p;
+  x.filter = `blur(${(p * 0.5).toFixed(1)}px)`; osdText(x, txt, o + p, o + p, p, 'rgba(0,0,0,.7)');
+  x.filter = `blur(${(p * 1.1).toFixed(1)}px)`; x.globalAlpha = 0.7; osdText(x, txt, o, o, p, '#3cff4e'); x.globalAlpha = 1;
+  x.filter = `blur(${(p * 0.28).toFixed(1)}px)`; osdText(x, txt, o, o, p, '#5dff6c'); x.filter = 'none';
+  osdCache.key = key; osdCache.cv = cv; return cv;
+}
 const vhsN = {}, chN = {};   // the VHS / Channel transitions' noise canvases
 // what each transition type draws into the master canvas: e = progress 0…1 (eased if Smooth), T = the preset,
 // A / B = the scene being left / arriving (drawn whole into trA / trB), [dx, dy] = the direction
@@ -416,7 +426,7 @@ const TR_DRAW = {
       }
       if (e >= inA){                                // the channel number, OSD green, top right (it stays until the transition ends)
         const txt = String(ch).padStart(2, '0'), p = Math.max(2, Math.round(H * 0.013)), cw = 6 * p, x0 = Math.round(W - H * 0.06 - txt.length * cw + p), y0 = Math.round(H * 0.06);
-        osdText(m, txt, x0 + p, y0 + p, p, 'rgba(0,0,0,.6)'); osdText(m, txt, x0, y0, p, '#3cff4e');   // shadow, then the digits
+        m.drawImage(osdImage(txt, p), x0 - 2 * p, y0 - 2 * p);   // drawn once per number and size, then reused every frame
       }
       return; }
     if (gst === 'vhs'){                            // a tape switching channels: the picture tears up, dissolves into snow, and the new one comes out of it
