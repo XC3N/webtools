@@ -368,3 +368,4 @@ output.mod{color:var(--env)}
 .lpleg{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;font-size:11px;color:var(--muted)}.lpleg span{display:inline-flex;align-items:center;gap:5px}.lpleg i{width:10px;height:10px;border-radius:2px;display:inline-block}
 .lpnote{font-size:11px;color:var(--muted);margin:10px 0 0}
 #fxStyleRow #fxStyle.rows2 button{flex:1 0 calc(100% / var(--per) - 1px);min-width:0}   /* two even rows */
+#fxStyleRow #fxStyle{min-height:48px;align-content:flex-start}   /* two rows' height for every effect (one style: the row stays where it is) */

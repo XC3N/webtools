@@ -23,7 +23,7 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - {fbk} **Feedback Length** (0.44) — F12 › Trails, Tunnel, Spiral: Length 100% leaves long smears, 20% only short ones.
 - {inlab} **Labels inside sliders** (0.45) — Transform, GIF › Colour / Auto, the effect editor, Settings: labels readable over the fill, nothing cut off at 1280×720, drag and double-click still work where the label is.
-- {dpat} **Palette patterns** (0.49) — F2 › Palette, Dither 100%, on a photo or a gradient: Scatter, Ordered, Checker each look different; Ordered reads like a DOS game.
+- {dpat} **Palette patterns** (0.49) — F2 › Palette, Dither 100%, on a photo or a gradient: Dither: Noise, Bayer, Check each look different; Bayer reads like a DOS game.
 - {mtgt} **Effect on several layers** (0.50) — GIFs on layers 1–3, Mirror: click 2 (from All): layers 1, 3, 4 mirrored each on their own; right-click 3: only layer 3; lit buttons in the layers' colours.
 - {cpy2} **Copy scenes and presets** (0.51) — drag a scene / an effect preset, hold Ctrl: + on the empty ones, drop: a copy; without Ctrl: a swap.
 - {diag} **Stick to diagonals** (0.51) — Diagonals (or Perspective) + Stick: drag a GIF near a diagonal, its centre slides onto it and the line lights up.

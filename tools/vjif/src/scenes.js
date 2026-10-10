@@ -349,7 +349,7 @@ function syncFxUI(){
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
-    styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2); $('#fxStyle').classList.toggle('rows2', d.styles.length > 5); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));
+    styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2); $('#fxStyle').classList.toggle('rows2', d.styles.length > 1); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));
     tgtSet(E.target);
   }
   else if (pre){
@@ -360,7 +360,7 @@ function syncFxUI(){
   else {
     setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[2]}">${s[1]}</button>`).join(''));
     styleSet(FX_DEFS.indexOf(d), C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
-    $('#fxStyle').classList.toggle('rows2', d.styles.length > 5); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));   // many styles: two even rows (CRT: 4 + 3), not 6 + 1
+    $('#fxStyle').classList.toggle('rows2', d.styles.length > 1); $('#fxStyle').style.setProperty('--per', Math.ceil(d.styles.length / 2));   // styles always in two even rows (CRT 4 + 3, Strobe 1 + 1): the editor keeps the same height for every effect
     tgtSet(C.target);
   }
   segSet('#fxMode', C.mode);
@@ -379,7 +379,7 @@ function syncFxUI(){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
     const alt = rateAlt(d, C.style || d.styles[0][0]); $('#fxRateRow').classList.toggle('altrow', !!alt);
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
-    if (alt){ const L = alt.list, ai = optIdx(L, C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
+    if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
       $('#fxRateRow').title = alt.title(ai); $('#fxRateRow').classList.remove('dimmed'); }
     else { $('#fxRate').max = FX_RATES.length - 1; $('#fxRateRow').title = 'Rate: how fast it moves (beats)';
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
@@ -526,7 +526,7 @@ $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
   if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = 0; else C.rel = fxRelDef(C.mode);
   drawFxEnv(); });
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
-$('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (alt) X[alt.key] = alt.list[+e.target.value][0]; else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
+$('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
   if (b){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); return; }
   const ch = e.target.closest('.pchip'); if (ch){ preEd = +ch.dataset.e; syncFxUI(); } });

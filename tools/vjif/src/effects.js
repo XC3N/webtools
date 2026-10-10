@@ -35,19 +35,23 @@ const FX_PALS = [
   ['GB Pocket', 'Game Boy Pocket: four olive greys', '1f1f1f 4d533c 8b956d c4cfa1'],
   ['GB Light', 'Game Boy Light, backlight on: four blue-greens', '004f3b 00694a 009a71 00b581'],
 ].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)); return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0) }; });
-const FX_DITH = Array.from({ length: 21 }, (_, i) => [i / 20, i ? i * 5 + '%' : 'off']);
 // Colour › Palette: how the in-between shades are drawn (the Size row stands in for it). Scatter: noise added before
 // snapping (soft, many colours touch). Ordered: each pixel picks one of the two nearest palette colours by a 4×4 Bayer
 // threshold, like DOS-era / 8-bit art. Checker: the two colours only ever as a 50% checkerboard (hand-pixelled look)
-const FX_DPAT = [[0, 'Scatter'], [1, 'Ordered'], [2, 'Checker']];
-function sizeAlt(d, style){ return d && d.id === 'colour' && style === 'pal' ? { label: 'Pattern', key: 'dpat', def: 0, list: FX_DPAT, title: () => 'Pattern: how in-between shades are drawn with the palette (Scatter: soft noise · Ordered: two colours in a Bayer pattern, DOS / 8-bit style · Checker: two colours as a 50% checkerboard)' } : null; }
+const FX_DPAT = [[0, 'Noise'], [1, 'Bayer'], [2, 'Check']];   // short: the name and amount share the slider's readout
+// Colour › Palette's Dither row holds both: off, then each pattern from 10 to 100% (one slider, as there's room for one).
+// Its value is pattern × 2 + amount (Noise 0.1–1, Bayer 2.1–3, Check 4.1–5), split back into dpat and dith.
+const FX_DITHP = [[0, 'off'], ...FX_DPAT.flatMap(([k, n]) => Array.from({ length: 10 }, (_, j) => [k * 2 + (j + 1) / 10, `${n} ${(j + 1) * 10}%`]))];
+const sizeAlt = () => null;
 // styles that use the Rate row for something else: Colour › Palette picks the palette, Mirror › Kaleido zooms in, Feedback: how long the echoes last
 const FX_KZ = Array.from({ length: 101 }, (_, i) => { const v = +(1 + i * 0.05).toFixed(2); return [v, v.toFixed(2).replace(/\.?0+$/, '') + '×']; });   // 1× to 6×, fine steps
 const FX_FBK = Array.from({ length: 20 }, (_, i) => [(i + 1) / 20, (i + 1) * 5 + '%']);   // no 0%: it isn't "off", only the shortest trails
 function rateAlt(d, style){
   if (!d) return null;
   if (d.id === 'feedback') return { label: 'Length', key: 'fbk', def: 0.7, list: FX_FBK, title: () => 'Length: how long the trails / echoes last before they fade' };
-  if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, title: () => 'Dither: ordered dots between the palette colours, for in-between shades (off = flat areas)' };
+  if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITHP,
+    get: C => C.dith > 0 ? (C.dpat || 0) * 2 + Math.round(C.dith * 10) / 10 : 0, set: (C, v) => { if (!v){ C.dith = 0; return; } C.dpat = Math.floor((v - 0.001) / 2); C.dith = +(v - C.dpat * 2).toFixed(2); },
+    title: () => 'Dither: in-between shades drawn with the palette colours, and how. Noise: soft scattered dots · Bayer: two colours in an ordered pattern, DOS / 8-bit style · Check: two colours as a 50% checkerboard (off = flat areas)' };
   if (d.id === 'mirror' && style === 'kal') return { label: 'Zoom', key: 'kz', def: 1, list: FX_KZ, title: () => 'Zoom: into the middle of the kaleidoscope' };
   return null;
 }
@@ -138,8 +142,8 @@ function tgtToggle(t, li, solo){               // a click on a layer button: in 
   if (solo) return li;
   const S = new Set(tgtList(t)[0] === 'out' ? [0, 1, 2, 3] : tgtList(t));
   S.has(li) ? S.delete(li) : S.add(li);
-  if (!S.size || S.size === 4) return 'out';
-  const L = [...S].sort(); return L.length === 1 ? L[0] : L;
+  if (!S.size) return [0, 1, 2, 3];                  // the last one taken out: every layer (each on its own), not All
+  const L = [...S].sort(); return L.length === 1 ? L[0] : L;   // all four is still "each layer", which isn't the same as All (the blended picture)
 }
 function fxMix(b, X = fxLive()){
   const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0) });

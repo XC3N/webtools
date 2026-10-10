@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.55.0 — 2026-10-09
+
+### Effects
+- The effect editor keeps the same height for every effect: styles always sit in two even rows (CRT 4 + 3, Strobe 1 + 1). Switching effects no longer shifts the rows below.
+- Colour › Palette: the Pattern control from 0.49 never actually showed (that row is hidden for Colour). Pattern and amount now share the Dither slider: off, then Noise / Bayer / Check from 10 to 100% (renamed from Scatter / Ordered / Checker so they fit).
+- Layer mask: taking out the last lit layer gives every layer (1+2+3+4, each on its own), and lighting all four keeps them as layers instead of switching to All (the blended picture). All is only the All button.
+
 ## 0.54.1 — 2026-10-09
 
 ### Interface
