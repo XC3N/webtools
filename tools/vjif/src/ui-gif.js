@@ -25,8 +25,9 @@ function syncGifUI(){
   $('#gifSettings').classList.toggle('disabled', !g);
   $('#gifName').textContent = `${p.label}${g ? '' : ' · empty'}`;
   $('#gText').hidden = !(g && g.media && g.media.text);
-  if (!g){ $('#gInfo').textContent = ''; document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
+  if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); $('#gInfo').textContent = ''; document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
   $('#gSmooth').checked = !g.crisp;
+  document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
   if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + FX_PALS.map((P, i) => `<option value="${i}" title="${esc(P.t)}">${esc(P.n)}</option>`).join('');
   $('#gPal').value = String(g.pal ? g.pal.i : -1); $('#gPalD').value = g.pal ? g.pal.d : 0; $('#gPalD').nextElementSibling.textContent = Math.round((g.pal ? g.pal.d : 0) * 100) + '%';
   $('#gPalD').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
@@ -59,7 +60,7 @@ onSeg($('#gRes'), (b, e) => { const g = curGif(); if (!g || g.media.text) return
   setMediaScale(m, sc).then(() => toast2(`${m.name}: ${(was / 1048576).toFixed(0)} → ${(m.srcBytes / 1048576).toFixed(0)} MB`)); });
 // ---- colour swaps: the GIF's palette (most used colours first), each swap = one palette colour → another ----
 function gifPalette(g){
-  const m = g.media, CL = g.swapMerge ?? 10; m.palettes = m.palettes || {}; if (m.palettes[CL]) return m.palettes[CL];
+  const m = g.media, CL = g.swapMerge ?? 0; m.palettes = m.palettes || {}; if (m.palettes[CL]) return m.palettes[CL];
   const cnt = new Map(), step = Math.max(1, Math.floor(m.src.length / 8));
   const cv = new OffscreenCanvas(m.w, m.h), x = cv.getContext('2d', { willReadFrequently: true });
   for (let i = 0; i < m.src.length; i += step){
@@ -86,7 +87,7 @@ const sameRgb = (a, b) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 let swSel = null;                                     // the palette colour picked ([r,g,b]) or null; not yet swapped = a waiting row at the end
 function syncSwapUI(g){
   if (!g) return;
-  $('#swMerge').value = g.swapMerge ?? 10; $('#swMerge').nextElementSibling.textContent = (g.swapMerge ?? 10) ? (g.swapMerge ?? 10) + '' : 'off';
+  $('#swMerge').value = g.swapMerge ?? 0; $('#swMerge').nextElementSibling.textContent = (g.swapMerge ?? 0) ? (g.swapMerge ?? 0) + '' : 'off';
   const pal = gifPalette(g);
   if (swSel && !pal.some(c => sameRgb(c, swSel))) swSel = null;
   $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}${swSel && sameRgb(swSel, c) ? ' sel' : ''}" style="background:${rgbHex(c)}" title="${rgbHex(c)}"></button>`).join('');

@@ -185,6 +185,8 @@ pv.addEventListener('pointerdown', e => {
     hit = all.length ? all[(i + 1) % all.length] : null;
   } else hit = hitAny(px, py);
   if (hit){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); c = hit[1]; }
+  if (!hit && (px < 0 || px > W || py < 0 || py > H)){   // a click in the border around the canvas, on nothing: no GIF selected (its frame and handles go)
+    if (layers[target].sel){ layers[target].sel = null; syncLayerUI(); syncXfUI(); redraw.all = true; } return; }
   if (c) drag = { type: 'move', c, px, py, x0: c.x, y0: c.y };
 });
 pv.addEventListener('pointermove', e => {
@@ -210,14 +212,23 @@ pv.addEventListener('pointermove', e => {
       if (h[1] > 0) c[B] = clamp(1 - vs, 0, 1 - c[T] - MIN); else c[T] = clamp(vs, 0, 1 - c[B] - MIN);
     }
   } else if (drag.type === 'move'){
-    c.x = clamp(drag.x0 + px - drag.px, -W, W); c.y = clamp(drag.y0 + py - drag.py, -H, H);
-    drag.snap = null;
-    if ((pvOpt.stick || e.shiftKey) && !e.altKey){       // stick: the GIF's edges or centre onto a guide, the centre or an edge, within ~8 screen px · Shift: its centre only (Stick on or off)
-      const G = clipGeom(c), co = e.shiftKey;
-      if (G){ const tol = (co ? 14 : 8) * W / view.w, rx = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), ry = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
+    const fx = clamp(drag.x0 + px - drag.px, -W, W), fy = clamp(drag.y0 + py - drag.py, -H, H);   // where the pointer alone puts it
+    if (e.shiftKey && drag.lock){                       // Shift on a lit guide: the GIF slides along that line only
+      const L = drag.lock; c.x = fx; c.y = fy;
+      if (L.line){ const G = clipGeom(c), [x0, y0, x1, y1] = L.line, dx = x1 - x0, dy = y1 - y0, t = clamp(((G.cx - x0) * dx + (G.cy - y0) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+        c.x += x0 + t * dx - G.cx; c.y += y0 + t * dy - G.cy; }
+      else if (L.x != null && (L.y == null || Math.abs(fy - L.cy) >= Math.abs(fx - L.cx))) c.x = L.cx;   // on a vertical line (both lit: the way the pointer goes most)
+      else c.y = L.cy;
+      drag.snap = L; return;
+    }
+    if (!e.shiftKey) drag.lock = null;
+    c.x = fx; c.y = fy; drag.snap = null;
+    if ((pvOpt.stick || e.shiftKey) && !e.altKey){       // stick: the GIF's edges or centre onto a guide, the centre or an edge, within ~8 screen px
+      const G = clipGeom(c);
+      if (G){ const tol = 8 * W / view.w, rx = Math.abs(G.hw * Math.cos(G.a)) + Math.abs(G.hh * Math.sin(G.a)), ry = Math.abs(G.hw * Math.sin(G.a)) + Math.abs(G.hh * Math.cos(G.a));
         const [gx, gy] = guideLines(), [sx, sy] = safeLines(), LX = [0, W / 2, W, ...gx, ...sx], LY = [0, H / 2, H, ...gy, ...sy];
         const best = (pts, lines) => { let b = null; for (const p of pts) for (const l of lines){ const d = l - p; if (Math.abs(d) <= tol && (!b || Math.abs(d) < Math.abs(b.d))) b = { d, l }; } return b; };
-        const bx = best(co ? [G.cx] : [G.cx - rx, G.cx, G.cx + rx], LX), by = best(co ? [G.cy] : [G.cy - ry, G.cy, G.cy + ry], LY);
+        const bx = best([G.cx - rx, G.cx, G.cx + rx], LX), by = best([G.cy - ry, G.cy, G.cy + ry], LY);
         // slanted guides: the centre slides onto the nearest diagonal / perspective ray (closest point on it)
         let sl = null; for (const [x0, y0, x1, y1] of guideSlants()){ const dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy; if (!L2) continue;
           const t = clamp(((G.cx - x0) * dx + (G.cy - y0) * dy) / L2, 0, 1), qx = x0 + t * dx, qy = y0 + t * dy, d = Math.hypot(qx - G.cx, qy - G.cy);
@@ -226,6 +237,7 @@ pv.addEventListener('pointermove', e => {
         if (sl && sl.d < sd){ drag.snap = { x: null, y: null, line: sl.line }; c.x += sl.mx; c.y += sl.my; }
         else if (bx || by){ drag.snap = { x: bx ? bx.l : null, y: by ? by.l : null }; if (bx) c.x += bx.d; if (by) c.y += by.d; } }
     }
+    if (e.shiftKey && drag.snap) drag.lock = { ...drag.snap, cx: c.x, cy: c.y };   // Shift while a guide is lit: from now on, along that guide
   } else {
     const { G0, h } = drag, [lx, ly] = toLocal(G0, px, py), center = e.altKey !== !!pvOpt.fromC;
     let ncx = 0, ncy = 0;

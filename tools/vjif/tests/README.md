@@ -38,11 +38,12 @@ python3 tools/vjif/tests/run_all.py golden crt_stack -v   # some tests, with the
 | copy_pads | Drag a pad, then hold Ctrl: a copy; release Ctrl: a move; Ctrl+click: clear. |
 | copy_scenes_presets | The same for effect presets and scenes, plus a swap without Ctrl. |
 | fx_targets | Effect layer mask: toggles, right-click solo, and the per-layer mix. |
-| crt_stack | CRT styles stack; Degauss stays on its own; the tile label. |
+| crt_stack | CRT styles stack and un-stack; the tile label. |
 | stick_diagonal | A dragged GIF's centre sticks to a diagonal guide. |
 | key_regions | Key › Everywhere / From edges / From pick, checked by transparency at known spots. |
 | slider_labels | No slider label cut off, or running into its value, at 1600 and 1280 wide. |
 | midi_learn | Learn bar placement, the opacity tag on the slider, Sync's message with MIDI clock. Uses a simulated MIDI input. |
 | review_fixes | Regressions found in the 0.52 code review: copying an empty scene, a % in a URL name, the same file loading twice at once, BRB catching up after a hold, Smooth vs Stutter / Melt timing |
 | gif_palette | GIF › Colour › Palette snaps to the palette (dither on), is saved with the set; Smoothing sits in GIF › Play |
+| text_drag | Text window: the text dragged onto a pad lands on that pad; the window steps aside while dragging |
 | launchpad | Simulated Launchpad Pro MK3: Programmer-mode SysEx, the layout, LED colours, back to Live mode. |

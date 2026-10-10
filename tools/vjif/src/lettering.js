@@ -57,7 +57,7 @@ async function renderText(spec, OW = W, OH = H){   // OW × OH: the frame it's d
   if (S.cut){ x.fillStyle = S.color; x.fillRect(0, 0, w, h); x.globalCompositeOperation = 'destination-out'; eachSeg(G, (t, sx, y) => { x.fillStyle = '#000'; x.fillText(t, sx, y); }); }
   else drawLook(G);
   const bmp = await createImageBitmap(cv);
-  return { src: [bmp], durs: [1000], w, h, srcBytes: w * h * 4, textW: tw + 2 * pad };
+  return { src: [bmp], durs: [1000], w, h, srcBytes: w * h * 4, textW: tw + 2 * pad, inkW: tw + 2 * Math.ceil(slant), inkH: th };   // ink: the letters alone (no room for glow / shadow)
 }
 // every part of every line, in place: fn(text, x, y, isAccent, line, part); slant is a shear around the baseline
 function eachSeg(G, fn, dx = 0, dy = 0){
@@ -146,7 +146,7 @@ function openText(edit = -1){
   $('#txSize').value = txSpec.size; $('#txTrack').value = txSpec.track; $('#txCol').value = txSpec.color; $('#txCol2').value = txSpec.col2 || TEXT_DEF.col2;
   const d = edit >= 0 ? edit : nextEmpty(selPad);
   $('#txTo').textContent = edit >= 0 ? `pad ${pads[edit].label}` : d >= 0 ? `→ pad ${pads[d].label}` : 'all pads full: pool only';
-  $('#txOk').textContent = edit >= 0 ? 'Update' : d >= 0 ? 'Put on pad' : 'Add to pool';
+  $('#txOk').textContent = edit >= 0 ? 'Update' : 'Add to pool'; $('#txOk').hidden = edit < 0 && d >= 0; $('#txDrag').hidden = edit >= 0;   // new text: dragged onto a pad (or Enter / a click: the next empty one)
   txFontStyle(); $('#textPanel').hidden = false; txUI(); $('#txText').focus();
 }
 function closeText(){ $('#textPanel').hidden = true; }
@@ -171,7 +171,7 @@ async function txPreview(){
   const f = r.src[0]; if (my !== txPrevN){ f.close(); return; }   // a newer one is on its way
   c.height = Math.round(c.width * H / W);
   // the frame, zoomed out when the text (or a cut-out's grown matte) is bigger than it, so the whole text shows
-  const zw = Math.max(FW, f.width), zh = Math.max(FH, f.height), k = Math.min(c.width / zw, c.height / zh);
+  const zw = Math.max(FW, spec.cut ? f.width : r.inkW * 1.04), zh = Math.max(FH, spec.cut ? f.height : r.inkH * 1.04), k = Math.min(c.width / zw, c.height / zh);   // by the letters, so a bigger glow doesn't zoom out
   const fx = (c.width - FW * k) / 2, fy = (c.height - FH * k) / 2;
   x.clearRect(0, 0, c.width, c.height);
   if (spec.cut){ x.fillStyle = '#3a6'; x.fillRect((c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k); }   // what shows through the letters
@@ -179,7 +179,7 @@ async function txPreview(){
   if (k < c.width / FW - 1e-6){ x.strokeStyle = '#ff5bb0'; x.setLineDash([4, 3]); x.strokeRect(fx + 0.5, fy + 0.5, FW * k - 1, FH * k - 1); x.setLineDash([]); }   // the output frame
   f.close();
 }
-async function textOk(){
+async function textOk(target = -1){   // target: the pad it was dragged onto (-1: the next empty one)
   txRead(); if (!txSpec.text.trim()) return toast('Type a text first');
   const spec = { ...txSpec, v: 1 };
   const blob = new Blob([JSON.stringify(spec)], { type: TEXT_MIME }), name = textName(spec), edit = txEdit;
@@ -191,7 +191,7 @@ async function textOk(){
       if (g){ delete keep.lfo; applyGifSettings(g, keep); g.lfo = JSON.parse(JSON.stringify(old.lfo)); if (g.lfo.x) delete g.lfo.x; textDefaults(g);
         if (!spec.marquee && old.lfo.x && !old.media.text.marquee) g.lfo.x = JSON.parse(JSON.stringify(old.lfo.x));
         if (g.key.on || hsvOn(g)) applyFx(g); syncGifUI(); }
-    } else { const d = nextEmpty(selPad); if (d >= 0){ putMedia(m, d); pads[d].el.classList.remove('hit'); void pads[d].el.offsetWidth; pads[d].el.classList.add('hit'); } else toast('All pads are full: the text is in the pool'); }
+    } else { const d = target >= 0 ? target : nextEmpty(selPad); if (d >= 0){ putMedia(m, d); pads[d].el.classList.remove('hit'); void pads[d].el.offsetWidth; pads[d].el.classList.add('hit'); } else toast('All pads are full: the text is in the pool'); }
   } catch (err) { toast("Couldn't make the text: " + err.message); }
 }
 // the font list: a font not listed (a set from another computer) is added so it stays selected
@@ -209,8 +209,19 @@ $('#txFont').addEventListener('change', async e => {
 });
 $('#textBtn').addEventListener('click', () => openText(-1));
 $('#gText').addEventListener('click', () => openText(selPad));
-$('#txClose').addEventListener('click', closeText); $('#txCancel').addEventListener('click', closeText);
-$('#txOk').addEventListener('click', textOk);
+$('#txClose').addEventListener('click', closeText);
+$('#txOk').addEventListener('click', () => textOk());
+// a new text: drag the chip onto any pad (the window steps aside while dragging); a click puts it on the next empty pad
+{ const chip = $('#txDrag'); let d = null;
+  chip.addEventListener('pointerdown', e => { if (e.button) return; chip.setPointerCapture(e.pointerId); d = { x: e.clientX, y: e.clientY, moved: false }; });
+  chip.addEventListener('pointermove', e => { if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5){ d.moved = true; $('#textPanel').classList.add('dragging'); const g = document.createElement('span'); g.className = 'chip'; g.innerHTML = `<span>${esc((txSpec.text || 'Text').slice(0, 10))}</span>`; ghost.show(g); }
+    if (d.moved){ ghost.move(e.clientX, e.clientY); const t = document.elementFromPoint(e.clientX, e.clientY), p = t && t.closest('.pad'); pads.forEach(q => q.el.classList.toggle('drop', q.el === p)); } });
+  const end = e => { if (!d) return; const was = d; d = null;
+    const t = was.moved && e && document.elementFromPoint(e.clientX, e.clientY), p = t && t.closest('.pad');   // (while the window is still out of the way)
+    ghost.hide(); pads.forEach(q => q.el.classList.remove('drop')); $('#textPanel').classList.remove('dragging');
+    if (!was.moved) textOk(); else if (p) textOk(+p.dataset.i); };
+  chip.addEventListener('pointerup', end); chip.addEventListener('pointercancel', () => end(null)); }
 $('#textPanel').addEventListener('input', () => { txRead(); txUI(); });
 $('#textPanel').addEventListener('change', () => { txRead(); txUI(); });
 onSeg($('#txCut'), (b, e) => {

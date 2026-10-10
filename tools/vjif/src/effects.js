@@ -11,8 +11,8 @@ const FX_DEFS = [
   { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']] },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
-  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['scramble', 'Scramble', 'Pixelated blocks with their colours scrambled (Size = biggest block)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'scramble'] },
-  { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, degauss', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches (best as a Hit with a long Release)'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
+  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['scramble', 'Scramble', 'Pixelated blocks with their colours scrambled (Size = biggest block)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'scramble'] },
+  { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, pay-TV and satellite scrambling (several at once)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
 
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
@@ -42,7 +42,13 @@ const FX_DPAT = [[0, 'Noise'], [1, 'Bayer'], [2, 'Check']];   // short: the name
 // Colour › Palette's Dither row holds both: off, then each pattern from 10 to 100% (one slider, as there's room for one).
 // Its value is pattern × 2 + amount (Noise 0.1–1, Bayer 2.1–3, Check 4.1–5), split back into dpat and dith.
 const FX_DITHP = [[0, 'off'], ...FX_DPAT.flatMap(([k, n]) => Array.from({ length: 10 }, (_, j) => [k * 2 + (j + 1) / 10, `${n} ${(j + 1) * 10}%`]))];
-const sizeAlt = () => null;
+// CRT › VHS alone (no Scanlines / Crypt, which own the Size row): the Size row sets how many dropouts the tape has
+const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   // 0–200 %
+function sizeAlt(d, style){
+  if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+');
+  if (!P.includes('vhs') || P.includes('scan') || P.includes('crypt')) return null;
+  return { label: 'Dropouts', key: 'vdrop', def: 1, list: FX_DROP, title: () => 'Dropouts: how often the tape loses its picture in streaks (they also grow with Wear)' };
+}
 // styles that use the Rate row for something else: Colour › Palette picks the palette, Mirror › Kaleido zooms in, Feedback: how long the echoes last
 const FX_KZ = Array.from({ length: 101 }, (_, i) => { const v = +(1 + i * 0.05).toFixed(2); return [v, v.toFixed(2).replace(/\.?0+$/, '') + '×']; });   // 1× to 6×, fine steps
 const FX_FBK = Array.from({ length: 20 }, (_, i) => [(i + 1) / 20, (i + 1) * 5 + '%']);   // no 0%: it isn't "off", only the shortest trails
@@ -62,7 +68,7 @@ const kalSlices = amt => Math.round(3 + 9 * clamp((amt - 0.05) / 0.95, 0, 1)), k
 const STYLE_SHORT = { thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', scramble: 'Scramb.', kal: 'Kaleid.', square: 'Square' };
 const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === String(v).split('+')[0]));
 // CRT can stack styles ('vhs+scan'): they run as separate stages in a fixed order. Degauss stays on its own (a one-off hit)
-const FX_MULTI = { rgb: true }, FX_SOLO = { degauss: true };
+const FX_MULTI = { rgb: true }, FX_SOLO = {};   // (Degauss, a one-off hit, moved to Glitch: CRT's styles all stack)
 const styleParts = (i, v) => { const L = String(v || '').split('+').filter(p => FX_DEFS[i].styles.some(s => s[0] === p)); return L.length ? L : [FX_DEFS[i].styles[0][0]]; };
 const styleNorm = (i, v) => { const P = styleParts(i, v); return FX_DEFS[i].styles.map(s => s[0]).filter(k => P.includes(k)).join('+'); };   // valid parts, in the styles' order
 const styleMask = (i, v) => styleParts(i, v).reduce((m, p) => m | (1 << FX_DEFS[i].styles.findIndex(s => s[0] === p)), 0);
@@ -138,15 +144,16 @@ const tgtKey = t => t === 'out' || t === undefined || t === null ? 'out' : +t;
 // ([0, 2]: each of them gets the effect on its own, before blending)
 const tgtList = t => Array.isArray(t) ? t : [tgtKey(t)];
 const tgtLabel = t => { const L = tgtList(t); return L[0] === 'out' ? '' : 'L' + L.map(i => i + 1).join('+'); };
-function tgtToggle(t, li, solo){               // a click on a layer button: in / out of the mask (right-click: that layer alone)
-  if (solo) return li;
-  const S = new Set(tgtList(t)[0] === 'out' ? [0, 1, 2, 3] : tgtList(t));
+// All and the layer buttons are two separate modes: All on (no layer lit), or All off and a set of layers.
+function tgtToggle(t, li, solo){               // a click on a layer button: in / out of the set (right-click: that layer alone)
+  if (solo || tgtList(t)[0] === 'out') return li;    // from All: the set starts with this layer
+  const S = new Set(tgtList(t));
   S.has(li) ? S.delete(li) : S.add(li);
-  if (!S.size) return [0, 1, 2, 3];                  // the last one taken out: every layer (each on its own), not All
+  if (!S.size) return 'out';                         // the last layer taken out: back to All
   const L = [...S].sort(); return L.length === 1 ? L[0] : L;   // all four is still "each layer", which isn't the same as All (the blended picture)
 }
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ for (const k of tgtList(C.target)){ const m = M.get(k); m.lv[i] = v; m.env[i] = l; } } });
   X.pre.forEach((P, k) => {
@@ -154,13 +161,13 @@ function fxMix(b, X = fxLive()){
     for (const [i, e] of Object.entries(P.fx)){
       const v = l * e.amt;
       for (const k of tgtList(e.target)){ const m = M.get(k);
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; } }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; } }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
-function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, dith, dpat }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
   const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
@@ -169,7 +176,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, dith, dpat }){
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
     mirror: nm(7) === 'kal' ? env[7] : lv[7], mirS: S(7), mirN: kalSlices(amt[7]),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: styleMask(9, style[9]), crtSz: size[9], monoSz: size[0],
-    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, palP: dpat ? dpat[1] : 0, mirZ: kz ? kz[7] : 1, fbK: fbk ? fbk[11] : 0.7 };
+    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, palP: dpat ? dpat[1] : 0, mirZ: kz ? kz[7] : 1, fbK: fbk ? fbk[11] : 0.7, vDrop: vdrop ? vdrop[9] : 1 };
   if (U.colrS === FXS.colour.pal) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(5) === 'jitter', sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
@@ -215,7 +222,7 @@ function makePost(){
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
       uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP,
-                    glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, fbK, shakeZ;
+                    glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, shakeZ;
       uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -278,7 +285,7 @@ ${FX_GLSL}
       void main(){
         if (blit > 0.5){ gl_FragColor = texture2D(tex, vec2(uv.x, 1.0 - uv.y)); return; }
         vec2 p = uv, a = A(), scell = vec2(0.0); float scr = 0.0;
-        float split = rgb > 0.001 ? rgb * max(max(HAS(rgbS, S_rgb_split) ? 0.025 : 0.0, HAS(rgbS, S_rgb_vhs) ? 0.006 : 0.0), max(max(HAS(rgbS, S_rgb_scan) ? 0.0015 : 0.0, HAS(rgbS, S_rgb_phos) ? 0.002 : 0.0), HAS(rgbS, S_rgb_degauss) ? 0.008 : 0.0)) : 0.0;   // stacked styles: the widest colour split
+        float split = rgb > 0.001 ? rgb * max(max(HAS(rgbS, S_rgb_split) ? 0.025 : 0.0, HAS(rgbS, S_rgb_vhs) ? 0.006 : 0.0), max(HAS(rgbS, S_rgb_scan) ? 0.0015 : 0.0, HAS(rgbS, S_rgb_phos) ? 0.002 : 0.0)) : 0.0;   // stacked styles: the widest colour split
         float payU = 1.0;                              // pay-TV: where this pixel falls across the line (0 = the blanking bar's edge)
         if (rgb > 0.001 && HAS(rgbS, S_rgb_crypt)){              // crypt: lines shuffled within blocks of 32 (Nagravision Syster), then each cut at a random point and its halves swapped (Videocrypt)
           float lh = max(crtSz, 1.0) / res.y, line = floor(p.y / lh), key = floor(time * 4.0);
@@ -291,8 +298,8 @@ ${FX_GLSL}
           float off = rgb * (0.24 + 0.15 * sin(y * 3.2 + t * 0.9) + 0.035 * sin(y * 9.0 - t * 1.7) + 0.005 * sin(y * 61.0 + t * 11.0));
           p.y = fract(p.y + fract(t * 0.031) * rgb * 0.6);   // and the vertical hold drifts
           payU = fract(p.x + off); p.x = payU; }
-        if (rgb > 0.001 && HAS(rgbS, S_rgb_degauss)){ // degauss: the picture ripples
-          p += vec2(sin(p.y * 18.0 + time * 35.0), cos(p.x * 14.0 + time * 29.0)) * 0.006 * rgb; }
+        if (glitch > 0.001 && IS(glS, S_glitch_degauss)){ // degauss: the picture ripples
+          p += vec2(sin(p.y * 18.0 + time * 35.0), cos(p.x * 14.0 + time * 29.0)) * 0.006 * glitch; split += 0.008 * glitch; }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ // VHS tracking: a gentle sway and a torn band rolling down; with Wear: more of the tape's faults
           float fr = floor(time * 30.0), ln = floor(p.y * res.y / 2.0), w = rgb;   // Amount is the wear
           p.x += sin(p.y * 30.0 + time * 6.0) * 0.0015 * rgb;
@@ -348,8 +355,8 @@ ${FX_GLSL}
           float e = payU / 0.11;                      // the blanking bar: a bright sync edge, dark purple, a pale edge where the picture starts
           if (e < 1.0) d = e < 0.12 ? mix(vec3(0.95, 0.92, 1.0), vec3(0.55, 0.35, 0.75), e / 0.12) : e > 0.88 ? mix(vec3(0.16, 0.05, 0.24), vec3(0.75, 0.62, 0.95), (e - 0.88) / 0.12) : mix(vec3(0.30, 0.12, 0.42), vec3(0.14, 0.04, 0.22), (e - 0.12) / 0.76);
           c = mix(c, d, rgb); }
-        if (rgb > 0.001 && HAS(rgbS, S_rgb_degauss)){ // degauss: rainbow blotches swirling out
-          float r = length((uv - 0.5) * a); c = mix(c, clamp(hueRot(c, sin(r * 12.0 - time * 18.0 + sin(uv.x * 7.0) * 2.0) * 3.0), 0.0, 1.0), 0.75 * rgb); }
+        if (glitch > 0.001 && IS(glS, S_glitch_degauss)){ // degauss: rainbow blotches swirling out
+          float r = length((uv - 0.5) * a); c = mix(c, clamp(hueRot(c, sin(r * 12.0 - time * 18.0 + sin(uv.x * 7.0) * 2.0) * 3.0), 0.0, 1.0), 0.75 * glitch); }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ // VHS picture: washed colour, scanlines, noise; with Wear: colour bleeding right, dropouts
           float w = rgb, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
           if (w > 0.001){                            // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
@@ -361,13 +368,13 @@ ${FX_GLSL}
             c = mix(c, vec3(yl) + ch, 0.8 * w);                                     // colour at a fraction of the sharpness, smeared to the right
             c += (vec3(h1(ln * 3.7 + fr), h1(ln * 5.1 + fr * 1.7), h1(ln * 2.3 + fr * 0.7)) - 0.5) * 0.06 * w;   // chroma noise, line by line
             float bq = vhsBand(uv.y), seg = h1(ln * 1.3 + fr * 3.1);   // dropouts: where the tape lost its oxide, mostly in the bands
-            if (seg < (0.02 + 0.3 * bq) * w){
+            if (seg < (0.004 + 0.05 * w + 0.3 * bq) * w * vDrop){   // more with Wear (more often, brighter), × Dropouts
               float x0 = h1(ln + fr * 0.3), x1 = x0 + 0.02 + h1(ln * 2.1 + fr) * 0.3;
               float k = smoothstep(x0, x0 + 0.008, uv.x) * (1.0 - smoothstep(x0 + 0.01, x1, uv.x));   // a soft head that trails off
               k *= 0.55 + 0.45 * h1(floor(uv.x * res.x / 3.0) + ln);              // grainy along its length
-              c = mix(c, vec3(0.85) + (h2(gl_FragCoord.xy + fr) - 0.5) * 0.3, k * (0.5 + 0.4 * h1(ln + fr)));
+              c = mix(c, vec3(0.85) + (h2(gl_FragCoord.xy + fr) - 0.5) * 0.3, k * (0.5 + 0.4 * h1(ln + fr)) * (0.45 + 0.55 * w));
             }
-            if (uv.y > 0.955) c = mix(c, vec3(h2(gl_FragCoord.xy + fr)), 0.5 * w);   // the switching noise is snowy
+            if (uv.y > 0.955) c = mix(c, vec3(h2(gl_FragCoord.xy + fr), h2(gl_FragCoord.xy + fr + 17.3), h2(gl_FragCoord.xy + fr + 41.9)) * 0.7 + h2(gl_FragCoord.xy + fr) * 0.3, 0.5 * w);   // the switching noise is snowy, in colour
           }
           c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rgb);
           c *= 1.0 - 0.28 * rgb * step(0.5, fract(gl_FragCoord.y / 3.0));
@@ -401,7 +408,7 @@ ${FX_GLSL}
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz']);   // sizes given in canvas pixels
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP',
-                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'shakeZ', 'time'];
+                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'time'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
@@ -669,6 +676,7 @@ function drawOverlay(gh = ghostList()){
       const [tx, ty] = toWorld(G, 0, -G.hh), [kx, ky] = knobPos(G);
       pctx.beginPath(); pctx.moveTo(tx*k, ty*k); pctx.lineTo(kx*k, ky*k); pctx.stroke();
       pctx.beginPath(); pctx.arc(kx*k, ky*k, 5*dpr, 0, Math.PI*2); pctx.fillStyle = LCOL[target]; pctx.fill();
+      const cs = 5 * dpr; pctx.beginPath(); pctx.moveTo(G.cx*k - cs, G.cy*k); pctx.lineTo(G.cx*k + cs, G.cy*k); pctx.moveTo(G.cx*k, G.cy*k - cs); pctx.lineTo(G.cx*k, G.cy*k + cs); pctx.stroke();   // its centre (what sticks to slanted guides)
     }
   }
   pctx.restore();

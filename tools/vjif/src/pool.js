@@ -99,7 +99,7 @@ function makeInst(m, saved = null){
   const g = { uid: ++gifSeq, fxWaits: [], media: m, hash: m.hash, name: m.name, blob: m.blob, type: m.type, src: m.src, frames: m.src, durs: m.durs,
            w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
-           key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, pal: { i: -1, d: 0 }, swap: [], swapMerge: 10, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, pal: { i: -1, d: 0 }, swap: [], swapMerge: 0, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free' }, lfo: {} };
   insts.set(g.uid, g); rebuildSeq(g);

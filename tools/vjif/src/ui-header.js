@@ -184,9 +184,10 @@ function setUiZoom(z){ uiZoom = Math.round(clamp(z, 0.7, 1.3) * 100) / 100;
 // dragged by hand rather than by the browser: the slider grows and shrinks with the interface, so its own maths would chase the pointer
 let uzDrag = null;
 $('#uiZoomR').addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect();
-  uzDrag = { x: e.clientX, z: uiZoom, w: r.width }; e.currentTarget.setPointerCapture(e.pointerId); });
+  uzDrag = { x: e.clientX, z: uiZoom, w: r.width }; e.currentTarget.setPointerCapture(e.pointerId); $('#setPanel').classList.add('peek'); });   // while dragging, Settings steps aside: only this row stays, the interface shows through
 $('#uiZoomR').addEventListener('pointermove', e => { if (uzDrag) setUiZoom(uzDrag.z + (e.clientX - uzDrag.x) / uzDrag.w * 0.6); });
-$('#uiZoomR').addEventListener('pointerup', () => { uzDrag = null; });
+const uzEnd = () => { uzDrag = null; $('#setPanel').classList.remove('peek'); };
+$('#uiZoomR').addEventListener('pointerup', uzEnd); $('#uiZoomR').addEventListener('pointercancel', uzEnd);
 $('#uiZoomR').addEventListener('input', e => { if (!uzDrag) setUiZoom(+e.target.value); });   // keyboard arrows
 $('#uiZoomR').addEventListener('dblclick', () => setUiZoom(1));
 // screens below 1280×720: a note, until it's big enough (or the interface is made smaller)
@@ -201,7 +202,7 @@ function sizeNotice(){
 addEventListener('resize', sizeNotice); sizeNotice();
 // your defaults
 const DEF_KEYS = ['fx', 'fxPre', 'tr'];
-function defNote(){ const ks = DEF_KEYS.filter(k => userDef[k] !== undefined); $('#defNote').textContent = ks.length ? `Your defaults (saved ${new Date(userDef.saved).toLocaleDateString()}): new sets start with your ${ks.map(k => DEF_NAMES[k]).join(', ')}; resets go back to them.` : "Using VJif's own defaults. Set effects and presets the way you like them, then Save current settings: every new set starts like that."; }
+function defNote(){ const ks = DEF_KEYS.filter(k => userDef[k] !== undefined); $('#defHead').title = ks.length ? `Your defaults (saved ${new Date(userDef.saved).toLocaleDateString()}): new sets start with your ${ks.map(k => DEF_NAMES[k]).join(', ')}; resets go back to them.` : "Using VJif's own defaults. Set effects and presets the way you like them, then Save current settings: every new set starts like that."; }
 function setUserDef(d){ userDef = d || {}; Prefs.set('vjif-userdef', d ? JSON.stringify(d) : null); defNote(); }
 // the ticked parts: Save, Reset, Export and Import only touch those
 const DEF_NAMES = { fx: 'effects', fxPre: 'effect presets', tr: 'transitions' };

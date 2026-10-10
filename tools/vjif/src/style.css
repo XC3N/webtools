@@ -105,7 +105,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
 .sub .info{display:inline-grid;place-items:center;width:13px;height:13px;border:1px solid var(--edge);border-radius:50%;font:600 9px var(--mono);color:var(--muted);cursor:help}.sub[title]{cursor:help}
 #guideEye .slash{display:none}#guideGrp.ghidden #guideEye .slash{display:inline}#guideGrp.ghidden [data-g].on{opacity:.45}   /* hidden: the eye is struck through, the guides that will come back stay marked, dimmed */
-#musGrp .iconbtn.on,#setBtn.on,#learnBtn.on,#guideEye.on{color:var(--sig);border-color:var(--sig)}.volwrap{position:relative;display:inline-flex}
+#musGrp .iconbtn.on,#setBtn.on,#guideEye.on{color:var(--sig);border-color:var(--sig)}#learnBtn.on{color:var(--learn);border-color:var(--learn)}.volwrap{position:relative;display:inline-flex}
 #musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:34px;height:130px;box-shadow:0 6px 18px #0009}
 /* a normal (horizontal) slider turned upright: the app's slider styling only works sideways, a vertical writing-mode slider ignored clicks */
 #musVolPop[hidden]{display:none}#musVol{position:absolute;left:50%;top:50%;width:110px;height:22px;margin:0;transform:translate(-50%,-50%) rotate(-90deg);cursor:ns-resize}
@@ -161,7 +161,6 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxTgt{flex:none;width:118px}#fxTgt button{padding:0}
 #fxTgt button[data-v]:not([data-v=out]){box-shadow:inset 0 -2px 0 var(--lc)}
 #fxTgt button[data-v]:not([data-v=out]).on{background:color-mix(in srgb,var(--lc) 28%,transparent);color:var(--lc);border-color:var(--lc)}
-#fxTgt:has(button[data-v=out].on) button[data-v]:not([data-v=out]).on{background:color-mix(in srgb,var(--lc) 12%,transparent)}   /* All: every layer, but it plays on the blended output */
 #fxEdit.pre #fxTgt{display:none}
 #fxEdit.pre.ent #fxTgt{display:grid}#fxEdit.pre.ent #fxStyle{display:flex}#fxEdit.ent #fxPreList{display:none}#fxEdit.pre.ent.rated #fxRateRow,#fxEdit.pre.ent:not(.sized) #fxRateRow,#fxEdit.pre.ent.sized #fxSizeRow{display:grid}
 #fxEdit.ent #fxMode,#fxEdit.ent #fxEnvRow{opacity:.5}
@@ -275,7 +274,7 @@ body.del #fxPads .fxp:hover,body.del #trPre button:hover{box-shadow:inset 0 0 0 
 /* dragging a pad: no delete hint; with Ctrl held it copies, and the empty pads (the only places a copy can go) show a + */
 body.paddragging.del .pad:not(.empty):hover,body.fxdragging.del #fxPre .fxp:not(.empty):hover{box-shadow:none}body.paddragging.del .pad:not(.empty):hover::after,body.fxdragging.del #fxPre .fxp:not(.empty):hover::after{content:none}
 body.precopy #fxPre .fxp.empty::after,#scenes.copying .scene.empty::after,body.padcopy .pad.empty::after{content:"+";position:absolute;inset:3px;z-index:2;display:grid;place-items:center;border:1px dashed var(--sig);border-radius:inherit;color:var(--sig);font:400 26px/1 var(--sans);opacity:.45;pointer-events:none}
-body.precopy #fxPre .fxp.empty.drop::after,#scenes.copying .scene.empty.drop::after,body.padcopy .pad.empty.drop::after{content:"+";opacity:1;background:var(--sig-soft, rgba(95,211,176,.15))}
+body.precopy #fxPre .fxp.empty.drop::after,#scenes.copying .scene.empty.drop::after,body.padcopy .pad.empty.drop::after{content:"+";opacity:1;border:0;inset:0;background:var(--sig-soft, rgba(95,211,176,.15))}
 
 /* ---------- transform ---------- */
 #xfTitle{width:100%}
@@ -320,11 +319,11 @@ body.precopy #fxPre .fxp.empty.drop::after,#scenes.copying .scene.empty.drop::af
 .ask span{flex:1;min-width:0;font:500 12px var(--sans);color:#ffd6d6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ask button{width:auto}
 #setList:empty::before{content:'No saved sets yet.';font:400 12px var(--sans);color:var(--faint)}
-#learnBar{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:20;max-width:calc(100% - 12px)!important;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;background:var(--panel);border:1px solid var(--sig);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12px;max-width:92vw}
-#learnBar b{color:var(--sig);white-space:nowrap}#learnBar{padding:3px 4px 3px 10px!important}#learnBar button{height:24px;padding-block:0}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-body.learning .learnMapped{outline:2px dotted var(--sig);outline-offset:-2px}
-body.learning .pad.learnMapped::before{content:"";position:absolute;inset:0;border:2px dotted var(--sig);border-radius:inherit;z-index:6;pointer-events:none}   /* a pad's picture covers its own outline */
-.midiHost{position:relative}.midiTag{position:absolute;right:2px;bottom:2px;z-index:7;pointer-events:none;font:600 9px/1 var(--mono);color:var(--sigtxt);background:var(--sig);border-radius:2px;padding:2px 3px;white-space:nowrap;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis}
+#learnBar{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:20;max-width:calc(100% - 12px)!important;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;background:var(--panel);border:1px solid var(--learn);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12px;max-width:92vw}
+#learnBar b{color:var(--learn);white-space:nowrap}#learnBar{padding:3px 4px 3px 10px!important}#learnBar button{height:24px;padding-block:0}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.learning .learnMapped{outline:2px dotted var(--learn);outline-offset:-2px}
+body.learning .pad.learnMapped::before{content:"";position:absolute;inset:0;border:2px dotted var(--learn);border-radius:inherit;z-index:6;pointer-events:none}   /* a pad's picture covers its own outline */
+.midiHost{position:relative}.midiTag{position:absolute;right:2px;bottom:2px;z-index:7;pointer-events:none;font:600 9px/1 var(--mono);color:#1a1200;background:var(--learn);border-radius:2px;padding:2px 3px;white-space:nowrap;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis}
 .midiTag.new{animation:wait .25s steps(1) 6}
 body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px;animation:wait .5s steps(1) infinite}
 #midiMap{display:flex;flex-direction:column;gap:3px;max-height:220px;overflow:auto}
@@ -369,3 +368,19 @@ output.mod{color:var(--env)}
 .lpnote{font-size:11px;color:var(--muted);margin:10px 0 0}
 #fxStyleRow #fxStyle.rows2 button{flex:1 0 calc(100% / var(--per) - 1px);min-width:0}   /* two even rows */
 #fxStyleRow #fxStyle{min-height:48px;align-content:flex-start}   /* two rows' height for every effect (one style: the row stays where it is) */
+
+:root{--learn:#ffb000}   /* MIDI learn has its own colour (amber), so learn mode can't be mistaken for the normal accent */
+body.padcopy .pad.drop,#scenes.copying .scene.drop,body.precopy #fxPre .fxp.drop{outline:2px solid var(--sig);outline-offset:-2px}
+#defParts{display:flex;gap:10px;font-weight:500}#defParts .tog{font:500 11px var(--sans);color:var(--ink);gap:4px}   /* the parts sit in the Defaults heading: no line of their own */
+#setPanel.peek{background:transparent}#setPanel.peek .modalBox{background:transparent;border-color:transparent;box-shadow:none}#setPanel.peek .modalBox>:not(.uzRow){visibility:hidden}#setPanel.peek .uzRow{background:var(--panel);border:1px solid var(--sig);border-radius:var(--r);padding:4px 8px;box-shadow:0 6px 24px rgba(0,0,0,.6)}
+#setPanel .modalBox,#poolPanel .modalBox{background:color-mix(in srgb,var(--panel) 90%,#fff);border-color:color-mix(in srgb,var(--sig) 45%,var(--edge));box-shadow:0 18px 50px rgba(0,0,0,.75),0 2px 8px rgba(0,0,0,.5)}   /* panels that float over the interface without dimming it: a lighter face, an accent edge and a deep shadow so they read as on top */
+#bank .field{grid-template-columns:58px minmax(0,1fr);gap:6px}   /* Transition: short labels (Preset, Type, Style, Direction…), so the buttons get the room */
+/* on / off: a square box, empty when off, filled when on (instead of a sliding switch) */
+input[type=checkbox]{width:16px;height:16px;background:transparent;border:1px solid var(--muted)}
+input[type=checkbox]::before{top:3px;left:3px;width:8px;height:8px;border-radius:1px;background:transparent;transition:none}
+input[type=checkbox]:checked{background:transparent;border-color:var(--sig)}
+input[type=checkbox]:checked::before{left:3px;background:var(--sig)}
+input[type=checkbox]:hover{border-color:var(--ink)}
+[data-pane=play] .tnote{display:none;margin:0 0 8px;font-size:11px;color:var(--muted)}[data-pane=play].textpad .tnote{display:block}[data-pane=play].textpad>:not(.tkeep):not(.tnote){opacity:.3;pointer-events:none}
+#textPanel.dragging{visibility:hidden}   /* dragging the text: the window steps aside so the pads show */
+.txchip{cursor:grab;padding:6px 12px;border:1px dashed var(--sig);border-radius:var(--r);color:var(--sig);font:600 12px var(--sans);user-select:none;touch-action:none}.txchip:hover{background:var(--sig-soft,rgba(95,211,176,.15))}

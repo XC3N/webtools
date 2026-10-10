@@ -4,6 +4,33 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.56.0 — 2026-10-10
+
+### Effects
+- Degauss moved from CRT to Glitch (it's a one-off hit, not a screen). CRT's six styles now all stack, in two rows of three.
+- CRT › VHS on its own: the Size row is Dropouts (0–200%). Dropouts also grow with Wear now (more often and brighter), and the switching noise along the bottom is in colour.
+- Layer mask: All and the layer buttons are separate. Either All is lit, or a set of layers is (a layer button from All starts the set with just that layer; taking out the last one goes back to All).
+
+### Preview
+- Shift while dragging, once a guide lights up: the GIF slides along that guide only (straight or slanted). It used to make only the centre stick.
+- The selected GIF shows a small + at its centre (what sticks to slanted guides).
+- A click in the border around the canvas, on nothing, deselects the GIF.
+
+### Interface
+- Toggles are square boxes (empty = off, filled = on) instead of sliding switches.
+- MIDI learn has its own colour (amber) for the outlines, tags, bar and button; the learn button is a crosshair.
+- Settings stands out from the interface: a lighter face, an accent edge, a deeper shadow. While dragging Interface › Size, only that row stays: the rest of Settings steps aside so you can see the interface.
+- Settings › Defaults: the part ticks sit in the heading and the explanation is its tooltip (two lines fewer).
+- Transition panel: narrower labels, wider buttons.
+- Transform: the Fit menu is Base size, with the same names as the buttons (Fit, Fill, Stretch); the buttons' tooltips say they set it and reset the scale.
+- GIF › Play: Smooth scaling, one label. On a lettering pad the settings that don't apply to it (timing, loop, frames) are dimmed, with a note.
+- Copying with Ctrl: the target pad / scene / preset shows one clean outline.
+- Swap colours › Merge starts off (0).
+
+### Lettering
+- No Cancel / Put on pad buttons: drag the "Drag onto a pad" chip onto any pad (the window steps aside while you drag), or click it / press Enter for the next empty pad. ×, Esc or a click outside closes. The help line is gone.
+- A bigger glow no longer zooms the preview out (it's sized by the letters).
+
 ## 0.55.0 — 2026-10-09
 
 ### Effects

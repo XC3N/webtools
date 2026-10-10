@@ -9,7 +9,7 @@ async def main():
     await pg.evaluate("fileTarget=0"); await pg.set_input_files('#fileIn',[str(S/'busy.gif')]); await pg.wait_for_function("pads[0].gif")
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(300); await pg.evaluate("selectFx(9); fxCfg[9].mode='latch'; pvOpt.gHide=true; layers[0].sel=null")
     out=[]
-    for v in ['scan','phos','vhs','degauss','split','split']:
+    for v in ['scan','phos','vhs','paytv','split','split']:
       await pg.click(f'#fxStyle [data-v="{v}"]'); await pg.wait_for_timeout(50); out.append(await pg.evaluate("fxCfg[9].style"))
     await pg.evaluate("fxCfg[9].style='vhs+scan+phos'; syncFxUI()")
     await pg.keyboard.press('F10'); await pg.wait_for_timeout(1200)
