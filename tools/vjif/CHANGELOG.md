@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.54.0 — 2026-10-09
+
+### GIFs
+- GIF › Colour › Palette: snap one GIF's colours to a palette (the same ones as the Colour effect), with Dither in an ordered pattern on the GIF's own pixels. Saved with the GIF, so each pad / scene can have its own.
+- Smoothing moved from Transform to GIF › Play: it's a setting of the GIF (everywhere it's used), not of where it's placed.
+
+### Effects
+- New order inside the effect pass: the picture's own look (Mono, Colour, Palette) now comes before the screen it's shown on (CRT). A Palette scene with VHS on top keeps VHS's noise, colour bleed and scanlines instead of having them snapped to the palette.
+
 ## 0.53.0 — 2026-10-09
 
 ### Performance

@@ -99,7 +99,7 @@ function makeInst(m, saved = null){
   const g = { uid: ++gifSeq, fxWaits: [], media: m, hash: m.hash, name: m.name, blob: m.blob, type: m.type, src: m.src, frames: m.src, durs: m.durs,
            w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, inF: 0, outF: n - 1, startF: 0,
-           key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, swap: [], swapMerge: 10, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, pal: { i: -1, d: 0 }, swap: [], swapMerge: 10, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free' }, lfo: {} };
   insts.set(g.uid, g); rebuildSeq(g);
@@ -108,7 +108,7 @@ function makeInst(m, saved = null){
 }
 const gifSettings = g => JSON.parse(JSON.stringify(Object.fromEntries(GIF_KEYS.map(k => [k, g[k]]))));
 // an independent copy (same frames, own settings), with its colour work started
-function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); c.seed = g.seed ?? g.uid; if (g.masks) c.masks = g.masks; if (c.key.on || hsvOn(c)) applyFx(c); return c; }
+function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); c.seed = g.seed ?? g.uid; if (g.masks) c.masks = g.masks; if (fxActive(c)) applyFx(c); return c; }
 function freeMedia(m){ const i = pool.indexOf(m); if (i >= 0) pool.splice(i, 1); m.src.forEach(f => f.close()); }
 // a GIF file → its media in the pool (decoded and stored the first time it's seen)
 const decoding = new Map();                           // hash → the decode in progress (the same file dropped twice decodes once)
@@ -149,7 +149,8 @@ function autoFit(g){                               // new imports: Fit, with the
   g.beats = BEAT_OPTS.reduce((a, b) => Math.abs(Math.log2(b / natBeats)) < Math.abs(Math.log2(a / natBeats)) ? b : a);
 }
 function applyGifSettings(g, saved){
-  const { key, hsv, env, lfo, swap, hash, name, file, ...rest } = saved;
+  const { key, hsv, pal, env, lfo, swap, hash, name, file, ...rest } = saved;
+  g.pal = { i: -1, d: 0, ...(pal || {}) };
   g.swap = Array.isArray(swap) ? JSON.parse(JSON.stringify(swap)).slice(0, SWAP_MAX) : [];
   Object.assign(g, Object.fromEntries(Object.entries(rest).filter(([k]) => GIF_KEYS.includes(k))));
   if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv); if (env) Object.assign(g.env, env);

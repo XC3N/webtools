@@ -28,6 +28,8 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {cpy2} **Copy scenes and presets** (0.51) — drag a scene / an effect preset, hold Ctrl: + on the empty ones, drop: a copy; without Ctrl: a swap.
 - {diag} **Stick to diagonals** (0.51) — Diagonals (or Perspective) + Stick: drag a GIF near a diagonal, its centre slides onto it and the line lights up.
 - {crtstack} **Stacked CRT** (0.52) — F10: click VHS, Scanlines, Phosphor: all three at once; Degauss alone; GPU LOAD with three stacked.
+- {gpal} **GIF palette** (0.54) — GIF › Colour › Palette on one pad (e.g. Game Boy), Dither 50%: only that GIF changes; reload: still there.
+- {fxorder} **Palette, then VHS** (0.54) — F2 › Palette + F10 › VHS: the tape noise and colour bleed show over the palette.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

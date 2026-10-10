@@ -26,6 +26,10 @@ function syncGifUI(){
   $('#gifName').textContent = `${p.label}${g ? '' : ' · empty'}`;
   $('#gText').hidden = !(g && g.media && g.media.text);
   if (!g){ $('#gInfo').textContent = ''; document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
+  $('#gSmooth').checked = !g.crisp;
+  if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + FX_PALS.map((P, i) => `<option value="${i}" title="${esc(P.t)}">${esc(P.n)}</option>`).join('');
+  $('#gPal').value = String(g.pal ? g.pal.i : -1); $('#gPalD').value = g.pal ? g.pal.d : 0; $('#gPalD').nextElementSibling.textContent = Math.round((g.pal ? g.pal.d : 0) * 100) + '%';
+  $('#gPalD').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
   segSet('#gSync', g.sync); segSet('#gLoop', g.loop); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
   segSet('#gBeats', g.beats); segSet('#gSub', g.subdiv); segSet('#gRestart', g.restart);
@@ -118,7 +122,7 @@ $('#swMerge').addEventListener('input', e => { const g = curGif(); if (!g) retur
   scheduleFx(g, 150); syncSwapUI(g); clearTimeout(e.target._t); e.target._t = setTimeout(commit, 400); });
 $('#swClear').addEventListener('click', () => { const g = curGif(); if (!g || !g.swap.length) return; g.swap = []; scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
 
-$('#gSmooth').addEventListener('change', e => { const c = selClip(), g = c && pads[c.pad].gif; if (g){ g.crisp = !e.target.checked; renderPad(c.pad); } });
+$('#gSmooth').addEventListener('change', e => { const g = curGif(); if (g){ g.crisp = !e.target.checked; renderPad(selPad); redraw.all = true; } });   // a setting of the GIF (in GIF › Play), not of where it's placed
 $('#gSpeed').addEventListener('input', e => { const g = curGif(); if (g){ g.speed = +e.target.value; e.target.nextElementSibling.textContent = g.speed.toFixed(2) + '×'; showCycle(g); } });
 const HSV_UI = [['#hH', 'h', v => (v > 0 ? '+' : '') + v + '°'], ['#hS', 's', v => (+v).toFixed(2) + '×'], ['#hV', 'v', v => (+v).toFixed(2) + '×']];
 HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
@@ -126,6 +130,8 @@ HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
   g.hsv[k] = +e.target.value; e.target.nextElementSibling.textContent = fmt(g.hsv[k]);
   scheduleFx(g, 150);
 }));
+$('#gPal').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { d: 0 }), i: +e.target.value }; e.target.blur(); scheduleFx(g, 0); syncGifUI(); renderPad(selPad); });
+$('#gPalD').addEventListener('input', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { i: -1 }), d: +e.target.value }; e.target.nextElementSibling.textContent = Math.round(g.pal.d * 100) + '%'; scheduleFx(g, 100); });
 $('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.hsv, { h: 0, s: 1, v: 1 }); scheduleFx(g, 0); syncGifUI(); });
 
 // ---- trigger tab: Stay / Fade one-shot ----

@@ -11,7 +11,7 @@ const fxGL = (() => {
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 swF[8], swT[8]; uniform float swR[8], swK[8]; uniform int swN; varying vec2 uv;
+      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 pal[64]; uniform float palN, palD; uniform vec3 swF[8], swT[8]; uniform float swR[8], swK[8]; uniform int swN; varying vec2 uv;
       void main(){
         vec4 px = texture2D(tex, uv);
         if (px.a == 0.0){ gl_FragColor = vec4(0.0); return; }
@@ -32,6 +32,15 @@ const fxGL = (() => {
           vec3 r = h < 60.0 ? vec3(C, X, 0.0) : h < 120.0 ? vec3(X, C, 0.0) : h < 180.0 ? vec3(0.0, C, X) : h < 240.0 ? vec3(0.0, X, C) : h < 300.0 ? vec3(X, 0.0, C) : vec3(C, 0.0, X);
           o = floor((r + m) * 255.0 + 0.5) / 255.0;
         }
+        if (palN > 0.5){                               // palette: the nearest of its colours (weighted like the eye); Dither mixes the two nearest in a 4×4 Bayer pattern, on the GIF's own pixels
+          vec3 W = vec3(0.55, 0.75, 0.35), best = pal[0], sec = pal[0]; float bd = 1e9, sd = 1e9;
+          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = (o - pal[i]) * W; float e = dot(d, d);
+            if (e < bd){ sd = bd; sec = best; bd = e; best = pal[i]; } else if (e < sd){ sd = e; sec = pal[i]; } }
+          if (palD > 0.001 && palN > 1.5){ vec3 ab = (sec - best) * W; float t = clamp(dot((o - best) * W, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+            t = clamp((t - 0.5) / palD + 0.5, 0.0, 1.0) * step(0.001, t);
+            vec2 q = floor(gl_FragCoord.xy); float b2 = fract(q.x / 2.0 + q.y * q.y * 0.75), b4 = fract(floor(q.x / 2.0) / 2.0 + floor(q.y / 2.0) * floor(q.y / 2.0) * 0.75) * 0.25 + b2;
+            o = b4 + 0.03125 < t ? sec : best; } else o = best;
+        }
         float a = px.a * f;
         gl_FragColor = vec4(o * a, a);
       }`));
@@ -47,7 +56,7 @@ const fxGL = (() => {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);            // mask rows are 1 byte per pixel, any width
-    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swR', 'swK', 'swN'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swR', 'swK', 'swN', 'pal', 'palN', 'palD'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
     const swF = new Float32Array(24), swT = new Float32Array(24), swR = new Float32Array(8), swK = new Float32Array(8);
     gl.uniform1i(U.tex, 0); gl.uniform1i(U.mtex, 1);
     let lost = false;
@@ -64,6 +73,7 @@ const fxGL = (() => {
         gl.uniform3f(U.key, p.kr, p.kg, p.kb); gl.uniform1f(U.t0, p.t0); gl.uniform1f(U.t1sq, p.t1sq); gl.uniform1f(U.span, p.span);
         gl.uniform1f(U.H, p.H); gl.uniform1f(U.S, p.S); gl.uniform1f(U.V, p.V); gl.uniform1i(U.doKey, p.doKey); gl.uniform1i(U.doHsv, p.doHsv);
         const sw = p.sw || []; swF.fill(0); swT.fill(0); swR.fill(1.5); swK.fill(0); sw.forEach((x, i) => { swF.set(x.slice(0, 3), i * 3); swT.set(x.slice(3, 6), i * 3); swR[i] = x[6] || 1.5; swK[i] = x[7] ? 1 : 0; });
+        if (p.palF){ gl.uniform3fv(U.pal, p.palF); gl.uniform1f(U.palN, p.palN); gl.uniform1f(U.palD, p.palD); } else gl.uniform1f(U.palN, 0);
         gl.uniform3fv(U.swF, swF); gl.uniform3fv(U.swT, swT); gl.uniform1fv(U.swR, swR); gl.uniform1fv(U.swK, swK); gl.uniform1i(U.swN, sw.length);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -74,7 +84,8 @@ const fxGL = (() => {
 })();
 const liveFx = () => fxGL && fxGL.ok;
 const SWAP_MAX = 8;                                 // colour swaps per GIF: { from: [r,g,b], to: [r,g,b] }
-const fxActive = g => g.key.on || hsvOn(g) || !!(g.swap && g.swap.length);
+const fxActive = g => g.key.on || hsvOn(g) || !!(g.swap && g.swap.length) || palOn(g);
+const palOn = g => !!g.pal && g.pal.i >= 0 && !!FX_PALS[g.pal.i];   // GIF › Colour › Palette: its colours snapped to an old computer's / console's
 // the image to draw for frame `fi` of GIF `g`: run through the colour shader when live colour is on.
 // e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
 // Connected key: the frame's mask (from the flood fill) replaces the per-pixel colour test.
@@ -126,6 +137,9 @@ function fxColor(c, p){
   let rgb = c & 0xffffff, sr = r, sg = gr, sb = b;
   if (p.sw) for (const x of p.sw){ const t = x[6] || 1.5; if (Math.abs(r - x[0]) < t && Math.abs(gr - x[1]) < t && Math.abs(b - x[2]) < t){ sr = x[3]; sg = x[4]; sb = x[5]; rgb = sr | (sg << 8) | (sb << 16); if (x[7]) f = 0; break; } }
   if (p.doHsv){ const o = hsvShift(sr, sg, sb, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
+  if (p.palN){ const R = (rgb & 255) / 255, G = ((rgb >> 8) & 255) / 255, B = ((rgb >> 16) & 255) / 255; let bd = 1e9, bi = 0;   // palette: the nearest colour (no dither on this path)
+    for (let i = 0; i < p.palN; i++){ const dr = (R - p.palF[i * 3]) * 0.55, dg = (G - p.palF[i * 3 + 1]) * 0.75, db = (B - p.palF[i * 3 + 2]) * 0.35, e = dr * dr + dg * dg + db * db; if (e < bd){ bd = e; bi = i; } }
+    rgb = Math.round(p.palF[bi * 3] * 255) | (Math.round(p.palF[bi * 3 + 1] * 255) << 8) | (Math.round(p.palF[bi * 3 + 2] * 255) << 16); }
   return f * 16777216 + rgb;
 }
 // one frame in place: u = Uint32 view of RGBA pixels (0xAABBGGRR). GIFs have few distinct colors and long runs
@@ -170,7 +184,7 @@ function fxParams(g, hsv = g.hsv){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
            region: g.key.region || 'all', seed: g.key.seed || null,
-           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, sw: (g.swap || []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palN: FX_PALS[g.pal.i].c.length, palD: g.pal.d || 0 } : {}), sw: (g.swap || []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
 }
 // The worker gets the same functions as source text, so both paths run identical code.
 const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels].map(f => f.toString()).join('\n') + `
@@ -243,7 +257,7 @@ function applyFx(g){
     if (p.doKey && p.region !== 'all') requestMasks(g); else dropMasks(g);
     g.fxP = null; fxDone(g, g.src); return wait;
   }
-  if (!p.doKey && !p.doHsv && !(p.sw && p.sw.length)){ if (fxWorker) fxWorker.postMessage({ id: g.uid, gen }); fxDone(g, g.src); }
+  if (!p.doKey && !p.doHsv && !(p.sw && p.sw.length) && !p.palN){ if (fxWorker) fxWorker.postMessage({ id: g.uid, gen }); fxDone(g, g.src); }
   else if (fxWorker) fxWorker.postMessage({ id: g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w: g.src[0].width, h: g.src[0].height, q: g.media && g.media.px ? 'pixelated' : 'high', p });
   else fxMain(g, gen, p);
   return wait;

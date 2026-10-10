@@ -320,6 +320,12 @@ ${FX_GLSL}
             vec3 neon = c / max(max(c.r, max(c.g, c.b)), 0.15) * smoothstep(0.05, 0.5, e);
             c = mix(c, neon, poster); }
         }
+        // the picture's own look (mono, colour, palette) comes before the screen it's shown on (CRT): a palette or mono
+        // scene still gets VHS noise, scanlines and phosphor glow on top
+        float y = dot(c, vec3(0.299, 0.587, 0.114));
+        c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
+        if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
+          else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
         if (rgb > 0.001 && HAS(rgbS, S_rgb_scan)){ // scanlines + aperture grille
           float ln = 0.5 + 0.5 * cos(gl_FragCoord.y * 6.2831853 / max(crtSz, 2.0));   // a dark line every Size px
           float col = mod(floor(gl_FragCoord.x), 3.0); vec3 tri = vec3(col < 0.5 ? 1.0 : 0.7, col > 0.5 && col < 1.5 ? 1.0 : 0.7, col > 1.5 ? 1.0 : 0.7);
@@ -363,10 +369,6 @@ ${FX_GLSL}
           c *= 1.0 - 0.28 * rgb * step(0.5, fract(gl_FragCoord.y / 3.0));
           c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * rgb;
         }
-        float y = dot(c, vec3(0.299, 0.587, 0.114));
-        c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
-        if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
-          else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
         c = mix(c, vec3(IS(strobeS, S_strobe_white) ? 1.0 : 0.0), strobe); if (IS(strobeS, S_strobe_white)) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
           vec2 q = uv;

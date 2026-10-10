@@ -76,7 +76,6 @@
   <div id="xfPanel">
     <div class="field"><label for="xFit">Fit</label><select id="xFit" class="span">
       <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select></div>
-    <div class="field"><label for="gSmooth">Smoothing</label><label class="tog span" title="Off = crisp pixels when the GIF is scaled. Applies to this GIF everywhere it's used."><input type="checkbox" id="gSmooth"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">smooth when scaled</span></label></div>
     <div class="field"><label for="xX">X</label><input id="xX" type="range" data-def="0" min="-1920" max="1920" step="1"><output></output></div>
     <div class="field"><label for="xY">Y</label><input id="xY" type="range" data-def="0" min="-1080" max="1080" step="1"><output></output></div>
     <div class="field"><label for="xSX">Scale X</label><input id="xSX" type="range" data-def="1" min="0.05" max="8" step="0.01"><output></output></div>
@@ -117,6 +116,7 @@
         </div>
         <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
         <div class="field" title="Keep this GIF's frames at full, half or quarter resolution. It looks the same size; ½ uses a quarter of the memory, ¼ a sixteenth. Applies to the GIF everywhere it's used (every pad and scene). Pixel art that was saved blown up (every pixel a block of N×N) is found on load and kept at its real pixels: same picture, N² times less memory"><label>Resolution</label><div class="seg span" id="gRes"><button data-v="1">Full</button><button data-v="0.5">½</button><button data-v="0.25">¼</button></div></div>
+        <div class="field"><label for="gSmooth">Smoothing</label><label class="tog span" title="Off = crisp pixels when the GIF is scaled. Applies to this GIF everywhere it's used."><input type="checkbox" id="gSmooth"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">smooth when scaled</span></label></div>
       </div>
       <div data-pane="colour" class="off">
         <div class="sub" style="margin-top:0"><span>Key</span><span class="line"></span><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
@@ -131,6 +131,9 @@
         <div class="field"><label for="hH">Hue</label><input id="hH" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
         <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
         <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
+        <div class="sub"><span title="Snap every colour of this GIF to an old computer's or console's palette (after Adjust)">Palette</span><span class="line"></span></div>
+        <div class="field"><label for="gPal">Snap to</label><select id="gPal" class="span" title="The palette this GIF's colours snap to (None: its own colours)"></select></div>
+        <div class="field" title="Dither: in-between shades drawn as a pattern of the two nearest palette colours, on the GIF's own pixels (off = flat areas)"><label for="gPalD">Dither</label><input id="gPalD" type="range" data-def="0" data-pct min="0" max="1" step="0.05"><output></output></div>
         <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" title="Remove every swap">Clear</button></div>
         <div class="field" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="10"><output></output></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>

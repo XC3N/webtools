@@ -44,4 +44,5 @@ python3 tools/vjif/tests/run_all.py golden crt_stack -v   # some tests, with the
 | slider_labels | No slider label cut off, or running into its value, at 1600 and 1280 wide. |
 | midi_learn | Learn bar placement, the opacity tag on the slider, Sync's message with MIDI clock. Uses a simulated MIDI input. |
 | review_fixes | Regressions found in the 0.52 code review: copying an empty scene, a % in a URL name, the same file loading twice at once, BRB catching up after a hold, Smooth vs Stutter / Melt timing |
+| gif_palette | GIF › Colour › Palette snaps to the palette (dither on), is saved with the set; Smoothing sits in GIF › Play |
 | launchpad | Simulated Launchpad Pro MK3: Programmer-mode SysEx, the layout, LED colours, back to Live mode. |

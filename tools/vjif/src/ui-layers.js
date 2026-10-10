@@ -162,7 +162,6 @@ function syncXfUI(){
   const g = pads[c.pad].gif;                         // automated values: readout tinted blue (it shows the base value)
   Object.entries(XF_LFO).forEach(([id, ks]) => { const o = $(id).nextElementSibling, m = !!g && ks.some(k => g.lfo[k] && g.lfo[k].on);
     o.classList.toggle('mod', m); o.title = m ? 'Automated (GIF › Auto) — this is the base value' : ''; });
-  $('#gSmooth').checked = !!(pads[c.pad].gif && !pads[c.pad].gif.crisp);
   $('#xFit').value = c.fit; $('#xFx').checked = c.flipX; $('#xFy').checked = c.flipY; $('#xT').checked = c.tile;
   const pc = v => Math.round(v * 100);
   $('#xCrop').textContent = (c.cl || c.ct || c.cr || c.cb) ? `L${pc(c.cl)} T${pc(c.ct)} R${pc(c.cr)} B${pc(c.cb)}%${c.tile ? ' (ignored when tiled)' : ''}` : 'none';
