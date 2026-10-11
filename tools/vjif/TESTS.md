@@ -94,7 +94,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {yt2qowv5cyezsz6war3v} **LFO gap** (0.73) — Auto › X, Cycle 1 bar, Gap 1 bar: it moves for a bar, waits a bar, moves again.
 - [ ] {ilmva106bf3hjfzv20pn} **Transition options** (0.73) — try each Options row: Wipe Soft, Iris GIF, Luma Dark / Soft, Zoom Out / Through, Dissolve Lines / Diamonds, Glitch Split / Wide, VHS Chewed, Stutter 1/32 + Swing.
 - [ ] {ji9c5cqlzozra079aeix} **Scramble from the centre** (0.73) — Glitch › Scramble with a growing Amount: blocks grow from the middle, not towards a corner.
-- [ ] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
+- [x] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
 - [ ] {ocv7fifdfkezjtcdvqtn} **Dragging an effect leaves it alone** (0.74.1) — drag an effect tile (to a preset, or off and back): an effect that was off stays off, a latched one stays on.
 - [ ] {hr757smrqn2mmmwqnow0} **Launchpad preset row** (0.73) — Settings › Launchpad layout: bottom row = presets 7 8 9 4 5 6 1 2, right button 3.
 - [ ] {uqfogckolx2naf4ogqdd} **Shorter right column** (0.74) — no info strips under Transform and GIF (hover the headings' tags instead), Performance on one line.
