@@ -24,7 +24,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - [x] {fbk} **Feedback Length** (0.44) — F12 › Trails, Tunnel, Spiral: Length 100% leaves long smears, 20% only short ones.
 - [ ] {inlab} **Labels inside sliders** (0.45) — Transform, GIF › Colour / Auto, the effect editor, Settings: labels readable over the fill, nothing cut off at 1280×720, drag and double-click still work where the label is.
-- [ ] {dpat} **Palette patterns** (0.49) — F2 › Palette, Dither 100%, on a photo or a gradient: Dither: Noise, Bayer, Check each look different; Bayer reads like a DOS game.
+- [x] {dpat} **Palette patterns** (0.49) — F2 › Palette, Dither 100%, on a photo or a gradient: Dither: Noise, Bayer, Check each look different; Bayer reads like a DOS game.
 - [x] {mtgt} **Effect on several layers** (0.50) — GIFs on layers 1–3, Mirror: click 2 (from All): layers 1, 3, 4 mirrored each on their own; right-click 3: only layer 3; lit buttons in the layers' colours.
 - [ ] {cpy2} **Copy scenes and presets** (0.51) — drag a scene / an effect preset, hold Ctrl: + on the empty ones, drop: a copy; without Ctrl: a swap.
 - [x] {diag} **Stick to diagonals** (0.51) — Diagonals (or Perspective) + Stick: drag a GIF near a diagonal, its centre slides onto it and the line lights up.
@@ -50,29 +50,29 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {scdrop} **Drop on a scene** (0.62) — drag GIF files or a pool GIF onto another scene's tile: they land on its first empty pads, you stay where you are.
 - [x] {decsc} **Decoding mark** (0.62) — load a big GIF, switch scene at once: the pad on the new scene isn't marked as decoding.
 - [ ] {aresetall} **Auto Reset all** (0.62) — GIF › Auto › Reset all: every LFO of the GIF off.
-- [ ] {fxlocal} **FX Local** (0.63) — FX: Local; scene 1: latch Mono; scene 2: latch Colour, unlatch Mono; back to 1: Mono on, Colour off. Global, change scenes: effects stay. Local again: the scene's own come back. With a transition: do they ease in / out nicely?
+- [x] {fxlocal} **FX Local** (0.63) — FX: Local; scene 1: latch Mono; scene 2: latch Colour, unlatch Mono; back to 1: Mono on, Colour off. Global, change scenes: effects stay. Local again: the scene's own come back. With a transition: do they ease in / out nicely?
 - [ ] {fxmask} **Layer pips** (0.63) — effect tiles: "all" or four pips in the layers' colours, on their own line.
-- [ ] {dpat2} **Dither switch** (0.63) — Colour › Palette: Dither slider + Noise / Bayer / Check pictures beside it.
+- [x] {dpat2} **Dither switch** (0.63) — Colour › Palette: Dither slider + Noise / Bayer / Check pictures beside it.
 - [ ] {vhsbeat} **VHS rolls on the beat** (0.64) — CRT › VHS at high Wear, and the VHS transition: the bands start rolling on beats, at random.
 - [ ] {chopts} **Channel options** (0.64) — Transitions › Glitch › Channel › Options: Random / Scene (name a scene first) / Scene #.
 - [ ] {cpkmap} **Picker colour field** (0.64) — any swatch: click / drag in the field and the hue strip.
 - [ ] {padsc} **Pad onto another scene** (0.64) — drag a pad, hold it over another scene's tile: the scene opens; drop on an empty pad: a copy.
 - [x] {sccur} **Copy into this scene** (0.64) — on an empty scene, Ctrl+drag another scene onto its tile: it fills in place; Ctrl+Z undoes it.
 - [ ] {livebar} **Go live / leave BRB on the bar** (0.64) — Snap off: Enter in Prep waits for the next bar; in BRB a scene key changes on the next bar.
-- [ ] {fbghost} **Feedback fades out** (0.64) — Feedback Trails at a long Length, change scenes: no faint ghost of the old scene left.
+- [x] {fbghost} **Feedback fades out** (0.64) — Feedback Trails at a long Length, change scenes: no faint ghost of the old scene left.
 - [ ] {recsnd2} **Rec sound (worklet)** (0.65) — MP4 with the music player (a long track), a timed take, busy scene: is the sound clean, in sync, and there to the end?
 - [ ] {recpop} **Rec ▾** (0.65) — the ▾ next to Rec: bars / frame rate / Mb/s; same as in Settings.
 - [ ] {musseek} **Music seek bar** (0.65) — under the player buttons: click / drag to move in the track; the pause button pauses.
-- [ ] {fxmodekey} **Mode by key** (0.65) — hold F2, press Ins / Home / PgUp: Hold / Hit / Latch. F-keys don't move the editor.
+- [x] {fxmodekey} **Mode by key** (0.65) — hold F2, press Ins / Home / PgUp: Hold / Hit / Latch. F-keys don't move the editor.
 - [ ] {envreset} **Envelope reset** (0.65) — the ↺ above the envelope.
-- [ ] {vhsblur} **VHS soft at low wear** (0.65) — CRT › VHS at 5 %: the picture is already soft and smeared.
+- [x] {vhsblur} **VHS soft at low wear** (0.65) — CRT › VHS at 5 %: the picture is already soft and smeared.
 - [ ] {shadow} **GIF drop shadow** (0.66) — a GIF with transparency, GIF › Colour › Shadow: offset / blur / opacity / colour; it stays put when the GIF rotates.
 - [ ] {croptile} **Crop + tile** (0.66) — crop a GIF, then Tile: the cropped part repeats.
-- [ ] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
+- [x] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
 - [ ] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
 - [ ] {ctrlhush} **No delete after copying** (0.70) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines, and Ctrl+click doesn't clear anything until you let go of Ctrl and press it again.
 - [ ] {hbar} **Section buttons on their own row** (0.67) — Pads and Scenes: the buttons are on a row under the name; Clear pad is at the bottom right, dimmed on an empty pad.
-- [ ] {ez8ev63uoip1luh6y982} **Covered windows keep playing** (0.68) — output window over the control window, click the control window (so it covers the output): playback goes on, in both.
+- [x] {ez8ev63uoip1luh6y982} **Covered windows keep playing** (0.68) — output window over the control window, click the control window (so it covers the output): playback goes on, in both.
 - [ ] {r14m2kk53etwcxadqka1} **Layer solo** (0.68) — right-click a layer's number: only that layer on; right-click it again: the others as they were.
 - [ ] {allpip} **All-layers pips** (0.68) — an effect on All: four pips in one colour; Settings › Interface › All-layers pips changes it.
 - [ ] {osdfx} **Transitions keep their own colours** (0.70) — latch Colour › Palette, change scene with TV › Channel: the snow and the number keep their colours; the two scenes have the palette.
