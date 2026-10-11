@@ -405,4 +405,9 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 #musGrp{position:relative}#musSeek{position:absolute;left:0;right:0;bottom:-6px;height:4px;border-radius:2px;background:var(--track);cursor:pointer}#musSeek i{display:block;height:100%;width:0;border-radius:2px;background:var(--sig)}#musSeek.off{opacity:.35;pointer-events:none}#musSeek:hover{height:6px;bottom:-7px}   /* seek bar under the player (absolute: nothing moves) */
 #fxAllOff{flex:none;width:var(--ch)}
 #toast{top:var(--toastY,auto);bottom:auto;left:var(--toastX,50%);max-width:min(70vw,640px);z-index:40}   /* in the gap above the preview, not over the effects */
-@media (max-width:1400px){ h2 button{padding:0 6px} #scFx{min-width:62px} }   /* narrow left column: the Scenes buttons still fit beside the name */
+/* section buttons sit on their own row under the name (the headings stay quiet) */
+.hbar{display:flex;align-items:center;gap:4px;margin:-2px 0 8px}.hbar button{flex:none}
+.scbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+/* Clear pad: bottom right of the right column, always in the same place */
+#side{display:flex;flex-direction:column}#side>*{flex:none}
+.gfoot{margin-top:auto;position:sticky;bottom:-10px;display:flex;justify-content:flex-end;padding:8px 0 10px;margin-bottom:-10px;background:var(--panel);z-index:2}

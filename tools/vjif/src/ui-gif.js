@@ -24,7 +24,7 @@ function syncGifUI(){
   const p = pads[selPad], g = p.gif;
   $('#gifSettings').classList.toggle('disabled', !g);
   $('#gifName').textContent = `${p.label}${g ? '' : ' · empty'}`;
-  $('#gText').hidden = !(g && g.media && g.media.text);
+  $('#gText').hidden = !(g && g.media && g.media.text); $('#gClear').disabled = !g;
   if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); $('#gInfo').textContent = ''; document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
   $('#gSmooth').checked = !g.crisp;
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed

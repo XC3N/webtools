@@ -72,6 +72,8 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
 - [ ] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
 - [ ] {ctrlhush} **No red outline after copying** (0.66) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines until you let go.
+- [ ] {hbar} **Section buttons on their own row** (0.67) — Pads and Scenes: the buttons are on a row under the name; Clear pad is at the bottom right, dimmed on an empty pad.
+- [ ] {o9fm7v1dndg06e2kzku7} **Key selection modes** (0.56) — load key-regions.gif (white background, a ring, two windows), GIF › Colour › Key on, Pick the white. Everywhere: all the white goes; From edges: only the background; From pick: only the white area you clicked.
 - [x] {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - [x] {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - [x] {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

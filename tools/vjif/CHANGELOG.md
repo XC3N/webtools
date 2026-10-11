@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.67.0 — 2026-10-10
+
+### Interface
+- Pads and Scenes: the buttons sit on their own row under the section name, so the headings are just names.
+- Clear pad moved to the bottom right of the right column, always in the same place; dimmed when the pad is empty.
+
 ## 0.66.0 — 2026-10-10
 
 ### GIFs

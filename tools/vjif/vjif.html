@@ -27,14 +27,15 @@
 </header>
 
 <section id="bank" class="panel">
-  <h2 class="padhead">Pads
-    <input id="fileIn" type="file" accept=".gif,.webp,.png,.apng" multiple hidden>
-    <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><button id="textBtn" title="Lettering: type a text (an artist's name, a message) and use it like a GIF — plain, scrolling across (marquee) or cut out of a black matte">Text…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></h2>
+  <h2>Pads<span class="line"></span></h2>
+  <div class="hbar padhead"><input id="fileIn" type="file" accept=".gif,.webp,.png,.apng" multiple hidden>
+    <button id="addFiles" title="Add GIF files to the pads (or drop files / links onto a pad or anywhere in this panel)">Add…</button><button id="textBtn" title="Lettering: type a text (an artist's name, a message) and use it like a GIF — plain, scrolling across (marquee) or cut out of a black matte">Text…</button><input id="urlIn" type="url" placeholder="URL…" title="Paste a GIF link (or type it and press Enter) to load it onto a pad"><button id="poolBtn" title="Every GIF loaded in this set — put any of them on a pad of this scene">Pool 0</button></div>
   <div class="sub padsub" data-g="A" title="Click: fold / unfold these pads (their keys keep working)"><span>QWE / ASD / ZXC</span><span class="cnt"></span><span class="line"></span></div>
   <div class="padgrid" id="gridA"></div>
   <div class="sub padsub" data-g="B" title="Click: fold / unfold these pads (their keys keep working)"><span>RTY / FGH / VBN</span><span class="cnt"></span><span class="line"></span></div>
   <div class="padgrid" id="gridB"></div>
-  <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scFx" title="FX Global: latched effects stay on from scene to scene. FX Local: each scene remembers which latched effects were on, and going to it brings those back (switching to Local brings the current scene's back too)">FX Global</button><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
+  <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span></h2>
+  <div class="hbar scbar"><button id="scFx" title="FX Global: latched effects stay on from scene to scene. FX Local: each scene remembers which latched effects were on, and going to it brings those back (switching to Local brings the current scene's back too)">FX Global</button><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></div>
   <div class="scgrid" id="scenes"></div>
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
   <div class="field"><label>Preset</label><div class="seg span" id="trPre" title="Keys 1–9 arm a preset for the next scene change; the settings below edit the armed one"></div></div>
@@ -87,7 +88,7 @@
     <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropAuto" title="Crop to what is drawn: trims the see-through border, over every frame">To content</button><button id="xCropReset">Uncrop</button></div></div>
     <div class="btnrow"><button id="xFitS" title="Base size Fit, scale 1×, centred: the whole GIF visible (its cropped part)">Fit</button><button id="xFill" title="Base size Fill, scale 1×, centred: covers the whole frame, the overflow cut off">Fill</button><button id="xStr" title="Base size Stretch, scale 1×: covers the whole frame, distorted">Stretch</button><button id="xReset">Reset</button></div>
   </div>
-  <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></h2>
+  <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button></h2>
   <div id="gifSettings" class="disabled">
     <div class="lcd one" id="gInfo"></div>
     <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
@@ -174,6 +175,7 @@
       </div>
     </div>
   </div>
+  <div class="gfoot"><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></div>
 </aside>
 <div id="perf" class="panel" title="How hard VJif is working — hover each readout for details"><span class="ptitle">Performance</span><span id="saveStat"></span>
   <div class="meters"><span id="mem" class="mtr"></span><span id="fps" class="mtr"><i>FPS</i>—</span><span id="load" class="mtr"><i>LOAD</i>—</span></div></div>
