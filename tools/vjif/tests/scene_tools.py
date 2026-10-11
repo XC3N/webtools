@@ -23,6 +23,6 @@ async def main():
     print('channel', ch); assert len(ch[0]) == 2 and ch[1] == 'INTRO' and ch[2] == '03', ch
     # Options row shows the channel modes for Channel, arrows for Slide
     o = await pg.evaluate("transCfg = normTrans({ type: 'tv', style: 'channel', len: 2, dir: 'left', px: 12 }); syncTransUI(); const a = [...document.querySelectorAll('#trDir button')].map(b => b.textContent).join(','); transCfg = normTrans({ type: 'slide', len: 2, dir: 'left', px: 12 }); syncTransUI(); [a, [...document.querySelectorAll('#trDir button')].length]")
-    print('options', o); assert o == ['Random,Scene,Scene #', 4], o
+    print('options', o); assert o == ['Random,Scene,Scene #', 5], o
     await b.close()
 asyncio.run(main())

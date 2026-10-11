@@ -4,6 +4,18 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.72.0 — 2026-10-11
+
+### Interface
+- Sections fold: click a section's name in GIF › Play / Colour (Key, Adjust, Palette, Shadow, Swap colours, Frames), or the Transform / GIF heading itself. Remembered in this browser.
+- What a click opens further down (a swap's colour row) scrolls into view when it would land below the panel's edge.
+
+### GIFs
+- Swap colours › Pick: click the GIF in the preview to select the swatch of that colour.
+
+### Transitions
+- Options › Rnd: a random direction each time (Slide, Wipe and the others with arrows).
+
 ## 0.71.0 — 2026-10-11
 
 ### Effects

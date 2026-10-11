@@ -141,7 +141,7 @@
         <div class="field"><label for="shY">Y</label><input id="shY" type="range" data-def="8" min="-60" max="60" step="1"><output></output></div>
         <div class="field"><label for="shB">Blur</label><input id="shB" type="range" data-def="12" min="0" max="80" step="1"><output></output></div>
         <div class="field"><label for="shO">Opacity</label><input id="shO" type="range" data-def="0.6" data-pct min="0" max="1" step="0.01"><output></output></div>
-        <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" title="Remove every swap">Clear</button></div>
+        <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swPick" title="Then click the GIF in the preview: selects the swatch of that colour">Pick</button><button id="swClear" title="Remove every swap">Clear</button></div>
         <div class="field" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="0"><output></output></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>
         <div id="swList"></div>

@@ -291,6 +291,8 @@ body.precopy #fxPre .fxp.empty.drop::after,#scenes.copying .scene.empty.drop::af
 /* ---------- modals ---------- */
 @keyframes hl{from{background:var(--sig);color:var(--sigtxt)}}
 .sub.hl{animation:hl .7s ease-out}
+.foldhid{display:none!important}.sub.foldable>span:first-child{cursor:pointer;user-select:none}.sub.foldable>span:first-child::before{content:'▾';display:inline-block;width:11px;color:var(--faint)}.sub.foldable.shut>span:first-child::before{content:'▸'}.sub.foldable>span:first-child:hover{color:var(--ink)}
+h2.foldable>.fname{cursor:pointer;user-select:none}h2.foldable>.fname::before{content:'▾';display:inline-block;width:12px;color:var(--faint)}h2.foldable.shut>.fname::before{content:'▸'}h2.foldable>.fname:hover{color:var(--sig)}   /* GIF sections fold by their name */
 #setPanel{background:none;place-items:start end;pointer-events:none}
 #poolPanel{background:none;place-items:start start;pointer-events:none}
 #txFont option{font-size:15px}

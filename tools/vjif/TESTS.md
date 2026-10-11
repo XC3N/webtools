@@ -85,6 +85,10 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {vhspal} **VHS / Phosphor over a palette** (0.70) — latch Colour › Palette, add CRT › VHS + Scanlines (or Phosphor): only palette colours, no original colours showing through.
 - [ ] {18g1ehdwbwsh9iit2nzy} **Rotation sticks** (0.71) — Stick on, turn a GIF by its round handle: it catches at 0 / 45 / 90° …; Alt turns freely.
 - [ ] {envdef} **Envelope defaults** (0.71) — an effect in Hit: ↺ gives Gate 1/8, Release 1/8; in Hold / Latch: Release 1/32.
+- [ ] {ccmisycd54ppu6dwywvg} **Folding sections** (0.72) — click Shadow (GIF › Colour) or the Transform heading: it folds; click again: back. Still folded after a reload.
+- [ ] {sxli9h0fg4vdbo0jxj1i} **Swap › Pick** (0.72) — Swap colours › Pick, click a colour of the GIF in the preview: its swatch is selected and its row shows.
+- [ ] {spwmb1r0v2aujdqh5oo3} **Random direction** (0.72) — a Slide preset, Options › Rnd: each scene change slides a different way.
+- [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.72) — the right column scrolled so Swap is at the bottom, click a swatch: the panel scrolls to show its row.
 - [ ] {o9fm7v1dndg06e2kzku7} **Key selection modes** (0.56) — load key-regions.gif (white background, a ring, two windows), GIF › Colour › Key on, Pick the white. Everywhere: all the white goes; From edges: only the background; From pick: only the white area you clicked.
 - [x] {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - [x] {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.

@@ -48,5 +48,12 @@ async def main():
     # after a Ctrl+drag copy, Ctrl+click doesn't remove until Ctrl is pressed again
     h = await pg.evaluate("hushDel(); const a = isRm({ ctrlKey: true }); dispatchEvent(new KeyboardEvent('keyup', { key: 'Control' })); [a, isRm({ ctrlKey: true })]")
     print('hush', h); assert h == [False, True], h
+    # 0.72: GIF sections fold, Swap › Pick arms, Options › Rnd picks a direction each time
+    fo = await pg.evaluate("(() => { const s = [...document.querySelectorAll('#gPanes [data-pane=colour] .sub.foldable')].find(x => x.textContent.includes('Shadow')); s.querySelector('span').click(); const a = s.nextElementSibling.classList.contains('foldhid'); s.querySelector('span').click(); return [a, s.nextElementSibling.classList.contains('foldhid')]; })()")
+    print('fold', fo); assert fo == [True, False], fo
+    pk = await pg.evaluate("$('#swPick').click(); const a = picking; $('#swPick').click(); [a, picking]")
+    print('pick', pk); assert pk == ['swap', False], pk
+    rd = await pg.evaluate("transCfg = normTrans({ type: 'slide', dir: 'rand', len: 2 }); new Set(Array.from({ length: 60 }, () => makeTrans([], [], 0).cfg.dir)).size")
+    print('rand dirs', rd); assert rd == 4, rd
     await b.close()
 asyncio.run(main())

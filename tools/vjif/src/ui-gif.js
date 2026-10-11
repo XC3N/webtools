@@ -101,7 +101,7 @@ onSeg($('#swPal'), (b, e) => { const g = curGif(); if (!g) return;
   const c = gifPalette(g)[+b.dataset.i];
   if (swSel && sameRgb(swSel, c)) swSel = null;      // again: deselect
   else { if (!g.swap.some(x => sameRgb(x.from, c)) && g.swap.length >= SWAP_MAX) return toast(`Up to ${SWAP_MAX} swaps per GIF`); swSel = c.slice(); }
-  syncSwapUI(g);
+  syncSwapUI(g); if (swSel) revealSoon('#swList .swr.sel');
 });
 $('#swList').addEventListener('input', e => {
   const g = curGif(); if (!g || !e.target.matches('input[type=color]')) return;
@@ -259,16 +259,26 @@ $('#kCol').addEventListener('input', e => { const g = curGif(); if (g){ g.key.co
   e.target.nextElementSibling.textContent = (+e.target.value * 100).toFixed(0) + '%';
   if (g.key.on) scheduleFx(g, 250);
 }));
-$('#kPick').addEventListener('click', () => picking ? stopPick() : startPick());
-function startPick(){ picking = true; $('#kPick').classList.add('armed'); $('#kPick').textContent = 'Click GIF…'; pv.style.cursor = 'crosshair'; }
-function stopPick(){ picking = false; $('#kPick').classList.remove('armed'); $('#kPick').textContent = 'Pick'; pv.style.cursor = ''; }
+// Pick (Key, Swap): the next click in the preview samples the GIF there. picking: false | 'key' | 'swap'
+const PICK_BTN = { key: '#kPick', swap: '#swPick' };
+$('#kPick').addEventListener('click', () => picking === 'key' ? stopPick() : startPick('key'));
+$('#swPick').addEventListener('click', () => picking === 'swap' ? stopPick() : startPick('swap'));
+function startPick(k){ stopPick(); picking = k; $(PICK_BTN[k]).classList.add('armed'); $(PICK_BTN[k]).textContent = 'Click GIF…'; pv.style.cursor = 'crosshair'; }
+function stopPick(){ picking = false; Object.values(PICK_BTN).forEach(q => { $(q).classList.remove('armed'); $(q).textContent = 'Pick'; }); pv.style.cursor = ''; }
 function pickAt(px, py){
-  stopPick();
+  const kind = picking; stopPick();
   const hit = hitAny(px, py) || hitsAt(px, py, false)[0]; if (!hit) return toast('No GIF under the cursor');
   const c = hit[1], g = pads[c.pad].gif, d = sampleClip(c, px, py, true);
+  if (kind === 'swap'){                              // the swatch nearest that colour (the GIF's own colours, before its swaps)
+    const pal = gifPalette(g), dist = q => Math.abs(q[0] - d[0]) + Math.abs(q[1] - d[1]) + Math.abs(q[2] - d[2]);
+    const best = pal.reduce((a, q) => !a || dist(q) < dist(a) ? q : a, null); if (!best) return;
+    selectPad(c.pad); swSel = best.slice(); syncSwapUI(g); revealSoon('#swList .swr.sel'); return;
+  }
   g.key.color = [d[0], d[1], d[2]]; g.key.seed = [d.u, d.v]; g.key.on = true;
   selectPad(c.pad); scheduleFx(g, 0);
 }
+// what a click just opened further down (a swap's editor row): scrolled into view if it's below the panel's edge
+function revealSoon(q){ requestAnimationFrame(() => { const el = typeof q === 'string' ? document.querySelector(q) : q; if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }); }
 // Clearing a pad (in this scene) is undoable: its GIF instance and its sprites are kept in the undo entry,
 // and only freed when that entry leaves the history. The decoded GIF stays in the pool either way.
 function clearPad(i, fromRedo = false){
@@ -301,3 +311,20 @@ function syncShadowUI(g){
 SH_F.forEach(([id, k, f]) => $(id).addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, [k]: +e.target.value, on: true }; syncShadowUI(g); redraw.all = true; }));
 $('#shOn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, on: e.target.checked }; syncShadowUI(g); redraw.all = true; });
 $('#shCol').addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, col: e.target.value, on: true }; syncShadowUI(g); redraw.all = true; });
+
+// GIF › Play / Colour sections fold: click a section's name (remembered in this browser)
+const gFold = new Set(Prefs.json('vjif-gfold', []));
+document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=colour] > .sub').forEach(s => {
+  const t = s.querySelector('span'), name = t.textContent.trim(); s.classList.add('foldable');
+  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };
+  t.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
+  apply();
+});
+// the right column's own sections (Transform, GIF) fold too: click the heading's name
+document.querySelectorAll('#side > h2').forEach(h => {
+  const name = 'h2:' + h.firstChild.textContent.trim(); h.classList.add('foldable');
+  const apply = () => { const shut = gFold.has(name); h.classList.toggle('shut', shut); for (let n = h.nextElementSibling; n && n.tagName !== 'H2' && !n.classList.contains('gfoot'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };
+  const lab = document.createElement('span'); lab.className = 'fname'; lab.textContent = h.firstChild.textContent; h.firstChild.replaceWith(lab);
+  lab.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
+  apply();
+});

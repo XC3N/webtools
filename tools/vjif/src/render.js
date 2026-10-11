@@ -231,7 +231,8 @@ function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
 let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt, free: GIF copies to let go after }
 function makeTrans(from, gifs, beat, free = null){
   if (transCfg.type === 'cut') return null;
-  return { cfg: { ...transCfg }, from, gifs, b0: beat, len: transCfg.len, free, melt: isMelt(transCfg) ? meltTable(transCfg.px) : null, dis: null };   // (Dissolve's CPU grid is made when it's first needed: only without WebGL)
+  const cfg = { ...transCfg }; if (cfg.dir === 'rand') cfg.dir = ['left', 'right', 'up', 'down'][Math.floor(Math.random() * 4)];   // Options › Rnd: a direction picked each time
+  return { cfg, from, gifs, b0: beat, len: transCfg.len, free, melt: isMelt(transCfg) ? meltTable(transCfg.px) : null, dis: null };   // (Dissolve's CPU grid is made when it's first needed: only without WebGL)
 }
 function endTrans(){ if (trans && trans.free) trans.free.forEach(freeGif); if (trans && trans.gifs) dropFxCache(trans.gifs); trans = null; }
 // GIFs no longer on screen let go of their kept coloured frames (fxImage)

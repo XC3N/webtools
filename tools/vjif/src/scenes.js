@@ -236,7 +236,7 @@ onSeg($('#trType'), (b, e) => { transCfg.type = b.dataset.v; transCfg.style = tr
 onSeg($('#trStyle'), (b, e) => {
   transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
   syncTransUI(); });
-const TR_OPTS = { dir: [['left', '←', 'Towards the left'], ['right', '→', 'Towards the right'], ['up', '↑', 'Upwards'], ['down', '↓', 'Downwards']],
+const TR_OPTS = { dir: [['left', '←', 'Towards the left'], ['right', '→', 'Towards the right'], ['up', '↑', 'Upwards'], ['down', '↓', 'Downwards'], ['rand', 'Rnd', 'A random direction each time']],
   ch: [['rand', 'Random', 'A random channel number each time'], ['scene', 'Scene', "The new scene's name (or its number if it has none)"], ['num', 'Scene #', 'The new scene\'s number, with a leading 0 (01–09)']] };
 onSeg($('#trDir'), (b, e) => { if ($('#trDir').dataset.mode === 'ch') transCfg.ch = b.dataset.v; else transCfg.dir = b.dataset.v; syncTransUI(); });
 onSeg($('#trCurve'), (b, e) => { transCfg.smooth = b.dataset.v === '1'; syncTransUI(); });
