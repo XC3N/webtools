@@ -290,7 +290,7 @@ function wireFxTile(el){
       else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
       selFx = i; syncFxUI(); return; }
     if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); el._edit = true; return; }     // a preset is held: this click edits it
-    el.setPointerCapture(e.pointerId); fxDown(i);
+    el.setPointerCapture(e.pointerId); fxDown(i); if (selFx !== i){ selFx = i; syncFxUI(); }   // a click on the tile also opens it in the editor
     fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; if (i >= NFX) heldPre = i - NFX;   // holding a preset tile: F keys edit it; dragging it moves / copies it
   });
   el.addEventListener('pointermove', e => {
@@ -439,14 +439,15 @@ function syncFxUI(){
 // effect names refit (full or short) when the window changes, and are measured again once the fonts are in
 let fxFitT = 0; addEventListener('resize', () => { clearTimeout(fxFitT); fxFitT = setTimeout(() => { fxFitGen++; syncFxUI(); }, 150); });
 if (document.fonts) document.fonts.ready.then(() => setTimeout(() => { fxFitGen++; syncFxUI(); }, 50));
-onSeg($('#fxMode'), (b, e) => {
-  const S = fxSt[selFx], C = fxConf(selFx), now = clock.beat, playing = fxLevel(selFx, now) > 0.001, v = b.dataset.v;
+onSeg($('#fxMode'), (b, e) => setFxMode(selFx, b.dataset.v));
+function setFxMode(i, v){                           // Hold / Hit / Latch for effect (or preset) i
+  const S = fxSt[i], C = fxConf(i), now = clock.beat, playing = fxLevel(i, now) > 0.001;
   const ad = (C.att || 0) + (C.dec || 0);
   S.held = false; S.on = false; S.b0 = -1e9; C.mode = v;
   if (v === 'latch'){ S.on = true; S.t0 = now - ad - 1e-6; }               // Latch starts on, straight at Sustain (no Attack: it was a mode change, not a hit)
   else if (playing){                                                       // Hold / Hit: what was playing fades out over Release
     if (v === 'hit') S.b0 = now - ad - (C.len || 0) - 1e-6; else { S.t0 = now - ad - 1e-6; S.rel = now; } }
-  syncFxUI(); });
+  syncFxUI(); }
 const fxEd = () => selFx < NFX ? fxCfg[selFx] : preEd != null ? fxPre[selFx - NFX].fx[preEd] : null;   // what the effect-level controls change
 // target buttons: All = the whole output (alone); or a set of layers: a layer button takes its layer in or out (from All:
 // just that one), right-click = that layer alone. Lit layer buttons take their layer's colour
@@ -552,6 +553,8 @@ function fxPrevLevel(i, C, b){
   if (t < top) return fxAD(C, t); const x = rel > 0 ? (t - top) / rel : 1; return x < 1 ? fxAD(C, top) * (1 - x) * (1 - x) : 0;
 }
 const syncEnvTg = () => { $('#envPrev').classList.toggle('on', envPrevOn); $('#fxEnvRow').classList.toggle('sliders', envSliders); $('#envView').innerHTML = envSliders ? ENV_IC_GRAPH : ENV_IC_SL; $('#envView').title = envSliders ? 'Show the envelope as a graph' : 'Show the envelope as sliders'; };
+$('#envReset').addEventListener('click', () => { const C = fxConf(selFx), D = selFx < NFX ? fxDefaults()[selFx] : fxPreDefaults()[selFx - NFX];
+  ['att', 'dec', 'sus', 'len', 'rel'].forEach(k => { if (D[k] === undefined) delete C[k]; else C[k] = D[k]; }); syncFxUI(); toast2('Envelope back to its default'); });
 $('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; Prefs.set('vjif-envprev', envPrevOn ? '1' : '0'); syncEnvTg(); });
 $('#envView').addEventListener('click', () => { envSliders = !envSliders; Prefs.set('vjif-envview', envSliders ? 'sl' : 'g'); syncEnvTg(); syncEnvSl(); drawFxEnv(); });
 const ENV_SL = { a: [() => FX_ATTS, 'att'], d: [() => FX_ATTS, 'dec'], l: [() => FX_LENS, 'len'], r: [() => FX_RELS, 'rel'] };

@@ -1,4 +1,4 @@
-# a short MP4 take with sound (a test tone as the input): the sound chunks must form one unbroken stream
+# a short MP4 take with sound (a test tone as the input): the sound chunks must form one unbroken stream, as long as the picture
 import asyncio
 from playwright.async_api import async_playwright
 from _env import DIST, ARGS
@@ -12,11 +12,12 @@ async () => {
   rec.writer = null; rec.name = 'test.mp4'; rec.audio = d.stream;
   await wcStart(clock.beat);
   if (!rec.wc) return { skipped: 'no WebCodecs video encoder' };
-  const t0 = performance.now(); while (performance.now() - t0 < 2500){ wcCapture(performance.now()); await new Promise(r => setTimeout(r, 30)); }
+  const t0 = performance.now(); let busy = false; while (performance.now() - t0 < 2500){ wcCapture(performance.now()); await new Promise(r => setTimeout(r, 30));
+    if (!busy && performance.now() - t0 > 1000){ busy = true; const b0 = performance.now(); while (performance.now() - b0 < 400); } }   // a 400 ms stall (a heavy frame): no sound may be lost
   const C = rec.wc; let saved = null; window.saveFile = (blob) => { saved = blob.size; };
   await wcStop(C); rec.mr = null;
   let gaps = 0; for (let i = 1; i < chunks.length; i++) if (Math.abs(chunks[i][0] - (chunks[i-1][0] + chunks[i-1][1])) > 1) gaps++;
-  return { n: chunks.length, gaps, saved, sr: C.aenc ? 'ok' : 'none' };
+  return { n: chunks.length, gaps, saved, sr: C.aenc ? 'ok' : 'none', end: chunks.length ? (chunks[chunks.length-1][0] + chunks[chunks.length-1][1]) / 1e6 : 0, vid: C.n / C.fps };
 }"""
 async def main():
   async with async_playwright() as p:
@@ -24,6 +25,6 @@ async def main():
     await pg.goto(DIST); await pg.wait_for_function("store.ready")
     r = await pg.evaluate(JS); print(r)
     if 'skipped' not in r:
-      assert r['n'] > 20 and r['gaps'] == 0 and r['saved'], r
+      assert r['n'] > 20 and r['gaps'] == 0 and r['saved'] and abs(r['end'] - r['vid']) < 0.35, r   # the sound runs to the end of the picture
     await b.close()
 asyncio.run(main())

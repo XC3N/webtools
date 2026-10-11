@@ -13,7 +13,7 @@ async def main():
       await pg.click(f'#fxStyle [data-v="{v}"]'); await pg.wait_for_timeout(50); out.append(await pg.evaluate("fxCfg[9].style"))
     await pg.evaluate("fxCfg[9].style='vhs+scan+phos'; syncFxUI()")
     await pg.keyboard.press('F10'); await pg.wait_for_timeout(1200)
-    bb=await pg.locator('#pv').bounding_box(); await pg.screenshot(path=str(OUT/'crt_stack.png'), clip=bb)
+    bb=await pg.locator('#pv').bounding_box(timeout=180000); await pg.screenshot(path=str(OUT/'crt_stack.png'), clip=bb, timeout=180000)   # (a software GPU takes seconds per VHS frame)
     t=await pg.evaluate("[$('#fxStrip .fxp[data-i=\"9\"] .s').textContent, [...document.querySelectorAll('#fxStyle button.on')].map(b=>b.dataset.v)]")
     print(out, t, errs)
     # stacked: right-click a style that's on shows its settings without switching it; one row of styles for every effect

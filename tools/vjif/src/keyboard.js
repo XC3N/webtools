@@ -5,6 +5,7 @@ function isTyping(e){
   if (t.isContentEditable || t.tagName === 'TEXTAREA') return true;
   return t.tagName === 'INPUT' && ['text','number','url','search'].includes(t.type);
 }
+const FX_MODE_KEYS = { Insert: 'hold', Home: 'hit', PageUp: 'latch' };   // the 3 keys above the arrows, left to right
 let heldFxKey = -1;   // an F-key effect held down: 1–5 then set its layers
 function onKey(e){
   if (midiCtl.learning){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); endLearn(); } return; }
@@ -51,6 +52,8 @@ function onKey(e){
     if (shifted) storeFxPre(k); else { fxDown(NFX + k); heldPre = k; selectFx(NFX + k); }
     return;
   }
+  if (heldFxKey >= 0 && !e.shiftKey && FX_MODE_KEYS[e.code]){   // an effect key held + Ins / Home / PgUp: Hold / Hit / Latch
+    e.preventDefault(); if (!e.repeat){ setFxMode(heldFxKey, FX_MODE_KEYS[e.code]); toast2(`${FX_DEFS[heldFxKey].name}: ${FX_MODE_KEYS[e.code]}`); } return; }
   if (e.code === 'Digit0'){ e.preventDefault(); if (!e.repeat){ setBlack(true); updLiveTag(); } return; }   // 0: blackout while held
   if (e.code === 'Insert'){ e.preventDefault(); if (!e.repeat) setFreeze(true); return; }                  // Ins: freeze while held
   const ti = TR_KEYS.indexOf(e.code);                // 1–9: arm a transition preset · Shift+1–4: layer on / off

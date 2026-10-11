@@ -4,6 +4,27 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.65.0 — 2026-10-10
+
+### Recording
+- MP4 sound, rebuilt: the sound is now captured on the browser's audio thread (an AudioWorklet), so nothing is dropped while the page is busy drawing (blocks queue up and arrive late at worst). Each block is stamped from its sample count, so the sound is one unbroken stream that runs to the end of the picture. The music player is tapped straight from its own audio graph. A test records a tone with a 400 ms stall in the middle and checks for gaps and length.
+- Rec ▾ (like BRB's): bars, frame rate and quality at hand, kept in step with Settings › Recording; More in Settings… for the rest.
+- Music player: a thin seek bar under its buttons (click or drag).
+
+### Effects
+- Hold an F-key + Ins / Home / PgUp: that effect's mode becomes Hold / Hit / Latch.
+- Playing an effect from its F-key (or MIDI) no longer moves the effect editor to it; clicking its tile still does.
+- Envelope: a reset button (back to the effect's default).
+- CRT › VHS: the tape's softness (blur and colour smear) is there in full from the lowest Wear; Wear adds the faults.
+
+### Interface
+- Layer cards show the selected GIF only on the edit layer (the one in the right-hand panel).
+- Settings / pool windows: a few shades darker.
+- Interface › Size: Settings only steps aside once you actually drag, so a double-click (reset) no longer flashes it.
+
+### Fixes
+- Music player: the pause button sometimes did nothing. Its icon was redrawn 4× a second, and a click that started on the old icon never reached the button.
+
 ## 0.64.0 — 2026-10-10
 
 ### Effects

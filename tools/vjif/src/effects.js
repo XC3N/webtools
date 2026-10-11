@@ -140,8 +140,8 @@ function fxDown(i){
   const C = fxConf(i), S = fxSt[i], b = clock.beat;
   if (C.mode === 'hit') S.b0 = snapBeat(b);
   else if (C.mode === 'hold'){ S.held = true; S.t0 = b; }
-  else { S.on = !S.on; if (!S.on){ S.rel = b; return; } S.t0 = b; }   // switching a Latch off leaves the editor where it is
-  if (selFx !== i){ selFx = i; syncFxUI(); }
+  else { S.on = !S.on; if (!S.on){ S.rel = b; return; } S.t0 = b; }
+  // (playing an effect from its key or MIDI leaves the editor on what you were editing: clicking its tile selects it)
 }
 function fxUp(i){ const S = fxSt[i]; if (S.held){ S.held = false; S.rel = clock.beat; } }
 function selectFx(i){ selFx = i; syncFxUI(); }
@@ -393,10 +393,11 @@ ${FX_GLSL}
           if (w > 0.001){                            // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
             vec2 q = geo(p), px1 = vec2((1.5 + 2.0 * w) / res.x, 0.0);         // softer as the tape wears
             vec3 lu = (raw(q - px1) + c * 2.0 + raw(q + px1)) / 4.0;                // tape's soft picture: brightness a little blurred sideways…
-            c = mix(c, lu + (c - lu) * 0.6, 0.7 * w);                              // …with a faint edge ring (the sharpening VCRs added)
+            float kb = min(1.0, w * 20.0);              // the tape's softness is there at any Wear (full from 5 %): Wear adds the faults
+            c = mix(c, lu + (c - lu) * 0.6, 0.7 * kb);                             // …with a faint edge ring (the sharpening VCRs added)
             vec3 sm = (raw(q - vec2(0.004, 0.0)) + raw(q - vec2(0.008, 0.0)) + raw(q - vec2(0.012, 0.0)) + raw(q - vec2(0.016, 0.0))) / 4.0;
             float yl = dot(c, vec3(0.299, 0.587, 0.114)); vec3 ch = sm - dot(sm, vec3(0.299, 0.587, 0.114));
-            c = mix(c, vec3(yl) + ch, 0.8 * w);                                     // colour at a fraction of the sharpness, smeared to the right
+            c = mix(c, vec3(yl) + ch, 0.8 * kb);                                    // colour at a fraction of the sharpness, smeared to the right
             c += (vec3(h1(ln * 3.7 + fr), h1(ln * 5.1 + fr * 1.7), h1(ln * 2.3 + fr * 0.7)) - 0.5) * 0.06 * w;   // chroma noise, line by line
             float bq = vhsBand(uv.y), seg = h1(ln * 1.3 + fr * 3.1);   // dropouts: where the tape lost its oxide, mostly in the bands
             if (seg < (0.004 + 0.05 * w + 0.3 * bq) * w * vDrop){   // more with Wear (more often, brighter), × Dropouts

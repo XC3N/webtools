@@ -184,8 +184,10 @@ function setUiZoom(z){ uiZoom = Math.round(clamp(z, 0.7, 1.3) * 100) / 100;
 // dragged by hand rather than by the browser: the slider grows and shrinks with the interface, so its own maths would chase the pointer
 let uzDrag = null;
 $('#uiZoomR').addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect();
-  uzDrag = { x: e.clientX, z: uiZoom, w: r.width }; e.currentTarget.setPointerCapture(e.pointerId); $('#setPanel').classList.add('peek'); });   // while dragging, Settings steps aside: only this row stays, the interface shows through
-$('#uiZoomR').addEventListener('pointermove', e => { if (uzDrag) setUiZoom(uzDrag.z + (e.clientX - uzDrag.x) / uzDrag.w * 0.6); });
+  uzDrag = { x: e.clientX, z: uiZoom, w: r.width, moved: false }; e.currentTarget.setPointerCapture(e.pointerId); });
+// once it really moves, Settings steps aside: only this row stays, the interface shows through (a click or double-click doesn't flash it)
+$('#uiZoomR').addEventListener('pointermove', e => { if (!uzDrag) return; if (!uzDrag.moved && Math.abs(e.clientX - uzDrag.x) > 3){ uzDrag.moved = true; $('#setPanel').classList.add('peek'); }
+  if (uzDrag.moved) setUiZoom(uzDrag.z + (e.clientX - uzDrag.x) / uzDrag.w * 0.6); });
 const uzEnd = () => { uzDrag = null; $('#setPanel').classList.remove('peek'); };
 $('#uiZoomR').addEventListener('pointerup', uzEnd); $('#uiZoomR').addEventListener('pointercancel', uzEnd);
 $('#uiZoomR').addEventListener('input', e => { if (!uzDrag) setUiZoom(+e.target.value); });   // keyboard arrows

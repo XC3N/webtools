@@ -8,7 +8,7 @@ mus.el.crossOrigin = 'anonymous'; mus.el.preload = 'auto';
 // file → speakers (at the listening level) and → a stream for recordings (full level)
 function musGraph(){
   if (mus.ctx) return;
-  mus.ctx = new AudioContext(); const src = mus.ctx.createMediaElementSource(mus.el);
+  mus.ctx = new AudioContext(); const src = mus.src = mus.ctx.createMediaElementSource(mus.el);
   mus.gain = mus.ctx.createGain(); mus.gain.gain.value = +$('#musVol').value; mus.dest = mus.ctx.createMediaStreamDestination();
   src.connect(mus.gain); mus.gain.connect(mus.ctx.destination); src.connect(mus.dest);
 }
@@ -27,7 +27,10 @@ function musOnSync(){ if ($('#musSync').checked && mus.el.src && clock.src === '
 const mmss = t => isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '–:––';
 function musUI(){
   $('#musName').textContent = mus.name || 'no track'; $('#musPlay').disabled = $('#musStop').disabled = !mus.el.src;
-  $('#musPlay').innerHTML = mus.el.paused ? MUS_IC_PLAY : MUS_IC_PAUSE; $('#musPlay').classList.toggle('on', !mus.el.paused);
+  // the icon only when it changes: swapping it on every time update (4× a second) removed the icon under a click in
+  // progress, so the click never reached the button (the pause button "did nothing")
+  const ic = mus.el.paused ? 'play' : 'pause'; if ($('#musPlay').dataset.ic !== ic){ $('#musPlay').dataset.ic = ic; $('#musPlay').innerHTML = mus.el.paused ? MUS_IC_PLAY : MUS_IC_PAUSE; }
+  $('#musPlay').classList.toggle('on', !mus.el.paused);
   $('#musPlay').title = mus.el.src ? `${mus.el.paused ? 'Play' : 'Pause'}: ${mus.name} · ${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : 'Play / pause (no track: load one with ⏏)';
   $('#musTime').textContent = mus.el.src ? `${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : '';
 }
@@ -54,6 +57,40 @@ $('#musLoop').addEventListener('click', () => { mus.el.loop = !mus.el.loop; $('#
 $('#setPanel').addEventListener('dragover', e => { if ([...e.dataTransfer.items].some(i => i.type.startsWith('audio/'))) e.preventDefault(); });
 $('#setPanel').addEventListener('drop', e => { const f = [...e.dataTransfer.files].find(f => f.type.startsWith('audio/')); if (!f) return; e.preventDefault(); e.stopPropagation(); musSet(f, f.name); });
 async function musRestore(){ try { const r = await store.get('music'); if (r) musSet(r.blob || r.url, r.name, false); } catch (e) {} }
+
+// ---- sound capture for MP4 takes: an AudioWorklet copies every block of samples to the page (as 2 channels) ----
+const CAP_WORKLET = `class Cap extends AudioWorkletProcessor {
+  constructor(){ super(); this.on = true; this.n = 0; this.f0 = 0; this.l = new Float32Array(2048); this.r = new Float32Array(2048);
+    this.port.onmessage = e => { if (e.data === 'stop') this.on = false; }; }
+  process(inputs){
+    if (!this.on) return false;
+    const inp = inputs[0], L = inp && inp[0], R = inp && (inp[1] || inp[0]), m = L ? L.length : 128;
+    if (this.n === 0) this.f0 = currentFrame;
+    if (L){ this.l.set(L, this.n); this.r.set(R, this.n); } else { this.l.fill(0, this.n, this.n + m); this.r.fill(0, this.n, this.n + m); }
+    this.n += m;
+    if (this.n >= 1024){ const l = this.l.slice(0, this.n), r = this.r.slice(0, this.n); this.port.postMessage({ f: this.f0, l, r }, [l.buffer, r.buffer]); this.n = 0; }
+    return true; } }
+registerProcessor('vjif-cap', Cap);`;
+const capCtxs = new WeakSet();
+async function audioCapture(stream){
+  let ctx, srcNode, own = false;
+  if (stream){ ctx = new AudioContext(); own = true; srcNode = ctx.createMediaStreamSource(stream); }   // another input: its own capture context
+  else { musGraph(); ctx = mus.ctx; srcNode = mus.src; }                                              // the music player: tapped where it plays
+  await ctx.resume().catch(() => {});
+  if (!capCtxs.has(ctx)){                            // the worklet's code from a blob: URL (a data: URL where blobs are refused, e.g. a page opened from a file)
+    const u = URL.createObjectURL(new Blob([CAP_WORKLET], { type: 'text/javascript' }));
+    try { await ctx.audioWorklet.addModule(u); } catch (e) { await ctx.audioWorklet.addModule('data:text/javascript;charset=utf-8,' + encodeURIComponent(CAP_WORKLET)); }
+    finally { URL.revokeObjectURL(u); }
+    capCtxs.add(ctx); }
+  const node = new AudioWorkletNode(ctx, 'vjif-cap', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 2, channelCountMode: 'explicit', channelInterpretation: 'speakers' });
+  const mute = ctx.createGain(); mute.gain.value = 0; srcNode.connect(node); node.connect(mute); mute.connect(ctx.destination);   // (a node only runs when it leads to the speakers)
+  // the context's clock → the page's clock, from when the sound is heard (what you hear lines up with the picture)
+  const ot = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null, base = ot && ot.performanceTime ? { c: ot.contextTime, p: ot.performanceTime } : { c: ctx.currentTime, p: performance.now() };
+  return { ctx,
+    toPerf: sec => base.p + (sec - base.c) * 1000,
+    start(fn){ node.port.onmessage = e => fn(e.data.f, [e.data.l, e.data.r]); },
+    stop(){ try { node.port.postMessage('stop'); srcNode.disconnect(node); node.disconnect(); mute.disconnect(); } catch (e) {} if (own){ ctx.close().catch(() => {}); stream.getTracks().forEach(t => t.stop()); } } };
+}
 
 const rec = { mr: null, writer: null, t0: 0, wait: null, name: '', bytes: 0, starting: false };   // starting: an MP4 take is getting its encoders ready
 // MP4 (H.264) uploads straight to Instagram / TikTok / YouTube; WebM (VP9) is the fallback where the browser has no H.264 encoder
@@ -204,21 +241,21 @@ async function wcSetup(beat){
     toast2(`No ${WC_NAMES[recCodec]}${recCodec !== 'h264' ? ' or H.264' : ''} encoder here — recording with the browser's own recorder instead`);
     rec.audio = audio; return recStart(m, beat);
   }
-  const track = audio && audio.getAudioTracks()[0], set = track ? track.getSettings() : null;
-  let acfg = null, reader = null, first = null;
-  if (track && typeof AudioEncoder === 'function' && typeof MediaStreamTrackProcessor === 'function'){
-    // a deep buffer (~2 s of sound) so a busy frame doesn't make the browser drop sound blocks (heard as crackle / garble)
-    reader = new MediaStreamTrackProcessor({ track, maxBufferSize: 200 }).readable.getReader();
-    // the encoder is set up from the sound as it really arrives (rate, channels), not from what the track claims
-    first = await Promise.race([reader.read().then(r => r.done ? null : r.value).catch(() => null), new Promise(r => setTimeout(() => r(null), 600))]);
-    const sr = first ? first.sampleRate : set.sampleRate || 48000, nch = first ? first.numberOfChannels : set.channelCount || 2;
-    for (const codec of recACodec === 'opus' ? ['opus', 'mp4a.40.2'] : ['mp4a.40.2', 'opus']){   // AAC is what the social sites expect; Opus in MP4 plays in browsers and VLC
-      const c = { codec, sampleRate: sr, numberOfChannels: Math.min(2, nch), bitrate: 192000 };
+  // The sound is captured on the audio thread (an AudioWorklet), so nothing is lost when the page is busy drawing: the blocks
+  // queue up and arrive late at worst. Each block is stamped from its sample count, so the sound is one unbroken stream.
+  // The music player is tapped straight from its own audio graph; other inputs go through a capture context of their own.
+  const track = audio && audio.getAudioTracks()[0];
+  let acfg = null, cap = null;
+  if (track && typeof AudioEncoder === 'function' && typeof AudioData === 'function'){
+    try { cap = await audioCapture(recAudio && recAudio.id === 'music' && mus.ctx ? null : audio); } catch (e) { cap = null; }
+    if (!cap) toast('Couldn\'t capture the sound — recording without sound');
+    else for (const codec of recACodec === 'opus' ? ['opus', 'mp4a.40.2'] : ['mp4a.40.2', 'opus']){   // AAC is what the social sites expect; Opus in MP4 plays in browsers and VLC
+      const c = { codec, sampleRate: cap.ctx.sampleRate, numberOfChannels: 2, bitrate: 192000 };
       try { if ((await AudioEncoder.isConfigSupported(c)).supported){ acfg = c; break; } } catch (e) {}
     }
-    if (!acfg) toast('This browser can\'t encode sound for MP4 — recording without sound');
-    else if (acfg.codec === 'opus' && recACodec === 'aac') toast2('No AAC encoder here: the sound is Opus, which some sites refuse');
-    else if (acfg.codec !== 'opus' && recACodec === 'opus') toast2('No Opus encoder here: the sound is AAC');
+    if (cap && !acfg){ toast('This browser can\'t encode sound for MP4 — recording without sound'); cap.stop(); cap = null; }
+    else if (acfg && acfg.codec === 'opus' && recACodec === 'aac') toast2('No AAC encoder here: the sound is Opus, which some sites refuse');
+    else if (acfg && acfg.codec !== 'opus' && recACodec === 'opus') toast2('No Opus encoder here: the sound is AAC');
   }
   const target = writer ? new Mp4Muxer.FileSystemWritableFileStreamTarget(writer) : new Mp4Muxer.ArrayBufferTarget();
   // both tracks share one time base: video frame n sits at n / fps from the bar the take started on (C.t0), and the sound
@@ -228,33 +265,28 @@ async function wcSetup(beat){
     audio: acfg ? { codec: acfg.codec === 'opus' ? 'opus' : 'aac', sampleRate: acfg.sampleRate, numberOfChannels: acfg.numberOfChannels } : undefined });
   const fail = e => { toast('Recording failed: ' + (e && e.message || e)); recStop(); };
   // the clip's clock starts on the bar it was asked to start on (getting the encoders ready took a few ms), so a bar-length take is exactly that long
-  const C = { venc: null, aenc: null, reader: null, audio, muxer, target, writer, name, fps, us, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm,
+  const C = { venc: null, aenc: null, cap: null, audio, muxer, target, writer, name, fps, us, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm,
               stopping: false, vOn: false, aHold: [], aOff: null, aNext: null, dropped: 0, warned: false };
   C.venc = new VideoEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addVideoChunk(ch, meta);
     if (!C.vOn){ C.vOn = true; C.aHold.forEach(a => muxer.addAudioChunkRaw(...a)); C.aHold = null; } }, error: fail });
   C.venc.configure(vcfg);
   if (acfg){
-    // sound chunks are re-stamped onto the video clock; any that arrive before the first video chunk wait for it, so the
-    // muxer sees the video track first (its first frame is time 0)
+    // sound chunks arrive stamped on the video clock (µs from C.t0); any that arrive before the first video chunk wait for
+    // it, so the muxer sees the video track first (its first frame is time 0)
     C.aenc = new AudioEncoder({ output: (ch, meta) => {
-      // the first block is placed on the video clock; every next one follows straight on (by its length), so the sound
-      // stays one unbroken stream even when blocks arrive with jittery time stamps
-      let t = ch.timestamp - C.aOff; if (C.aNext === null){ if (t < 0) return; } else t = C.aNext;
-      C.aNext = t + (ch.duration || 0);
       const b = new Uint8Array(ch.byteLength); ch.copyTo(b); rec.bytes += b.byteLength;
-      const a = [b, ch.type, t, ch.duration ?? 0, meta];
+      const a = [b, ch.type, ch.timestamp, ch.duration ?? 0, meta];
       if (C.vOn) muxer.addAudioChunkRaw(...a); else C.aHold.push(a); }, error: fail });
     C.aenc.configure(acfg);
-    C.reader = reader;
-    (async () => { for (;;){ let value, done; if (first){ value = first; first = null; } else ({ value, done } = await C.reader.read().catch(() => ({ done: true }))); if (done) break;
-      if (C.aOff === null){
-        // Chrome stamps captured sound on the page's own clock (µs since it opened): then it lines up exactly. If a source
-        // uses another clock, the first block is placed at the moment it arrived instead.
-        const ms = value.timestamp / 1000, wall = performance.now();
-        C.aOff = Math.abs(ms - wall) < 2000 ? C.t0 * 1000 : value.timestamp - (wall - C.t0 - (value.duration || 0) / 1000) * 1000;
-      }
-      if (C.aenc.state === 'configured') C.aenc.encode(value); value.close(); } })();
-  } else { if (first) first.close(); if (reader) reader.cancel().catch(() => {}); if (audio) audio.getTracks().forEach(t => t.stop()); }
+    C.cap = cap; const sr = cap.ctx.sampleRate;
+    cap.start((frame, planes) => {                    // frame: the block's first sample, on the capture context's clock
+      if (C.stopping || C.aenc.state !== 'configured') return;
+      const t = (cap.toPerf(frame / sr) - C.t0) * 1000; if (t < 0) return;   // before the bar the take starts on
+      const n = planes[0].length, data = new Float32Array(n * 2); data.set(planes[0], 0); data.set(planes[1] || planes[0], n);
+      const ad = new AudioData({ format: 'f32-planar', sampleRate: sr, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(t), data });
+      C.aenc.encode(ad); ad.close();
+    });
+  } else if (audio) audio.getTracks().forEach(t => t.stop());
   rec.wc = C;
   rec.mr = { stop: () => wcStop(C) };                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
   rec.t0 = C.t0; redraw.all = true; recUI(); bgTickSet(true);
@@ -281,7 +313,7 @@ function wcCapture(now){
 async function wcStop(C){
   if (C.stopping) return; C.stopping = true; if (rec.wc === C) rec.wc = null;
   try {
-    if (C.reader) await C.reader.cancel().catch(() => {});
+    if (C.cap) C.cap.stop();
     if (C.audio) C.audio.getTracks().forEach(t => t.stop());
     await C.venc.flush(); if (C.aenc) await C.aenc.flush();
     if (!C.vOn){ C.venc.close(); if (C.aenc) C.aenc.close(); if (C.writer) await C.writer.abort().catch(() => {}); toast('The take stopped before its first frame — nothing was saved'); return; }
@@ -448,3 +480,26 @@ async function restore(){
   }
 }
 setInterval(autosave, 1000);
+
+// ---- Rec ▾: the take's length, frame rate and quality at hand (the same settings as Settings › Recording, kept in step) ----
+{
+  const ROWS = [['Bars', '#recBarsSeg'], ['Frame rate', '#recFpsSeg'], ['Mb/s', '#recMbpsSeg']];
+  $('#recPopRows').innerHTML = ROWS.map(([n, q], k) => `<span class="poprow"><span>${n}</span><div class="seg" data-src="${q}">${$(q).innerHTML.replace('4 bars', '4')}</div></span>`).join('');
+  const sync = () => document.querySelectorAll('#recPopRows .seg').forEach(g => { const src = $(g.dataset.src).querySelectorAll('button');
+    g.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', src[i].classList.contains('on'))); });
+  document.querySelectorAll('#recPopRows .seg').forEach(g => onSeg(g, b => { $(g.dataset.src).querySelectorAll('button')[[...g.children].indexOf(b)].click(); sync(); }));
+  $('#recCfg').addEventListener('click', e => { e.stopPropagation(); sync(); $('#recPop').hidden = !$('#recPop').hidden; });
+  document.addEventListener('pointerdown', e => { if (!$('#recPop').hidden && !e.target.closest('#recWrap')) $('#recPop').hidden = true; });
+  $('#recPopMore').addEventListener('click', () => { $('#recPop').hidden = true; if ($('#setPanel').hidden) $('#setBtn').click(); const r = $('#recBarsSeg').closest('.row'); if (r) r.scrollIntoView({ block: 'center' }); });
+}
+
+// ---- seek bar: a thin bar under the player's buttons (click or drag to move in the track) ----
+{
+  const bar = document.createElement('span'); bar.id = 'musSeek'; bar.title = 'Click or drag: move in the track'; bar.innerHTML = '<i></i>'; $('#musGrp').appendChild(bar);
+  const fill = bar.firstChild;
+  const at = e => { const r = bar.getBoundingClientRect(), d = mus.el.duration; if (!isFinite(d) || !d) return; mus.el.currentTime = clamp((e.clientX - r.left) / r.width, 0, 1) * d; draw(); };
+  const draw = () => { const d = mus.el.duration; fill.style.width = (isFinite(d) && d ? mus.el.currentTime / d * 100 : 0) + '%'; bar.classList.toggle('off', !mus.el.src); };
+  bar.addEventListener('pointerdown', e => { if (!mus.el.src) return; bar.setPointerCapture(e.pointerId); bar._d = true; at(e); });
+  bar.addEventListener('pointermove', e => { if (bar._d) at(e); }); ['pointerup', 'pointercancel'].forEach(t => bar.addEventListener(t, () => bar._d = false));
+  ['timeupdate', 'loadedmetadata', 'emptied', 'seeked'].forEach(ev => mus.el.addEventListener(ev, draw)); draw();
+}

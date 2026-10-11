@@ -60,6 +60,12 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {livebar} **Go live / leave BRB on the bar** (0.64) — Snap off: Enter in Prep waits for the next bar; in BRB a scene key changes on the next bar.
 - {fbghost} **Feedback fades out** (0.64) — Feedback Trails at a long Length, change scenes: no faint ghost of the old scene left.
 - {bordersel} **Border click deselects** (0.64) — a big GIF sticking out past the canvas: click in the grey border over it: deselected.
+- {recsnd2} **Rec sound (worklet)** (0.65) — MP4 with the music player (a long track), a timed take, busy scene: is the sound clean, in sync, and there to the end?
+- {recpop} **Rec ▾** (0.65) — the ▾ next to Rec: bars / frame rate / Mb/s; same as in Settings.
+- {musseek} **Music seek bar** (0.65) — under the player buttons: click / drag to move in the track; the pause button pauses.
+- {fxmodekey} **Mode by key** (0.65) — hold F2, press Ins / Home / PgUp: Hold / Hit / Latch. F-keys don't move the editor.
+- {envreset} **Envelope reset** (0.65) — the ↺ above the envelope.
+- {vhsblur} **VHS soft at low wear** (0.65) — CRT › VHS at 5 %: the picture is already soft and smeared.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.
