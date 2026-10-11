@@ -96,6 +96,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ji9c5cqlzozra079aeix} **Scramble from the centre** (0.73) — Glitch › Scramble with a growing Amount: blocks grow from the middle, not towards a corner.
 - [x] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
 - [ ] {ocv7fifdfkezjtcdvqtn} **Dragging an effect leaves it alone** (0.74.1) — drag an effect tile (to a preset, or off and back): an effect that was off stays off, a latched one stays on.
+- [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75) — GIF › Auto › Envelope: Depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Only on Zoom: a punch per hit (Attack 0, Decay 1/4).
 - [ ] {hr757smrqn2mmmwqnow0} **Launchpad preset row** (0.73) — Settings › Launchpad layout: bottom row = presets 7 8 9 4 5 6 1 2, right button 3.
 - [ ] {uqfogckolx2naf4ogqdd} **Shorter right column** (0.74) — no info strips under Transform and GIF (hover the headings' tags instead), Performance on one line.
 - [ ] {idfxcorner} **Effects toolbar + Trig Follow** (0.74) — top-left of the effect editor: ⏻ and Trig Follow. Follow on: an F-key opens that effect in the editor; off: it doesn't.

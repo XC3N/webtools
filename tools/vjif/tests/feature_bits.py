@@ -81,5 +81,18 @@ async def main():
         dg.append(await pg.evaluate("fxSt[0].on"))
     await pg.evaluate("fxSt[0].on = false; fxCfg[0].mode = 'hold'")
     print('drag keeps state', dg); assert dg == [False, True], dg
+    # 0.75: Auto › Envelope (ADSR per hit: Attack / Decay play out, Sustain while held, Release); Depth scales the LFO, Only replaces it
+    ev = await pg.evaluate("""(() => { const A = { ea: 1, ed: 2, es: 0.5, er: 1 }, r = v => Math.round(v * 100) / 100;
+      const held = { hitBeat: 0, relBeat: null }, tap = { hitBeat: 0, relBeat: 0.2 };
+      return [r(lfoEnv(A, held, 0.5)), r(lfoEnv(A, held, 2)), r(lfoEnv(A, held, 9)), r(lfoEnv(A, tap, 2)), r(lfoEnv(A, tap, 3.5)), lfoEnv(A, tap, 4.5), lfoEnv(A, {}, 1),
+        r(lfoUnit({ ...A, em: 'only', shape: 'square', per: 4, ph: 0, sync: 'clock' }, held, 1, 0.5)), lfoUnit({ ...A, em: 'depth', shape: 'up', per: 4, ph: 0, sync: 'clock' }, {}, 1, 1)]; })()""")
+    print('lfo env', ev); assert ev == [0.5, 0.75, 0.5, 0.75, 0.25, 0, 0, 0.5, 0], ev
+    eu = await pg.evaluate("""(() => { if (!pads[0].gif) return 'no gif'; selectPad(0); $('#gTabs [data-v=auto]').click(); document.querySelector('#aEnv [data-v=only]').click();
+      const A = pads[0].gif.lfo[aSel]; const r = [A.em, A.on, $('#aShape').closest('.field').classList.contains('dimmed'), $('#aEA').closest('.field').classList.contains('dimmed')];
+      document.querySelector('#aEnv [data-v=off]').click(); r.push($('#aEA').closest('.field').classList.contains('dimmed')); return r; })()""")
+    print('env ui', eu); assert eu == ['only', True, True, False, True], eu
+    await pg.evaluate("document.querySelector('#aEnv [data-v=depth]').click()")
+    await (await pg.query_selector('#gPanes')).screenshot(path='/tmp/claude-0/-home-claude-webtools/1b2b3a57-6428-5293-a0ca-34110d8408a2/scratchpad/autoenv.png')
+    await pg.evaluate("$('#aReset').click()")
     await b.close()
 asyncio.run(main())

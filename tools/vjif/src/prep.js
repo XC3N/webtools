@@ -15,7 +15,7 @@ function startPrep(){
   st.forEach(S => { if (S.held){ S.held = false; S.rel = now; } });   // a key held right now would never be let go on the output
   // a gated fade held open right now (pad still down) is let go on the copy: the editor's release never reaches it
   const gated = c => { const g = pads[c.pad].gif; return c.env && c.env.rel === null && g && g.trig === 'fade' && g.env.gate && !c.env.noGate; };
-  prep = { layers: layers.map(L => ({ ...layerState(L), clips: L.clips.map(c => ({ ...c, env: c.env && { ...c.env, rel: gated(c) ? Math.max(now, c.env.t0) : c.env.rel } })) })), gifs, free,
+  prep = { layers: layers.map(L => ({ ...layerState(L), clips: L.clips.map(c => ({ ...c, relBeat: c.relBeat === null ? now : c.relBeat, env: c.env && { ...c.env, rel: gated(c) ? Math.max(now, c.env.t0) : c.env.rel } })) })), gifs, free,
            fx: { cfg: cp(fxCfg), pre: cp(fxPre), st }, scene: sceneIdx };
   if (brb.link && !brb.on) brbStart();                // linked: BRB keeps the output changing while you prep
   syncPrepUI(); renderScenes(); redraw.all = true;
@@ -47,7 +47,7 @@ function prepSwitchTo(i, beat){
   endPrepTr();
   const T = makeTrans(P.layers, P.gifs, beat, P.free);   // the old output picture fades / slides out (its GIF copies go when it ends)
   if (T) P.tr = T; else P.free.forEach(freeGif);
-  P.layers = sc.layers.map(L => ({ ...L, clips: L.clips.map(c => ({ ...c, startBeat: beat, startTime: t0, env: null })) }));
+  P.layers = sc.layers.map(L => ({ ...L, clips: L.clips.map(c => ({ ...c, startBeat: beat, startTime: t0, env: null, hitBeat: undefined })) }));
   P.gifs = gifs; P.free = free; P.scene = i;
   redraw.all = true; renderScenes();
 }

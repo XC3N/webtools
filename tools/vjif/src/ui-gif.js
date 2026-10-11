@@ -154,6 +154,7 @@ $('#aTgt').innerHTML = LFO_T.map(t => `<button data-v="${t[0]}" title="${t[2]}">
 $('#aShape').innerHTML = segHTML(SHAPES);
 $('#aPer').max = PER_OPTS.length - 1;
 const lfoFmt = (t, v) => t[6] === '%' ? Math.round(v * 100) + '%' : t[6] === '×' ? (+v).toFixed(2) + '×' : (v > 0 ? '+' : '') + Math.round(v) + (t[6] === '°' ? '°' : '');
+const A_ENV = [['#aEA', 'ea', 0], ['#aED', 'ed', 4], ['#aER', 'er', 1]];   // Envelope times (ENV_OPTS), with their defaults
 function syncAutoUI(g){
   const t = LFO_T.find(t => t[0] === aSel), A = g.lfo[aSel] || lfoDef(aSel);
   $('#aTgt').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.v === aSel); b.classList.toggle('act', !!(g.lfo[b.dataset.v] && g.lfo[b.dataset.v].on)); });
@@ -166,6 +167,11 @@ function syncAutoUI(g){
   const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(PER_OPTS, D.per); $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
   const gi = optIdx(GAP_OPTS, A.gap || 0); $('#aGap').value = gi; $('#aGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
+  const em = A.em || 'off'; segSet('#aEnv', em);
+  A_ENV.forEach(([id, k, def]) => { const i = optIdx(ENV_OPTS, A[k] ?? def); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
+  $('#aES').value = A.es ?? 0; $('#aES').nextElementSibling.textContent = Math.round((A.es ?? 0) * 100) + '%';
+  document.querySelectorAll('#gPanes .aEnvF').forEach(f => f.classList.toggle('dimmed', em === 'off'));
+  ['#aShape', '#aPer', '#aGap', '#aPh', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
   $('#gTabs [data-v=trig]').classList.toggle('act', g.trig === 'fade');
   $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
 }
@@ -188,6 +194,9 @@ $('#aMax').addEventListener('input', e => { editLfo(A => A.max = +e.target.value
 $('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0]));
 $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value));
 $('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.target.value][0]));
+A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0])); });
+$('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value));
+onSeg($('#aEnv'), b => editLfo(A => A.em = b.dataset.v));
 $('#aResetAll').addEventListener('click', () => { const g = curGif(); if (!g) return; const n = LFO_T.filter(t => g.lfo[t[0]] && g.lfo[t[0]].on).length; g.lfo = {}; syncAutoUI(g); syncXfUI(); toast2(n ? `Automation off (${n} LFO${n > 1 ? 's' : ''} reset)` : 'No automation to reset'); });
 $('#aReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.lfo[aSel]; syncAutoUI(g); syncXfUI(); });
 
@@ -217,6 +226,14 @@ function drawLfoScope(g){
   const S = scopeCtx($('#aScope')); if (!S) return; const [x, w, h, d] = S;
   const A = g.lfo[aSel] || lfoDef(aSel), i = LFO_T.findIndex(t => t[0] === aSel), c = clipOf(selPad) || { startBeat: 0 };
   const t = A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat, L = A.per + (A.gap || 0), seed = lfoSeed(g, i);
+  if ((A.em || 'off') !== 'off'){                    // with an envelope: one hit held for a beat, the dot where the last hit is now
+    const a = A.ea ?? 0, dd = A.ed ?? 4, r = A.er ?? 1, span = Math.max(a + dd + 1 + r, 1) * 1.1, sh = { hitBeat: 0, relBeat: 1 };
+    const val = (u, cl) => A.em === 'only' ? lfoEnv(A, cl, u) : lfoShape(A, lfoPosT(A, u), seed) * lfoEnv(A, cl, u);
+    const y = scopeTrace(x, w, h, d, u => val(u * span, sh), A.on);
+    const hit = c.hitBeat !== undefined ? clock.beat - c.hitBeat : -1;
+    if (hit >= 0 && hit < span) scopeDot(x, hit / span * w, y(val(hit, { hitBeat: 0, relBeat: c.relBeat === null ? null : (c.relBeat ?? c.hitBeat) - c.hitBeat })), d);
+    return;
+  }
   const y = scopeTrace(x, w, h, d, u => lfoShape(A, lfoPosT(A, t + (u - 0.75) * 2 * L), seed), A.on);   // two cycles (with their gaps), now at 3/4
   scopeDot(x, w * 0.75, y(lfoShape(A, lfoPosT(A, t), seed)), d);
 }
@@ -316,9 +333,9 @@ $('#shCol').addEventListener('input', e => { const g = curGif(); if (!g) return;
 
 // GIF › Play / Colour sections fold: click a section's name (remembered in this browser)
 const gFold = new Set(Prefs.json('vjif-gfold', []));
-document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=colour] > .sub').forEach(s => {
+document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=colour] > .sub, #gPanes [data-pane=auto] > .sub[data-fold]').forEach(s => {
   const t = s.querySelector('span'), name = t.textContent.trim(); s.classList.add('foldable');
-  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };
+  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub') && !n.classList.contains('scope'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };   // (a scope stays: it ends the section)
   t.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
   apply();
 });

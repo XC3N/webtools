@@ -70,6 +70,7 @@ function fire(p, beat, released = false, swap = false){
   }
   if (swap || L.clips.length !== n0) touched.edit = true;   // a GIF added to a layer (or taking it over) is an undo step
   c.startBeat = beat; c.startTime = beatTime(beat);
+  c.hitBeat = beat; c.relBeat = released ? beat : null;   // Auto › Envelope: this hit, held until the pad is let go (null)
   // fade one-shot: start from wherever the last fade is now, so a fast retrigger doesn't flicker
   if (g.trig === 'fade') c.env = { t0: beat, from: envLevel(c, g, clock.beat), rel: null, noGate: released };
   L.sel = c; L.on = true;
@@ -78,6 +79,7 @@ function fire(p, beat, released = false, swap = false){
 // pad / key released: ends a gated fade (a release before a snapped hit fires turns that hit into a plain one-shot)
 function release(p){
   const q = pending.get(p); if (q){ q.released = true; return; }
+  for (const L of layers) for (const c of L.clips) if (c.pad === p && c.relBeat === null) c.relBeat = Math.max(clock.beat, c.hitBeat);
   const g = pads[p].gif; if (!g || g.trig !== 'fade' || !g.env.gate) return;
   for (const L of layers) for (const c of L.clips) if (c.pad === p && c.env && c.env.rel === null) c.env.rel = Math.max(clock.beat, c.env.t0);
 }
@@ -123,7 +125,7 @@ function envLevel(c, g, beat){
 }
 
 // ---------- automation (LFOs) ----------
-const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, min: t[7], max: t[8], shape: t[9], per: t[10], ph: 0, sync: 'clock', gap: 0 }; };
+const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, min: t[7], max: t[8], shape: t[9], per: t[10], ph: 0, sync: 'clock', gap: 0, em: 'off', ea: 0, ed: 4, es: 0, er: 1 }; };
 function rnd(seed, n){ let h = Math.imul(seed ^ Math.imul(n | 0, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
 // position in cycles (whole part = cycle number)
 function lfoPos(A, c){ return lfoPosT(A, A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat); }
@@ -146,6 +148,25 @@ function lfoShape(A, pos, seed){
     default: return 0.5 - 0.5 * Math.cos(2 * Math.PI * f);        // sine, starting at Min
   }
 }
+// Auto › Envelope, run by each pad hit: Attack and Decay always play out (a quick tap gets them whole), then Sustain while
+// the pad is held, then Release. Before the first hit (or after a scene starts) it rests at 0.
+function lfoEnv(A, c, beat){
+  if (c.hitBeat === undefined) return 0;
+  const a = A.ea ?? 0, d = A.ed ?? 4, s = A.es ?? 0, r = A.er ?? 1, x = beat - c.hitBeat;
+  if (x < 0) return 0;
+  const ad = t => t < a ? t / a : t < a + d ? 1 - (1 - s) * (t - a) / d : s;
+  if (c.relBeat === null) return ad(x);
+  const rs = Math.max(a + d, (c.relBeat ?? c.hitBeat) - c.hitBeat);
+  if (x < rs) return ad(x);
+  const top = ad(rs); return r > 0 && x - rs < r ? top * (1 - (x - rs) / r) : 0;
+}
+// an LFO's value from Min (0) to Max (1): its shape; Envelope › Depth scales the swing (resting at Min); Only: the envelope alone
+function lfoUnit(A, c, seed, beat){
+  const m = A.em || 'off';
+  if (m === 'only') return lfoEnv(A, c, beat);
+  const w = lfoShape(A, lfoPos(A, c), seed);
+  return m === 'depth' ? w * lfoEnv(A, c, beat) : w;
+}
 let lfoPeek = null;   // { g, k, end: 'min' | 'max', t }: set while Min / Max are dragged in GIF › Auto
 const lfoSeed = (g, i) => (g.seed ?? g.uid) * 16 + i;   // a copy keeps its original's random automation
 const lfoAny = g => LFO_T.some(t => g.lfo[t[0]] && g.lfo[t[0]].on);
@@ -156,7 +177,7 @@ function effClip(c, g){
     const k = LFO_T[i][0], A = g.lfo[k]; if (!A || !A.on) continue;
     if (!e) e = Object.assign({}, c);
     const pk = lfoPeek && lfoPeek.g === g && lfoPeek.k === k && performance.now() - lfoPeek.t < 700 ? lfoPeek.end : null;   // Min / Max being set: show that end, wherever the cycle is
-    const v = pk ? A[pk] : A.min + (A.max - A.min) * lfoShape(A, lfoPos(A, c), lfoSeed(g, i));
+    const v = pk ? A[pk] : A.min + (A.max - A.min) * lfoUnit(A, c, lfoSeed(g, i), clock.beat);
     switch (k){
       case 'x': e.x += v; break;          case 'y': e.y += v; break;
       case 'zoom': e.sx *= v; e.sy *= v; break;

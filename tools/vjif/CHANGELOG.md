@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.75.0 — 2026-10-11
+
+### GIFs
+- Auto › Envelope: each pad hit runs an envelope on the LFO: Attack, Decay, Sustain while the pad is held, then Release (a quick tap still gets the whole Attack and Decay). Mode Depth: the envelope fades the LFO's swing in and out (it rests at Min between hits). Mode Only: the envelope alone moves the value from Min to Max, ADSR style. Before the first hit after a scene starts, it rests at Min. The scope shows one hit held for a beat.
+
 ## 0.74.1 — 2026-10-11
 
 ### Fixes

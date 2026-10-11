@@ -64,7 +64,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
   layers.forEach((L, li) => {
     const s = sc ? sc.layers[li] : emptyLayer();
     Object.assign(L, layerProps(s));
-    L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; });   // the scene starts from the top
+    L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; c.hitBeat = undefined; });   // the scene starts from the top
   });
   pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
   if (!trans) dropFxCache(left);                     // (with a transition: when it ends)

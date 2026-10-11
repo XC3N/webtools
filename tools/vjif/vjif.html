@@ -170,7 +170,13 @@
         <div class="field"><label for="aGap" title="A pause after each cycle: the value holds where the cycle ended, then the next cycle starts">Gap</label><input id="aGap" type="range" min="0" max="8" step="1" data-def="0" title="A pause after each cycle: the value holds where the cycle ended, then the next cycle starts"><output></output></div>
         <div class="field"><label for="aPh">Phase</label><input id="aPh" type="range" data-def="0" min="0" max="1" step="0.03125"><output></output></div>
         <div class="field"><label>Count from</label><div class="seg span" id="aSync"><button data-v="clock" title="Cycles line up with the bar (and with other GIFs)">Bar</button><button data-v="trig" title="Each pad hit restarts the cycle">Trigger</button></div></div>
-        <canvas id="aScope" class="scope" title="Two cycles of the LFO — the dot is now"></canvas>
+        <div class="sub" data-fold><span title="Shapes this LFO on each pad hit: Attack, Decay, then Sustain while the pad is held, then Release (a quick tap still gets the whole Attack and Decay)">Envelope</span><span class="line"></span></div>
+        <div class="field"><label>Mode</label><div class="seg span" id="aEnv"><button data-v="off" title="No envelope: the LFO runs on its own">Off</button><button data-v="depth" title="Each pad hit fades the LFO's swing in and out by the envelope (it rests at Min between hits)">Depth</button><button data-v="only" title="The envelope alone moves the value from Min to Max on each hit (Shape, Cycle, Gap, Phase and Count from don't count)">Only</button></div></div>
+        <div class="field aEnvF"><label for="aEA">Attack</label><input id="aEA" type="range" min="0" step="1" data-def="0"><output></output></div>
+        <div class="field aEnvF"><label for="aED">Decay</label><input id="aED" type="range" min="0" step="1" data-def="6"><output></output></div>
+        <div class="field aEnvF"><label for="aES" title="The level held while the pad is held, after Decay">Sustain</label><input id="aES" type="range" min="0" max="1" step="0.05" data-def="0" data-pct><output></output></div>
+        <div class="field aEnvF"><label for="aER">Release</label><input id="aER" type="range" min="0" step="1" data-def="4"><output></output></div>
+        <canvas id="aScope" class="scope" title="Two cycles of the LFO — the dot is now. With an envelope: one hit, held for a beat"></canvas>
         <p class="note">X, Y and Rotate are added to the placement; Zoom, Width, Height, Saturation and Brightness multiply it; Opacity multiplies the sprite's opacity; Hue is added. Touching a setting switches its LFO on.</p>
       </div>
     </div>
