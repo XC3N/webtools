@@ -23,7 +23,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {r3} **4- or 8-bar take** — starts on the next bar, counts down on Rec, loops cleanly when played back.
 - [ ] {r4} **Long free recording** — 10+ minutes: stays smooth, file plays fine.
 - [x] {fbk} **Feedback Length** (0.44) — F12 › Trails, Tunnel, Spiral: Length 100% leaves long smears, 20% only short ones.
-- [ ] {inlab} **Labels inside sliders** (0.45) — Transform, GIF › Colour / Auto, the effect editor, Settings: labels readable over the fill, nothing cut off at 1280×720, drag and double-click still work where the label is.
+- [x] {inlab} **Labels inside sliders** (0.45) — Transform, GIF › Colour / Auto, the effect editor, Settings: labels readable over the fill, nothing cut off at 1280×720, drag and double-click still work where the label is.
 - [x] {dpat} **Palette patterns** (0.49) — F2 › Palette, Dither 100%, on a photo or a gradient: Dither: Noise, Bayer, Check each look different; Bayer reads like a DOS game.
 - [x] {mtgt} **Effect on several layers** (0.50) — GIFs on layers 1–3, Mirror: click 2 (from All): layers 1, 3, 4 mirrored each on their own; right-click 3: only layer 3; lit buttons in the layers' colours.
 - [ ] {cpy2} **Copy scenes and presets** (0.51) — drag a scene / an effect preset, hold Ctrl: + on the empty ones, drop: a copy; without Ctrl: a swap.
@@ -40,25 +40,25 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {lfopeek} **Auto Min / Max preview** (0.58) — GIF › Auto › Rotate: drag Max: the GIF sits at that angle while you hold it, then goes back to moving.
 - [x] {syncfx} **Sync keeps effects** (0.58) — latch an effect, press Sync: it stays on. Queue a pad for the next bar, press Sync: it starts at once.
 - [x] {sclayers} **Empty scene layers on** (0.58) — empty a scene, or go to a new one: the four layer switches are on.
-- [ ] {lamps} **Flat toggles** (0.58.1) — every on / off toggle is a flat lamp: easy enough to hit? (Clicking its label works too.)
+- [x] {lamps} **Flat toggles** (0.58.1) — every on / off toggle is a flat lamp: easy enough to hit? (Clicking its label works too.)
 - [ ] {chan} **Channel transition** (0.59) — Transitions › Glitch › Channel, 1/2 to 1 bar: snow, the new scene rolls in, a green number top right (a new one each time).
 - [x] {fxkeys} **Effect layers by key** (0.60) — hold F1, press 1 and 3: Mono works on layers 1 + 3; 5: All; 5 again: 1 + 3 back. Let go of F1: 1–9 arm transitions again.
 - [x] {allback} **All remembers** (0.60) — effect on layers 2 + 4, click All, click All again: 2 + 4 again.
 - [ ] {recsnd} **Rec sound, long track** (0.61) — MP4, Sound: Music player, a long MP3, a timed take (e.g. 8 bars) while the interface is busy: is the sound clean?
 - [ ] {mussync} **Music With Sync** (0.61) — track playing: Rec doesn't restart it, and it keeps playing after a timed take. Sync: the track starts from the top. Rec then Sync: the take and the song start together.
-- [ ] {ch20} **20 px controls** (0.62) — look around every panel (Settings, Sets, pool, Text, MIDI map): anything clipped or cramped?
+- [x] {ch20} **20 px controls** (0.62) — look around every panel (Settings, Sets, pool, Text, MIDI map): anything clipped or cramped?
 - [ ] {scdrop} **Drop on a scene** (0.62) — drag GIF files or a pool GIF onto another scene's tile: they land on its first empty pads, you stay where you are.
 - [x] {decsc} **Decoding mark** (0.62) — load a big GIF, switch scene at once: the pad on the new scene isn't marked as decoding.
 - [ ] {aresetall} **Auto Reset all** (0.62) — GIF › Auto › Reset all: every LFO of the GIF off.
 - [x] {fxlocal} **FX Local** (0.63) — FX: Local; scene 1: latch Mono; scene 2: latch Colour, unlatch Mono; back to 1: Mono on, Colour off. Global, change scenes: effects stay. Local again: the scene's own come back. With a transition: do they ease in / out nicely?
-- [ ] {fxmask} **Layer pips** (0.63) — effect tiles: "all" or four pips in the layers' colours, on their own line.
+- [x] {fxmask} **Layer pips** (0.63) — effect tiles: "all" or four pips in the layers' colours, on their own line.
 - [x] {dpat2} **Dither switch** (0.63) — Colour › Palette: Dither slider + Noise / Bayer / Check pictures beside it.
 - [ ] {vhsbeat} **VHS rolls on the beat** (0.64) — CRT › VHS at high Wear, and the VHS transition: the bands start rolling on beats, at random.
 - [ ] {chopts} **Channel options** (0.64) — Transitions › Glitch › Channel › Options: Random / Scene (name a scene first) / Scene #.
 - [ ] {cpkmap} **Picker colour field** (0.64) — any swatch: click / drag in the field and the hue strip.
 - [ ] {padsc} **Pad onto another scene** (0.64) — drag a pad, hold it over another scene's tile: the scene opens; drop on an empty pad: a copy.
 - [x] {sccur} **Copy into this scene** (0.64) — on an empty scene, Ctrl+drag another scene onto its tile: it fills in place; Ctrl+Z undoes it.
-- [ ] {livebar} **Go live / leave BRB on the bar** (0.64) — Snap off: Enter in Prep waits for the next bar; in BRB a scene key changes on the next bar.
+- [x] {livebar} **Go live / leave BRB on the bar** (0.64) — Snap off: Enter in Prep waits for the next bar; in BRB a scene key changes on the next bar.
 - [x] {fbghost} **Feedback fades out** (0.64) — Feedback Trails at a long Length, change scenes: no faint ghost of the old scene left.
 - [ ] {recsnd2} **Rec sound (worklet)** (0.65) — MP4 with the music player (a long track), a timed take, busy scene: is the sound clean, in sync, and there to the end?
 - [ ] {recpop} **Rec ▾** (0.65) — the ▾ next to Rec: bars / frame rate / Mb/s; same as in Settings.
@@ -69,12 +69,12 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {shadow} **GIF drop shadow** (0.66) — a GIF with transparency, GIF › Colour › Shadow: offset / blur / opacity / colour; it stays put when the GIF rotates.
 - [ ] {croptile} **Crop + tile** (0.66) — crop a GIF, then Tile: the cropped part repeats.
 - [x] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
-- [ ] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
+- [x] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
 - [ ] {ctrlhush} **No delete after copying** (0.70) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines, and Ctrl+click doesn't clear anything until you let go of Ctrl and press it again.
-- [ ] {hbar} **Section buttons on their own row** (0.67) — Pads and Scenes: the buttons are on a row under the name; Clear pad is at the bottom right, dimmed on an empty pad.
+- [x] {hbar} **Section buttons on their own row** (0.67) — Pads and Scenes: the buttons are on a row under the name; Clear pad is at the bottom right, dimmed on an empty pad.
 - [x] {ez8ev63uoip1luh6y982} **Covered windows keep playing** (0.68) — output window over the control window, click the control window (so it covers the output): playback goes on, in both.
 - [ ] {r14m2kk53etwcxadqka1} **Layer solo** (0.68) — right-click a layer's number: only that layer on; right-click it again: the others as they were.
-- [ ] {allpip} **All-layers pips** (0.68) — an effect on All: four pips in one colour; Settings › Interface › All-layers pips changes it.
+- [x] {allpip} **All-layers pips** (0.68) — an effect on All: four pips in one colour; Settings › Interface › All-layers pips changes it.
 - [ ] {osdfx} **Transitions keep their own colours** (0.70) — latch Colour › Palette, change scene with TV › Channel: the snow and the number keep their colours; the two scenes have the palette.
 - [ ] {qx05hugalvzxnl9opxvt} **With Sync in Rec ▾** (0.68) — Rec ▾ › Music starts with Sync does what With Sync did.
 - [ ] {sgjh9joapu33uxnftn46} **Transitions regrouped** (0.69) — Type is a 3 × 3 grid; Melt is under Dissolve, VHS and Channel under TV; the Style row never takes two lines. Old presets still play the same.
@@ -119,7 +119,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {phold} **Hold to remove from the pool** (0.28.1) — Pool: hover a GIF that's on pads, press and hold ×: the bar sweeps, then it's gone from the pool, its pads and layers (other scenes too). A quick click says where it is.
 - [ ] {rhid} **Recording while the tab is hidden** (0.28.1) — no output window, start a free take, switch to another tab for 20 s, come back, stop: the clip moves the whole time.
 - [ ] {rsync} **Sound in sync** (0.28.1) — an MP4 take with sound (music player, a track with a clear kick): the kick lines up with the beat flashes from the start.
-- [ ] {uiz} **Interface size** (0.28) — Settings › Interface › 80% / 90%: everything fits, dragging in the preview and the pads still lands where the pointer is.
+- [x] {uiz} **Interface size** (0.28) — Settings › Interface › 80% / 90%: everything fits, dragging in the preview and the pads still lands where the pointer is.
 - [ ] {defs} **My defaults** (0.28) — tweak effects / presets, Save as my defaults, new set: they're there; Export / Import.
 - [ ] {fx28} **Effects** (0.28) — Zoom › Each in / out; Kaleido Amount = slices; Dither / Glitch / Scanlines Size; Latch off keeps the editor.
 - [ ] {thumbs} **Scene tiles after reload** (0.28).
@@ -151,7 +151,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {n11} **New logo** (0.14) — header and About: Russo One, chrome, "if" in magenta, slanted; nothing clipped at your display scaling.
 - [x] {n12} **Slanted drag chips everywhere** (0.14.1) — dragging a layer chip, an effect tile or the effect name shows the same slanted chip as pads.
 - [x] {n13} **Output window remembers its place** (0.15) — move it to the projector screen, close it, reopen: same place and size. Drag inside it to move it; Shift+click Output resets.
-- [ ] {i5} **Prep mode** (0.17: Enter toggles) — Enter: the output keeps the live scene while you edit any scene (with the output window open on a second screen); Enter again goes live with the transition.
+- [x] {i5} **Prep mode** (0.17: Enter toggles) — Enter: the output keeps the live scene while you edit any scene (with the output window open on a second screen); Enter again goes live with the transition.
 - [x] {n15} **Frames under Play** (0.17) — In / Out / Start next to Loop.
 - [x] {n16} **Recording with sound** (0.17) — Settings › Canvas › Sound: pick your interface or loopback; the file has audio in sync.
 - [x] {n17} **Small ones** (0.17.1) — pool drags show the slanted chip; the About tagline rotates.
