@@ -52,6 +52,14 @@ function padDragMove(e, i){
   }
   if (d.ghost) ghost.move(e.clientX, e.clientY);
   d.lastE = e; padCopyMode(isDel(e));
+  // held over another scene's tile for half a second: that scene opens, and the GIF can be dropped on one of its pads (a copy)
+  const t = document.elementFromPoint(e.clientX, e.clientY), sc = t && t.closest('#scenes .scene'), si = sc ? +sc.dataset.i : -1;
+  document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === sc && si !== sceneIdx));
+  if (si !== d.hoverSc){ d.hoverSc = si; clearTimeout(d.scT);
+    if (si >= 0 && si !== sceneIdx) d.scT = setTimeout(() => { if (padDrag !== d) return;
+      if (!d.carry) d.carry = pads[d.i].gif;            // what you're carrying, from the scene you started in
+      pads[d.i].el.classList.remove('lifted'); gotoScene(si, clock.beat, true); d.hoverSc = -1;
+      document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); toast2(`Scene ${si + 1}: drop it on a pad`); }, 500); }
 }
 // what the drop would do now: Ctrl held = copy (empty pads only), otherwise move / swap / onto a layer
 function padCopyMode(on){
@@ -64,12 +72,18 @@ function padCopyMode(on){
 addEventListener('keydown', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCopyMode(true); });
 addEventListener('keyup', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCopyMode(false); });
 function padDragEnd(e, i){
-  const d = padDrag; padDrag = null;
+  const d = padDrag; padDrag = null; if (d) clearTimeout(d.scT); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
   if (d && d.ghost){ ghost.hide(); pads[d.i].el.classList.remove('lifted'); }
   pads.forEach(p => p.el.classList.remove('drop')); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging', 'padcopy');
   if (!d || d.i !== i || !d.moved) return false;
   pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
   const o = e && padDropAt(e); if (!o) return true;
+  if (d.carry){                                      // carried into another scene: a copy onto an empty pad there
+    if (!o.classList.contains('pad')) return toast('Drop it on an empty pad to copy it into this scene'), true;
+    const j = +o.dataset.i; if (pads[j].gif || pads[j].loading) return toast('Drop it on an empty pad to copy it into this scene'), true;
+    commit(); pads[j].gif = cloneInst(d.carry); pushStep({ kind: 'swap', pad: j, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI();
+    afterPadChange(j); toast2(`Copied to scene ${sceneIdx + 1}, pad ${pads[j].label}`); return true;
+  }
   if (d.copyNow ?? d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i); return true; }   // Ctrl held at the drop: a copy
   if (o.classList.contains('pad')){ const j = +o.dataset.i; if (j !== i) swapPads(i, j); }
   else if (o.id === 'pvWrap'){                       // dropped on the preview: onto the edit layer, centred where it was dropped

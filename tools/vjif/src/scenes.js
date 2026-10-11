@@ -67,10 +67,10 @@ function gotoScene(i, beat = clock.beat, instant = false){
 }
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
 function sceneKey(i){
-  if (brb.on) brbStop();                             // you're back: a scene key takes control again
+  const back = brb.on; if (back) brbStop();          // you're back: a scene key takes control again (on the downbeat, whatever Snap is)
   if (i === sceneIdx){ pendingScene = null; renderScenes(); return; }
   if (prep) return gotoScene(i, clock.beat, true);   // preparing: just open that scene (the output doesn't change)
-  const at = snapBeat(clock.beat);
+  const at = back ? barBeat(clock.beat) : snapBeat(clock.beat);
   if (at <= clock.beat) return gotoScene(i, at);
   pendingScene = { i, beat: at }; renderScenes();
 }
@@ -186,7 +186,10 @@ $('#scenes').addEventListener('drop', e => {
   e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying');
   const b = e.target.closest('.scene'); if (!b) return;
   const a = +e.dataTransfer.getData(SCENE_MIME), t = +b.dataset.i;
-  if (isDel(e)){ if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy'); if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); scenes[t] = sceneCopy(a); renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
+  if (isDel(e)){ if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy'); if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); if (t === sceneIdx){ const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads } };   // into the scene you're on: it fills in place (one undo step)
+      commit(); applyScn(E); pushStep(E); hist.cur = histState(); updHistUI(); }
+    else scenes[t] = sceneCopy(a);
+    renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
   swapScenes(a, t);
 });
 $('#scenes').addEventListener('dragend', () => { document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); });
@@ -205,7 +208,7 @@ function syncTransUI(){
   if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; $('#trPx').max = TR_PX.length - 1; }
   const T = transCfg, cut = T.type === 'cut';
   $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="Key ${k + 1}: ${trLabel(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${k + 1}</button>`).join('');
-  segSet('#trType', T.type); segSet('#trDir', T.dir); segSet('#trCurve', T.smooth ? 1 : 0);
+  segSet('#trType', T.type); segSet('#trCurve', T.smooth ? 1 : 0);
   const sts = TR_STYLES[T.type] || [], stl = trStyleOf(T);
   $('#trStyle').innerHTML = sts.length ? sts.map(x => `<button data-v="${x[0]}" class="${x[0] === stl ? 'on' : ''}" title="${x[2]}">${x[1]}</button>`).join('') : '<button disabled>—</button>';
   $('#trStyle').classList.toggle('wrap3', sts.length > 4);   // five styles: two rows, so none is squeezed out
@@ -213,7 +216,11 @@ function syncTransUI(){
   const pi = optIdx(TR_PX, T.px || 12); $('#trPx').value = pi; $('#trPx').nextElementSibling.textContent = TR_PX[pi][1];
   $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || T.type === 'glitch') || (T.type === 'glitch' && trStyleOf(T) === 'vhs'));   // VHS has no block size
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
-  $('#trDirRow').classList.toggle('dimmed', !(T.type === 'slide' || (T.type === 'wipe' && stl === 'line')));
+  // the Options row: what this transition can be tuned with (Slide / Wipe: the direction · Channel: what the number shows)
+  const om = T.type === 'glitch' && stl === 'channel' ? 'ch' : 'dir';
+  if ($('#trDir').dataset.mode !== om){ $('#trDir').dataset.mode = om; $('#trDir').innerHTML = TR_OPTS[om].map(([v, l, t]) => `<button data-v="${v}" title="${t}">${l}</button>`).join(''); }
+  segSet('#trDir', om === 'ch' ? (T.ch || 'rand') : T.dir);
+  $('#trDirRow').classList.toggle('dimmed', !(om === 'ch' || T.type === 'slide' || (T.type === 'wipe' && stl === 'line')));
   $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || (T.type === 'glitch' && trStyleOf(T) === 'melt'));   // the melt keeps Doom's own timing
   $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
@@ -224,7 +231,9 @@ onSeg($('#trType'), (b, e) => { transCfg.type = b.dataset.v; transCfg.style = tr
 onSeg($('#trStyle'), (b, e) => {
   transCfg.style = b.dataset.v; if (b.dataset.v === 'pixelate' && (transCfg.px || 12) < 32) transCfg.px = 48;   // pixelate wants big blocks
   syncTransUI(); });
-onSeg($('#trDir'), (b, e) => { transCfg.dir = b.dataset.v; syncTransUI(); });
+const TR_OPTS = { dir: [['left', '←', 'Towards the left'], ['right', '→', 'Towards the right'], ['up', '↑', 'Upwards'], ['down', '↓', 'Downwards']],
+  ch: [['rand', 'Random', 'A random channel number each time'], ['scene', 'Scene', "The new scene's name (or its number if it has none)"], ['num', 'Scene #', 'The new scene\'s number, with a leading 0 (01–09)']] };
+onSeg($('#trDir'), (b, e) => { if ($('#trDir').dataset.mode === 'ch') transCfg.ch = b.dataset.v; else transCfg.dir = b.dataset.v; syncTransUI(); });
 onSeg($('#trCurve'), (b, e) => { transCfg.smooth = b.dataset.v === '1'; syncTransUI(); });
 $('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
 $('#trPx').addEventListener('input', e => { transCfg.px = TR_PX[+e.target.value][0]; syncTransUI(); });

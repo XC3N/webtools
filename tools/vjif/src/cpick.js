@@ -6,6 +6,7 @@ const cpk = (() => {
   const el = document.createElement('div'); el.id = 'cpk'; el.hidden = true;
   const F = [['h', 'Hue', 360, '°'], ['s', 'Sat', 100, '%'], ['v', 'Bright', 100, '%'], ['r', 'R', 255, ''], ['g', 'G', 255, ''], ['b', 'B', 255, '']];
   el.innerHTML = `<div class="cpkTop"><i class="cpkSw"></i><input class="cpkHex" type="text" maxlength="7" spellcheck="false" title="Hex colour: type it, Enter applies"></div>` +
+    `<canvas class="cpkSV" width="204" height="104" title="Click or drag: saturation (across) and brightness (up)"></canvas><canvas class="cpkH" width="204" height="12" title="Click or drag: hue"></canvas>` +
     F.map(([k, n, m, u]) => `<div class="field"><label>${n}</label><input type="range" data-k="${k}" min="0" max="${m}" step="1"><output></output></div>`).join('');
   document.body.appendChild(el);
   let tgt = null, hsv = [0, 0, 0], changed = false;
@@ -19,8 +20,24 @@ const cpk = (() => {
     if (!keepHsv) { const n = rgb2hsv(rgb); hsv = [n[1] && n[2] ? n[0] : hsv[0], n[2] ? n[1] : hsv[1], n[2]]; }   // grey / black keep the hue (and black the sat) you had
     const V = { h: hsv[0], s: hsv[1], v: hsv[2], r: rgb[0], g: rgb[1], b: rgb[2] };
     F.forEach(([k, , , u]) => { const s = sl(k); s.value = Math.round(V[k]); s.nextElementSibling.textContent = Math.round(V[k]) + u; });
+    drawMaps();
     const hx = rgb2hex(rgb); el.querySelector('.cpkSw').style.background = hx; if (document.activeElement !== el.querySelector('.cpkHex')) el.querySelector('.cpkHex').value = hx;
   }
+  // the colour field (saturation × brightness for the hue) and the hue strip, with a mark where the colour is
+  const sv = el.querySelector('.cpkSV'), hs = el.querySelector('.cpkH'), svx = sv.getContext('2d'), hsx = hs.getContext('2d');
+  function drawMaps(){
+    const w = sv.width, h = sv.height; svx.fillStyle = rgb2hex(hsv2rgb([hsv[0], 100, 100])); svx.fillRect(0, 0, w, h);
+    let g = svx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); svx.fillStyle = g; svx.fillRect(0, 0, w, h);
+    g = svx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); svx.fillStyle = g; svx.fillRect(0, 0, w, h);
+    const x = hsv[1] / 100 * w, y = (1 - hsv[2] / 100) * h; svx.lineWidth = 2; svx.strokeStyle = hsv[2] > 55 ? '#000' : '#fff'; svx.beginPath(); svx.arc(x, y, 5, 0, 7); svx.stroke();
+    const hw = hs.width; g = hsx.createLinearGradient(0, 0, hw, 0); for (let k = 0; k <= 6; k++) g.addColorStop(k / 6, rgb2hex(hsv2rgb([k * 60, 100, 100]))); hsx.fillStyle = g; hsx.fillRect(0, 0, hw, hs.height);
+    const hx = hsv[0] / 360 * hw; hsx.fillStyle = '#fff'; hsx.fillRect(hx - 1.5, 0, 3, hs.height); hsx.fillStyle = '#000'; hsx.fillRect(hx - 0.5, 0, 1, hs.height);
+  }
+  const mapDrag = (cv, fn) => { const at = e => { const r = cv.getBoundingClientRect(); fn(clamp((e.clientX - r.left) / r.width, 0, 1), clamp((e.clientY - r.top) / r.height, 0, 1)); };
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); at(e); cv._d = true; });
+    cv.addEventListener('pointermove', e => { if (cv._d) at(e); }); cv.addEventListener('pointerup', () => cv._d = false); cv.addEventListener('pointercancel', () => cv._d = false); };
+  mapDrag(sv, (fx, fy) => { hsv[1] = fx * 100; hsv[2] = (1 - fy) * 100; put(hsv2rgb(hsv), true); });
+  mapDrag(hs, fx => { hsv[0] = Math.min(359.9, fx * 360); put(hsv2rgb(hsv), true); });
   function put(rgb, keepHsv){
     if (!tgt) return; const hx = rgb2hex(rgb); show(rgb, keepHsv);
     if (tgt.value !== hx){ tgt.value = hx; changed = true; tgt.dispatchEvent(new Event('input', { bubbles: true })); }

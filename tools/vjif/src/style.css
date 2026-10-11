@@ -94,7 +94,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #brbPop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);padding:8px;box-shadow:0 6px 18px #0009;display:grid;gap:6px;width:250px}#brbPop[hidden]{display:none}
 .poph{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.poprow{display:flex}.poprow .seg{flex:1}#brbCfg{width:18px;margin-left:-1px}
 #brbBtn{flex:none;width:76px;font-variant-numeric:tabular-nums;padding:0 6px}#brbLed.on{background:var(--sig);box-shadow:0 0 6px var(--sig)}#brbLed.wait{animation:ledblink .25s steps(1) infinite}
-#brbWrap{display:inline-flex}#brbWrap>#brbBtn{border-top-right-radius:0;border-bottom-right-radius:0}#brbWrap>#brbCfg{border-top-left-radius:0;border-bottom-left-radius:0;border-left:1px solid var(--edge);margin-left:0}
+#brbWrap{display:inline-flex;gap:2px}#brbWrap>#brbCfg{margin-left:0;border:1px solid var(--edge)}   /* the chevron is a box of its own, next to BRB */
 .scene{position:relative;height:40px;padding:0;border:0;border-radius:var(--r);background:var(--bg) center/cover no-repeat;cursor:pointer}
 .scene:hover{box-shadow:0 0 0 1px var(--edge-2)}
 .scene .k{position:absolute;left:3px;top:3px;font:600 11px/1 var(--mono);color:#fff;background:#000b;border-radius:2px;padding:2px 4px}
@@ -392,6 +392,7 @@ input[type=checkbox]:hover{border-color:var(--ink)}
 /* VJif's colour picker (cpick.js): sliders like everywhere else, under the swatch that opened it */
 #cpk{position:fixed;z-index:200;width:220px;padding:8px;background:var(--panel);border:1px solid var(--edge-2);border-radius:var(--r);box-shadow:0 6px 24px #0008}
 #cpk .cpkTop{display:flex;gap:6px;margin-bottom:6px}#cpk .cpkSw{flex:1;border:1px solid var(--edge);border-radius:var(--r);height:var(--ch)}
+#cpk .cpkSV,#cpk .cpkH{display:block;width:100%;border-radius:2px;cursor:crosshair;margin-bottom:5px}#cpk .cpkH{height:12px;margin-bottom:7px}#cpk .cpkSV{height:104px}
 #cpk .cpkHex{width:84px;font:400 12px var(--mono);text-transform:lowercase}#cpk .field{margin-bottom:4px}#cpk .field:last-child{margin-bottom:0}
 input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 

@@ -250,7 +250,7 @@ function startPrep(){
 function goLive(){
   if (!prep) return;
   updateClock(performance.now());                    // the beat right now, not as of the last frame
-  const at = snapBeat(clock.beat);
+  const at = barBeat(clock.beat);                    // always on the downbeat, whatever Snap is
   if (at > clock.beat){ pendingLive = at; syncPrepUI(); return; }
   doGoLive(at);
 }
@@ -302,7 +302,8 @@ function meltTable(px = 12){
 // a built-in 5 × 7 pixel font for on-screen-display numbers (no font file needed, crisp at any size)
 const OSD_GLYPHS = { 0: '01110100011001110101110011000101110', 1: '00100011000010000100001000010001110', 2: '01110100010000100010001000100011111', 3: '11111000100010000010000011000101110',
   4: '00010001100101010010111110001000010', 5: '11111100001111000001000011000101110', 6: '00110010001000011110100011000101110', 7: '11111000010001000100010000100001000',
-  8: '01110100011000101110100011000101110', 9: '01110100011000101111000010001001100', '-': '00000000000000011111000000000000000' };
+  8: '01110100011000101110100011000101110', 9: '01110100011000101111000010001001100', '-': '00000000000000011111000000000000000',
+  'A': '01110100011000111111100011000110001', 'B': '11110100011000111110100011000111110', 'C': '01110100011000010000100001000101110', 'D': '11100100101000110001100011001011100', 'E': '11111100001000011110100001000011111', 'F': '11111100001000011110100001000010000', 'G': '01110100011000010111100011000101111', 'H': '10001100011000111111100011000110001', 'I': '01110001000010000100001000010001110', 'J': '00111000100001000010000101001001100', 'K': '10001100101010011000101001001010001', 'L': '10000100001000010000100001000011111', 'M': '10001110111010110101100011000110001', 'N': '10001100011100110101100111000110001', 'O': '01110100011000110001100011000101110', 'P': '11110100011000111110100001000010000', 'Q': '01110100011000110001101011001001101', 'R': '11110100011000111110101001001010001', 'S': '01111100001000001110000010000111110', 'T': '11111001000010000100001000010000100', 'U': '10001100011000110001100011000101110', 'V': '10001100011000110001100010101000100', 'W': '10001100011000110101101011010101010', 'X': '10001100010101000100010101000110001', 'Y': '10001100010101000100001000010000100', 'Z': '11111000010001000100010001000011111', '.': '00000000000000000000000000110001100', ' ': '00000000000000000000000000000000000' };
 function osdText(m, txt, x, y, p, col){ m.fillStyle = col;
   [...txt].forEach((c, k) => { const g = OSD_GLYPHS[c]; if (g) for (let i = 0; i < 35; i++) if (g[i] === '1') m.fillRect(x + k * 6 * p + (i % 5) * p, y + Math.floor(i / 5) * p, p, p); }); }
 // the number soft like an analog TV: a blurred shadow, a green glow, then the digits slightly out of focus (made once, kept)
@@ -405,8 +406,10 @@ const TR_DRAW = {
       }
       m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return; }
     if (gst === 'channel'){                        // a TV changing channels: the old picture collapses into snow, the new one rolls in, the channel number shows
-      if (trans && trans.ch == null) trans.ch = 2 + Math.floor(Math.random() * 98);
-      const ch = trans ? trans.ch : 12, inA = 0.12, outB = 0.5;                  // snow from 12 % to 50 % of the way
+      if (trans && trans.ch == null){                // what the number shows (Options): random, the new scene's name, or its number
+        const m = T.ch || 'rand', nm = (liveName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 .\-]/g, '').trim().slice(0, 10);
+        trans.ch = m === 'num' ? String(sceneIdx + 1).padStart(2, '0') : m === 'scene' ? (nm || String(sceneIdx + 1)) : String(2 + Math.floor(Math.random() * 98)).padStart(2, '0'); }
+      const ch = trans ? trans.ch : '12', inA = 0.12, outB = 0.5;                  // snow from 12 % to 50 % of the way
       if (!chN.cv){ chN.cv = document.createElement('canvas'); chN.cv.width = 240; chN.cv.height = 135; chN.x = chN.cv.getContext('2d'); chN.img = chN.x.createImageData(240, 135); }
       const d = chN.img.data;                       // TV snow: fine grey speckle, new every frame
       for (let i = 0; i < d.length; i += 4){ const v = Math.random() ** 1.6 * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
@@ -425,7 +428,7 @@ const TR_DRAW = {
         m.globalAlpha = (1 - q) ** 2 * 0.8; m.drawImage(chN.cv, 0, 0, W, H); m.globalAlpha = 1;
       }
       if (e >= inA){                                // the channel number, OSD green, top right (it stays until the transition ends)
-        const txt = String(ch).padStart(2, '0'), p = Math.max(2, Math.round(H * 0.013)), cw = 6 * p, x0 = Math.round(W - H * 0.06 - txt.length * cw + p), y0 = Math.round(H * 0.06);
+        const txt = String(ch), p = Math.max(2, Math.round(H * 0.013)), cw = 6 * p, x0 = Math.round(W - H * 0.06 - txt.length * cw + p), y0 = Math.round(H * 0.06);
         m.drawImage(osdImage(txt, p), x0 - 2 * p, y0 - 2 * p);   // drawn once per number and size, then reused every frame
       }
       return; }
@@ -433,7 +436,10 @@ const TR_DRAW = {
       const k = Math.sin(Math.PI * e), src = e < 0.5 ? A : B, t = performance.now() / 1000;
       const nz = Math.min(1, Math.max(0, 1 - Math.abs(e - 0.5) / 0.3)) ** 1.5;   // snow: none at the ends, all of it around the middle
       // tracking lost: two bands rolling down at different speeds, torn sideways, where most dropouts happen
-      const bands = [[((t * 0.35 + e * 0.8) % 1.3 - 0.15) * H, H * 0.16], [((t * 0.61 + 0.5 + e * 1.3) % 1.3 - 0.15) * H, H * 0.05]];
+      // the bands roll on the beat, at random (as in CRT › VHS): the wide one over 2 beats, the thin one over 1; off-screen when not rolling
+      const bt = clock.beat, k2 = Math.floor(bt / 2), f2 = bt / 2 - k2, n1 = Math.floor(bt), f1 = bt - n1, hr = x => { const v = Math.sin(x * 12.9898) * 43758.5453; return v - Math.floor(v); };
+      const y1 = hr(k2 * 3.1 + 0.7) < 0.7 ? -0.15 + f2 * (1.05 + 0.5 * hr(k2 * 5.3 + 1.9)) : -9, y2 = hr(n1 * 2.3 + 4.1) < 0.5 ? -0.15 + 0.3 * hr(n1 * 7.7 + 0.3) + f1 * 1.2 : -9;
+      const bands = [[y1 * H, H * 0.16], [y2 * H, H * 0.05]];
       const fr = Math.floor(t * 30), flag = H * 0.09, head = H * 0.95;
       if (post && post.trans(3, A, B, { e, t: t % 1000, fr: fr % 100000, k, nz, useB: e < 0.5 ? 0 : 1, bands: [bands[0][0], bands[0][1], bands[1][0], bands[1][1]] })) return;
       m.fillStyle = '#000'; m.fillRect(0, 0, W, H);

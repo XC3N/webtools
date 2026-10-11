@@ -124,6 +124,12 @@ function fxLevelRaw(C, S, b, rel){
 // beats per snap step; 0 when Snap is off or a MIDI clock is stopped (nothing to wait for)
 const snapUnit = () => (clock.src === 'midi' && !clock.midiRunning) ? 0 : snapMode === 'bar' ? 4 : snapMode === 'beat' ? 1 : 0;
 // where a hit at beat b lands: on the step just passed (within the grace), else on the next one
+// the downbeat for Prep's go-live and leaving BRB, whatever Snap is set to (none to wait for with a stopped MIDI clock)
+function barBeat(b){
+  if (clock.src === 'midi' && !clock.midiRunning) return b;
+  const prev = Math.floor(b / 4 + 1e-9) * 4;
+  return b - prev <= 4 * SNAP_GRACE ? prev : prev + 4;
+}
 function snapBeat(b){
   const unit = snapUnit();
   if (!unit) return b;
@@ -186,7 +192,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
     mirror: nm(7) === 'kal' ? env[7] : lv[7], mirS: S(7), mirN: kalSlices(amt[7]),   // kaleido: Amount = how many slices
     glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: styleMask(9, style[9]), crtSz: size[9], monoSz: size[0],
-    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, palP: dpat ? dpat[1] : 0, mirZ: kz ? kz[7] : 1, fbK: fbk ? fbk[11] : 0.7, vDrop: vdrop ? vdrop[9] : 1 };
+    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, palP: dpat ? dpat[1] : 0, mirZ: kz ? kz[7] : 1, fbK: fbk ? fbk[11] : 0.7, vDrop: vdrop ? vdrop[9] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(5) === 'jitter', sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
@@ -230,7 +236,7 @@ function makePost(){
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
 ${FX_GLSL}
-      uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time;
+      uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time, beat;
       uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP,
                     glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, shakeZ;
       uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
@@ -251,12 +257,16 @@ ${FX_GLSL}
         if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (IS(pixS, S_pixel_wide)) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
         return p;
       }
+      // VHS tracking bands roll on the beat, at random: the wide one sweeps down over 2 beats (in 7 of 10 pairs, at its own
+      // speed), the thin one over 1 beat (every other beat or so, from its own start). Off-screen (-9) when not rolling
+      float vhsB1(){ float k = floor(beat * 0.5), f = fract(beat * 0.5); return h1(k * 3.1 + 0.7) < 0.7 ? -0.15 + f * (1.05 + 0.5 * h1(k * 5.3 + 1.9)) : -9.0; }
+      float vhsB2(){ float n = floor(beat), f = fract(beat); return h1(n * 2.3 + 4.1) < 0.5 ? -0.15 + 0.3 * h1(n * 7.7 + 0.3) + f * 1.2 : -9.0; }
       float vhsBand(float y){                       // VHS: how far inside one of the two tracking bands rolling down this line is (0 outside)
-        float b1 = fract(time * 0.35) * 1.3 - 0.15, b2 = fract(time * 0.61 + 0.5) * 1.3 - 0.15;
+        float b1 = vhsB1(), b2 = vhsB2();
         return max(max(0.0, 1.0 - abs(y - b1) / 0.11), max(0.0, 1.0 - abs(y - b2) / 0.035));
       }
       vec2 vhsEdges(float y){                       // VHS: x = the colour trailing below the wide band (1 at its edge, fading), y = the thin magenta fringe above it
-        float b1 = fract(time * 0.35) * 1.3 - 0.15, d = y - (b1 + 0.11), u = (b1 - 0.11) - y;
+        float b1 = vhsB1(), d = y - (b1 + 0.11), u = (b1 - 0.11) - y;
         return vec2(d > 0.0 ? max(0.0, 1.0 - d / 0.14) : 0.0, step(0.0, u) * step(u, 0.008));
       }
       bool offs(vec2 p){ return p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0; }
@@ -295,6 +305,13 @@ ${FX_GLSL}
         vec3 y = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312) * c;
         float cs = cos(an), sn = sin(an); y.yz = vec2(y.y * cs - y.z * sn, y.y * sn + y.z * cs);
         return mat3(1.0, 1.0, 1.0, 0.956, -0.272, -1.106, 0.621, -0.647, 1.703) * y;
+      }
+      vec3 look(vec3 c){                              // the picture's own look: Mono, then Colour (flip / cycle / invert / palette)
+        float y = dot(c, vec3(0.299, 0.587, 0.114));
+        c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
+        if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
+          else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
+        return c;
       }
       void main(){
         if (blit > 0.5){ gl_FragColor = texture2D(tex, vec2(uv.x, 1.0 - uv.y)); return; }
@@ -347,10 +364,10 @@ ${FX_GLSL}
         }
         // the picture's own look (mono, colour, palette) comes before the screen it's shown on (CRT): a palette or mono
         // scene still gets VHS noise, scanlines and phosphor glow on top
-        float y = dot(c, vec3(0.299, 0.587, 0.114));
-        c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
-        if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
-          else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
+        if (split > 0.001 && (mono > 0.001 || colr > 0.001)){   // colour split: each channel is taken from its own (shifted) picture
+          vec2 q = geo(p), o = vec2(split, 0.0);                  // after the look, so a palette / mono picture splits into its own colours
+          vec3 lr = look(raw(q + o)), lb = look(raw(q - o)); c = look(c); c = vec3(lr.r, c.g, lb.b);   // (instead of the split's fringes being snapped back)
+        } else c = look(c);
         if (rgb > 0.001 && HAS(rgbS, S_rgb_scan)){ // scanlines + aperture grille
           float ln = 0.5 + 0.5 * cos(gl_FragCoord.y * 6.2831853 / max(crtSz, 2.0));   // a dark line every Size px
           float col = mod(floor(gl_FragCoord.x), 3.0); vec3 tri = vec3(col < 0.5 ? 1.0 : 0.7, col > 0.5 && col < 1.5 ? 1.0 : 0.7, col > 1.5 ? 1.0 : 0.7);
@@ -389,7 +406,7 @@ ${FX_GLSL}
               c = mix(c, vec3(0.85) + (h2(gl_FragCoord.xy + fr) - 0.5) * 0.3, k * (0.5 + 0.4 * h1(ln + fr)) * (0.45 + 0.55 * w));
             }
             if (uv.y > 0.955) c = mix(c, vec3(h2(gl_FragCoord.xy + fr), h2(gl_FragCoord.xy + fr + 17.3), h2(gl_FragCoord.xy + fr + 41.9)) * 0.7 + h2(gl_FragCoord.xy + fr) * 0.3, 0.5 * w);   // the switching noise is snowy, in colour
-            float wb = max(0.0, 1.0 - abs(uv.y - (fract(time * 0.35) * 1.3 - 0.15)) / 0.11) * smoothstep(0.35, 1.0, w);   // heavy wear: the wide band loses the picture
+            float wb = max(0.0, 1.0 - abs(uv.y - vhsB1()) / 0.11) * smoothstep(0.35, 1.0, w);   // heavy wear: the wide band loses the picture
             if (wb > 0.001){                         // …to a dark band of streaks: white and coloured lines of different lengths
               float seg = floor(uv.x * 24.0), s1 = h1(ln * 4.3 + seg * 13.7 + fr * 1.9), sx = (seg + h1(ln * 7.1 + seg + fr)) / 24.0, sl = 0.004 + h1(ln * 2.9 + seg + fr * 0.5) * 0.03;
               float st = step(0.6, s1) * step(sx, uv.x) * step(uv.x, sx + sl) * (0.6 + 0.4 * h2(gl_FragCoord.xy + fr));   // dense short specks, like the footage
@@ -410,7 +427,9 @@ ${FX_GLSL}
           if (!IS(fbS, S_feedback_trails)){ vec2 d = (q - 0.5) * a * 1.06; if (IS(fbS, S_feedback_spiral)){ float cs = cos(0.06), sn = sin(0.06); d = mat2(cs, sn, -sn, cs) * d; } q = d / a + 0.5; }
           vec4 pv = fbInit > 0.5 || offs(q) ? vec4(0.0) : texture2D(prev, vec2(q.x, 1.0 - q.y));
           float k = 0.6 + 0.38 * fbK - (IS(fbS, S_feedback_trails) ? 0.16 * (1.0 - fb) : 0.0);   // older copies fade as they repeat (Length: how slowly)
-          c = mix(c, max(c, pv.rgb * k), fb); al = mix(al, max(al, pv.a * k), fb);
+          // the history is 8-bit: × k alone gets stuck on dim values (10 × 0.98 rounds back to 10), so a faint ghost of an old
+          // scene stayed for ever. Taking off 1.5 / 255 each frame as well lets every trail fade out completely
+          c = mix(c, max(c, pv.rgb * k - 0.006), fb); al = mix(al, max(al, pv.a * k - 0.006), fb);
         }
         gl_FragColor = vec4(clamp(c, 0.0, 1.0), clamp(al, 0.0, 1.0));
       }`));
@@ -432,7 +451,7 @@ ${FX_GLSL}
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz']);   // sizes given in canvas pixels
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP',
-                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'time'];
+                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);

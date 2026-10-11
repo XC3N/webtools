@@ -52,6 +52,14 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {fxlocal} **FX Local** (0.63) — FX: Local; scene 1: latch Mono; scene 2: latch Colour, unlatch Mono; back to 1: Mono on, Colour off. Global, change scenes: effects stay. Local again: the scene's own come back. With a transition: do they ease in / out nicely?
 - {fxmask} **Layer pips** (0.63) — effect tiles: "all" or four pips in the layers' colours, on their own line.
 - {dpat2} **Dither switch** (0.63) — Colour › Palette: Dither slider + Noise / Bayer / Check pictures beside it.
+- {vhsbeat} **VHS rolls on the beat** (0.64) — CRT › VHS at high Wear, and the VHS transition: the bands start rolling on beats, at random.
+- {chopts} **Channel options** (0.64) — Transitions › Glitch › Channel › Options: Random / Scene (name a scene first) / Scene #.
+- {cpkmap} **Picker colour field** (0.64) — any swatch: click / drag in the field and the hue strip.
+- {padsc} **Pad onto another scene** (0.64) — drag a pad, hold it over another scene's tile: the scene opens; drop on an empty pad: a copy.
+- {sccur} **Copy into this scene** (0.64) — on an empty scene, Ctrl+drag another scene onto its tile: it fills in place; Ctrl+Z undoes it.
+- {livebar} **Go live / leave BRB on the bar** (0.64) — Snap off: Enter in Prep waits for the next bar; in BRB a scene key changes on the next bar.
+- {fbghost} **Feedback fades out** (0.64) — Feedback Trails at a long Length, change scenes: no faint ghost of the old scene left.
+- {bordersel} **Border click deselects** (0.64) — a big GIF sticking out past the canvas: click in the grey border over it: deselected.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

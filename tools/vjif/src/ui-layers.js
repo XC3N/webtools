@@ -179,13 +179,14 @@ pv.addEventListener('pointerdown', e => {
   let c = selClip(); const h = hitHandle(c, px, py);
   if (h === 'rot'){ const G = clipGeom(c); drag = { type: 'rot', c, cx: G.cx, cy: G.cy, a0: Math.atan2(py - G.cy, px - G.cx), r0: c.rot }; pv.style.cursor = 'grabbing'; return; }
   if (h){ drag = { type: e.shiftKey ? 'crop' : 'resize', h, c, G0: clipGeom(c), sx0: c.sx, sy0: c.sy }; return; }
-  let hit;
-  if (e.altKey){                                         // Alt+click: cycle down through what's under the cursor
+  let hit; const outside = px < 0 || px > W || py < 0 || py > H;   // outside the canvas nothing shows, so only a handle counts there
+  if (outside) hit = null;
+  else if (e.altKey){                                         // Alt+click: cycle down through what's under the cursor
     const all = hitsAt(px, py, false), i = all.findIndex(h => h[1] === c);
     hit = all.length ? all[(i + 1) % all.length] : null;
   } else hit = hitAny(px, py);
   if (hit){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); c = hit[1]; }
-  if (!hit && (px < 0 || px > W || py < 0 || py > H)){   // a click in the border around the canvas, on nothing: no GIF selected (its frame and handles go)
+  if (!hit && outside){   // a click in the border around the canvas, on nothing: no GIF selected (its frame and handles go)
     if (layers[target].sel){ layers[target].sel = null; syncLayerUI(); syncXfUI(); redraw.all = true; } return; }
   if (c) drag = { type: 'move', c, px, py, x0: c.x, y0: c.y };
 });

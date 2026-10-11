@@ -4,6 +4,30 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.64.0 — 2026-10-10
+
+### Effects
+- CRT › VHS (and the VHS transition): the tracking bands roll on the beat, at random. The wide one sweeps down over two beats (most pairs, each at its own speed), the thin one over one beat (about every other beat). Not only on the downbeat.
+
+### Transitions
+- The Direction row is now Options: what each transition can be tuned with. Slide / Wipe: the direction. Glitch › Channel: what the number shows: Random, Scene (the new scene's name, or its number), Scene # (01–09).
+- The OSD font has letters (A–Z) for scene names.
+
+### Interface
+- Colour picker: a colour field (saturation across, brightness up) and a hue strip above the sliders, to click or drag.
+- Dragging a pad: hold it over another scene's tile for half a second and that scene opens; drop it on an empty pad there for a copy.
+- Ctrl+drag a scene onto the empty scene you're on: it fills in place (one undo step). It used to do nothing.
+- BRB's ▾ button has its own full box.
+
+### Timing
+- Prep: going live waits for the downbeat, whatever Snap is set to.
+- BRB: the scene key that takes you out of it changes the scene on the downbeat, whatever Snap is set to.
+
+### Fixes
+- Feedback: dim trails never faded completely (8-bit rounding kept the last few levels for ever), so a faint ghost of an older scene stayed. They now fade out to nothing.
+- A click outside the canvas deselects, even where a GIF sticks out past the edge (nothing shows there). Handles still work outside.
+- CRT › Split with Mono / Colour / Palette: each colour channel is now made from its own look, so a palette picture splits into its own colours instead of the fringes being snapped back.
+
 ## 0.63.0 — 2026-10-10
 
 ### Effects
