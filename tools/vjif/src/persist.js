@@ -23,12 +23,12 @@ const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.bl
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: SNAP_V, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0),
+    v: SNAP_V, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0), fxLocal, sceneFx: fxLocal ? latchedNow() : liveFxOn,
     pool: pool.map(m => ({ hash: m.hash, name: m.name, ...(m.scale && m.scale !== 1 ? { scale: m.scale } : {}) })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
     sceneName: liveName,
-    scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : { pads: serPads(sc.pads), layers: serLayers(sc.layers), name: sc.name || '' }),
+    scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : { pads: serPads(sc.pads), layers: serLayers(sc.layers), name: sc.name || '', ...(sc.fxOn ? { fxOn: sc.fxOn } : {}) }),
     thumbs: scenes.map((sc, i) => i === sceneIdx ? thumbKeep || liveThumb || null : sc && sc.thumb || null),   // the scene tiles' pictures, so they survive a reload
   });
 }
@@ -135,7 +135,7 @@ async function applySnapshot(st, { wait = true } = {}){
   for (let i = 0; i < N_SCENES; i++){
     const ss = i !== idx && st.scenes[i]; if (!ss){ scenes[i] = null; continue; }
     const gs = pads.map((_, k) => mk(ss.pads[k]));
-    scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: st.thumbs && st.thumbs[i] || null, name: ss.name || '' };
+    scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: st.thumbs && st.thumbs[i] || null, name: ss.name || '', fxOn: ss.fxOn || null };
   }
   sceneIdx = idx; pendingScene = null; liveThumb = st.thumbs && st.thumbs[idx] || null; liveName = st.sceneName || ''; endTrans(); dropPrep(); renderScenes();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait')); heldPre = -1;
@@ -145,6 +145,7 @@ async function applySnapshot(st, { wait = true } = {}){
   fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxCfg.forEach((c, i) => { c.style = FX_MULTI[FX_DEFS[i].id] ? styleNorm(i, c.style) : FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
   fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {}));   // older sets had six: they fill 1–6
   if (Array.isArray(st.fxOn)) st.fxOn.forEach((on, i) => { if (on && fxSt[i] && fxConf(i).mode === 'latch'){ const C = fxConf(i); Object.assign(fxSt[i], { on: true, t0: clock.beat - (C.att || 0) - (C.dec || 0) - 1e-6 }); } });   // latched effects come back on (at Sustain)
+  fxLocal = !!st.fxLocal; liveFxOn = st.sceneFx || null; fxScopeUI();
   syncFxUI();
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));

@@ -49,6 +49,9 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {scdrop} **Drop on a scene** (0.62) — drag GIF files or a pool GIF onto another scene's tile: they land on its first empty pads, you stay where you are.
 - {decsc} **Decoding mark** (0.62) — load a big GIF, switch scene at once: the pad on the new scene isn't marked as decoding.
 - {aresetall} **Auto Reset all** (0.62) — GIF › Auto › Reset all: every LFO of the GIF off.
+- {fxlocal} **FX Local** (0.63) — FX: Local; scene 1: latch Mono; scene 2: latch Colour, unlatch Mono; back to 1: Mono on, Colour off. Global, change scenes: effects stay. Local again: the scene's own come back. With a transition: do they ease in / out nicely?
+- {fxmask} **Layer pips** (0.63) — effect tiles: "all" or four pips in the layers' colours, on their own line.
+- {dpat2} **Dither switch** (0.63) — Colour › Palette: Dither slider + Noise / Bayer / Check pictures beside it.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

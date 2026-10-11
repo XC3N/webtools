@@ -41,6 +41,7 @@ const FX_PALS = [
 const FX_DPAT = [[0, 'Noise'], [1, 'Bayer'], [2, 'Check']];   // short: the name and amount share the slider's readout
 // Colour › Palette's Dither row holds both: off, then each pattern from 10 to 100% (one slider, as there's room for one).
 // Its value is pattern × 2 + amount (Noise 0.1–1, Bayer 2.1–3, Check 4.1–5), split back into dpat and dith.
+const FX_DITH = [[0, 'off'], ...Array.from({ length: 10 }, (_, j) => [(j + 1) / 10, (j + 1) * 10 + '%'])];   // Colour › Palette's Dither amount (the pattern is its own switch)
 const FX_DITHP = [[0, 'off'], ...FX_DPAT.flatMap(([k, n]) => Array.from({ length: 10 }, (_, j) => [k * 2 + (j + 1) / 10, `${n} ${(j + 1) * 10}%`]))];
 // CRT › VHS alone (no Scanlines / Crypt, which own the Size row): the Size row sets how many dropouts the tape has
 const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   // 0–200 %
@@ -58,9 +59,8 @@ const FX_FBK = Array.from({ length: 20 }, (_, i) => [(i + 1) / 20, (i + 1) * 5 +
 function rateAlt(d, style){
   if (!d) return null;
   if (d.id === 'feedback') return { label: 'Length', key: 'fbk', def: 0.7, list: FX_FBK, title: () => 'Length: how long the trails / echoes last before they fade' };
-  if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITHP,
-    get: C => C.dith > 0 ? (C.dpat || 0) * 2 + Math.round(C.dith * 10) / 10 : 0, set: (C, v) => { if (!v){ C.dith = 0; return; } C.dpat = Math.floor((v - 0.001) / 2); C.dith = +(v - C.dpat * 2).toFixed(2); },
-    title: () => 'Dither: in-between shades drawn with the palette colours, and how. Noise: soft scattered dots · Bayer: two colours in an ordered pattern, DOS / 8-bit style · Check: two colours as a 50% checkerboard (off = flat areas)' };
+  if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, pat: true,   // the pattern: the Noise / Bayer / Check switch beside it
+    title: () => 'Dither: how much of the in-between shades are drawn with the palette colours (off = flat areas). The switch beside it picks how' };
   if (d.id === 'mirror' && style === 'kal') return { label: 'Zoom', key: 'kz', def: 1, list: FX_KZ, title: () => 'Zoom: into the middle of the kaleidoscope' };
   return null;
 }

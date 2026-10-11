@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.63.0 — 2026-10-10
+
+### Effects
+- FX: Global / Local (scenes toolbar). Global: latched effects stay on from scene to scene (as before). Local: each scene remembers which latched effects were on when you left it; going to it switches those on and the rest off, each with its own attack / release, so they ease in and out with the transition. Switching back to Local brings the current scene's own effects back. Saved with the set.
+- Effect tiles show which layers they work on, on their own line: "all", or four pips lit in the layers' colours (it used to be L1+3 next to the mode).
+- Colour › Palette: Dither is its own amount again (off, 10–100 %), with a three-way pattern switch beside it (Noise, Bayer, Check, drawn as little pictures). The Palette slider gives up some room for them.
+
 ## 0.62.0 — 2026-10-10
 
 ### Interface

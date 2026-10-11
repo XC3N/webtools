@@ -22,7 +22,23 @@ const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: 
 const layerState = L => ({ i: L.i, ...layerProps(L) });
 // the tile keeps the live picture made in the last second (drawing a new one here would stall the scene change);
 // with the control window hidden that picture isn't refreshed, so then it's drawn
-const captureScene = () => ({ layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
+// FX Local / Global (scenes toolbar). Global: latched effects stay as they are from scene to scene. Local: each scene
+// remembers which latched effects were on, and going to it switches those on and the rest off (with their own attack /
+// release, so they ease in and out with the transition). Switching back to Local brings the scene's own effects back.
+let fxLocal = false, liveFxOn = null;               // liveFxOn: the current scene's remembered effects (scenes[] hold the others')
+const latchedNow = () => fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0);
+function applyLatched(list, b = clock.beat){
+  fxSt.forEach((S, i) => { if (fxConf(i).mode !== 'latch') return; const want = !!list[i];
+    if (want && !S.on){ S.on = true; S.t0 = b; } else if (!want && S.on){ S.on = false; S.rel = b; } });
+  syncFxUI();
+}
+function setFxLocal(on){
+  if (on === fxLocal) return; fxLocal = on;
+  if (on){ if (liveFxOn) applyLatched(liveFxOn); } else liveFxOn = latchedNow();
+  fxScopeUI(); toast2(on ? 'FX Local: each scene keeps its own latched effects' : 'FX Global: latched effects stay on from scene to scene');
+}
+function fxScopeUI(){ const b = $('#scFx'); b.textContent = fxLocal ? 'FX: Local' : 'FX: Global'; b.classList.toggle('on', fxLocal); }
+const captureScene = () => ({ fxOn: fxLocal ? latchedNow() : liveFxOn, layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   if (hist.ready) commit();                          // an edit still waiting for its undo step gets it now, in its own scene
@@ -41,6 +57,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
   pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
   if (!trans) dropFxCache(left);                     // (with a transition: when it ends)
   scenes[i] = null; liveThumb = sc && sc.thumb; thumbKeep = liveThumb; liveName = sc && sc.name || '';
+  liveFxOn = sc && sc.fxOn || null; if (fxLocal && liveFxOn) applyLatched(liveFxOn, beat);   // (a scene never left in Local keeps what's on)
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
   // what's selected: as you left this scene; else the edit layer stays and the GIF panel shows that layer's selected GIF
   if (sc && sc.pick){ target = sc.pick.target; selPad = sc.pick.pad; }
@@ -216,7 +233,7 @@ function sceneCopy(i){
   const live = i === sceneIdx, sc = live ? null : scenes[i];
   if (!live && !sc) return emptyScene();             // never opened: a copy of nothing is an empty scene (not a shell without layers)
   const P = live ? pads.map(p => p.gif) : (sc && sc.pads) || [], Ls = live ? layers : (sc && sc.layers) || [];
-  return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, pads: P.map(g => g && cloneInst(g)),
+  return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, fxOn: live ? (fxLocal ? latchedNow() : liveFxOn) : sc && sc.fxOn || null, pads: P.map(g => g && cloneInst(g)),
     layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
       return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
 }
@@ -229,7 +246,7 @@ $('#scDup').addEventListener('click', () => {
 });
 // ---- screen effect pads + editor ----
 const NP_ORDER = [6, 7, 8, 3, 4, 5, 0, 1, 2];           // preset tiles laid out like the numpad (7 8 9 on top)
-function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span><span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
+function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span>${i < NFX ? '<span class="mk"></span>' : ''}<span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
@@ -341,7 +358,10 @@ function syncFxUI(){
     // names are measured (forces a layout) only when what the tile shows changed: pressing an effect key just moves the highlight
     const sig = i < NFX ? `${c.mode}|${c.target}|${c.style}|${fxFitGen}` : `${c.mode}|${JSON.stringify(fxPre[i - NFX].fx)}|${fxFitGen}`;
     if (el._sig === sig) return; el._sig = sig;
-    el.querySelector('.md').textContent = (i < NFX && tgtLabel(c.target) ? tgtLabel(c.target) + ' ' : '') + c.mode;
+    el.querySelector('.md').textContent = c.mode;
+    if (i < NFX){ const L = tgtList(c.target), mk = el.querySelector('.mk');   // the layers it works on: "all", or four pips lit in the layers' colours
+      mk.innerHTML = L[0] === 'out' ? 'all' : [0, 1, 2, 3].map(k => `<i${L.includes(k) ? ` class="on" style="--c:${LCOL[k]}"` : ''}></i>`).join('');
+      mk.classList.toggle('all', L[0] === 'out'); }
     if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
       fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); const many = styleParts(i, c.style).length > 1; fitText(el.querySelector('.s'), D.styles.length > 1 ? (many ? styleLabel(i, c.style) : st[1]) : '', many ? styleLabel(i, c.style, true) : STYLE_SHORT[st[0]], D.styles.length > 1 && st[1].length > 4 ? (many ? styleParts(i, c.style).length + ' styles' : st[1].slice(0, 3) + '.') : null);
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
@@ -391,6 +411,7 @@ function syncFxUI(){
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
     const alt = rateAlt(d, C.style || d.styles[0][0]); $('#fxRateRow').classList.toggle('altrow', !!alt);
+    $('#fxDpat').hidden = !(alt && alt.pat); $('#fxRateRow').classList.toggle('patrow', !!(alt && alt.pat)); if (alt && alt.pat) segSet('#fxDpat', String(C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
       $('#fxRateRow').title = alt.title(ai); $('#fxRateRow').classList.remove('dimmed'); }
@@ -545,6 +566,7 @@ $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
   if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = 0; else C.rel = fxRelDef(C.mode);
   drawFxEnv(); });
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
+onSeg($('#fxDpat'), b => { const X = fxEd(); if (X){ X.dpat = +b.dataset.v; syncFxUI(); } });
 $('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
   if (b){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); return; }
@@ -566,6 +588,7 @@ function emptySceneAt(i){
   toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);
 }
 $('#scEmpty').addEventListener('click', () => emptySceneAt(sceneIdx));
+$('#scFx').addEventListener('click', () => setFxLocal(!fxLocal));
 let thumbKeep = null, thumbTick = 0;                 // the live tile's picture as saved: refreshed every 20 s (not every second), so autosave doesn't rewrite the set constantly
 setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb; } }, 1000);
 // a layer on / off can play a transition: the picture before the change is the leaving side, like a scene change

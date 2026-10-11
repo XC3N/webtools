@@ -198,6 +198,9 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 .fxp .lv{position:absolute;inset:auto 0 0 0;height:0;background:var(--sig);opacity:.85}
 .fxp .hd{position:relative;display:flex;justify-content:space-between;gap:4px;font:600 9px/1 var(--mono);color:var(--faint);white-space:nowrap}
 .fxp .md{font-weight:400;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.fxp .mk{position:relative;display:flex;align-items:center;gap:2px;height:7px;margin:3px 0 1px;font:600 8px/7px var(--mono);color:var(--faint);letter-spacing:.04em}   /* the layer mask: "all", or four pips */
+.fxp .mk i{width:9px;height:3px;border-radius:1px;background:var(--edge-2)}.fxp .mk i.on{background:var(--c)}
+.fxp.on .mk{color:var(--sigtxt)}.fxp.on .mk i:not(.on){background:rgba(0,0,0,.25)}.fxp.on .mk i.on{box-shadow:0 0 0 1px rgba(0,0,0,.35)}
 .fxp .t{position:relative;display:flex;flex-direction:column;min-width:0}
 .fxp .t>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fxp .n{font:600 11.5px/13px var(--sans);letter-spacing:-.01em;color:var(--ink)}
@@ -391,3 +394,9 @@ input[type=checkbox]:hover{border-color:var(--ink)}
 #cpk .cpkTop{display:flex;gap:6px;margin-bottom:6px}#cpk .cpkSw{flex:1;border:1px solid var(--edge);border-radius:var(--r);height:var(--ch)}
 #cpk .cpkHex{width:84px;font:400 12px var(--mono);text-transform:lowercase}#cpk .field{margin-bottom:4px}#cpk .field:last-child{margin-bottom:0}
 input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
+
+/* Colour › Palette: a shorter Dither slider with the pattern switch beside it */
+#fxRateRow.patrow{grid-template-columns:minmax(0,1fr) auto!important;column-gap:4px;flex:1.4}#fxRateRow.patrow>.seg{grid-column:2;grid-row:1;width:78px;flex:none}
+.fxrow:has(#fxRateRow.patrow)>.field:first-child{flex:1}   /* the Palette slider gives up some room for Dither + its switch */
+#fxRateRow.patrow>.seg button{padding:0}   /* the three patterns as little pictures (the tooltips name them) */
+#scFx{min-width:78px}#scFx.on{color:var(--sig);border-color:var(--sig)}   /* FX: Local / Global: the same width either way */
