@@ -73,5 +73,13 @@ async def main():
     print('credits', cr, cr2); assert cr and cr2 == [True, False], (cr, cr2)
     th = await pg.evaluate("(() => { const t = performance.now(); const u = sceneThumb(); return [typeof u === 'string' && u.startsWith('data:image/jpeg'), performance.now() - t < 100]; })()")
     print('thumb', th); assert th == [True, True], th
+    # 0.74.1: dragging an effect tile leaves it as it was (a latched one stays on, an off one stays off)
+    dg = []
+    for on in (False, True):
+        r = await pg.evaluate(f"(() => {{ fxCfg[0].mode = 'latch'; fxSt[0].on = {str(on).lower()}; const t = document.querySelector('#fxPads .fxp[data-i=\"0\"]').getBoundingClientRect(); return [t.left + t.width / 2, t.top + t.height / 2]; }})()")
+        await pg.mouse.move(r[0], r[1]); await pg.mouse.down(); await pg.mouse.move(r[0] + 40, r[1] + 40, steps=4); await pg.mouse.move(r[0] + 80, r[1] - 200, steps=4); await pg.mouse.up()
+        dg.append(await pg.evaluate("fxSt[0].on"))
+    await pg.evaluate("fxSt[0].on = false; fxCfg[0].mode = 'hold'")
+    print('drag keeps state', dg); assert dg == [False, True], dg
     await b.close()
 asyncio.run(main())

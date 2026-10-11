@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.74.1 — 2026-10-11
+
+### Fixes
+- Dragging an effect tile no longer plays or stops it: once the drag starts, the effect goes back to how it was before the press (a click still plays it as before).
+
 ## 0.74.0 — 2026-10-11
 
 ### Interface

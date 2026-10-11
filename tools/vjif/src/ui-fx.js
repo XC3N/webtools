@@ -35,17 +35,18 @@ function wireFxTile(el){
       else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
       selFx = i; syncFxUI(); return; }
     if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); el._edit = true; return; }     // a preset is held: this click edits it
+    const was = { ...fxSt[i] };                        // its state before this press: a drag puts it back
     el.setPointerCapture(e.pointerId); fxDown(i); if (selFx !== i){ selFx = i; syncFxUI(); }   // a click on the tile also opens it in the editor
-    fxDrag = { i, x: e.clientX, y: e.clientY, moved: false }; if (i >= NFX) heldPre = i - NFX;   // holding a preset tile: F keys edit it; dragging it moves / copies it
+    fxDrag = { i, x: e.clientX, y: e.clientY, moved: false, was }; if (i >= NFX) heldPre = i - NFX;   // holding a preset tile: F keys edit it; dragging it moves / copies it
   });
   el.addEventListener('pointermove', e => {
     if (!fxDrag || fxDrag.i !== i) return;
-    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; if (i >= NFX) heldPre = -1; document.body.classList.add('fxdragging'); fxGhost(i); }   // (it keeps playing while dragged: let go to stop it)
+    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; if (i >= NFX) heldPre = -1; for (const k in fxSt[i]) delete fxSt[i][k]; Object.assign(fxSt[i], fxDrag.was); document.body.classList.add('fxdragging'); fxGhost(i); }   // a drag leaves the effect as it was: the press is undone
     if (fxDrag.moved){ ghost.move(e.clientX, e.clientY); fxDrag.lastE = e; fxDropMark(isDel(e)); }
   });
   const end = e => {
     if (el._edit){ el._edit = false; return; }       // that click edited a preset: nothing was started
-    fxUp(i); if (i >= NFX && heldPre === i - NFX) heldPre = -1;
+    if (!(fxDrag && fxDrag.i === i && fxDrag.moved)) fxUp(i); if (i >= NFX && heldPre === i - NFX) heldPre = -1;
     if (fxDrag && fxDrag.i === i && fxDrag.moved){
       const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp'), cp = fxDrag.copy;
       if (d && i < NFX) addPreFx(+d.dataset.i - NFX, i);
