@@ -4,6 +4,30 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.73.0 — 2026-10-11
+
+### Layers
+- Two mask blend modes: Mask: cut out (this layer's GIFs cut holes in the layers below, showing black) and Mask: keep inside (only what's under them stays).
+
+### GIFs
+- Shadow › Crop: takes away the top of the shadow, so the GIF seems to stand on what's behind it.
+- Auto › Gap: a pause after each LFO cycle (the value holds where the cycle ended).
+
+### Transitions
+- Options for every family: Wipe and Luma › Soft edge; Iris from the middle or the selected GIF; Luma › Bright / Dark first; Zoom › In / Out / Through; Dissolve › Squares / Lines / Diamonds; Glitch › Clean / Split / Wide; TV › VHS › Light / Worn / Chewed; Stutter › 1/16 / 1/8 / 1/32 and Swing.
+
+### Fixes
+- Effect › Glitch › Scramble: the blocks grow from the centre (anchored in a corner, they seemed to slide into it).
+- Dragging a scene tile over the pads no longer marks them as a place to drop it.
+- An effect keeps playing while its tile is dragged (it stops when you let go).
+- Copy targets: the dashed outline sits on the tile's own edge.
+- Launchpad layout: the bottom row holds the effect presets in numpad order (7 8 9 4 5 6 1 2, 3 on the right-hand button).
+
+### Under the hood
+- The two biggest source files split by subject: scenes.js → scenes, ui-trans (the Transition panel), ui-fx (effect pads and editor); render.js → render, transitions, prep, preview (overlays and guides). The built page runs the same code in a compatible order.
+- One pair of colour helpers (hex2rgb / rgb2hex) instead of four copies; unused code and styles removed; a stale "(ignored when tiled)" crop note fixed.
+- The build checks that every script parses, so a syntax slip fails the build instead of showing a blank page.
+
 ## 0.72.0 — 2026-10-11
 
 ### Interface

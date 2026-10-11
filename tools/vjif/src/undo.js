@@ -158,7 +158,7 @@ buildLayers(); renderScenes(); syncTransUI(); syncLayerUI(); syncXfUI(); selectP
 const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), i = opts.findIndex(o => o[1].toLowerCase() === l || o[1].toLowerCase() === l + 's');
   if (i >= 0) return i; const n = parseFloat(t); return isFinite(n) ? optIdx(opts, n) : null; };
 ['#tA', '#tH', '#tR'].forEach(id => $(id).ctlParse = lenParse(ENV_OPTS));
-$('#aPer').ctlParse = lenParse(PER_OPTS);
+$('#aPer').ctlParse = lenParse(PER_OPTS); $('#aGap').ctlParse = lenParse(GAP_OPTS);
 $('#aPh').ctlParse = t => { const n = parseFloat(t); return isFinite(n) ? mod(n, 360) / 360 : null; };
 $('#themeBox').addEventListener('input', () => quietUI());
 Theme.mount($('#themeBox'), { app: 'vjif', toast: toast2,

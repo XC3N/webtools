@@ -84,7 +84,7 @@ function lpTick(){
 // ---- a ready-made layout for the 8×8 grid (Programmer mode: the pad in row r (1 = bottom), column c is note r·10 + c) ----
 //   rows 8–6: the 18 GIF pads, laid out like the keyboard (QWE ASD ZXC | RTY FGH VBN), then layers 1–4, Blackout, Freeze
 //   rows 5–3: scenes as on the numpad (7 8 9 / 4 5 6 / 1 2 3), effects F1–F12 in 3 rows of 4, then Tap, Sync, BRB
-//   row 2: transition presets 1–8 (9 on the right-hand button) · row 1: effect presets 1–8 (9 on the right-hand button)
+//   row 2: transition presets 1–8 (9 on the right-hand button) · row 1: effect presets in numpad order 7 8 9 4 5 6 1 2 (3 on the right-hand button)
 function lpLayout(){
   const map = [], note = (r, c) => `n0.${r * 10 + c}`, cc = n => `c0.${n}`;
   for (let k = 0; k < 18; k++){ const blk = k < 9 ? 0 : 1, j = k % 9; map.push({ key: note(8 - Math.floor(j / 3), 1 + blk * 3 + j % 3), t: 'pad', i: k }); }
@@ -92,8 +92,9 @@ function lpLayout(){
   for (let s = 0; s < 9; s++) map.push({ key: note(3 + Math.floor(s / 3), 1 + s % 3), t: 'scene', i: s });   // scene 1 bottom left, like the numpad
   for (let f = 0; f < 12; f++) map.push({ key: note(5 - Math.floor(f / 4), 4 + f % 4), t: 'fx', i: f });
   [[5, 8, 'tap'], [4, 8, 'sync'], [3, 8, 'brb']].forEach(([r, c, t]) => map.push({ key: note(r, c), t, i: 0 }));
-  for (let k = 0; k < 8; k++){ map.push({ key: note(2, 1 + k), t: 'trans', i: k }); map.push({ key: note(1, 1 + k), t: 'fx', i: NFX + k }); }
-  map.push({ key: cc(29), t: 'trans', i: 8 }, { key: cc(19), t: 'fx', i: NFX + 8 });
+  const PRE_ORD = [6, 7, 8, 3, 4, 5, 0, 1, 2];        // effect presets in numpad order (they live on the numpad with Caps): 7 8 9 4 5 6 1 2, then 3 on the right-hand button
+  for (let k = 0; k < 8; k++){ map.push({ key: note(2, 1 + k), t: 'trans', i: k }); map.push({ key: note(1, 1 + k), t: 'fx', i: NFX + PRE_ORD[k] }); }
+  map.push({ key: cc(29), t: 'trans', i: 8 }, { key: cc(19), t: 'fx', i: NFX + PRE_ORD[8] });
   const keys = new Set(map.map(m => m.key));
   midiCtl.map = midiCtl.map.filter(m => !keys.has(m.key)).concat(map); saveMidiCtl(); renderMidiCtl(); markLearn();
   if (!midiAccess) getMidi().then(() => { bindCtlInputs(); fillMidi(); renderMidiCtl(); }).catch(() => {});

@@ -36,6 +36,13 @@ function markdown(file, from){
   }
   flush(); return html.join('\n');
 }
+// every inline <script> must at least parse: a syntax error would otherwise only show up in the browser, as a blank tool
+function checkScripts(html, name){
+  const vm = require('vm'), re = /<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g; let m, n = 0;
+  while ((m = re.exec(html))){ n++; if (/type="(?!text\/javascript|module)/.test(m[0].slice(0, 60))) continue;
+    try { new vm.Script(m[1], { filename: `${name} script ${n}` }); }
+    catch (e){ const ln = (e.stack.match(/:(\d+)\n/) || [])[1]; throw new Error(`${name}: script ${n} doesn't parse: ${e.message}${ln ? ` (line ${ln} of that script)` : ''}`); } }
+}
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 fs.rmSync(out, { recursive: true, force: true });
@@ -46,6 +53,7 @@ for (const dirName of fs.readdirSync(path.join(root, 'tools')).sort()){
   if (!fs.existsSync(metaFile)) continue;
   const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
   const html = inline(path.join(dir, meta.entry));
+  checkScripts(html, meta.output);
   fs.writeFileSync(path.join(out, meta.output), html);
   tools.push(meta);
   console.log(`built dist/${meta.output}  (${(Buffer.byteLength(html) / 1024).toFixed(0)} KB)`);

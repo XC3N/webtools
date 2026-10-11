@@ -16,12 +16,15 @@ window.addEventListener('drop', e => {
 });
 const bank = $('#bank');
 bank.addEventListener('dragover', e => {
-  e.preventDefault(); if (e.dataTransfer.types.includes(POOL_MIME)) e.dataTransfer.dropEffect = 'copy';
-  const el = e.target.closest('.pad'); pads.forEach(p => p.el.classList.toggle('drop', p.el === el));
+  e.preventDefault(); const T = e.dataTransfer.types;
+  const ok = !T.includes(SCENE_MIME) && (T.includes(POOL_MIME) || T.includes('Files') || T.includes('text/uri-list') || T.includes('text/plain'));   // GIFs, files, links: a scene tile is no GIF
+  e.dataTransfer.dropEffect = ok ? 'copy' : 'none';
+  const el = ok && e.target.closest('.pad'); pads.forEach(p => p.el.classList.toggle('drop', p.el === el));
 });
 bank.addEventListener('dragleave', e => { if (!bank.contains(e.relatedTarget)) pads.forEach(p => p.el.classList.remove('drop')); });
 bank.addEventListener('drop', e => {
   e.preventDefault(); pads.forEach(p => p.el.classList.remove('drop'));
+  if (e.dataTransfer.types.includes(SCENE_MIME)) return;
   const padEl = e.target.closest('.pad'), start = padEl ? +padEl.dataset.i : -1;
   const ph = e.dataTransfer.getData(POOL_MIME);
   if (ph){                                           // a pool GIF dragged onto a pad: put it there (replacing — undoable)

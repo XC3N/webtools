@@ -123,10 +123,16 @@ function envLevel(c, g, beat){
 }
 
 // ---------- automation (LFOs) ----------
-const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, min: t[7], max: t[8], shape: t[9], per: t[10], ph: 0, sync: 'clock' }; };
+const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, min: t[7], max: t[8], shape: t[9], per: t[10], ph: 0, sync: 'clock', gap: 0 }; };
 function rnd(seed, n){ let h = Math.imul(seed ^ Math.imul(n | 0, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
 // position in cycles (whole part = cycle number)
-function lfoPos(A, c){ return (A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat) / A.per + A.ph; }
+function lfoPos(A, c){ return lfoPosT(A, A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat); }
+// Gap: after each cycle the LFO waits (holding where the cycle ended) before the next one starts
+function lfoPosT(A, t){
+  const g = A.gap || 0; if (!g) return t / A.per + A.ph;
+  const L = A.per + g, u = t + A.ph * A.per, n = Math.floor(u / L), r = u - n * L;
+  return n + (r < A.per ? r / A.per : 0.999999);
+}
 function lfoShape(A, pos, seed){
   const n = Math.floor(pos), f = pos - n;
   switch (A.shape){

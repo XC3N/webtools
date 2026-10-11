@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.72.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.73.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -57,7 +57,9 @@ const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it 
 const MEM_WARN_MB = 1500;      // whole bank
 const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','KeyR','KeyT','KeyY','KeyF','KeyG','KeyH','KeyV','KeyB','KeyN'];
 const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','R','T','Y','F','G','H','V','B','N'];
-const BLENDS = [['source-over','Normal'],['lighter','Add'],['screen','Screen'],['multiply','Multiply'],['difference','Difference'],['exclusion','Exclusion'],['lighten','Lighten'],['darken','Darken'],['overlay','Overlay']];
+const BLENDS = [['source-over','Normal'],['lighter','Add'],['screen','Screen'],['multiply','Multiply'],['difference','Difference'],['exclusion','Exclusion'],['lighten','Lighten'],['darken','Darken'],['overlay','Overlay'],
+  ['destination-out','Mask: cut out'],['destination-in','Mask: keep inside']];   // masks: this layer's GIFs cut holes in the layers below it, or keep only what's under them
+const MASK_BLENDS = new Set(['destination-out', 'destination-in']);
 const LCOL = ['#4dff7a','#3ad1c4','#ff5bb0','#8fa8ff'];
 const LNAMES = ['Background', 'Midground', 'Foreground', 'Overlay'];
 // musical lengths in beats (4/4): [beats, label]
@@ -68,6 +70,7 @@ const BEAT_OPTS = LEN_OPTS.map(o => o[0]);
 const lenLabel = b => { const o = LEN_OPTS.find(o => Math.abs(o[0] - b) < 1e-6); return o ? o[1] : b % 4 === 0 ? `${b/4} bars` : `${+b.toFixed(2)} beats`; };
 // fade one-shot lengths and LFO cycles, in beats
 const ENV_OPTS = [[0,'0'],[0.125,'1/32'],[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars']];
+const GAP_OPTS = [[0, 'off'], [0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];   // LFO Gap: a pause after each cycle
 const PER_OPTS = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars'],[64,'16 bars']];
 const optIdx = (opts, v) => opts.reduce((bi, o, i) => Math.abs(o[0] - v) < Math.abs(opts[bi][0] - v) ? i : bi, 0);
 // LFO targets: [key, button, title, slider min, max, step, unit, default min, max, shape, cycle (beats)]
@@ -110,8 +113,9 @@ const onSeg = (el, fn) => el.addEventListener('click', e => { const b = e.target
 // innerHTML only when it differs from what was last put there (rebuilding buttons / images costs a layout)
 const setHTML = (el, html) => { if (el._html !== html){ el.innerHTML = html; el._html = html; } };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const hex2rgb = h => [1,3,5].map(i => parseInt(h.substr(i, 2), 16));
-const rgb2hex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+// colours: '#rrggbb' ↔ [r, g, b] (the one pair used everywhere)
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) || 0);
+const rgb2hex = c => '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('');
 
 // ---------- state ----------
 const pads = PAD_KEYS.map((code, i) => ({ i, code, label: PAD_LABELS[i], gif: null, loading: false, el: null }));

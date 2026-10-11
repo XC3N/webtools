@@ -41,7 +41,8 @@
  * @property {number} swapMerge    how close palette colours are merged into one swap
  * @property {'stay'|'fade'} trig  trigger: plays until replaced, or a fade one-shot shaped by `env`
  * @property {{a: number, h: number, r: number, curve: 'lin'|'smooth', gate: boolean, len: 'free'|'gif'}} env
- * @property {Object<string, {on: boolean, min: number, max: number, shape: string, per: number, ph: number, sync: string}>} lfo   automation per target (LFO_T)
+ * @property {Object<string, {on: boolean, min: number, max: number, shape: string, per: number, ph: number, sync: string, gap: number}>} lfo   automation per target (LFO_T); gap: beats of pause after each cycle
+ * @property {{on: boolean, x: number, y: number, blur: number, op: number, col: string, cut: number}} shadow   drop shadow (x / y / blur in output px; cut: top of the shadow taken away, 0–0.95)
  * @property {number} fxVer        bumped when its colour result changes (redraw / thumbnail checks)
  * @property {?Object} fxP         shader parameters (fxParams), made on demand; fxC: the last few coloured frames
  * @property {?Uint8Array[]} masks connected-key masks, one per frame
@@ -67,7 +68,7 @@
  * @typedef {Object} Layer
  * @property {number} i            0 Background … 3 Overlay
  * @property {boolean} on @property {number} opacity
- * @property {GlobalCompositeOperation} blend
+ * @property {GlobalCompositeOperation} blend   BLENDS; destination-out / -in are the mask modes (MASK_BLENDS)
  * @property {Clip[]} clips        drawn first to last (the last is on top)
  * @property {?Clip} sel           the one Transform edits
  * @property {boolean} fillOn @property {string} fill   Background only: a colour under its GIFs
@@ -100,8 +101,19 @@
  * @typedef {Object} TransPreset
  * @property {'cut'|'fade'|'slide'|'wipe'|'zoom'|'dissolve'|'glitch'|'tv'|'stutter'} type
  * @property {string} style        one of TR_STYLES[type]
- * @property {'left'|'right'|'up'|'down'} dir
+ * @property {'left'|'right'|'up'|'down'|'rand'} dir   Slide / Wipe (rand: one picked each time)
  * @property {number} len          beats
  * @property {boolean} smooth      eased, or linear
  * @property {number} px           block / slice / column size
+ * Options (see trOptsOf; a missing one means its first choice):
+ * @property {boolean} [soft]      Wipe, Luma: a feathered edge
+ * @property {'mid'|'gif'} [from]  Iris: from the middle or the selected GIF's centre
+ * @property {'bright'|'dark'} [inv]  Luma: which parts change first
+ * @property {'in'|'out'|'thru'} [zoom]
+ * @property {'sq'|'lines'|'dia'} [shape]   Dissolve › Blocks
+ * @property {'off'|'on'|'wide'} [split]    Glitch › Slices / Blocks: colour split
+ * @property {'light'|'worn'|'chewed'} [wear]   TV › VHS
+ * @property {'rand'|'scene'|'num'} [ch]    TV › Channel: what the number shows
+ * @property {string} [grid]       Stutter › Even: beats per cut ('0.25' …)
+ * @property {boolean} [swing]     Stutter: long-short pairs
  */

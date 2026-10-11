@@ -82,8 +82,6 @@ function gifPalette(g){
   return m.palettes[CL] = top.sort((a, b) => { const A = hsl(a), B = hsl(b), ga = A[1] < 0.12, gb = B[1] < 0.12;   // spectrum order: greys first (dark → light), then by hue
     return ga !== gb ? (ga ? -1 : 1) : ga ? A[2] - B[2] : A[0] - B[0] || A[2] - B[2]; });
 }
-const rgbHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
-const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const sameRgb = (a, b) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 let swSel = null;                                     // the palette colour picked ([r,g,b]) or null; not yet swapped = a waiting row at the end
 function syncSwapUI(g){
@@ -91,9 +89,9 @@ function syncSwapUI(g){
   $('#swMerge').value = g.swapMerge ?? 0; $('#swMerge').nextElementSibling.textContent = (g.swapMerge ?? 0) ? (g.swapMerge ?? 0) + '' : 'off';
   const pal = gifPalette(g);
   if (swSel && !pal.some(c => sameRgb(c, swSel))) swSel = null;
-  $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}${swSel && sameRgb(swSel, c) ? ' sel' : ''}" style="background:${rgbHex(c)}" title="${rgbHex(c)}"></button>`).join('');
+  $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}${swSel && sameRgb(swSel, c) ? ' sel' : ''}" style="background:${rgb2hex(c)}" title="${rgb2hex(c)}"></button>`).join('');
   const ae = document.activeElement; if ((ae && ae.type === 'color' && $('#swList').contains(ae)) || (cpk.target && $('#swList').contains(cpk.target))) return;   // a colour picker is open in the list: leave it alone (a clicked × or ∅ still has focus: not that)
-  const row = (from, to, i, pend, clr = pend ? false : !!(g.swap[i] && g.swap[i].clear)) => `<div class="swr${pend ? ' pending' : ''}${swSel && sameRgb(swSel, from) ? ' sel' : ''}" data-r="${i}"><i style="background:${rgbHex(from)}"></i>→<label class="swTo${clr ? ' clear' : ''}" style="background:${clr ? '' : rgbHex(to)}" title="${pend ? 'Click: pick what this colour becomes' : 'Click to change'}"><input type="color" data-i="${i}" value="${rgbHex(to)}"></label><button class="iconbtn${clr ? ' on' : ''}" data-k="${i}" title="Transparent: this colour disappears (click again to bring it back)">∅</button>${pend ? '' : `<button class="iconbtn" data-x="${i}" title="Remove this swap">×</button>`}</div>`;
+  const row = (from, to, i, pend, clr = pend ? false : !!(g.swap[i] && g.swap[i].clear)) => `<div class="swr${pend ? ' pending' : ''}${swSel && sameRgb(swSel, from) ? ' sel' : ''}" data-r="${i}"><i style="background:${rgb2hex(from)}"></i>→<label class="swTo${clr ? ' clear' : ''}" style="background:${clr ? '' : rgb2hex(to)}" title="${pend ? 'Click: pick what this colour becomes' : 'Click to change'}"><input type="color" data-i="${i}" value="${rgb2hex(to)}"></label><button class="iconbtn${clr ? ' on' : ''}" data-k="${i}" title="Transparent: this colour disappears (click again to bring it back)">∅</button>${pend ? '' : `<button class="iconbtn" data-x="${i}" title="Remove this swap">×</button>`}</div>`;
   const pend = swSel && !g.swap.some(x => sameRgb(x.from, swSel));
   $('#swList').innerHTML = g.swap.map((x, i) => row(x.from, x.to, i, false)).join('') + (pend ? row(swSel, swSel, 'new', true) : '');
 }
@@ -108,7 +106,7 @@ $('#swList').addEventListener('input', e => {
   let x;
   if (e.target.dataset.i === 'new'){ if (!swSel) return; const pc = gifPalette(g).find(c => sameRgb(c, swSel)); x = { from: swSel.slice(), to: swSel.slice(), tol: pc && pc.rad ? pc.rad + 1.5 : undefined }; g.swap.push(x); e.target.dataset.i = g.swap.length - 1; e.target.closest('.swr').classList.remove('pending'); }
   else x = g.swap[+e.target.dataset.i];
-  if (!x) return; x.to = hexRgb(e.target.value); e.target.parentElement.style.background = e.target.value; scheduleFx(g, 60);
+  if (!x) return; x.to = hex2rgb(e.target.value); e.target.parentElement.style.background = e.target.value; scheduleFx(g, 60);
 });
 $('#swList').addEventListener('change', e => { const g = curGif(); if (!g) return; e.target.blur(); scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
 $('#swList').addEventListener('click', e => {
@@ -164,6 +162,7 @@ function syncAutoUI(g){
     el.value = A[k]; el.dataset.def = D[k];
     el.nextElementSibling.textContent = lfoFmt(t, A[k]); if (t[6] === '%') el.dataset.pct = ''; else delete el.dataset.pct; });
   const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(PER_OPTS, D.per); $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
+  const gi = optIdx(GAP_OPTS, A.gap || 0); $('#aGap').value = gi; $('#aGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
   $('#gTabs [data-v=trig]').classList.toggle('act', g.trig === 'fade');
   $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
@@ -186,6 +185,7 @@ $('#aMax').addEventListener('input', e => { editLfo(A => A.max = +e.target.value
   addEventListener('pointerup', () => clearInterval(hold), { once: true }); }));
 $('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0]));
 $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value));
+$('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.target.value][0]));
 $('#aResetAll').addEventListener('click', () => { const g = curGif(); if (!g) return; const n = LFO_T.filter(t => g.lfo[t[0]] && g.lfo[t[0]].on).length; g.lfo = {}; syncAutoUI(g); syncXfUI(); toast2(n ? `Automation off (${n} LFO${n > 1 ? 's' : ''} reset)` : 'No automation to reset'); });
 $('#aReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.lfo[aSel]; syncAutoUI(g); syncXfUI(); });
 
@@ -214,9 +214,9 @@ function scopeDot(x, px, py, d){ x.fillStyle = '#fff'; x.beginPath(); x.arc(px, 
 function drawLfoScope(g){
   const S = scopeCtx($('#aScope')); if (!S) return; const [x, w, h, d] = S;
   const A = g.lfo[aSel] || lfoDef(aSel), i = LFO_T.findIndex(t => t[0] === aSel), c = clipOf(selPad) || { startBeat: 0 };
-  const pos = lfoPos(A, c), seed = lfoSeed(g, i);
-  const y = scopeTrace(x, w, h, d, u => lfoShape(A, pos + (u - 0.75) * 2, seed), A.on);   // two cycles, now at 3/4
-  scopeDot(x, w * 0.75, y(lfoShape(A, pos, seed)), d);
+  const t = A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat, L = A.per + (A.gap || 0), seed = lfoSeed(g, i);
+  const y = scopeTrace(x, w, h, d, u => lfoShape(A, lfoPosT(A, t + (u - 0.75) * 2 * L), seed), A.on);   // two cycles (with their gaps), now at 3/4
+  scopeDot(x, w * 0.75, y(lfoShape(A, lfoPosT(A, t), seed)), d);
 }
 function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
@@ -302,7 +302,7 @@ function afterPadChange(i){ renderScenes(); renderPad(i); selectPad(i); syncLaye
 $('#gClear').addEventListener('click', () => { clearPad(selPad); toast2('Pad cleared — Ctrl+Z brings it back'); });
 
 // ---- drop shadow (GIF › Colour › Shadow): moving a setting switches it on ----
-const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%']];
+const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off']];
 function syncShadowUI(g){
   const S = g.shadow || (g.shadow = { ...SHADOW_DEF });
   $('#shOn').checked = !!S.on; $('#shCol').value = S.col;

@@ -24,7 +24,7 @@ const TX_PRESETS = [
   ['Condensed italic', { font: 'Anton', fill: 'chrome', cs: 'upper', track: 0.02, sk: -12, color: '#ffb000' }],
 ];
 const TX_LOOK0 = { fill: 'solid', line: 'none', shadow: 'none', glow: 'none', box: 'none', sk: 0, cs: 'none', bold: false, ital: false, track: 0, color: '#ffffff', col2: '#ff5bb0' };
-const mixHex = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return rgbHex(A.map((v, i) => Math.round(v + (B[i] - v) * t))); };
+const mixHex = (a, b, t) => { const A = hex2rgb(a), B = hex2rgb(b); return rgb2hex(A.map((v, i) => Math.round(v + (B[i] - v) * t))); };
 // one frame at the current canvas size. Letters: tight around the text. Cut-out: a matte the size of the output
 // (wider when it scrolls, so it always covers the screen) with the letters punched through.
 async function renderText(spec, OW = W, OH = H){   // OW × OH: the frame it's drawn for (the Text window's preview draws it small)
@@ -69,7 +69,7 @@ function eachSeg(G, fn, dx = 0, dy = 0){
       sx += q.w; });
   });
 }
-const onColor = hex => { const [r, g, b] = hexRgb(hex); return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#111111' : '#ffffff'; };
+const onColor = hex => { const [r, g, b] = hex2rgb(hex); return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#111111' : '#ffffff'; };
 // the Letters look: a box behind, glow and shadow, then the outline, then the fill (like paint-order: stroke fill)
 function drawLook(G){
   const { x, S, segs, cx, y0, lh, px: em, asc, dsc, box, sk } = G;

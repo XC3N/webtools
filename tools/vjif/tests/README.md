@@ -47,3 +47,11 @@ python3 tools/vjif/tests/run_all.py golden crt_stack -v   # some tests, with the
 | gif_palette | GIF › Colour › Palette snaps to the palette (dither on), is saved with the set; Smoothing sits in GIF › Play |
 | text_drag | Text window: the text dragged onto a pad lands on that pad; the window steps aside while dragging |
 | launchpad | Simulated Launchpad Pro MK3: Programmer-mode SysEx, the layout, LED colours, back to Live mode. |
+| colour_picker | VJif's own colour picker: a swatch opens it, its sliders and hex field set the colour, Esc / click away close it. |
+| fx_layer_keys | Hold an F-key + 1–4 (layers in / out) or 5 (All and back). |
+| rec_sound | A short MP4 take with a test tone: the sound is one unbroken stream, as long as the picture (also under a stall). |
+| scene_drop | GIFs dropped on a scene tile go to that scene's first empty pads. |
+| fx_local | FX Local: each scene keeps its own latched effects; the layer pips on effect tiles. |
+| scene_tools | Ctrl+drag a scene onto the empty one you're on; Prep goes live on the downbeat; Channel number modes and the Options row. |
+| ui_bits | F-keys don't move the effect editor; mode by key; envelope reset; Rec ▾; drop shadow and crop + tile draw. |
+| feature_bits | 0.68–0.73: layer solo, frames with hidden / covered windows, BRB linked to Prep, count-in, transition regroup and options, border deselect, Ctrl hush, folding sections, Swap › Pick, LFO gap, mask modes, shadow crop. |

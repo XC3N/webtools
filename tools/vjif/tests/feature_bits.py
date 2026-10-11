@@ -1,4 +1,4 @@
-# 0.68 / 0.69 (BRB linked to Prep, count-in, transitions regrouped): layer solo (right-click its number), the frame loop keeps going when the windows are hidden / covered, With Sync in Rec ▾
+# 0.68–0.73 features: layer solo, the frame loop with hidden / covered windows, Rec ▾ items, BRB linked to Prep, count-in, transition regroup and options, border deselect, Ctrl hush, folding sections, Swap › Pick, LFO gap, mask modes, shadow crop
 import asyncio
 from playwright.async_api import async_playwright
 from _env import DIST, ARGS
@@ -30,7 +30,7 @@ async def main():
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(200)
     await pg.evaluate("gotoScene(0, clock.beat, true)")
     r = await pg.evaluate("[sceneCount(0), sceneCount(1), sceneCount(2)]"); print('scenes', r)
-    await pg.click('#brbLink'); await pg.evaluate("transCfg = trPresets[1]; startPrep()")
+    await pg.click("#brbLink"); await pg.evaluate("transCfg = trPresets[1]; transCfg.len = 16; startPrep()")
     lk = await pg.evaluate("[brb.link, brb.on, prep.scene]"); print('linked', lk); assert lk == [True, True, 0], lk
     await pg.evaluate("sceneKey(2)"); await pg.wait_for_timeout(100)
     await pg.evaluate("brb.next = clock.beat - 0.01"); await pg.wait_for_timeout(300)
@@ -55,5 +55,14 @@ async def main():
     print('pick', pk); assert pk == ['swap', False], pk
     rd = await pg.evaluate("transCfg = normTrans({ type: 'slide', dir: 'rand', len: 2 }); new Set(Array.from({ length: 60 }, () => makeTrans([], [], 0).cfg.dir)).size")
     print('rand dirs', rd); assert rd == 4, rd
+    # 0.73: LFO gap holds, mask blend modes, transition options, shadow crop draws
+    gp = await pg.evaluate("const A = { per: 4, ph: 0, gap: 4, shape: 'up' }; [lfoPosT(A, 2), lfoPosT(A, 6), lfoPosT(A, 9)].map(v => Math.round(v * 100) / 100)")
+    print('gap', gp); assert gp == [0.5, 1.0, 1.25], gp
+    mk = await pg.evaluate("[BLENDS.some(b => b[0] === 'destination-out'), MASK_BLENDS.has('destination-in')]")
+    print('masks', mk); assert mk == [True, True], mk
+    op = await pg.evaluate("transCfg = normTrans({ type: 'wipe', style: 'line', dir: 'left', len: 2 }); syncTransUI(); const s = document.querySelector('#trDir [data-k=soft]'); s.click(); const a = transCfg.soft; transCfg = normTrans({ type: 'zoom', len: 2 }); syncTransUI(); document.querySelector('#trDir [data-v=thru]').click(); [a, transCfg.zoom, document.querySelectorAll('#trDir button').length]")
+    print('options', op); assert op == [True, 'thru', 3], op
+    sc = await pg.evaluate("(() => { const g = pads[0].gif; if (!g) return 'no gif'; g.shadow = { ...SHADOW_DEF, on: true, cut: 0.6 }; const c = layers.flatMap(L => L.clips).find(c => c.pad === 0); const cv = document.createElement('canvas'); cv.width = 320; cv.height = 180; const x = cv.getContext('2d'); x.scale(320 / W, 180 / H); drawClip(x, effClip(c, g), g, fxImage(g, 0, c)); return 'ok'; })()")
+    print('shadow crop', sc); assert sc == 'ok', sc
     await b.close()
 asyncio.run(main())

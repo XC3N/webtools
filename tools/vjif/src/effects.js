@@ -43,7 +43,6 @@ const FX_DPAT = [[0, 'Noise'], [1, 'Bayer'], [2, 'Check']];   // short: the name
 // Colour › Palette's Dither row holds both: off, then each pattern from 10 to 100% (one slider, as there's room for one).
 // Its value is pattern × 2 + amount (Noise 0.1–1, Bayer 2.1–3, Check 4.1–5), split back into dpat and dith.
 const FX_DITH = [[0, 'off'], ...Array.from({ length: 10 }, (_, j) => [(j + 1) / 10, (j + 1) * 10 + '%'])];   // Colour › Palette's Dither amount (the pattern is its own switch)
-const FX_DITHP = [[0, 'off'], ...FX_DPAT.flatMap(([k, n]) => Array.from({ length: 10 }, (_, j) => [k * 2 + (j + 1) / 10, `${n} ${(j + 1) * 10}%`]))];
 // CRT › VHS alone (no Scanlines / Crypt, which own the Size row): the Size row sets how many dropouts the tape has
 const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   // 0–200 %
 // With several CRT styles stacked, the one in focus (right-click a style, or the last one switched on) decides: VHS → Dropouts, Scanlines / Crypt → Size
@@ -348,7 +347,7 @@ ${FX_GLSL}
           else if (IS(glS, S_glitch_blocks)){ vec2 cell = floor(p * res / max(glSz, 2.0));
             if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
           else if (IS(glS, S_glitch_melt)){ float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
-          else if (IS(glS, S_glitch_scramble)){ vec2 bsz = vec2(max(2.0, glSz * (0.15 + 0.85 * glitch))) / res; scell = floor(p / bsz); p = (scell + 0.5) * bsz; scr = glitch; }
+          else if (IS(glS, S_glitch_scramble)){ vec2 bsz = vec2(max(2.0, glSz * (0.15 + 0.85 * glitch))) / res; scell = floor((p - 0.5) / bsz); p = (scell + 0.5) * bsz + 0.5; scr = glitch; }   // the block grid grows from the centre (anchored at a corner, the blocks seemed to slide into it)
         }
         vec4 c4 = samp(geo(p), split);
         if (scr > 0.0){ float q = h2(scell + gseed);   // scramble: some blocks get their channels rotated, swapped or inverted
@@ -464,12 +463,13 @@ ${FX_GLSL}
     // Luma transition: a second small program in the same context
     const lp = gl.createProgram();
     gl.attachShader(lp, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
-    gl.attachShader(lp, sh(gl.FRAGMENT_SHADER, `precision mediump float; uniform sampler2D a, b, c; uniform float e; varying vec2 uv;
-      void main(){ vec4 A = texture2D(a, uv), B = texture2D(b, uv); float l0 = dot(A.rgb, vec3(0.299, 0.587, 0.114)), t = e * 1.25;
+    gl.attachShader(lp, sh(gl.FRAGMENT_SHADER, `precision mediump float; uniform sampler2D a, b, c; uniform float e, inv, sw; varying vec2 uv;
+      void main(){ vec4 A = texture2D(a, uv), B = texture2D(b, uv); float l0 = dot(A.rgb, vec3(0.299, 0.587, 0.114)), t = e * (1.0 + sw);
         float l = texture2D(c, vec2((l0 * 255.0 + 0.5) / 256.0, 0.5)).a;   // brightness → its rank in this scene (0 = darkest, 1 = brightest)
-        gl_FragColor = vec4(mix(A.rgb, B.rgb, smoothstep(1.0 - t, 1.25 - t, l)), 1.0); }`));
+        l = mix(l, 1.0 - l, inv);                     // Options › Dark: the darkest parts change first
+        gl_FragColor = vec4(mix(A.rgb, B.rgb, smoothstep(1.0 - t, 1.0 + sw - t, l)), 1.0); }`));
     gl.linkProgram(lp); if (!gl.getProgramParameter(lp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(lp));
-    const lu = { a: gl.getUniformLocation(lp, 'a'), b: gl.getUniformLocation(lp, 'b'), c: gl.getUniformLocation(lp, 'c'), e: gl.getUniformLocation(lp, 'e') }, lpLoc = gl.getAttribLocation(lp, 'p'), texB = mkTex(), texC = mkTex();
+    const lu = { a: gl.getUniformLocation(lp, 'a'), b: gl.getUniformLocation(lp, 'b'), c: gl.getUniformLocation(lp, 'c'), e: gl.getUniformLocation(lp, 'e'), inv: gl.getUniformLocation(lp, 'inv'), sw: gl.getUniformLocation(lp, 'sw') }, lpLoc = gl.getAttribLocation(lp, 'p'), texB = mkTex(), texC = mkTex();
     // Luma pacing: the edge sweeps through the old scene's brightness *ranks*, not raw brightness, so a dark or a bright
     // scene takes the same time (equal areas change per moment). The ranks come from a 64×36 copy, every 4th frame.
     const rk = document.createElement('canvas'); rk.width = 64; rk.height = 36; const rx = rk.getContext('2d', { willReadFrequently: true });
@@ -505,7 +505,8 @@ ${FX_GLSL}
       void main(){
         vec2 P = floor(uv * res) + 0.5; vec3 c;
         if (mode < 1.5){                                  // dissolve: each block switches to the new scene at its own random moment
-          vec2 cell = floor(P / bs); c = rnd(cell.x * 1.37 + cell.y * 91.7 + seed) < e ? tex(b, P) : tex(a, P);
+          vec2 cell = stp < 0.5 ? floor(P / bs) : stp < 1.5 ? vec2(0.0, floor(P.y / bs)) : floor(vec2(P.x + P.y, P.x - P.y) / (bs * 1.4142));   // Options: squares, lines, diamonds
+          c = rnd(cell.x * 1.37 + cell.y * 91.7 + seed) < e ? tex(b, P) : tex(a, P);
         } else if (mode < 2.5){                           // scramble: big blocks (a = the scenes already shrunk, one pixel per block), colours rotated / swapped / inverted
           vec2 cell = floor(P / bs); c = tex(a, cell + 0.5);
           if (bs >= 3.0){ float n = cell.y * ceil(res.x / bs) + cell.x, q = rnd(n * 0.37 + stp * 17.1);
@@ -538,13 +539,13 @@ ${FX_GLSL}
     gl.linkProgram(tp); if (!gl.getProgramParameter(tp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(tp));
     const tu = {}; ['a', 'b', 'res', 'mode', 'e', 'bs', 'seed', 'stp', 't', 'fr', 'k', 'nz', 'mixB', 'pr', 'useB', 'bands'].forEach(n => tu[n] = gl.getUniformLocation(tp, n));
     const tpLoc = gl.getAttribLocation(tp, 'p');
-    return { luma(A, B, e){
+    return { luma(A, B, e, T = {}){
       if (lost || gl.isContextLost()){                 // no GPU: a plain crossfade
         mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over';
         mctx.globalAlpha = 1; mctx.drawImage(A, 0, 0); mctx.globalAlpha = Math.min(1, Math.max(0, e)); mctx.drawImage(B, 0, 0); mctx.globalAlpha = 1; return;
       }
       gl.useProgram(lp); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(lpLoc); gl.vertexAttribPointer(lpLoc, 2, gl.FLOAT, false, 0, 0);
-      gl.uniform1i(lu.a, 0); gl.uniform1i(lu.b, 1); gl.uniform1i(lu.c, 2); gl.uniform1f(lu.e, e);
+      gl.uniform1i(lu.a, 0); gl.uniform1i(lu.b, 1); gl.uniform1i(lu.c, 2); gl.uniform1f(lu.e, e); gl.uniform1f(lu.inv, T.inv === 'dark' ? 1 : 0); gl.uniform1f(lu.sw, T.soft ? 0.7 : 0.25);   // Soft: a wider edge
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texC);
       if (rankN++ % 4 === 0 || e < 0.02){ ranks(A); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1); gl.texImage2D(gl.TEXTURE_2D, 0, gl.ALPHA, 256, 1, 0, gl.ALPHA, gl.UNSIGNED_BYTE, rank); }
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, A);
