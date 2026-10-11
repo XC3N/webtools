@@ -37,6 +37,7 @@ html:fullscreen,html:fullscreen *{cursor:none}
   outWin.addEventListener('keyup', e => { onKeyUp(e); commit(); });
   outWin.addEventListener('blur', releaseAll);
   outWin.addEventListener('pagehide', () => setTimeout(restartLoop, 0));
+  d.addEventListener('visibilitychange', () => restartLoop());   // covered by another window / minimized: the loop moves
   redraw.all = true; restartLoop();
   updateOutStat();
 }

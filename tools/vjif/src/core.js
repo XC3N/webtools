@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.67.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.68.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -39,6 +39,7 @@ document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.docum
 const FORMATS = { '16:9': [1920, 1080, 'Landscape 16:9 — screens, projectors, YouTube'], '9:16': [1080, 1920, 'Vertical 9:16 — Reels, TikTok, Shorts, Stories'],
                   '1:1': [1080, 1080, 'Square 1:1'], '4:5': [1080, 1350, 'Portrait 4:5 — Instagram feed'] };
 let format = '16:9';
+let allPipCol = /^#[0-9a-f]{6}$/i.test(Prefs.get('vjif-allpip', '')) ? Prefs.get('vjif-allpip', '') : '#c8c6c0';   // effect tiles: the pips of an effect on all layers
 let recBars = +Prefs.get('vjif-recbars') || 0;   // 0 = until stopped
 let recAudio = Prefs.json('vjif-recaudio');   // { id, label } of the sound input recorded with the video, or null
 // recording settings (Settings › Recording), kept per browser

@@ -1,17 +1,26 @@
 // ---------- main loop ----------
 let lastBeatIdx = -1, fpsN = 0, fpsT = performance.now();
 const dots = [...document.querySelectorAll('#beats i')], beatsEl = $('#beats'), midiStatEl = $('#midiStat'), midiLedEl = $('#midiLed');
-// The loop runs on the output window's requestAnimationFrame while it's open, so the output keeps
-// playing when this control window is minimized or hidden (a hidden window's own rAF stops).
-// A watchdog restarts the loop on this window if the output closes mid-frame.
-let loopGen = 0, lastFrame = 0, driver = 'control', drawn = 0, scopeT = 0;
+// The loop runs on the requestAnimationFrame of a window that is showing: the output window while it's open and
+// visible, else this one. A window that's minimized or completely covered (another window on top of it) counts as
+// hidden and its rAF stops, so when both are hidden a worker's timer (not slowed down) drives the frames.
+// A watchdog restarts the loop if the window it ran on closes or hides mid-frame.
+let loopGen = 0, lastFrame = 0, driver = 'control', drawn = 0, scopeT = 0, tickW = null;
+const isHidden = w => { try { return w.document.hidden; } catch (e) { return true; } };
 function schedule(){
-  const g = loopGen, w = (outWin && !outWin.closed) ? outWin : window;
-  driver = w === window ? 'control' : 'output';
-  w.requestAnimationFrame(() => frame(g));
+  const g = loopGen, o = outWin && !outWin.closed ? outWin : null;
+  const w = o && !isHidden(o) ? o : !document.hidden ? window : null;
+  driver = w === window ? 'control' : w ? 'output' : 'timer';
+  if (w){ w.requestAnimationFrame(() => frame(g)); return; }
+  if (!tickW) try {
+    const url = URL.createObjectURL(new Blob(['onmessage = e => setTimeout(() => postMessage(e.data[0]), e.data[1]);'], { type: 'text/javascript' }));
+    tickW = new Worker(url); URL.revokeObjectURL(url); tickW.onmessage = e => frame(e.data);
+  } catch (e) { setTimeout(() => frame(g), 16); return; }
+  tickW.postMessage([g, rec.mr ? Math.max(4, 1000 / recFps - 1) : 16]);
 }
 function restartLoop(){ loopGen++; schedule(); }
 setInterval(() => { if (performance.now() - lastFrame > 400) restartLoop(); }, 250);
+document.addEventListener('visibilitychange', () => restartLoop());   // shown / hidden: move the loop to a window that's showing
 // ---------- load meter: how much of each second VJif's frame work takes, plus missed screen refreshes and stalls ----------
 const meter = { busy: 0, peak: 0, drops: 0, gaps: [], longN: 0, longMs: 0 };
 try { new PerformanceObserver(l => l.getEntries().forEach(en => { meter.longN++; meter.longMs += en.duration; })).observe({ type: 'longtask', buffered: false }); } catch (e) {}
@@ -20,19 +29,6 @@ function frame(gen){
   if (gen !== loopGen) return;                       // a stale loop: drop it
   step();
   schedule();
-}
-// Recording with no output window while this tab is hidden: the browser stops requestAnimationFrame and slows timers
-// to about once a second, so a worker's timer (not slowed) drives the frames instead, at the recording's frame rate.
-let bgTick = null;
-function bgTickSet(on){
-  if (on && !bgTick){
-    try {
-      const url = URL.createObjectURL(new Blob(['let t; onmessage = e => { clearInterval(t); if (e.data) t = setInterval(() => postMessage(0), e.data); };'], { type: 'text/javascript' }));
-      bgTick = new Worker(url); URL.revokeObjectURL(url);
-      bgTick.onmessage = () => { if (document.hidden && !(outWin && !outWin.closed) && rec.mr) step(); };
-      bgTick.postMessage(1000 / recFps);
-    } catch (e) { bgTick = null; }
-  } else if (!on && bgTick){ bgTick.terminate(); bgTick = null; }
 }
 // one frame of work: clock, triggers, drawing, recording, UI
 function step(){

@@ -5,7 +5,7 @@ function buildLayers(){
     const L = layers[li], row = document.createElement('div');
     row.className = 'layer'; row.style.setProperty('--lc', LCOL[li]);
     // a narrow card: on / name / clear — mode / blend — opacity — GIF chips
-    row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: Shift+${li+1} (End: the edit layer)">${li+1}</button>
+    row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: Shift+${li+1} (End: the edit layer). Right-click: solo (again: back as before)">${li+1}</button>
       <span class="lname" title="Click the card, PgUp / PgDn or Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
       ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
@@ -14,6 +14,7 @@ function buildLayers(){
       <div class="seg ltr" title="Turning this layer on / off (its number, Shift+${li+1}, End, MIDI): ✕ straight away, ★ with the armed transition, 1–9 always with that preset"><button data-v="cut" title="On / off: straight away (cut)">✕</button><button data-v="armed" title="On / off: with the armed transition">★</button>${[1,2,3,4,5,6,7,8,9].map(k => `<button data-v="${k - 1}" title="On / off: always with transition preset ${k}">${k}</button>`).join('')}</div>
       <div class="clips"></div>`;
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
+    row.querySelector('.lon').addEventListener('contextmenu', e => { e.preventDefault(); soloLayer(li); });
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
     row.querySelector('.lclr').addEventListener('click', () => { L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });
     row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });

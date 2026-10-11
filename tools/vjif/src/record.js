@@ -207,7 +207,7 @@ function recStart(mime, beat = clock.beat){
     else { const blob = new Blob(chunks, { type: mime.split(';')[0] });
       saveFile(blob, name); toast2(`Recording saved: ${name} (downloads folder)`); }
   };
-  mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI(); bgTickSet(true);
+  mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI();
 }
 // ---- MP4 through WebCodecs: frames from the master canvas at a steady frame rate (Settings), sound from the chosen input ----
 // codec strings to try, best first. Levels cover 1080p (and 1080×1920) at the chosen frame rate
@@ -289,7 +289,7 @@ async function wcSetup(beat){
   } else if (audio) audio.getTracks().forEach(t => t.stop());
   rec.wc = C;
   rec.mr = { stop: () => wcStop(C) };                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
-  rec.t0 = C.t0; redraw.all = true; recUI(); bgTickSet(true);
+  rec.t0 = C.t0; redraw.all = true; recUI();
 }
 // called every frame while recording: one encoded frame per frame slot of real time (a slow frame repeats the picture,
 // so the clip keeps its length and stays in sync with the sound)
@@ -323,7 +323,7 @@ async function wcStop(C){
       saveFile(blob, C.name); toast2(`Recording saved: ${C.name} (downloads folder)`); }
   } catch (e) { toast('Saving the recording failed: ' + e.message); }
 }
-function recStop(){ if (!rec.mr) return; bgTickSet(false); const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
+function recStop(){ if (!rec.mr) return; const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
 function recUI(){
   const b = $('#recBtn'); $('#recLed').classList.toggle('on', !!rec.mr); $('#recLed').classList.toggle('wait', !!rec.wait);
   if (rec.mr){ const t = (performance.now() - rec.t0) / 1000, mb = rec.bytes / 1048576;

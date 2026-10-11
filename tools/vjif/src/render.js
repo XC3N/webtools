@@ -437,7 +437,7 @@ const TR_DRAW = {
       }
       if (e >= inA){                                // the channel number, OSD green, top right (it stays until the transition ends)
         const txt = String(ch), p = Math.max(2, Math.round(H * 0.013)), cw = 6 * p, x0 = Math.round(W - H * 0.06 - txt.length * cw + p), y0 = Math.round(H * 0.06);
-        m.drawImage(osdImage(txt, p), x0 - 2 * p, y0 - 2 * p);   // drawn once per number and size, then reused every frame
+        trOverlay = [osdImage(txt, p), x0 - 2 * p, y0 - 2 * p];   // drawn once per number and size; put on after the screen effects (a TV's own text: no palette, no glitch on it)
       }
       return; }
     if (gst === 'vhs'){                            // a tape switching channels: the picture tears up, dissolves into snow, and the new one comes out of it
@@ -499,7 +499,11 @@ const TR_DRAW = {
 };
 // Transitions combine whole pictures, so they work in real pixels: W / H stand for the canvases' real size while they
 // draw (block / slice sizes shrink with the render size so they look the same)
+// what a transition puts on top of everything, after the screen effects (Channel's number)
+let trOverlay = null;
+function drawTrOverlay(){ if (!trOverlay) return; const [im, x, y] = trOverlay; trOverlay = null; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(im, x, y); }
 function composeTransition(e, T){
+  trOverlay = null;
   const m = mctx; m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
   const A = trA.canvas, B = trB.canvas, [dx, dy] = TR_DIRS[T.dir] || TR_DIRS.left, w0 = W, h0 = H;
   const T2 = RS === 1 ? T : { ...T, px: Math.max(1, Math.round((T.px || 12) * RS)) };

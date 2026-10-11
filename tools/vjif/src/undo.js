@@ -90,6 +90,8 @@ function histWhat(e, cur){
 let undoToast = Prefs.get('vjif-undotoast') !== '0';
 const histToast = (verb, what) => { if (undoToast) toast2(what ? `${verb}: ${what}` : verb); };
 $('#undoToastChk').checked = undoToast;
+$('#allPipC').value = allPipCol;
+$('#allPipC').addEventListener('input', e => { allPipCol = e.target.value; Prefs.set('vjif-allpip', allPipCol); fxFitGen++; paintFxPads(clock.beat); });
 $('#undoToastChk').addEventListener('change', e => { undoToast = e.target.checked; Prefs.set('vjif-undotoast', undoToast ? '1' : '0'); });
 function dropAll(list){ list.forEach(dropEntry); }
 function trimHist(){ while (hist.undo.length > 100) dropEntry(hist.undo.shift()); }

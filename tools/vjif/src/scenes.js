@@ -349,6 +349,14 @@ function storeFxPre(k){
   fxPre[k].fx = fx; selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`);
 }
 const fxPadLv = [];
+// style buttons: the full name (Scanlines, Phosphor) where it fits, else the short one (Scan, Phos); measured only when the buttons or the width changed
+function fitStyleBtns(){
+  const box = $('#fxStyle'), sig = box.innerHTML.length + '|' + box.clientWidth + '|' + box.firstChild?.dataset.v; if (box._fit === sig) return;
+  const bs = [...box.querySelectorAll('button')].filter(b => STYLE_BTN[b.dataset.v]);
+  bs.forEach(b => { const st = FX_DEFS.flatMap(d => d.styles).find(x => x[0] === b.dataset.v); if (st) b.textContent = st[1]; });
+  if ([...box.querySelectorAll('button')].some(b => b.scrollWidth > b.clientWidth + 0.5)) bs.forEach(b => b.textContent = STYLE_BTN[b.dataset.v]);   // all full or all short
+  box._fit = box.innerHTML.length + '|' + box.clientWidth + '|' + box.firstChild?.dataset.v;
+}
 function paintFxPads(b){
   fxTiles.forEach(el => { const i = +el.dataset.i;
     const v = Math.round(fxLevel(i, b) * 100); if (fxPadLv[i] === v) return; fxPadLv[i] = v;
@@ -365,11 +373,11 @@ function syncFxUI(){
     const i = +el.dataset.i, c = fxConf(i);
     if (el.classList.contains('sel') !== (i === selFx)) el.classList.toggle('sel', i === selFx);
     // names are measured (forces a layout) only when what the tile shows changed: pressing an effect key just moves the highlight
-    const sig = i < NFX ? `${c.mode}|${c.target}|${c.style}|${fxFitGen}` : `${c.mode}|${JSON.stringify(fxPre[i - NFX].fx)}|${fxFitGen}`;
+    const sig = i < NFX ? `${c.mode}|${c.target}|${c.style}|${fxFitGen}|${allPipCol}` : `${c.mode}|${JSON.stringify(fxPre[i - NFX].fx)}|${fxFitGen}`;
     if (el._sig === sig) return; el._sig = sig;
     el.querySelector('.md').textContent = c.mode;
     if (i < NFX){ const L = tgtList(c.target), mk = el.querySelector('.mk');   // the layers it works on: "all", or four pips lit in the layers' colours
-      mk.innerHTML = L[0] === 'out' ? 'all' : [0, 1, 2, 3].map(k => `<i${L.includes(k) ? ` class="on" style="--c:${LCOL[k]}"` : ''}></i>`).join('');
+      mk.innerHTML = [0, 1, 2, 3].map(k => L[0] === 'out' ? `<i class="on" style="--c:${allPipCol}"></i>` : `<i${L.includes(k) ? ` class="on" style="--c:${LCOL[k]}"` : ''}></i>`).join('');   // all: the four pips in one colour (Settings › Interface)
       mk.classList.toggle('all', L[0] === 'out'); }
     if (i < NFX){ const D = FX_DEFS[i], st = D.styles[styleIdx(i, c.style)];
       fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); const many = styleParts(i, c.style).length > 1; fitText(el.querySelector('.s'), D.styles.length > 1 ? (many ? styleLabel(i, c.style) : st[1]) : '', many ? styleLabel(i, c.style, true) : STYLE_SHORT[st[0]], D.styles.length > 1 && st[1].length > 4 ? (many ? styleParts(i, c.style).length + ' styles' : st[1].slice(0, 3) + '.') : null);
@@ -390,7 +398,7 @@ function syncFxUI(){
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${STYLE_BTN[s[0]] || s[1]}</button>`).join(''));
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
     styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     tgtSet(E.target);
   }
@@ -400,7 +408,7 @@ function syncFxUI(){
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>');
   }
   else {
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${STYLE_BTN[s[0]] || s[1]}</button>`).join(''));
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
     styleSet(FX_DEFS.indexOf(d), C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
       // styles always in two even rows (CRT 4 + 3, Strobe 1 + 1): the editor keeps the same height for every effect
     tgtSet(C.target);
@@ -617,5 +625,13 @@ function toggleLayer(li){
   layers[li].on = !layers[li].on; syncLayerUI(); redraw.all = true;
 }
 
+// right-click a layer's number: only that layer on; right-click it again while it's still soloed: the others as they were
+let soloPrev = null;
+function soloLayer(li){
+  const isSolo = layers.every((L, k) => L.on === (k === li));
+  if (isSolo && soloPrev && soloPrev.li === li){ layers.forEach((L, k) => L.on = soloPrev.on[k]); soloPrev = null; }
+  else { soloPrev = { li, on: layers.map(L => L.on) }; layers.forEach((L, k) => L.on = k === li); }
+  syncLayerUI(); redraw.all = true;
+}
 function setTarget(li){ target = li; syncLayerUI(); syncXfUI(); }
 document.addEventListener('visibilitychange', () => { redraw.all = true; });

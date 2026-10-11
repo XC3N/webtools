@@ -4,6 +4,23 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.68.0 — 2026-10-10
+
+### Fixes
+- Playback stopped when the output window was covered by the control window (or the other way round): a window that's completely covered counts as hidden, and the browser stops drawing it. The frames now run on whichever window is showing, and on a background timer when neither is.
+- Feedback: a scene change no longer brings back a full-colour trail of a scene shown in an earlier transition (each trail starts clean when it hasn't been used for a moment).
+
+### Effects
+- An effect on all layers shows its four pips in one colour (Settings › Interface › All-layers pips) instead of "all".
+- CRT styles read Scanlines and Phosphor in full where they fit (wide windows), Scan and Phos otherwise.
+
+### Transitions
+- Channel: the channel number goes on after the screen effects, so a latched Palette (or Glitch) no longer changes its colour.
+
+### Interface
+- Right-click a layer's number: solo that layer; right-click it again: the others come back as they were.
+- Music "With Sync" moved to Rec ▾ (Music starts with Sync).
+
 ## 0.67.0 — 2026-10-10
 
 ### Interface

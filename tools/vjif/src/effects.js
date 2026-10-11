@@ -582,6 +582,7 @@ ${FX_GLSL}
         gl.uniform1f(u.fbInit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       } else {                                       // into this slot's render target (kept as the next frame's "previous"), then onto the canvas
         const S = slotOf(slot), rt = S.rt, cur = S.cur;
+        const tNow = performance.now(); if (S.t && tNow - S.t > 250){ S.stale = true; S.fbWas = false; } S.t = tNow;   // a slot that sat unused (the scene being left in an earlier transition, Prep's) starts clean: no trail of what it showed back then
         gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src);   // (making a slot's targets binds them)
         if (S.stale){ gl.bindFramebuffer(gl.FRAMEBUFFER, rt[1 - cur].f); gl.clear(gl.COLOR_BUFFER_BIT); S.stale = false; }   // frames drawn straight left no trail
         gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, rt[1 - cur].t);
@@ -660,6 +661,7 @@ function drawFrame(now){
     } else render(list, mctx, SLOT.LAYERS, LUs, zE);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
     if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);
+    drawTrOverlay();
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
     if (!hidden && !quiet) sctx.drawImage(master, 0, 0, pvScene.width, pvScene.height);
