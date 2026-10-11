@@ -10,7 +10,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {g2} **MIDI mappings survive a reload** — reload VJif: mappings work again without re-learning.
 - [x] {g3} **Controller unplugged at load** — Settings shows your input as "(not connected)".
 - [ ] {g4} **MIDI clock from the DAW** (0.32: MIDI button in the top bar, input in Settings › MIDI) — a bar-length recording starts when the DAW starts and stops when it stops.
-- [ ] {lp1} **Launchpad lights** (0.43) — Settings › MIDI control › Lights on a Launchpad, then Launchpad layout: pads light in their GIF's colour, the live scene is white, effects light when on, Tap blinks on the beat. Untick: the Launchpad goes back to its own mode.
+- [x] {lp1} **Launchpad lights** (0.43) — Settings › MIDI control › Lights on a Launchpad, then Launchpad layout: pads light in their GIF's colour, the live scene is white, effects light when on, Tap blinks on the beat. Untick: the Launchpad goes back to its own mode.
 - [x] {lpmap} **Launchpad map** (0.47) — Settings › MIDI control › Map (or ? › Launchpad map): the picture matches where things are on your Launchpad and the colours match its lights.
 - [x] {trgpu} **GPU transitions on your machine** (0.53) — Glitch › VHS, Glitch › Scramble, Dissolve (Pixel 2) at full render size, output full screen: smooth, LOAD lower than before, they look as they did.
 - [x] {g5} **Performance on your GPU** — Feedback, Glitch and Luma especially, full screen in the output window. 0.40: LOAD should be lower, and pad hits / scene changes shouldn't hitch.
@@ -33,7 +33,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {fxorder} **Palette, then VHS** (0.54) — F2 › Palette + F10 › VHS: the tape noise and colour bleed show over the palette.
 - [x] {shiftlock} **Shift slides along a guide** (0.56) — Stick on, drag a GIF onto a third line, hold Shift: it only moves along that line (also on a diagonal).
 - [ ] {txdrag} **Text onto a pad** (0.56) — Text…, type, drag the chip onto any pad: the window steps aside, the text lands there.
-- [ ] {vhsref} **VHS like the footage** (0.57) — CRT › VHS at Wear above ~50%: the wide band rolling down turns dark and streaky, with a green cast under it and a magenta line on top. Same trail in the Glitch › VHS transition.
+- [x] {vhsref} **VHS like the footage** (0.57) — CRT › VHS at Wear above ~50%: the wide band rolling down turns dark and streaky, with a green cast under it and a magenta line on top. Same trail in the Glitch › VHS transition.
 - [x] {crtfocus} **Stacked CRT settings** (0.57) — CRT with VHS + Scan on: right-click VHS → the Size row reads Dropouts, right-click Scan → Size; neither switches off. One row of styles.
 - [ ] {picker} **File picker speed** (0.57) — + Add / an empty pad: does the system picker open faster than before?
 - [ ] {cpk} **Colour picker** (0.58) — Background colour, a colour swap, Text colours: VJif's picker opens under the swatch; sliders drag / scroll / arrows / double-click the number; hex field + Enter; Esc closes.
@@ -41,7 +41,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {syncfx} **Sync keeps effects** (0.58) — latch an effect, press Sync: it stays on. Queue a pad for the next bar, press Sync: it starts at once.
 - [x] {sclayers} **Empty scene layers on** (0.58) — empty a scene, or go to a new one: the four layer switches are on.
 - [x] {lamps} **Flat toggles** (0.58.1) — every on / off toggle is a flat lamp: easy enough to hit? (Clicking its label works too.)
-- [ ] {chan} **Channel transition** (0.59) — Transitions › Glitch › Channel, 1/2 to 1 bar: snow, the new scene rolls in, a green number top right (a new one each time).
+- [x] {chan} **Channel transition** (0.59) — Transitions › Glitch › Channel, 1/2 to 1 bar: snow, the new scene rolls in, a green number top right (a new one each time).
 - [x] {fxkeys} **Effect layers by key** (0.60) — hold F1, press 1 and 3: Mono works on layers 1 + 3; 5: All; 5 again: 1 + 3 back. Let go of F1: 1–9 arm transitions again.
 - [x] {allback} **All remembers** (0.60) — effect on layers 2 + 4, click All, click All again: 2 + 4 again.
 - [ ] {recsnd} **Rec sound, long track** (0.61) — MP4, Sound: Music player, a long MP3, a timed take (e.g. 8 bars) while the interface is busy: is the sound clean?
@@ -53,8 +53,8 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {fxlocal} **FX Local** (0.63) — FX: Local; scene 1: latch Mono; scene 2: latch Colour, unlatch Mono; back to 1: Mono on, Colour off. Global, change scenes: effects stay. Local again: the scene's own come back. With a transition: do they ease in / out nicely?
 - [x] {fxmask} **Layer pips** (0.63) — effect tiles: "all" or four pips in the layers' colours, on their own line.
 - [x] {dpat2} **Dither switch** (0.63) — Colour › Palette: Dither slider + Noise / Bayer / Check pictures beside it.
-- [ ] {vhsbeat} **VHS rolls on the beat** (0.64) — CRT › VHS at high Wear, and the VHS transition: the bands start rolling on beats, at random.
-- [ ] {chopts} **Channel options** (0.64) — Transitions › Glitch › Channel › Options: Random / Scene (name a scene first) / Scene #.
+- [x] {vhsbeat} **VHS rolls on the beat** (0.64) — CRT › VHS at high Wear, and the VHS transition: the bands start rolling on beats, at random.
+- [x] {chopts} **Channel options** (0.64) — Transitions › Glitch › Channel › Options: Random / Scene (name a scene first) / Scene #.
 - [ ] {cpkmap} **Picker colour field** (0.64) — any swatch: click / drag in the field and the hue strip.
 - [ ] {padsc} **Pad onto another scene** (0.64) — drag a pad, hold it over another scene's tile: the scene opens; drop on an empty pad: a copy.
 - [x] {sccur} **Copy into this scene** (0.64) — on an empty scene, Ctrl+drag another scene onto its tile: it fills in place; Ctrl+Z undoes it.
@@ -70,19 +70,19 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {croptile} **Crop + tile** (0.66) — crop a GIF, then Tile: the cropped part repeats.
 - [x] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
 - [x] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
-- [ ] {ctrlhush} **No delete after copying** (0.70) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines, and Ctrl+click doesn't clear anything until you let go of Ctrl and press it again.
+- [x] {ctrlhush} **No delete after copying** (0.70) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines, and Ctrl+click doesn't clear anything until you let go of Ctrl and press it again.
 - [x] {hbar} **Section buttons on their own row** (0.67) — Pads and Scenes: the buttons are on a row under the name; Clear pad is at the bottom right, dimmed on an empty pad.
 - [x] {ez8ev63uoip1luh6y982} **Covered windows keep playing** (0.68) — output window over the control window, click the control window (so it covers the output): playback goes on, in both.
 - [ ] {r14m2kk53etwcxadqka1} **Layer solo** (0.68) — right-click a layer's number: only that layer on; right-click it again: the others as they were.
 - [x] {allpip} **All-layers pips** (0.68) — an effect on All: four pips in one colour; Settings › Interface › All-layers pips changes it.
-- [ ] {osdfx} **Transitions keep their own colours** (0.70) — latch Colour › Palette, change scene with TV › Channel: the snow and the number keep their colours; the two scenes have the palette.
+- [x] {osdfx} **Transitions keep their own colours** (0.70) — latch Colour › Palette, change scene with TV › Channel: the snow and the number keep their colours; the two scenes have the palette.
 - [ ] {qx05hugalvzxnl9opxvt} **With Sync in Rec ▾** (0.68) — Rec ▾ › Music starts with Sync does what With Sync did.
-- [ ] {sgjh9joapu33uxnftn46} **Transitions regrouped** (0.69) — Type is a 3 × 3 grid; Melt is under Dissolve, VHS and Channel under TV; the Style row never takes two lines. Old presets still play the same.
+- [x] {sgjh9joapu33uxnftn46} **Transitions regrouped** (0.69) — Type is a 3 × 3 grid; Melt is under Dissolve, VHS and Channel under TV; the Style row never takes two lines. Old presets still play the same.
 - [ ] {6c1mq3jcoix9tqtc6gc1} **BRB linked to Prep** (0.69) — fill 3+ scenes, turn on the chain, Enter: the output changes scenes every N bars (never to the one you edit; switch scenes to edit freely). Enter again: your scene goes live, BRB stops.
 - [ ] {4ofgrromx5bbl2ig0jiv} **Count-in** (0.69) — Rec ▾ › Count-in 2, Rec: the button counts In 2, In 1, then records.
-- [ ] {1iff1fyq0m9ucq0tcjit} **Border click deselects** (0.70) — click in the grey border around the canvas, on nothing: no GIF selected, and it stays so (a big GIF sticking out doesn't get picked).
-- [ ] {0lme81rrpjbxw13t1i1o} **Music Play stays lit** (0.70) — Play: lit; Pause: still lit (play icon); Stop: off.
-- [ ] {vhspal} **VHS / Phosphor over a palette** (0.70) — latch Colour › Palette, add CRT › VHS + Scanlines (or Phosphor): only palette colours, no original colours showing through.
+- [x] {1iff1fyq0m9ucq0tcjit} **Border click deselects** (0.70) — click in the grey border around the canvas, on nothing: no GIF selected, and it stays so (a big GIF sticking out doesn't get picked).
+- [x] {0lme81rrpjbxw13t1i1o} **Music Play stays lit** (0.70) — Play: lit; Pause: still lit (play icon); Stop: off.
+- [x] {vhspal} **VHS / Phosphor over a palette** (0.70) — latch Colour › Palette, add CRT › VHS + Scanlines (or Phosphor): only palette colours, no original colours showing through.
 - [ ] {18g1ehdwbwsh9iit2nzy} **Rotation sticks** (0.71) — Stick on, turn a GIF by its round handle: it catches at 0 / 45 / 90° …; Alt turns freely.
 - [ ] {envdef} **Envelope defaults** (0.71) — an effect in Hit: ↺ gives Gate 1/8, Release 1/8; in Hold / Latch: Release 1/32.
 - [ ] {ccmisycd54ppu6dwywvg} **Folding sections** (0.72) — click Shadow (GIF › Colour) or the Transform heading: it folds; click again: back. Still folded after a reload.
