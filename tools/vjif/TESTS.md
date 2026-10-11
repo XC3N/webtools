@@ -90,13 +90,16 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {spwmb1r0v2aujdqh5oo3} **Random direction** (0.72) — a Slide preset, Options › Rnd: each scene change slides a different way.
 - [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.72) — the right column scrolled so Swap is at the bottom, click a swatch: the panel scrolls to show its row.
 - [ ] {4etro6ow3de4f12yceir} **Mask layers** (0.73) — layer 4 blend Mask: cut out: its GIFs punch black holes through layers 1–3; Mask: keep inside: only what's under them stays.
-- [ ] {a5gwta1vqomj7j9e8ov4} **Shadow crop** (0.73) — a GIF with a shadow, Shadow › Crop 60 %: only the shadow under its lower part stays.
+- [ ] {a5gwta1vqomj7j9e8ov4} **Shadow crop** (0.73, Soft 0.76) — a GIF with a shadow, Shadow › Crop 60 %: only the shadow under its lower part stays; Soft 20–40 %: it fades in at its top, no straight line.
 - [ ] {yt2qowv5cyezsz6war3v} **LFO gap** (0.73) — Auto › X, Cycle 1 bar, Gap 1 bar: it moves for a bar, waits a bar, moves again.
 - [ ] {ilmva106bf3hjfzv20pn} **Transition options** (0.73) — try each Options row: Wipe Soft, Iris GIF, Luma Dark / Soft, Zoom Out / Through, Dissolve Lines / Diamonds, Glitch Split / Wide, VHS Chewed, Stutter 1/32 + Swing.
 - [ ] {ji9c5cqlzozra079aeix} **Scramble from the centre** (0.73) — Glitch › Scramble with a growing Amount: blocks grow from the middle, not towards a corner.
 - [x] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
 - [ ] {ocv7fifdfkezjtcdvqtn} **Dragging an effect leaves it alone** (0.74.1) — drag an effect tile (to a preset, or off and back): an effect that was off stays off, a latched one stays on.
 - [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75) — GIF › Auto › Envelope: Depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Only on Zoom: a punch per hit (Attack 0, Decay 1/4).
+- [ ] {3nncmqhey98f03a7vd3w} **Sound level meter** (0.76) — Settings › Recording › Sound on your input (after one take, so it's allowed): the meter moves with the signal; also in Rec ▾. Music player and a picked tab too.
+- [ ] {aj1f2qesqolp85ln1w0i} **Sound in Rec ▾** (0.76) — Rec ▾ › Sound: pick a source; Settings › Recording › Sound shows the same.
+- [ ] {yakjn2tbslfxw9844lmq} **Claude's VJif theme** (0.76) — Settings › Theme › Claude's VJif: readable everywhere (signal text, LCDs, graphs).
 - [ ] {hr757smrqn2mmmwqnow0} **Launchpad preset row** (0.73) — Settings › Launchpad layout: bottom row = presets 7 8 9 4 5 6 1 2, right button 3.
 - [ ] {uqfogckolx2naf4ogqdd} **Shorter right column** (0.74) — no info strips under Transform and GIF (hover the headings' tags instead), Performance on one line.
 - [ ] {idfxcorner} **Effects toolbar + Trig Follow** (0.74) — top-left of the effect editor: ⏻ and Trig Follow. Follow on: an F-key opens that effect in the editor; off: it doesn't.

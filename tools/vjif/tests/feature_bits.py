@@ -94,5 +94,13 @@ async def main():
     await pg.evaluate("document.querySelector('#aEnv [data-v=depth]').click()")
     await (await pg.query_selector('#gPanes')).screenshot(path='/tmp/claude-0/-home-claude-webtools/1b2b3a57-6428-5293-a0ca-34110d8408a2/scratchpad/autoenv.png')
     await pg.evaluate("$('#aReset').click()")
+    # 0.76: Claude's VJif theme (Claude's Mopho stays Bad MOPHO's), Sound in Rec ▾ drives Settings › Sound, level meters, soft shadow crop
+    th = await pg.evaluate("[...document.querySelectorAll('#themeBox .thm-preset option')].map(o => o.value)")
+    print('themes', th); assert "Claude's VJif" in th and "Claude's Mopho" not in th, th
+    sn = await pg.evaluate("""(() => { $('#recCfg').click(); const p = $('#recPopSnd'), s = $('#recAudioSel'); const o = [...p.options].map(o => o.value); const v = o.find(x => x === 'music') || o[o.length - 1];
+      p.value = v; p.dispatchEvent(new Event('change')); const r = [o.length === s.options.length, s.value === v, document.querySelectorAll('.vu').length]; $('#recCfg').click(); s.value = ''; s.dispatchEvent(new Event('change')); return r; })()""")
+    print('rec sound', sn); assert sn == [True, True, 2], sn
+    so = await pg.evaluate("SHADOW_DEF.soft")
+    print('soft default', so); assert so == 0.2, so
     await b.close()
 asyncio.run(main())

@@ -25,7 +25,10 @@ const Theme = (() => {
     "Claude's Mopho": { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 },
     'XC3N':           { hCtrl: 171, hLcd: 317, hEnv: 300, hMeter: 319, bh: 238, bs: 20, bv: 15 },
     'Blue Berries':   { hCtrl: 199, hLcd: 266, hEnv: 225, hMeter: 242, bh: 238, bs: 27, bv: 18 },
+    "Claude's VJif":  { hCtrl: 14, sCtrl: 58, vCtrl: 93, hLcd: 185, sLcd: 50, vLcd: 92, hEnv: 322, hMeter: 265, bh: 20, bs: 9, bv: 10 },
   };
+  // presets that belong to one tool (by its app name): only that tool lists them
+  const OWN = { "Claude's Mopho": 'mopho-programmer', "Claude's VJif": 'vjif' };
   // the default theme is Matte (double-clicking a slider in the editor goes back to its Matte value)
   const DEFAULT = { ...PRESETS['Matte'] };
   const CORE = ['hCtrl', 'hEnv', 'hMeter', 'bh', 'bs', 'bv'];   // hLcd is optional in older files
@@ -95,7 +98,7 @@ const Theme = (() => {
     const say = m => opts.toast && opts.toast(m), changed = () => opts.onChange && opts.onChange(get());
     const HUE = 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)';
     host.classList.add('thm');
-    host.innerHTML = `<div class="thm-prow"><select class="thm-preset" title="Theme preset">${[...Object.keys(PRESETS), 'Custom'].map(n => `<option>${n}</option>`).join('')}</select>
+    host.innerHTML = `<div class="thm-prow"><select class="thm-preset" title="Theme preset">${[...Object.keys(PRESETS).filter(n => !OWN[n] || OWN[n] === opts.app), 'Custom'].map(n => `<option>${n}</option>`).join('')}</select>
       <button type="button" class="thm-exp" title="Export this theme to a .json file">Export</button><button type="button" class="thm-imp" title="Import a theme .json (from any XC3N tool)">Import</button>
       <input type="file" accept=".json,application/json" hidden></div>
       <div class="thm-roles"></div>
@@ -135,7 +138,7 @@ const Theme = (() => {
         inp.style.background = grad;
         if (sw) sw.style.background = roleColor(k);
       }
-      host.querySelector('.thm-preset').value = match();
+      { const sel = host.querySelector('.thm-preset'), m = match(); sel.value = [...sel.options].some(o => o.value === m) ? m : 'Custom'; }   // another tool's own preset shows as Custom here
     }
     host.querySelector('.thm-preset').addEventListener('change', e => { const p = PRESETS[e.target.value]; if (p){ apply(p); sync(); changed(); } else sync(); });
     host.querySelector('.thm-exp').addEventListener('click', () => {

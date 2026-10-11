@@ -482,6 +482,36 @@ async function restore(){
 }
 setInterval(autosave, 1000);
 
+// ---- level meter for the chosen sound (Settings › Recording › Sound and Rec ▾), only while one of them is open ----
+// A sound input is only opened for it once the browser already allows the microphone (no permission prompt from a meter).
+const vu = { key: '', ctx: null, ownCtx: false, an: null, src: null, stream: null, buf: null, lv: 0, busy: false };   // stream: an input opened for the meter (ours to stop)
+function vuStop(){
+  try { if (vu.src && vu.an) vu.src.disconnect(vu.an); } catch (e) {}
+  if (vu.stream) vu.stream.getTracks().forEach(t => t.stop());
+  if (vu.ownCtx && vu.ctx) vu.ctx.close().catch(() => {});
+  Object.assign(vu, { ctx: null, ownCtx: false, an: null, src: null, stream: null, lv: 0 });
+}
+async function vuStart(id){
+  if (id === 'music'){ musGraph(); vu.ctx = mus.ctx; vu.src = mus.src; }   // tapped where the player plays
+  else {
+    let st = null;
+    if (id === 'tab') st = recTabLive() ? rec.tab : null;                 // the tab picked in Settings (not ours to stop)
+    else { let ok = true; try { ok = (await navigator.permissions.query({ name: 'microphone' })).state === 'granted'; } catch (e) {}
+      if (ok) try { st = vu.stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: id }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); } catch (e) {} }
+    if (!st) return;
+    vu.ctx = new AudioContext(); vu.ownCtx = true; vu.ctx.resume().catch(() => {}); vu.src = vu.ctx.createMediaStreamSource(st);
+  }
+  vu.an = vu.ctx.createAnalyser(); vu.an.fftSize = 1024; vu.buf = new Float32Array(vu.an.fftSize); vu.src.connect(vu.an);
+}
+setInterval(async () => {
+  const open = !$('#setPanel').hidden || !$('#recPop').hidden, id = open && recAudio ? recAudio.id + (recAudio.id === 'tab' && recTabLive() ? ':live' : '') : '';
+  if (id !== vu.key && !vu.busy){ vu.busy = true; vuStop(); if (id) await vuStart(id.replace(/:live$/, '')).catch(() => {}); vu.key = id; vu.busy = false; }
+  let peak = 0; if (vu.an){ vu.an.getFloatTimeDomainData(vu.buf); for (let i = 0; i < vu.buf.length; i++){ const a = Math.abs(vu.buf[i]); if (a > peak) peak = a; } }
+  const db = peak > 0 ? 20 * Math.log10(peak) : -99, v = Math.max(0, Math.min(1, (db + 60) / 60));   // −60 dB … 0 dB
+  vu.lv = Math.max(v, vu.lv - 0.08);                 // falls back gently
+  document.querySelectorAll('.vu').forEach(m => { m.firstChild.style.transform = `scaleX(${vu.lv})`; m.classList.toggle('hot', db > -6); m.classList.toggle('clip', db > -0.5); m.classList.toggle('dimmed', !vu.an); });
+}, 50);
+
 // ---- Rec ▾: the take's length, frame rate and quality at hand (the same settings as Settings › Recording, kept in step) ----
 {
   const ROWS = [['Bars', '#recBarsSeg'], ['Count-in', '#recCountSeg'], ['Frame rate', '#recFpsSeg'], ['Mb/s', '#recMbpsSeg']];
@@ -489,7 +519,11 @@ setInterval(autosave, 1000);
   const sync = () => document.querySelectorAll('#recPopRows .seg').forEach(g => { const src = $(g.dataset.src).querySelectorAll('button');
     g.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', src[i].classList.contains('on'))); });
   document.querySelectorAll('#recPopRows .seg').forEach(g => onSeg(g, b => { $(g.dataset.src).querySelectorAll('button')[[...g.children].indexOf(b)].click(); sync(); }));
-  $('#recCfg').addEventListener('click', e => { e.stopPropagation(); sync(); $('#recPop').hidden = !$('#recPop').hidden; });
+  // the sound source too (the same list as Settings › Recording › Sound), with its level meter
+  $('#recPopRows').insertAdjacentHTML('beforeend', '<span class="poprow"><span>Sound</span><span class="sndrow"><select id="recPopSnd" title="The sound recorded with the video (Settings › Recording › Sound)"></select><span class="vu" title="Level of the chosen sound, so you can see it\'s coming in"><i></i></span></span></span>');
+  const sndSync = () => { const s = $('#recAudioSel'), p = $('#recPopSnd'); p.innerHTML = s.innerHTML; p.value = s.value; };
+  $('#recPopSnd').addEventListener('change', e => { const s = $('#recAudioSel'); s.value = e.target.value; s.dispatchEvent(new Event('change')); });
+  $('#recCfg').addEventListener('click', e => { e.stopPropagation(); sync(); sndSync(); $('#recPop').hidden = !$('#recPop').hidden; });
   document.addEventListener('pointerdown', e => { if (!$('#recPop').hidden && !e.target.closest('#recWrap')) $('#recPop').hidden = true; });
   $('#recPopMore').addEventListener('click', () => { $('#recPop').hidden = true; if ($('#setPanel').hidden) $('#setBtn').click(); const r = $('#recBarsSeg').closest('.row'); if (r) r.scrollIntoView({ block: 'center' }); });
 }

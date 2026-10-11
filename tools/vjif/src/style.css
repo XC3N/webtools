@@ -415,3 +415,7 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 /* Clear pad: bottom right of the right column, always in the same place */
 #side{display:flex;flex-direction:column}#side>*{flex:none}
 .gfoot{margin-top:auto;position:sticky;bottom:-10px;display:flex;justify-content:flex-end;padding:8px 0 10px;margin-bottom:-10px;background:var(--panel);z-index:2}
+/* sound level meter (Settings › Recording › Sound, Rec ▾) */
+.vu{display:inline-block;flex:none;width:44px;height:8px;align-self:center;background:var(--track);border-radius:2px;overflow:hidden}.vu i{display:block;height:100%;background:var(--ok);transform-origin:left;transform:scaleX(0);transition:transform 50ms linear}
+.vu.hot i{background:var(--amber-dim)}.vu.clip i{background:var(--danger)}.vu.dimmed{opacity:.4}
+.sndrow{display:flex;gap:6px;min-width:0}.sndrow select{flex:1;min-width:0}

@@ -42,7 +42,7 @@
  * @property {'stay'|'fade'} trig  trigger: plays until replaced, or a fade one-shot shaped by `env`
  * @property {{a: number, h: number, r: number, curve: 'lin'|'smooth', gate: boolean, len: 'free'|'gif'}} env
  * @property {Object<string, {on: boolean, min: number, max: number, shape: string, per: number, ph: number, sync: string, gap: number, em: 'off'|'depth'|'only', ea: number, ed: number, es: number, er: number}>} lfo   automation per target (LFO_T); gap: beats of pause after each cycle; em: Envelope mode, ea / ed / er: attack / decay / release in beats, es: sustain 0–1
- * @property {{on: boolean, x: number, y: number, blur: number, op: number, col: string, cut: number}} shadow   drop shadow (x / y / blur in output px; cut: top of the shadow taken away, 0–0.95)
+ * @property {{on: boolean, x: number, y: number, blur: number, op: number, col: string, cut: number, soft: number}} shadow   drop shadow (x / y / blur in output px; cut: top of the shadow taken away, 0–0.95; soft: its fade-in there, share of the height)
  * @property {number} fxVer        bumped when its colour result changes (redraw / thumbnail checks)
  * @property {?Object} fxP         shader parameters (fxParams), made on demand; fxC: the last few coloured frames
  * @property {?Uint8Array[]} masks connected-key masks, one per frame

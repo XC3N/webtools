@@ -84,6 +84,17 @@ function hitHandle(c, px, py){
 
 // ---------- rendering ----------
 const tileCv = document.createElement('canvas'), tileX = tileCv.getContext('2d');   // a cropped GIF's tile
+// a soft-cropped shadow is drawn apart first, then faded in at its top: one scratch canvas per target canvas, of the same kind
+// (a CPU canvas for the CPU thumbnails: drawing a GPU canvas into one would wait for a read-back)
+const shScratch = new WeakMap();
+function shadowScratch(ctx){
+  const t = ctx.canvas, cw = t.width, ch = t.height; let s = shScratch.get(t);
+  if (!s){ const cpu = ctx.getContextAttributes && ctx.getContextAttributes().willReadFrequently;
+    if (cpu) { const [c, x] = cpuCanvas(cw, ch); s = { c, x }; } else { const c = document.createElement('canvas'); c.width = cw; c.height = ch; s = { c, x: c.getContext('2d') }; }
+    shScratch.set(t, s); }
+  if (s.c.width !== cw || s.c.height !== ch){ s.c.width = cw; s.c.height = ch; }
+  return s;
+}
 const hexA = (h, a) => `rgba(${hex2rgb(h).join(',')},${a})`;
 function drawClip(ctx, c, g, img){
   const [bw, bh] = baseSize(g, c.fit), T0 = ctx.getTransform(), base = c.tile ? T0 : null, dk = Math.hypot(T0.a, T0.b) || 1;   // dk: canvas units → device pixels
@@ -91,10 +102,16 @@ function drawClip(ctx, c, g, img){
   ctx.imageSmoothingEnabled = !g.crisp;
   const S = g.shadow, shOn = S && S.on && !c.tile && S.op > 0;   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
   if (shOn && S.cut > 0){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
-    const M = ctx.getTransform(), I = M.inverse(), vx = S.x * dk, vy = S.y * dk, ly = I.b * vx + I.d * vy, OFF = 1e5;
-    ctx.save(); ctx.beginPath(); ctx.rect(-OFF, -bh/2 + S.cut * bh + ly, 2 * OFF, 2 * OFF); ctx.clip();
-    ctx.shadowColor = hexA(S.col, S.op); ctx.shadowBlur = S.blur * dk; ctx.shadowOffsetX = vx - M.a * OFF; ctx.shadowOffsetY = vy - M.b * OFF;
-    ctx.translate(OFF, 0); drawPlain(ctx, c, img, bw, bh); ctx.restore();
+    const M = ctx.getTransform(), I = M.inverse(), vx = S.x * dk, vy = S.y * dk, ly = I.b * vx + I.d * vy, OFF = 1e5, y0 = -bh/2 + S.cut * bh + ly, sb = (S.soft ?? 0) * bh;
+    const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF; x.shadowOffsetY = vy - M.b * OFF; x.translate(OFF, 0); drawPlain(x, c, img, bw, bh); };
+    if (sb > 0){                                     // soft: drawn apart, faded in across the cut line (in the GIF's own up / down), then put down like the shadow would be
+      const { c: shCv, x: shX } = shadowScratch(ctx), cw = shCv.width, ch = shCv.height;
+      shX.save(); shX.setTransform(1, 0, 0, 1, 0, 0); shX.globalCompositeOperation = 'source-over'; shX.globalAlpha = 1; shX.clearRect(0, 0, cw, ch);
+      shX.setTransform(M); shX.imageSmoothingEnabled = !g.crisp; shX.save(); shadowOnly(shX); shX.restore();
+      const gr = shX.createLinearGradient(0, y0 - sb / 2, 0, y0 + sb / 2); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, '#000');
+      shX.globalCompositeOperation = 'destination-in'; shX.fillStyle = gr; shX.fillRect(-OFF, -OFF, 2 * OFF, 2 * OFF); shX.restore();
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(shCv, 0, 0); ctx.restore();
+    } else { ctx.save(); ctx.beginPath(); ctx.rect(-OFF, y0, 2 * OFF, 2 * OFF); ctx.clip(); shadowOnly(ctx); ctx.restore(); }
   } else if (shOn){ ctx.shadowColor = hexA(S.col, S.op); ctx.shadowBlur = S.blur * dk; ctx.shadowOffsetX = S.x * dk; ctx.shadowOffsetY = S.y * dk; }
   if (c.tile){
     // fill exactly the frame, with the clip's whole transform folded into the pattern; a crop tiles the cropped part

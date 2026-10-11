@@ -4,6 +4,19 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.76.0 — 2026-10-11
+
+### Recording
+- A level meter next to the sound source (Settings › Recording › Sound, and Rec ▾), so you can see the signal coming in. It runs only while one of them is open, and only opens a sound input the browser already allows (no permission prompt from the meter).
+- Rec ▾ has the sound source too (sound input, tab, music player, none), in step with Settings.
+
+### GIFs
+- Shadow › Soft: the cropped shadow fades in gradually at its top (a share of the GIF's height) instead of a straight cut. 20 % by default.
+
+### Interface
+- New theme: Claude's VJif (coral signal, cyan readouts, magenta graphs on warm charcoal). It replaces Claude's Mopho in VJif's list; Bad MOPHO keeps its own.
+- About › Credits no longer carries the music link (it's for third-party credits only).
+
 ## 0.75.0 — 2026-10-11
 
 ### GIFs

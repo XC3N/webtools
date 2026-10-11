@@ -23,5 +23,3 @@ The code is written for these tools rather than copied from other projects, apar
 - The Dissolve › Melt transition follows the Doom screen wipe (id Software, 1993).
 - CRT › Pay-TV follows analogue cable sync suppression; Crypt follows Videocrypt's cut-and-rotate and Nagravision Syster's line shuffling.
 - Ordered dithering uses Bayer's matrix (Bryce Bayer, 1973).
-
-If these tools are useful to you, consider supporting the music at [xc3n.bandcamp.com](https://xc3n.bandcamp.com).
