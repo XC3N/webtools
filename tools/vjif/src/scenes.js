@@ -567,7 +567,9 @@ function fxPrevLevel(i, C, b){
 }
 const syncEnvTg = () => { $('#envPrev').classList.toggle('on', envPrevOn); $('#fxEnvRow').classList.toggle('sliders', envSliders); $('#envView').innerHTML = envSliders ? ENV_IC_GRAPH : ENV_IC_SL; $('#envView').title = envSliders ? 'Show the envelope as a graph' : 'Show the envelope as sliders'; };
 $('#envReset').addEventListener('click', () => { const C = fxConf(selFx), D = selFx < NFX ? fxDefaults()[selFx] : fxPreDefaults()[selFx - NFX];
-  ['att', 'dec', 'sus', 'len', 'rel'].forEach(k => { if (D[k] === undefined) delete C[k]; else C[k] = D[k]; }); syncFxUI(); toast2('Envelope back to its default'); });
+  ['att', 'dec', 'sus', 'len', 'rel'].forEach(k => { if (D[k] === undefined) delete C[k]; else C[k] = D[k]; });
+  if (D.mode !== C.mode){ C.len = fxLenDef(C.mode); C.rel = fxRelDef(C.mode); }   // its mode was changed: that mode's defaults
+  syncFxUI(); toast2('Envelope back to its default'); });
 $('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; Prefs.set('vjif-envprev', envPrevOn ? '1' : '0'); syncEnvTg(); });
 $('#envView').addEventListener('click', () => { envSliders = !envSliders; Prefs.set('vjif-envview', envSliders ? 'sl' : 'g'); syncEnvTg(); syncEnvSl(); drawFxEnv(); });
 const ENV_SL = { a: [() => FX_ATTS, 'att'], d: [() => FX_ATTS, 'dec'], l: [() => FX_LENS, 'len'], r: [() => FX_RELS, 'rel'] };
@@ -588,7 +590,7 @@ document.querySelectorAll('#fxEnvSl input').forEach(el => { el.closest('.sl').ti
 $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
   const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
   const near = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
-  if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = 0; else C.rel = fxRelDef(C.mode);
+  if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = fxLenDef(C.mode); else C.rel = fxRelDef(C.mode);
   drawFxEnv(); });
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
 onSeg($('#fxDpat'), b => { const X = fxEd(); if (X){ X.dpat = +b.dataset.v; syncFxUI(); } });

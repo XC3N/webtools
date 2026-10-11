@@ -11,7 +11,7 @@ async def main():
     r = await pg.evaluate("[selFx, fxCfg[1].mode]"); print('focus/mode', r); assert r == [4, 'latch'], r
     await pg.keyboard.down('F2'); await pg.keyboard.press('Home'); await pg.keyboard.up('F2')
     r2 = await pg.evaluate("[fxCfg[1].mode, live.freeze || false]"); print('hit', r2); assert r2[0] == 'hit', r2
-    e = await pg.evaluate("selectFx(1); fxCfg[1].att = 2; fxCfg[1].rel = 3; $('#envReset').click(); const D = fxDefaults()[1]; [fxCfg[1].att === D.att, fxCfg[1].rel === D.rel]")
+    e = await pg.evaluate("selectFx(1); fxCfg[1].att = 2; fxCfg[1].rel = 3; $('#envReset').click(); const D = fxDefaults()[1]; [fxCfg[1].att === D.att, fxCfg[1].rel === (D.mode === fxCfg[1].mode ? D.rel : fxRelDef(fxCfg[1].mode))]")
     print('env', e); assert e == [True, True], e
     await pg.click('#recCfg'); await pg.click('#recPopRows .seg[data-src="#recBarsSeg"] button:nth-child(3)')
     rb = await pg.evaluate("[recBars, $('#recBarsSeg button.on').dataset.b]"); print('rec', rb); assert rb == [8, '8'], rb

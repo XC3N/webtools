@@ -19,9 +19,10 @@ const FX_DEFS = [
 const FX_LENS = [[0, '0'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const FX_REL = 0.125;                                // default release of Hold / Latch effects (beats)
 const FX_RELS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
-const fxRelDef = mode => mode === 'hit' ? 1 : FX_REL;
+const fxRelDef = mode => mode === 'hit' ? 0.5 : FX_REL;   // Hit: Gate 1/8 + Release 1/8 (a quarter note in all); Hold / Latch: a short 1/32 tail
+const fxLenDef = mode => mode === 'hit' ? 0.5 : 0;
 const FX_RATES = [[0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];
-const fxFactory = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, att: 0, dec: 0, sus: 1, len: 0, rel: fxRelDef(d.mode), rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: d.sizeDef || 64 }));
+const fxFactory = () => FX_DEFS.map(d => ({ mode: d.mode, amt: 1, att: 0, dec: 0, sus: 1, len: fxLenDef(d.mode), rel: fxRelDef(d.mode), rate: d.id === 'wobble' ? 2 : d.id === 'colour' ? 1 : 0.25, style: d.styles[0][0], target: 'out', size: d.sizeDef || 64 }));
 const fxDefaults = () => userDef.fx ? JSON.parse(JSON.stringify(userDef.fx)) : fxFactory();   // your own defaults (Settings › Defaults) if saved
 // Colour › Palette: the old machines' colours (hex), nearest-colour match in the shader
 const FX_PALS = [

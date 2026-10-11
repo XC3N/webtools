@@ -198,6 +198,7 @@ pv.addEventListener('pointermove', e => {
   if (drag.type === 'rot'){
     let r = drag.r0 + (Math.atan2(py - drag.cy, px - drag.cx) - drag.a0) * 180 / Math.PI;
     if (e.shiftKey) r = Math.round(r / 15) * 15;
+    else if (pvOpt.stick && !e.altKey){ const k = Math.round(r / 45) * 45; if (Math.abs(r - k) < 4) r = k; }   // Stick: straight (0 / 90 / 180°) and the diagonals pull the angle in within 4°
     c.rot = mod(r + 180, 360) - 180;
     placeVisible(c, drag.cx, drag.cy);                   // spin around the visible center
   } else if (drag.type === 'crop'){

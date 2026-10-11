@@ -4,6 +4,18 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.71.0 — 2026-10-11
+
+### Effects
+- New envelope defaults: Hit plays Gate 1/8 + Release 1/8 (about a quarter note); Hold and Latch keep a short 1/32 release. The ↺ reset (and double-clicking a point) follows the effect's current mode.
+
+### Preview
+- With Stick on, turning a GIF sticks to straight (0 / 90 / 180°) and to the diagonals, within 4°.
+
+### Interface
+- The BRB and Rec chevrons are outlined on hover again, and lit while their menu is open.
+- GIF › Play: "Scaling ☐ Smooth" on one line (was "Smooth scaling" wrapping onto two).
+
 ## 0.70.0 — 2026-10-11
 
 ### Fixes
