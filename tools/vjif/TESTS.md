@@ -45,6 +45,10 @@ encoders, uploads). Updated in the same commit as the feature it covers. Ticks l
 - {allback} **All remembers** (0.60) — effect on layers 2 + 4, click All, click All again: 2 + 4 again.
 - {recsnd} **Rec sound, long track** (0.61) — MP4, Sound: Music player, a long MP3, a timed take (e.g. 8 bars) while the interface is busy: is the sound clean?
 - {mussync} **Music With Sync** (0.61) — track playing: Rec doesn't restart it, and it keeps playing after a timed take. Sync: the track starts from the top. Rec then Sync: the take and the song start together.
+- {ch20} **20 px controls** (0.62) — look around every panel (Settings, Sets, pool, Text, MIDI map): anything clipped or cramped?
+- {scdrop} **Drop on a scene** (0.62) — drag GIF files or a pool GIF onto another scene's tile: they land on its first empty pads, you stay where you are.
+- {decsc} **Decoding mark** (0.62) — load a big GIF, switch scene at once: the pad on the new scene isn't marked as decoding.
+- {aresetall} **Auto Reset all** (0.62) — GIF › Auto › Reset all: every LFO of the GIF off.
 - {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.

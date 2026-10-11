@@ -130,6 +130,7 @@ function gifThumb(g, f = fxImage(g, g.startF)){
 function renderPad(i){
   if (padFold) queueMicrotask(syncPadFold);   // the folded sections' GIF counts
   const p = pads[i], el = p.el, c = el.querySelector('canvas'), g = p.gif;
+  el.classList.toggle('loading', !!p.loading);   // a file decoding for another scene doesn't show here
   // the picture only changes with the GIF, its colour version, start frame, smoothing, key or the theme: otherwise keep it (scene changes redo all 18 pads)
   const sig = g ? `${g.fxVer}|${g.startF}|${g.crisp}|${g.key.on}|${g.name}|${TC.track}|${TC.edge2}|${c.width}x${c.height}` : `-|${TC.track}`;
   if (el._g === g && el._sig === sig && (!g || g.thumb)) return;

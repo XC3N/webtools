@@ -1,4 +1,6 @@
 /* @include common/style.css */
+/* VJif's controls are 20 px tall (the shared tools use 24): buttons, menus, sliders, fields */
+:root{--ch:20px}
 /* VJif on top of the shared style: layout, header, pads, scenes, layers, preview. Sections are grouped by surface tone:
    panels sit 2 px apart on the background, with no borders or shadows. */
 :root{--gap:2px}
@@ -109,7 +111,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:34px;height:130px;box-shadow:0 6px 18px #0009}
 /* a normal (horizontal) slider turned upright: the app's slider styling only works sideways, a vertical writing-mode slider ignored clicks */
 #musVolPop[hidden]{display:none}#musVol{position:absolute;left:50%;top:50%;width:110px;height:22px;margin:0;transform:translate(-50%,-50%) rotate(-90deg);cursor:ns-resize}
-#txLooks .txlook.dimmed{opacity:.4;pointer-events:none}#txPreset{flex:1;min-width:0}#txLooks .field{margin-bottom:5px}#txCol2{width:34px;height:24px;padding:2px;flex:none}
+#txLooks .txlook.dimmed{opacity:.4;pointer-events:none}#txPreset{flex:1;min-width:0}#txLooks .field{margin-bottom:5px}#txCol2{width:34px;height:var(--ch);padding:2px;flex:none}
 .swTo.clear{background:repeating-conic-gradient(#666 0 25%,#333 0 50%) 0 0/8px 8px!important}.swr .iconbtn.on{color:var(--sig);border-color:var(--sig)}
 .padsub{cursor:pointer;user-select:none}.padsub:hover{color:var(--muted)}.padsub::before{content:'▾';width:10px;display:inline-block}.padsub.fold::before{content:'▸'}.padsub.fold+.padgrid{display:none}.padsub .cnt{display:none}.padsub.fold .cnt{display:inline}
 .padsub{margin:8px 0 5px;font:500 11px var(--mono);color:var(--faint)}.padsub .line{flex:1;height:1px;background:var(--edge)}
@@ -153,7 +155,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:30px}
-.fxrow #fxName{flex:1;width:auto!important;max-width:none}#fxStyleRow #fxStyle{flex:1;min-width:0;display:flex;flex-wrap:wrap}#fxStyleRow #fxStyle button{height:24px;flex:1 0 auto;min-width:64px;padding:0 8px}   /* each style as wide as its name (rows share out the rest), wrapping when they don't fit */#fxStyleRow{height:auto;min-height:26px}
+.fxrow #fxName{flex:1;width:auto!important;max-width:none}#fxStyleRow #fxStyle{flex:1;min-width:0;display:flex;flex-wrap:wrap}#fxStyleRow #fxStyle button{height:var(--ch);flex:1 0 auto;min-width:64px;padding:0 8px}   /* each style as wide as its name (rows share out the rest), wrapping when they don't fit */#fxStyleRow{height:auto;min-height:26px}
 .fxrow .lcd{flex:none;width:12ch;text-align:center;font-size:11px}
 .fxrow .seg{flex:1;min-width:0}
 #fxStyle button{flex:1 1 0;min-width:0;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* every style shrinks a little, rather than the last one vanishing */
@@ -183,7 +185,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
 .fxrow button{flex:none}
 #fxPreList{flex:1;min-width:0;display:flex;gap:4px;overflow:hidden;align-items:center}
-.pchip{display:inline-flex;align-items:center;gap:2px;flex:none;height:24px;padding:0 2px 0 7px;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);font:500 11px var(--sans);color:var(--ink);cursor:pointer}
+.pchip{display:inline-flex;align-items:center;gap:2px;flex:none;height:var(--ch);padding:0 2px 0 7px;border-radius:var(--r);background:var(--panel-2);border:1px solid var(--edge);font:500 11px var(--sans);color:var(--ink);cursor:pointer}
 .pchip button{width:18px;height:18px;padding:0;border:0;background:none;color:var(--muted);font:400 13px/1 var(--mono)}
 .pchip button:hover{color:var(--danger)}
 .pempty{font:400 11px var(--sans);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -211,11 +213,11 @@ body.fxdragging,body.fxdragging *{cursor:copy !important}
 #sizeNote{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:20;background:#ffb000;color:#1a1200;font:600 12px var(--sans);padding:6px 6px 6px 12px;border-radius:var(--r);box-shadow:0 4px 16px #0008;display:flex;gap:8px;align-items:center}
 #sizeNote button{color:#1a1200}
 #pvBar{position:absolute;left:0;right:0;z-index:3;display:flex;justify-content:center;pointer-events:none}#pvBar .grp{pointer-events:auto;background:var(--panel);border-radius:var(--r);padding:2px 4px}
-#guideGrp{display:flex;align-items:center;gap:3px}#pvBar .iconbtn{width:28px;height:26px}#pvBar .iconbtn.on{color:var(--sig);border-color:var(--sig);background:transparent}
+#guideGrp{display:flex;align-items:center;gap:3px}#pvBar .iconbtn{width:28px;height:calc(var(--ch) + 2px)}#pvBar .iconbtn.on{color:var(--sig);border-color:var(--sig);background:transparent}
 .gsep{width:1px;height:18px;background:var(--edge);margin:0 3px}#guideGrp .dim{color:var(--muted);font:400 11px var(--mono)}
-#guideCol{width:28px;height:26px;padding:3px;border:1px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}#guideCol::-webkit-color-swatch-wrapper{padding:0}#guideCol::-webkit-color-swatch{border:none;border-radius:2px}
+#guideCol{width:28px;height:calc(var(--ch) + 2px);padding:3px;border:1px solid var(--edge);border-radius:var(--r);background:none;cursor:pointer}#guideCol::-webkit-color-swatch-wrapper{padding:0}#guideCol::-webkit-color-swatch{border:none;border-radius:2px}
 #guideGrp input[type=number]{cursor:ns-resize}
-#guideGrp input[type=number]{width:30px;height:26px;padding:0 2px;text-align:center;font:400 11px var(--mono);-moz-appearance:textfield}
+#guideGrp input[type=number]{width:30px;height:calc(var(--ch) + 2px);padding:0 2px;text-align:center;font:400 11px var(--mono);-moz-appearance:textfield}
 #guideGrp input[type=number]::-webkit-inner-spin-button{display:none}#guideGrp .dim{font-size:11px}
 #fmtTag{position:absolute;top:8px;right:8px;z-index:3;font:600 11px var(--mono);color:var(--muted);background:#000a;padding:3px 8px;border-radius:2px;pointer-events:none}
 #prepTag{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;font:600 11px var(--mono);letter-spacing:.06em;color:#1a1200;background:#ffb000;padding:3px 10px;border-radius:2px;pointer-events:none;white-space:nowrap}
@@ -320,7 +322,7 @@ body.precopy #fxPre .fxp.empty.drop::after,#scenes.copying .scene.empty.drop::af
 .ask button{width:auto}
 #setList:empty::before{content:'No saved sets yet.';font:400 12px var(--sans);color:var(--faint)}
 #learnBar{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:20;max-width:calc(100% - 12px)!important;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;background:var(--panel);border:1px solid var(--learn);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12px;max-width:92vw}
-#learnBar b{color:var(--learn);white-space:nowrap}#learnBar{padding:3px 4px 3px 10px!important}#learnBar button{height:24px;padding-block:0}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#learnBar b{color:var(--learn);white-space:nowrap}#learnBar{padding:3px 4px 3px 10px!important}#learnBar button{height:var(--ch);padding-block:0}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.learning .learnMapped{outline:2px dotted var(--learn);outline-offset:-2px}
 body.learning .pad.learnMapped::before{content:"";position:absolute;inset:0;border:2px dotted var(--learn);border-radius:inherit;z-index:6;pointer-events:none}   /* a pad's picture covers its own outline */
 .midiHost{position:relative}.midiTag{position:absolute;right:2px;bottom:2px;z-index:7;pointer-events:none;font:600 9px/1 var(--mono);color:#1a1200;background:var(--learn);border-radius:2px;padding:2px 3px;white-space:nowrap;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis}

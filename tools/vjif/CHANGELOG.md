@@ -4,6 +4,16 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.62.0 — 2026-10-10
+
+### Interface
+- Controls are 20 px tall (were 24): buttons, menus, sliders and fields. Text keeps its size; the GIF settings column and the effect editor get shorter.
+- Drop GIF files, or a GIF from the pool, on a scene tile: they go onto that scene's first empty pads, without leaving the scene you're on.
+- GIF › Auto: Reset all (every LFO of the GIF off and back to defaults), next to Reset (this one).
+
+### Fixes
+- A file still decoding no longer marks the same pad as "decoding" on another scene after you switch: the mark belongs to the scene the file is going to.
+
 ## 0.61.0 — 2026-10-10
 
 ### Recording

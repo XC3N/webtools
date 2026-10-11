@@ -171,12 +171,16 @@ async function hashBlob(blob){
   return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0') + u.length.toString(16);
 }
 let setGen = 0;                                       // bumped when a set is loaded / emptied: loads still decoding for the old one are dropped
-async function loadInto(p, blob, name){
-  const pad = pads[p], gen = setGen, tag = sceneIds[sceneIdx];   // the scene's identity survives renumbering (drag-swap)
-  pad.loading = true; pad.el.classList.add('loading');
+async function loadInto(p, blob, name, si = sceneIdx){
+  const pad = pads[p], gen = setGen, tag = sceneIds[si];   // the scene's identity survives renumbering (drag-swap)
+  // "decoding" belongs to the scene the file is going to, not to the pad slot (all scenes share the 18 pads):
+  // pad.loading reads true only while the scene on screen is that scene
+  if (!pad.loads){ pad.loads = new Map(); Object.defineProperty(pad, 'loading', { configurable: true, get(){ return (this.loads.get(sceneIds[sceneIdx]) || 0) > 0; }, set(){} }); }
+  const busy = d => { pad.loads.set(tag, (pad.loads.get(tag) || 0) + d); if (!pad.loads.get(tag)) pad.loads.delete(tag); pad.el.classList.toggle('loading', pad.loading); };
+  busy(1);
   try { const m = await mediaFor(blob, name, gen); if (gen === setGen) putMedia(m, p, sceneIds.indexOf(tag)); }
   catch (err) { if (gen === setGen) toast(`Couldn't load ${name}: ${err.message}`); }   // (a load for a set that was replaced just stops)
-  finally { pad.loading = false; pad.el.classList.remove('loading'); }
+  finally { busy(-1); }
 }
 // a pool GIF onto pad p of scene `si` (default: the current one), as a fresh instance; replaces what was there
 function putMedia(m, p, si = sceneIdx){
@@ -222,6 +226,24 @@ function nextEmpty(from = 0, exclude = new Set()){
   return -1;
 }
 
+// first empty pad of scene si (no GIF, nothing decoding for it), skipping `exclude`
+function nextEmptyIn(si, exclude = new Set()){
+  if (si === sceneIdx) return nextEmpty(0, exclude);
+  const sc = scenes[si], tag = sceneIds[si];
+  for (let i = 0; i < pads.length; i++) if (!(sc && sc.pads[i]) && !(pads[i].loads && pads[i].loads.get(tag)) && !exclude.has(i)) return i;
+  return -1;
+}
+// files dropped on a scene tile: each onto that scene's next empty pad (the scene you're on isn't changed)
+function loadFilesToScene(files, si){
+  const used = new Set(), jobs = [];
+  for (let k = 0; k < files.length; k++){
+    const p = nextEmptyIn(si, used);
+    if (p < 0){ toast(`Scene ${si + 1}'s 18 pads are full — ${files.length - k} file(s) skipped`); break; }
+    used.add(p); jobs.push(loadInto(p, files[k], files[k].name, si));
+  }
+  if (jobs.length && si !== sceneIdx) toast2(`${jobs.length} GIF${jobs.length > 1 ? 's' : ''} going to scene ${si + 1}`);
+  return Promise.all(jobs);
+}
 function loadFiles(files, start = -1){
   if (start === POOL_ONLY) return Promise.all(files.map(f => mediaFor(f, f.name).catch(err => toast(`Couldn't load ${f.name}: ${err.message}`))));
   const used = new Set(), jobs = [];

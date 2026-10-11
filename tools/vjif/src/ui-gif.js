@@ -185,6 +185,7 @@ $('#aMax').addEventListener('input', e => { editLfo(A => A.max = +e.target.value
   addEventListener('pointerup', () => clearInterval(hold), { once: true }); }));
 $('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0]));
 $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value));
+$('#aResetAll').addEventListener('click', () => { const g = curGif(); if (!g) return; const n = LFO_T.filter(t => g.lfo[t[0]] && g.lfo[t[0]].on).length; g.lfo = {}; syncAutoUI(g); syncXfUI(); toast2(n ? `Automation off (${n} LFO${n > 1 ? 's' : ''} reset)` : 'No automation to reset'); });
 $('#aReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.lfo[aSel]; syncAutoUI(g); syncXfUI(); });
 
 // ---- scopes (drawn by the main loop while their tab is showing) ----

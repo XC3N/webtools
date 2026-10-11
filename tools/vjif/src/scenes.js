@@ -145,13 +145,26 @@ $('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.s
   e.dataTransfer.setDragImage(NO_IMG, 0, 0);
   const g = document.createElement('span'); g.className = 'chip scghost'; g.innerHTML = `<span>${+b.dataset.i + 1}</span>`; g.style.backgroundImage = b.style.backgroundImage;
   ghost.show(g, e.clientX, e.clientY); });
+const gifDrag = e => e.dataTransfer.types.includes('Files') || e.dataTransfer.types.includes(POOL_MIME);   // a file, or a GIF from the pool
 $('#scenes').addEventListener('dragover', e => {
+  if (gifDrag(e) && !e.dataTransfer.types.includes(SCENE_MIME)){ const b = e.target.closest('.scene'); if (!b) return;
+    e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy';
+    document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b)); return; }
   if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
   e.preventDefault(); e.stopPropagation(); const cp = isDel(e); e.dataTransfer.dropEffect = cp ? 'copy' : 'move'; $('#scenes').classList.toggle('copying', cp);
   const b = e.target.closest('.scene'); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b && (!cp || x.classList.contains('empty'))));
 });
 $('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)){ document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); } });
 $('#scenes').addEventListener('drop', e => {
+  if (gifDrag(e) && !e.dataTransfer.types.includes(SCENE_MIME)){   // GIFs dropped on a scene: onto its first empty pads
+    const b = e.target.closest('.scene'); if (!b) return;
+    e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
+    const si = +b.dataset.i, ph = e.dataTransfer.getData(POOL_MIME);
+    if (ph){ const m = pool.find(m => m.hash === ph), d = nextEmptyIn(si); if (!m) return; if (d < 0) return toast(`Scene ${si + 1}'s 18 pads are full`);
+      putMedia(m, d, si); renderPool(); if (si !== sceneIdx) toast2(`${m.name} → scene ${si + 1}, pad ${PAD_LABELS[d]}`); return; }
+    const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
+    if (files.length) loadFilesToScene(files, si); return;
+  }
   if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
   e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying');
   const b = e.target.closest('.scene'); if (!b) return;
