@@ -78,6 +78,9 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {allpip} **All-layers pips** (0.68) — an effect on All: four pips in one colour; Settings › Interface › All-layers pips changes it.
 - [ ] {osdfx} **Channel number over the effects** (0.68) — latch Colour › Palette, change scene with Glitch › Channel: the number stays green.
 - [ ] {qx05hugalvzxnl9opxvt} **With Sync in Rec ▾** (0.68) — Rec ▾ › Music starts with Sync does what With Sync did.
+- [ ] {sgjh9joapu33uxnftn46} **Transitions regrouped** (0.69) — Type is a 3 × 3 grid; Melt is under Dissolve, VHS and Channel under TV; the Style row never takes two lines. Old presets still play the same.
+- [ ] {6c1mq3jcoix9tqtc6gc1} **BRB linked to Prep** (0.69) — fill 3+ scenes, turn on the chain, Enter: the output changes scenes every N bars (never to the one you edit; switch scenes to edit freely). Enter again: your scene goes live, BRB stops.
+- [ ] {4ofgrromx5bbl2ig0jiv} **Count-in** (0.69) — Rec ▾ › Count-in 2, Rec: the button counts In 2, In 1, then records.
 - [ ] {o9fm7v1dndg06e2kzku7} **Key selection modes** (0.56) — load key-regions.gif (white background, a ring, two windows), GIF › Colour › Key on, Pick the white. Everywhere: all the white goes; From edges: only the background; From pick: only the white area you clicked.
 - [x] {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - [x] {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.

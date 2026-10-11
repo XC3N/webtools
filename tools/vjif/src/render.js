@@ -197,19 +197,22 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0]){
 }
 // ---------- scene transitions: the scene being left and the new one are each drawn whole, then combined ----------
 // transition families, each with its styles (like the effects); a preset = family + style + its settings
-const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['stutter', 'Stutter']];
+const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['tv', 'TV'], ['stutter', 'Stutter']];
 const TR_STYLES = {
   stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes on the beat grid, faster and faster (1/8, 1/16, 1/32), landing on the new one'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
   wipe: [['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],
-  dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)']],
+  dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)'],
+             ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
-           ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)'], ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)'],
-           ['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
+           ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)']],
+  tv: [['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
            ['channel', 'Channel', 'A TV changing channels: a flick of snow, then the new scene rolls into place, with a green channel number in the top right corner']] };
 const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
 // a preset made valid: a known type and style, a block size
 function normTrans(P){
+  if (P.type === 'glitch' && P.style === 'melt') P.type = 'dissolve';                          // 0.69: Melt moved to Dissolve,
+  if (P.type === 'glitch' && (P.style === 'vhs' || P.style === 'channel')) P.type = 'tv';      // VHS and Channel to TV
   if (!TR_TYPES.some(t => t[0] === P.type)) P.type = 'cut';
   P.style = trStyleOf(P); if (!P.px) P.px = 12;
   return P;
@@ -222,13 +225,13 @@ const TR_KEYS = Array.from({ length: 9 }, (_, i) => 'Digit' + (i + 1));
 const trDefaults = () => userDef.tr ? userDef.tr.map(P => normTrans({ ...P })) : trFactory();
 const trFactory = () => [{ type: 'cut' }, { type: 'fade', style: 'cross', len: 2 }, { type: 'fade', style: 'cross', len: 4 }, { type: 'fade', style: 'dip', len: 2 },
   { type: 'slide', dir: 'left', len: 2 }, { type: 'slide', dir: 'right', len: 2 }, { type: 'wipe', style: 'iris', len: 2 },
-  { type: 'glitch', style: 'slices', len: 1 }, { type: 'glitch', style: 'melt', len: 4, smooth: false }].map(P => normTrans({ dir: 'left', len: 2, smooth: true, px: 12, ...P }));
+  { type: 'glitch', style: 'slices', len: 1 }, { type: 'dissolve', style: 'melt', len: 4, smooth: false }].map(P => normTrans({ dir: 'left', len: 2, smooth: true, px: 12, ...P }));
 let trPresets = trDefaults(), trSel = 1, transCfg = trPresets[trSel];
 function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
 let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt, free: GIF copies to let go after }
 function makeTrans(from, gifs, beat, free = null){
   if (transCfg.type === 'cut') return null;
-  return { cfg: { ...transCfg }, from, gifs, b0: beat, len: transCfg.len, free, melt: transCfg.type === 'glitch' && trStyleOf(transCfg) === 'melt' ? meltTable(transCfg.px) : null, dis: null };   // (Dissolve's CPU grid is made when it's first needed: only without WebGL)
+  return { cfg: { ...transCfg }, from, gifs, b0: beat, len: transCfg.len, free, melt: isMelt(transCfg) ? meltTable(transCfg.px) : null, dis: null };   // (Dissolve's CPU grid is made when it's first needed: only without WebGL)
 }
 function endTrans(){ if (trans && trans.free) trans.free.forEach(freeGif); if (trans && trans.gifs) dropFxCache(trans.gifs); trans = null; }
 // GIFs no longer on screen let go of their kept coloured frames (fxImage)
@@ -252,6 +255,7 @@ function startPrep(){
   const gated = c => { const g = pads[c.pad].gif; return c.env && c.env.rel === null && g && g.trig === 'fade' && g.env.gate && !c.env.noGate; };
   prep = { layers: layers.map(L => ({ ...layerState(L), clips: L.clips.map(c => ({ ...c, env: c.env && { ...c.env, rel: gated(c) ? Math.max(now, c.env.t0) : c.env.rel } })) })), gifs, free,
            fx: { cfg: cp(fxCfg), pre: cp(fxPre), st }, scene: sceneIdx };
+  if (brb.link && !brb.on) brbStart();                // linked: BRB keeps the output changing while you prep
   syncPrepUI(); renderScenes(); redraw.all = true;
 }
 // Go live: the scene you're on goes out with the armed transition (on the next beat / bar with Snap)
@@ -264,6 +268,7 @@ function goLive(){
 }
 function doGoLive(beat = clock.beat){
   const P = prep; pendingLive = null; if (!P) return;
+  endPrepTr(); if (brb.link && brb.on) brbStop();   // linked BRB ends with Prep
   prep = null; endTrans();
   const t0 = beatTime(beat);
   if (P.scene !== sceneIdx) layers.forEach(L => L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; if (c.env) c.env = { ...c.env, t0: beat, from: 0, rel: null }; }));   // another scene starts from the top (fades too)
@@ -271,7 +276,20 @@ function doGoLive(beat = clock.beat){
   if (!trans) P.free.forEach(freeGif);
   syncPrepUI(); renderScenes(); redraw.all = true;
 }
-function dropPrep(){ if (!prep) return; prep.free.forEach(freeGif); prep = null; pendingLive = null; syncPrepUI(); }
+function dropPrep(){ if (!prep) return; endPrepTr(); if (brb.link && brb.on) brbStop(); prep.free.forEach(freeGif); prep = null; pendingLive = null; syncPrepUI(); }
+// BRB linked to Prep: the output itself changes to scene i (a stored scene, with the armed / BRB transition), the editor stays where it is
+function prepSwitchTo(i, beat){
+  const P = prep, sc = scenes[i]; if (!P || !sc) return;
+  const t0 = beatTime(beat), gifs = pads.map(() => null), free = [], used = new Set(sc.layers.flatMap(L => L.clips.map(c => c.pad)));
+  sc.pads.forEach((g, k) => { if (g && used.has(k)){ gifs[k] = cloneInst(g); free.push(gifs[k]); } });
+  endPrepTr();
+  const T = makeTrans(P.layers, P.gifs, beat, P.free);   // the old output picture fades / slides out (its GIF copies go when it ends)
+  if (T) P.tr = T; else P.free.forEach(freeGif);
+  P.layers = sc.layers.map(L => ({ ...L, clips: L.clips.map(c => ({ ...c, startBeat: beat, startTime: t0, env: null })) }));
+  P.gifs = gifs; P.free = free; P.scene = i;
+  redraw.all = true; renderScenes();
+}
+function endPrepTr(){ const T = prep && prep.tr; if (!T) return; prep.tr = null; if (T.free) T.free.forEach(freeGif); if (T.gifs) dropFxCache(T.gifs); }
 function syncPrepUI(){
   const b = $('#prepBtn'); if (!b) return;
   b.classList.toggle('on', !!prep); $('#prepLed').classList.toggle('on', !!prep); $('#prepLed').classList.toggle('wait', pendingLive !== null);   // blinks until the beat it goes live on
@@ -287,7 +305,8 @@ function dissolveGrid(px){
   return { cv, ctx, img: ctx.createImageData(w, h), noise: new Float32Array(w * h).map(() => Math.random()) };
 }
 // Smooth eases the progress, except for the transitions with their own timing: Stutter's beat grid and Doom's melt
-const trEase = (p, T) => T.smooth && T.type !== 'stutter' && !(T.type === 'glitch' && trStyleOf(T) === 'melt') ? p * p * (3 - 2 * p) : p;
+const isMelt = T => T.type === 'dissolve' && trStyleOf(T) === 'melt';
+const trEase = (p, T) => T.smooth && T.type !== 'stutter' && !isMelt(T) ? p * p * (3 - 2 * p) : p;
 function transProgress(){ if (!trans) return 1; const p = (clock.beat - trans.b0) / trans.len; return p < 0 ? 0 : p > 1 ? 1 : p; }
 // combine trA (leaving) and trB (arriving) on the master at progress e (0 → 1)
 // The screen melt from Doom (1993), same rules: 160 columns, each starting up to 15 ticks late (neighbours differ by
@@ -357,6 +376,7 @@ const TR_DRAW = {
     z(A, 1 + 0.8 * e, 1 - e); z(B, 0.6 + 0.4 * e, e);
   },
   dissolve(m, A, B, e, T, dx, dy){ // blocks of the new scene appear in random order
+    if (trStyleOf(T) === 'melt') return TR_DRAW.glitch(m, A, B, e, T, dx, dy);   // (Melt is drawn with the glitch family's code)
     if (trStyleOf(T) === 'pixelate'){              // the old scene breaks into ever bigger blocks, the new one resolves out of them
       const big = Math.max(2, T.px || 48), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
       const w = Math.ceil(W / bs), h = Math.ceil(H / bs);
@@ -494,6 +514,7 @@ const TR_DRAW = {
       if (j < 0.25 * tear){ m.globalCompositeOperation = 'lighter'; m.globalAlpha = 0.5; m.drawImage(src, 0, y, W, h, ox + 14, y, W, h); m.globalAlpha = 1; m.globalCompositeOperation = 'source-over'; }
     });
   },
+  tv(m, A, B, e, T, dx, dy){ return TR_DRAW.glitch(m, A, B, e, T, dx, dy); },   // VHS, Channel (drawn with the glitch family's code)
   cut(m, A, B, e, T, dx, dy){ m.drawImage(B, 0, 0);
   },
 };

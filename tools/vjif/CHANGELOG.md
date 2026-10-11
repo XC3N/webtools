@@ -4,6 +4,17 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.69.0 — 2026-10-10
+
+### Transitions
+- Regrouped so every Style row fits on one line: Dissolve (Blocks, Pixelate, Melt), Glitch (Slices, Blocks, Scramble) and a new TV type (VHS, Channel). Types sit in a 3 × 3 grid. Saved presets move over by themselves.
+
+### Scenes
+- Link BRB to Prep (the chain button between them): with it on, Prep also starts BRB on the output, so the output keeps changing scenes while you prep (never to the scene you're editing; you can still change which scene you edit). Going live or leaving Prep stops it.
+
+### Recording
+- Count-in (Settings › Recording, and Rec ▾): Off / 1 / 2 / 4 bars to wait after the next bar before recording starts; the Rec button counts down (In 2, In 1).
+
 ## 0.68.0 — 2026-10-10
 
 ### Fixes

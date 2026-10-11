@@ -187,7 +187,7 @@ async function recPrepare(){
     catch (e) { if (e.name === 'AbortError'){ recDropAudio(); return; } rec.writer = null; }
   }
   // every take starts on the next downbeat (Snap or not), so you know when it begins; with a stopped MIDI clock it waits for the clock
-  rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4, mime }; rec.last = clock.beat; recUI();
+  rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4 + recCount * 4, mime }; rec.last = clock.beat; recUI();   // + the count-in
 }
 function recStart(mime, beat = clock.beat){
   if (mime === WC_MP4) return wcStart(beat);
@@ -329,13 +329,14 @@ function recUI(){
   if (rec.mr){ const t = (performance.now() - rec.t0) / 1000, mb = rec.bytes / 1048576;
     $('#recTxt').textContent = rec.stopAt ? `${Math.max(1, Math.ceil((rec.stopAt - clock.beat) / 4))} bar${Math.ceil((rec.stopAt - clock.beat) / 4) > 1 ? 's' : ''}` : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
-  else { $('#recTxt').textContent = rec.wait ? 'Wait' : 'Rec';
-    b.title = rec.wait ? 'Starts recording on the next bar — click to cancel' : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${CW}×${CH}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
+  else { const left = rec.wait ? Math.ceil((rec.wait.beat - clock.beat) / 4 - 1e-9) : 0;
+    $('#recTxt').textContent = rec.wait ? (recCount && left > 0 ? 'In ' + left : 'Wait') : 'Rec';
+    b.title = rec.wait ? (recCount ? `Count-in: recording starts in ${left} bar${left > 1 ? 's' : ''} — click to cancel` : 'Starts recording on the next bar — click to cancel') : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${CW}×${CH}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
 }
 function recTick(){
   const b = clock.beat, back = b < (rec.last ?? b) - 0.5; rec.last = b;   // the beat count jumps back on Sync or a MIDI Start
   if (rec.wait){
-    if (back) recStart(rec.wait.mime, b);                                // restarted on a downbeat: go now
+    if (back){ if (recCount) rec.wait.beat = b + recCount * 4; else recStart(rec.wait.mime, b); }   // restarted on a downbeat: go now (or count in from it)
     else if (b >= rec.wait.beat - 1e-9) recStart(rec.wait.mime, rec.wait.beat);
   } else if (rec.mr && rec.stopAt){
     if (back){ rec.stopAt = b + Math.max(0, rec.stopAt - rec.lastFwd); }   // keep the length still to go
@@ -344,7 +345,7 @@ function recTick(){
   }
   if (!back) rec.lastFwd = b;
 }
-setInterval(() => { if (rec.mr) recUI(); }, 500);
+setInterval(() => { if (rec.mr || rec.wait) recUI(); }, 250);   // the time, the bars left, the count-in
 $('#recBtn').addEventListener('click', recToggle);
 $('#fsBtn').addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => toast('Full screen was refused by the browser')));
 document.addEventListener('fullscreenchange', () => $('#fsBtn').classList.toggle('on', !!document.fullscreenElement));
@@ -483,7 +484,7 @@ setInterval(autosave, 1000);
 
 // ---- Rec ▾: the take's length, frame rate and quality at hand (the same settings as Settings › Recording, kept in step) ----
 {
-  const ROWS = [['Bars', '#recBarsSeg'], ['Frame rate', '#recFpsSeg'], ['Mb/s', '#recMbpsSeg']];
+  const ROWS = [['Bars', '#recBarsSeg'], ['Count-in', '#recCountSeg'], ['Frame rate', '#recFpsSeg'], ['Mb/s', '#recMbpsSeg']];
   $('#recPopRows').innerHTML = ROWS.map(([n, q], k) => `<span class="poprow"><span>${n}</span><div class="seg" data-src="${q}">${$(q).innerHTML.replace('4 bars', '4')}</div></span>`).join('');
   const sync = () => document.querySelectorAll('#recPopRows .seg').forEach(g => { const src = $(g.dataset.src).querySelectorAll('button');
     g.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', src[i].classList.contains('on'))); });

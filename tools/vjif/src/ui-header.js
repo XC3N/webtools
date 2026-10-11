@@ -143,6 +143,9 @@ syncRecFmt();
 const syncRecBars = () => document.querySelectorAll('#recBarsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.b === recBars));
 syncRecBars();
 onSeg($('#recBarsSeg'), (b, e) => { recBars = +b.dataset.b; Prefs.set('vjif-recbars', recBars); syncRecBars(); });
+const syncRecCount = () => document.querySelectorAll('#recCountSeg button').forEach(b => b.classList.toggle('on', +b.dataset.b === recCount));
+syncRecCount();
+onSeg($('#recCountSeg'), (b, e) => { recCount = +b.dataset.b; Prefs.set('vjif-reccount', recCount); syncRecCount(); });
 // sound inputs: names only show once the browser has been allowed to use audio input (asked the first time you pick one)
 async function fillRecAudio(ask = false){
   const sel = $('#recAudioSel'); if (!sel || !navigator.mediaDevices) return;

@@ -480,7 +480,7 @@ ${FX_GLSL}
       for (let v = 1; v < 256; v++) if (!hist[v] && rank[v] < rank[v - 1]) rank[v] = rank[v - 1];
     };
     // Transitions that used to be drawn bit by bit on the CPU (hundreds of drawImage / fillRect calls, or a loop over
-    // every block): Dissolve, Glitch › Scramble and Glitch › VHS, as one shader pass over the two scenes.
+    // every block): Dissolve, Glitch › Scramble and TV › VHS, as one shader pass over the two scenes.
     // mode 1 dissolve · 2 scramble · 3 vhs. Pixels: P (y down, like the canvases).
     const tp = gl.createProgram();
     gl.attachShader(tp, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
@@ -610,13 +610,19 @@ function drawPrep(now, hidden, quiet){
   const oF = post ? fxFrame(b, P.fx) : NOFX;
   oF.layers.forEach((U, li) => { if (!U && post) post.idle(SLOT.LAYERS + li); });
   // each picture is redrawn only when something in it moves or changed (a still scene under Prep cost every pass, every frame)
-  const oList = frameList(now, P.layers, P.gifs), oMoving = oF.any || (bl > 0 && bl < 1);
+  const oList = frameList(now, P.layers, P.gifs);
+  let ptp = 1; if (P.tr){ const keep = trans; trans = P.tr; ptp = transProgress(); trans = keep; if (ptp >= 1){ endPrepTr(); redraw.all = true; } }   // BRB linked: the output's own transition
+  const oMoving = oF.any || (bl > 0 && bl < 1) || !!P.tr;
   if (oMoving) prepOutSig.forget();
   if (oMoving || sceneChanged(oList, live.freeze, bl >= 1, prepOutSig) || force){ drawn++;
   if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
+  else if (P.tr){ const keep = trans; trans = P.tr;
+    try { render(frameList(now, P.tr.from, P.tr.gifs), trA, SLOT.LEAVING_LAYERS, oF.layers, zoomEOf(oF.out)); render(oList, trB, SLOT.LAYERS, oF.layers, zoomEOf(oF.out)); composeTransition(trEase(ptp, P.tr.cfg), P.tr.cfg); }
+    finally { trans = keep; } }
   else render(oList, mctx, SLOT.LAYERS, oF.layers, zoomEOf(oF.out));
   if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }
   if (oF.out) post.run(oF.out); else if (post) post.idle(SLOT.OUT);
+  drawTrOverlay();
   if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
   if (outCtx) outCtx.drawImage(master, 0, 0);
   }

@@ -94,6 +94,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #brbPop,#recPop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);padding:8px;box-shadow:0 6px 18px #0009;display:grid;gap:6px;width:250px}#brbPop[hidden],#recPop[hidden]{display:none}
 .poph{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.poprow{display:flex}.poprow .seg{flex:1}#brbCfg{width:18px;margin-left:-1px}
 #brbBtn{flex:none;width:76px;font-variant-numeric:tabular-nums;padding:0 6px}#brbLed.on{background:var(--sig);box-shadow:0 0 6px var(--sig)}#brbLed.wait{animation:ledblink .25s steps(1) infinite}
+#brbLink{width:22px;color:var(--faint)}#brbLink.on{color:var(--sig);border-color:var(--sig)}
 #brbWrap{display:inline-flex;gap:2px}#brbWrap>#brbCfg{margin-left:0;border:1px solid var(--edge)}   /* the chevron is a box of its own, next to BRB */
 .scene{position:relative;height:40px;padding:0;border:0;border-radius:var(--r);background:var(--bg) center/cover no-repeat;cursor:pointer}
 .scene:hover{box-shadow:0 0 0 1px var(--edge-2)}

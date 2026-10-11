@@ -98,7 +98,7 @@
 
 /**
  * @typedef {Object} TransPreset
- * @property {'cut'|'fade'|'slide'|'wipe'|'zoom'|'dissolve'|'glitch'|'stutter'} type
+ * @property {'cut'|'fade'|'slide'|'wipe'|'zoom'|'dissolve'|'glitch'|'tv'|'stutter'} type
  * @property {string} style        one of TR_STYLES[type]
  * @property {'left'|'right'|'up'|'down'} dir
  * @property {number} len          beats

@@ -67,7 +67,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
 }
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
 function sceneKey(i){
-  const back = brb.on; if (back) brbStop();          // you're back: a scene key takes control again (on the downbeat, whatever Snap is)
+  const back = brb.on && !(prep && brb.link); if (back) brbStop();          // you're back (linked to Prep: BRB keeps the output going while you edit): a scene key takes control again (on the downbeat, whatever Snap is)
   if (i === sceneIdx){ pendingScene = null; renderScenes(); return; }
   if (prep) return gotoScene(i, clock.beat, true);   // preparing: just open that scene (the output doesn't change)
   const at = back ? barBeat(clock.beat) : snapBeat(clock.beat);
@@ -93,32 +93,34 @@ function renderScenes(){
 $('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; isDel(e) ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
 // ---- BRB: scene changes by themselves every few bars, on the bar, while you step away ----
 const brb = (() => { const s = Prefs.json('vjif-brb', {});
-  return { on: false, next: 0, bars: [4, 8, 16, 32].includes(s.bars) ? s.bars : 8, scn: s.scn === 'rand' ? 'rand' : 'order', tr: s.tr === 'rand' ? 'rand' : 'armed', lastTr: -1 }; })();
-const brbSave = () => Prefs.setJson('vjif-brb', { bars: brb.bars, scn: brb.scn, tr: brb.tr });
+  return { on: false, next: 0, bars: [4, 8, 16, 32].includes(s.bars) ? s.bars : 8, scn: s.scn === 'rand' ? 'rand' : 'order', tr: s.tr === 'rand' ? 'rand' : 'armed', lastTr: -1, link: !!s.link }; })();
+const brbSave = () => Prefs.setJson('vjif-brb', { bars: brb.bars, scn: brb.scn, tr: brb.tr, link: brb.link });
 const brbFirst = () => (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4 + (brb.bars - 1) * 4;   // counted from the next bar
 function brbStart(){ brb.on = true; brb.next = brbFirst(); brbUI(); }
 function brbStop(){ brb.on = false; brbUI(); }
-// scenes it can go to: those with GIFs playing, other than the current one
-const brbChoices = () => Array.from({ length: N_SCENES }, (_, i) => i).filter(i => i !== sceneIdx && sceneCount(i) > 0);
+// scenes it can go to: those with GIFs playing, other than the current one (linked to Prep: other than the one on the output and the one being edited)
+const brbCur = () => prep && brb.link ? prep.scene : sceneIdx;
+const brbChoices = () => Array.from({ length: N_SCENES }, (_, i) => i).filter(i => i !== sceneIdx && i !== brbCur() && sceneCount(i) > 0);
 function brbPick(){
   const c = brbChoices(); if (!c.length) return -1;
   if (brb.scn === 'rand') return c[Math.floor(Math.random() * c.length)];
   // in order = the numpad's reading order: 7 8 9, 4 5 6, 1 2 3
-  const ord = Array.from({ length: N_SCENES }, (_, k) => k).sort((a, b) => (Math.floor(b / 3) - Math.floor(a / 3)) || (a % 3 - b % 3)), at = ord.indexOf(sceneIdx);
+  const ord = Array.from({ length: N_SCENES }, (_, k) => k).sort((a, b) => (Math.floor(b / 3) - Math.floor(a / 3)) || (a % 3 - b % 3)), at = ord.indexOf(brbCur());
   for (let k = 1; k <= N_SCENES; k++){ const i = ord[(at + k) % N_SCENES]; if (c.includes(i)) return i; }
   return -1;
 }
+const brbGo = (i, at) => prep ? prepSwitchTo(i, at) : gotoScene(i, at);
 function brbTick(){
   const b = clock.beat;
   if (b < brb.next - brb.bars * 4 - 4) brb.next = brbFirst();   // the beat count jumped back (Sync, MIDI Start): count again
-  if (prep || b < brb.next - 1e-9) return;           // Prep holds the output still: BRB waits for go-live
+  if ((prep && !brb.link) || b < brb.next - 1e-9) return;   // Prep holds the output still: BRB waits for go-live (unless linked: then BRB changes the output)
   const at = brb.next; while (brb.next <= b + 1e-9) brb.next += brb.bars * 4;   // after a long Prep hold / a jump: one change, then back on the grid (not one per tick)
   const i = brbPick(); if (i < 0) return;            // nothing else to play: stay
   if (brb.tr === 'rand'){                            // a random preset (not the same twice in a row), without re-arming it
     const all = trPresets.map((_, k) => k).filter(k => k !== brb.lastTr && trPresets[k].type !== 'cut');
     const k = all.length ? all[Math.floor(Math.random() * all.length)] : trSel; brb.lastTr = k;
-    const keep = transCfg; transCfg = trPresets[k]; try { gotoScene(i, at); } finally { transCfg = keep; }
-  } else gotoScene(i, at);
+    const keep = transCfg; transCfg = trPresets[k]; try { brbGo(i, at); } finally { transCfg = keep; }
+  } else brbGo(i, at);
 }
 // called every 100 ms while BRB runs: the elements are kept, and touched only when what they show changes
 const brbEl = { led: $('#brbLed'), btn: $('#brbBtn'), txt: $('#brbTxt'), segs: ['#brbBars', '#brbScn', '#brbTr'].map(q => [...document.querySelectorAll(q + ' button')]), shown: '' };
@@ -131,6 +133,9 @@ function brbUI(){
   [brb.bars, brb.scn, brb.tr].forEach((v, k) => E.segs[k].forEach(x => x.classList.toggle('on', x.dataset.v === String(v))));
 }
 $('#brbBtn').addEventListener('click', () => brb.on ? brbStop() : brbStart());
+const brbLinkUI = () => $('#brbLink').classList.toggle('on', brb.link);
+brbLinkUI();
+$('#brbLink').addEventListener('click', () => { brb.link = !brb.link; brbSave(); brbLinkUI(); if (prep && brb.link && !brb.on) brbStart(); });
 $('#brbCfg').addEventListener('click', e => { e.stopPropagation(); $('#brbPop').hidden = !$('#brbPop').hidden; });
 document.addEventListener('pointerdown', e => { if (!$('#brbPop').hidden && !e.target.closest('#brbWrap')) $('#brbPop').hidden = true; });
 [['#brbBars', v => { brb.bars = +v; if (brb.on) brb.next = brbFirst(); }], ['#brbScn', v => { brb.scn = v; }], ['#brbTr', v => { brb.tr = v; }]].forEach(([q, f]) =>
@@ -214,14 +219,14 @@ function syncTransUI(){
   $('#trStyle').classList.toggle('wrap3', sts.length > 4);   // five styles: two rows, so none is squeezed out
   $('#trStyleRow').classList.toggle('dimmed', !sts.length);
   const pi = optIdx(TR_PX, T.px || 12); $('#trPx').value = pi; $('#trPx').nextElementSibling.textContent = TR_PX[pi][1];
-  $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || T.type === 'glitch') || (T.type === 'glitch' && trStyleOf(T) === 'vhs'));   // VHS has no block size
+  $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || T.type === 'glitch'));   // TV (VHS, Channel) has no block size
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
   // the Options row: what this transition can be tuned with (Slide / Wipe: the direction · Channel: what the number shows)
-  const om = T.type === 'glitch' && stl === 'channel' ? 'ch' : 'dir';
+  const om = T.type === 'tv' && stl === 'channel' ? 'ch' : 'dir';
   if ($('#trDir').dataset.mode !== om){ $('#trDir').dataset.mode = om; $('#trDir').innerHTML = TR_OPTS[om].map(([v, l, t]) => `<button data-v="${v}" title="${t}">${l}</button>`).join(''); }
   segSet('#trDir', om === 'ch' ? (T.ch || 'rand') : T.dir);
   $('#trDirRow').classList.toggle('dimmed', !(om === 'ch' || T.type === 'slide' || (T.type === 'wipe' && stl === 'line')));
-  $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || (T.type === 'glitch' && trStyleOf(T) === 'melt'));   // the melt keeps Doom's own timing
+  $('#trLenRow').classList.toggle('dimmed', cut); $('#trCurveRow').classList.toggle('dimmed', cut || isMelt(T));   // the melt keeps Doom's own timing
   $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
 onSeg($('#trPre'), (b, e) => { const k = +b.dataset.v;
