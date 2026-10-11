@@ -54,15 +54,15 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #beats i.on{background:var(--ink)}
 #beats i:first-child.on{background:var(--sig)}
 /* meters: memory and load, one LCD strip in the header */
-#perf{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 12px}
-#perf .ptitle{font:600 12px var(--sans);color:var(--muted)}
+#perf{display:flex;align-items:center;gap:8px;padding:5px 12px}
+
 .meters{display:flex;align-items:center;width:100%;background:var(--lcd-bg);border-radius:var(--r);padding:0 2px;height:calc(var(--ch) + 4px)}
 .meters .mtr{flex:1;font:400 11px/1 var(--mono);color:var(--lcd-ink);padding:0 7px;white-space:nowrap;text-align:center}
 .meters .mtr i{font-style:normal;font-size:9px;opacity:.55;margin-right:4px}
 .meters .mtr+.mtr{border-left:1px solid color-mix(in srgb,var(--lcd-ink) 25%,transparent)}
 .meters .mtr.warn{color:#e8b54d}.meters .mtr.bad{color:var(--danger)}
 
-#saveStat{margin-left:auto;font:400 11px var(--mono);color:var(--muted);white-space:nowrap}
+#saveStat{font:400 11px var(--mono);color:var(--muted);white-space:nowrap}
 #saveStat:empty{display:none}
 #setLabel{width:clamp(84px,8vw,150px);height:var(--ch);line-height:12px}
 #setLabel.dirty::after{content:" •"}
@@ -118,7 +118,6 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .padsub{margin:8px 0 5px;font:500 11px var(--mono);color:var(--faint)}.padsub .line{flex:1;height:1px;background:var(--edge)}
 
 #gifName{width:9ch}
-#gInfo{margin-bottom:8px}
 #bank h2:not(:first-child){margin-top:12px}
 
 /* ---------- frames tab ---------- */
@@ -156,7 +155,8 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:30px}
-.fxrow #fxName{flex:1;width:auto!important;max-width:none}#fxStyleRow #fxStyle{flex:1;min-width:0;display:flex;flex-wrap:wrap}#fxStyleRow #fxStyle button{height:var(--ch);flex:1 0 auto;min-width:64px;padding:0 8px}   /* each style as wide as its name (rows share out the rest), wrapping when they don't fit */#fxStyleRow{height:auto;min-height:26px}
+.fxrow.fxtop{display:grid;grid-template-columns:1fr minmax(0,150px) 1fr}.fxtop #fxName{width:auto!important;max-width:none;min-width:0}.fxtop #fxTgt{justify-self:end}   /* all effects (left) · this effect's name (middle) · where it plays (right) */
+.fxglob{display:flex;gap:3px;justify-self:start;padding:2px;border:1px dashed var(--edge);border-radius:var(--r)}#fxFollow.on{color:var(--sig);border-color:var(--sig)}#fxStyleRow #fxStyle{flex:1;min-width:0;display:flex;flex-wrap:wrap}#fxStyleRow #fxStyle button{height:var(--ch);flex:1 0 auto;min-width:64px;padding:0 8px}   /* each style as wide as its name (rows share out the rest), wrapping when they don't fit */#fxStyleRow{height:auto;min-height:26px}
 .fxrow .lcd{flex:none;width:12ch;text-align:center;font-size:11px}
 .fxrow .seg{flex:1;min-width:0}
 #fxStyle button{flex:1 1 0;min-width:0;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* every style shrinks a little, rather than the last one vanishing */
@@ -283,7 +283,6 @@ body.precopy #fxPre .fxp.empty::after,#scenes.copying .scene.empty::after,body.p
 body.precopy #fxPre .fxp.empty.drop::after,#scenes.copying .scene.empty.drop::after,body.padcopy .pad.empty.drop::after{content:"+";opacity:1;border:0;inset:0;background:var(--sig-soft, rgba(95,211,176,.15))}
 
 /* ---------- transform ---------- */
-#xfTitle{width:100%}
 #xCrop{flex:1;min-width:0}
 .btnrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 
@@ -358,6 +357,8 @@ kbd{display:inline-block;min-width:1.5em;padding:1px 4px;margin:0 1px;border:1px
 #aboutLog ul{margin:2px 0 6px;padding-left:18px;display:grid;gap:3px}
 #aboutLog code{font:11.5px var(--mono);color:var(--sig)}
 #aboutPanel a{color:var(--sig)}
+.linkbtn{all:unset;color:var(--sig);cursor:pointer;text-decoration:underline;text-underline-offset:2px}.linkbtn:focus-visible{outline:1px solid var(--sig)}
+.credBody{max-height:min(64vh,560px);overflow:auto;font-size:13px;line-height:1.5;color:var(--ink)}.credBody h3{display:none}.credBody h4{margin:14px 0 4px;font:600 12px var(--sans);color:var(--muted)}.credBody ul{margin:0;padding-left:18px}.credBody p{margin:6px 0}.credBody a{color:var(--sig)}.credBody code{font:400 12px var(--mono)}
 .brand{cursor:pointer}
 .keys{margin:0;display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:12px}
 .keys dt{font:600 11px var(--mono);color:var(--sig);white-space:nowrap}.keys dd{margin:0;color:var(--ink);line-height:1.45}

@@ -56,7 +56,7 @@
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
-      <div class="fxrow"><button class="iconbtn" id="fxAllOff" title="All effects off: every latched effect and preset is let go (each fades over its Release)"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" style="display:block;margin:auto"><path d="M8 2v6"/><path d="M4.6 4.2a5 5 0 1 0 6.8 0"/></svg></button><span class="lcd" id="fxName">Mono</span>
+      <div class="fxrow fxtop"><span class="fxglob" title="For all effects"><button class="iconbtn" id="fxAllOff" title="All effects off: every latched effect and preset is let go (each fades over its Release)"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" style="display:block;margin:auto"><path d="M8 2v6"/><path d="M4.6 4.2a5 5 0 1 0 6.8 0"/></svg></button><button class="iconbtn" id="fxFollow" title="Trig Follow: playing an effect (F-key, MIDI) also opens it in the editor. Off: the editor stays on what you are editing"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="6.5" y="6.5" width="7" height="7" rx="1"/><path d="M2 2l5 5"/><path d="M7 3.5V7H3.5"/></svg></button></span><span class="lcd" id="fxName">Mono</span>
         <div class="seg" id="fxTgt" title="Where it plays. All: the whole output, after the layers are blended. Or a set of layers: a layer button takes that layer in or out (from All: just that one); each chosen layer gets the effect on its own, before blending. Right-click a layer: that layer alone"><button data-v="out" title="All: once, on the finished picture (the layers already blended). 1+2+3+4 is different: each layer gets its own copy of the effect before they're blended (a Mirror per layer, a trail per layer, layers that blend differently with the effect on them). Tiles: All shows its four pips in one colour">All</button><button data-v="0" title="Layer 1 in / out (right-click: only layer 1)">1</button><button data-v="1" title="Layer 2 in / out (right-click: only layer 2)">2</button><button data-v="2" title="Layer 3 in / out (right-click: only layer 3)">3</button><button data-v="3" title="Layer 4 in / out (right-click: only layer 4)">4</button></div></div>
       <div class="fxrow" id="fxStyleRow"><div class="seg" id="fxStyle"></div><span id="fxPreList"></span></div>
       <div class="fxrow">
@@ -72,8 +72,7 @@
 </main>
 
 <aside id="side" class="panel">
-  <h2>Transform<span class="line"></span></h2>
-  <div class="lcd one" id="xfTitle" style="margin-bottom:12px">—</div>
+  <h2>Transform<span class="tag" id="xfTag"></span><span class="line"></span></h2>
   <div id="xfPanel">
     <div class="field" title="Base size: what Scale 1.00× means for this GIF. It's kept when the canvas format changes (a GIF on Fill still fills a 9:16 canvas). The buttons below set it and reset scale, rotation and flips in one go"><label for="xFit">Base size</label><select id="xFit" class="span">
       <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Fit</option><option value="cover">Fill</option><option value="stretch">Stretch</option></select></div>
@@ -90,7 +89,6 @@
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button></h2>
   <div id="gifSettings" class="disabled">
-    <div class="lcd one" id="gInfo"></div>
     <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
     <div id="gPanes">
       <div data-pane="play">
@@ -179,7 +177,7 @@
   </div>
   <div class="gfoot"><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></div>
 </aside>
-<div id="perf" class="panel" title="How hard VJif is working — hover each readout for details"><span class="ptitle">Performance</span><span id="saveStat"></span>
+<div id="perf" class="panel" title="Performance: how hard VJif is working — hover each readout for details"><span id="saveStat"></span>
   <div class="meters"><span id="mem" class="mtr"></span><span id="fps" class="mtr"><i>FPS</i>—</span><span id="load" class="mtr"><i>LOAD</i>—</span></div></div>
 <div id="toast"></div>
 <div id="setPanel" class="modal" hidden>
@@ -240,8 +238,14 @@
     </div>
     <div id="aboutLog" hidden><!-- @markdown tools/vjif/CHANGELOG.md --></div>
     <p class="note aboutCred">Design and UX by XC3N · code by Claude (Anthropic). MIT licence — source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a>.<br>
-      <a href="https://github.com/XC3N/webtools#credits" target="_blank" rel="noopener">Third-party credits</a> (fonts, the MP4 writer, palettes, borrowed ideas) are on the GitHub page.<br>If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
+      <button id="credBtn" class="linkbtn" title="Fonts, the MP4 writer, palettes, borrowed ideas">Credits</button>: fonts, the MP4 writer, palettes and borrowed ideas.<br>If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
     <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
+  </div>
+</div>
+<div id="credPanel" class="modal" hidden>
+  <div class="modalBox credBox" style="width:min(620px,94vw)">
+    <h2>Credits<span class="line"></span><button id="credClose" class="iconbtn" title="Close (Esc)">×</button></h2>
+    <div class="credBody"><!-- @markdown CREDITS.md --></div>
   </div>
 </div>
 <div id="lpMapPanel" class="modal" hidden>

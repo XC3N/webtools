@@ -232,7 +232,7 @@ try {
     if (!g || m.gen !== g.keyGen){ if (m.frames) m.frames.forEach(f => f.close()); return; }   // stale or cleared
     if (m.frames) fxDone(g, m.frames);
     else if (m.error){ console.warn('color worker:', m.error, '— using main thread'); fxMain(g, m.gen, fxParams(g)); }
-    else { g.keyMsg = `processing ${m.progress}/${m.total}…`; if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg; }
+    else { g.keyMsg = `processing ${m.progress}/${m.total}…`; gifMsg(g); }
   };
   fxWorker.onerror = e => {                          // worker unusable: redo pending work on this thread
     console.warn('color worker failed, using main thread', e.message); fxWorker = null;
@@ -269,7 +269,7 @@ function requestMasks(g){
   clearTimeout(g.maskT);
   g.maskT = setTimeout(() => {
     const gen = ++g.maskGen, p = fxParams(g), w = g.src[0].width, h = g.src[0].height;
-    if (p.region === 'point' && !p.seed){ g.keyMsg = 'Region "From pick": click Pick, then the GIF'; if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg; return; }
+    if (p.region === 'point' && !p.seed){ g.keyMsg = 'Region "From pick": click Pick, then the GIF'; gifMsg(g); return; }
     if (fxWorker) fxWorker.postMessage({ kind: 'mask', id: 'm' + g.uid, gen, blob: g.blob, type: g.type, n: g.src.length, w, h, q: g.media && g.media.px ? 'pixelated' : 'high', p });
     else masksMain(g, gen, p, w, h);
   }, 120);
@@ -279,7 +279,7 @@ function maskMsg(m){
   if (!g || m.gen !== g.maskGen) return;
   if (m.masks) masksDone(g, m.masks.map(b => new Uint8Array(b)));
   else if (m.error){ console.warn('mask worker:', m.error); masksMain(g, m.gen, fxParams(g), g.src[0].width, g.src[0].height); }
-  else { g.keyMsg = `finding edges ${m.progress}/${m.total}…`; if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg; }
+  else { g.keyMsg = `finding edges ${m.progress}/${m.total}…`; gifMsg(g); }
 }
 function masksDone(g, masks){
   g.masks = masks; g.maskBytes = masks.reduce((a, m) => a + m.length, 0); g.keyMsg = ''; g.fxVer++;
@@ -308,7 +308,7 @@ async function fxMain(g, gen, p){                    // fallback when workers ar
     out.push(await createImageBitmap(img));
     if (performance.now() - slice > 12){
       g.keyMsg = `processing ${i+1}/${g.src.length}…`;
-      if (pads[selPad].gif === g) $('#gInfo').textContent = g.keyMsg;
+      gifMsg(g);
       await yieldNow(); slice = performance.now();
     }
   }

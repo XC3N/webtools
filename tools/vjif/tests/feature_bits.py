@@ -1,4 +1,4 @@
-# 0.68–0.73 features: layer solo, the frame loop with hidden / covered windows, Rec ▾ items, BRB linked to Prep, count-in, transition regroup and options, border deselect, Ctrl hush, folding sections, Swap › Pick, LFO gap, mask modes, shadow crop
+# 0.68–0.74 features: Trig Follow, the Credits window, CPU thumbnails; layer solo, the frame loop with hidden / covered windows, Rec ▾ items, BRB linked to Prep, count-in, transition regroup and options, border deselect, Ctrl hush, folding sections, Swap › Pick, LFO gap, mask modes, shadow crop
 import asyncio
 from playwright.async_api import async_playwright
 from _env import DIST, ARGS
@@ -33,7 +33,7 @@ async def main():
     await pg.click("#brbLink"); await pg.evaluate("transCfg = trPresets[1]; transCfg.len = 16; startPrep()")
     lk = await pg.evaluate("[brb.link, brb.on, prep.scene]"); print('linked', lk); assert lk == [True, True, 0], lk
     await pg.evaluate("sceneKey(2)"); await pg.wait_for_timeout(100)
-    await pg.evaluate("brb.next = clock.beat - 0.01"); await pg.wait_for_timeout(300)
+    await pg.evaluate("brb.next = clock.beat - 0.01"); await pg.wait_for_function("prep.scene !== 0", timeout=20000)   # the next frame runs BRB (slow machines: wait for it)
     sw = await pg.evaluate("[prep.scene, sceneIdx, !!prep.tr, brb.on]"); print('switched', sw); assert sw == [1, 2, True, True], sw
     await pg.wait_for_timeout(300)
     await pg.evaluate("doGoLive()"); gl = await pg.evaluate("[!!prep, brb.on]"); print('live', gl); assert gl == [False, False], gl
@@ -64,5 +64,14 @@ async def main():
     print('options', op); assert op == [True, 'thru', 3], op
     sc = await pg.evaluate("(() => { const g = pads[0].gif; if (!g) return 'no gif'; g.shadow = { ...SHADOW_DEF, on: true, cut: 0.6 }; const c = layers.flatMap(L => L.clips).find(c => c.pad === 0); const cv = document.createElement('canvas'); cv.width = 320; cv.height = 180; const x = cv.getContext('2d'); x.scale(320 / W, 180 / H); drawClip(x, effClip(c, g), g, fxImage(g, 0, c)); return 'ok'; })()")
     print('shadow crop', sc); assert sc == 'ok', sc
+    # 0.74: Trig Follow, Credits over About, thumbnails without a GPU read-back
+    tf = await pg.evaluate("selectFx(0); fxPlay(5); fxUp(5); const a = selFx; $('#fxFollow').click(); fxPlay(5); fxUp(5); const r = [a, selFx, fxFollow]; $('#fxFollow').click(); r")
+    print('follow', tf); assert tf == [0, 5, True], tf
+    cr = await pg.evaluate("$('#aboutPanel').hidden = false; $('#credBtn').click(); const a = !$('#credPanel').hidden && $('#credPanel .credBody').textContent.includes('VCR OSD Mono'); a")
+    await pg.keyboard.press('Escape')
+    cr2 = await pg.evaluate("[$('#credPanel').hidden, $('#aboutPanel').hidden]"); await pg.evaluate("closeAbout()")
+    print('credits', cr, cr2); assert cr and cr2 == [True, False], (cr, cr2)
+    th = await pg.evaluate("(() => { const t = performance.now(); const u = sceneThumb(); return [typeof u === 'string' && u.startsWith('data:image/jpeg'), performance.now() - t < 100]; })()")
+    print('thumb', th); assert th == [True, True], th
     await b.close()
 asyncio.run(main())

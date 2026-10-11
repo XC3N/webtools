@@ -97,6 +97,11 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
 - [ ] {ocv7fifdfkezjtcdvqtn} **Effect plays while dragged** (0.73) — hold an effect tile and drag it: the effect stays on until you let go.
 - [ ] {hr757smrqn2mmmwqnow0} **Launchpad preset row** (0.73) — Settings › Launchpad layout: bottom row = presets 7 8 9 4 5 6 1 2, right button 3.
+- [ ] {uqfogckolx2naf4ogqdd} **Shorter right column** (0.74) — no info strips under Transform and GIF (hover the headings' tags instead), Performance on one line.
+- [ ] {idfxcorner} **Effects toolbar + Trig Follow** (0.74) — top-left of the effect editor: ⏻ and Trig Follow. Follow on: an F-key opens that effect in the editor; off: it doesn't.
+- [ ] {le351226yqjllwldpp40} **VCR channel font** (0.74) — TV › Channel: the number in the VCR OSD font.
+- [ ] {credits} **Credits window** (0.74) — About › Credits: the list opens over About; Esc closes it.
+- [ ] {thumbspeed} **Smoother with effects** (0.74) — heavy effects on, watch FPS: no hitch once a second (the scene tile's refresh).
 - [ ] {o9fm7v1dndg06e2kzku7} **Key selection modes** (0.56) — load key-regions.gif (white background, a ring, two windows), GIF › Colour › Key on, Pick the white. Everywhere: all the white goes; From edges: only the background; From pick: only the white area you clicked.
 - [x] {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - [x] {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.

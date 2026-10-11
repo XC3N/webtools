@@ -127,7 +127,7 @@ function padToLayer(p, li){
 // a scene-tile-shaped picture of a GIF's first frame, fitted whole like a scene thumbnail (pads loaded, nothing playing)
 function gifTile(g){
   if (g.tileThumb && g.tileFmt === format) return g.tileThumb;
-  const c = document.createElement('canvas'); c.width = 96; c.height = 54; const x = c.getContext('2d'), f = fxImage(g, g.startF);
+  const [c, x] = cpuCanvas(96, 54), f = fxImage(g, g.startF);
   const k = Math.min(96 / W, 54 / H), fw = W * k, fh = H * k, s = Math.min(fw / f.width, fh / f.height);   // the canvas frame, then the GIF inside it
   x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54); x.imageSmoothingEnabled = !g.crisp;
   x.drawImage(f, (96 - f.width * s) / 2, (54 - f.height * s) / 2, f.width * s, f.height * s);
@@ -136,8 +136,7 @@ function gifTile(g){
 // small cover-cropped copy for the layer chips and scene tiles (made on demand for GIFs of scenes not on screen)
 function gifThumb(g, f = fxImage(g, g.startF)){
   if (g.thumb) return g.thumb;
-  const t = document.createElement('canvas'); t.width = 52; t.height = 48;
-  const tx = t.getContext('2d'), k = Math.max(t.width / f.width, t.height / f.height);
+  const [t, tx] = cpuCanvas(52, 48), k = Math.max(t.width / f.width, t.height / f.height);
   tx.imageSmoothingEnabled = !g.crisp; tx.drawImage(f, (t.width - f.width*k)/2, (t.height - f.height*k)/2, f.width*k, f.height*k);
   return g.thumb = t.toDataURL();
 }

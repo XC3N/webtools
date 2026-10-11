@@ -23,9 +23,9 @@ function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.queryS
 function syncGifUI(){
   const p = pads[selPad], g = p.gif;
   $('#gifSettings').classList.toggle('disabled', !g);
-  $('#gifName').textContent = `${p.label}${g ? '' : ' · empty'}`;
+  $('#gifName').textContent = `${p.label}${g ? (g.keyMsg ? ' · ' + g.keyMsg : '') : ' · empty'}`; $('#gifName').title = '';
   $('#gText').hidden = !(g && g.media && g.media.text); $('#gClear').disabled = !g;
-  if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); $('#gInfo').textContent = ''; document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
+  if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
   $('#gSmooth').checked = !g.crisp;
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
   if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + FX_PALS.map((P, i) => `<option value="${i}" title="${esc(P.t)}">${esc(P.n)}</option>`).join('');
@@ -50,9 +50,11 @@ function syncGifUI(){
   $('#tLenRow').classList.toggle('dimmed', g.env.gate);
   syncAutoUI(g);
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
-  $('#gInfo').textContent = g.keyMsg || `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h}${g.media && g.media.px ? ` (pixel art ×${g.media.px[0]}${g.media.px[1] !== g.media.px[0] ? '×' + g.media.px[1] : ''}, kept at ${g.w / g.media.px[0]}×${g.h / g.media.px[1]})` : ''} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
+  $('#gifName').title = `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h}${g.media && g.media.px ? ` (pixel art ×${g.media.px[0]}${g.media.px[1] !== g.media.px[0] ? '×' + g.media.px[1] : ''}, kept at ${g.w / g.media.px[0]}×${g.h / g.media.px[1]})` : ''} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
 }
 const curGif = () => pads[selPad].gif;
+// a GIF's processing message (key, edges…) shows in the GIF heading, after its pad letter
+const gifMsg = g => { if (pads[selPad].gif === g) $('#gifName').textContent = `${pads[selPad].label}${g.keyMsg ? ' · ' + g.keyMsg : ''}`; };
 // readouts too narrow for their text: hovering shows all of it
 document.addEventListener('pointerover', e => { const el = e.target.closest && e.target.closest('.lcd, .tag, output, .seg button, .fxp .t>span');
   if (el && el.scrollWidth > el.clientWidth + 1 && (!el.title || el.dataset.autoTip)){ el.title = el.textContent.trim(); el.dataset.autoTip = 1; } });

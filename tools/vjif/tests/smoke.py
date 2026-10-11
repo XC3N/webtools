@@ -47,7 +47,7 @@ async def main():
     await pg.evaluate("autosave(true)"); await pg.wait_for_timeout(200)
     print('saved', await pg.evaluate("store.last.length > 100"))
     print('fps', await pg.evaluate("$('#fps').textContent"), await pg.evaluate("$('#load').textContent"))
-    await pg.screenshot(path=str(OUT/'smoke.png'))
+    await pg.screenshot(path=str(OUT/'smoke.png'), timeout=180000)   # the software GPU can be slow on a busy machine
     print('ERRORS', errs)
     await b.close()
 asyncio.run(main())

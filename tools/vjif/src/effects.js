@@ -136,12 +136,15 @@ function snapBeat(b){
   const prev = Math.floor(b / unit + 1e-9) * unit;
   return b - prev <= unit * SNAP_GRACE ? prev : prev + unit;
 }
+// an effect played from its key or MIDI; with Trig Follow on, the editor opens it too
+let fxFollow = Prefs.get('vjif-fxfollow') === '1';
+function fxPlay(i){ fxDown(i); if (fxFollow && selFx !== i) selectFx(i); }
 function fxDown(i){
   const C = fxConf(i), S = fxSt[i], b = clock.beat;
   if (C.mode === 'hit') S.b0 = snapBeat(b);
   else if (C.mode === 'hold'){ S.held = true; S.t0 = b; }
   else { S.on = !S.on; if (!S.on){ S.rel = b; return; } S.t0 = b; }
-  // (playing an effect from its key or MIDI leaves the editor on what you were editing: clicking its tile selects it)
+  // (playing an effect from its key or MIDI leaves the editor on what you were editing, unless Trig Follow: see fxPlay)
 }
 function fxUp(i){ const S = fxSt[i]; if (S.held){ S.held = false; S.rel = clock.beat; } }
 function selectFx(i){ selFx = i; syncFxUI(); }
@@ -740,3 +743,5 @@ function drawOverlay(gh = ghostList()){
   }
   pctx.restore();
 }
+$('#fxFollow').classList.toggle('on', fxFollow);
+$('#fxFollow').addEventListener('click', () => { fxFollow = !fxFollow; Prefs.set('vjif-fxfollow', fxFollow ? '1' : '0'); $('#fxFollow').classList.toggle('on', fxFollow); });

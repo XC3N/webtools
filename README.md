@@ -36,19 +36,9 @@ and a Markdown file as HTML with `<!-- @markdown tools/vjif/CHANGELOG.md -->` (V
 - UI follows the shared design language and its layout-stability rules: readouts have fixed widths, context-dependent text lives in fixed boxes, swapped controls share one slot sized to the largest, unavailable controls are dimmed in place. See the comment at the top of each tool's stylesheet.
 - Desktop Chrome is the target browser (WebCodecs, Web MIDI, OffscreenCanvas).
 
-## Third-party code
-
-- [mp4-muxer](https://github.com/Vanilagy/mp4-muxer) 5.2.2 (MIT) in `common/vendor/`, used by VJif to write MP4 recordings.
-
 ## Credits
 
-UX & features design by XC3N · implementation & coding by Claude.
-
-Apart from the vendored library above, the code is written for these tools rather than copied from other projects. What they borrow is listed here, and the list is updated in the same commit as whatever adds to it.
-
-- Typefaces, loaded from Google Fonts: Instrument Sans, JetBrains Mono (JetBrains), and for VJif's Lettering Russo One, Anton, Bebas Neue, Bungee, Monoton, Orbitron, Press Start 2P, Rubik Mono One, Righteous (all SIL Open Font License) and Permanent Marker (Apache License 2.0).
-- VJif Colour › Palette data: the C64 colours are Philip "Pepto" Timmermann's palette (pepto.de); the CGA, EGA, NES and Game Boy colours as listed in Wikipedia's "List of video game console palettes".
-- Ideas, not code: the Glitch › Melt transition follows the Doom screen wipe (id Software, 1993); Pay-TV follows analogue cable sync suppression, Crypt follows Videocrypt's cut-and-rotate and Nagravision Syster's line shuffling; ordered dithering uses Bayer's matrix (Bryce Bayer, 1973).
+UX & features design by XC3N · implementation & coding by Claude. Third-party code (mp4-muxer, MIT), typefaces, palette data and borrowed ideas are listed in [CREDITS.md](CREDITS.md); VJif shows the same list under About › Credits.
 
 If these tools are useful to you, consider supporting the music at [xc3n.bandcamp.com](https://xc3n.bandcamp.com).
 

@@ -7,15 +7,27 @@ const sceneIds = Array.from({ length: N_SCENES }, (_, i) => i);   // which scene
 let sceneIdx = 0, pendingScene = null, liveThumb = null, liveName = '';   // liveName: the current scene's name
 const emptyLayer = () => ({ on: true, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a', tr: 'cut' });
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
-function sceneThumb(){
-  if (!layers.some(L => L.clips.length)) return null;
-  // the scene itself, drawn apart from the output (no screen or layer effects, transition, blackout or freeze), straight at tile size
-  const c = document.createElement('canvas'); c.width = 96; c.height = 54; const x = c.getContext('2d'), k = Math.min(96 / W, 54 / H);
+// the scene itself, drawn apart from the output (no screen or layer effects, transition, blackout or freeze), straight at tile size
+function drawThumb(x){
+  const k = Math.min(96 / W, 54 / H);
   x.imageSmoothingQuality = 'high'; x.fillStyle = '#000'; x.fillRect(0, 0, 96, 54);
   const xf = [k, 0, 0, k, (96 - W * k) / 2, (54 - H * k) / 2];   // other formats letterboxed
   x.setTransform(...xf); x.save(); x.beginPath(); x.rect(0, 0, W, H); x.clip();
   render(frameList(performance.now()), x, null, NO_LAYER_FX, 0, xf); x.restore();
+}
+// Thumbnails are drawn on CPU canvases (willReadFrequently): reading back a GPU canvas (toDataURL) waited for the
+// whole GPU queue, the effects included: 0.2–0.5 s per picture in tests, a dropped frame or more each second live
+function sceneThumb(){
+  if (!layers.some(L => L.clips.length)) return null;
+  const [c, x] = cpuCanvas(96, 54); drawThumb(x);
   return c.toDataURL('image/jpeg', 0.7);
+}
+// the live tile, once a second, only when the picture was redrawn since the last one
+let thumbDrawn = -1;
+function refreshLiveThumb(){
+  if (!layers.some(L => L.clips.length)){ if (liveThumb){ liveThumb = null; renderScenes(); } return; }
+  if (drawn === thumbDrawn) return; thumbDrawn = drawn;
+  liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb;
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)
 const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut' });
@@ -241,7 +253,7 @@ $('#scEmpty').addEventListener('click', () => emptySceneAt(sceneIdx));
 $('#scFx').addEventListener('click', () => setFxLocal(!fxLocal));
 $('#fxAllOff').addEventListener('click', () => { const n = latchedNow().filter(Boolean).length; applyLatched([]); toast2(n ? `All effects off (${n})` : 'No effects on'); });
 let thumbKeep = null, thumbTick = 0;                 // the live tile's picture as saved: refreshed every 20 s (not every second), so autosave doesn't rewrite the set constantly
-setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb; } }, 1000);
+setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet) refreshLiveThumb(); }, 1000);
 // a layer on / off can play a transition: the picture before the change is the leaving side, like a scene change
 function toggleLayer(li){
   const lt = layers[li].tr || 'cut', P = lt === 'cut' ? null : lt === 'armed' ? transCfg : trPresets[+lt];   // each layer's own on / off transition (its card)

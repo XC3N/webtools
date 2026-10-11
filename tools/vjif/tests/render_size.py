@@ -15,7 +15,7 @@ async def run(p, rs):
     t = await pg.evaluate("""async () => { let s = 0; for (let i = 0; i < 40; i++){ await new Promise(r => requestAnimationFrame(r)); redraw.all = true; const a = performance.now(); drawFrame(performance.now()); s += performance.now() - a; } return (s / 40).toFixed(1); }""")
     print(rs, 'drawFrame ms', t)
     bb = await pg.locator('#pv').bounding_box()
-    await pg.screenshot(path=str(OUT/f'rs{rs}.png'), clip=bb)
+    await pg.screenshot(path=str(OUT/f'rs{rs}.png'), clip=bb, timeout=180000)
     # transition + scene thumb + freeze + still
     await pg.keyboard.press('Digit2'); await pg.keyboard.press('Numpad2'); await pg.wait_for_timeout(500); await pg.keyboard.press('Numpad1'); await pg.wait_for_timeout(700)
     await pg.keyboard.down('Insert'); await pg.wait_for_timeout(200); await pg.keyboard.up('Insert')

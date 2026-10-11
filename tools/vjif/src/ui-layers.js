@@ -153,7 +153,7 @@ $('#xCropReset').addEventListener('click', () => {
 function syncXfUI(){
   const c = selClip();
   $('#xfPanel').classList.toggle('disabled', !c);
-  $('#xfTitle').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label} · ${pads[c.pad].gif ? pads[c.pad].gif.name : ''}` : `${LNAMES[target]} · no GIF selected`;
+  $('#xfTag').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label}` : `${LNAMES[target]} · nothing selected`; $('#xfTag').title = c && pads[c.pad].gif ? pads[c.pad].gif.name : '';
   if (!c){                                          // nothing selected: show neutral values, not the last GIF's
     XF.forEach(([id]) => { const el = $(id); el.value = el.dataset.def ?? 0; el.nextElementSibling.textContent = '—'; el.nextElementSibling.classList.remove('mod'); });
     $('#xFit').value = 'auto'; $('#xFx').checked = $('#xFy').checked = $('#xT').checked = false; $('#xCrop').textContent = 'none';

@@ -4,6 +4,20 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.74.0 — 2026-10-11
+
+### Interface
+- The right column is shorter: no info strip under Transform (its heading now says the layer and pad; hover for the GIF's name) or under GIF (hover the GIF heading's pad letter for file, frames, size and length; processing messages show there too), and Performance is one line.
+- The effect editor's top row: the buttons for all effects on the left (⏻ all off, Trig Follow), the effect's name in the middle, where it plays on the right.
+- Trig Follow: with it on, playing an effect from its key or MIDI also opens it in the editor.
+- About › Credits opens the credits in VJif itself (the same list as CREDITS.md in the repo).
+
+### Transitions
+- TV › Channel draws its number in VCR OSD Mono, the classic VCR on-screen font (by Riciery Leal, free for any use).
+
+### Speed
+- Scene and pad thumbnails are drawn on the CPU: reading back a GPU canvas once a second waited for the whole GPU queue (effects included), which could drop frames. The live scene tile is also only redrawn when the picture changed.
+
 ## 0.73.0 — 2026-10-11
 
 ### Layers

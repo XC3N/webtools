@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.73.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.74.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -107,6 +107,8 @@ function stillOf(src = master){ const c = document.createElement('canvas'); c.wi
 const mod = (a, n) => ((a % n) + n) % n;
 // a tooltip that changes every second: the new text waits until the pointer leaves, so an open tooltip stays readable
 function setTip(el, t){ el.dataset.tip = t; if (!el.matches(':hover')) el.title = t; if (!el._tip){ el._tip = 1; el.addEventListener('pointerleave', () => { el.title = el.dataset.tip; }); } }
+// a small canvas for pictures that get read back (thumbnails): on the CPU, so reading it doesn't wait for the GPU
+const cpuCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d', { willReadFrequently: true })]; };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 // a row of buttons (segmented control): fn(button, event) for a click on one of them (not on a disabled one)
 const onSeg = (el, fn) => el.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled && el.contains(b)) fn(b, e); });

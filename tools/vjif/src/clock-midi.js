@@ -171,7 +171,7 @@ function ctlApply(m, kind, val, key){
     case 'pad': down ? trigger(i) : release(i); break;
     case 'scene': if (down) sceneKey(i); break;
     case 'trans': if (down) armTrans(i); break;
-    case 'fx': down ? fxDown(i) : fxUp(i); break;
+    case 'fx': down ? fxPlay(i) : fxUp(i); break;
     case 'layer': if (down) toggleLayer(i); break;
     case 'black': setBlack(down); updLiveTag(); break;
     case 'freeze': setFreeze(down); break;

@@ -250,6 +250,10 @@ $('#aboutVer').addEventListener('click', e => { e.preventDefault(); aboutTab('lo
 function closeAbout(){ $('#aboutPanel').hidden = true; Prefs.set('vjif-about', $('#aboutAgain').checked ? 'show' : 'seen'); }
 $('.brand').addEventListener('click', () => openAbout());
 $('#helpAbout').addEventListener('click', () => openAbout());
+// Credits: over About (last in the page, so it sits on top)
+$('#credBtn').addEventListener('click', () => { document.body.appendChild($('#credPanel')); $('#credPanel').hidden = false; });
+$('#credClose').addEventListener('click', () => { $('#credPanel').hidden = true; });
+$('#credPanel').addEventListener('pointerdown', e => { if (e.target.id === 'credPanel') $('#credPanel').hidden = true; });
 $('#aboutClose').addEventListener('click', closeAbout); $('#aboutGo').addEventListener('click', closeAbout);
 $('#aboutPanel').addEventListener('pointerdown', e => { if (e.target.id === 'aboutPanel') closeAbout(); });
 { const a = Prefs.get('vjif-about'), v = Prefs.get('vjif-ver'); Prefs.set('vjif-ver', APP_VERSION);
