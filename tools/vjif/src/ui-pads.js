@@ -12,7 +12,7 @@ function buildPads(){
       trigger(i, e.altKey); });   // Alt+click: swap
     el.addEventListener('contextmenu', e => { e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
-    el.addEventListener('pointerup', e => { const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
+    el.addEventListener('pointerup', e => { const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); if (delHush) return; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
     el.addEventListener('click', e => { if (el._shift || isDel(e)){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);

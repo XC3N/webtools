@@ -375,11 +375,11 @@ ${FX_GLSL}
         if (rgb > 0.001 && HAS(rgbS, S_rgb_phos)){ // phosphor: bright parts bloom and linger
           vec2 q = geo(p), t = vec2(5.0) / res; vec3 bl = vec3(0.0);
           for (int i = 0; i < 8; i++){ float an = float(i) * 0.785398; bl += raw(q + vec2(cos(an), sin(an)) * t * 1.6) + raw(q + vec2(cos(an), sin(an)) * t * 3.4); }
-          bl /= 16.0; c += max(bl - 0.35, 0.0) * 1.6 * rgb;
+          bl = look(bl / 16.0); c += max(bl - 0.35, 0.0) * 1.6 * rgb;
           vec4 pv = texture2D(prev, vec2(uv.x, 1.0 - uv.y)); c = max(c, pv.rgb * 0.82 * rgb); }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_crypt)) c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))) * 0.85 + 0.06, 0.45 * rgb);   // crypt: colour lost, the black level lifted
         if (rgb > 0.001 && HAS(rgbS, S_rgb_paytv)){ // pay-TV picture: a smeared echo, the colour decoded wrong (hue turned round, oversaturated), now and then a negative field
-          vec3 gh = raw(geo(vec2(fract(p.x - 0.022), p.y)));
+          vec3 gh = look(raw(geo(vec2(fract(p.x - 0.022), p.y))));
           vec3 d = mix(c, gh, 0.38);
           d = clamp(hueRot(d, 3.14159), 0.0, 1.0); float l = dot(d, vec3(0.299, 0.587, 0.114)); d = clamp(mix(vec3(l), d, 1.7), 0.0, 1.0);
           if (h1(floor(time * 3.0) + 0.5) < 0.25) d = 1.0 - d;
@@ -392,11 +392,11 @@ ${FX_GLSL}
           float w = rgb, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
           if (w > 0.001){                            // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
             vec2 q = geo(p), px1 = vec2((1.5 + 2.0 * w) / res.x, 0.0);         // softer as the tape wears
-            vec3 lu = (raw(q - px1) + c * 2.0 + raw(q + px1)) / 4.0;                // tape's soft picture: brightness a little blurred sideways…
+            vec3 lu = (look(raw(q - px1)) + c * 2.0 + look(raw(q + px1))) / 4.0;   // (the neighbours with the picture's look too: a palette doesn't show its original colours through)                // tape's soft picture: brightness a little blurred sideways…
             float kb = min(1.0, w * 20.0);              // the tape's softness is there at any Wear (full from 5 %): Wear adds the faults
             c = mix(c, lu + (c - lu) * 0.6, 0.7 * kb);                             // …with a faint edge ring (the sharpening VCRs added)
             vec3 sm = (raw(q - vec2(0.004, 0.0)) + raw(q - vec2(0.008, 0.0)) + raw(q - vec2(0.012, 0.0)) + raw(q - vec2(0.016, 0.0))) / 4.0;
-            float yl = dot(c, vec3(0.299, 0.587, 0.114)); vec3 ch = sm - dot(sm, vec3(0.299, 0.587, 0.114));
+            float yl = dot(c, vec3(0.299, 0.587, 0.114)); sm = look(sm); vec3 ch = sm - dot(sm, vec3(0.299, 0.587, 0.114));
             c = mix(c, vec3(yl) + ch, 0.8 * kb);                                    // colour at a fraction of the sharpness, smeared to the right
             c += (vec3(h1(ln * 3.7 + fr), h1(ln * 5.1 + fr * 1.7), h1(ln * 2.3 + fr * 0.7)) - 0.5) * 0.06 * w;   // chroma noise, line by line
             float bq = vhsBand(uv.y), seg = h1(ln * 1.3 + fr * 3.1);   // dropouts: where the tape lost its oxide, mostly in the bands
@@ -595,7 +595,7 @@ ${FX_GLSL}
       to.setTransform(1, 0, 0, 1, 0, 0); to.globalAlpha = 1; to.globalCompositeOperation = 'source-over';
       if (slot === 0){ to.fillStyle = '#000'; to.fillRect(0, 0, CW, CH); } else to.clearRect(0, 0, CW, CH);   // what moved away is black / see-through
       to.drawImage(cv, 0, 0);
-    }, idle(slot){ const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; } },   // nothing on it: the trail starts over next time
+    }, swap(a, b){ const t = slots[a]; slots[a] = slots[b]; slots[b] = t; }, idle(slot){ const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; } },   // nothing on it: the trail starts over next time
     resize(){                                        // new canvas format: the render targets follow (feedback history starts over)
       cv.width = CW; cv.height = CH; gl.viewport(0, 0, CW, CH);
       slots.forEach(S => { if (!S) return; S.rt.forEach(r => { gl.bindTexture(gl.TEXTURE_2D, r.t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, CW, CH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }); S.fbWas = false; S.stale = true; });
@@ -642,7 +642,7 @@ function drawFrame(now){
   if (prep) drawPrep(now, hidden, quiet); else {
   const list = frameList(now);
   let tp = 1;
-  if (trans){ tp = transProgress(); if (tp >= 1){ endTrans(); redraw.all = true; } }
+  if (trans){ tp = transProgress(); if (tp >= 1){ if (trans.sideFx && post) post.swap(SLOT.OUT, SLOT.ARRIVING_OUT); endTrans(); redraw.all = true; } }   // the arriving scene's trail carries on
   const fxF = post ? fxFrame(clock.beat) : NOFX, fxU = fxF.out, bl = blackLevel(now);
   const LUs = fxF.layers, zE = zoomEOf(fxU); LUs.forEach((U, li) => { if ((!U || !layers[li].on) && post) post.idle(SLOT.LAYERS + li); });   // off: its trail starts over when it comes back
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
@@ -659,10 +659,12 @@ function drawFrame(now){
       const aF = fxFrame(clock.beat, trans.fx);
       render(frameList(now, trans.from, trans.gifs), trA, SLOT.LEAVING_LAYERS, aF.layers, zoomEOf(aF.out)); if (aF.out) post.run(aF.out, trA.canvas, trA, SLOT.LEAVING_OUT); else post.idle(SLOT.LEAVING_OUT);
       render(list, trB, SLOT.LAYERS, LUs, zE); if (fxU) post.run(fxU, trB.canvas, trB, SLOT.ARRIVING_OUT); else post.idle(SLOT.ARRIVING_OUT);
-      composeTransition(trEase(tp, trans.cfg), trans.cfg); sideFx = true;
+      composeTransition(trEase(tp, trans.cfg), trans.cfg); sideFx = trans.sideFx = true;
     }
     else if (trans){
       render(frameList(now, trans.from, trans.gifs), trA, SLOT.LEAVING_LAYERS, LUs, zE); render(list, trB, SLOT.LAYERS, LUs, zE);
+      if (fxU && post){                              // the screen effects on each scene before they're combined: the transition's own picture
+        post.run(fxU, trA.canvas, trA, SLOT.LEAVING_OUT); post.run(fxU, trB.canvas, trB, SLOT.ARRIVING_OUT); sideFx = trans.sideFx = true; }   // (snow, tears, OSD) keeps its colours
       composeTransition(trEase(tp, trans.cfg), trans.cfg);
     } else render(list, mctx, SLOT.LAYERS, LUs, zE);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects

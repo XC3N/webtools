@@ -60,7 +60,6 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {sccur} **Copy into this scene** (0.64) — on an empty scene, Ctrl+drag another scene onto its tile: it fills in place; Ctrl+Z undoes it.
 - [ ] {livebar} **Go live / leave BRB on the bar** (0.64) — Snap off: Enter in Prep waits for the next bar; in BRB a scene key changes on the next bar.
 - [ ] {fbghost} **Feedback fades out** (0.64) — Feedback Trails at a long Length, change scenes: no faint ghost of the old scene left.
-- [ ] {bordersel} **Border click deselects** (0.64) — a big GIF sticking out past the canvas: click in the grey border over it: deselected.
 - [ ] {recsnd2} **Rec sound (worklet)** (0.65) — MP4 with the music player (a long track), a timed take, busy scene: is the sound clean, in sync, and there to the end?
 - [ ] {recpop} **Rec ▾** (0.65) — the ▾ next to Rec: bars / frame rate / Mb/s; same as in Settings.
 - [ ] {musseek} **Music seek bar** (0.65) — under the player buttons: click / drag to move in the track; the pause button pauses.
@@ -71,16 +70,19 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {croptile} **Crop + tile** (0.66) — crop a GIF, then Tile: the cropped part repeats.
 - [ ] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
 - [ ] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
-- [ ] {ctrlhush} **No red outline after copying** (0.66) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines until you let go.
+- [ ] {ctrlhush} **No delete after copying** (0.70) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines, and Ctrl+click doesn't clear anything until you let go of Ctrl and press it again.
 - [ ] {hbar} **Section buttons on their own row** (0.67) — Pads and Scenes: the buttons are on a row under the name; Clear pad is at the bottom right, dimmed on an empty pad.
 - [ ] {ez8ev63uoip1luh6y982} **Covered windows keep playing** (0.68) — output window over the control window, click the control window (so it covers the output): playback goes on, in both.
 - [ ] {r14m2kk53etwcxadqka1} **Layer solo** (0.68) — right-click a layer's number: only that layer on; right-click it again: the others as they were.
 - [ ] {allpip} **All-layers pips** (0.68) — an effect on All: four pips in one colour; Settings › Interface › All-layers pips changes it.
-- [ ] {osdfx} **Channel number over the effects** (0.68) — latch Colour › Palette, change scene with Glitch › Channel: the number stays green.
+- [ ] {osdfx} **Transitions keep their own colours** (0.70) — latch Colour › Palette, change scene with TV › Channel: the snow and the number keep their colours; the two scenes have the palette.
 - [ ] {qx05hugalvzxnl9opxvt} **With Sync in Rec ▾** (0.68) — Rec ▾ › Music starts with Sync does what With Sync did.
 - [ ] {sgjh9joapu33uxnftn46} **Transitions regrouped** (0.69) — Type is a 3 × 3 grid; Melt is under Dissolve, VHS and Channel under TV; the Style row never takes two lines. Old presets still play the same.
 - [ ] {6c1mq3jcoix9tqtc6gc1} **BRB linked to Prep** (0.69) — fill 3+ scenes, turn on the chain, Enter: the output changes scenes every N bars (never to the one you edit; switch scenes to edit freely). Enter again: your scene goes live, BRB stops.
 - [ ] {4ofgrromx5bbl2ig0jiv} **Count-in** (0.69) — Rec ▾ › Count-in 2, Rec: the button counts In 2, In 1, then records.
+- [ ] {1iff1fyq0m9ucq0tcjit} **Border click deselects** (0.70) — click in the grey border around the canvas, on nothing: no GIF selected, and it stays so (a big GIF sticking out doesn't get picked).
+- [ ] {0lme81rrpjbxw13t1i1o} **Music Play stays lit** (0.70) — Play: lit; Pause: still lit (play icon); Stop: off.
+- [ ] {vhspal} **VHS / Phosphor over a palette** (0.70) — latch Colour › Palette, add CRT › VHS + Scanlines (or Phosphor): only palette colours, no original colours showing through.
 - [ ] {o9fm7v1dndg06e2kzku7} **Key selection modes** (0.56) — load key-regions.gif (white background, a ring, two windows), GIF › Colour › Key on, Pick the white. Everywhere: all the white goes; From edges: only the background; From pick: only the white area you clicked.
 - [x] {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - [x] {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.

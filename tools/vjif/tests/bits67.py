@@ -40,5 +40,13 @@ async def main():
     # count-in in Rec ▾, transitions regrouped
     c = await pg.evaluate("[!!document.querySelector('#recPopRows .seg[data-src=\"#recCountSeg\"]'), normTrans({ type: 'glitch', style: 'melt' }).type, normTrans({ type: 'glitch', style: 'channel' }).type, TR_TYPES.length]")
     print('count-in / regroup', c); assert c == [True, 'dissolve', 'tv', 9], c
+    # a click in the border on nothing deselects, and it stays deselected (it used to fall back to the last GIF)
+    bd = await pg.evaluate("""(() => { const L = layers[target]; if (!L.clips.length) return 'no clips'; L.sel = L.clips[0]; const r = pv.getBoundingClientRect();
+      pv.dispatchEvent(new PointerEvent('pointerdown', { clientX: r.left + 3, clientY: r.top + 3, pointerId: 1, bubbles: true })); pv.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, bubbles: true }));
+      return [L.sel, selClip()]; })()""")
+    print('border', bd); assert bd == [False, None], bd
+    # after a Ctrl+drag copy, Ctrl+click doesn't remove until Ctrl is pressed again
+    h = await pg.evaluate("hushDel(); const a = isRm({ ctrlKey: true }); dispatchEvent(new KeyboardEvent('keyup', { key: 'Control' })); [a, isRm({ ctrlKey: true })]")
+    print('hush', h); assert h == [False, True], h
     await b.close()
 asyncio.run(main())

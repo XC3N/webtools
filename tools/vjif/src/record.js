@@ -30,7 +30,7 @@ function musUI(){
   // the icon only when it changes: swapping it on every time update (4× a second) removed the icon under a click in
   // progress, so the click never reached the button (the pause button "did nothing")
   const ic = mus.el.paused ? 'play' : 'pause'; if ($('#musPlay').dataset.ic !== ic){ $('#musPlay').dataset.ic = ic; $('#musPlay').innerHTML = mus.el.paused ? MUS_IC_PLAY : MUS_IC_PAUSE; }
-  $('#musPlay').classList.toggle('on', !mus.el.paused);
+  $('#musPlay').classList.toggle('on', !!mus.el.src && (!mus.el.paused || mus.el.currentTime > 0));   // lit from Play until Stop (a pause keeps it lit)
   $('#musPlay').title = mus.el.src ? `${mus.el.paused ? 'Play' : 'Pause'}: ${mus.name} · ${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : 'Play / pause (no track: load one with ⏏)';
   $('#musTime').textContent = mus.el.src ? `${mmss(mus.el.currentTime)} / ${mmss(mus.el.duration)}` : '';
 }

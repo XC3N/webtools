@@ -292,9 +292,9 @@ function renderPool(){
     const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);
     x.imageSmoothingEnabled = false; x.drawImage(f, (c.width - f.width * k) / 2, (c.height - f.height * k) / 2, f.width * k, f.height * k);
     // × or Ctrl+click removes: at once when no pad uses it, after a held press when one does (see poolHold)
-    t.addEventListener('pointerdown', e => { if (e.button === 0 && (e.target.closest('.px') || isDel(e)) && poolUse(m).sc.length) poolHold(t, m, e); });
+    t.addEventListener('pointerdown', e => { if (e.button === 0 && (e.target.closest('.px') || isRm(e)) && poolUse(m).sc.length) poolHold(t, m, e); });
     t.addEventListener('click', e => { if (t._held){ t._held = false; return; }   // the end of a held press, not a click
-      if (e.target.closest('.px') || isDel(e)){ if (!poolUse(m).sc.length) removeMedia(m); return; } pickPool(m); });
+      if (e.target.closest('.px') || isRm(e)){ if (!poolUse(m).sc.length) removeMedia(m); return; } pickPool(m); });
     t.addEventListener('contextmenu', e => { if (!e.ctrlKey) return; e.preventDefault(); if (!poolUse(m).sc.length) removeMedia(m); });   // (a Mac's Ctrl+click)
     grid.appendChild(t);
   });

@@ -90,7 +90,7 @@ function renderScenes(){
     b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
   });
 }
-$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; isDel(e) ? emptySceneAt(+b.dataset.i) : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
+$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; isRm(e) ? emptySceneAt(+b.dataset.i) : isDel(e) ? null : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
 // ---- BRB: scene changes by themselves every few bars, on the bar, while you step away ----
 const brb = (() => { const s = Prefs.json('vjif-brb', {});
   return { on: false, next: 0, bars: [4, 8, 16, 32].includes(s.bars) ? s.bars : 8, scn: s.scn === 'rand' ? 'rand' : 'order', tr: s.tr === 'rand' ? 'rand' : 'armed', lastTr: -1, link: !!s.link }; })();
@@ -230,7 +230,7 @@ function syncTransUI(){
   $('#trTag').textContent = `${trSel + 1} · ` + (cut ? 'cut' : `${trLabel(T).toLowerCase()} · ${TR_LENS[i][1]}`);
 }
 onSeg($('#trPre'), (b, e) => { const k = +b.dataset.v;
-  if (isDel(e)){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Ctrl+click: reset it
+  if (isRm(e)){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Ctrl+click: reset it
 $('#trPre').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || !e.ctrlKey) return; e.preventDefault(); const k = +b.dataset.v; trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); armTrans(k); });
 onSeg($('#trType'), (b, e) => { transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); });
 onSeg($('#trStyle'), (b, e) => {
@@ -290,7 +290,7 @@ function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
     if (e.button) return;
-    if (isDel(e) && heldPre < 0){ el._edit = true;                        // Ctrl+click: reset an effect / empty a preset
+    if (isRm(e) && heldPre < 0){ el._edit = true;                        // Ctrl+click: reset an effect / empty a preset
       if (i < NFX){ fxUp(i); fxCfg[i] = fxDefaults()[i]; toast2(`${FX_DEFS[i].name} back to its defaults`); }
       else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
       selFx = i; syncFxUI(); return; }

@@ -28,7 +28,7 @@ function buildLayers(){
     row.querySelector('.clips').addEventListener('click', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
-      if (e.target.tagName === 'B' || isDel(e)) removeClip(li, c);
+      if (e.target.tagName === 'B' || isRm(e)) removeClip(li, c);
       else { L.sel = c; selectPad(c.pad); setTarget(li); }
     });
     row.querySelector('.clips').addEventListener('contextmenu', e => {   // right-click a chip: select it (a Mac's Ctrl+click arrives here: delete)
@@ -188,7 +188,7 @@ pv.addEventListener('pointerdown', e => {
   } else hit = hitAny(px, py);
   if (hit){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); c = hit[1]; }
   if (!hit && outside){   // a click in the border around the canvas, on nothing: no GIF selected (its frame and handles go)
-    if (layers[target].sel){ layers[target].sel = null; syncLayerUI(); syncXfUI(); redraw.all = true; } return; }
+    if (layers[target].sel !== false){ layers[target].sel = false; syncLayerUI(); syncXfUI(); redraw.all = true; } return; }
   if (c) drag = { type: 'move', c, px, py, x0: c.x, y0: c.y };
 });
 pv.addEventListener('pointermove', e => {

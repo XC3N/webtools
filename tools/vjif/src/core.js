@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.69.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.70.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -126,6 +126,7 @@ const clock = { bpm: 120, beat: 0, last: performance.now(), src: 'internal', tap
 
 function selClip(li = target){
   const L = layers[li];
+  if (L.sel === false) return null;                  // deselected on purpose (a click on nothing): stays so until something is picked
   if (L.sel && L.clips.includes(L.sel)) return L.sel;
   return L.sel = L.clips[L.clips.length - 1] || null;
 }

@@ -4,6 +4,22 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.70.0 — 2026-10-11
+
+### Fixes
+- Preview: a click in the border on nothing deselected for a moment only: the selection came back to the layer's last GIF (often the big one sticking out). Now nothing stays selected until you pick something.
+- CRT › VHS, Phosphor and Pay-TV over a palette (or Mono): their blur, colour smear and glow took the picture's original colours, which showed through the palette. They now use the picture's look too.
+- After a Ctrl+drag copy, Ctrl+click no longer removes anything until Ctrl is let go and pressed again (the red outline already waited).
+
+### Transitions
+- The screen effects now run on each scene before the transition combines them, so the transition's own picture (TV snow, Channel's number, tears) keeps its colours under a latched Palette or Mono. A Feedback trail carries on from the arriving scene.
+
+### Music
+- Play stays lit from Play until Stop (Pause keeps it lit, with the play icon).
+
+### Help
+- All vs 1+2+3+4 explained (the All button and Keys & mouse › F1–F12).
+
 ## 0.69.0 — 2026-10-10
 
 ### Transitions
