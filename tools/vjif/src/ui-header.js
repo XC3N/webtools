@@ -267,3 +267,8 @@ onSeg($('#rsSeg'), b => { setRenderSize(+b.dataset.v > 0.6 && +b.dataset.v < 0.7
 syncRS();
 // no browser menu on right-click anywhere in VJif (right-click means "select / edit" here); text boxes keep theirs (copy / paste)
 document.addEventListener('contextmenu', e => { if (!e.target.closest('textarea, input:not([type]), input[type=text], input[type=search], input[type=url], [contenteditable]')) e.preventDefault(); });
+
+// notes (toasts) show in the gap between the layer cards and the preview, centred over the preview
+function placeToast(){ const r = $('#pvWrap').getBoundingClientRect(), z = uiZoom || 1, L = $('#layers').getBoundingClientRect();
+  const st = document.documentElement.style; st.setProperty('--toastX', (r.left + r.width / 2) / z + 'px'); st.setProperty('--toastY', Math.max(L.bottom, r.top) / z + 4 + 'px'); }
+addEventListener('resize', placeToast); new ResizeObserver(placeToast).observe($('#pvWrap')); placeToast();

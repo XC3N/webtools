@@ -34,7 +34,7 @@
   <div class="padgrid" id="gridA"></div>
   <div class="sub padsub" data-g="B" title="Click: fold / unfold these pads (their keys keep working)"><span>RTY / FGH / VBN</span><span class="cnt"></span><span class="line"></span></div>
   <div class="padgrid" id="gridB"></div>
-  <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scFx" title="FX Global: latched effects stay on from scene to scene. FX Local: each scene remembers which latched effects were on, and going to it brings those back (switching to Local brings the current scene's back too)">FX: Global</button><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
+  <h2>Scenes<span class="line"></span><span class="tag" id="npTag">numpad</span><span id="capsTag" class="tag" hidden title="Caps Lock is on: the numpad plays effect presets">CAPS · FX</span><button id="scFx" title="FX Global: latched effects stay on from scene to scene. FX Local: each scene remembers which latched effects were on, and going to it brings those back (switching to Local brings the current scene's back too)">FX Global</button><button id="scEmpty" title="Empty this scene: its pads and layers (Ctrl+Z brings it back)">Empty</button><button id="scDup" title="Copy this scene into the next empty one and go there">Duplicate</button></h2>
   <div class="scgrid" id="scenes"></div>
   <h2>Transition<span class="line"></span><span class="tag" id="trTag"></span></h2>
   <div class="field"><label>Preset</label><div class="seg span" id="trPre" title="Keys 1–9 arm a preset for the next scene change; the settings below edit the armed one"></div></div>
@@ -55,7 +55,7 @@
   <div id="fxStrip">
     <div id="fxPads" title="Screen effects (on the output or one layer) — F1–F12 · Shift+F-key or right-click: edit without playing"></div>
     <div id="fxEdit">
-      <div class="fxrow"><span class="lcd" id="fxName">Mono</span>
+      <div class="fxrow"><button class="iconbtn" id="fxAllOff" title="All effects off: every latched effect and preset is let go (each fades over its Release)"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" style="display:block;margin:auto"><path d="M8 2v6"/><path d="M4.6 4.2a5 5 0 1 0 6.8 0"/></svg></button><span class="lcd" id="fxName">Mono</span>
         <div class="seg" id="fxTgt" title="Where it plays. All: the whole output, after the layers are blended. Or a set of layers: a layer button takes that layer in or out (from All: just that one); each chosen layer gets the effect on its own, before blending. Right-click a layer: that layer alone"><button data-v="out" title="The whole output">All</button><button data-v="0" title="Layer 1 in / out (right-click: only layer 1)">1</button><button data-v="1" title="Layer 2 in / out (right-click: only layer 2)">2</button><button data-v="2" title="Layer 3 in / out (right-click: only layer 3)">3</button><button data-v="3" title="Layer 4 in / out (right-click: only layer 4)">4</button></div></div>
       <div class="fxrow" id="fxStyleRow"><div class="seg" id="fxStyle"></div><span id="fxPreList"></span></div>
       <div class="fxrow">
@@ -135,6 +135,11 @@
         <div class="sub"><span title="Snap every colour of this GIF to an old computer's or console's palette (after Adjust)">Palette</span><span class="line"></span></div>
         <div class="field"><label for="gPal">Snap to</label><select id="gPal" class="span" title="The palette this GIF's colours snap to (None: its own colours)"></select></div>
         <div class="field" title="Dither: in-between shades drawn as a pattern of the two nearest palette colours, on the GIF's own pixels (off = flat areas)"><label for="gPalD">Dither</label><input id="gPalD" type="range" data-def="0" data-pct min="0" max="1" step="0.05"><output></output></div>
+        <div class="sub"><span title="A shadow under the GIF, from its see-through edges, to sit it into the scene (best on GIFs with transparency)">Shadow</span><span class="line"></span><input type="color" id="shCol" value="#000000" title="Shadow colour"><label class="tog" title="Shadow on / off"><input type="checkbox" id="shOn"></label></div>
+        <div class="field"><label for="shX">X</label><input id="shX" type="range" data-def="8" min="-60" max="60" step="1"><output></output></div>
+        <div class="field"><label for="shY">Y</label><input id="shY" type="range" data-def="8" min="-60" max="60" step="1"><output></output></div>
+        <div class="field"><label for="shB">Blur</label><input id="shB" type="range" data-def="12" min="0" max="80" step="1"><output></output></div>
+        <div class="field"><label for="shO">Opacity</label><input id="shO" type="range" data-def="0.6" data-pct min="0" max="1" step="0.01"><output></output></div>
         <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" title="Remove every swap">Clear</button></div>
         <div class="field" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="0"><output></output></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>

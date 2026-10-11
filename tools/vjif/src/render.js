@@ -83,15 +83,23 @@ function hitHandle(c, px, py){
 }
 
 // ---------- rendering ----------
+const tileCv = document.createElement('canvas'), tileX = tileCv.getContext('2d');   // a cropped GIF's tile
+const hexA = (h, a) => `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`;
 function drawClip(ctx, c, g, img){
-  const [bw, bh] = baseSize(g, c.fit), base = c.tile ? ctx.getTransform() : null;
+  const [bw, bh] = baseSize(g, c.fit), T0 = ctx.getTransform(), base = c.tile ? T0 : null, dk = Math.hypot(T0.a, T0.b) || 1;   // dk: canvas units → device pixels
   ctx.save(); ctx.globalAlpha *= (c.alpha ?? 1); applyXf(ctx, c);
   ctx.imageSmoothingEnabled = !g.crisp;
+  const S = g.shadow; if (S && S.on && !c.tile && S.op > 0){   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
+    ctx.shadowColor = hexA(S.col, S.op); ctx.shadowBlur = S.blur * dk; ctx.shadowOffsetX = S.x * dk; ctx.shadowOffsetY = S.y * dk; }
   if (c.tile){
-    // fill exactly the frame, with the clip's whole transform folded into the pattern
-    const pat = ctx.createPattern(img, 'repeat');
+    // fill exactly the frame, with the clip's whole transform folded into the pattern; a crop tiles the cropped part
+    const cr = c.cl || c.ct || c.cr || c.cb, sw = 1 - c.cl - c.cr, sh = 1 - c.ct - c.cb;
+    let src = img; if (cr){ const w = Math.max(1, Math.round(sw * img.width)), h = Math.max(1, Math.round(sh * img.height));
+      if (tileCv.width !== w || tileCv.height !== h){ tileCv.width = w; tileCv.height = h; } tileX.clearRect(0, 0, w, h); tileX.imageSmoothingEnabled = !g.crisp;
+      tileX.drawImage(img, c.cl * img.width, c.ct * img.height, sw * img.width, sh * img.height, 0, 0, w, h); src = tileCv; }
+    const pat = ctx.createPattern(src, 'repeat');
     pat.setTransform(new DOMMatrix().translate(W/2 + c.x, H/2 + c.y).rotate(c.rot)
-      .scale(c.sx * (c.flipX ? -1 : 1), c.sy * (c.flipY ? -1 : 1)).translate(-bw/2, -bh/2).scale(bw / img.width, bh / img.height));
+      .scale(c.sx * (c.flipX ? -1 : 1), c.sy * (c.flipY ? -1 : 1)).translate(-bw/2 + (cr ? c.cl * bw : 0), -bh/2 + (cr ? c.ct * bh : 0)).scale((cr ? sw * bw : bw) / src.width, (cr ? sh * bh : bh) / src.height));
     ctx.fillStyle = pat; ctx.setTransform(base);
     ctx.fillRect(0, 0, W, H);
   } else if (c.cl || c.ct || c.cr || c.cb){
@@ -149,7 +157,7 @@ function sceneChanged(list, frozen, black, S = sceneSig){
   S.start(); S.add(frozen); S.add(black);
   if (!frozen) for (const { L, items } of list){
     S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill);
-    for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit);
+    for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit); if (g.shadow && g.shadow.on) S.add(JSON.stringify(g.shadow));
       S.add(e.flipX); S.add(e.flipY); S.add(e.tile); S.add(e.cl); S.add(e.ct); S.add(e.cr); S.add(e.cb); S.add(e.alpha); S.add(e.H); S.add(e.S); S.add(e.V); }
   }
   return S.changed();

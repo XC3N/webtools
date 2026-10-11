@@ -83,8 +83,10 @@ function release(p){
 }
 // Ctrl (⌘ on a Mac) held: what a click would delete or reset is marked
 const DEL_KEYS = ['Control', 'Meta'];   // Ctrl (⌘ on a Mac) + click deletes
-addEventListener('keydown', e => { if (DEL_KEYS.includes(e.key)) document.body.classList.add('del'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.add('alt'); } });
-addEventListener('keyup', e => { if (DEL_KEYS.includes(e.key)) document.body.classList.remove('del'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.remove('alt'); } });   // (no browser menu on Alt)
+// after a Ctrl+drag copy, the red "Ctrl+click removes" outline stays off until Ctrl is let go (you were copying, not deleting)
+let delHush = false; const hushDel = () => { delHush = true; document.body.classList.remove('del'); };
+addEventListener('keydown', e => { if (DEL_KEYS.includes(e.key) && !delHush) document.body.classList.add('del'); if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.add('alt'); } });
+addEventListener('keyup', e => { if (DEL_KEYS.includes(e.key)){ document.body.classList.remove('del'); delHush = false; } if (e.key === 'Alt'){ e.preventDefault(); document.body.classList.remove('alt'); } });   // (no browser menu on Alt)
 function releaseAll(){ document.body.classList.remove('del', 'alt'); heldPre = -1;  heldFxKey = -1; pads.forEach((_, i) => release(i)); fxSt.forEach((_, i) => fxUp(i)); if (live.blackOn){ setBlack(false); updLiveTag(); } setFreeze(false); }
 window.addEventListener('blur', releaseAll);         // keys held while switching windows would otherwise stay down
 

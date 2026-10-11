@@ -82,9 +82,9 @@ function padDragEnd(e, i){
     if (!o.classList.contains('pad')) return toast('Drop it on an empty pad to copy it into this scene'), true;
     const j = +o.dataset.i; if (pads[j].gif || pads[j].loading) return toast('Drop it on an empty pad to copy it into this scene'), true;
     commit(); pads[j].gif = cloneInst(d.carry); pushStep({ kind: 'swap', pad: j, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI();
-    afterPadChange(j); toast2(`Copied to scene ${sceneIdx + 1}, pad ${pads[j].label}`); return true;
+    afterPadChange(j); toast2(`Copied to scene ${sceneIdx + 1}, pad ${pads[j].label}`); if (isDel(e)) hushDel(); return true;
   }
-  if (d.copyNow ?? d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i); return true; }   // Ctrl held at the drop: a copy
+  if (d.copyNow ?? d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i); hushDel(); return true; }   // Ctrl held at the drop: a copy
   if (o.classList.contains('pad')){ const j = +o.dataset.i; if (j !== i) swapPads(i, j); }
   else if (o.id === 'pvWrap'){                       // dropped on the preview: onto the edit layer, centred where it was dropped
     const [px, py] = evtToOut(e); padToLayer(i, target);

@@ -34,10 +34,10 @@ function applyLatched(list, b = clock.beat){
 }
 function setFxLocal(on){
   if (on === fxLocal) return; fxLocal = on;
-  if (on){ if (liveFxOn) applyLatched(liveFxOn); } else liveFxOn = latchedNow();
+  if (on){ if (liveFxOn) applyLatched(liveFxOn); else liveFxOn = latchedNow(); } else liveFxOn = latchedNow();   // (the scene you're on keeps what's on)
   fxScopeUI(); toast2(on ? 'FX Local: each scene keeps its own latched effects' : 'FX Global: latched effects stay on from scene to scene');
 }
-function fxScopeUI(){ const b = $('#scFx'); b.textContent = fxLocal ? 'FX: Local' : 'FX: Global'; b.classList.toggle('on', fxLocal); }
+function fxScopeUI(){ const b = $('#scFx'); b.textContent = fxLocal ? 'FX Local' : 'FX Global'; b.classList.toggle('on', fxLocal); }
 const captureScene = () => ({ fxOn: fxLocal ? latchedNow() : liveFxOn, layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
@@ -57,7 +57,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
   pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
   if (!trans) dropFxCache(left);                     // (with a transition: when it ends)
   scenes[i] = null; liveThumb = sc && sc.thumb; thumbKeep = liveThumb; liveName = sc && sc.name || '';
-  liveFxOn = sc && sc.fxOn || null; if (fxLocal && liveFxOn) applyLatched(liveFxOn, beat);   // (a scene never left in Local keeps what's on)
+  liveFxOn = sc && sc.fxOn || null; if (fxLocal) applyLatched(liveFxOn || [], beat);   // Local: a scene with no effects of its own yet starts with none on
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
   // what's selected: as you left this scene; else the edit layer stays and the GIF panel shows that layer's selected GIF
   if (sc && sc.pick){ target = sc.pick.target; selPad = sc.pick.pad; }
@@ -186,7 +186,7 @@ $('#scenes').addEventListener('drop', e => {
   e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying');
   const b = e.target.closest('.scene'); if (!b) return;
   const a = +e.dataTransfer.getData(SCENE_MIME), t = +b.dataset.i;
-  if (isDel(e)){ if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy'); if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); if (t === sceneIdx){ const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads } };   // into the scene you're on: it fills in place (one undo step)
+  if (isDel(e)){ hushDel(); if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy'); if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); if (t === sceneIdx){ const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads } };   // into the scene you're on: it fills in place (one undo step)
       commit(); applyScn(E); pushStep(E); hist.cur = histState(); updHistUI(); }
     else scenes[t] = sceneCopy(a);
     renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
@@ -304,7 +304,7 @@ function wireFxTile(el){
     if (fxDrag && fxDrag.i === i && fxDrag.moved){
       const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp'), cp = fxDrag.copy;
       if (d && i < NFX) addPreFx(+d.dataset.i - NFX, i);
-      else if (d && +d.dataset.i !== i) movePre(i - NFX, +d.dataset.i - NFX, cp);
+      else if (d && +d.dataset.i !== i){ movePre(i - NFX, +d.dataset.i - NFX, cp); if (cp) hushDel(); }
       document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging', 'precopy');
     }
     if (fxDrag && fxDrag.moved) ghost.hide();
@@ -601,6 +601,7 @@ function emptySceneAt(i){
 }
 $('#scEmpty').addEventListener('click', () => emptySceneAt(sceneIdx));
 $('#scFx').addEventListener('click', () => setFxLocal(!fxLocal));
+$('#fxAllOff').addEventListener('click', () => { const n = latchedNow().filter(Boolean).length; applyLatched([]); toast2(n ? `All effects off (${n})` : 'No effects on'); });
 let thumbKeep = null, thumbTick = 0;                 // the live tile's picture as saved: refreshed every 20 s (not every second), so autosave doesn't rewrite the set constantly
 setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet){ liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb; } }, 1000);
 // a layer on / off can play a transition: the picture before the change is the leaving side, like a scene change

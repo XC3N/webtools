@@ -4,6 +4,21 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.66.0 — 2026-10-10
+
+### GIFs
+- Drop shadow (GIF › Colour › Shadow): X / Y offset, Blur, Opacity and colour, from the GIF's see-through edges. The offset is in output pixels, so the light doesn't turn with the GIF. Saved with the GIF.
+- Tile with a crop: the cropped part is what repeats (the crop used to be ignored when tiled).
+
+### Effects
+- FX Local: a scene with no effects of its own yet starts with none on (it used to inherit what was on). Switching to Local keeps what's on for the scene you're on.
+- An "all effects off" button (⏻) left of the effect name: every latched effect and preset lets go, each over its Release.
+
+### Interface
+- Notes (toasts) show in the gap above the preview, under the layer cards, instead of at the bottom over the effects.
+- After a Ctrl+drag copy (pads, scenes, presets), the red "Ctrl+click removes" outline stays off until you let go of Ctrl.
+- Scenes header: FX Global / FX Local, and the buttons fit beside the name at 1280 wide.
+
 ## 0.65.0 — 2026-10-10
 
 ### Recording

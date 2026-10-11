@@ -400,6 +400,9 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 #fxRateRow.patrow{grid-template-columns:minmax(0,1fr) auto!important;column-gap:4px;flex:1.4}#fxRateRow.patrow>.seg{grid-column:2;grid-row:1;width:78px;flex:none}
 .fxrow:has(#fxRateRow.patrow)>.field:first-child{flex:1}   /* the Palette slider gives up some room for Dither + its switch */
 #fxRateRow.patrow>.seg button{padding:0}   /* the three patterns as little pictures (the tooltips name them) */
-#scFx{min-width:78px}#scFx.on{color:var(--sig);border-color:var(--sig)}   /* FX: Local / Global: the same width either way */
+#scFx{min-width:68px}#scFx.on{color:var(--sig);border-color:var(--sig)}   /* FX: Local / Global: the same width either way */
 #recWrap{position:relative;display:inline-flex;gap:2px}#recWrap>#recCfg{border:1px solid var(--edge)}#recPop{width:270px}#recPopRows{display:grid;gap:6px}#recPopRows .poprow{display:grid;grid-template-columns:62px minmax(0,1fr);align-items:center;gap:6px}#recPopRows .poprow>span{font-size:11px;color:var(--muted)}   /* Rec ▾: like BRB's */
 #musGrp{position:relative}#musSeek{position:absolute;left:0;right:0;bottom:-6px;height:4px;border-radius:2px;background:var(--track);cursor:pointer}#musSeek i{display:block;height:100%;width:0;border-radius:2px;background:var(--sig)}#musSeek.off{opacity:.35;pointer-events:none}#musSeek:hover{height:6px;bottom:-7px}   /* seek bar under the player (absolute: nothing moves) */
+#fxAllOff{flex:none;width:var(--ch)}
+#toast{top:var(--toastY,auto);bottom:auto;left:var(--toastX,50%);max-width:min(70vw,640px);z-index:40}   /* in the gap above the preview, not over the effects */
+@media (max-width:1400px){ h2 button{padding:0 6px} #scFx{min-width:62px} }   /* narrow left column: the Scenes buttons still fit beside the name */

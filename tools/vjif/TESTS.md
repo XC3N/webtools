@@ -67,6 +67,11 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {fxmodekey} **Mode by key** (0.65) — hold F2, press Ins / Home / PgUp: Hold / Hit / Latch. F-keys don't move the editor.
 - [ ] {envreset} **Envelope reset** (0.65) — the ↺ above the envelope.
 - [ ] {vhsblur} **VHS soft at low wear** (0.65) — CRT › VHS at 5 %: the picture is already soft and smeared.
+- [ ] {shadow} **GIF drop shadow** (0.66) — a GIF with transparency, GIF › Colour › Shadow: offset / blur / opacity / colour; it stays put when the GIF rotates.
+- [ ] {croptile} **Crop + tile** (0.66) — crop a GIF, then Tile: the cropped part repeats.
+- [ ] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
+- [ ] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
+- [ ] {ctrlhush} **No red outline after copying** (0.66) — Ctrl+drag a pad onto an empty pad, keep Ctrl down: no red outlines until you let go.
 - [x] {pvt} **Guides / Stick / Ghosts** (0.28.1: under the preview, centred) — each guide set; drag a GIF near a line, edge or the centre (Alt: free); Ghosts off hides faded one-shots.
 - [x] {undo40} **Undo after moving scenes** (0.40) — clear a pad or empty a scene, drag scenes to other numbers, Ctrl+Z: it comes back in the right scene.
 - [x] {kal2} **Kaleido slices** (0.40) — Mirror › Kaleido: Amount changes the number of slices.
