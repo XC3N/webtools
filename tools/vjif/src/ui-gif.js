@@ -261,15 +261,13 @@ function drawLfoScope(g){
 }
 function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
-  const E = g.env, T = envTimes(g), c = clipOf(selPad); let hold = E.gate ? Math.max(E.h, 1) : T.h;
-  if (E.gate && g.trig === 'fade' && c && c.env && !c.env.noGate){   // Hit › Hold: the curve as this hit is played (held so far, or let go)
-    const t = clock.beat - c.env.t0, held = c.env.rel === null ? t : c.env.rel - c.env.t0;
-    if (c.env.rel === null || t < held + T.r + 1) hold = Math.max(held - T.a, 0); }
-  const span = Math.max(T.a + hold + T.r, 0.5) * 1.1;
+  const E = g.env, T = envTimes(g), c = clipOf(selPad), hold = E.gate ? Math.max(E.h, 1) : T.h, span = Math.max(T.a + hold + T.r, 0.5) * 1.1;
   const shape = { env: { t0: 0, from: 0, rel: E.gate ? T.a + hold : null, noGate: false } };   // (T: the times as played, One play shrinks the fades)
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
   if (g.trig === 'fade' && c && c.env){
-    const lv = envLevel(c, g, clock.beat), t = clock.beat - c.env.t0;
+    const lv = envLevel(c, g, clock.beat); let t = clock.beat - c.env.t0;
+    if (E.gate && !c.env.noGate){ const rs = T.a + hold;   // Hit › Hold: the graph keeps its shape; while the pad is held the dot waits where the fade out starts,
+      t = c.env.rel === null ? Math.min(t, rs) : rs + Math.max(0, clock.beat - c.env.rel); }   // and once let go it runs down the fade out from there
     if (lv > 0) scopeDot(x, Math.min(w - 3 * d, t / span * w), y(lv), d);
   }
 }

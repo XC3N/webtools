@@ -4,6 +4,20 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.85.0 — 2026-10-12
+
+### Layers
+- Painting a mask: the layer's card swaps its blend, opacity and transition rows for the mask tools (same height, GIF chips kept); the guides stay under the preview.
+
+### Pads & scenes
+- Settings › Interface › Permanent scene names: emptying a scene keeps its name (off by default).
+
+### Effects
+- Colour › Palette › Dots only with the Game Boy palettes, as a switch: Off / 2 px / 10 px (other sizes beat against the picture). With other palettes the slot is an empty grey box.
+
+### GIFs
+- Hit › Hold graph: back to the shape as set; while the pad is held the dot waits where the fade out starts, then runs down it when let go.
+
 ## 0.84.0 — 2026-10-12
 
 ### Layers

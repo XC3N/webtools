@@ -196,13 +196,15 @@ function syncFxUI(){
     else { $('#fxRate').max = FX_RATES.length - 1; $('#fxRateRow').title = 'Rate: how fast it moves (beats)';
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
     $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }
-    const za = sizeAlt(d, C.style || d.styles[0][0]); $('#fxSizeRow label').textContent = za ? za.label : 'Size';
+    const za = sizeAlt(d, C.style || d.styles[0][0], C); $('#fxSizeRow label').textContent = za ? za.label : 'Size';
+    $('#fxSizeSeg').hidden = !(za && za.seg); $('#fxSize').hidden = $('#fxSize').nextElementSibling.hidden = !!(za && za.seg);   // a few fixed choices: a switch instead of the slider
+    if (za && za.seg){ setHTML($('#fxSizeSeg'), za.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxSizeSeg', String(C[za.key] ?? za.def)); }
     if (za){ const L = za.list, ai = optIdx(L, C[za.key] ?? za.def); $('#fxSize').max = L.length - 1; $('#fxSize').value = ai; $('#fxSize').nextElementSibling.textContent = L[ai][1];
       $('#fxSize').dataset.def = optIdx(L, za.def); $('#fxSizeRow').title = za.title(); $('#fxSizeRow').classList.remove('dimmed'); }
     else { $('#fxSize').max = FX_SIZES.length - 1; $('#fxSizeRow').title = 'Size: the pixel block size at full amount';
     const zi = optIdx(FX_SIZES, C.size || d.sizeDef || 64); $('#fxSize').value = zi; $('#fxSize').nextElementSibling.textContent = FX_SIZES[zi][1];
     $('#fxSize').dataset.def = optIdx(FX_SIZES, d.sizeDef || 64);
-    $('#fxSizeRow').classList.toggle('dimmed', !!d.sizeFor && !styleParts(di, C.style).some(p => d.sizeFor.includes(p))); }
+    $('#fxSizeRow').classList.toggle('dimmed', !d.size || d.id === 'colour' || (!!d.sizeFor && !styleParts(di, C.style).some(p => d.sizeFor.includes(p)))); }
   }
 }
 // effect names refit (full or short) when the window changes, and are measured again once the fonts are in
@@ -357,7 +359,8 @@ $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
   const near = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
   if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = fxLenDef(C.mode); else C.rel = fxRelDef(C.mode);
   drawFxEnv(); });
-$('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
+$('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
+onSeg($('#fxSizeSeg'), b => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za){ X[za.key] = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxDpat'), b => { const X = fxEd(); if (X){ X.dpat = +b.dataset.v; syncFxUI(); } });
 $('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');

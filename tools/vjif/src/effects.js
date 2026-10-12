@@ -57,9 +57,10 @@ const FX_DITH = [[0, 'off'], ...Array.from({ length: 10 }, (_, j) => [(j + 1) / 
 const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   // 0–200 %
 // With several CRT styles stacked, the one in focus (right-click a style, or the last one switched on) decides: VHS → Dropouts, Scanlines / Crypt → Size
 const fxFocus = {};   // effect id → style in focus (editor state, not saved)
-const FX_DOTS = [[0, 'off'], [2, '2 px'], [3, '3 px'], [4, '4 px'], [5, '5 px'], [6, '6 px'], [8, '8 px'], [10, '10 px'], [12, '12 px'], [16, '16 px']];
-function sizeAlt(d, style){
-  if (d && d.id === 'colour') return style !== 'pal' ? null : { label: 'Dots', key: 'dots', def: 0, list: FX_DOTS, title: () => 'Dots: the picture as a dot-matrix screen (Game Boy LCD): blocks of this size with thin gaps in the palette\'s lightest colour (off: none)' };
+const FX_DOTS = [[0, 'Off'], [2, '2 px'], [10, '10 px']];   // Colour › Palette › Dots, for the Game Boy palettes (other sizes beat against the picture: moiré)
+const palGB = i => /^GB/.test((FX_PALS[i] || {}).n || '');
+function sizeAlt(d, style, C){
+  if (d && d.id === 'colour') return style !== 'pal' || !(C && palGB(C.pal || 0)) ? null : { label: 'Dots', key: 'dots', def: 0, list: FX_DOTS, seg: true, title: () => 'Dots: the picture as a dot-matrix screen (Game Boy LCD): blocks of this size with thin gaps in the palette\'s lightest colour (off: none)' };
   if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+'), f = P.includes(fxFocus[d.id]) ? fxFocus[d.id] : null;
   if (f === 'scan' || f === 'crypt') return null;
   if (f !== 'vhs' && (!P.includes('vhs') || P.includes('scan') || P.includes('crypt'))) return null;
@@ -210,7 +211,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], monoSz: size[MO],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && lv[CO] > 0.001 && nm(CO) === 'pal' ? dots[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? dots[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;

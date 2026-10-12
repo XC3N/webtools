@@ -128,9 +128,10 @@ async def main():
     sw = await pg.evaluate("[hsvOn({ hsv: { h: 10, s: 1, v: 1, off: true } }), hsvOn({ hsv: { h: 10, s: 1, v: 1 } }), palOn({ pal: { i: 2, off: true } }), palOn({ pal: { i: 2 } }), swapOn({ swap: [1], swapOff: true }), swapOn({ swap: [1] }), ['fOn', 'tOn', 'hOn', 'pOn', 'swOn'].every(id => !!document.getElementById(id))]")
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
     print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg
-    d82 = await pg.evaluate("""(() => { selectFx(FXI.colour); const C = fxCfg[FXI.colour], was = C.style; C.style = 'pal'; syncFxUI(); const a = $('#fxSizeRow label').textContent;
-      C.style = 'flip'; syncFxUI(); const b2 = $('#fxSizeRow label').textContent; C.style = was; syncFxUI(); return [a, b2, FX_PALS.at(-1).n, FX_PALS.at(-1).c.length, 'dots' in fxEntry(FXI.colour)]; })()""")
-    print('0.82', d82); assert d82 == ['Dots', 'Size', 'ZX Spectrum', 15, True], d82
+    d82 = await pg.evaluate("""(() => { selectFx(FXI.colour); const C = fxCfg[FXI.colour], was = C.style, wp = C.pal; C.style = 'pal'; C.pal = FX_PALS.findIndex(p => p.n === 'GB'); syncFxUI(); const a = $('#fxSizeRow label').textContent + '/' + [...document.querySelectorAll('#fxSizeSeg button')].map(b => b.textContent).join(',') + '/' + $('#fxSizeSeg').hidden;
+      C.pal = 0; syncFxUI(); const a2 = $('#fxSizeRow').classList.contains('dimmed'); C.pal = wp;
+      C.style = 'flip'; syncFxUI(); const b2 = $('#fxSizeRow label').textContent; C.style = was; syncFxUI(); return [a, a2, b2, FX_PALS.at(-1).n, FX_PALS.at(-1).c.length, 'dots' in fxEntry(FXI.colour)]; })()""")
+    print('0.82', d82); assert d82 == ['Dots/Off,2 px,10 px/false', True, 'Size', 'ZX Spectrum', 15, True], d82   # 0.85: Dots only for the Game Boy palettes, as a switch
     d83 = await pg.evaluate("""(() => { const g = pads[0].gif; selectPad(0); $('#gTabs [data-v=colour]').click(); g.swap = [{ from: [1, 2, 3], to: [9, 9, 9] }]; g.swapOff = false; syncGifUI(); return [...document.querySelectorAll('#gLoop button')].map(b => b.textContent).join('/'); })()""")
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); off = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); on = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")

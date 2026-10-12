@@ -258,13 +258,13 @@ $('#scDup').addEventListener('click', () => {
 });
 // empty a scene (its name stays) — undoable; another scene is emptied where it is, without going there
 function emptySceneAt(i){
-  if (!sceneCount(i) && !scenePads(i) && !sceneName(i)) return;
+  if (!sceneCount(i) && !scenePads(i) && (keepSceneNames || !sceneName(i))) return;
   commit();
-  const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null), name: '' };   // emptied: its name goes too (Ctrl+Z brings it back)
+  const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null), ...(keepSceneNames ? {} : { name: '' }) };   // emptied: its name goes too (Ctrl+Z brings it back), unless Settings › Permanent scene names
   let E;
   if (i === sceneIdx){ E = { kind: 'scn', sid: sceneIds[i], data: blank }; applyScn(E); liveThumb = null; }
-  else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads, thumb: sc.thumb, name: sc.name || '' } };   // undo swaps these back in (its picture too)
-    scenes[i] = Object.assign(emptyScene(), { name: '' }); if (pendingScene && pendingScene.i === i) pendingScene = null; renderScenes(); renderPool(); updateMem(); }
+  else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads, thumb: sc.thumb, ...(keepSceneNames ? {} : { name: sc.name || '' }) } };   // undo swaps these back in (its picture too)
+    scenes[i] = Object.assign(emptyScene(), { name: keepSceneNames ? sc.name || '' : '' }); if (pendingScene && pendingScene.i === i) pendingScene = null; renderScenes(); renderPool(); updateMem(); }
   pushStep(E); hist.cur = histState(); updHistUI();
   toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);
 }

@@ -27,9 +27,14 @@ let maskStroke = null, maskPtr = null;
 function maskOpen(li){
   if (maskEd && maskEd.li === li) return maskClose();
   maskEd = { li }; if (target !== li) setTarget(li);
-  $('#stage').classList.add('masking'); $('#maskBar').hidden = false; syncMaskUI(); syncLayerUI(); redraw.all = true;
+  const bar = $('#maskBar'), card = layers[li].row, top = card.querySelector('.lrow'), clips = card.querySelector('.clips');
+  layers.forEach(L => L.row.classList.remove('masking'));
+  bar.style.height = (clips.offsetTop - top.offsetTop - 6) + 'px';   // exactly the rows it stands in for: the card keeps its height
+  card.insertBefore(bar, top); card.classList.add('masking'); bar.hidden = false;
+  $('#stage').classList.add('masking'); syncMaskUI(); syncLayerUI(); redraw.all = true;
 }
-function maskClose(){ if (maskStroke) maskUp(); maskEd = null; maskStroke = null; $('#maskBar').hidden = true; $('#stage').classList.remove('masking'); syncLayerUI(); redraw.all = true; pv.style.cursor = ''; }
+function maskClose(){ if (maskStroke) maskUp(); maskEd = null; maskStroke = null; $('#maskBar').hidden = true; layers.forEach(L => L.row.classList.remove('masking'));
+  $('#stage').classList.remove('masking'); syncLayerUI(); redraw.all = true; pv.style.cursor = ''; }
 function syncMaskUI(){
   if (!maskEd) return; const L = layers[maskEd.li], m = L.mask;
   $('#maskName').textContent = `Mask · ${LNAMES[maskEd.li]}`;

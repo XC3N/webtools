@@ -293,3 +293,7 @@ addEventListener('resize', placeToast); new ResizeObserver(placeToast).observe($
 // the × on pads, scenes and presets (Settings › Interface › Ctrl+click to delete only hides them)
 { const on = Prefs.get('vjif-noxdel') === '1'; $('#noXdelChk').checked = on; document.body.classList.toggle('noxdel', on);
   $('#noXdelChk').addEventListener('change', e => { document.body.classList.toggle('noxdel', e.target.checked); Prefs.set('vjif-noxdel', e.target.checked ? '1' : '0'); }); }
+
+// Settings › Interface › Permanent scene names: emptying a scene keeps its name
+let keepSceneNames = Prefs.get('vjif-keepnames') === '1'; $('#keepNamesChk').checked = keepSceneNames;
+$('#keepNamesChk').addEventListener('change', e => { keepSceneNames = e.target.checked; Prefs.set('vjif-keepnames', keepSceneNames ? '1' : '0'); });

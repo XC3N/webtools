@@ -13,10 +13,12 @@ async def main():
       await pg.keyboard.press(key); await pg.wait_for_timeout(200)
     await pg.evaluate("layers.forEach(L => L.clips.forEach(c => { c.sx = c.sy = 6; c.x = 0; c.y = 0; })); redraw.all = true")
     pv0 = await pg.evaluate("[...['#layers','#pvWrap'].map(s => $(s).getBoundingClientRect().top)]")
+    h0 = await pg.evaluate("Math.round(document.querySelector('.layer:nth-child(2)').getBoundingClientRect().height)")
     await pg.click('.layer:nth-child(2) .lmask'); await pg.wait_for_timeout(300)
     # 0.84: the bar takes the guides' place under the picture: the preview doesn't move or shrink, the picture isn't covered
-    geo = await pg.evaluate("(() => { const M = $('#maskBar').getBoundingClientRect(), r = pv.getBoundingClientRect(); return [[...['#layers','#pvWrap'].map(s => $(s).getBoundingClientRect().top)], M.top >= r.y + view.y + view.h - 1, Math.round(M.height), M.width > 300, getComputedStyle($('#guideGrp')).display]; })()")
-    print('bar', pv0, geo); assert geo[0] == pv0 and geo[1] and geo[2] < 40 and geo[3] and geo[4] == 'none', geo
+    # 0.85: the tools sit in that layer's card, in place of blend / opacity / transition: nothing moves, the guides stay
+    geo = await pg.evaluate("(() => { const card = document.querySelector('.layer:nth-child(2)'), M = $('#maskBar').getBoundingClientRect(), C = card.getBoundingClientRect(); return [[...['#layers','#pvWrap'].map(s => $(s).getBoundingClientRect().top)], card.contains($('#maskBar')), M.top >= C.top && M.bottom <= C.bottom, getComputedStyle(card.querySelector('.lrow')).display, getComputedStyle($('#guideGrp')).display, getComputedStyle(card.querySelector('.clips')).display !== 'none', Math.round(C.height) === H0]; })()".replace('H0', str(h0)))
+    print('bar', pv0, geo); assert geo == [pv0, True, True, 'none', 'flex', True, True], geo
     await pg.screenshot(path=str(OUT/'mask_bar.png'), clip={'x':0,'y':0,'width':1600,'height':520})
     r = await pg.evaluate("(() => { const r = pv.getBoundingClientRect(); return [r.x + view.x, r.y + view.y, view.w, view.h]; })()")
     x0,y0,w,h = r
