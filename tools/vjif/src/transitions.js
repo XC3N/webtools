@@ -2,13 +2,14 @@
 // transition families, each with its styles (like the effects); a preset = family + style + its settings
 const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['tv', 'TV'], ['stutter', 'Stutter']];
 const TR_STYLES = {
-  stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes, 8 shots, faster and faster (on the 1/32 grid), landing on the new one'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
+  stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes, faster and faster (on the 1/32 grid when there is room), landing on the new one (Repeats: how many times the new scene flashes)'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
   slide: [['push', 'Push', 'The new scene pushes the old one out (Direction)'], ['bands', 'Bands', "The frame splits into horizontal bands: the new scene's slide in one after another, from the left and the right in turn (Options: how many)"]],
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
   wipe: [['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)'],
              ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
+           ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)'],
            ['corrupt', 'Corrupt', 'A damaged video file with its keyframe lost: the old picture smears along block motion while the new scene arrives in broken runs of blocks, then a clean keyframe (Pixel = block size)']],
   tv: [['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
            ['channel', 'Channel', 'A TV changing channels: a flick of snow, then the new scene rolls into place, with a green channel number in the top right corner']] };
@@ -17,7 +18,6 @@ const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x =>
 function normTrans(P){
   if (P.type === 'glitch' && P.style === 'melt') P.type = 'dissolve';                          // 0.69: Melt moved to Dissolve,
   if (P.type === 'glitch' && (P.style === 'vhs' || P.style === 'channel')) P.type = 'tv';      // VHS and Channel to TV
-  if (P.type === 'glitch' && P.style === 'scramble') P.style = 'corrupt';                     // 0.79: Scramble became Corrupt
   if (!TR_TYPES.some(t => t[0] === P.type)) P.type = 'cut';
   P.style = trStyleOf(P); if (!P.px) P.px = 12;
   return P;
@@ -98,8 +98,9 @@ const moshCv = document.createElement('canvas'), moshX = moshCv.getContext('2d')
 const TR_DRAW = {
   fade(m, A, B, e, T, dx, dy){ const st = trStyleOf(T);
     if (st === 'dip' || st === 'flash'){          // through black (dip) or white (flash): out, then in
+      const h = T.hold || 0, a = (1 - h) / 2;          // Hold: the share of the length spent all black (or white)
       m.drawImage(e < 0.5 ? A : B, 0, 0); m.fillStyle = st === 'dip' ? '#000' : '#fff';
-      m.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2; m.fillRect(0, 0, W, H); return; }
+      m.globalAlpha = e < a ? e / a : e > 1 - a ? (1 - e) / a : 1; m.fillRect(0, 0, W, H); return; }
     if (st === 'luma' && post){ post.luma(A, B, e, T); return; }   // the brightest parts of the old scene give way first
     m.drawImage(A, 0, 0); m.globalAlpha = e; m.drawImage(B, 0, 0);
   },
@@ -134,8 +135,11 @@ const TR_DRAW = {
   stutter(m, A, B, e, T, dx, dy){ // hard cuts between the two scenes on the beat grid, ending on the new one
     const L = trans ? trans.len : 4, t = e * L, ramp = trStyleOf(T) !== 'even';
     let step = +(T.grid || 0.25), t0 = 0;            // beats per cut (0.25 = a 1/16 note; Even: Options picks it)
-    if (ramp){                                       // Ramp: 8 shots, each shorter than the one before, cut on the 1/32 grid, the last one the new scene
-      let k = 0, at = 0, w = 0; for (let i = 1; i < 8; i++){ w += 12 - i; at = Math.max(at + 0.125, Math.round(w / 60 * L * 8) / 8); if (t >= at - 1e-6) k = i; }   // shots 11 : 10 : … : 4 of the length
+    if (ramp){                                       // Ramp: old, new, old, new… (Repeats = how many news), each shot shorter than the one before (11 : 4 from first to last),
+      const N = 2 * (T.reps || 8), grid = N <= L * 8;    // cut on the 1/32 grid when every shot can have at least one step of it
+      let k = 0, at = 0, w = 0, S = 0; for (let i = 0; i < N; i++) S += 11 - 7 * i / (N - 1);
+      const G = Math.round(L * 8);                     // the 1/32 steps in the length; each shot keeps at least one, and leaves one for each shot after it
+      for (let i = 1; i < N; i++){ w += 11 - 7 * (i - 1) / (N - 1); const c = w / S * L; at = grid ? clamp(Math.round(c * 8), Math.round(at * 8) + 1, G - (N - i)) / 8 : c; if (t >= at - 1e-6) k = i; }
       m.drawImage(k % 2 ? B : A, 0, 0); return;
     }
     let k = Math.floor((t - t0) / step + 1e-6);
@@ -206,6 +210,23 @@ const TR_DRAW = {
         if (p < arrive){ moshX.globalAlpha = 0.3; moshX.drawImage(B, x, y, w, bs, x, y, w, bs); moshX.globalAlpha = 1; }   // the new scene's changes bleeding into the smear
       }
       m.drawImage(moshCv, 0, 0); trSplit(m, T, Math.sin(Math.PI * e)); return; }
+    if (gst === 'scramble'){                       // pixelate up, colours scrambled block by block while the scenes swap, then resolve
+      const big = Math.max(4, (T.px || 12) * 4), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
+      const w = Math.ceil(W / bs), h = Math.ceil(H / bs), mixB = Math.min(1, Math.max(0, (e - 0.35) / 0.3));
+      pxCtx.imageSmoothingEnabled = true; pxCtx.globalAlpha = 1; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(A, 0, 0, w, h);
+      if (mixB > 0){ pxCtx.globalAlpha = mixB; pxCtx.drawImage(B, 0, 0, w, h); pxCtx.globalAlpha = 1; }
+      if (post && post.trans(2, pxCv, null, { e, bs, stp: Math.floor(e * 30), pr: k * 0.9 })) return;   // the scramble and blow-up on the GPU (the shrinking stays a drawImage)
+      if (bs >= 3){                                // the scramble: each block's channels rotated / swapped / inverted, re-rolled ~30 times
+        const im = pxCtx.getImageData(0, 0, w, h), d = im.data, step = Math.floor(e * 30), pr = k * 0.9;
+        for (let i = 0, n = 0; i < d.length; i += 4, n++){
+          const q = fxRand(n * 0.37 + step * 17.1); if (q > pr) continue;
+          const r = d[i], g = d[i + 1], b = d[i + 2], s = (q / pr * 4) | 0;
+          if (s === 0){ d[i] = g; d[i + 1] = b; d[i + 2] = r; } else if (s === 1){ d[i] = b; d[i + 1] = r; d[i + 2] = g; }
+          else if (s === 2){ if (r > 20 || g > 20 || b > 20){ d[i] = 255 - r; d[i + 1] = 255 - g; d[i + 2] = 255 - b; } } else { d[i] = r; d[i + 1] = b; d[i + 2] = g; }
+        }
+        pxCtx.putImageData(im, 0, 0);
+      }
+      m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return; }
     if (gst === 'channel'){                        // a TV changing channels: the old picture collapses into snow, the new one rolls in, the channel number shows
       if (trans && trans.ch == null){                // what the number shows (Options): random, the new scene's name, or its number
         const m = T.ch || 'rand', nm = (liveName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 .\-]/g, '').trim().slice(0, 10);

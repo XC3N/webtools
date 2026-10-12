@@ -16,17 +16,19 @@ async def main():
     bb=await pg.locator('#pv').bounding_box(timeout=180000); await pg.screenshot(path=str(OUT/'crt_stack.png'), clip=bb, timeout=180000)   # (a software GPU takes seconds per VHS frame)
     t=await pg.evaluate("[$('#fxStrip .fxp[data-i=\"10\"] .s').textContent, [...document.querySelectorAll('#fxStyle button.on')].map(b=>b.dataset.v)]")
     print(out, t, errs)
-    # stacked: right-click a style that's on shows its settings without switching it; one row of styles for every effect
+    # stacked: a click on a style that's on (not the one shown) shows its settings without switching it; right-click solos, again: the stack back
     await pg.evaluate("fxCfg[FXI.rgb].style='vhs+scan'; delete fxFocus.rgb; syncFxUI()")
     lab=lambda: pg.evaluate("[$('#fxSizeRow label').textContent, fxCfg[FXI.rgb].style, $('#fxSizeRow').classList.contains('dimmed'), [...document.querySelectorAll('#fxStyle button.focus')].map(b=>b.dataset.v)]")
-    r0=await lab(); await pg.click('#fxStyle [data-v="vhs"]', button='right', force=True, timeout=120000); r1=await lab()
-    await pg.click('#fxStyle [data-v="split"]', button='right', force=True, timeout=120000); r2=await lab()
-    await pg.click('#fxStyle [data-v="scan"]', button='right', force=True, timeout=120000); r3=await lab()
-    print(r0, r1, r2, r3)
+    r0=await lab(); await pg.click('#fxStyle [data-v="vhs"]', force=True, timeout=120000); r1=await lab()
+    await pg.click('#fxStyle [data-v="scan"]', force=True, timeout=120000); r2=await lab()
+    await pg.click('#fxStyle [data-v="vhs"]', button='right', force=True, timeout=120000); r3=await lab()
+    await pg.click('#fxStyle [data-v="vhs"]', button='right', force=True, timeout=120000); r4=await lab()
+    print(r0, r1, r2, r3, r4)
     assert r0[:3]==['Size','vhs+scan',False], r0
     assert r1==['Dropouts','vhs+scan',False,['vhs']], r1
-    assert r2==r1, r2
-    assert r3==['Size','vhs+scan',False,['scan']], r3
+    assert r2==['Size','vhs+scan',False,['scan']], r2
+    assert r3[:2]==['Dropouts','vhs'], r3
+    assert r4[1]=='vhs+scan', r4
     rows=await pg.evaluate("FX_DEFS.map((d,i)=>{ selectFx(i); const t=[...document.querySelectorAll('#fxStyle button')].map(b=>b.getBoundingClientRect().top); return [d.id, new Set(t).size, [...document.querySelectorAll('#fxStyle button')].some(b=>b.scrollWidth>b.clientWidth+1)]; })")
     print(rows)
     assert all(r[1]<=1 and not r[2] for r in rows), rows

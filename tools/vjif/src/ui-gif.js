@@ -44,7 +44,7 @@ function syncGifUI(){
   syncRangeUI(g); drawPrev(g, g.startF);
   HSV_UI.forEach(([id, k, fmt]) => { $(id).value = g.hsv[k]; $(id).nextElementSibling.textContent = fmt(g.hsv[k]); });
   if (!$('#gPanes [data-pane="colour"]').classList.contains('off')) syncSwapUI(g);
-  segSet('#tMode', g.trig); segSet('#tCurve', g.env.curve); $('#tGate').checked = g.env.gate;
+  segSet('#tMode', g.trig === 'fade' && g.env.gate ? 'hold' : g.trig); segSet('#tCurve', g.env.curve);
   ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
   segSet('#tLen', g.env.len || 'free');
   $('#tEnv').classList.toggle('dimmed', g.trig !== 'fade'); $('#tHoldRow').classList.toggle('dimmed', g.env.gate || g.env.len === 'gif');
@@ -142,12 +142,11 @@ const ENV_UI = [['#tA', 'a'], ['#tH', 'h'], ['#tR', 'r']];
 ENV_UI.forEach(([id, k]) => { const el = $(id); el.max = ENV_OPTS.length - 1;
   el.addEventListener('input', e => { const g = curGif(); if (!g) return; const o = ENV_OPTS[+e.target.value]; g.env[k] = o[0]; e.target.nextElementSibling.textContent = o[1]; }); });
 onSeg($('#tMode'), (b, e) => { const g = curGif(); if (!g) return;
-  g.trig = b.dataset.v; layers.forEach(L => L.clips.forEach(c => { if (c.pad === selPad) c.env = null; }));   // switching hides / shows it at once
+  const v = b.dataset.v; g.trig = v === 'stay' ? 'stay' : 'fade'; if (v !== 'stay') g.env.gate = v === 'hold'; layers.forEach(L => L.clips.forEach(c => { if (c.pad === selPad) c.env = null; }));   // switching hides / shows it at once
   syncGifUI(); redraw.all = true;
 });
 onSeg($('#tLen'), (b, e) => { const g = curGif(); if (g){ g.env.len = b.dataset.v; syncGifUI(); } });
 onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.dataset.v; syncGifUI(); } });
-$('#tGate').addEventListener('change', e => { const g = curGif(); if (g){ g.env.gate = e.target.checked; syncGifUI(); } });
 
 // ---- auto tab: one LFO per target ----
 let aSel = 'x';
@@ -340,6 +339,13 @@ document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=c
   t.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
   apply();
 });
+// Settings' sections fold the same way (remembered on their own)
+{ const sFold = new Set(Prefs.json('vjif-setfold', []));
+  document.querySelectorAll('#setPanel .modalBox > .sub').forEach(s => {
+    const t = s.querySelector('span'), name = t.textContent.trim(); s.classList.add('foldable');
+    const apply = () => { const shut = sFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };
+    t.addEventListener('click', () => { sFold.has(name) ? sFold.delete(name) : sFold.add(name); Prefs.setJson('vjif-setfold', [...sFold]); apply(); });
+    apply(); }); }
 // a section that differs from its defaults: its fold arrow in the signal colour (readable at a glance, folded or not)
 ['input', 'change', 'click'].forEach(t => $('#gPanes').addEventListener(t, () => queueMicrotask(markFolds)));
 // each section's own switch (off: skipped, its settings kept); Key and Shadow have theirs elsewhere

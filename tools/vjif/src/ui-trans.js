@@ -1,14 +1,15 @@
 // ---------- UI: the Transition panel (presets, type, style, options, length) ----------
 function syncTransUI(){
-  if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; $('#trPx').max = TR_PX.length - 1; }
+  if (!$('#trType').children.length){ $('#trType').innerHTML = TR_TYPES.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join(''); $('#trLen').max = TR_LENS.length - 1; }
   const T = transCfg, cut = T.type === 'cut';
   $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="Key ${k + 1}: ${trLabel(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${k + 1}</button>`).join('');
   segSet('#trType', T.type); segSet('#trCurve', T.smooth ? 1 : 0);
   const sts = TR_STYLES[T.type] || [], stl = trStyleOf(T);
   $('#trStyle').innerHTML = sts.length ? sts.map(x => `<button data-v="${x[0]}" class="${x[0] === stl ? 'on' : ''}" title="${x[2]}">${x[1]}</button>`).join('') : '<button disabled>—</button>';
   $('#trStyleRow').classList.toggle('dimmed', !sts.length);
-  const pi = optIdx(TR_PX, T.px || 12); $('#trPx').value = pi; $('#trPx').nextElementSibling.textContent = TR_PX[pi][1];
-  $('#trPxRow').classList.toggle('dimmed', !(T.type === 'dissolve' || T.type === 'glitch'));   // TV (VHS, Channel) has no block size
+  const A = trAmtOf(T), AL = A ? A.list : TR_PX, pi = optIdx(AL, A ? T[A.k] ?? A.def : 12), sl = $('#trPx');   // the slider row: block size, Hold or Repeats
+  sl.max = AL.length - 1; sl.value = pi; sl.dataset.def = optIdx(AL, A ? A.def : 12); sl.nextElementSibling.textContent = AL[pi][1];
+  $('#trPxRow label').textContent = A ? A.lab : 'Pixel'; $('#trPxRow').title = A ? A.tip : ''; $('#trPxRow').classList.toggle('dimmed', !A);
   const i = optIdx(TR_LENS, T.len); $('#trLen').value = i; $('#trLen').nextElementSibling.textContent = TR_LENS[i][1];
   // the Options row: what this transition can be tuned with (groups of choices, and on / off switches)
   const G = trOptsOf(T), sig = T.type + '|' + stl, box = $('#trDir');
@@ -42,11 +43,20 @@ function trOptsOf(T){ const st = trStyleOf(T);
     case 'tv': return st === 'channel' ? [['ch', [['rand', 'Random', 'A random channel number each time'], ['scene', 'Scene', "The new scene's name (or its number if it has none)"], ['num', 'Scene #', 'The new scene\'s number, with a leading 0 (01–09)']]]]
       : [['wear', [['light', 'Light', 'A tape in good shape'], ['worn', 'Worn', 'A well-used tape'], ['chewed', 'Chewed', 'The VCR ate it']]]];
     case 'stutter': return st === 'even' ? [['grid', [['0.25', '1/16', 'A cut every 1/16 note'], ['0.5', '1/8', 'A cut every 1/8 note'], ['0.125', '1/32', 'A cut every 1/32 note']]], ['swing', [0, 'Swing', 'Long-short pairs, like swung notes'], true]]
-      : [['swing', [0, 'Swing', 'Long-short pairs, like swung notes'], true]];
+      : [];
   }
   return [];
 }
 onSeg($('#trDir'), (b, e) => { const k = b.dataset.k; if (!k) return; if (b.dataset.tog) transCfg[k] = !transCfg[k]; else transCfg[k] = b.dataset.v; syncTransUI(); });
 onSeg($('#trCurve'), (b, e) => { transCfg.smooth = b.dataset.v === '1'; syncTransUI(); });
 $('#trLen').addEventListener('input', e => { transCfg.len = TR_LENS[+e.target.value][0]; syncTransUI(); });
-$('#trPx').addEventListener('input', e => { transCfg.px = TR_PX[+e.target.value][0]; syncTransUI(); });
+$('#trPx').addEventListener('input', e => { const A = trAmtOf(transCfg); if (!A) return; transCfg[A.k] = A.list[+e.target.value][0]; syncTransUI(); });
+// the slider row's job for each transition: the block size (Dissolve, Glitch), how long Dip / Flash stays black / white, how many times Ramp flashes the new scene
+const TR_HOLD = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7].map(v => [v, Math.round(v * 100) + '%']);
+const TR_REPS = [2, 3, 4, 5, 6, 8, 10, 12, 16].map(v => [v, String(v)]);
+function trAmtOf(T){ const st = trStyleOf(T);
+  if (T.type === 'dissolve' || T.type === 'glitch') return { k: 'px', list: TR_PX, def: 12, lab: 'Pixel', tip: 'Block size (Dissolve, Glitch), column width (Dissolve › Melt), biggest block (Pixelate, Scramble)' };
+  if (T.type === 'fade' && (st === 'dip' || st === 'flash')) return { k: 'hold', list: TR_HOLD, def: 0, lab: 'Hold', tip: 'How much of the length stays all black (Dip) or white (Flash)' };
+  if (T.type === 'stutter' && st === 'ramp') return { k: 'reps', list: TR_REPS, def: 8, lab: 'Repeats', tip: 'How many times the new scene flashes in' };
+  return null;
+}

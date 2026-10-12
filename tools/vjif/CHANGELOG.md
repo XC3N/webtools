@@ -4,6 +4,33 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.81.0 — 2026-10-12
+
+### Layers
+- The mask bar is one line between the layer cards and the preview (it no longer covers the preview). Left button paints, right button erases (Ctrl + left still erases). Clicking another layer ends painting.
+
+### Transitions
+- Glitch › Scramble is back (the 0.78 look), next to Corrupt.
+- The Pixel slider row does what the transition needs: Pixel (Dissolve, Glitch), Hold (Fade › Dip / Flash: how much of the length stays black / white) or Repeats (Stutter › Ramp: how many times the new scene flashes in, 2–16, 8 by default). Ramp's 8 shots were 4 flashes of the new scene; the default is now 8 flashes. Ramp's Swing (it did nothing) is gone.
+- Changing scene again during a TV › Channel transition: the screen effects no longer run over the snow and the number (they go on the arriving scene only).
+
+### Effects
+- Right-click a style of a stacked effect (Glitch, CRT): only it on; right-click it again: the stack back. A click on a style that's on but not the one shown shows its settings first; a second click takes it out.
+- Effect preset tiles show what each effect does: its palette (Colour › Palette) or its style(s).
+- Glitch › Corrupt: the smearing blocks move in whole pixels, mostly along one axis, so they stay sharp (digital, not analogue drift).
+- Glitch › Crunch: the colour comes from blocks twice the size and bleeds across edges; the detail stays in finer steps (more unlike Pixel).
+
+### GIFs
+- Trigger › Hit: Stay, Hold, One shot. Hold is the old Gate switch (fades in while the pad is held, out when let go).
+
+### Interface
+- Settings sections fold (click their name; remembered).
+- The tempo shows under the BPM box while the wheel turns it (Chrome keeps the pointer until the mouse moves).
+- Settings › Interface › all-layers pip colour: the picker no longer closes Settings, and the effect tiles follow the colour as you drag.
+
+### Fixes
+- Emptying the scene you're on, going to another, then Ctrl+Z: the emptied scene's tile gets its picture back.
+
 ## 0.80.0 — 2026-10-12
 
 ### GIFs

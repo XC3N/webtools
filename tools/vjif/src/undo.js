@@ -60,7 +60,7 @@ function applyScn(E){
     E.data = cur; if (pendingScene && pendingScene.i === i) pendingScene = null;
     renderScenes(); updateMem(); renderPool(); toast2(`Scene ${i + 1} changed back`); return;
   }
-  const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif) };
+  const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? liveThumb : null };   // (its picture too, in case it's undone from another scene)
   layers.forEach((L, li) => { const d = E.data.layers[li]; Object.assign(L, layerProps(d)); });
   pads.forEach((p, k) => { p.gif = E.data.pads[k]; renderPad(k); });
   E.data = cur; pending.clear();
@@ -91,7 +91,7 @@ let undoToast = Prefs.get('vjif-undotoast') !== '0';
 const histToast = (verb, what) => { if (undoToast) toast2(what ? `${verb}: ${what}` : verb); };
 $('#undoToastChk').checked = undoToast;
 $('#allPipC').value = allPipCol;
-$('#allPipC').addEventListener('input', e => { allPipCol = e.target.value; Prefs.set('vjif-allpip', allPipCol); fxFitGen++; paintFxPads(clock.beat); });
+$('#allPipC').addEventListener('input', e => { allPipCol = e.target.value; Prefs.set('vjif-allpip', allPipCol); fxFitGen++; syncFxUI(); });   // (the tiles redraw their pips)
 $('#undoToastChk').addEventListener('change', e => { undoToast = e.target.checked; Prefs.set('vjif-undotoast', undoToast ? '1' : '0'); });
 function dropAll(list){ list.forEach(dropEntry); }
 function trimHist(){ while (hist.undo.length > 100) dropEntry(hist.undo.shift()); }

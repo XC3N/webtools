@@ -89,7 +89,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {sxli9h0fg4vdbo0jxj1i} **Swap › Pick** (0.72) — Swap colours › Pick, click a colour of the GIF in the preview: its swatch is selected and its row shows.
 - [ ] {spwmb1r0v2aujdqh5oo3} **Random direction** (0.72) — a Slide preset, Options › Rnd: each scene change slides a different way.
 - [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.72) — the right column scrolled so Swap is at the bottom, click a swatch: the panel scrolls to show its row.
-- [ ] {4etro6ow3de4f12yceir} **Layer masks** (0.73, painted 0.78) — blend Mask: cut out / keep inside on layer 4; and the mask button on a layer card: paint (Free, Rect, Ellipse; Ctrl erases; Soft; Invert): that layer hides where painted, per scene, saved, Ctrl+Z per stroke.
+- [ ] {4etro6ow3de4f12yceir} **Layer masks** (0.73, painted 0.78, bar 0.81) — blend Mask: cut out / keep inside on layer 4; and the mask button on a layer card: its bar opens as one line between the layer cards and the preview (nothing covers the preview); paint with the left button, erase with the right (Free, Rect, Ellipse; Soft; Invert): that layer hides where painted, per scene, saved, Ctrl+Z per stroke. Click another layer: the bar closes.
 - [ ] {a5gwta1vqomj7j9e8ov4} **Shadow crop** (0.73, Soft 0.76) — a GIF with a shadow, Shadow › Crop 60 %: only the shadow under its lower part stays; Soft 20–40 %: it fades in at its top, no straight line.
 - [ ] {yt2qowv5cyezsz6war3v} **LFO gap** (0.73) — Auto › X, Cycle 1 bar, Gap 1 bar: it moves for a bar, waits a bar, moves again.
 - [ ] {ilmva106bf3hjfzv20pn} **Transition options** (0.73) — try each Options row: Wipe Soft, Iris GIF, Luma Dark / Soft, Zoom Out / Through, Dissolve Lines / Diamonds, Glitch Split / Wide, VHS Chewed, Stutter 1/32 + Swing.
@@ -99,6 +99,18 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75) — GIF › Auto › Envelope: Depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Only on Zoom: a punch per hit (Attack 0, Decay 1/4).
 - [ ] {sr1ri9phf2p3eyg1ozhe} **Section switches** (0.80) — GIF › Play / Colour: each section's switch turns it off without losing its settings (Frames: every frame; Adjust, Palette, Swaps: skipped); a slider touched turns it back on.
 - [ ] {8y575napbddy9c5nf7e2} **Resets on the heading line** (0.80) — fold Transform / Adjust / Key: Reset (Key: Pick + Clear) still there and works.
+- [ ] {0g5bim1rd8zzry16be4s} **Emptied scene's picture comes back** (0.79, 0.81) — select a scene, empty it (×), go to another scene, Ctrl+Z: the emptied scene's tile shows its picture again.
+- [ ] {4ulb8padwhpii6z6g25q} **Channel switched mid-transition** (0.81) — a Palette latched, TV › Channel: switch scene again before the number is gone: the snow and the new number keep their own colours, no palette on them.
+- [ ] {r71mg79hp3mhx0fvj3d3} **Glitch › Scramble is back** (0.81) — transitions: Glitch has Slices, Blocks, Scramble (the 0.78 look) and Corrupt.
+- [ ] {ua33ly01a08mz2zq2e7d} **Stutter › Ramp repeats** (0.81) — the slider row reads Repeats: 8 = the new scene flashes in 8 times, faster and faster (1/2 bar or longer for the 1/32 grid).
+- [ ] {q9ht8c8dz2xaq87rczen} **Dip / Flash hold** (0.81) — Fade › Dip: the slider row reads Hold; 50% = half the length all black, then the new scene fades in.
+- [ ] {wyr6y8vriz85mhh8o5uc} **Hit › Hold** (0.81) — GIF › Play › Trigger › Hit: Stay / Hold / One shot. Hold: hidden until hit, fades in while the pad is held, out when let go (the old Gate switch).
+- [ ] {jaynivxj9t3eg7c1b0oq} **Preset tiles say what they do** (0.81) — an effect preset with Colour › Palette CGA 3: its tile reads Colour / CGA 3; with Flip + Pixel: the styles on the second line.
+- [ ] {jcudlq0f3erc7a71e4p1} **Solo a style** (0.81) — CRT or Glitch with three styles on: right-click one: only it; right-click it again: the three back. A click on a style that's on but not outlined shows its settings; a second click takes it out.
+- [ ] {3stjfqy18x1q3sw4rpoc} **Settings sections fold** (0.81) — Settings: click a section's name (Canvas, Recording, Interface…): it folds, and stays folded after a reload.
+- [ ] {h09u0zq2j98igyy0r4dl} **All-layers pip colour** (0.81) — Settings › Interface › the pip colour: the picker opens and Settings stays open; the effect tiles' pips change while you drag.
+- [ ] {e2unhzisreav5qtiykow} **Glitch › Corrupt looks digital** (0.81) — F10 › Corrupt: the smeared blocks move in whole-pixel steps, sharp, no soft analogue drift.
+- [ ] {2q5ovua4n4d57ky23c92} **Crunch vs Pixel** (0.81) — Glitch › Crunch keeps the detail in bands and the colour bleeds in bigger blocks; Pixel is flat blocks.
 - [ ] {z3nn98qy05fsovfh9j46} **One shot fade in** (0.79) — Snap Bar, One shot with Fade in 1/16 or 1/8: the fade in shows on every hit, also hits just after the bar; the scope matches.
 - [ ] {jmfzwwsc1irpkbzmnqyv} **× to delete** (0.79) — hover a pad, a scene, a preset: × deletes it (Ctrl+Z back); Settings › Interface › Ctrl+click to delete only hides them; pad layers next to the key, preset mode next to its number.
 - [ ] {j77v227xl0hjqb61x0bn} **One shot banner** (0.79) — a marquee text pad, Trigger One shot, Length One play, fades 0: a hit sends it once across the screen, then it's gone.
@@ -107,7 +119,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ny48f2sb4rjpb1z7nzrw} **Slide › Bands** (0.78) — the new scene's bands slide in one by one, alternating sides; Options 4 / 6 / 8 / 12.
 - [ ] {fyy7csf8s1k7emai4obr} **FX Local through a transition** (0.78) — FX Local, a palette latched in scene 2 only: going 1 → 2 with a long Fade, scene 1 stays in its own colours while it fades.
 - [ ] {x0kewmc1wl1e2fwuqym5} **Folded sections** (0.78) — fold Key: Pick is still there; fold Adjust: its Reset hides; change a setting: that section's arrow turns the signal colour.
-- [ ] {eo6k9egelqrdizlkchvy} **Tempo wheel** (0.78) — wheel over the BPM: the pointer hides, the underlined digit steps; move the mouse: the pointer is back.
+- [ ] {eo6k9egelqrdizlkchvy} **Tempo wheel** (0.78, readout 0.81) — wheel over the BPM: the underlined digit steps and the tempo shows big just under the box while you turn (the pointer may stay: Chrome only hides it once the mouse moves).
 - [ ] {didb3n53mtijxg435c2g} **Glitch › Corrupt / Keyframe / Crunch** (0.77, 0.79) — effect Glitch › Corrupt on a moving scene: blocks smear on in runs and some go blocky in wrong colours; Keyframe: the picture freezes then smears with the motion; Crunch: starved bit rate; they stack. Transition Glitch › Corrupt: the old scene smears while the new one arrives in broken blocks.
 - [ ] {76oqldbtmf66p2712fa5} **Layer lock** (0.77, per scene 0.78) — lock the Background: clicks in the preview go through it; Transform sliders and arrows still move it; another scene's Background isn't locked.
 - [ ] {2ejq54kc22i63ai5t75s} **Shift + numpad presets** (0.77) — Caps Lock off: Shift + numpad 1–9 plays effect presets; without Shift, scenes. Caps on + Shift onto a full preset: a second press is needed to replace it (0.78).

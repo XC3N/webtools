@@ -125,7 +125,7 @@ async def main():
     g9 = await pg.evaluate("""[styleParts(FXI.glitch, 'corrupt+crunch').join('+'), styleParts(FXI.glitch, 'scramble').join(), normTrans({ type: 'glitch', style: 'scramble' }).style,
       document.querySelectorAll('.pad .xdel').length, document.querySelectorAll('#scenes .scene .xdel').length, document.querySelectorAll('#fxPre .fxp .xdel').length,
       !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('[data-pane=colour] #gSmooth')]""")
-    print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'corrupt', 18, 9, 9, True, True, True], g9
+    print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'scramble', 18, 9, 9, True, True, True], g9
     sw = await pg.evaluate("[hsvOn({ hsv: { h: 10, s: 1, v: 1, off: true } }), hsvOn({ hsv: { h: 10, s: 1, v: 1 } }), palOn({ pal: { i: 2, off: true } }), palOn({ pal: { i: 2 } }), swapOn({ swap: [1], swapOff: true }), swapOn({ swap: [1] }), ['fOn', 'tOn', 'hOn', 'pOn', 'swOn'].every(id => !!document.getElementById(id))]")
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
     print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg

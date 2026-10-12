@@ -97,7 +97,11 @@ const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map
 const FX_SHORT = { mono: 'MN', colour: 'CLR', strobe: 'STRB', poster: 'PSTR', zoom: 'ZM', shake: 'SHK', wobble: 'WBL', mirror: 'MIR', glitch: 'GLT', rgb: 'CRT', pixel: 'PIX', feedback: 'FDBK' };
 // the full text, else the short one, else (for style names) its first letters: whichever fits first
 function fitText(el, full, short, tiny){ el.textContent = full; for (const t of [short, tiny]) if (t && el.scrollWidth > el.clientWidth + 1) el.textContent = t; }
-const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${styleLabel(i, P.fx[i].style)}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
+// what an effect in a preset does, in a word or two: its palette (Colour › Palette) or its style(s)
+const fxDetail = (i, E, short) => { const D = FX_DEFS[i], st = E.style || D.styles[0][0];
+  if (D.id === 'colour' && st === 'pal') return (FX_PALS[E.pal || 0] || FX_PALS[0]).n;
+  return D.styles.length > 1 ? styleLabel(i, st, short) : ''; };
+const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${fxDetail(i, P.fx[i]) || FX_DEFS[i].styles[0][1]}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
 // store the effects that are on right now (from their own keys) into preset slot k
 function storeFxPre(k){
   const b = clock.beat, fx = {};
@@ -141,12 +145,10 @@ function syncFxUI(){
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
     else { const k = i - NFX, P = fxPre[k], e = !Object.keys(P.fx).length;
       if (e){ el.querySelector('.n').textContent = 'empty'; el.querySelector('.s').textContent = ''; }
-      else { const ks = Object.keys(P.fx), nm = ks.map(i => FX_DEFS[i].name);   // two lines of names; short ones when they don't fit
-        const n = el.querySelector('.n'), s2 = el.querySelector('.s'); fitText(n, nm.join(' + '), null);
-        if (n.scrollWidth > n.clientWidth + 1){ const h = Math.ceil(ks.length / 2), sh = k => FX_SHORT[FX_DEFS[k].id];
-          n.textContent = nm.slice(0, h).join(' + ') + ' +'; s2.textContent = nm.slice(h).join(' + ');
-          if (n.scrollWidth > n.clientWidth + 1 || s2.scrollWidth > s2.clientWidth + 1){ n.textContent = ks.slice(0, h).map(sh).join('+') + (h < ks.length ? '+' : ''); s2.textContent = ks.slice(h).map(sh).join('+'); } }
-        else s2.textContent = ''; }
+      else { const ks = Object.keys(P.fx), n = el.querySelector('.n'), s2 = el.querySelector('.s');   // the effects' names, and under them what each does (its style, or its palette)
+        fitText(n, ks.map(i => FX_DEFS[i].name).join(' + '), ks.map(i => FX_SHORT[FX_DEFS[i].id]).join('+'));
+        const dt = ks.map(i => fxDetail(i, P.fx[i])).filter(Boolean), ds = ks.map(i => fxDetail(i, P.fx[i], true)).filter(Boolean);
+        fitText(s2, dt.join(' · '), ds.join('·')); }
       el.classList.toggle('empty', e);
       el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; }
   });
@@ -155,7 +157,7 @@ function syncFxUI(){
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (click: in / out of the stack · right-click: solo it, again: the stack back)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
     styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     tgtSet(E.target);
   }
@@ -165,7 +167,7 @@ function syncFxUI(){
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>');
   }
   else {
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (right-click when on: its settings, without switching it off)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (click: in / out of the stack · right-click: solo it, again: the stack back)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
     styleSet(FX_DEFS.indexOf(d), C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
       // styles always in two even rows (CRT 4 + 3, Strobe 1 + 1): the editor keeps the same height for every effect
     tgtSet(C.target);
@@ -221,12 +223,21 @@ onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ if (b.dataset.v === 'ou
 $('#fxTgt').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === 'out') return; e.preventDefault(); const X = fxEd(); if (X){ X.target = +b.dataset.v; syncFxUI(); } });
 const styleSet = (i, v) => { const P = styleParts(i, v), f = fxFocus[FX_DEFS[i].id], multi = FX_MULTI[FX_DEFS[i].id] && P.length > 1;
   $('#fxStyle').querySelectorAll('button').forEach(b => { b.classList.toggle('on', P.includes(b.dataset.v)); b.classList.toggle('focus', !!multi && b.dataset.v === f && P.includes(f)); }); };
-onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (!X) return; const i = selFx < NFX ? selFx : preEd, id = FX_DEFS[i].id;
-  X.style = styleToggle(i, X.style || FX_DEFS[i].styles[0][0], b.dataset.v);
-  if (FX_MULTI[id]) fxFocus[id] = styleParts(i, X.style).includes(b.dataset.v) ? b.dataset.v : undefined;   // switched on: its settings show
+// stacked styles (Glitch, CRT): a click takes a style in or out (one that's on but not the one shown: shows its settings first);
+// right-click solos it (only it on), right-click it again brings the stack back
+const soloWas = new WeakMap();
+onSeg($('#fxStyle'), (b, e) => { const X = fxEd(); if (!X) return; const i = selFx < NFX ? selFx : preEd, id = FX_DEFS[i].id, v = b.dataset.v, P = styleParts(i, X.style);
+  if (FX_MULTI[id] && P.length > 1 && P.includes(v) && fxFocus[id] !== v){ fxFocus[id] = v; syncFxUI(); return; }
+  X.style = styleToggle(i, X.style || FX_DEFS[i].styles[0][0], v); soloWas.delete(X);
+  if (FX_MULTI[id]) fxFocus[id] = styleParts(i, X.style).includes(v) ? v : undefined;   // switched on: its settings show
   syncFxUI(); });
-$('#fxStyle').addEventListener('contextmenu', e => { const b = e.target.closest('button'), X = fxEd(); if (!b || !X) return; e.preventDefault();   // right-click: that style's settings, without switching it
-  const i = selFx < NFX ? selFx : preEd, id = FX_DEFS[i].id; if (!FX_MULTI[id] || !styleParts(i, X.style).includes(b.dataset.v)) return; fxFocus[id] = b.dataset.v; syncFxUI(); });
+$('#fxStyle').addEventListener('contextmenu', e => { const b = e.target.closest('button'), X = fxEd(); if (!b || !X) return; e.preventDefault();
+  const i = selFx < NFX ? selFx : preEd, id = FX_DEFS[i].id, v = b.dataset.v, cur = styleNorm(i, X.style);
+  if (!FX_MULTI[id]){ X.style = v; syncFxUI(); return; }
+  const was = soloWas.get(X);
+  if (cur === v && was){ X.style = was; soloWas.delete(X); }                      // un-solo: the stack as it was
+  else { if (cur !== v) soloWas.set(X, cur); X.style = v; }
+  fxFocus[id] = v; syncFxUI(); });
 $('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----

@@ -20,16 +20,16 @@ function applyMask(b, m){                            // b: a flattened layer; cu
   b.imageSmoothingEnabled = true; b.drawImage(m.cv, 0, 0, b.canvas.width, b.canvas.height); b.restore();
 }
 
-// ---- painting: Mask on a layer card opens the bar over the preview; the preview then paints instead of selecting ----
+// ---- painting: Mask on a layer card opens the bar between the layer cards and the preview; the preview then paints instead of selecting ----
 const MASK_TOOLS = [['free', 'Free', 'Freehand brush'], ['rect', 'Rect', 'Rectangle: drag from corner to corner (Shift: square)'], ['ell', 'Ellipse', 'Ellipse: drag across it (Shift: circle)']];
 const maskOpt = Prefs.json('vjif-maskopt', { tool: 'free', size: 80, soft: 0.4 });
 let maskStroke = null, maskPtr = null;
 function maskOpen(li){
   if (maskEd && maskEd.li === li) return maskClose();
   maskEd = { li }; if (target !== li) setTarget(li);
-  $('#maskBar').hidden = false; syncMaskUI(); syncLayerUI(); redraw.all = true;
+  $('#stage').classList.add('masking'); $('#maskBar').hidden = false; syncMaskUI(); syncLayerUI(); redraw.all = true;
 }
-function maskClose(){ maskEd = null; maskStroke = null; $('#maskBar').hidden = true; syncLayerUI(); redraw.all = true; pv.style.cursor = ''; }
+function maskClose(){ if (maskStroke) maskUp(); maskEd = null; maskStroke = null; $('#maskBar').hidden = true; $('#stage').classList.remove('masking'); syncLayerUI(); redraw.all = true; pv.style.cursor = ''; }
 function syncMaskUI(){
   if (!maskEd) return; const L = layers[maskEd.li], m = L.mask;
   $('#maskName').textContent = `Mask · ${LNAMES[maskEd.li]}`;
@@ -59,12 +59,12 @@ function maskDraw(fn){
   maskRev++; redraw.all = true;
 }
 function maskDown(e){
-  if (e.button) return;
+  if (e.button !== 0 && e.button !== 2) return;     // left paints, right erases
   const [px, py] = evtToOut(e), L = layers[maskEd.li], base = L.mask;
   pv.setPointerCapture(e.pointerId);
   const m = maskNew(base && base.cv, { inv: base ? base.inv : false, on: base ? base.on : true });   // paint on a copy
   L.mask = m;
-  maskStroke = { m, base, tool: maskOpt.tool, erase: isDel(e), x0: px, y0: py, last: [px, py] };
+  maskStroke = { m, base, tool: maskOpt.tool, erase: e.button === 2 || isDel(e), x0: px, y0: py, last: [px, py] };
   if (maskStroke.tool === 'free') maskDraw(x => maskDab(x, px, py, maskOpt.size / 2, maskOpt.soft));
   syncMaskUI();
 }
@@ -90,6 +90,7 @@ function maskUp(){
 pv.addEventListener('pointermove', e => { if (maskEd) maskMove(e); });
 pv.addEventListener('pointerup', () => { if (maskEd) maskUp(); });
 pv.addEventListener('pointercancel', () => { if (maskEd) maskUp(); });
+pv.addEventListener('contextmenu', e => { if (maskEd) e.preventDefault(); });   // (right button erases)
 pv.addEventListener('pointerleave', () => { if (maskEd && !maskStroke){ maskPtr = null; redraw.all = true; } });
 // the bar
 $('#maskTool').innerHTML = MASK_TOOLS.map(([v, l, t]) => `<button data-v="${v}" title="${t}">${l}</button>`).join('');
@@ -113,14 +114,4 @@ function drawMaskOverlay(dpr){
   if (maskPtr && maskOpt.tool === 'free'){ const k = VW / W, r = maskOpt.size / 2 * k;
     pctx.lineWidth = dpr; pctx.strokeStyle = '#fff'; pctx.setLineDash([3 * dpr, 3 * dpr]); pctx.beginPath(); pctx.arc(X + maskPtr[0] * k, Y + maskPtr[1] * k, r, 0, Math.PI * 2); pctx.stroke(); }
   pctx.restore();
-}
-// the bar moves (drag its title), within the preview, so it's never in the way of what you paint
-{
-  const bar = $('#maskBar'), hd = $('#maskName'), place = (x, y) => { const P = bar.parentElement, mx = Math.max(0, P.clientWidth - bar.offsetWidth), my = Math.max(0, P.clientHeight - bar.offsetHeight);
-    bar.style.left = clamp(x, 0, mx) + 'px'; bar.style.top = clamp(y, 0, my) + 'px'; };
-  const at = Prefs.json('vjif-maskbar', null); if (at) place(at[0], at[1]);
-  hd.style.cursor = 'move'; hd.title = 'Drag to move the bar';
-  hd.addEventListener('pointerdown', e => { if (e.button) return; const ox = e.clientX - bar.offsetLeft, oy = e.clientY - bar.offsetTop; hd.setPointerCapture(e.pointerId);
-    const mv = ev => place(ev.clientX - ox, ev.clientY - oy), up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up); Prefs.setJson('vjif-maskbar', [bar.offsetLeft, bar.offsetTop]); };
-    hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up); });
 }

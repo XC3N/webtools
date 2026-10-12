@@ -74,13 +74,17 @@ bpmEl.addEventListener('mousemove', e => {
   if (bpmEl.disabled || document.activeElement === bpmEl){ bpmMark.style.display = 'none'; return; }
   const d = bpmDigit(e); Object.assign(bpmMark.style, { display: 'block', left: d.x + 'px', width: d.w + 'px' });
 });
-bpmEl.addEventListener('mouseleave', () => { bpmMark.style.display = 'none'; bpmHide = null; bpmEl.style.cursor = ''; });
+// the pointer can't always be hidden (Chrome keeps it until the mouse moves): the tempo also shows under the box while the wheel turns
+const bpmPeek = $('#bpmPeek'); let bpmPeekT = 0;
+const peekOff = () => { clearTimeout(bpmPeekT); bpmPeek.style.display = 'none'; };
+bpmEl.addEventListener('mouseleave', () => { bpmMark.style.display = 'none'; bpmHide = null; bpmEl.style.cursor = ''; peekOff(); });
 bpmEl.addEventListener('wheel', e => {
   e.preventDefault();
   if (clock.src !== 'internal' || document.activeElement === bpmEl) return;
   const d = e.deltaY || e.deltaX; if (!d) return;
   if (!bpmHide){ bpmHide = [e.clientX, e.clientY]; bpmEl.style.cursor = 'none'; }
   setBpm(clock.bpm + (d < 0 ? 1 : -1) * bpmDigit(e).place);
+  bpmPeek.textContent = bpmEl.value; bpmPeek.style.display = 'block'; clearTimeout(bpmPeekT); bpmPeekT = setTimeout(peekOff, 1200);
 }, { passive: false });
 // drag the tempo up / down: the digit under the pointer moves 1 step every 6 px (a click without dragging types instead)
 {
@@ -109,7 +113,7 @@ $('#outBtn').addEventListener('click', openOutput);   // Shift+click: reset its 
 $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
 $('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = !$('#setPanel').hidden; if (!$('#setPanel').hidden) placeSettings(); });
 // a click anywhere outside the Settings window closes it (the click still reaches what's under it)
-document.addEventListener('pointerdown', e => { if (!$('#setPanel').hidden && !e.target.closest('#setPanel .modalBox, #setBtn')) $('#setPanel').hidden = true; }, true);
+document.addEventListener('pointerdown', e => { if (!$('#setPanel').hidden && !e.target.closest('#setPanel .modalBox, #setBtn, #cpk')) $('#setPanel').hidden = true; }, true);   // (the colour picker sits outside it)
 // floating windows (Settings, Pool): drag the title bar to move them out of the way; the spot is remembered
 function movable(box, key){
   const hd = box.querySelector('h2'); hd.style.cursor = 'move'; hd.title = 'Drag to move';

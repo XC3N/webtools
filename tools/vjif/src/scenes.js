@@ -289,5 +289,5 @@ function soloLayer(li){
   else { soloPrev = { li, on: layers.map(L => L.on) }; layers.forEach((L, k) => L.on = k === li); }
   syncLayerUI(); redraw.all = true;
 }
-function setTarget(li){ target = li; syncLayerUI(); syncXfUI(); }
+function setTarget(li){ target = li; if (maskEd && maskEd.li !== li) maskClose(); syncLayerUI(); syncXfUI(); }   // another layer: mask painting ends
 document.addEventListener('visibilitychange', () => { redraw.all = true; });

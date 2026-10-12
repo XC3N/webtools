@@ -12,7 +12,7 @@ const FX_DEFS = [
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
-  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'A damaged video file: some blocks keep the frame before and smear along their own motion (datamosh), others break into flat, blocky squares in the wrong colours (Size = block size)'], ['keyfr', 'Keyframe', 'A lost keyframe: the picture freezes when it starts, then moves with the live picture\'s motion, block by block, and smears (datamosh); a few blocks catch up each Rate, more with less Amount (Size = block size)'], ['crunch', 'Crunch', 'Heavy compression: blocky, banded detail and smeared colour, like a starved bit rate (Size = block size)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt', 'keyfr', 'crunch'] },
+  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'A damaged video file: some blocks keep the frame before and smear along their own motion (datamosh), others break into flat, blocky squares in the wrong colours (Size = block size)'], ['keyfr', 'Keyframe', 'A lost keyframe: the picture freezes when it starts, then moves with the live picture\'s motion, block by block, and smears (datamosh); a few blocks catch up each Rate, more with less Amount (Size = block size)'], ['crunch', 'Crunch', 'Heavy compression, like a starved bit rate: the detail stays but in a few bands per block, the colour comes in blocks twice the size and bleeds across edges (Size = block size)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt', 'keyfr', 'crunch'] },
   { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, pay-TV and satellite scrambling (several at once)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
 const FXI = Object.fromEntries(FX_DEFS.map((d, i) => [d.id, i]));   // an effect's slot (F key) by its id
@@ -448,7 +448,10 @@ ${FX_GLSL}
           vec2 run = vec2(floor(cell.x / 5.0 + h1(cell.y * 3.1 + gseed) * 5.0), cell.y);   // damage comes in runs along a row, as a broken file decodes
           float q = h2(run + gseed), r = h2(run * 1.7 + gseed + 3.1);
           if (q < glitch * 0.55){                     // moshed: the block keeps the last frame, nudged along its own motion vector each frame, so it smears on (datamosh)
-            vec2 mv = (vec2(h2(run + gseed * 1.3), h2(run * 2.3 + gseed)) - 0.5) * vec2(4.0, 2.5) * (0.4 + glitch) / res;
+            // whole pixels per frame (a codec's vectors), mostly along one axis, the run's vector give or take a pixel per block: the copy stays sharp and the blocks step, nothing blurs
+            vec2 mv = floor((vec2(h2(run + gseed * 1.3), h2(run * 2.3 + gseed)) - 0.5) * vec2(10.0, 6.0) * (0.4 + glitch) + 0.5);
+            if (h2(run * 3.9 + gseed) < 0.5) mv.y = 0.0; else if (h2(run * 4.7 + gseed) < 0.4) mv.x = 0.0;
+            mv += floor(vec2(h2(cell + gseed * 2.1), h2(cell * 1.9 + gseed)) * 3.0) - 1.0; mv /= res;
             vec4 pv = texture2D(prev, vec2(uv.x + mv.x, 1.0 - uv.y - mv.y)); float has = step(0.02, pv.a);   // (nothing drawn there yet: the picture)
             c = mix(c, pv.rgb, has); al = mix(al, pv.a, has);
           } else if (r < glitch * 0.3){                // broken: the block's colour flattened, a stray cosine pattern on it, the colour difference thrown off (green / pink)
@@ -461,8 +464,10 @@ ${FX_GLSL}
         }
         if (glitch > 0.001 && HAS(glS, S_glitch_crunch)){   // crunch (a starved bit rate): per block, the detail in a few luma steps around the block's mean, the colour from its centre only
           float bs = max(glSz * 0.25, 3.0); vec2 cell = floor(uv * res / bs), cc = (cell + 0.5) * bs / res; vec3 L3 = vec3(0.299, 0.587, 0.114);
-          vec3 b = look(samp(geo(cc), 0.0).rgb); float ya = dot(b, L3), y = dot(c, L3), q = mix(0.03, 0.3, glitch);
-          y = ya + floor((y - ya) / q + 0.5) * q; float u2 = (b.b - ya) * 0.565, v2 = (b.r - ya) * 0.713;
+          vec3 b = look(samp(geo(cc), 0.0).rgb); float ya = dot(b, L3), y = dot(c, L3), q = mix(0.03, 0.16, glitch);
+          y = ya + floor((y - ya) / q + 0.5) * q;      // the detail stays, in a few steps (unlike Pixel, where a block is one flat colour)
+          vec2 cc2 = (floor(uv * res / (bs * 2.0)) + 0.5) * bs * 2.0 / res; vec3 b2 = look(samp(geo(cc2), 0.0).rgb); float y2 = dot(b2, L3);   // the colour from blocks twice the size, so it bleeds across edges
+          float u2 = (b2.b - y2) * 0.565, v2 = (b2.r - y2) * 0.713;
           c = mix(c, vec3(y + 1.403 * v2, y - 0.344 * u2 - 0.714 * v2, y + 1.770 * u2), min(1.0, glitch * 1.5));
         }
         c = mix(c, vec3(IS(strobeS, S_strobe_white) ? 1.0 : 0.0), strobe); if (IS(strobeS, S_strobe_white)) al = mix(al, 1.0, strobe);
@@ -698,6 +703,7 @@ function drawFrame(now){
     if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
     else if (trans && trans.still){                   // from a still of the interrupted transition
       trA.setTransform(1, 0, 0, 1, 0, 0); trA.globalAlpha = 1; trA.globalCompositeOperation = 'source-over'; trA.drawImage(trans.still, 0, 0); render(list, trB, SLOT.LAYERS, LUs, zE);
+      if (fxU && post){ post.run(fxU, trB.canvas, trB, SLOT.ARRIVING_OUT); sideFx = trans.sideFx = true; }   // the still has its effects already: only the arriving scene gets them, so the transition's own picture (snow, number) keeps its colours
       composeTransition(trEase(tp, trans.cfg), trans.cfg);
     }
     else if (trans && trans.fx && post){                 // going live from Prep: each side with its own effects, then combined
