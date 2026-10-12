@@ -47,10 +47,11 @@ function onKey(e){
     e.preventDefault(); if (e.repeat) return;
     const k = +np[1] - 1;
     setCaps(e.getModifierState('CapsLock'));
-    if (!capsOn) return sceneKey(k);
-    // Shift stores. On Windows, Shift+numpad with NumLock on arrives as Home / ↑ / PgUp… without the Shift flag
+    // Shift: on Windows, Shift+numpad with NumLock on arrives as Home / ↑ / PgUp… without the Shift flag
     const shifted = e.shiftKey || (e.getModifierState('NumLock') && !/^[0-9]$/.test(e.key));
-    if (shifted) storeFxPre(k); else { fxDown(NFX + k); heldPre = k; selectFx(NFX + k); }
+    if (!capsOn && !shifted) return sceneKey(k);
+    // Caps Lock: the numpad plays effect presets (Shift stores into one) · Caps Lock off, Shift held: plays them too
+    if (capsOn && shifted) storeFxPre(k); else { fxDown(NFX + k); heldPre = k; selectFx(NFX + k); }
     return;
   }
   if (heldFxKey >= 0 && !e.shiftKey && FX_MODE_KEYS[e.code]){   // an effect key held + Ins / Home / PgUp: Hold / Hit / Latch

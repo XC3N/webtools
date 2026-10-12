@@ -155,7 +155,7 @@ async function fillRecAudio(ask = false){
   if (ask){ try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach(t => t.stop()); } catch (e) { toast('Sound input access was not allowed'); } }
   let ins = []; try { ins = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput' && d.deviceId !== 'default' && d.deviceId !== 'communications'); } catch (e) {}
   const named = ins.some(d => d.label);
-  sel.innerHTML = '<option value="">No sound</option><option value="music">Music player (below)</option><option value="tab">Tab audio (pick a tab at Rec)</option>' + (named ? ins.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label)}</option>`).join('') : '<option value="?">Choose an input… (asks permission)</option>')
+  sel.innerHTML = '<option value="">No sound</option><option value="music">Music player</option><option value="tab">Tab audio</option>' + (named ? ins.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label)}</option>`).join('') : '<option value="?">Choose an input… (asks permission)</option>')
     + (recAudio && !SPECIAL_SND.includes(recAudio.id) && !ins.some(d => d.deviceId === recAudio.id) ? `<option value="${esc(recAudio.id)}">${esc(recAudio.label || 'Chosen input')} (not connected)</option>` : '');
   sel.value = recAudio ? recAudio.id : '';
 }

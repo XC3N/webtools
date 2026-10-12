@@ -74,6 +74,7 @@
  * @property {Clip[]} clips        drawn first to last (the last is on top)
  * @property {?Clip} sel           the one Transform edits
  * @property {boolean} fillOn @property {string} fill   Background only: a colour under its GIFs
+ * @property {boolean} [lock]   the mouse goes through its GIFs in the preview (saved with the set, the same in every scene)
  * @property {'cut'|'armed'|string} tr   its own on / off transition: none, the armed one, or a preset number
  * @property {?HTMLElement} row    its card
  */

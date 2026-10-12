@@ -89,7 +89,8 @@ async function audioCapture(stream){
   return { ctx,
     toPerf: sec => base.p + (sec - base.c) * 1000,
     start(fn){ node.port.onmessage = e => fn(e.data.f, [e.data.l, e.data.r]); },
-    stop(){ try { node.port.postMessage('stop'); srcNode.disconnect(node); node.disconnect(); mute.disconnect(); } catch (e) {} if (own){ ctx.close().catch(() => {}); stream.getTracks().forEach(t => t.stop()); } } };
+    release(){ try { node.port.postMessage('stop'); srcNode.disconnect(node); node.disconnect(); mute.disconnect(); } catch (e) {} if (own) ctx.close().catch(() => {}); },   // the input itself stays open
+    stop(){ this.release(); if (own) stream.getTracks().forEach(t => t.stop()); } };
 }
 
 const rec = { mr: null, writer: null, t0: 0, wait: null, name: '', bytes: 0, starting: false };   // starting: an MP4 take is getting its encoders ready
@@ -117,7 +118,7 @@ async function recToggle(){
   if (rec.busy || rec.starting) return;              // the save dialog is still open, or a take is getting ready
   rec.busy = true; try { await recPrepare(); } finally { rec.busy = false; }
 }
-function recDropAudio(){ if (rec.audio){ rec.audio.getTracks().forEach(t => t.stop()); rec.audio = null; } }
+function recDropAudio(){ if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; } if (rec.audio){ rec.audio.getTracks().forEach(t => t.stop()); rec.audio = null; } }
 function recCancelWait(){
   if (!rec.wait) return;
   rec.wait = null; recDropAudio(); if (rec.writer){ try { rec.writer.abort(); } catch (e) {} rec.writer = null; }   // the chosen file is dropped, not left empty
@@ -173,6 +174,9 @@ async function recPrepare(){
     try { rec.audio = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: recAudio.id }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
     catch (e) { toast(`Can't open the sound input (${recAudio.label || 'chosen input'}) — recording without sound`); }
   }
+  // a tab or an input gets its capture going now, while the take waits for its bar: a capture started on the bar itself
+  // could stumble for its first few blocks (a hiccup at the start of the clip)
+  if (rec.audio && !(recAudio && recAudio.id === 'music') && typeof AudioEncoder === 'function' && typeof AudioData === 'function') rec.capPre = audioCapture(rec.audio).catch(() => null);
   let mime = recMime(!!rec.audio);
   if (!mime && rec.audio){ recDropAudio(); toast('This browser can\'t record sound with this format — recording without sound'); mime = recMime(false); }
   if (!mime){ recDropAudio(); return toast('Recording needs MediaRecorder (use Chrome)'); }
@@ -193,6 +197,7 @@ function recStart(mime, beat = clock.beat){
   if (mime === WC_MP4) return wcStart(beat);
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   // this take owns its writer, chunks, name and sound input: a quick next take can't step on them while this one saves
+  if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; }   // the browser's own recorder takes the sound itself
   const writer = rec.writer, name = rec.name, chunks = [], audio = rec.audio; rec.audio = null;
   let pend = Promise.resolve();
   const stream = master.captureStream(recFps);
@@ -236,7 +241,7 @@ async function wcSetup(beat){
   }
   if (!vcfg){                                        // no H.264 here: fall back to MediaRecorder (WebM when nothing else)
     const m = REC_MIMES_AV.mp4.concat(REC_MIMES.mp4).find(recOk) || (audio ? REC_MIMES_AV.webm : REC_MIMES.webm).find(recOk);
-    if (!m){ if (audio) audio.getTracks().forEach(t => t.stop()); toast('This browser can\'t record video'); return; }
+    if (!m){ if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; } if (audio) audio.getTracks().forEach(t => t.stop()); toast('This browser can\'t record video'); return; }
     if (!writer && !m.startsWith('video/mp4')) rec.name = name.replace(/\.mp4$/, '.webm');
     toast2(`No ${WC_NAMES[recCodec]}${recCodec !== 'h264' ? ' or H.264' : ''} encoder here — recording with the browser's own recorder instead`);
     rec.audio = audio; return recStart(m, beat);
@@ -247,7 +252,8 @@ async function wcSetup(beat){
   const track = audio && audio.getAudioTracks()[0];
   let acfg = null, cap = null;
   if (track && typeof AudioEncoder === 'function' && typeof AudioData === 'function'){
-    try { cap = await audioCapture(recAudio && recAudio.id === 'music' && mus.ctx ? null : audio); } catch (e) { cap = null; }
+    const pre = rec.capPre; rec.capPre = null;
+    try { cap = pre ? await pre : await audioCapture(recAudio && recAudio.id === 'music' && mus.ctx ? null : audio); } catch (e) { cap = null; }
     if (!cap) toast('Couldn\'t capture the sound — recording without sound');
     else for (const codec of recACodec === 'opus' ? ['opus', 'mp4a.40.2'] : ['mp4a.40.2', 'opus']){   // AAC is what the social sites expect; Opus in MP4 plays in browsers and VLC
       const c = { codec, sampleRate: cap.ctx.sampleRate, numberOfChannels: 2, bitrate: 192000 };

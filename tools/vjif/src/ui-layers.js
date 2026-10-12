@@ -8,6 +8,7 @@ function buildLayers(){
     row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: Shift+${li+1} (End: the edit layer). Right-click: solo (again: back as before)">${li+1}</button>
       <span class="lname" title="Click the card, PgUp / PgDn or Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
       ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
+      <button class="llock iconbtn" title="Lock: the mouse can't select, move or resize this layer's GIFs in the preview (clicks go through to the layers below). The Transform panel and the arrow keys still work"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor" stroke="none"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg></button>
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow">      <select class="lbl" title="Layer blend mode. Mask: cut out — this layer's GIFs cut holes in the layers below it (they show black); Mask: keep inside — only what's under this layer's GIFs stays of the layers below">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
       <span class="lopw"><input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity"></span>
@@ -16,6 +17,7 @@ function buildLayers(){
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
     row.querySelector('.lon').addEventListener('contextmenu', e => { e.preventDefault(); soloLayer(li); });
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
+    row.querySelector('.llock').addEventListener('click', () => { L.lock = !L.lock; if (L.lock && drag && drag.c && L.clips.includes(drag.c)) drag = null; syncLayerUI(); redraw.all = true; toast2(`${LNAMES[li]} ${L.lock ? 'locked: the mouse goes through it' : 'unlocked'}`); });
     row.querySelector('.lclr').addEventListener('click', () => { L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });
     row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });
     if (li === 0){
@@ -88,7 +90,7 @@ function moveClip(sli, sid, dli, at){
 function syncLayerUI(){
   for (const L of layers){
     const r = L.row, sel = selClip(L.i);
-    r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target);
+    r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target); r.querySelector('.llock').classList.toggle('on', !!L.lock);
     r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
     r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
@@ -170,6 +172,7 @@ function syncXfUI(){
 
 // ---------- preview mouse: select, move, resize handles ----------
 let drag = null, wheelT = 0;
+const editSel = () => layers[target].lock ? null : selClip();   // what the mouse may change: nothing on a locked layer
 function evtToOut(e){ const r = pv.getBoundingClientRect(), z = r.width / (pv.clientWidth || r.width); return [((e.clientX - r.left) / z - view.x) * W / view.w, ((e.clientY - r.top) / z - view.y) * H / view.h]; }
 function cursorFor(h, shift){ if (!h) return ''; if (h === 'rot') return 'grab'; if (shift) return 'crosshair'; if (h[0] && h[1]) return h[0] * h[1] > 0 ? 'nwse-resize' : 'nesw-resize'; return h[0] ? 'ew-resize' : 'ns-resize'; }
 
@@ -177,7 +180,7 @@ pv.addEventListener('pointerdown', e => {
   const [px, py] = evtToOut(e);
   if (picking){ pickAt(px, py); return; }
   pv.setPointerCapture(e.pointerId);
-  let c = selClip(); const h = hitHandle(c, px, py);
+  let c = editSel(); const h = hitHandle(c, px, py);
   if (h === 'rot'){ const G = clipGeom(c); drag = { type: 'rot', c, cx: G.cx, cy: G.cy, a0: Math.atan2(py - G.cy, px - G.cx), r0: c.rot }; pv.style.cursor = 'grabbing'; return; }
   if (h){ drag = { type: e.shiftKey ? 'crop' : 'resize', h, c, G0: clipGeom(c), sx0: c.sx, sy0: c.sy }; return; }
   let hit; const outside = px < 0 || px > W || py < 0 || py > H;   // outside the canvas nothing shows, so only a handle counts there
@@ -193,7 +196,7 @@ pv.addEventListener('pointerdown', e => {
 });
 pv.addEventListener('pointermove', e => {
   const [px, py] = evtToOut(e);
-  if (!drag){ if (!picking) pv.style.cursor = cursorFor(hitHandle(selClip(), px, py), e.shiftKey) || (hitsAt(px, py, false).length ? 'move' : 'default'); return; }
+  if (!drag){ if (!picking) pv.style.cursor = cursorFor(hitHandle(editSel(), px, py), e.shiftKey) || (hitsAt(px, py, false).length ? 'move' : 'default'); return; }
   const c = drag.c;
   if (drag.type === 'rot'){
     let r = drag.r0 + (Math.atan2(py - drag.cy, px - drag.cx) - drag.a0) * 180 / Math.PI;

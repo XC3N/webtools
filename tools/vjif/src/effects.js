@@ -11,7 +11,7 @@ const FX_DEFS = [
   { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']] },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
-  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['scramble', 'Scramble', 'Pixelated blocks with their colours scrambled (Size = biggest block)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'scramble'] },
+  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'A damaged video file: some blocks keep the frame before and smear along their own motion (datamosh), others break into flat, blocky squares in the wrong colours (Size = block size)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt'] },
   { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, pay-TV and satellite scrambling (several at once)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
 
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
@@ -69,8 +69,9 @@ const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'
 const kalSlices = amt => Math.round(3 + 9 * clamp((amt - 0.05) / 0.95, 0, 1)), kalAmt = n => 0.05 + (n - 3) / 9 * 0.95;
 // a style's name on an effect tile, when the whole word doesn't fit
 const STYLE_BTN = { scan: 'Scan', phos: 'Phos' };   // style buttons: short enough for one row (the tooltip has the full name)
-const STYLE_SHORT = { thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', scramble: 'Scramb.', kal: 'Kaleid.', square: 'Square' };
-const styleIdx = (i, v) => Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === String(v).split('+')[0]));
+const STYLE_SHORT = { thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', kal: 'Kaleid.', square: 'Square' };
+const STYLE_WAS = { scramble: 'corrupt' };   // renamed / replaced styles: what an older set gets instead
+const styleIdx = (i, v) => { const k = String(v).split('+')[0]; return Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === (STYLE_WAS[k] || k))); };
 // CRT can stack styles ('vhs+scan'): they run as separate stages in a fixed order. Degauss stays on its own (a one-off hit)
 const FX_MULTI = { rgb: true }, FX_SOLO = {};   // (Degauss, a one-off hit, moved to Glitch: CRT's styles all stack)
 const styleParts = (i, v) => { const L = String(v || '').split('+').filter(p => FX_DEFS[i].styles.some(s => s[0] === p)); return L.length ? L : [FX_DEFS[i].styles[0][0]]; };
@@ -318,7 +319,7 @@ ${FX_GLSL}
       }
       void main(){
         if (blit > 0.5){ gl_FragColor = texture2D(tex, vec2(uv.x, 1.0 - uv.y)); return; }
-        vec2 p = uv, a = A(), scell = vec2(0.0); float scr = 0.0;
+        vec2 p = uv, a = A();
         float split = rgb > 0.001 ? rgb * max(max(HAS(rgbS, S_rgb_split) ? 0.025 : 0.0, HAS(rgbS, S_rgb_vhs) ? 0.006 : 0.0), max(HAS(rgbS, S_rgb_scan) ? 0.0015 : 0.0, HAS(rgbS, S_rgb_phos) ? 0.002 : 0.0)) : 0.0;   // stacked styles: the widest colour split
         float payU = 1.0;                              // pay-TV: where this pixel falls across the line (0 = the blanking bar's edge)
         if (rgb > 0.001 && HAS(rgbS, S_rgb_crypt)){              // crypt: lines shuffled within blocks of 32 (Nagravision Syster), then each cut at a random point and its halves swapped (Videocrypt)
@@ -350,12 +351,8 @@ ${FX_GLSL}
           else if (IS(glS, S_glitch_blocks)){ vec2 cell = floor(p * res / max(glSz, 2.0));
             if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
           else if (IS(glS, S_glitch_melt)){ float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
-          else if (IS(glS, S_glitch_scramble)){ vec2 bsz = vec2(max(2.0, glSz * (0.15 + 0.85 * glitch))) / res; scell = floor((p - 0.5) / bsz); p = (scell + 0.5) * bsz + 0.5; scr = glitch; }   // the block grid grows from the centre (anchored at a corner, the blocks seemed to slide into it)
         }
         vec4 c4 = samp(geo(p), split);
-        if (scr > 0.0){ float q = h2(scell + gseed);   // scramble: some blocks get their channels rotated, swapped or inverted
-          if (q < scr * 0.8){ float s4 = floor(q / (scr * 0.8) * 4.0);
-            c4.rgb = s4 < 0.5 ? c4.gbr : s4 < 1.5 ? c4.brg : s4 < 2.5 ? mix(c4.rgb, 1.0 - c4.rgb, step(0.08, max(c4.r, max(c4.g, c4.b)))) : c4.rbg; } }   // (black stays black)
         if (mirror > 0.001) c4 = mix(c4, samp(geo(fold(p)), split), mirror);
         vec3 c = c4.rgb; float al = c4.a;
         if (poster > 0.001){
@@ -424,6 +421,22 @@ ${FX_GLSL}
           c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rgb);
           c *= 1.0 - 0.28 * rgb * step(0.5, fract(gl_FragCoord.y / 3.0));
           c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * rgb;
+        }
+        if (glitch > 0.001 && IS(glS, S_glitch_corrupt)){   // corrupt (a damaged video file), on a grid of blocks re-keyed every Rate:
+          float bs = max(glSz * 0.5, 4.0); vec2 px = uv * res, cell = floor(px / bs), f = fract(px / bs);
+          vec2 run = vec2(floor(cell.x / 5.0 + h1(cell.y * 3.1 + gseed) * 5.0), cell.y);   // damage comes in runs along a row, as a broken file decodes
+          float q = h2(run + gseed), r = h2(run * 1.7 + gseed + 3.1);
+          if (q < glitch * 0.55){                     // moshed: the block keeps the last frame, nudged along its own motion vector each frame, so it smears on (datamosh)
+            vec2 mv = (vec2(h2(run + gseed * 1.3), h2(run * 2.3 + gseed)) - 0.5) * vec2(4.0, 2.5) * (0.4 + glitch) / res;
+            vec4 pv = texture2D(prev, vec2(uv.x + mv.x, 1.0 - uv.y - mv.y)); float has = step(0.02, pv.a);   // (nothing drawn there yet: the picture)
+            c = mix(c, pv.rgb, has); al = mix(al, pv.a, has);
+          } else if (r < glitch * 0.3){                // broken: the block's colour flattened, a stray cosine pattern on it, the colour difference thrown off (green / pink)
+            vec2 ctr = (cell + 0.5) * bs / res; vec3 b = look(samp(geo(ctr), 0.0).rgb);
+            float y = dot(b, vec3(0.299, 0.587, 0.114)), u2 = (b.b - y) * 0.565, v2 = (b.r - y) * 0.713;
+            y += cos(f.x * 3.14159 * floor(1.0 + h2(cell + 7.7) * 3.0)) * cos(f.y * 3.14159 * floor(1.0 + h2(cell + 5.3) * 3.0)) * 0.1;
+            u2 += (h2(run + gseed + 1.9) - 0.5) * 0.35; v2 += (h2(run + gseed + 4.4) - 0.5) * 0.35;
+            c = vec3(y + 1.403 * v2, y - 0.344 * u2 - 0.714 * v2, y + 1.770 * u2); al = max(al, samp(geo(ctr), 0.0).a);
+          }
         }
         c = mix(c, vec3(IS(strobeS, S_strobe_white) ? 1.0 : 0.0), strobe); if (IS(strobeS, S_strobe_white)) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
@@ -581,7 +594,7 @@ ${FX_GLSL}
       if (String(U.shake) !== last.shake){ last.shake = String(U.shake); gl.uniform3fv(u.shake, U.shake); }
       if (U.palI !== last.palI){ last.palI = U.palI; const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }   // the 64-colour palette only when it changes
       gl.uniform1f(u.blit, 0);
-      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1));   // only Feedback and Phosphor read the previous frame
+      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1)) || (U.glitch > 0.001 && U.glS === FXS.glitch.corrupt);   // only Feedback, Phosphor and Glitch › Corrupt read the previous frame
       if (!trail){                                   // straight onto the canvas: no render target, no second pass
         const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; }
         gl.uniform1f(u.fbInit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -732,7 +745,7 @@ function drawOverlay(gh = ghostList()){
     const G = clipGeom(c); if (!G) continue;
     pctx.lineWidth = (c === sel ? 1.5 : 1) * dpr; pctx.setLineDash(c === sel ? [] : [5*dpr, 4*dpr]);
     pctx.globalAlpha = c === sel ? 1 : 0.6; outline(G, k);
-    if (c === sel){
+    if (c === sel && !L.lock){                       // (a locked layer: its frame, no handles)
       pctx.fillStyle = '#000'; const s = 4 * dpr;
       for (const h of HANDLES){ const [x, y] = toWorld(G, h[0]*G.hw, h[1]*G.hh); pctx.fillRect(x*k - s, y*k - s, 2*s, 2*s); pctx.strokeRect(x*k - s, y*k - s, 2*s, 2*s); }
       const [tx, ty] = toWorld(G, 0, -G.hh), [kx, ky] = knobPos(G);

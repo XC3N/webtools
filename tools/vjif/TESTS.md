@@ -95,8 +95,11 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ilmva106bf3hjfzv20pn} **Transition options** (0.73) — try each Options row: Wipe Soft, Iris GIF, Luma Dark / Soft, Zoom Out / Through, Dissolve Lines / Diamonds, Glitch Split / Wide, VHS Chewed, Stutter 1/32 + Swing.
 - [ ] {ji9c5cqlzozra079aeix} **Scramble from the centre** (0.73) — Glitch › Scramble with a growing Amount: blocks grow from the middle, not towards a corner.
 - [x] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
-- [ ] {ocv7fifdfkezjtcdvqtn} **Dragging an effect leaves it alone** (0.74.1) — drag an effect tile (to a preset, or off and back): an effect that was off stays off, a latched one stays on.
+- [ ] {ocv7fifdfkezjtcdvqtn} **Dragging an effect leaves it alone** (0.77) — drag an effect tile (to a preset, or off and back): an effect that was off never flashes on, a latched one stays on; a click still plays it.
 - [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75) — GIF › Auto › Envelope: Depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Only on Zoom: a punch per hit (Attack 0, Decay 1/4).
+- [ ] {didb3n53mtijxg435c2g} **Glitch › Corrupt** (0.77) — Glitch with Corrupt on a moving scene: blocks smear on in runs (datamosh) and some go blocky in wrong colours; Size changes the blocks; Rate re-keys them.
+- [ ] {76oqldbtmf66p2712fa5} **Layer lock** (0.77) — lock the Background: clicks in the preview go through it (a GIF on a layer above still selects); Transform sliders and arrows still move it; saved with the set.
+- [ ] {2ejq54kc22i63ai5t75s} **Shift + numpad presets** (0.77) — Caps Lock off: Shift + numpad 1–9 plays effect presets (on Windows with NumLock on too); without Shift, scenes.
 - [ ] {3nncmqhey98f03a7vd3w} **Sound level meter** (0.76) — Settings › Recording › Sound on your input (after one take, so it's allowed): the meter moves with the signal; also in Rec ▾. Music player and a picked tab too.
 - [ ] {aj1f2qesqolp85ln1w0i} **Sound in Rec ▾** (0.76) — Rec ▾ › Sound: pick a source; Settings › Recording › Sound shows the same.
 - [ ] {yakjn2tbslfxw9844lmq} **Claude's VJif theme** (0.76) — Settings › Theme › Claude's VJif: readable everywhere (signal text, LCDs, graphs).

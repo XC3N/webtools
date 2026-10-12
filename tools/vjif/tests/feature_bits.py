@@ -102,5 +102,20 @@ async def main():
     print('rec sound', sn); assert sn == [True, True, 2], sn
     so = await pg.evaluate("SHADOW_DEF.soft")
     print('soft default', so); assert so == 0.2, so
+    # 0.77: Shift+numpad plays an effect preset (Caps Lock off), a locked layer lets the mouse through, Glitch › Corrupt (old Scramble maps to it), a tile click still plays
+    sh = await pg.evaluate("""(() => { setCaps(false); dispatchEvent(new KeyboardEvent('keydown', { code: 'Numpad3', key: '3', shiftKey: true })); const a = fxSt[NFX + 2].held;
+      dispatchEvent(new KeyboardEvent('keyup', { code: 'Numpad3', key: '3' })); return [a, fxSt[NFX + 2].held, heldPre]; })()""")
+    print('shift+numpad', sh); assert sh == [True, False, -1], sh
+    lk = await pg.evaluate("""(() => { const L = layers[0], c = newClip(0); L.clips = [c]; L.on = true; L.opacity = 1; const G = clipGeom(c); const n = hitsAt(G.cx, G.cy, false).length;
+      L.lock = true; const m = hitsAt(G.cx, G.cy, false).length, k = hitsAt(G.cx, G.cy, false, true).length; L.lock = false; L.clips = []; return [n, m, k]; })()""")
+    print('lock', lk); assert lk == [1, 0, 1], lk
+    gc = await pg.evaluate("[FX_DEFS[8].styles.map(s => s[0]).includes('corrupt'), FX_DEFS[8].styles[styleIdx(8, 'scramble')][0]]")
+    print('corrupt', gc); assert gc == [True, 'corrupt'], gc
+    tc = []
+    for _ in range(2):
+        r = await pg.evaluate("(() => { fxCfg[0].mode = 'latch'; const t = document.querySelector('#fxPads .fxp[data-i=\"0\"]').getBoundingClientRect(); return [t.left + t.width / 2, t.top + t.height / 2]; })()")
+        await pg.mouse.click(r[0], r[1]); tc.append(await pg.evaluate("fxSt[0].on"))
+    await pg.evaluate("fxCfg[0].mode = 'hold'")
+    print('tile click', tc); assert tc == [True, False], tc
     await b.close()
 asyncio.run(main())

@@ -286,7 +286,7 @@ function startPick(k){ stopPick(); picking = k; $(PICK_BTN[k]).classList.add('ar
 function stopPick(){ picking = false; Object.values(PICK_BTN).forEach(q => { $(q).classList.remove('armed'); $(q).textContent = 'Pick'; }); pv.style.cursor = ''; }
 function pickAt(px, py){
   const kind = picking; stopPick();
-  const hit = hitAny(px, py) || hitsAt(px, py, false)[0]; if (!hit) return toast('No GIF under the cursor');
+  const hit = hitsAt(px, py, true, true)[0] || hitsAt(px, py, false, true)[0]; if (!hit) return toast('No GIF under the cursor');
   const c = hit[1], g = pads[c.pad].gif, d = sampleClip(c, px, py, true);
   if (kind === 'swap'){                              // the swatch nearest that colour (the GIF's own colours, before its swaps)
     const pal = gifPalette(g), dist = q => Math.abs(q[0] - d[0]) + Math.abs(q[1] - d[1]) + Math.abs(q[2] - d[2]);

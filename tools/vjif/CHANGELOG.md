@@ -4,6 +4,20 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.77.0 — 2026-10-12
+
+### Effects
+- Glitch › Corrupt replaces Scramble: a damaged video file. In runs along the rows, some blocks keep the frame before and smear along their own motion (datamosh), others break into flat, blocky squares in the wrong colours. Size = block size. Sets that used Scramble get Corrupt.
+- Shift + numpad plays effect presets without Caps Lock (Caps Lock + Shift + numpad still stores).
+- A click on an effect tile now plays it once it's held still for 120 ms (or at once when let go sooner): dragging a tile no longer flashes the effect.
+
+### Layers
+- Lock (padlock on the layer card): the mouse goes through that layer's GIFs in the preview, so a background can't be moved by accident. The Transform panel and arrow keys still work; the colour picker still sees it. Saved with the set, the same in every scene.
+
+### Recording
+- A tab or a sound input starts its capture as soon as you press Rec (while the take waits for its bar), so the start of the clip doesn't stumble.
+- Settings › Sound: "Music player" and "Tab audio" without the extra words.
+
 ## 0.76.0 — 2026-10-11
 
 ### Recording

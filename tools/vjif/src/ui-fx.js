@@ -4,6 +4,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
+const FX_DRAG_WAIT = 120;   // ms a tile press waits (held still) before it plays: time for a drag to show itself
 const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0 });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
@@ -36,16 +37,19 @@ function wireFxTile(el){
       selFx = i; syncFxUI(); return; }
     if (i < NFX && heldPre >= 0){ togglePreFx(heldPre, i); el._edit = true; return; }     // a preset is held: this click edits it
     const was = { ...fxSt[i] };                        // its state before this press: a drag puts it back
-    el.setPointerCapture(e.pointerId); fxDown(i); if (selFx !== i){ selFx = i; syncFxUI(); }   // a click on the tile also opens it in the editor
-    fxDrag = { i, x: e.clientX, y: e.clientY, moved: false, was }; if (i >= NFX) heldPre = i - NFX;   // holding a preset tile: F keys edit it; dragging it moves / copies it
+    el.setPointerCapture(e.pointerId); if (selFx !== i){ selFx = i; syncFxUI(); }   // a click on the tile also opens it in the editor
+    // it plays after FX_DRAG_WAIT ms held still, or at once when let go sooner: a drag that starts in that time never plays it
+    const d = fxDrag = { i, x: e.clientX, y: e.clientY, moved: false, was, fired: false }; d.timer = setTimeout(() => { if (fxDrag === d && !d.moved){ d.fired = true; fxDown(i); } }, FX_DRAG_WAIT);
+    if (i >= NFX) heldPre = i - NFX;   // holding a preset tile: F keys edit it; dragging it moves / copies it
   });
   el.addEventListener('pointermove', e => {
     if (!fxDrag || fxDrag.i !== i) return;
-    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; if (i >= NFX) heldPre = -1; for (const k in fxSt[i]) delete fxSt[i][k]; Object.assign(fxSt[i], fxDrag.was); document.body.classList.add('fxdragging'); fxGhost(i); }   // a drag leaves the effect as it was: the press is undone
+    if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; clearTimeout(fxDrag.timer); if (i >= NFX) heldPre = -1; if (fxDrag.fired){ for (const k in fxSt[i]) delete fxSt[i][k]; Object.assign(fxSt[i], fxDrag.was); } document.body.classList.add('fxdragging'); fxGhost(i); }   // a drag leaves the effect as it was: the press is undone
     if (fxDrag.moved){ ghost.move(e.clientX, e.clientY); fxDrag.lastE = e; fxDropMark(isDel(e)); }
   });
   const end = e => {
     if (el._edit){ el._edit = false; return; }       // that click edited a preset: nothing was started
+    if (fxDrag && fxDrag.i === i && !fxDrag.moved){ clearTimeout(fxDrag.timer); if (!fxDrag.fired) fxDown(i); }   // let go before it played: a click
     if (!(fxDrag && fxDrag.i === i && fxDrag.moved)) fxUp(i); if (i >= NFX && heldPre === i - NFX) heldPre = -1;
     if (fxDrag && fxDrag.i === i && fxDrag.moved){
       const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp'), cp = fxDrag.copy;

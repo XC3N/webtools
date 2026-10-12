@@ -60,10 +60,10 @@ function sampleClip(c, px, py, src = false){
   return d;
 }
 // everything under the point, in visual order (topmost first); transparent pixels don't count
-function hitsAt(px, py, opaqueOnly = true){
+function hitsAt(px, py, opaqueOnly = true, locked = false){   // locked: a locked layer's GIFs count too (the colour picker); else the mouse goes through them
   const out = [];
   for (let li = 3; li >= 0; li--){
-    const L = layers[li]; if (!L.on || L.opacity <= 0) continue;
+    const L = layers[li]; if (!L.on || L.opacity <= 0 || (L.lock && !locked)) continue;
     for (let k = L.clips.length - 1; k >= 0; k--){
       const c = L.clips[k];
       if (inClip(c, px, py) && (!opaqueOnly || sampleClip(c, px, py)[3] > 16)) out.push([li, c]);

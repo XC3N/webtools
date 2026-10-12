@@ -26,7 +26,7 @@ function snapshot(){
     v: SNAP_V, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0), fxLocal, sceneFx: fxLocal ? latchedNow() : liveFxOn,
     pool: pool.map(m => ({ hash: m.hash, name: m.name, ...(m.scale && m.scale !== 1 ? { scale: m.scale } : {}) })),
     pads: serPads(pads.map(p => p.gif)),
-    layers: serLayers(layers),
+    layers: serLayers(layers), locks: layers.map(L => !!L.lock),
     sceneName: liveName,
     scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : { pads: serPads(sc.pads), layers: serLayers(sc.layers), name: sc.name || '', ...(sc.fxOn ? { fxOn: sc.fxOn } : {}) }),
     thumbs: scenes.map((sc, i) => i === sceneIdx ? thumbKeep || liveThumb || null : sc && sc.thumb || null),   // the scene tiles' pictures, so they survive a reload
@@ -131,7 +131,7 @@ async function applySnapshot(st, { wait = true } = {}){
   setFormat(st.format || '16:9', { quiet: true, force: true });
   setBpm(st.bpm); snapMode = st.snap || 'off'; $('#snap').value = snapMode;
   const now = performance.now(), idx = st.scene || 0;
-  deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s));
+  deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s)); layers.forEach((L, li) => L.lock = !!(st.locks && st.locks[li]));   // locks belong to the set, not a scene
   for (let i = 0; i < N_SCENES; i++){
     const ss = i !== idx && st.scenes[i]; if (!ss){ scenes[i] = null; continue; }
     const gs = pads.map((_, k) => mk(ss.pads[k]));
@@ -197,7 +197,7 @@ async function newEmptySet(){
   dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0;
   [...insts.values()].forEach(freeGif); pool.slice().forEach(freeMedia);
   pads.forEach((p, i) => { p.gif = null; renderPad(i); }); renderPool();
-  layers.forEach(L => Object.assign(L, emptyLayer()));
+  layers.forEach(L => Object.assign(L, emptyLayer(), { lock: false }));
   scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; endTrans(); dropPrep(); renderScenes();
   trPresets = trDefaults(); armTrans(1);
   fxCfg = fxDefaults(); fxPre = fxPreDefaults(); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); heldPre = -1; syncFxUI();
