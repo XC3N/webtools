@@ -61,9 +61,11 @@ const cpk = (() => {
     if (!tgt) return; const t = tgt; tgt = null; el.hidden = true; t.classList.remove('cpkOn');
     if (changed) t.dispatchEvent(new Event('change', { bubbles: true }));
   }
+  let skipT = 0;                                   // a press on another colour while one is open only closes it (a second click opens that one)
+  const colourAt = t => t.closest && (t.closest('input[type=color]') || (t.closest('label') && t.closest('label').querySelector('input[type=color]')));
   document.addEventListener('click', e => {   // the browser's picker never opens: ours does
-    const i = e.target.closest && e.target.closest('input[type=color]'); if (!i || i.disabled) return; e.preventDefault(); open(i); }, true);
-  document.addEventListener('pointerdown', e => { if (tgt && !el.contains(e.target) && e.target !== tgt && !(e.target.closest && e.target.closest('label') && e.target.closest('label').contains(tgt))) close(); }, true);
+    const i = e.target.closest && e.target.closest('input[type=color]'); if (!i || i.disabled) return; e.preventDefault(); if (performance.now() - skipT < 800){ skipT = 0; return; } open(i); }, true);
+  document.addEventListener('pointerdown', e => { if (tgt && !el.contains(e.target) && e.target !== tgt && !(e.target.closest && e.target.closest('label') && e.target.closest('label').contains(tgt))){ const o = colourAt(e.target); if (o && o !== tgt) skipT = performance.now(); close(); } }, true);
   addEventListener('keydown', e => { if (tgt && e.key === 'Escape' && document.activeElement !== hexIn){ e.stopPropagation(); close(); } }, true);
   return { el, open, close, get target(){ return tgt; } };
 })();

@@ -155,11 +155,13 @@ $('#xCropReset').addEventListener('click', () => {
   const c = selClip(); if (!c) return;
   const G = clipGeom(c); Object.assign(c, { cl: 0, ct: 0, cr: 0, cb: 0 }); placeVisible(c, G.cx, G.cy); syncXfUI();
 });
+// Transform's heading arrow in the signal colour when the selected GIF's placement is away from the defaults (as the GIF sections do)
+function markXf(c = selClip()){ const h = $('#xReset').closest('h2'), d = newXf(); if (h) h.classList.toggle('mod', !!c && (Object.keys(d).some(k => (c[k] ?? d[k]) !== d[k]) || (c.alpha ?? 1) !== 1)); }
 function syncXfUI(){
   const c = selClip();
   $('#xfPanel').classList.toggle('disabled', !c);
   $('#xfTag').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label}` : `${LNAMES[target]} · nothing selected`; $('#xfTag').title = c && pads[c.pad].gif ? pads[c.pad].gif.name : '';
-  if (!c){                                          // nothing selected: show neutral values, not the last GIF's
+  if (!c){ markXf(null);                           // nothing selected: show neutral values, not the last GIF's
     XF.forEach(([id]) => { const el = $(id); el.value = el.dataset.def ?? 0; el.nextElementSibling.textContent = '—'; el.nextElementSibling.classList.remove('mod'); });
     $('#xFit').value = 'auto'; $('#xFx').checked = $('#xFy').checked = $('#xT').checked = false; $('#xCrop').textContent = 'none';
     return;
@@ -171,6 +173,7 @@ function syncXfUI(){
   $('#xFit').value = c.fit; $('#xFx').checked = c.flipX; $('#xFy').checked = c.flipY; $('#xT').checked = c.tile;
   const pc = v => Math.round(v * 100);
   $('#xCrop').textContent = (c.cl || c.ct || c.cr || c.cb) ? `L${pc(c.cl)} T${pc(c.ct)} R${pc(c.cr)} B${pc(c.cb)}%${c.tile ? ' (tiled)' : ''}` : 'none';
+  markXf(c);
 }
 
 // ---------- preview mouse: select, move, resize handles ----------
@@ -192,7 +195,7 @@ pv.addEventListener('pointerdown', e => {
   else if (e.altKey){                                         // Alt+click: cycle down through what's under the cursor
     const all = hitsAt(px, py, false), i = all.findIndex(h => h[1] === c);
     hit = all.length ? all[(i + 1) % all.length] : null;
-  } else hit = hitAny(px, py);
+  } else hit = pickClip(px, py);                             // in a GIF's box: the closest pixels win; clicking again there cycles
   if (hit){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); c = hit[1]; }
   if (!hit && outside){   // a click in the border around the canvas, on nothing: no GIF selected (its frame and handles go)
     if (layers[target].sel !== false){ layers[target].sel = false; syncLayerUI(); syncXfUI(); redraw.all = true; } return; }

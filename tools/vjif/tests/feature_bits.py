@@ -123,7 +123,7 @@ async def main():
     # 0.79: Glitch styles stack (Keyframe, Crunch), the Glitch transition's Scramble became Corrupt, × on pads / scenes / presets, Trigger inside Play
     g9 = await pg.evaluate("""[styleParts(FXI.glitch, 'corrupt+crunch').join('+'), styleParts(FXI.glitch, 'scramble').join(), normTrans({ type: 'glitch', style: 'scramble' }).style,
       document.querySelectorAll('.pad .xdel').length, document.querySelectorAll('#scenes .scene .xdel').length, document.querySelectorAll('#fxPre .fxp .xdel').length,
-      !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('#xfPanel #gSmooth')]""")
+      !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('[data-pane=colour] #gSmooth')]""")
     print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'corrupt', 18, 9, 9, True, True, True], g9
     sw = await pg.evaluate("[hsvOn({ hsv: { h: 10, s: 1, v: 1, off: true } }), hsvOn({ hsv: { h: 10, s: 1, v: 1 } }), palOn({ pal: { i: 2, off: true } }), palOn({ pal: { i: 2 } }), swapOn({ swap: [1], swapOff: true }), swapOn({ swap: [1] }), ['fOn', 'tOn', 'hOn', 'pOn', 'swOn'].every(id => !!document.getElementById(id))]")
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
@@ -136,8 +136,13 @@ async def main():
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); off = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); on = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
     m83 = await pg.evaluate("""(() => { const g = pads[0].gif, keep = gifSettings(g); applyGifSettings(g, { ...keep, loop: 'once', trig: 'stay' }); const r = [g.loop, g.trig, g.env.len];
-      applyGifSettings(g, keep); return [r, $('#tMode button').textContent, !document.querySelector('#gClear'), [...document.querySelectorAll('#aEnv button')].map(b => b.textContent).join('/'), !!$('#gSmooth').closest('#xfPanel')]; })()""")
+      applyGifSettings(g, keep); return [r, $('#tMode button').textContent, !document.querySelector('#gClear'), [...document.querySelectorAll('#aEnv button')].map(b => b.textContent).join('/'), !!$('#gSmooth').closest('[data-pane=colour]')]; })()""")
     print('0.83', d83, off, on, m83); assert d83 == 'Forward/Ping-pong' and off == [True, False] and on == [False, True], (d83, off, on)
     assert m83 == [['loop', 'fade', 'gif'], 'Loop', True, 'Off/LFO depth/Bypass LFO', True], m83
+    d86 = await pg.evaluate("""(() => { selectFx(FXI.shake); const a = [$('#fxSizeRow label').textContent, [...document.querySelectorAll('#fxSizeSeg button')].map(b => b.textContent).join(','), $('#fxSizeSeg button.on') && $('#fxSizeSeg button.on').textContent];
+      const g = pads[0].gif, P = gifPalette(g); g.swap = [{ from: P[0].slice(0, 3), to: [255, 0, 0] }]; selectPad(0); syncGifUI(); const on1 = swapOn(g);
+      document.querySelector('#swList i[data-t="0"]').click(); const on2 = swapOn(g), sw = fxParams(g).sw.length; document.querySelector('#swList i[data-t="0"]').click();
+      return [...a, on1, on2, sw, swapOn(g), $('#gTabs [data-v=colour]').textContent, typeof pickClip]; })()""")
+    print('0.86', d86); assert d86 == ['Overscan', 'Off,Some,Full', 'Some', True, False, 0, True, 'Display', 'function'], d86
     await b.close()
 asyncio.run(main())

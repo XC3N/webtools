@@ -106,6 +106,10 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {qgbns6zmu4031jfa599t} **ZX Spectrum palette** (0.82) — Colour › Palette (and GIF › Colour › Palette): ZX Spectrum is last in the list; its 15 colours, plain and bright.
 - [ ] {5oeugv5igouqrqyoteee} **Keys & mouse search** (0.84) — ? opens Keys & mouse with the search box ready; type “scene”: only the entries about scenes (and their headings) show; Esc closes.
 - [ ] {rafm68fmll6hdh2rm2p0} **Blank slider rows** (0.84) — an effect with no Rate (Mono): the Rate row is an empty grey box; Transition Cut: the Pixel row too.
+- [ ] {fw9lb94n3j9s503v250y} **Click to select** (0.86) — two GIFs overlapping: click in the transparent part of one's box: it's selected (the one with pixels nearest wins); click again on the same spot: the other.
+- [ ] {ni93cxo0i9rh1k2o6vco} **Swap off / on** (0.86) — Display › Swap colours: click a swap's original colour: that swap stops (row dimmed), click again: back.
+- [ ] {twgegdfw6biw7gt5pj41} **Shake overscan** (0.86) — Shake, the third slot: Overscan Off: the frame edges show while it shakes; Full: they never do.
+- [ ] {87xkaenk1bq0qgqgjmb9} **Transform changed mark** (0.86) — move or turn a GIF: Transform's heading arrow lights; Reset: it goes back.
 - [ ] {0g5bim1rd8zzry16be4s} **Emptied scene comes back** (0.79, 0.81, name 0.84, 0.85) — name a scene, select it, empty it (×): its name goes too (with Settings › Interface › Permanent scene names on: it stays); go to another scene, Ctrl+Z: the emptied scene's tile shows its picture and name again.
 - [x] {4ulb8padwhpii6z6g25q} **Channel switched mid-transition** (0.81) — a Palette latched, TV › Channel: switch scene again before the number is gone: the snow and the new number keep their own colours, no palette on them.
 - [ ] {r71mg79hp3mhx0fvj3d3} **Glitch transition styles** (0.84) — transitions: Glitch has Slices, Blocks and Corrupt (no Scramble).
@@ -136,7 +140,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {hr757smrqn2mmmwqnow0} **Launchpad preset row** (0.73) — Settings › Launchpad layout: bottom row = presets 7 8 9 4 5 6 1 2, right button 3.
 - [x] {uqfogckolx2naf4ogqdd} **Shorter right column** (0.74) — no info strips under Transform and GIF (hover the headings' tags instead), Performance on one line.
 - [ ] {idfxcorner} **Effects toolbar + Trig Follow** (0.74) — top-left of the effect editor: ⏻ and Trig Follow. Follow on: an F-key opens that effect in the editor; off: it doesn't.
-- [ ] {le351226yqjllwldpp40} **VCR channel font** (0.74, the TTF 0.83) — TV › Channel: the number in VCR OSD Mono, soft green, held 0.8 s after the picture is back (the slider row: Number, 0.84); it looks the same as before (now drawn from the font file).
+- [x] {le351226yqjllwldpp40} **VCR channel font** (0.74, the TTF 0.83) — TV › Channel: the number in VCR OSD Mono, soft green, held 0.8 s after the picture is back (the slider row: Number, 0.84); it looks the same as before (now drawn from the font file).
 - [x] {credits} **Credits window** (0.74) — About › Credits: the list opens over About; Esc closes it.
 - [x] {thumbspeed} **Smoother with effects** (0.74) — heavy effects on, watch FPS: no hitch once a second (the scene tile's refresh).
 - [x] {o9fm7v1dndg06e2kzku7} **Key selection modes** (0.56) — load key-regions.gif (white background, a ring, two windows), GIF › Colour › Key on, Pick the white. Everywhere: all the white goes; From edges: only the background; From pick: only the white area you clicked.

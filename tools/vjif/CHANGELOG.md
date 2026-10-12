@@ -4,6 +4,20 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.86.0 — 2026-10-12
+
+### GIFs
+- GIF › Colour is now GIF › Display, and Smooth scaling is back there as its first row.
+- Swap colours: click a swap's original colour to switch that swap off and on (it stays in the list, dimmed); the swatches have room for their outline.
+- Clicking another swap's colour while the colour picker is open closes it (a second click opens that one).
+
+### Preview
+- Clicking in a GIF's box selects it, transparent parts included; where boxes overlap, the GIF whose own pixels are nearest the pointer wins. Click again on the same spot to go through the others there.
+- Transform's heading arrow lights when the selected GIF's placement is away from the defaults, like the GIF sections.
+
+### Effects
+- Shake › Overscan: Off / Some / Full: how far the picture zooms in while it shakes (Full: no frame edge ever shows; Some: as before).
+
 ## 0.85.0 — 2026-10-12
 
 ### Layers

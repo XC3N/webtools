@@ -72,6 +72,23 @@ function hitsAt(px, py, opaqueOnly = true, locked = false){   // locked: a locke
   return out;
 }
 function hitAny(px, py){ return hitsAt(px, py)[0] || null; }
+// a click in the preview: every GIF whose box is under the pointer counts; the one whose own (non-transparent) pixels are
+// closest to it comes first (searched in rings out to 64 output px), ties in visual order. A second click on the same
+// spot soon after moves on to the next one (cycling through what overlaps there).
+let lastPick = null;
+function pickClip(px, py){
+  const all = hitsAt(px, py, false); if (!all.length) return null;
+  const near = c => { if (sampleClip(c, px, py)[3] > 16) return 0;
+    for (const r of [4, 8, 16, 32, 64]){ const R = r * W / view.w; for (let k = 0; k < 12; k++){ const a = k * Math.PI / 6, x = px + Math.cos(a) * R, y = py + Math.sin(a) * R;
+      if (inClip(c, x, y) && sampleClip(c, x, y)[3] > 16) return r; } }
+    return 1e3; };
+  const ranked = all.map((h, i) => [h, near(h[1]), i]).sort((a, b) => a[1] - b[1] || a[2] - b[2]).map(x => x[0]);
+  const now = performance.now(), again = lastPick && now - lastPick.t < 1500 && Math.hypot(px - lastPick.x, py - lastPick.y) < 6 * W / view.w;
+  let pick = ranked[0];
+  if (again && ranked.length > 1){ const i = ranked.findIndex(h => h[1] === lastPick.c); pick = ranked[(i + 1) % ranked.length]; }
+  lastPick = { x: px, y: py, t: now, c: pick[1] };
+  return pick;
+}
 const KNOB = 26;    // rotate knob distance above the box, preview px
 function knobPos(G){ return toWorld(G, 0, -G.hh - KNOB * W / view.w); }
 function hitHandle(c, px, py){

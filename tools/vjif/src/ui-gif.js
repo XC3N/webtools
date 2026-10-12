@@ -94,7 +94,7 @@ function syncSwapUI(g){
   if (swSel && !pal.some(c => sameRgb(c, swSel))) swSel = null;
   $('#swPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${g.swap.some(x => sameRgb(x.from, c)) ? 'on' : ''}${swSel && sameRgb(swSel, c) ? ' sel' : ''}" style="background:${rgb2hex(c)}" title="${rgb2hex(c)}"></button>`).join('');
   const ae = document.activeElement; if ((ae && ae.type === 'color' && $('#swList').contains(ae)) || (cpk.target && $('#swList').contains(cpk.target))) return;   // a colour picker is open in the list: leave it alone (a clicked × or ∅ still has focus: not that)
-  const row = (from, to, i, pend, clr = pend ? false : !!(g.swap[i] && g.swap[i].clear)) => `<div class="swr${pend ? ' pending' : ''}${swSel && sameRgb(swSel, from) ? ' sel' : ''}" data-r="${i}"><i style="background:${rgb2hex(from)}"></i>→<label class="swTo${clr ? ' clear' : ''}" style="background:${clr ? '' : rgb2hex(to)}" title="${pend ? 'Click: pick what this colour becomes' : 'Click to change'}"><input type="color" data-i="${i}" value="${rgb2hex(to)}"></label><button class="iconbtn${clr ? ' on' : ''}" data-k="${i}" title="Transparent: this colour disappears (click again to bring it back)">∅</button>${pend ? '' : `<button class="iconbtn" data-x="${i}" title="Remove this swap">×</button>`}</div>`;
+  const row = (from, to, i, pend, clr = pend ? false : !!(g.swap[i] && g.swap[i].clear)) => `<div class="swr${pend ? ' pending' : ''}${swSel && sameRgb(swSel, from) ? ' sel' : ''}${!pend && g.swap[i] && g.swap[i].off ? ' off' : ''}" data-r="${i}"><i data-t="${i}" style="background:${rgb2hex(from)}" title="${pend ? '' : 'Click: this swap off / on (it stays in the list)'}"></i>→<label class="swTo${clr ? ' clear' : ''}" style="background:${clr ? '' : rgb2hex(to)}" title="${pend ? 'Click: pick what this colour becomes' : 'Click to change'}"><input type="color" data-i="${i}" value="${rgb2hex(to)}"></label><button class="iconbtn${clr ? ' on' : ''}" data-k="${i}" title="Transparent: this colour disappears (click again to bring it back)">∅</button>${pend ? '' : `<button class="iconbtn" data-x="${i}" title="Remove this swap">×</button>`}</div>`;
   const pend = swSel && !g.swap.some(x => sameRgb(x.from, swSel));
   $('#swList').innerHTML = g.swap.map((x, i) => row(x.from, x.to, i, false)).join('') + (pend ? row(swSel, swSel, 'new', true) : '');
 }
@@ -118,6 +118,7 @@ $('#swList').addEventListener('click', e => {
     let x; if (k.dataset.k === 'new'){ if (!swSel || g.swap.length >= SWAP_MAX) return; const pc = gifPalette(g).find(c => sameRgb(c, swSel)); x = { from: swSel.slice(), to: swSel.slice(), tol: pc && pc.rad ? pc.rad + 1.5 : undefined }; g.swap.push(x); }
     else x = g.swap[+k.dataset.k];
     if (x){ x.clear = !x.clear; scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); commit(); } return; }
+  const t = e.target.closest('i[data-t]'); if (t && t.dataset.t !== 'new'){ const x = g.swap[+t.dataset.t]; if (x){ x.off = !x.off; if (!x.off) delete x.off; scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); commit(); } return; }   // its original colour: this swap off / on
   const b = e.target.closest('[data-x]'); if (b){ const x = g.swap[+b.dataset.x]; if (x && swSel && sameRgb(x.from, swSel)) swSel = null; g.swap.splice(+b.dataset.x, 1); scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); }
 });
 $('#swMerge').addEventListener('input', e => { const g = curGif(); if (!g) return; g.swapMerge = +e.target.value;
@@ -348,7 +349,7 @@ function restoreClear(E){
 }
 function afterPadChange(i){ renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); renderPool(); redraw.all = true; }
 
-// ---- drop shadow (GIF › Colour › Shadow): moving a setting switches it on ----
+// ---- drop shadow (GIF › Display › Shadow): moving a setting switches it on ----
 const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off'], ['#shS', 'soft', v => v > 0 ? Math.round(v * 100) + '%' : 'hard']];
 function syncShadowUI(g){
   const S = g.shadow || (g.shadow = { ...SHADOW_DEF });

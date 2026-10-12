@@ -84,10 +84,10 @@ const fxGL = (() => {
 })();
 const liveFx = () => fxGL && fxGL.ok;
 const SWAP_MAX = 8;                                 // colour swaps per GIF: { from: [r,g,b], to: [r,g,b] }
-const swapOn = g => !g.swapOff && !!(g.swap && g.swap.length);   // each GIF › Colour section has its own switch: off keeps its settings but skips it
+const swapOn = g => !g.swapOff && !!(g.swap && g.swap.some(x => !x.off));   // (a swap can be off on its own: clicked on its original colour)   // each GIF › Display section has its own switch: off keeps its settings but skips it
 const HSV0 = { h: 0, s: 1, v: 1 }, hsvOf = g => g.hsv.off ? HSV0 : g.hsv;
 const fxActive = g => g.key.on || hsvOn(g) || swapOn(g) || palOn(g);
-const palOn = g => !!g.pal && !g.pal.off && g.pal.i >= 0 && !!FX_PALS[g.pal.i];   // GIF › Colour › Palette: its colours snapped to an old computer's / console's
+const palOn = g => !!g.pal && !g.pal.off && g.pal.i >= 0 && !!FX_PALS[g.pal.i];   // GIF › Display › Palette: its colours snapped to an old computer's / console's
 // the image to draw for frame `fi` of GIF `g`: run through the colour shader when live colour is on.
 // e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
 // Connected key: the frame's mask (from the flood fill) replaces the per-pixel colour test.
@@ -186,7 +186,7 @@ function fxParams(g, hsv = hsvOf(g)){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
            region: g.key.region || 'all', seed: g.key.seed || null,
-           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palN: FX_PALS[g.pal.i].c.length, palD: g.pal.d || 0 } : {}), sw: (swapOn(g) ? g.swap : []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palN: FX_PALS[g.pal.i].c.length, palD: g.pal.d || 0 } : {}), sw: (swapOn(g) ? g.swap.filter(x => !x.off) : []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
 }
 // The worker gets the same functions as source text, so both paths run identical code.
 const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels].map(f => f.toString()).join('\n') + `

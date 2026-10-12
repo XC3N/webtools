@@ -124,7 +124,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 /* ---------- frames tab ---------- */
 .frames{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:10px;align-items:start}
 .frames .field{grid-template-columns:40px minmax(0,1fr)}
-#swPal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin:2px 0 6px}
+#swPal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin:7px 3px 7px}   /* room for a swatch's outline (3 px out) clear of the Merge row and the edges */
 #swPal button{height:16px;min-width:0;padding:0;border:1px solid #0006;border-radius:2px}
 #swPal button.on{outline:2px solid var(--sig);outline-offset:1px}
 #swPal button.sel{outline:2px solid #fff;outline-offset:1px;position:relative;z-index:1}
@@ -432,7 +432,7 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 #maskBar .mrow>button{flex:1;height:20px;padding:0 4px;font-size:11px}#maskBar .tog{font-size:11px;gap:3px}
 .lmask{width:var(--ch);padding:0;flex:none;color:var(--faint)}.lmask svg{display:block;margin:auto}.lmask:hover{color:var(--ink)}.lmask.has{color:var(--amber)}.lmask.on{color:var(--sigtxt);background:var(--amber);border-color:var(--amber)}
 /* a folded section: its Reset is hidden (its place kept); a section changed from its defaults shows its arrow in the signal colour */
-.sub.foldable.mod>span:first-child::before{color:var(--amber)}
+.sub.foldable.mod>span:first-child::before{color:var(--amber)}h2.foldable.mod>.fname::before{color:var(--amber)}
 
 /* × on a pad, scene or effect preset: delete it in one click (shown on hover; Settings › Interface › Ctrl+click to delete only hides them) */
 .xdel{position:absolute;right:2px;top:2px;z-index:3;width:15px;height:15px;font:600 12px/15px var(--mono);text-align:center;border-radius:2px;color:#fff;background:#000b;opacity:0;cursor:pointer;transition:opacity .1s}
@@ -458,3 +458,4 @@ input[type=color].sw{width:26px;height:20px;padding:0;flex:none;border:1px solid
 /* Keys & mouse: grouped, with a search box */
 #helpQ{width:100%;margin:0 0 8px;height:var(--ch)}.khead{margin:12px 0 6px;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #helpPanel [hidden]{display:none!important}
+#swList .swr.off>.swTo,#swList .swr.off>button{opacity:.35}#swList .swr i[data-t]{cursor:pointer}#swList .swr.off i[data-t]{outline:1px dashed var(--muted);outline-offset:1px}   /* a swap switched off on its own */

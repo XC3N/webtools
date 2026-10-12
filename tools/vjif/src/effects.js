@@ -8,7 +8,7 @@ const FX_DEFS = [
   { id: 'poster', name: 'Posterize', title: 'Flat colours / outlines', mode: 'hold', styles: [['bands', 'Bands', 'Fewer colours, flat bands'], ['edges', 'Edges', 'Neon outlines on black']] },
   { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black']] },
   { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in, around the middle of the frame'], ['out', 'Out', 'Punches out, around the middle of the frame'], ['eachin', 'Each in', 'Every GIF punches in around its own centre'], ['eachout', 'Each out', 'Every GIF punches out around its own centre']] },
-  { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']] },
+  { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']], size: true },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
@@ -58,8 +58,10 @@ const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   
 // With several CRT styles stacked, the one in focus (right-click a style, or the last one switched on) decides: VHS → Dropouts, Scanlines / Crypt → Size
 const fxFocus = {};   // effect id → style in focus (editor state, not saved)
 const FX_DOTS = [[0, 'Off'], [2, '2 px'], [10, '10 px']];   // Colour › Palette › Dots, for the Game Boy palettes (other sizes beat against the picture: moiré)
+const FX_OVS = [[0, 'Off'], [1, 'Some'], [2, 'Full']];   // Shake › Overscan
 const palGB = i => /^GB/.test((FX_PALS[i] || {}).n || '');
 function sizeAlt(d, style, C){
+  if (d && d.id === 'shake') return { label: 'Overscan', key: 'ovs', def: 1, list: FX_OVS, seg: true, title: () => 'Overscan: how far the picture zooms in while it shakes, so the frame edges stay hidden: Off (the edges show), Some, Full (never an edge)' };
   if (d && d.id === 'colour') return style !== 'pal' || !(C && palGB(C.pal || 0)) ? null : { label: 'Dots', key: 'dots', def: 0, list: FX_DOTS, seg: true, title: () => 'Dots: the picture as a dot-matrix screen (Game Boy LCD): blocks of this size with thin gaps in the palette\'s lightest colour (off: none)' };
   if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+'), f = P.includes(fxFocus[d.id]) ? fxFocus[d.id] : null;
   if (f === 'scan' || f === 'crypt') return null;
@@ -186,7 +188,7 @@ function tgtToggle(t, li, solo){               // a click on a layer button: in 
   const L = [...S].sort(); return L.length === 1 ? L[0] : L;   // all four is still "each layer", which isn't the same as All (the blended picture)
 }
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), dots: X.cfg.map(c => c.dots || 0) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ for (const k of tgtList(C.target)){ const m = M.get(k); m.lv[i] = v; m.env[i] = l; } } });
   X.pre.forEach((P, k) => {
@@ -194,14 +196,14 @@ function fxMix(b, X = fxLive()){
     for (const [i, e] of Object.entries(P.fx)){
       const v = l * e.amt;
       for (const k of tgtList(e.target)){ const m = M.get(k);
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.dots != null) m.dots[i] = e.dots; } }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.ovs != null) m.ovs[i] = e.ovs; if (e.dots != null) m.dots[i] = e.dots; } }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
 const FX_U_IDX = ['mono', 'colour', 'strobe', 'poster', 'zoom', 'shake', 'wobble', 'mirror', 'glitch', 'rgb', 'pixel', 'feedback'].map(k => FXI[k]);
-function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat, dots }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat, dots, ovs }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
   const [MO, CO, ST, PO, ZO, SH, WO, MI, GL, CR, PX, FB] = FX_U_IDX;
@@ -214,7 +216,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? dots[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
-  U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
+  U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = [0, 0.1, 0.22][ovs ? ovs[SH] ?? 1 : 1] * s;   // Overscan: off · some · full (enough for the biggest jolt and tilt)
   return U;
 }
 // this frame's settings for every target: { out: U | null, layers: [U | null ×4], any }

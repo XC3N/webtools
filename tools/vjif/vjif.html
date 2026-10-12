@@ -87,14 +87,13 @@
     <div class="field"><label>Scale</label><div class="keyrow span" style="gap:14px"><label class="tog" title="Scale X and Y move together (keeps the shape), with the sliders and the side handles in the preview"><input type="checkbox" id="xLink">Link</label><label class="tog" title="Handles in the preview scale around the centre instead of the opposite edge (Alt while dragging does the opposite)"><input type="checkbox" id="xFromC">From centre</label></div></div>
     <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
     <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
-    <div class="field wide"><label for="gSmooth" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Belongs to the GIF: applies everywhere it's used, every layer and scene">Smooth scaling</label><label class="tog span" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Belongs to the GIF: applies everywhere it's used, every layer and scene"><input type="checkbox" id="gSmooth"></label></div>
     <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
     <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropAuto" title="Crop to what is drawn: trims the see-through border, over every frame">To content</button><button id="xCropReset">Uncrop</button></div></div>
     <div class="btnrow"><button id="xFitS" title="Base size Fit, scale 1×, centred: the whole GIF visible (its cropped part)">Fit</button><button id="xFill" title="Base size Fill, scale 1×, centred: covers the whole frame, the overflow cut off">Fill</button><button id="xStr" title="Base size Stretch, scale 1×: covers the whole frame, distorted">Stretch</button></div>
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button></h2>
   <div id="gifSettings" class="disabled">
-    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
+    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour" title="How the GIF shows: smoothing, key, colour, palette, shadow, swaps">Display</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
     <div id="gPanes">
       <div data-pane="play">
         <div class="sub" style="margin-top:0"><span title="How the GIF plays when nothing triggers it: its timing, direction and restarts">Loop</span><span class="line"></span></div>
@@ -135,6 +134,7 @@
           <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div></div>
       </div>
       <div data-pane="colour" class="off">
+        <div class="field wide tkeep"><label for="gSmooth" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used">Smooth scaling</label><label class="tog span" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used"><input type="checkbox" id="gSmooth"></label></div>
         <div class="sub"><span>Key</span><span class="line"></span><button id="kPick" title="Pick the key colour: then click the GIF in the preview">Pick</button><button id="kReset" title="Clear the key: back to its defaults (off)">Clear</button><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
         <div class="field"><div class="keyrow"><label title="The key colour">Colour</label><input type="color" id="kCol" class="sw" value="#00ff00" title="The key colour"></div><div class="seg span" id="kRegion" title="Which matching pixels are removed">
           <button data-v="all" title="Every pixel of the key colour, anywhere">All</button>
@@ -300,7 +300,7 @@
       <dt>Shift+1–4</dt><dd>Layer on / off — 1 Background · 2 Midground · 3 Foreground · 4 Overlay. Right-click a layer's number: solo it (again: back as before)</dd>
       <dt>PgUp / PgDn · End</dt><dd>Edit layer up / down (or click its card; Alt+1–4 too) · End: the edit layer on / off</dd>
       <dt>Layer chips</dt><dd>One per GIF on the layer (its pad key). Click to select · drag to another layer or to reorder — the leftmost is drawn on top; a bar shows where it will land · remove: × on hover, or Ctrl+click (with Ctrl held the chips turn red)</dd>
-      <dt>Click</dt><dd>Select the topmost visible GIF (Alt+click = the one beneath)</dd>
+      <dt>Click</dt><dd>Select a GIF: clicking anywhere in its box counts; where boxes overlap, the GIF whose own pixels are nearest the pointer wins. Click again on the same spot to go through the others there (Alt+click too)</dd>
       <dt>Drag</dt><dd>Move · side handles stretch X/Y · corners zoom (Alt = from centre) · Shift+handle crops · round knob rotates (Shift snaps 15°)</dd>
       <dt>Wheel</dt><dd>Zoom · Shift+wheel rotates · double-click resets</dd>
       <dt>Arrows · Home</dt><dd>Nudge the selected GIF 1 px (Shift = 10 px; with the mouse over a slider or button row, the arrows adjust that control) · Home resets its placement</dd>
