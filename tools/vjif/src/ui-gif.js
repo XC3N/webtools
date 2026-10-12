@@ -130,10 +130,10 @@ $('#gSpeed').addEventListener('input', e => { const g = curGif(); if (g){ g.spee
 const HSV_UI = [['#hH', 'h', v => (v > 0 ? '+' : '') + v + '°'], ['#hS', 's', v => (+v).toFixed(2) + '×'], ['#hV', 'v', v => (+v).toFixed(2) + '×']];
 HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
   const g = curGif(); if (!g) return;
-  g.hsv[k] = +e.target.value; e.target.nextElementSibling.textContent = fmt(g.hsv[k]);
+  g.hsv[k] = +e.target.value; g.hsv.off = false; e.target.nextElementSibling.textContent = fmt(g.hsv[k]);   // (touching it switches Adjust on)
   scheduleFx(g, 150);
 }));
-$('#gPal').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { d: 0 }), i: +e.target.value }; e.target.blur(); scheduleFx(g, 0); syncGifUI(); renderPad(selPad); });
+$('#gPal').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { d: 0 }), i: +e.target.value, off: false }; e.target.blur(); scheduleFx(g, 0); syncGifUI(); renderPad(selPad); });
 $('#gPalD').addEventListener('input', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { i: -1 }), d: +e.target.value }; e.target.nextElementSibling.textContent = Math.round(g.pal.d * 100) + '%'; scheduleFx(g, 100); });
 $('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.hsv, { h: 0, s: 1, v: 1 }); scheduleFx(g, 0); syncGifUI(); });
 
@@ -261,7 +261,7 @@ function drawPrev(g, f){
 [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => {
   $(id).addEventListener('input', e => {
     const g = curGif(); if (!g) return;
-    const v = +e.target.value; g[k] = v;
+    const v = +e.target.value; g[k] = v; g.trimOff = false;   // (touching it switches Frames on)
     if (k === 'inF' && g.outF < v) g.outF = v;          // dragging in past out pushes out along (and vice versa)
     if (k === 'outF' && g.inF > v) g.inF = v;
     rebuildSeq(g); syncRangeUI(g); drawPrev(g, g[k]); showCycle(g);
@@ -342,9 +342,18 @@ document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=c
 });
 // a section that differs from its defaults: its fold arrow in the signal colour (readable at a glance, folded or not)
 ['input', 'change', 'click'].forEach(t => $('#gPanes').addEventListener(t, () => queueMicrotask(markFolds)));
+// each section's own switch (off: skipped, its settings kept); Key and Shadow have theirs elsewhere
+function syncSwitches(g){ if (!g) return; $('#fOn').checked = !g.trimOff; $('#tOn').checked = g.trig === 'fade'; $('#hOn').checked = !g.hsv.off; $('#pOn').checked = palOn(g); $('#swOn').checked = !g.swapOff; }
+const swFx = fn => e => { const g = curGif(); if (!g) return; fn(g, e.target.checked); scheduleFx(g, 0); renderPad(selPad); syncGifUI(); redraw.all = true; };
+$('#fOn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.trimOff = !e.target.checked; rebuildSeq(g); syncGifUI(); redraw.all = true; });
+$('#tOn').addEventListener('change', e => { const b = $(`#tMode [data-v=${e.target.checked ? 'fade' : 'stay'}]`); if (b) b.click(); });
+$('#hOn').addEventListener('change', swFx((g, on) => { g.hsv.off = !on; }));
+$('#pOn').addEventListener('change', swFx((g, on) => { if (on && !(g.pal.i >= 0)) g.pal.i = 0; g.pal.off = !on; }));
+$('#swOn').addEventListener('change', swFx((g, on) => { g.swapOff = !on; }));
 function markFolds(){
+  syncSwitches(curGif());
   document.querySelectorAll('#gPanes .sub.foldable').forEach(s => {
-    let mod = [...s.querySelectorAll('input[type=checkbox]')].some(c => c.checked);   // its own switch (Key, Shadow) on
+    let mod = [...s.querySelectorAll('input[type=checkbox]')].some(c => c.checked !== (c.dataset.def === '1'));   // its own switch away from its default (Key, Shadow on; Adjust off…)
     for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling){
       n.querySelectorAll('input[type=range][data-def]').forEach(r => { const d = r.dataset.def, v = d === 'min' ? +r.min : d === 'max' ? +r.max : +d; if (Math.abs(+r.value - v) > 1e-6) mod = true; });
       n.querySelectorAll('select').forEach(q => { if (q.selectedIndex > 0) mod = true; });

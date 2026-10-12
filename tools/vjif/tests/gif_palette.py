@@ -23,7 +23,7 @@ async def m():
     # smoothing: in GIF › Colour (0.79)
     r3 = await pg.evaluate("[!!$('#gSmooth').closest('[data-pane=colour]'), (() => { selectPad(0); $('#gSmooth').checked = true; $('#gSmooth').dispatchEvent(new Event('change')); return pads[0].gif && pads[0].gif.crisp })()]")
     print('colours', r, '| after reload', r2, '| smoothing', r3)
-    ok = r[0] <= r[1] and r2 == '{"i":2,"d":1}' and r3 == [True, False]
+    ok = r[0] <= r[1] and __import__('json').loads(r2).get('i') == 2 and __import__('json').loads(r2).get('d') == 1 and r3 == [True, False]
     await b.close()
     if not ok: raise SystemExit('FAILED')
     return

@@ -89,7 +89,7 @@ async function setMediaScale(m, sc){
   insts.forEach(g => { if (g.media !== m) return;
     const fx = g.frames !== g.src; if (fx) g.frames.forEach(f => f.close());
     Object.assign(g, { src: m.src, frames: m.src, srcBytes: m.srcBytes, bytes: m.srcBytes, masks: null, thumb: null, tileThumb: null, fxP: null });
-    if (fx || g.key.on || hsvOn(g) || (g.swap && g.swap.length)) applyFx(g); });
+    if (fx || g.key.on || hsvOn(g) || swapOn(g)) applyFx(g); });
   old.forEach(f => f.close());
   pads.forEach(p => p.gif && p.gif.media === m && renderPad(p.i)); updateMem(); renderPool(); syncGifUI(); redraw.all = true;
 }
@@ -129,8 +129,9 @@ async function mediaFor(blob, name, gen = setGen){
 function rebuildSeq(g){
   const F = g.src.length;
   g.inF = clamp(g.inF | 0, 0, F - 1); g.outF = clamp(g.outF | 0, g.inF, F - 1); g.startF = clamp(g.startF | 0, g.inF, g.outF);
-  const n = g.outF - g.inF + 1; g.seq = []; g.cum = []; let t = 0;
-  for (let k = 0; k < n; k++){ const f = g.inF + mod(g.startF - g.inF + k, n); g.seq.push(f); g.cum.push(t); t += g.durs[f]; }
+  const [i0, i1, s0] = g.trimOff ? [0, F - 1, 0] : [g.inF, g.outF, g.startF];   // Frames switched off: every frame, from the first (In / Out / Start kept)
+  const n = i1 - i0 + 1; g.seq = []; g.cum = []; let t = 0;
+  for (let k = 0; k < n; k++){ const f = i0 + mod(s0 - i0 + k, n); g.seq.push(f); g.cum.push(t); t += g.durs[f]; }
   g.total = t;
 }
 

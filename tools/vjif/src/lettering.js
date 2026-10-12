@@ -130,7 +130,7 @@ async function retextAll(){
       const fx = g.frames !== g.src; if (fx) g.frames.forEach(f => f.close());
       Object.assign(g, { src: m.src, frames: m.src, w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes, masks: null, thumb: null, tileThumb: null, fxP: null });
       if (m.text.marquee && g.lfo.x && g.lfo.x.on){ const sp = Math.round((W + m.textW) / 2); g.lfo.x.min = sp; g.lfo.x.max = -sp; }
-      rebuildSeq(g); if (fx || g.key.on || hsvOn(g) || (g.swap && g.swap.length)) applyFx(g); });
+      rebuildSeq(g); if (fx || g.key.on || hsvOn(g) || swapOn(g)) applyFx(g); });
     old.forEach(f => f.close());
   }
   pads.forEach(p => p.gif && p.gif.media && p.gif.media.text && renderPad(p.i)); renderPool(); redraw.all = true;

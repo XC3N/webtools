@@ -84,8 +84,10 @@ const fxGL = (() => {
 })();
 const liveFx = () => fxGL && fxGL.ok;
 const SWAP_MAX = 8;                                 // colour swaps per GIF: { from: [r,g,b], to: [r,g,b] }
-const fxActive = g => g.key.on || hsvOn(g) || !!(g.swap && g.swap.length) || palOn(g);
-const palOn = g => !!g.pal && g.pal.i >= 0 && !!FX_PALS[g.pal.i];   // GIF › Colour › Palette: its colours snapped to an old computer's / console's
+const swapOn = g => !g.swapOff && !!(g.swap && g.swap.length);   // each GIF › Colour section has its own switch: off keeps its settings but skips it
+const HSV0 = { h: 0, s: 1, v: 1 }, hsvOf = g => g.hsv.off ? HSV0 : g.hsv;
+const fxActive = g => g.key.on || hsvOn(g) || swapOn(g) || palOn(g);
+const palOn = g => !!g.pal && !g.pal.off && g.pal.i >= 0 && !!FX_PALS[g.pal.i];   // GIF › Colour › Palette: its colours snapped to an old computer's / console's
 // the image to draw for frame `fi` of GIF `g`: run through the colour shader when live colour is on.
 // e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
 // Connected key: the frame's mask (from the flood fill) replaces the per-pixel colour test.
@@ -98,7 +100,7 @@ function fxImage(g, fi, e){
   if (!auto && !fxActive(g)) return img;
   const base = g.fxP || (g.fxP = fxParams(g)), mask = g.key.on && g.key.region !== 'all' && g.masks ? g.masks[fi] : null;
   if (auto){                                         // automated colour changes every frame: nothing worth keeping
-    const h = g.hsv.h + (e.H ?? 0), s = g.hsv.s * (e.S ?? 1), v = g.hsv.v * (e.V ?? 1);
+    const B = hsvOf(g), h = B.h + (e.H ?? 0), s = B.s * (e.S ?? 1), v = B.v * (e.V ?? 1);
     return fxGL.render(img, Object.assign({}, base, { doHsv: h !== 0 || s !== 1 || v !== 1, H: h, S: s, V: v }), mask);
   }
   let C = g.fxC; if (!C || C.p !== base || C.m !== g.masks) C = g.fxC = { p: base, m: g.masks, list: [] };   // new colour settings or masks: start over
@@ -115,7 +117,7 @@ function scheduleFx(g, ms){
   clearTimeout(g.keyT); g.keyT = setTimeout(() => applyFx(g), ms);
 }
 
-const hsvOn = g => g.hsv.h !== 0 || g.hsv.s !== 1 || g.hsv.v !== 1;
+const hsvOn = g => !g.hsv.off && (g.hsv.h !== 0 || g.hsv.s !== 1 || g.hsv.v !== 1);
 // shift a colour in HSV space; returns packed 0xRRGGBB
 function hsvShift(r, gr, b, H, S, V){
   const mx = Math.max(r, gr, b), mn = Math.min(r, gr, b), d = mx - mn;
@@ -180,11 +182,11 @@ function fxPixels(u, p, cache, mask = null){
     u[i] = (na << 24) | (lastV & 0xffffff);
   }
 }
-function fxParams(g, hsv = g.hsv){
+function fxParams(g, hsv = hsvOf(g)){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
            region: g.key.region || 'all', seed: g.key.seed || null,
-           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palN: FX_PALS[g.pal.i].c.length, palD: g.pal.d || 0 } : {}), sw: (g.swap || []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palN: FX_PALS[g.pal.i].c.length, palD: g.pal.d || 0 } : {}), sw: (swapOn(g) ? g.swap : []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
 }
 // The worker gets the same functions as source text, so both paths run identical code.
 const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels].map(f => f.toString()).join('\n') + `

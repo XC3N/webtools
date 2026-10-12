@@ -72,7 +72,7 @@
 </main>
 
 <aside id="side" class="panel">
-  <h2>Transform<span class="tag" id="xfTag"></span><span class="line"></span></h2>
+  <h2>Transform<span class="tag" id="xfTag"></span><span class="line"></span><button id="xReset" class="h2btn">Reset</button></h2>
   <div id="xfPanel">
     <div class="field" title="Base size: what Scale 1.00× means for this GIF. It's kept when the canvas format changes (a GIF on Fill still fills a 9:16 canvas). The buttons below set it and reset scale, rotation and flips in one go"><label for="xFit">Base size</label><select id="xFit" class="span">
       <option value="auto">Auto (native ×N)</option><option value="native">Native px</option><option value="contain">Fit</option><option value="cover">Fill</option><option value="stretch">Stretch</option></select></div>
@@ -85,7 +85,7 @@
     <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
     <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
     <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropAuto" title="Crop to what is drawn: trims the see-through border, over every frame">To content</button><button id="xCropReset">Uncrop</button></div></div>
-    <div class="btnrow"><button id="xFitS" title="Base size Fit, scale 1×, centred: the whole GIF visible (its cropped part)">Fit</button><button id="xFill" title="Base size Fill, scale 1×, centred: covers the whole frame, the overflow cut off">Fill</button><button id="xStr" title="Base size Stretch, scale 1×: covers the whole frame, distorted">Stretch</button><button id="xReset">Reset</button></div>
+    <div class="btnrow"><button id="xFitS" title="Base size Fit, scale 1×, centred: the whole GIF visible (its cropped part)">Fit</button><button id="xFill" title="Base size Fill, scale 1×, centred: covers the whole frame, the overflow cut off">Fill</button><button id="xStr" title="Base size Stretch, scale 1×: covers the whole frame, distorted">Stretch</button></div>
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button></h2>
   <div id="gifSettings" class="disabled">
@@ -106,7 +106,7 @@
           <button data-v="pingpong" title="Forward then backward (in Fit, the round trip fills the loop length)">Ping-pong</button>
           <button data-v="once" title="Play through, then hold the last frame until triggered again">Once</button></div></div>
         <div class="field"><label title="Jump back to the start every …">Restart</label><div class="seg span grid4" id="gRestart"></div></div>
-        <div class="sub"><span title="In / Out trim the animation; Start sets the frame the loop begins on (it wraps within In–Out)">Frames</span><span class="line"></span></div>
+        <div class="sub"><span title="In / Out trim the animation; Start sets the frame the loop begins on (it wraps within In–Out)">Frames</span><span class="line"></span><label class="tog" title="Frames on / off: off plays every frame from the first (In / Out / Start are kept)"><input type="checkbox" id="fOn" data-def="1"></label></div>
         <div class="frames">
           <div><div class="field"><label for="gIn">In</label><input id="gIn" type="range" data-def="min" min="0" step="1"><output></output></div>
           <div class="field"><label for="gOut">Out</label><input id="gOut" type="range" data-def="max" min="0" step="1"><output></output></div>
@@ -115,7 +115,7 @@
         </div>
         <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
         <div class="field" title="Keep this GIF's frames at full, half or quarter resolution. It looks the same size; ½ uses a quarter of the memory, ¼ a sixteenth. Applies to the GIF everywhere it's used (every pad and scene). Pixel art that was saved blown up (every pixel a block of N×N) is found on load and kept at its real pixels: same picture, N² times less memory"><label>Resolution</label><div class="seg span" id="gRes"><button data-v="1">Full</button><button data-v="0.5">½</button><button data-v="0.25">¼</button></div></div>
-        <div class="sub trig"><span title="What a pad hit does: restart it and stay, or play it once">Trigger</span><span class="line"></span></div>
+        <div class="sub trig"><span title="What a pad hit does: restart it and stay, or play it once">Trigger</span><span class="line"></span><label class="tog" title="On: One shot (hidden until hit, plays once) · Off: Stay"><input type="checkbox" id="tOn" data-def="0"></label></div>
         <div class="field trig"><label title="What a pad hit does">Hit</label><div class="seg span" id="tMode">
           <button data-v="stay" title="A hit restarts the GIF and it stays on">Stay</button>
           <button data-v="fade" title="Hidden until hit (a dotted ghost in the preview, nothing in the output): each hit plays it once: Fade in, Hold, Fade out. Fades at 0: a plain one-shot. Lengths follow the tempo">One shot</button></div></div>
@@ -131,19 +131,18 @@
       </div>
       <div data-pane="colour" class="off">
         <div class="field tkeep"><label for="gSmooth" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used">Scaling</label><label class="tog span" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used"><input type="checkbox" id="gSmooth">Smooth</label></div>
-        <div class="sub"><span>Key</span><span class="line"></span><button id="kPick" title="Pick the key colour: then click the GIF in the preview">Pick</button><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
-        <div class="field"><label>Colour</label><div class="keyrow span"><input type="color" id="kCol" value="#00ff00" style="flex:1"><button id="kReset" title="Key back to defaults">Reset</button></div></div>
-        <div class="field"><label title="Which matching pixels are removed">Region</label><div class="seg span" id="kRegion">
-          <button data-v="all" title="Every pixel of the key colour, anywhere">Everywhere</button>
-          <button data-v="edges" title="Only key-coloured areas that touch the frame edges — the colour inside the subject stays">From edges</button>
-          <button data-v="point" title="Magic wand: only the key-coloured area joined to the point you picked">From pick</button></div></div>
+        <div class="sub"><span>Key</span><span class="line"></span><button id="kPick" title="Pick the key colour: then click the GIF in the preview">Pick</button><button id="kReset" title="Clear the key: back to its defaults (off)">Clear</button><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
+        <div class="field"><label title="The key colour, and which matching pixels are removed">Colour</label><div class="keyrow span"><input type="color" id="kCol" value="#00ff00" title="The key colour"><div class="seg" id="kRegion" style="flex:1" title="Which matching pixels are removed">
+          <button data-v="all" title="Every pixel of the key colour, anywhere">All</button>
+          <button data-v="edges" title="Only key-coloured areas that touch the frame edges — the colour inside the subject stays">Edges</button>
+          <button data-v="point" title="Magic wand: only the key-coloured area joined to the point you picked">Wand</button></div></div></div>
         <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" data-def="0" data-pct min="0" max="0.6" step="0.005"><output></output></div>
         <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" data-def="0" data-pct min="0" max="0.4" step="0.005"><output></output></div>
-        <div class="sub"><span>Adjust</span><span class="line"></span><button id="hReset" class="rst" title="Hue, saturation and brightness back to normal">Reset</button></div>
+        <div class="sub"><span>Adjust</span><span class="line"></span><button id="hReset" class="rst" title="Hue, saturation and brightness back to normal">Reset</button><label class="tog" title="Adjust on / off (the settings are kept)"><input type="checkbox" id="hOn" data-def="1"></label></div>
         <div class="field"><label for="hH">Hue</label><input id="hH" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
         <div class="field"><label for="hS">Saturation</label><input id="hS" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
         <div class="field"><label for="hV">Brightness</label><input id="hV" type="range" data-def="1" min="0" max="3" step="0.01"><output></output></div>
-        <div class="sub"><span title="Snap every colour of this GIF to an old computer's or console's palette (after Adjust)">Palette</span><span class="line"></span></div>
+        <div class="sub"><span title="Snap every colour of this GIF to an old computer's or console's palette (after Adjust)">Palette</span><span class="line"></span><label class="tog" title="Palette on / off (the chosen palette is kept)"><input type="checkbox" id="pOn" data-def="0"></label></div>
         <div class="field"><label for="gPal">Snap to</label><select id="gPal" class="span" title="The palette this GIF's colours snap to (None: its own colours)"></select></div>
         <div class="field" title="Dither: in-between shades drawn as a pattern of the two nearest palette colours, on the GIF's own pixels (off = flat areas)"><label for="gPalD">Dither</label><input id="gPalD" type="range" data-def="0" data-pct min="0" max="1" step="0.05"><output></output></div>
         <div class="sub"><span title="A shadow under the GIF, from its see-through edges, to sit it into the scene (best on GIFs with transparency)">Shadow</span><span class="line"></span><input type="color" id="shCol" value="#000000" title="Shadow colour"><label class="tog" title="Shadow on / off"><input type="checkbox" id="shOn"></label></div>
@@ -154,7 +153,7 @@
         <div class="field"><label for="shO">Opacity</label><input id="shO" type="range" data-def="0.6" data-pct min="0" max="1" step="0.01"><output></output></div>
         <div class="field"><label for="shC" title="Take away the top of the shadow: only the part under the GIF's lower edge stays, so it seems to stand on what's behind it">Crop</label><input id="shC" type="range" data-def="0" min="0" max="0.95" step="0.01" title="Take away the top of the shadow: only the part under the GIF's lower edge stays, so it seems to stand on what's behind it"><output></output></div>
         <div class="field"><label for="shS" title="How gradually the cropped shadow fades in at its top (as a share of the GIF's height): soft and rounded instead of a straight cut">Soft</label><input id="shS" type="range" data-def="0.2" min="0" max="0.6" step="0.01" title="How gradually the cropped shadow fades in at its top (as a share of the GIF's height): soft and rounded instead of a straight cut"><output></output></div>
-        <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swPick" title="Then click the GIF in the preview: selects the swatch of that colour">Pick</button><button id="swClear" title="Remove every swap">Clear</button></div>
+        <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swPick" title="Then click the GIF in the preview: selects the swatch of that colour">Pick</button><button id="swClear" title="Remove every swap">Clear</button><label class="tog" title="Colour swaps on / off (the swaps are kept)"><input type="checkbox" id="swOn" data-def="1"></label></div>
         <div class="field" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="0"><output></output></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>
         <div id="swList"></div>

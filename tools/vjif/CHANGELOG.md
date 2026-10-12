@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.80.0 — 2026-10-12
+
+### GIFs
+- Every GIF section has its own switch on its heading line: Frames, Trigger (on: One shot), Key, Adjust, Palette, Shadow, Swap colours. Off skips that section and keeps its settings; touching a setting switches its section back on.
+- Resets live on their section's heading line, so they're there when it's folded: Transform's Reset moved up to the Transform heading; Adjust's stays visible; Key has Pick and Clear (its reset) next to its switch.
+- Key: the colour swatch (the usual swatch size) and the region (All, Edges, Wand) share one row.
+
 ## 0.79.0 — 2026-10-12
 
 ### Licence

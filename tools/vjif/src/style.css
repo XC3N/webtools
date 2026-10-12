@@ -285,7 +285,7 @@ body.precopy #fxPre .fxp.empty.drop::after,#scenes.copying .scene.empty.drop::af
 
 /* ---------- transform ---------- */
 #xCrop{flex:1;min-width:0}
-.btnrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.btnrow{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px}   /* as many equal buttons as it holds */
 
 /* ---------- modals ---------- */
 @keyframes hl{from{background:var(--sig);color:var(--sigtxt)}}
@@ -426,7 +426,7 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 #maskBar .mrow button{flex:1}#maskBar .seg button{flex:1}.mhint{font-size:10px;color:var(--faint)}
 .lmask{width:var(--ch);padding:0;flex:none;color:var(--faint)}.lmask svg{display:block;margin:auto}.lmask:hover{color:var(--ink)}.lmask.has{color:var(--amber)}.lmask.on{color:var(--sigtxt);background:var(--amber);border-color:var(--amber)}
 /* a folded section: its Reset is hidden (its place kept); a section changed from its defaults shows its arrow in the signal colour */
-.sub.foldable.shut>.rst{visibility:hidden}.sub.foldable.mod>span:first-child::before{color:var(--amber)}
+.sub.foldable.mod>span:first-child::before{color:var(--amber)}
 
 /* × on a pad, scene or effect preset: delete it in one click (shown on hover; Settings › Interface › Ctrl+click to delete only hides them) */
 .xdel{position:absolute;right:2px;top:2px;z-index:3;width:15px;height:15px;font:600 12px/15px var(--mono);text-align:center;border-radius:2px;color:#fff;background:#000b;opacity:0;cursor:pointer;transition:opacity .1s}
@@ -437,3 +437,5 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 .scene.holding::before,#fxPre .fxp.holding::before{content:'';position:absolute;left:0;bottom:0;z-index:4;height:3px;width:100%;background:var(--danger);transform-origin:left;animation:holdbar 1.2s linear both}
 @keyframes holdbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .scene.armed,#fxPre .fxp.armed{outline:2px solid var(--danger)!important;outline-offset:-2px}
+
+h2 .h2btn{margin-left:6px;height:20px;padding:0 8px;font-size:11px}   /* a section's own button on its heading line (there when folded) */

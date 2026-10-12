@@ -97,6 +97,8 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
 - [ ] {ocv7fifdfkezjtcdvqtn} **Dragging an effect leaves it alone** (0.77) — drag an effect tile (to a preset, or off and back): an effect that was off never flashes on, a latched one stays on; a click still plays it.
 - [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75) — GIF › Auto › Envelope: Depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Only on Zoom: a punch per hit (Attack 0, Decay 1/4).
+- [ ] {sr1ri9phf2p3eyg1ozhe} **Section switches** (0.80) — GIF › Play / Colour: each section's switch turns it off without losing its settings (Frames: every frame; Adjust, Palette, Swaps: skipped); a slider touched turns it back on.
+- [ ] {8y575napbddy9c5nf7e2} **Resets on the heading line** (0.80) — fold Transform / Adjust / Key: Reset (Key: Pick + Clear) still there and works.
 - [ ] {z3nn98qy05fsovfh9j46} **One shot fade in** (0.79) — Snap Bar, One shot with Fade in 1/16 or 1/8: the fade in shows on every hit, also hits just after the bar; the scope matches.
 - [ ] {jmfzwwsc1irpkbzmnqyv} **× to delete** (0.79) — hover a pad, a scene, a preset: × deletes it (Ctrl+Z back); Settings › Interface › Ctrl+click to delete only hides them; pad layers next to the key, preset mode next to its number.
 - [ ] {j77v227xl0hjqb61x0bn} **One shot banner** (0.79) — a marquee text pad, Trigger One shot, Length One play, fades 0: a hit sends it once across the screen, then it's gone.

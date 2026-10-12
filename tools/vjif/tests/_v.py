@@ -14,13 +14,7 @@ async def main():
       await pg.evaluate(f"setTarget({k}); fileTarget = {k}"); await pg.set_input_files('#fileIn', [str(FIX/f)]); await pg.wait_for_function(f"pads[{k}].gif")
       await pg.keyboard.press(key); await pg.wait_for_timeout(200)
     await pg.hover('.pad[data-i="0"]'); await pg.wait_for_timeout(200); await shot(pg, '#bank', 'ui_bank')
-    await pg.evaluate("selectPad(0); $('#gTabs [data-v=play]').click()"); await pg.wait_for_timeout(300); await shot(pg, '#side', 'ui_side')
-    # corrupt transition stills
-    out = await pg.evaluate("""(() => { const res = []; transCfg = normTrans({ type: 'glitch', style: 'corrupt', len: 2, px: 12 }); trans = makeTrans([], [], 0);
-      for (const e of [0.2, 0.35, 0.5, 0.65, 0.8]){ trA.setTransform(1,0,0,1,0,0); trB.setTransform(1,0,0,1,0,0); trA.fillStyle = '#c33'; trA.fillRect(0,0,CW,CH); trA.fillStyle='#fff'; trA.fillRect(CW*0.3,CH*0.3,CW*0.4,CH*0.4); trB.fillStyle = '#33c'; trB.fillRect(0,0,CW,CH); trB.fillStyle='#ff0'; trB.beginPath(); trB.arc(CW*0.5,CH*0.5,CH*0.3,0,7); trB.fill(); composeTransition(e, transCfg); const c = document.createElement('canvas'); c.width = 320; c.height = 180; c.getContext('2d').drawImage(mctx.canvas, 0, 0, 320, 180); res.push(c.toDataURL()); }
-      trans = null; return res; })()""")
-    import base64
-    for i,u in enumerate(out): open(f'{SP}/trc{i}.png','wb').write(base64.b64decode(u.split(',')[1]))
+    await pg.evaluate("selectPad(0); $('#gTabs [data-v=colour]').click()"); await pg.wait_for_timeout(300); await shot(pg, '#side', 'ui_side')
     print(errs[:3])
     await b.close()
 asyncio.run(main())

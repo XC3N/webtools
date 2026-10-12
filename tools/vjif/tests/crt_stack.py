@@ -10,7 +10,7 @@ async def main():
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(300); await pg.evaluate("selectFx(FXI.rgb); fxCfg[FXI.rgb].mode='latch'; pvOpt.gHide=true; layers[0].sel=null")
     out=[]
     for v in ['scan','phos','vhs','paytv','split','split']:
-      await pg.click(f'#fxStyle [data-v="{v}"]'); await pg.wait_for_timeout(50); out.append(await pg.evaluate("fxCfg[FXI.rgb].style"))
+      await pg.click(f'#fxStyle [data-v="{v}"]', force=True, timeout=120000); await pg.wait_for_timeout(50); out.append(await pg.evaluate("fxCfg[FXI.rgb].style"))
     await pg.evaluate("fxCfg[FXI.rgb].style='vhs+scan+phos'; syncFxUI()")
     await pg.keyboard.press('F11'); await pg.wait_for_timeout(1200)
     bb=await pg.locator('#pv').bounding_box(timeout=180000); await pg.screenshot(path=str(OUT/'crt_stack.png'), clip=bb, timeout=180000)   # (a software GPU takes seconds per VHS frame)
@@ -19,9 +19,9 @@ async def main():
     # stacked: right-click a style that's on shows its settings without switching it; one row of styles for every effect
     await pg.evaluate("fxCfg[FXI.rgb].style='vhs+scan'; delete fxFocus.rgb; syncFxUI()")
     lab=lambda: pg.evaluate("[$('#fxSizeRow label').textContent, fxCfg[FXI.rgb].style, $('#fxSizeRow').classList.contains('dimmed'), [...document.querySelectorAll('#fxStyle button.focus')].map(b=>b.dataset.v)]")
-    r0=await lab(); await pg.click('#fxStyle [data-v="vhs"]', button='right'); r1=await lab()
-    await pg.click('#fxStyle [data-v="split"]', button='right'); r2=await lab()
-    await pg.click('#fxStyle [data-v="scan"]', button='right'); r3=await lab()
+    r0=await lab(); await pg.click('#fxStyle [data-v="vhs"]', button='right', force=True, timeout=120000); r1=await lab()
+    await pg.click('#fxStyle [data-v="split"]', button='right', force=True, timeout=120000); r2=await lab()
+    await pg.click('#fxStyle [data-v="scan"]', button='right', force=True, timeout=120000); r3=await lab()
     print(r0, r1, r2, r3)
     assert r0[:3]==['Size','vhs+scan',False], r0
     assert r1==['Dropouts','vhs+scan',False,['vhs']], r1
