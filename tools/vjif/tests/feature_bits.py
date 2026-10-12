@@ -121,6 +121,11 @@ async def main():
     mg = await pg.evaluate("""(() => { const on = Array(21).fill(0); on[2] = 1; on[10] = 1;
       const o = upgradeSnap({ v: 5, fx: FX_ORDER_V1.map(id => ({ tag: id })), fxPre: [{ fx: { 2: { a: 1 }, 10: { b: 1 } } }], fxOn: on.slice(), scenes: [{ fxOn: on.slice() }, null] });
       return [FX_DEFS.map(d => d.id).join(','), o.fx.every((c, i) => c.tag === FX_DEFS[i].id), Object.keys(o.fxPre[0].fx).map(Number).sort((a, b) => a - b).join(','), o.fxOn[FXI.strobe], o.fxOn[FXI.pixel], o.fxOn[2], o.scenes[0].fxOn[FXI.strobe]]; })()""")
+    # 0.79: Glitch styles stack (Keyframe, Crunch), the Glitch transition's Scramble became Corrupt, × on pads / scenes / presets, Trigger inside Play
+    g9 = await pg.evaluate("""[styleParts(FXI.glitch, 'corrupt+crunch').join('+'), styleParts(FXI.glitch, 'scramble').join(), normTrans({ type: 'glitch', style: 'scramble' }).style,
+      document.querySelectorAll('.pad .xdel').length, document.querySelectorAll('#scenes .scene .xdel').length, document.querySelectorAll('#fxPre .fxp .xdel').length,
+      !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('[data-pane=colour] #gSmooth')]""")
+    print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'corrupt', 18, 9, 9, True, True, True], g9
     print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg
     await b.close()
 asyncio.run(main())

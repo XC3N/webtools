@@ -1,6 +1,6 @@
 // ---------- UI: screen effect pads, the effect editor and its envelope ----------
 const NP_ORDER = [6, 7, 8, 3, 4, 5, 0, 1, 2];           // preset tiles laid out like the numpad (7 8 9 on top)
-function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span>${i < NFX ? '<span class="mk"></span>' : ''}<span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
+function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span>${i < NFX ? '<span class="mk"></span>' : '<span class="xdel" title="Empty this preset">×</span>'}<span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
@@ -16,12 +16,17 @@ const preEmpty = k => !Object.keys(fxPre[k].fx).length;
 function fxDropMark(cp){
   const d = fxDrag; if (!d || !d.moved) return; const pre = d.i >= NFX; d.copy = pre && cp; document.body.classList.toggle('precopy', d.copy);
   const t = d.lastE && document.elementFromPoint(d.lastE.clientX, d.lastE.clientY), o = t && t.closest('#fxPre .fxp');
-  document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.toggle('drop', x === o && (!pre || (+x.dataset.i !== d.i && (!d.copy || preEmpty(+x.dataset.i - NFX))))));
+  // Ctrl over a preset with effects: held there COPY_HOLD ms (the red bar fills), the drop replaces it
+  const full = pre && d.copy && o && +o.dataset.i !== d.i && !preEmpty(+o.dataset.i - NFX);
+  if (full){ if (!d.hold || d.hold.o !== o){ clearTimeout(d.hold && d.hold.T); d.hold = { o, at: performance.now(), T: setTimeout(() => fxDropMark(d.copy), COPY_HOLD + 20) }; } } else if (d.hold){ clearTimeout(d.hold.T); d.hold = null; }
+  const armed = !!d.hold && performance.now() - d.hold.at >= COPY_HOLD; d.armed = armed;
+  document.querySelectorAll('#fxPre .fxp').forEach(x => { x.classList.toggle('holding', !!d.hold && x === o && !armed); x.classList.toggle('armed', armed && x === o);
+    x.classList.toggle('drop', x === o && (!pre || (+x.dataset.i !== d.i && (!d.copy || preEmpty(+x.dataset.i - NFX) || armed)))); });
 }
 addEventListener('keydown', e => { if (fxDrag && DEL_KEYS.includes(e.key)) fxDropMark(true); });
 addEventListener('keyup', e => { if (fxDrag && DEL_KEYS.includes(e.key)) fxDropMark(false); });
-function movePre(a, b, copy){
-  if (copy){ if (!preEmpty(b)) return toast('Ctrl+drag onto an empty preset to copy'); fxPre[b] = JSON.parse(JSON.stringify(fxPre[a])); toast2(`Preset ${a + 1} copied to ${b + 1}`); }
+function movePre(a, b, copy, over = false){
+  if (copy){ if (!preEmpty(b) && !over) return toast(`Preset ${b + 1} has effects: hold over it until the bar fills, then drop, to replace them`); fxPre[b] = JSON.parse(JSON.stringify(fxPre[a])); toast2(`Preset ${a + 1} copied to ${b + 1}`); }
   else { [fxPre[a], fxPre[b]] = [fxPre[b], fxPre[a]]; toast2(`Presets ${a + 1} and ${b + 1} swapped`); }
   selFx = NFX + b; syncFxUI();
 }
@@ -31,6 +36,7 @@ function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
     if (e.button) return;
+    if (e.target.closest('.xdel')){ el._edit = true; fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); selFx = i; syncFxUI(); return; }   // a preset's ×
     if (isRm(e) && heldPre < 0){ el._edit = true;                        // Ctrl+click: reset an effect / empty a preset
       if (i < NFX){ fxUp(i); fxCfg[i] = fxDefaults()[i]; toast2(`${FX_DEFS[i].name} back to its defaults`); }
       else { fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); }
@@ -54,8 +60,9 @@ function wireFxTile(el){
     if (fxDrag && fxDrag.i === i && fxDrag.moved){
       const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp'), cp = fxDrag.copy;
       if (d && i < NFX) addPreFx(+d.dataset.i - NFX, i);
-      else if (d && +d.dataset.i !== i){ movePre(i - NFX, +d.dataset.i - NFX, cp); if (cp) hushDel(); }
-      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop')); document.body.classList.remove('fxdragging', 'precopy');
+      else if (d && +d.dataset.i !== i){ movePre(i - NFX, +d.dataset.i - NFX, cp, !!fxDrag.armed); if (cp) hushDel(); }
+      if (fxDrag.hold) clearTimeout(fxDrag.hold.T);
+      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop', 'holding', 'armed')); document.body.classList.remove('fxdragging', 'precopy');
     }
     if (fxDrag && fxDrag.moved) ghost.hide();
     fxDrag = null;

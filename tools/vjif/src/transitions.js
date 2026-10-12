@@ -9,7 +9,7 @@ const TR_STYLES = {
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)'],
              ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
-           ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)']],
+           ['corrupt', 'Corrupt', 'A damaged video file with its keyframe lost: the old picture smears along block motion while the new scene arrives in broken runs of blocks, then a clean keyframe (Pixel = block size)']],
   tv: [['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
            ['channel', 'Channel', 'A TV changing channels: a flick of snow, then the new scene rolls into place, with a green channel number in the top right corner']] };
 const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
@@ -17,6 +17,7 @@ const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x =>
 function normTrans(P){
   if (P.type === 'glitch' && P.style === 'melt') P.type = 'dissolve';                          // 0.69: Melt moved to Dissolve,
   if (P.type === 'glitch' && (P.style === 'vhs' || P.style === 'channel')) P.type = 'tv';      // VHS and Channel to TV
+  if (P.type === 'glitch' && P.style === 'scramble') P.style = 'corrupt';                     // 0.79: Scramble became Corrupt
   if (!TR_TYPES.some(t => t[0] === P.type)) P.type = 'cut';
   P.style = trStyleOf(P); if (!P.px) P.px = 12;
   return P;
@@ -90,7 +91,8 @@ function osdImage(txt, p){
   x.filter = `blur(${(p * 0.28).toFixed(1)}px)`; osdText(x, txt, o, o, p, '#5dff6c'); x.filter = 'none';
   osdCache.key = key; osdCache.cv = cv; return cv;
 }
-const vhsN = {}, chN = {};   // the VHS / Channel transitions' noise canvases
+const vhsN = {}, chN = {};
+const moshCv = document.createElement('canvas'), moshX = moshCv.getContext('2d'), moshT = document.createElement('canvas').getContext('2d'), moshTmp = moshT.canvas;   // Glitch › Corrupt: the smeared picture, and last frame's copy   // the VHS / Channel transitions' noise canvases
 // what each transition type draws into the master canvas: e = progress 0…1 (eased if Smooth), T = the preset,
 // A / B = the scene being left / arriving (drawn whole into trA / trB), [dx, dy] = the direction
 const TR_DRAW = {
@@ -189,23 +191,21 @@ const TR_DRAW = {
         m.drawImage(src, sc * bs, sr * bs, bs, bs, c * bs + ox, r * bs, bs, bs);
       }
       trSplit(m, T, tear); return; }
-    if (gst === 'scramble'){                       // pixelate up, colours scrambled block by block while the scenes swap, then resolve
-      const big = Math.max(4, (T.px || 12) * 4), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
-      const w = Math.ceil(W / bs), h = Math.ceil(H / bs), mixB = Math.min(1, Math.max(0, (e - 0.35) / 0.3));
-      pxCtx.imageSmoothingEnabled = true; pxCtx.globalAlpha = 1; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(A, 0, 0, w, h);
-      if (mixB > 0){ pxCtx.globalAlpha = mixB; pxCtx.drawImage(B, 0, 0, w, h); pxCtx.globalAlpha = 1; }
-      if (post && post.trans(2, pxCv, null, { e, bs, stp: Math.floor(e * 30), pr: k * 0.9 })) return;   // the scramble and blow-up on the GPU (the shrinking stays a drawImage)
-      if (bs >= 3){                                // the scramble: each block's channels rotated / swapped / inverted, re-rolled ~30 times
-        const im = pxCtx.getImageData(0, 0, w, h), d = im.data, step = Math.floor(e * 30), pr = k * 0.9;
-        for (let i = 0, n = 0; i < d.length; i += 4, n++){
-          const q = fxRand(n * 0.37 + step * 17.1); if (q > pr) continue;
-          const r = d[i], g = d[i + 1], b = d[i + 2], s = (q / pr * 4) | 0;
-          if (s === 0){ d[i] = g; d[i + 1] = b; d[i + 2] = r; } else if (s === 1){ d[i] = b; d[i + 1] = r; d[i + 2] = g; }
-          else if (s === 2){ if (r > 20 || g > 20 || b > 20){ d[i] = 255 - r; d[i + 1] = 255 - g; d[i + 2] = 255 - b; } } else { d[i] = r; d[i + 1] = b; d[i + 2] = g; }
-        }
-        pxCtx.putImageData(im, 0, 0);
+    if (gst === 'corrupt'){                        // a lost keyframe: the old picture smears along block motion vectors (P-frames decoded on the wrong
+      // picture) while the new scene arrives in runs of blocks, residue of it bleeding into the smear; at the end, a clean keyframe
+      const bs = Math.max(8, Math.round((T.px || 12) * 2)), cols = Math.ceil(W / bs), rows = Math.ceil(H / bs), RUN = 5, S = trans || {};
+      const seed = S.seed ?? (S.seed = Math.random() * 1000), arrive = Math.min(1, Math.max(0, (e - 0.15) / 0.75));
+      if (moshCv.width !== W || moshCv.height !== H){ moshCv.width = moshTmp.width = W; moshCv.height = moshTmp.height = H; S.moshed = false; }
+      if (!S.moshed){ S.moshed = true; moshX.globalAlpha = 1; moshX.drawImage(A, 0, 0); }   // where it starts: the old picture, the last keyframe
+      moshT.clearRect(0, 0, W, H); moshT.drawImage(moshCv, 0, 0);   // the last frame, to read from
+      for (let r = 0; r < rows; r++) for (let c0 = 0; c0 < cols; c0 += RUN){
+        const k = r * 977 + c0 * 1.31, w = Math.min(RUN, cols - c0) * bs, x = c0 * bs, y = r * bs, p = fxRand(k + seed);
+        if (e > 0.94 || p < arrive * arrive){ moshX.drawImage(B, x, y, w, bs, x, y, w, bs); continue; }   // decoded right: the new scene
+        const vx = (fxRand(k * 2.1 + seed) - 0.5) * bs * 0.6, vy = (fxRand(k * 3.7 + seed) - 0.5) * bs * 0.35;
+        moshX.drawImage(moshT.canvas, x - vx, y - vy, w, bs, x, y, w, bs);
+        if (p < arrive){ moshX.globalAlpha = 0.3; moshX.drawImage(B, x, y, w, bs, x, y, w, bs); moshX.globalAlpha = 1; }   // the new scene's changes bleeding into the smear
       }
-      m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return; }
+      m.drawImage(moshCv, 0, 0); trSplit(m, T, Math.sin(Math.PI * e)); return; }
     if (gst === 'channel'){                        // a TV changing channels: the old picture collapses into snow, the new one rolls in, the channel number shows
       if (trans && trans.ch == null){                // what the number shows (Options): random, the new scene's name, or its number
         const m = T.ch || 'rand', nm = (liveName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 .\-]/g, '').trim().slice(0, 10);

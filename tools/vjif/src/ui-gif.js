@@ -173,7 +173,6 @@ function syncAutoUI(g){
   $('#aES').value = A.es ?? 0; $('#aES').nextElementSibling.textContent = Math.round((A.es ?? 0) * 100) + '%';
   document.querySelectorAll('#gPanes .aEnvF').forEach(f => f.classList.toggle('dimmed', em === 'off'));
   ['#aShape', '#aPer', '#aGap', '#aPh', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
-  $('#gTabs [data-v=trig]').classList.toggle('act', g.trig === 'fade');
   $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
 }
 // change the edited LFO; touching any setting switches it on
@@ -213,7 +212,7 @@ const clipOf = p => { for (const L of layers){ const c = L.clips.find(c => c.pad
 function drawScopes(){
   if (fxSt.some((S, i) => fxLevel(i, clock.beat) > 0) || fxEnvDrag) drawFxEnv();
   const g = curGif(); if (!g) return;
-  if (gTab === 'auto') drawLfoScope(g); else if (gTab === 'trig') drawEnvScope(g);
+  if (gTab === 'auto') drawLfoScope(g); else if (gTab === 'play') drawEnvScope(g);
 }
 function scopeTrace(x, w, h, d, fn, on){                 // fn: 0..1 across → 0..1 up
   const pad = 5 * d, y = v => h - pad - v * (h - 2 * pad);
@@ -241,7 +240,7 @@ function drawLfoScope(g){
 function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
   const E = g.env, T = envTimes(g), hold = E.gate ? Math.max(E.h, 1) : T.h, span = Math.max(T.a + hold + T.r, 0.5) * 1.1;
-  const shape = { env: { t0: 0, from: 0, rel: E.gate ? E.a + hold : null, noGate: false } };
+  const shape = { env: { t0: 0, from: 0, rel: E.gate ? T.a + hold : null, noGate: false } };   // (T: the times as played, One play shrinks the fades)
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
   const c = clipOf(selPad);
   if (g.trig === 'fade' && c && c.env){

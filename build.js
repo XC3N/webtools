@@ -47,6 +47,9 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out);
+// every built file carries the licence's Required Notice lines (LICENSE.md) and its URL, so a copy passed on keeps them
+const NOTICES = fs.readFileSync(path.join(root, 'LICENSE.md'), 'utf8').split('\n').filter(l => /^(Required Notice|Licensor Line of Business):/.test(l));
+const withNotices = html => html.replace(/^(<!doctype html>\s*)/i, `$1<!--\n${NOTICES.join('\n')}\nLicence: PolyForm Shield 1.0.0, https://polyformproject.org/licenses/shield/1.0.0\n-->\n`);
 const tools = [];
 for (const dirName of fs.readdirSync(path.join(root, 'tools')).sort()){
   const dir = path.join(root, 'tools', dirName), metaFile = path.join(dir, 'tool.json');
@@ -54,7 +57,7 @@ for (const dirName of fs.readdirSync(path.join(root, 'tools')).sort()){
   const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
   const html = inline(path.join(dir, meta.entry));
   checkScripts(html, meta.output);
-  fs.writeFileSync(path.join(out, meta.output), html);
+  fs.writeFileSync(path.join(out, meta.output), withNotices(html));
   tools.push(meta);
   console.log(`built dist/${meta.output}  (${(Buffer.byteLength(html) / 1024).toFixed(0)} KB)`);
 }

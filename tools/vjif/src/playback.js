@@ -72,7 +72,9 @@ function fire(p, beat, released = false, swap = false){
   c.startBeat = beat; c.startTime = beatTime(beat);
   c.hitBeat = beat; c.relBeat = released ? beat : null;   // Auto › Envelope: this hit, held until the pad is let go (null)
   // fade one-shot: start from wherever the last fade is now, so a fast retrigger doesn't flicker
-  if (g.trig === 'fade') c.env = { t0: beat, from: envLevel(c, g, clock.beat), rel: null, noGate: released };
+  // (a hit just after a snapped beat counts as on it, so the GIF stays in step, but its fade starts now: from the beat, a
+  // short Fade in was already over before the GIF showed, and at Bar snap even long ones lost up to half a beat)
+  if (g.trig === 'fade') c.env = { t0: Math.max(beat, clock.beat), from: envLevel(c, g, clock.beat), rel: null, noGate: released };
   L.sel = c; L.on = true;
   selectPad(p, true); uiLater(UI.LAYERS | UI.XF);   // the panels follow after the frame is drawn
 }
@@ -101,7 +103,8 @@ const ease = (g, t) => g.env.curve === 'smooth' ? t * t * (3 - 2 * t) : t;
 function envTimes(g){
   const S = g.env; let { a, h, r } = S;
   if (S.len === 'gif' && !S.gate){
-    let cyc = cycleBeats(g);
+    const T = g.media && g.media.text, mq = T && T.marquee && g.lfo.x && g.lfo.x.on ? g.lfo.x.per : 0;   // a marquee: one play = once across the screen
+    let cyc = mq || cycleBeats(g);
     if (cyc === null) cyc = g.total * (g.loop === 'pingpong' ? 2 : 1) / g.speed * clock.bpm / 60000;
     if (g.restart) cyc = Math.min(cyc, g.restart);
     if (a + r > cyc){ const k = cyc / (a + r); a *= k; r *= k; }

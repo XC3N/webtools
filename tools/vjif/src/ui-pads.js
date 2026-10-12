@@ -3,16 +3,18 @@ function buildPads(){
   pads.forEach((p, i) => {
     const el = document.createElement('div');
     el.className = 'pad empty'; el.dataset.i = i;
-    el.innerHTML = `<canvas width="96" height="64"></canvas><span class="key">${p.label}</span><span class="dots"></span><span class="nm"></span>`;
+    el.innerHTML = `<canvas width="96" height="64"></canvas><span class="phd"><span class="key">${p.label}</span><span class="dots"></span></span><span class="xdel" title="Clear this pad (Ctrl+Z brings it back)">×</span><span class="nm"></span>`;
     // hit on press (and release on let go, for Gate); an empty pad opens the file browser on click
     el.addEventListener('pointerdown', e => { if (e.button || !p.gif) return;
+      if (e.target.closest('.xdel')){ e.stopPropagation(); el._x = true; return; }   // its ×: cleared on the click (below), nothing played
       el.setPointerCapture(e.pointerId);
       if (isDel(e)){ padDrag = { i, x: e.clientX, y: e.clientY, moved: false, copy: true, had: true, on: layers.map(L => L.on) }; el._shift = true; return; }   // Ctrl+click: clear · Ctrl+drag: copy (decided on let go)
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
       trigger(i, e.altKey); });   // Alt+click: swap
     el.addEventListener('contextmenu', e => { e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
-    el.addEventListener('pointerup', e => { const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); if (delHush) return; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
+    el.addEventListener('click', e => { if (!e.target.closest('.xdel') || !el._x) return; el._x = false; e.stopPropagation(); el._shift = true; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); }, true);
+    el.addEventListener('pointerup', e => { if (el._x) return; const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); if (delHush) return; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
     el.addEventListener('click', e => { if (el._shift || isDel(e)){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
     (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);

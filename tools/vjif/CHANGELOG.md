@@ -4,6 +4,30 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.79.0 — 2026-10-12
+
+### Licence
+- VJif and Bad MOPHO are now under the PolyForm Shield licence 1.0.0 (LICENSE.md): free to use, gigs and paid work included; the source is public; no selling the tools, no competing products made from the code. Copies carry its "Required Notice" lines (every built file has them at the top). Copies published before this were MIT.
+
+### Effects
+- Glitch styles stack, like CRT's (e.g. Corrupt + Crunch). New: Keyframe (a lost keyframe: the picture freezes, then moves with the live picture's motion block by block and smears; a few blocks catch up each Rate) and Crunch (a starved bit rate: blocky, banded detail, smeared colour).
+
+### Transitions
+- Glitch › Corrupt replaces Scramble: the old picture smears along block motion (P-frames on the wrong picture) while the new scene arrives in broken runs of blocks, then a clean keyframe. Presets with Scramble get Corrupt.
+
+### Pads, scenes, presets
+- A × in the corner of a pad, a scene and an effect preset deletes it in one click (shown on hover; Ctrl+Z brings it back). Settings › Interface › Ctrl+click to delete only hides them. A pad's layer numbers moved next to its key; a preset's mode next to its number.
+- Ctrl+drag a scene or preset onto one that isn't empty: hold there until the red bar fills, then drop to replace it (one undo step for scenes).
+
+### GIFs
+- Trigger is a section of Play now (the tab is gone); its mode is Stay / One shot. One shot with Length › One play on a marquee: once across the screen.
+- Scaling moved to Colour. The notes in Play and Trigger are gone (lettering dims what doesn't apply).
+- One shot: a hit just after a snapped beat starts its Fade in when it fires (it used to start on the beat, so short fades never showed and Bar snap cut up to half a beat); the scope draws the fades as played.
+
+### Interface
+- MIDI learn's colour is the theme's signal colour at the opposite hue (it was a strong yellow).
+- Undoing a scene emptied while you're in another scene brings its tile picture back.
+
 ## 0.78.0 — 2026-10-12
 
 ### Layers

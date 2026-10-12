@@ -55,8 +55,8 @@ function applyScn(E){
   const i = sceneOf(E.sid);
   if (i !== sceneIdx){                               // another scene: swap its contents back in place, without going there
     const sc = scenes[i] || Object.assign(emptyScene(), { name: '' });
-    const cur = { layers: sc.layers, pads: sc.pads };
-    scenes[i] = Object.assign({}, sc, { layers: E.data.layers.map((l, li) => Object.assign({}, l, { i: li })), pads: E.data.pads, thumb: null });
+    const cur = { layers: sc.layers, pads: sc.pads, thumb: sc.thumb || null };   // (its tile picture goes with it: that scene isn't drawn while you're elsewhere)
+    scenes[i] = Object.assign({}, sc, { layers: E.data.layers.map((l, li) => Object.assign({}, l, { i: li })), pads: E.data.pads, thumb: E.data.thumb || null });
     E.data = cur; if (pendingScene && pendingScene.i === i) pendingScene = null;
     renderScenes(); updateMem(); renderPool(); toast2(`Scene ${i + 1} changed back`); return;
   }
@@ -162,6 +162,9 @@ const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), 
 $('#aPer').ctlParse = lenParse(PER_OPTS); $('#aGap').ctlParse = lenParse(GAP_OPTS);
 $('#aPh').ctlParse = t => { const n = parseFloat(t); return isFinite(n) ? mod(n, 360) / 360 : null; };
 $('#themeBox').addEventListener('input', () => quietUI());
+// MIDI learn's colour: the signal colour turned to the opposite hue (it can't be mistaken for it, and it suits every theme)
+Theme.onApply(t => { const rgb = Theme.hsv2rgb((t.hCtrl + 180) % 360, t.sCtrl ?? 100, t.vCtrl ?? 100), R = document.documentElement.style;
+  R.setProperty('--learn', `rgb(${rgb.join(',')})`); R.setProperty('--learntxt', 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] > 140 ? '#111' : '#fff'); });
 Theme.mount($('#themeBox'), { app: 'vjif', toast: toast2,
   roles: [['hCtrl', 'Signal', 'What is selected or on: chosen buttons, switches, the selected pad and scene', true], ['hLcd', 'LCD', 'Readouts, the tempo, the cycle display', true],
           ['hEnv', 'Graphs', 'Fade and automation graphs; automated values in Transform']],

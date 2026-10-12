@@ -12,7 +12,7 @@ const FX_DEFS = [
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
-  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'A damaged video file: some blocks keep the frame before and smear along their own motion (datamosh), others break into flat, blocky squares in the wrong colours (Size = block size)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt'] },
+  { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'A damaged video file: some blocks keep the frame before and smear along their own motion (datamosh), others break into flat, blocky squares in the wrong colours (Size = block size)'], ['keyfr', 'Keyframe', 'A lost keyframe: the picture freezes when it starts, then moves with the live picture\'s motion, block by block, and smears (datamosh); a few blocks catch up each Rate, more with less Amount (Size = block size)'], ['crunch', 'Crunch', 'Heavy compression: blocky, banded detail and smeared colour, like a starved bit rate (Size = block size)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt', 'keyfr', 'crunch'] },
   { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, pay-TV and satellite scrambling (several at once)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
 const FXI = Object.fromEntries(FX_DEFS.map((d, i) => [d.id, i]));   // an effect's slot (F key) by its id
@@ -78,12 +78,12 @@ const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'
 const kalSlices = amt => Math.round(3 + 9 * clamp((amt - 0.05) / 0.95, 0, 1)), kalAmt = n => 0.05 + (n - 3) / 9 * 0.95;
 // a style's name on an effect tile, when the whole word doesn't fit
 const STYLE_BTN = { scan: 'Scan', phos: 'Phos' };   // style buttons: short enough for one row (the tooltip has the full name)
-const STYLE_SHORT = { thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', kal: 'Kaleid.', square: 'Square' };
+const STYLE_SHORT = { keyfr: 'Keyfr.', thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', kal: 'Kaleid.', square: 'Square' };
 const STYLE_WAS = { scramble: 'corrupt' };   // renamed / replaced styles: what an older set gets instead
 const styleIdx = (i, v) => { const k = String(v).split('+')[0]; return Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === (STYLE_WAS[k] || k))); };
 // CRT can stack styles ('vhs+scan'): they run as separate stages in a fixed order. Degauss stays on its own (a one-off hit)
-const FX_MULTI = { rgb: true }, FX_SOLO = {};   // (Degauss, a one-off hit, moved to Glitch: CRT's styles all stack)
-const styleParts = (i, v) => { const L = String(v || '').split('+').filter(p => FX_DEFS[i].styles.some(s => s[0] === p)); return L.length ? L : [FX_DEFS[i].styles[0][0]]; };
+const FX_MULTI = { rgb: true, glitch: true }, FX_SOLO = {};   // Glitch's styles stack too (0.79), e.g. Corrupt + Crunch   // (Degauss, a one-off hit, moved to Glitch: CRT's styles all stack)
+const styleParts = (i, v) => { const L = String(v || '').split('+').map(p => STYLE_WAS[p] || p).filter(p => FX_DEFS[i].styles.some(s => s[0] === p)); return L.length ? L : [FX_DEFS[i].styles[0][0]]; };
 const styleNorm = (i, v) => { const P = styleParts(i, v); return FX_DEFS[i].styles.map(s => s[0]).filter(k => P.includes(k)).join('+'); };   // valid parts, in the styles' order
 const styleMask = (i, v) => styleParts(i, v).reduce((m, p) => m | (1 << FX_DEFS[i].styles.findIndex(s => s[0] === p)), 0);
 const styleLabel = (i, v, short) => styleParts(i, v).map(p => { const s = FX_DEFS[i].styles.find(x => x[0] === p); return short ? STYLE_SHORT[p] || s[1] : s[1]; }).join('+');
@@ -206,7 +206,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     zoom: nm(ZO) === 'in' ? lv[ZO] * 0.5 : nm(ZO) === 'out' ? lv[ZO] * -0.3 : 0, zoomE: nm(ZO) === 'eachin' ? lv[ZO] * 0.5 : nm(ZO) === 'eachout' ? lv[ZO] * -0.3 : 0,   // Each: done per GIF in render()
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
-    glitch: lv[GL], glS: S(GL), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], monoSz: size[MO],
+    glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], monoSz: size[MO],
     pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
@@ -344,7 +344,7 @@ ${FX_GLSL}
           float off = rgb * (0.24 + 0.15 * sin(y * 3.2 + t * 0.9) + 0.035 * sin(y * 9.0 - t * 1.7) + 0.005 * sin(y * 61.0 + t * 11.0));
           p.y = fract(p.y + fract(t * 0.031) * rgb * 0.6);   // and the vertical hold drifts
           payU = fract(p.x + off); p.x = payU; }
-        if (glitch > 0.001 && IS(glS, S_glitch_degauss)){ // degauss: the picture ripples
+        if (glitch > 0.001 && HAS(glS, S_glitch_degauss)){ // degauss: the picture ripples
           p += vec2(sin(p.y * 18.0 + time * 35.0), cos(p.x * 14.0 + time * 29.0)) * 0.006 * glitch; split += 0.008 * glitch; }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ // VHS tracking: a gentle sway and a torn band rolling down; with Wear: more of the tape's faults
           float fr = floor(time * 30.0), ln = floor(p.y * res.y / 2.0), w = rgb;   // Amount is the wear
@@ -356,12 +356,12 @@ ${FX_GLSL}
           p.y += step(0.94, h1(floor(time * 6.0) + 0.3)) * 0.006 * w;                               // now and then the picture hops
         }
         if (glitch > 0.001){
-          if (IS(glS, S_glitch_slices)){ float nb = res.y / max(glSz, 2.0), band = floor(p.y * nb + h1(gseed) * nb), g = 0.0;
+          if (HAS(glS, S_glitch_slices)){ float nb = res.y / max(glSz, 2.0), band = floor(p.y * nb + h1(gseed) * nb), g = 0.0;
             if (h1(band + gseed) < glitch * 0.55) g = (h1(band * 1.7 + gseed) - 0.5) * 0.25 * glitch;
             split += abs(g) * 0.3 + glitch * 0.004; p.x += g; }
-          else if (IS(glS, S_glitch_blocks)){ vec2 cell = floor(p * res / max(glSz, 2.0));
+          if (HAS(glS, S_glitch_blocks)){ vec2 cell = floor(p * res / max(glSz, 2.0));
             if (h2(cell + gseed) < glitch * 0.45){ p += (vec2(h2(cell * 1.3 + gseed), h2(cell * 2.1 + gseed)) - 0.5) * 0.15 * glitch; split += 0.01 * glitch; } }
-          else if (IS(glS, S_glitch_melt)){ float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
+          if (HAS(glS, S_glitch_melt)){ float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * glitch * smoothstep(0.0, 1.0, p.y + 0.3)); }
         }
         vec4 c4 = samp(geo(p), split);
         if (mirror > 0.001) c4 = mix(c4, samp(geo(fold(p)), split), mirror);
@@ -397,7 +397,7 @@ ${FX_GLSL}
           float e = payU / 0.11;                      // the blanking bar: a bright sync edge, dark purple, a pale edge where the picture starts
           if (e < 1.0) d = e < 0.12 ? mix(vec3(0.95, 0.92, 1.0), vec3(0.55, 0.35, 0.75), e / 0.12) : e > 0.88 ? mix(vec3(0.16, 0.05, 0.24), vec3(0.75, 0.62, 0.95), (e - 0.88) / 0.12) : mix(vec3(0.30, 0.12, 0.42), vec3(0.14, 0.04, 0.22), (e - 0.12) / 0.76);
           c = mix(c, d, rgb); }
-        if (glitch > 0.001 && IS(glS, S_glitch_degauss)){ // degauss: rainbow blotches swirling out
+        if (glitch > 0.001 && HAS(glS, S_glitch_degauss)){ // degauss: rainbow blotches swirling out
           float r = length((uv - 0.5) * a); c = mix(c, clamp(hueRot(c, sin(r * 12.0 - time * 18.0 + sin(uv.x * 7.0) * 2.0) * 3.0), 0.0, 1.0), 0.75 * glitch); }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ // VHS picture: washed colour, scanlines, noise; with Wear: colour bleeding right, dropouts
           float w = rgb, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
@@ -433,7 +433,17 @@ ${FX_GLSL}
           c *= 1.0 - 0.28 * rgb * step(0.5, fract(gl_FragCoord.y / 3.0));
           c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * rgb;
         }
-        if (glitch > 0.001 && IS(glS, S_glitch_corrupt)){   // corrupt (a damaged video file), on a grid of blocks re-keyed every Rate:
+        if (glitch > 0.001 && HAS(glS, S_glitch_keyfr)){   // keyframe lost: the picture as it was (the last frame out) is moved along the live picture's motion,
+          // one motion vector per block, found by comparing the two around the block's centre (one step of optical flow): the old picture takes the new one's movement and smears
+          float bs = max(glSz * 0.5, 4.0); vec2 cell = floor(uv * res / bs), cc = (cell + 0.5) * bs / res, e1 = vec2(bs / res.x, 0.0), e2 = vec2(0.0, bs / res.y); vec3 L3 = vec3(0.299, 0.587, 0.114);
+          float pl = dot(texture2D(prev, vec2(cc.x, 1.0 - cc.y)).rgb, L3), cl = dot(look(samp(geo(cc), 0.0).rgb), L3);
+          vec2 g = vec2(dot(texture2D(prev, vec2(cc.x + e1.x, 1.0 - cc.y)).rgb - texture2D(prev, vec2(cc.x - e1.x, 1.0 - cc.y)).rgb, L3), dot(texture2D(prev, vec2(cc.x, 1.0 - cc.y - e2.y)).rgb - texture2D(prev, vec2(cc.x, 1.0 - cc.y + e2.y)).rgb, L3)) * 0.5;
+          vec2 v = clamp((pl - cl) * g / (dot(g, g) + 0.004), -0.6, 0.6) * vec2(e1.x, e2.y) * glitch;   // (in blocks, at most 0.6 of one per frame)
+          vec4 pv = texture2D(prev, vec2(uv.x - v.x, 1.0 - uv.y + v.y)); float has = step(0.02, pv.a);
+          float fresh = step(1.0 - 0.1 * (1.15 - glitch), h2(cell + gseed));   // each Rate a few blocks catch up with the live picture
+          c = mix(c, pv.rgb, has * (1.0 - fresh)); al = mix(al, pv.a, has * (1.0 - fresh));
+        }
+        if (glitch > 0.001 && HAS(glS, S_glitch_corrupt)){   // corrupt (a damaged video file), on a grid of blocks re-keyed every Rate:
           float bs = max(glSz * 0.5, 4.0); vec2 px = uv * res, cell = floor(px / bs), f = fract(px / bs);
           vec2 run = vec2(floor(cell.x / 5.0 + h1(cell.y * 3.1 + gseed) * 5.0), cell.y);   // damage comes in runs along a row, as a broken file decodes
           float q = h2(run + gseed), r = h2(run * 1.7 + gseed + 3.1);
@@ -448,6 +458,12 @@ ${FX_GLSL}
             u2 += (h2(run + gseed + 1.9) - 0.5) * 0.35; v2 += (h2(run + gseed + 4.4) - 0.5) * 0.35;
             c = vec3(y + 1.403 * v2, y - 0.344 * u2 - 0.714 * v2, y + 1.770 * u2); al = max(al, samp(geo(ctr), 0.0).a);
           }
+        }
+        if (glitch > 0.001 && HAS(glS, S_glitch_crunch)){   // crunch (a starved bit rate): per block, the detail in a few luma steps around the block's mean, the colour from its centre only
+          float bs = max(glSz * 0.25, 3.0); vec2 cell = floor(uv * res / bs), cc = (cell + 0.5) * bs / res; vec3 L3 = vec3(0.299, 0.587, 0.114);
+          vec3 b = look(samp(geo(cc), 0.0).rgb); float ya = dot(b, L3), y = dot(c, L3), q = mix(0.03, 0.3, glitch);
+          y = ya + floor((y - ya) / q + 0.5) * q; float u2 = (b.b - ya) * 0.565, v2 = (b.r - ya) * 0.713;
+          c = mix(c, vec3(y + 1.403 * v2, y - 0.344 * u2 - 0.714 * v2, y + 1.770 * u2), min(1.0, glitch * 1.5));
         }
         c = mix(c, vec3(IS(strobeS, S_strobe_white) ? 1.0 : 0.0), strobe); if (IS(strobeS, S_strobe_white)) al = mix(al, 1.0, strobe);
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
@@ -605,7 +621,7 @@ ${FX_GLSL}
       if (String(U.shake) !== last.shake){ last.shake = String(U.shake); gl.uniform3fv(u.shake, U.shake); }
       if (U.palI !== last.palI){ last.palI = U.palI; const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }   // the 64-colour palette only when it changes
       gl.uniform1f(u.blit, 0);
-      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1)) || (U.glitch > 0.001 && U.glS === FXS.glitch.corrupt);   // only Feedback, Phosphor and Glitch › Corrupt read the previous frame
+      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1)) || (U.glitch > 0.001 && (U.glS >> FXS.glitch.corrupt & 1 || U.glS >> FXS.glitch.keyfr & 1));   // only Feedback, Phosphor and Glitch › Corrupt / Keyframe read the previous frame
       if (!trail){                                   // straight onto the canvas: no render target, no second pass
         const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; }
         gl.uniform1f(u.fbInit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

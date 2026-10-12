@@ -285,3 +285,7 @@ document.addEventListener('contextmenu', e => { if (!e.target.closest('textarea,
 function placeToast(){ const r = $('#pvWrap').getBoundingClientRect(), z = uiZoom || 1, L = $('#layers').getBoundingClientRect();
   const st = document.documentElement.style; st.setProperty('--toastX', (r.left + r.width / 2) / z + 'px'); st.setProperty('--toastY', Math.max(L.bottom, r.top) / z + 4 + 'px'); }
 addEventListener('resize', placeToast); new ResizeObserver(placeToast).observe($('#pvWrap')); placeToast();
+
+// the × on pads, scenes and presets (Settings › Interface › Ctrl+click to delete only hides them)
+{ const on = Prefs.get('vjif-noxdel') === '1'; $('#noXdelChk').checked = on; document.body.classList.toggle('noxdel', on);
+  $('#noXdelChk').addEventListener('change', e => { document.body.classList.toggle('noxdel', e.target.checked); Prefs.set('vjif-noxdel', e.target.checked ? '1' : '0'); }); }

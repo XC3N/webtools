@@ -91,10 +91,10 @@ const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers 
 const scenePads = i => (i === sceneIdx ? pads.map(p => p.gif) : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
 function renderScenes(){
   const box = $('#scenes');
-  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" draggable="true"><span class="k">${i + 1}</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
+  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" draggable="true"><span class="k">${i + 1}</span><span class="xdel" title="Empty this scene (Ctrl+Z brings it back)">×</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
-    b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n);
+    b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n); b.classList.toggle('blank', !n && !np);
     const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
     const bg = n && th ? `url(${th})` : pg ? `url(${gifTile(pg)})` : ''; if (b._bg !== bg){ b._bg = bg; b.style.backgroundImage = bg; }   // (the browser rewrites url(...) with quotes: comparing with it never matched)
     b.classList.toggle('padsOnly', !!pg);
@@ -103,7 +103,9 @@ function renderScenes(){
     b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
   });
 }
-$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return; isRm(e) ? emptySceneAt(+b.dataset.i) : isDel(e) ? null : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
+$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return;
+  if (e.target.closest('.xdel')){ emptySceneAt(+b.dataset.i); return; }   // its ×
+  isRm(e) ? emptySceneAt(+b.dataset.i) : isDel(e) ? null : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
 // ---- BRB: scene changes by themselves every few bars, on the bar, while you step away ----
 const brb = (() => { const s = Prefs.json('vjif-brb', {});
   return { on: false, next: 0, bars: [4, 8, 16, 32].includes(s.bars) ? s.bars : 8, scn: s.scn === 'rand' ? 'rand' : 'order', tr: s.tr === 'rand' ? 'rand' : 'armed', lastTr: -1, link: !!s.link }; })();
@@ -187,9 +189,16 @@ $('#scenes').addEventListener('dragover', e => {
     document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b)); return; }
   if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
   e.preventDefault(); e.stopPropagation(); const cp = isDel(e); e.dataTransfer.dropEffect = cp ? 'copy' : 'move'; $('#scenes').classList.toggle('copying', cp);
-  const b = e.target.closest('.scene'); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b && (!cp || x.classList.contains('empty'))));
+  const b = e.target.closest('.scene'), full = b && !b.classList.contains('blank');
+  // Ctrl over a scene that isn't empty: held there COPY_HOLD ms (the red bar fills), the drop replaces it
+  if (cp && full){ if (!scHold || scHold.b !== b){ scHold = { b, at: performance.now() }; } } else scHold = null;
+  const armed = !!scHold && performance.now() - scHold.at >= COPY_HOLD;
+  document.querySelectorAll('#scenes .scene').forEach(x => { x.classList.toggle('holding', !!scHold && x === b && !armed); x.classList.toggle('armed', armed && x === b);
+    x.classList.toggle('drop', x === b && (!cp || !full || armed)); });
 });
-$('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)){ document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); } });
+let scHold = null; const COPY_HOLD = 1200;            // Ctrl+drag onto a scene / preset that isn't empty: held this long, the drop replaces it
+const scHoldOff = () => { scHold = null; document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('holding', 'armed')); };
+$('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)){ scHoldOff(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); } });
 $('#scenes').addEventListener('drop', e => {
   if (gifDrag(e) && !e.dataTransfer.types.includes(SCENE_MIME)){   // GIFs dropped on a scene: onto its first empty pads
     const b = e.target.closest('.scene'); if (!b) return;
@@ -203,14 +212,18 @@ $('#scenes').addEventListener('drop', e => {
   if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
   e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying');
   const b = e.target.closest('.scene'); if (!b) return;
-  const a = +e.dataTransfer.getData(SCENE_MIME), t = +b.dataset.i;
-  if (isDel(e)){ hushDel(); if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy'); if (sceneCount(t) || scenePads(t)) return toast('Ctrl+drag onto an empty scene to copy'); if (t === sceneIdx){ const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads } };   // into the scene you're on: it fills in place (one undo step)
+  const a = +e.dataTransfer.getData(SCENE_MIME), t = +b.dataset.i, armed = !!scHold && scHold.b === b && performance.now() - scHold.at >= COPY_HOLD; scHoldOff();
+  if (isDel(e)){ hushDel(); if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy');
+    if (sceneCount(t) || scenePads(t)){                // onto a scene with something in it: only after holding there (one undo step)
+      if (!armed) return toast(`Scene ${t + 1} isn't empty: hold over it until the bar fills, then drop, to replace it`);
+      const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads, thumb: cp.thumb } };
+      commit(); applyScn(E); pushStep(E); hist.cur = histState(); updHistUI(); renderScenes(); toast2(`Scene ${a + 1} copied over ${t + 1} — Ctrl+Z brings it back`); return; } if (t === sceneIdx){ const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads } };   // into the scene you're on: it fills in place (one undo step)
       commit(); applyScn(E); pushStep(E); hist.cur = histState(); updHistUI(); }
     else scenes[t] = sceneCopy(a);
     renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
   swapScenes(a, t);
 });
-$('#scenes').addEventListener('dragend', () => { document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); });
+$('#scenes').addEventListener('dragend', () => { scHoldOff(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); });
 function swapScenes(a, b){
   if (a === b || !(a >= 0 && b >= 0)) return;
   const map = i => i === a ? b : i === b ? a : i;
@@ -245,7 +258,7 @@ function emptySceneAt(i){
   const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null) };
   let E;
   if (i === sceneIdx){ E = { kind: 'scn', sid: sceneIds[i], data: blank }; applyScn(E); liveThumb = null; }
-  else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads } };   // undo swaps these back in (and goes there)
+  else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads, thumb: sc.thumb } };   // undo swaps these back in (its picture too)
     scenes[i] = Object.assign(emptyScene(), { name: sc.name || '' }); if (pendingScene && pendingScene.i === i) pendingScene = null; renderScenes(); renderPool(); updateMem(); }
   pushStep(E); hist.cur = histState(); updHistUI();
   toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);

@@ -38,7 +38,7 @@ function trOptsOf(T){ const st = trStyleOf(T);
     case 'fade': return st === 'luma' ? [['inv', [['bright', 'Bright', 'The brightest parts change first'], ['dark', 'Dark', 'The darkest parts change first']]], TR_SOFT] : [];
     case 'zoom': return [['zoom', [['in', 'In', 'The old scene grows and fades, the new one grows in'], ['out', 'Out', 'The old scene backs away, the new one comes down from close up'], ['thru', 'Through', 'The old scene flies past the camera']]]];
     case 'dissolve': return st === 'blocks' ? [['shape', [['sq', 'Squares', 'Square blocks'], ['lines', 'Lines', 'Whole lines (Pixel = their height)'], ['dia', 'Diamonds', 'Diamond-shaped blocks']]]] : [];
-    case 'glitch': return st === 'scramble' ? [] : [['split', [['off', 'Clean', 'No colour split'], ['on', 'Split', 'The red pulled sideways as it tears'], ['wide', 'Wide', 'A wider colour split']]]];
+    case 'glitch': return [['split', [['off', 'Clean', 'No colour split'], ['on', 'Split', 'The red pulled sideways as it tears'], ['wide', 'Wide', 'A wider colour split']]]];
     case 'tv': return st === 'channel' ? [['ch', [['rand', 'Random', 'A random channel number each time'], ['scene', 'Scene', "The new scene's name (or its number if it has none)"], ['num', 'Scene #', 'The new scene\'s number, with a leading 0 (01–09)']]]]
       : [['wear', [['light', 'Light', 'A tape in good shape'], ['worn', 'Worn', 'A well-used tape'], ['chewed', 'Chewed', 'The VCR ate it']]]];
     case 'stutter': return st === 'even' ? [['grid', [['0.25', '1/16', 'A cut every 1/16 note'], ['0.5', '1/8', 'A cut every 1/8 note'], ['0.125', '1/32', 'A cut every 1/32 note']]], ['swing', [0, 'Swing', 'Long-short pairs, like swung notes'], true]]

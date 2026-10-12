@@ -89,10 +89,9 @@
   </div>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button></h2>
   <div id="gifSettings" class="disabled">
-    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="trig" title="What a pad hit does: restart, or fade in and out">Trigger</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
+    <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
     <div id="gPanes">
       <div data-pane="play">
-        <p class="note tnote">Lettering is one still picture: timing, loop and frames don't apply to it. A marquee's speed is set in Text…</p>
         <div class="field"><label>Timing</label><div class="seg span" id="gSync">
           <button data-v="free" title="The GIF's own frame timing × speed — ignores the tempo">Free</button>
           <button data-v="stretch" title="The whole loop fits exactly the length below, at any tempo">Fit</button>
@@ -116,10 +115,23 @@
         </div>
         <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
         <div class="field" title="Keep this GIF's frames at full, half or quarter resolution. It looks the same size; ½ uses a quarter of the memory, ¼ a sixteenth. Applies to the GIF everywhere it's used (every pad and scene). Pixel art that was saved blown up (every pixel a block of N×N) is found on load and kept at its real pixels: same picture, N² times less memory"><label>Resolution</label><div class="seg span" id="gRes"><button data-v="1">Full</button><button data-v="0.5">½</button><button data-v="0.25">¼</button></div></div>
-        <div class="field tkeep"><label for="gSmooth" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used">Scaling</label><label class="tog span" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used"><input type="checkbox" id="gSmooth">Smooth</label></div>
+        <div class="sub trig"><span title="What a pad hit does: restart it and stay, or play it once">Trigger</span><span class="line"></span></div>
+        <div class="field trig"><label title="What a pad hit does">Hit</label><div class="seg span" id="tMode">
+          <button data-v="stay" title="A hit restarts the GIF and it stays on">Stay</button>
+          <button data-v="fade" title="Hidden until hit (a dotted ghost in the preview, nothing in the output): each hit plays it once: Fade in, Hold, Fade out. Fades at 0: a plain one-shot. Lengths follow the tempo">One shot</button></div></div>
+        <div id="tEnv">
+          <div class="field"><label for="tA">Fade in</label><input id="tA" type="range" data-def="3" min="0" step="1"><output></output></div>
+          <div class="field" id="tHoldRow"><label for="tH" title="Time at full opacity (Gate: until the pad is released)">Hold</label><input id="tH" type="range" data-def="4" min="0" step="1"><output></output></div>
+          <div class="field"><label for="tR">Fade out</label><input id="tR" type="range" data-def="5" min="0" step="1"><output></output></div>
+          <div class="field" id="tLenRow"><label title="How long one hit lasts">Length</label><div class="seg span" id="tLen"><button data-v="free" title="Fade in + Hold + Fade out, as set — the GIF keeps looping if that's longer than it">As set</button><button data-v="gif" title="One play of the GIF (a marquee: once across the screen): the fade ends when it does (Hold fills the rest; fades shrink if they don't fit)">One play</button></div></div>
+          <div class="field"><label>Curve</label><div class="seg span" id="tCurve"><button data-v="lin" title="Constant rate">Linear</button><button data-v="smooth" title="Eases in and out of each ramp">Smooth</button></div></div>
+          <div class="field"><label for="tGate">Gate</label><label class="tog span"><input type="checkbox" id="tGate"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">hold while the pad is held</span></label></div>
+          <canvas id="tScope" class="scope" title="Envelope: fade in, hold, fade out — the dot follows the last hit"></canvas>
+        </div>
       </div>
       <div data-pane="colour" class="off">
-        <div class="sub" style="margin-top:0"><span>Key</span><span class="line"></span><button id="kPick" title="Pick the key colour: then click the GIF in the preview">Pick</button><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
+        <div class="field tkeep"><label for="gSmooth" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used">Scaling</label><label class="tog span" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used"><input type="checkbox" id="gSmooth">Smooth</label></div>
+        <div class="sub"><span>Key</span><span class="line"></span><button id="kPick" title="Pick the key colour: then click the GIF in the preview">Pick</button><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
         <div class="field"><label>Colour</label><div class="keyrow span"><input type="color" id="kCol" value="#00ff00" style="flex:1"><button id="kReset" title="Key back to defaults">Reset</button></div></div>
         <div class="field"><label title="Which matching pixels are removed">Region</label><div class="seg span" id="kRegion">
           <button data-v="all" title="Every pixel of the key colour, anywhere">Everywhere</button>
@@ -146,21 +158,6 @@
         <div class="field" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="0"><output></output></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>
         <div id="swList"></div>
-      </div>
-      <div data-pane="trig" class="off">
-        <div class="field"><label>Mode</label><div class="seg span" id="tMode">
-          <button data-v="stay" title="A hit restarts the GIF and it stays on">Stay</button>
-          <button data-v="fade" title="Hidden until hit: each hit fades it in, holds, then fades it out">Fade one-shot</button></div></div>
-        <div id="tEnv">
-          <div class="field"><label for="tA">Fade in</label><input id="tA" type="range" data-def="3" min="0" step="1"><output></output></div>
-          <div class="field" id="tHoldRow"><label for="tH" title="Time at full opacity (Gate: until the pad is released)">Hold</label><input id="tH" type="range" data-def="4" min="0" step="1"><output></output></div>
-          <div class="field"><label for="tR">Fade out</label><input id="tR" type="range" data-def="5" min="0" step="1"><output></output></div>
-          <div class="field" id="tLenRow"><label title="How long one hit lasts">Length</label><div class="seg span" id="tLen"><button data-v="free" title="Fade in + Hold + Fade out, as set — the GIF keeps looping if that's longer than it">As set</button><button data-v="gif" title="One play of the GIF: the fade ends when its loop ends (Hold fills the rest; fades shrink if they don't fit)">One play</button></div></div>
-          <div class="field"><label>Curve</label><div class="seg span" id="tCurve"><button data-v="lin" title="Constant rate">Linear</button><button data-v="smooth" title="Eases in and out of each ramp">Smooth</button></div></div>
-          <div class="field"><label for="tGate">Gate</label><label class="tog span"><input type="checkbox" id="tGate"><span class="dim small" style="text-transform:none;letter-spacing:0;font-weight:500">hold while the pad is held</span></label></div>
-          <canvas id="tScope" class="scope" title="Envelope: fade in, hold, fade out — the dot follows the last hit"></canvas>
-        </div>
-        <p class="note">Fade one-shot: the GIF stays on its layer but is hidden (a dotted ghost in the preview, nothing in the output) until a hit fades it in. Lengths follow the tempo.</p>
       </div>
       <div data-pane="auto" class="off">
         <div class="seg grid5" id="aTgt" title="X, Y and Rotate are added to the placement; Zoom, Width, Height, Saturation and Brightness multiply it; Opacity multiplies the sprite's opacity; Hue is added. Touching a setting switches its LFO on."></div>
@@ -212,7 +209,7 @@
     <div class="sub"><span>Interface</span><span class="line"></span></div>
     <div class="row uzRow"><span class="lbl recLbl">Size</span><input id="uiZoomR" type="range" min="0.7" max="1.3" step="0.01" value="1" style="flex:1;min-width:0" title="Make the whole interface smaller for laptop screens (or bigger). VJif is made for 1280×720 and up. Double-click: 100%"><output id="uiZoomV" style="width:44px;text-align:right;font:400 11px var(--mono)"></output></div>
     <div class="row"><span class="lbl recLbl">Render</span><div class="seg" id="rsSeg" title="Render size: how many real pixels the canvas is drawn with. Smaller is much lighter for older or weaker graphics (2/3 = 44% of the pixels, 1/2 = 25%); the output window scales it up, recordings are made at this size"><button data-v="1">Full</button><button data-v="0.6667">2/3</button><button data-v="0.5">1/2</button></div><span id="rsInfo" class="lbl" style="color:var(--muted);width:auto"></span></div>
-    <div class="row"><label class="tog" title="Undo / redo show a short message saying what they changed"><input type="checkbox" id="undoToastChk">Verbose undo</label><span class="lbl recLbl" style="margin-left:auto;width:auto" title="Effect tiles: an effect on all layers shows its four pips in this colour">All-layers pips</span><input type="color" id="allPipC" value="#c8c6c0" title="Effect tiles: an effect on all layers shows its four pips in this colour"></div>
+    <div class="row"><label class="tog" title="Undo / redo show a short message saying what they changed"><input type="checkbox" id="undoToastChk">Verbose undo</label><label class="tog" title="Hide the × on pads, scenes and effect presets: deleting then takes Ctrl+click (harder to do by accident live)"><input type="checkbox" id="noXdelChk">Ctrl+click to delete only</label><span class="lbl recLbl" style="margin-left:auto;width:auto" title="Effect tiles: an effect on all layers shows its four pips in this colour">All-layers pips</span><input type="color" id="allPipC" value="#c8c6c0" title="Effect tiles: an effect on all layers shows its four pips in this colour"></div>
     <div class="sub" id="defHead"><span>Defaults</span><span class="info">i</span><span class="line"></span><span id="defParts" title="Which parts Save, Reset, Export and Import work on"><label class="tog"><input type="checkbox" data-k="fx" checked>Effects</label><label class="tog"><input type="checkbox" data-k="fxPre" checked>Presets</label><label class="tog"><input type="checkbox" data-k="tr" checked>Transitions</label></span></div>
     <div class="row"><button id="defSave" title="Your current effects (settings and styles), effect presets and transition presets become what every new set starts with, and what a reset (double-click, Ctrl+click) goes back to">Save current settings</button><button id="defReset" title="Back to VJif's own defaults (your saved ones are forgotten)">Reset</button><button id="defExport" title="Save your defaults to a file (to move them to another computer)">Export…</button><button id="defImport" title="Load defaults from a file">Import…</button><input id="defFile" type="file" accept=".json,application/json" hidden></div>
     <div class="sub" title="Signal marks what is selected or on; LCD colours the readouts; Graphs the fade and automation graphs. Theme files are shared with Bad MOPHO (it also uses colours VJif doesn't). The output window always stays black."><span>Theme</span><span class="info">i</span><span class="line"></span></div>
@@ -244,7 +241,7 @@
     </ol>
     </div>
     <div id="aboutLog" hidden><!-- @markdown tools/vjif/CHANGELOG.md --></div>
-    <p class="note aboutCred">Design and UX by XC3N · code by Claude (Anthropic). MIT licence — source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a>.<br>
+    <p class="note aboutCred">Design and UX by XC3N · code by Claude (Anthropic). Free to use; source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a> under the PolyForm Shield licence (no resale, no competing products).<br>
       <button id="credBtn" class="linkbtn" title="Fonts, the MP4 writer, palettes, borrowed ideas">Credits</button>: fonts, the MP4 writer, palettes and borrowed ideas.<br>If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
     <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
   </div>

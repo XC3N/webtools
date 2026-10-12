@@ -77,7 +77,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 .pad{position:relative;aspect-ratio:16/10;background:var(--bg);border-radius:var(--r);cursor:pointer;overflow:hidden;user-select:none}
 .pad:hover{box-shadow:0 0 0 1px var(--edge-2)}
 .pad canvas{width:100%;height:100%;display:block}
-.pad .key{position:absolute;left:3px;top:3px;font:600 11px/1 var(--mono);color:#fff;background:#000b;border-radius:2px;padding:2px 4px}
+.pad .phd{position:absolute;left:3px;top:3px;display:flex;gap:2px;align-items:center}.pad .key{font:600 11px/1 var(--mono);color:#fff;background:#000b;border-radius:2px;padding:2px 4px}   /* its key, then the layers it's on */
 .pad .nm{position:absolute;left:0;right:0;bottom:0;padding:2px 5px;font:400 11px var(--sans);color:#fff;background:linear-gradient(transparent,#000c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pad.empty .nm::before{content:'empty';color:var(--faint)}
 .pad.empty .nm{background:none}
@@ -86,7 +86,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 body.paddragging,body.paddragging *{cursor:grabbing!important}
 .pad.hit{animation:hit .2s}@keyframes hit{from{filter:brightness(1.8)}}
 .pad.wait{animation:wait .25s steps(1) infinite}@keyframes wait{50%{box-shadow:0 0 0 2px var(--sig)}}
-.pad .dots{position:absolute;right:3px;top:3px;display:flex;gap:2px}
+.pad .dots{display:flex;gap:2px}
 .pad .dots b{width:14px;height:14px;font:600 9px/14px var(--mono);border-radius:2px;color:#000;text-align:center}
 .pad.loading::after{content:'decoding…';position:absolute;inset:0;display:grid;place-items:center;background:#000b;font:400 11px var(--mono);color:var(--ink)}
 .scgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
@@ -331,7 +331,7 @@ h2.foldable>.fname{cursor:pointer;user-select:none}h2.foldable>.fname::before{co
 #learnBar b{color:var(--learn);white-space:nowrap}#learnBar{padding:3px 4px 3px 10px!important}#learnBar button{height:var(--ch);padding-block:0}#learnMsg{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.learning .learnMapped{outline:2px dotted var(--learn);outline-offset:-2px}
 body.learning .pad.learnMapped::before{content:"";position:absolute;inset:0;border:2px dotted var(--learn);border-radius:inherit;z-index:6;pointer-events:none}   /* a pad's picture covers its own outline */
-.midiHost{position:relative}.midiTag{position:absolute;right:2px;bottom:2px;z-index:7;pointer-events:none;font:600 9px/1 var(--mono);color:#1a1200;background:var(--learn);border-radius:2px;padding:2px 3px;white-space:nowrap;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis}
+.midiHost{position:relative}.midiTag{position:absolute;right:2px;bottom:2px;z-index:7;pointer-events:none;font:600 9px/1 var(--mono);color:var(--learntxt,#111);background:var(--learn);border-radius:2px;padding:2px 3px;white-space:nowrap;max-width:calc(100% - 4px);overflow:hidden;text-overflow:ellipsis}
 .midiTag.new{animation:wait .25s steps(1) 6}
 body.learning .learnSel{outline:2px solid #ff4dd2 !important;outline-offset:-2px;animation:wait .5s steps(1) infinite}
 #midiMap{display:flex;flex-direction:column;gap:3px;max-height:220px;overflow:auto}
@@ -379,7 +379,7 @@ output.mod{color:var(--env)}
 #fxStyleRow #fxStyle{flex-wrap:nowrap}#fxStyleRow #fxStyle button{flex:1 1 auto;min-width:0;padding:0 4px}   /* one row for every effect: each style as wide as its name, sharing out the rest */
 #fxStyle button.focus{box-shadow:inset 0 -2px 0 currentColor}   /* stacked CRT: the style whose settings show */
 
-:root{--learn:#ffb000}   /* MIDI learn has its own colour (amber), so learn mode can't be mistaken for the normal accent */
+:root{--learn:#ffb000}   /* MIDI learn has its own colour: the theme's signal colour at the opposite hue (set with the theme), so learn mode can't be mistaken for the normal accent */
 body.padcopy .pad.drop,#scenes.copying .scene.drop,body.precopy #fxPre .fxp.drop{outline:2px solid var(--sig);outline-offset:-2px}
 #defParts{display:flex;gap:10px;font-weight:500}#defParts .tog{font:500 11px var(--sans);color:var(--ink);gap:4px}   /* the parts sit in the Defaults heading: no line of their own */
 #setPanel.peek{background:transparent}#setPanel.peek .modalBox{background:transparent;border-color:transparent;box-shadow:none}#setPanel.peek .modalBox>:not(.uzRow){visibility:hidden}#setPanel.peek .uzRow{background:var(--panel);border:1px solid var(--sig);border-radius:var(--r);padding:4px 8px;box-shadow:0 6px 24px rgba(0,0,0,.6)}
@@ -390,7 +390,7 @@ input[type=checkbox]{width:16px;height:8px;border-radius:1px;background:transpar
 input[type=checkbox]::before{display:none}
 input[type=checkbox]:checked{background:var(--sig);border-color:var(--sig)}
 input[type=checkbox]:hover{border-color:var(--ink)}
-[data-pane=play] .tnote{display:none;margin:0 0 8px;font-size:11px;color:var(--muted)}[data-pane=play].textpad .tnote{display:block}[data-pane=play].textpad>:not(.tkeep):not(.tnote){opacity:.3;pointer-events:none}
+[data-pane=play].textpad>:not(.tkeep):not(.trig):not(#tEnv){opacity:.3;pointer-events:none}   /* lettering: the GIF-only settings dimmed (its Trigger still works) */
 #textPanel.dragging{visibility:hidden}   /* dragging the text: the window steps aside so the pads show */
 .txchip{cursor:grab;padding:6px 12px;border:1px dashed var(--sig);border-radius:var(--r);color:var(--sig);font:600 12px var(--sans);user-select:none;touch-action:none}.txchip:hover{background:var(--sig-soft,rgba(95,211,176,.15))}
 
@@ -427,3 +427,13 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 .lmask{width:var(--ch);padding:0;flex:none;color:var(--faint)}.lmask svg{display:block;margin:auto}.lmask:hover{color:var(--ink)}.lmask.has{color:var(--amber)}.lmask.on{color:var(--sigtxt);background:var(--amber);border-color:var(--amber)}
 /* a folded section: its Reset is hidden (its place kept); a section changed from its defaults shows its arrow in the signal colour */
 .sub.foldable.shut>.rst{visibility:hidden}.sub.foldable.mod>span:first-child::before{color:var(--amber)}
+
+/* × on a pad, scene or effect preset: delete it in one click (shown on hover; Settings › Interface › Ctrl+click to delete only hides them) */
+.xdel{position:absolute;right:2px;top:2px;z-index:3;width:15px;height:15px;font:600 12px/15px var(--mono);text-align:center;border-radius:2px;color:#fff;background:#000b;opacity:0;cursor:pointer;transition:opacity .1s}
+.pad:hover .xdel,.scene:hover .xdel,.fxp:hover .xdel{opacity:1}.xdel:hover{background:var(--danger);color:#000}
+.pad.empty .xdel,.scene.blank .xdel,.fxp.empty .xdel,body.noxdel .xdel{display:none}
+#fxPre .fxp .hd{justify-content:flex-start}#fxPre .fxp .hd .md{margin-right:18px}   /* a preset: its mode next to its number, the × on the right */
+/* Ctrl+drag onto a scene / preset that isn't empty: a red bar fills while you hold there; full, the drop replaces it */
+.scene.holding::before,#fxPre .fxp.holding::before{content:'';position:absolute;left:0;bottom:0;z-index:4;height:3px;width:100%;background:var(--danger);transform-origin:left;animation:holdbar 1.2s linear both}
+@keyframes holdbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.scene.armed,#fxPre .fxp.armed{outline:2px solid var(--danger)!important;outline-offset:-2px}
