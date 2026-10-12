@@ -5,7 +5,7 @@ const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
 const sceneIds = Array.from({ length: N_SCENES }, (_, i) => i);   // which scene sits at each number (swapped with the scenes)
 let sceneIdx = 0, pendingScene = null, liveThumb = null, liveName = '';   // liveName: the current scene's name
-const emptyLayer = () => ({ on: true, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a', tr: 'cut' });
+const emptyLayer = () => ({ on: true, opacity: 1, blend: 'source-over', clips: [], sel: null, fillOn: false, fill: '#1e2a3a', tr: 'cut', lock: false, mask: null });
 const emptyScene = () => ({ layers: [0, 1, 2, 3].map(i => Object.assign(emptyLayer(), { i })), pads: pads.map(() => null), thumb: null });
 // the scene itself, drawn apart from the output (no screen or layer effects, transition, blackout or freeze), straight at tile size
 function drawThumb(x){
@@ -30,7 +30,7 @@ function refreshLiveThumb(){
   liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb;
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)
-const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut' });
+const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: L.clips.slice(), sel: L.sel, fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut', lock: !!L.lock, mask: L.mask || null });   // (a mask is never changed in place: sharing it is safe)
 const layerState = L => ({ i: L.i, ...layerProps(L) });
 // the tile keeps the live picture made in the last second (drawing a new one here would stall the scene change);
 // with the control window hidden that picture isn't refreshed, so then it's drawn
@@ -69,6 +69,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
   pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
   if (!trans) dropFxCache(left);                     // (with a transition: when it ends)
   scenes[i] = null; liveThumb = sc && sc.thumb; thumbKeep = liveThumb; liveName = sc && sc.name || '';
+  if (fxLocal && trans && !trans.fx) trans.fx = { cfg: fxCfg, pre: fxPre, st: fxSt.map(S => ({ ...S })) };   // Local: the scene being left keeps its own effects through the transition (they used to switch at its start)
   liveFxOn = sc && sc.fxOn || null; if (fxLocal) applyLatched(liveFxOn || [], beat);   // Local: a scene with no effects of its own yet starts with none on
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
   // what's selected: as you left this scene; else the edit layer stays and the GIF panel shows that layer's selected GIF

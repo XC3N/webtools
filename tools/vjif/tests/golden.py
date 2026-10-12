@@ -21,9 +21,9 @@ JS = r"""
     post.run(U, src, dst, sl); const a = hash(dst); post.run(U, src, dst, sl); out['fx:' + d.id + ':' + s[0]] = a + '/' + hash(dst);
   }));
   // feedback after a frame without it, and phosphor after direct frames (history switching)
-  { const M = blank(); M.lv[11] = 0.8; M.env[11] = 1; const U = fxU(3.3, M); U.time = 12.3; const M0 = blank(); M0.lv[0] = 0.8; M0.env[0] = 1; const U0 = fxU(3.3, M0); U0.time = 12.3;
+  { const M = blank(); M.lv[FXI.feedback] = 0.8; M.env[FXI.feedback] = 1; const U = fxU(3.3, M); U.time = 12.3; const M0 = blank(); M0.lv[0] = 0.8; M0.env[0] = 1; const U0 = fxU(3.3, M0); U0.time = 12.3;
     post.run(U0, src, dst, 60); post.run(U, src, dst, 60); out['fx:switch:fb'] = hash(dst);
-    const M2 = blank(); M2.lv[9] = 0.8; M2.env[9] = 1; M2.style[9] = 'phos'; const U2 = fxU(3.3, M2); U2.time = 12.3;
+    const M2 = blank(); M2.lv[FXI.rgb] = 0.8; M2.env[FXI.rgb] = 1; M2.style[FXI.rgb] = 'phos'; const U2 = fxU(3.3, M2); U2.time = 12.3;
     post.run(U0, src, dst, 61); post.run(U0, src, dst, 61); post.run(U2, src, dst, 61); out['fx:switch:phos'] = hash(dst); }
   // transitions
   pat(trA, 0); pat(trB, 1);

@@ -5,17 +5,26 @@ const FX_KEYS = Array.from({ length: 12 }, (_, i) => 'F' + (i + 1)), FX_LABELS =
 const FX_DEFS = [
   { id: 'mono', name: 'Mono', title: 'Black and white', mode: 'hold', styles: [['grey', 'Grey', 'Shades of grey'], ['thresh', 'Threshold', 'Hard black and white'], ['dither', 'Dither', 'Black and white dots, ordered dither (1-bit, like an old Mac screen); Size = dot size']], size: true, sizeDef: 2, sizeFor: ['dither'] },
   { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['flip', 'Flip', 'Hue turned halfway round'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)'], ['invert', 'Invert', 'Negative colours'], ['pal', 'Palette', 'Every colour snapped to the nearest of an old computer or console palette (pick it with Palette)']] },
-  { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black']] },
   { id: 'poster', name: 'Posterize', title: 'Flat colours / outlines', mode: 'hold', styles: [['bands', 'Bands', 'Fewer colours, flat bands'], ['edges', 'Edges', 'Neon outlines on black']] },
+  { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black']] },
   { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in, around the middle of the frame'], ['out', 'Out', 'Punches out, around the middle of the frame'], ['eachin', 'Each in', 'Every GIF punches in around its own centre'], ['eachout', 'Each out', 'Every GIF punches out around its own centre']] },
   { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']] },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
+  { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
   { id: 'glitch', name: 'Glitch', title: 'Digital damage, re-torn every Rate', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'A damaged video file: some blocks keep the frame before and smear along their own motion (datamosh), others break into flat, blocky squares in the wrong colours (Size = block size)'], ['degauss', 'Degauss', 'The picture wobbles through rainbow blotches, like a tube being degaussed (best as a Hit with a long Release)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt'] },
   { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, pay-TV and satellite scrambling (several at once)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] },
-
-  { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] }];
+const FXI = Object.fromEntries(FX_DEFS.map((d, i) => [d.id, i]));   // an effect's slot (F key) by its id
+// 0.78 put the pads in groups of four (look · movement · texture and screen); sets, defaults and MIDI maps saved before
+// keep effects by their old slots, so they're moved: fxRemapIdx(old slot) → new slot (presets, past the twelve, stay)
+const FX_ORDER_V1 = ['mono', 'colour', 'strobe', 'poster', 'zoom', 'shake', 'wobble', 'mirror', 'glitch', 'rgb', 'pixel', 'feedback'];
+const fxRemapIdx = j => j < FX_ORDER_V1.length ? FXI[FX_ORDER_V1[j]] : j;
+const fxRemapArr = a => { if (!Array.isArray(a)) return a; const o = a.slice(); a.forEach((v, j) => { o[fxRemapIdx(j)] = v; }); return o; };
+const fxRemapKeys = o => o ? Object.fromEntries(Object.entries(o).map(([k, v]) => [fxRemapIdx(+k), v])) : o;
+function fxRemapDefs(d){ if (!d || d.fxOrd) return d; if (d.fx) d.fx = fxRemapArr(d.fx); if (d.fxPre) d.fxPre.forEach(P => P.fx = fxRemapKeys(P.fx)); d.fxOrd = 2; return d; }   // saved defaults (Settings › Defaults)
+if (userDef && (userDef.fx || userDef.fxPre) && !userDef.fxOrd){ fxRemapDefs(userDef); Prefs.set('vjif-userdef', JSON.stringify(userDef)); }
+{ const o = Prefs.json('vjif-midi'); if (o && !o.fxOrd && midiCtl.map.length){ midiCtl.map.forEach(m => { if (m.t === 'fx') m.i = fxRemapIdx(m.i); }); saveMidiCtl(); } }   // MIDI mappings of effect pads
 const FX_LENS = [[0, '0'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
 const FX_REL = 0.125;                                // default release of Hold / Latch effects (beats)
 const FX_RELS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
@@ -187,18 +196,20 @@ function fxMix(b, X = fxLive()){
   return M;
 }
 // one target's shader settings; null when nothing plays on it
+const FX_U_IDX = ['mono', 'colour', 'strobe', 'poster', 'zoom', 'shake', 'wobble', 'mirror', 'glitch', 'rgb', 'pixel', 'feedback'].map(k => FXI[k]);
 function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
-  const U = { mono: lv[0], monoS: S(0), colr: lv[1], colrS: S(1), hue: b / (rate[1] * 16) * Math.PI * 2,
-    strobe: lv[2] * ((b / rate[2]) % 1 < 0.5 ? 1 : 0), strobeS: S(2), poster: lv[3], posterS: S(3),
-    zoom: nm(4) === 'in' ? lv[4] * 0.5 : nm(4) === 'out' ? lv[4] * -0.3 : 0, zoomE: nm(4) === 'eachin' ? lv[4] * 0.5 : nm(4) === 'eachout' ? lv[4] * -0.3 : 0,   // Each: done per GIF in render()
-    wob: lv[6], wobS: S(6), wobPh: b / rate[6] * Math.PI * 2,
-    mirror: nm(7) === 'kal' ? env[7] : lv[7], mirS: S(7), mirN: kalSlices(amt[7]),   // kaleido: Amount = how many slices
-    glitch: lv[8], glS: S(8), gseed: st(8) * 7.13 % 100, glSz: size[8], rgb: lv[9], rgbS: styleMask(9, style[9]), crtSz: size[9], monoSz: size[0],
-    pixel: lv[10], pixS: S(10), pixSize: size[10], fb: lv[11], fbS: S(11), time: performance.now() / 1000 % 1000, palI: pal ? pal[1] : 0, palD: dith ? dith[1] : 0, palP: dpat ? dpat[1] : 0, mirZ: kz ? kz[7] : 1, fbK: fbk ? fbk[11] : 0.7, vDrop: vdrop ? vdrop[9] : 1, beat: b % 100000 };
-  if (U.colrS === FXS.colour.pal) U.colr = env[1];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
-  const jit = nm(5) === 'jitter', sk = Math.floor(b / (rate[5] * (jit ? 0.5 : 1))), s = lv[5] * (jit ? 0.35 : 1);
+  const [MO, CO, ST, PO, ZO, SH, WO, MI, GL, CR, PX, FB] = FX_U_IDX;
+  const U = { mono: lv[MO], monoS: S(MO), colr: lv[CO], colrS: S(CO), hue: b / (rate[CO] * 16) * Math.PI * 2,
+    strobe: lv[ST] * ((b / rate[ST]) % 1 < 0.5 ? 1 : 0), strobeS: S(ST), poster: lv[PO], posterS: S(PO),
+    zoom: nm(ZO) === 'in' ? lv[ZO] * 0.5 : nm(ZO) === 'out' ? lv[ZO] * -0.3 : 0, zoomE: nm(ZO) === 'eachin' ? lv[ZO] * 0.5 : nm(ZO) === 'eachout' ? lv[ZO] * -0.3 : 0,   // Each: done per GIF in render()
+    wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
+    mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
+    glitch: lv[GL], glS: S(GL), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], monoSz: size[MO],
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+  if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
+  const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
   return U;
 }
@@ -697,9 +708,10 @@ function drawFrame(now){
   paintFxPads(clock.beat);
   const L = layers[target], sel = selClip(), gh = ghostList();
   const O = overlaySig, Gd = pvOpt.guides; O.start();
-  [format, pvOpt.gcol, pvOpt.gx, pvOpt.gy, drag && drag.snap ? drag.snap.x : null, drag && drag.snap ? drag.snap.y : null, drag && drag.snap && drag.snap.line ? drag.snap.line.join() : null, target, sel && sel.id, view.w, view.h].forEach(O.add);
+  [format, pvOpt.gcol, pvOpt.gx, pvOpt.gy, drag && drag.snapRot ? drag.snapRot.a : null, drag && drag.snap && drag.snap.p ? drag.snap.p.join() : null, drag && drag.snap ? drag.snap.x : null, drag && drag.snap ? drag.snap.y : null, drag && drag.snap && drag.snap.line ? drag.snap.line.join() : null, target, sel && sel.id, view.w, view.h].forEach(O.add);
   for (const k of GUIDE_KEYS) O.add(!!Gd[k]); O.add(!!pvOpt.gHide);
   for (const c of L.clips){ const G = clipGeom(c); O.add('|'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }
+  if (maskEd){ O.add('m'); O.add(maskEd.li); O.add(maskRev); O.add(layers[maskEd.li].mask && layers[maskEd.li].mask.mid); O.add(maskPtr ? maskPtr[0] : -1); O.add(maskPtr ? maskPtr[1] : -1); O.add(maskOpt.size); O.add(maskOpt.tool); }
   for (const [c, g] of gh){ const G = clipGeom(c); O.add(';'); [c.id, G.cx, G.cy, G.hw, G.hh, G.a, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, g.fxVer, g.startF, g.crisp].forEach(O.add); }
   if (O.changed() || force) drawOverlay(gh);
   redraw.all = false;
@@ -729,7 +741,18 @@ function drawOverlay(gh = ghostList()){
     if (drag.snap.x != null){ const X = Math.round((view.x + drag.snap.x * view.w / W) * dpr) + 0.5; pctx.moveTo(X, view.y * dpr); pctx.lineTo(X, (view.y + view.h) * dpr); }
     if (drag.snap.y != null){ const Y = Math.round((view.y + drag.snap.y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); }
     if (drag.snap.line){ const [x0, y0, x1, y1] = drag.snap.line, Q = (x, y) => [(view.x + x * view.w / W) * dpr, (view.y + y * view.h / H) * dpr]; pctx.moveTo(...Q(x0, y0)); pctx.lineTo(...Q(x1, y1)); }
-    pctx.stroke(); pctx.restore();
+    pctx.stroke();
+    if (drag.snap.p){ pctx.fillStyle = '#ffd400'; for (let i = 0; i < drag.snap.p.length; i += 2){ pctx.beginPath(); pctx.arc((view.x + drag.snap.p[i] * view.w / W) * dpr, (view.y + drag.snap.p[i + 1] * view.h / H) * dpr, 4 * dpr, 0, Math.PI * 2); pctx.fill(); } }   // the point of the GIF that's hooked
+    pctx.restore();
+  }
+  if (drag && drag.type === 'rot' && drag.snapRot){         // turning, caught: the line(s) at that angle in pink, the knob in yellow
+    const S = drag.snapRot, Q = (x, y) => [(view.x + x * view.w / W) * dpr, (view.y + y * view.h / H) * dpr], c = drag.c, G = clipGeom(c);
+    pctx.save(); pctx.strokeStyle = '#ff5bb0'; pctx.lineWidth = dpr; pctx.beginPath();
+    if (S.lines.length) for (const [x0, y0, x1, y1] of S.lines){ pctx.moveTo(...Q(x0, y0)); pctx.lineTo(...Q(x1, y1)); }
+    else if (G){ const a = S.a * Math.PI / 180, R = W + H; pctx.moveTo(...Q(G.cx - Math.cos(a) * R, G.cy - Math.sin(a) * R)); pctx.lineTo(...Q(G.cx + Math.cos(a) * R, G.cy + Math.sin(a) * R)); }
+    pctx.stroke();
+    if (G){ const [kx, ky] = knobPos(G); pctx.fillStyle = '#ffd400'; pctx.beginPath(); pctx.arc(...Q(kx, ky), 6 * dpr, 0, Math.PI * 2); pctx.fill(); }
+    pctx.restore();
   }
   if (format === '9:16' && pvOpt.guides.safe && !pvOpt.gHide){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
     const x0 = (view.x + view.w * 0.06) * dpr, y0 = (view.y + view.h * 0.14) * dpr, x1 = (view.x + view.w * 0.86) * dpr, y1 = (view.y + view.h * 0.78) * dpr;
@@ -745,7 +768,7 @@ function drawOverlay(gh = ghostList()){
     const G = clipGeom(c); if (!G) continue;
     pctx.lineWidth = (c === sel ? 1.5 : 1) * dpr; pctx.setLineDash(c === sel ? [] : [5*dpr, 4*dpr]);
     pctx.globalAlpha = c === sel ? 1 : 0.6; outline(G, k);
-    if (c === sel && !L.lock){                       // (a locked layer: its frame, no handles)
+    if (c === sel && !L.lock && !maskEd){   // (painting a mask: no handles)                       // (a locked layer: its frame, no handles)
       pctx.fillStyle = '#000'; const s = 4 * dpr;
       for (const h of HANDLES){ const [x, y] = toWorld(G, h[0]*G.hw, h[1]*G.hh); pctx.fillRect(x*k - s, y*k - s, 2*s, 2*s); pctx.strokeRect(x*k - s, y*k - s, 2*s, 2*s); }
       const [tx, ty] = toWorld(G, 0, -G.hh), [kx, ky] = knobPos(G);
@@ -755,6 +778,7 @@ function drawOverlay(gh = ghostList()){
     }
   }
   pctx.restore();
+  if (maskEd) drawMaskOverlay(dpr);
 }
 $('#fxFollow').classList.toggle('on', fxFollow);
 $('#fxFollow').addEventListener('click', () => { fxFollow = !fxFollow; Prefs.set('vjif-fxfollow', fxFollow ? '1' : '0'); $('#fxFollow').classList.toggle('on', fxFollow); });

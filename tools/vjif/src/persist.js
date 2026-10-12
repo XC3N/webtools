@@ -19,6 +19,7 @@ const store = {
 // `pool` = every GIF of the set; `pads` + `layers` = the current scene; `scenes` = all nine as { pads, layers }
 // (the current one null); `scene` = which is current; `v` = the format's step (SNAP_STEPS).
 const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut',
+  ...(L.lock ? { lock: true } : {}), ...(L.mask && L.mask.url ? { mask: { url: L.mask.url, inv: !!L.mask.inv, on: L.mask.on !== false } } : {}),
   clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
@@ -26,7 +27,7 @@ function snapshot(){
     v: SNAP_V, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0), fxLocal, sceneFx: fxLocal ? latchedNow() : liveFxOn,
     pool: pool.map(m => ({ hash: m.hash, name: m.name, ...(m.scale && m.scale !== 1 ? { scale: m.scale } : {}) })),
     pads: serPads(pads.map(p => p.gif)),
-    layers: serLayers(layers), locks: layers.map(L => !!L.lock),
+    layers: serLayers(layers),
     sceneName: liveName,
     scenes: scenes.map((sc, i) => i === sceneIdx || !sc ? null : { pads: serPads(sc.pads), layers: serLayers(sc.layers), name: sc.name || '', ...(sc.fxOn ? { fxOn: sc.fxOn } : {}) }),
     thumbs: scenes.map((sc, i) => i === sceneIdx ? thumbKeep || liveThumb || null : sc && sc.thumb || null),   // the scene tiles' pictures, so they survive a reload
@@ -51,6 +52,11 @@ const SNAP_STEPS = {
       if (c.mode === 'hit'){ c.rel = c.len ?? 1; c.len = 0; } else c.rel = FX_REL; };
     (o.fx || []).forEach(rel); (o.fxPre || []).forEach(rel);
   },
+  6: o => {                                          // 0.78: the effect pads regrouped (F3 / F4 swapped, Pixel up to F9): every effect slot moves
+    o.fx = fxRemapArr(o.fx); (o.fxPre || []).forEach(P => { if (P) P.fx = fxRemapKeys(P.fx); });
+    o.fxOn = fxRemapArr(o.fxOn); o.sceneFx = fxRemapArr(o.sceneFx);
+    (o.scenes || []).forEach(sc => { if (sc && sc.fxOn) sc.fxOn = fxRemapArr(sc.fxOn); });
+  },
 };
 const SNAP_V = Math.max(...Object.keys(SNAP_STEPS).map(Number));
 function upgradeSnap(o){
@@ -69,7 +75,8 @@ function contentSig(snap){
 // saved layers → live layer states (only GIFs that loaded; a GIF lives on one layer: the topmost wins)
 function deserLayers(sls, now, gifs = pads.map(p => p.gif)){
   const out = sls.map(sl => { const clips = sl.clips.filter(c => gifs[c.pad]).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
-    return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null, fillOn: !!sl.fillOn, fill: sl.fill || '#1e2a3a', tr: sl.tr || 'cut' }; });
+    return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null, fillOn: !!sl.fillOn, fill: sl.fill || '#1e2a3a', tr: sl.tr || 'cut',
+      lock: !!sl.lock, mask: sl.mask && sl.mask.url ? maskFromUrl(sl.mask.url, sl.mask.inv, sl.mask.on) : null }; });
   const seen = new Set();
   for (let li = out.length - 1; li >= 0; li--){ const L = out[li]; L.clips = L.clips.filter(c => !seen.has(c.pad) && seen.add(c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; }
   return out;
@@ -131,7 +138,7 @@ async function applySnapshot(st, { wait = true } = {}){
   setFormat(st.format || '16:9', { quiet: true, force: true });
   setBpm(st.bpm); snapMode = st.snap || 'off'; $('#snap').value = snapMode;
   const now = performance.now(), idx = st.scene || 0;
-  deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s)); layers.forEach((L, li) => L.lock = !!(st.locks && st.locks[li]));   // locks belong to the set, not a scene
+  deserLayers(st.layers, now).forEach((s, li) => Object.assign(layers[li], s));
   for (let i = 0; i < N_SCENES; i++){
     const ss = i !== idx && st.scenes[i]; if (!ss){ scenes[i] = null; continue; }
     const gs = pads.map((_, k) => mk(ss.pads[k]));
@@ -197,7 +204,7 @@ async function newEmptySet(){
   dropAll(hist.undo); dropAll(hist.redo); hist.undo.length = hist.redo.length = 0;
   [...insts.values()].forEach(freeGif); pool.slice().forEach(freeMedia);
   pads.forEach((p, i) => { p.gif = null; renderPad(i); }); renderPool();
-  layers.forEach(L => Object.assign(L, emptyLayer(), { lock: false }));
+  layers.forEach(L => Object.assign(L, emptyLayer()));
   scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; endTrans(); dropPrep(); renderScenes();
   trPresets = trDefaults(); armTrans(1);
   fxCfg = fxDefaults(); fxPre = fxPreDefaults(); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); heldPre = -1; syncFxUI();

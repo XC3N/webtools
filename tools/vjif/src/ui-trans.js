@@ -33,7 +33,7 @@ const TR_DIR = ['dir', [['left', '←', 'Towards the left'], ['right', '→', 'T
 const TR_SOFT = ['soft', [0, 'Soft', 'A soft, feathered edge'], true];
 function trOptsOf(T){ const st = trStyleOf(T);
   switch (T.type){
-    case 'slide': return [TR_DIR];
+    case 'slide': return st === 'bands' ? [['bands', [['4', '4', '4 bands'], ['6', '6', '6 bands'], ['8', '8', '8 bands'], ['12', '12', '12 bands']]]] : [TR_DIR];
     case 'wipe': return st === 'iris' ? [['from', [['mid', 'Middle', 'Opens from the middle of the frame'], ['gif', 'GIF', "Opens from the selected GIF's centre (in the new scene)"]]], TR_SOFT] : [TR_DIR, TR_SOFT];
     case 'fade': return st === 'luma' ? [['inv', [['bright', 'Bright', 'The brightest parts change first'], ['dark', 'Dark', 'The darkest parts change first']]], TR_SOFT] : [];
     case 'zoom': return [['zoom', [['in', 'In', 'The old scene grows and fades, the new one grows in'], ['out', 'Out', 'The old scene backs away, the new one comes down from close up'], ['thru', 'Through', 'The old scene flies past the camera']]]];

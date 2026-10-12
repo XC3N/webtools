@@ -109,7 +109,7 @@ async def main():
     lk = await pg.evaluate("""(() => { const L = layers[0], c = newClip(0); L.clips = [c]; L.on = true; L.opacity = 1; const G = clipGeom(c); const n = hitsAt(G.cx, G.cy, false).length;
       L.lock = true; const m = hitsAt(G.cx, G.cy, false).length, k = hitsAt(G.cx, G.cy, false, true).length; L.lock = false; L.clips = []; return [n, m, k]; })()""")
     print('lock', lk); assert lk == [1, 0, 1], lk
-    gc = await pg.evaluate("[FX_DEFS[8].styles.map(s => s[0]).includes('corrupt'), FX_DEFS[8].styles[styleIdx(8, 'scramble')][0]]")
+    gc = await pg.evaluate("[FX_DEFS[FXI.glitch].styles.map(s => s[0]).includes('corrupt'), FX_DEFS[FXI.glitch].styles[styleIdx(FXI.glitch, 'scramble')][0]]")
     print('corrupt', gc); assert gc == [True, 'corrupt'], gc
     tc = []
     for _ in range(2):
@@ -117,5 +117,10 @@ async def main():
         await pg.mouse.click(r[0], r[1]); tc.append(await pg.evaluate("fxSt[0].on"))
     await pg.evaluate("fxCfg[0].mode = 'hold'")
     print('tile click', tc); assert tc == [True, False], tc
+    # 0.78: effect pads regrouped; an older set's effects follow their effect to its new slot
+    mg = await pg.evaluate("""(() => { const on = Array(21).fill(0); on[2] = 1; on[10] = 1;
+      const o = upgradeSnap({ v: 5, fx: FX_ORDER_V1.map(id => ({ tag: id })), fxPre: [{ fx: { 2: { a: 1 }, 10: { b: 1 } } }], fxOn: on.slice(), scenes: [{ fxOn: on.slice() }, null] });
+      return [FX_DEFS.map(d => d.id).join(','), o.fx.every((c, i) => c.tag === FX_DEFS[i].id), Object.keys(o.fxPre[0].fx).map(Number).sort((a, b) => a - b).join(','), o.fxOn[FXI.strobe], o.fxOn[FXI.pixel], o.fxOn[2], o.scenes[0].fxOn[FXI.strobe]]; })()""")
+    print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg
     await b.close()
 asyncio.run(main())

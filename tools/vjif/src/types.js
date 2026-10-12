@@ -74,7 +74,8 @@
  * @property {Clip[]} clips        drawn first to last (the last is on top)
  * @property {?Clip} sel           the one Transform edits
  * @property {boolean} fillOn @property {string} fill   Background only: a colour under its GIFs
- * @property {boolean} [lock]   the mouse goes through its GIFs in the preview (saved with the set, the same in every scene)
+ * @property {boolean} [lock]   the mouse goes through its GIFs in the preview (per scene, like the rest of the layer)
+ * @property {?{cv: HTMLCanvasElement, mid: number, url: ?string, inv: boolean, on: boolean}} [mask]   painted mask (mask.js): painted = hidden, inv: only the painted part shows; never changed in place
  * @property {'cut'|'armed'|string} tr   its own on / off transition: none, the armed one, or a preset number
  * @property {?HTMLElement} row    its card
  */

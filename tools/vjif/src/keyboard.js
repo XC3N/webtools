@@ -5,6 +5,7 @@ function isTyping(e){
   if (t.isContentEditable || t.tagName === 'TEXTAREA') return true;
   return t.tagName === 'INPUT' && ['text','number','url','search'].includes(t.type);
 }
+let npArm = null;                                   // Caps+Shift+numpad on a full preset: armed, waiting for the second press
 const FX_MODE_KEYS = { Insert: 'hold', Home: 'hit', PageUp: 'latch' };   // the 3 keys above the arrows, left to right
 let heldFxKey = -1;   // an F-key effect held down: 1–5 then set its layers
 function onKey(e){
@@ -12,6 +13,7 @@ function onKey(e){
   if (!$('#textPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); closeText(); } else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); textOk(); } return; }   // Enter: put it on the pad · Shift+Enter: a new line (as everywhere)
   if (!$('#credPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); $('#credPanel').hidden = true; } return; }
   if (!$('#aboutPanel').hidden){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); closeAbout(); } return; }
+  if (maskEd && e.key === 'Escape'){ e.preventDefault(); maskClose(); return; }   // painting a mask: Esc is Done (other keys keep playing)
   if (!$('#lpMapPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); $('#lpMapPanel').hidden = true; } return; }
   if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
@@ -51,7 +53,11 @@ function onKey(e){
     const shifted = e.shiftKey || (e.getModifierState('NumLock') && !/^[0-9]$/.test(e.key));
     if (!capsOn && !shifted) return sceneKey(k);
     // Caps Lock: the numpad plays effect presets (Shift stores into one) · Caps Lock off, Shift held: plays them too
-    if (capsOn && shifted) storeFxPre(k); else { fxDown(NFX + k); heldPre = k; selectFx(NFX + k); }
+    if (capsOn && shifted){                         // storing over a preset that has effects: press again within 1.5 s (Caps Lock left on by mistake can't wipe one)
+      const full = Object.keys(fxPre[k].fx).length, now = performance.now();
+      if (full && !(npArm && npArm.k === k && now - npArm.t < 1500)){ npArm = { k, t: now }; toast(`${FXP_LABELS[k]} has effects: press again to replace them (Caps Lock is on)`); return; }
+      npArm = null; storeFxPre(k);
+    } else { fxDown(NFX + k); heldPre = k; selectFx(NFX + k); }
     return;
   }
   if (heldFxKey >= 0 && !e.shiftKey && FX_MODE_KEYS[e.code]){   // an effect key held + Ins / Home / PgUp: Hold / Hit / Latch

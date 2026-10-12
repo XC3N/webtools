@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.77.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.78.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -33,6 +33,7 @@ let RS = [1, 2 / 3, 0.5].includes(+Prefs.get('vjif-rscale')) ? +Prefs.get('vjif-
 let CW = Math.round(W * RS), CH = Math.round(H * RS);
 // your own defaults for effects, effect presets and transition presets (Settings › Defaults), used by new sets and resets
 let userDef = Prefs.json('vjif-userdef', {});
+let maskEd = null, maskRev = 0;                     // mask.js: the layer whose mask is being painted (null: none) · bumped by every paint stroke
 // interface size (Settings › Interface): the whole page is zoomed; pointer maths divides by it
 let uiZoom = (() => { const z = +Prefs.get('vjif-uizoom'); return z >= 0.7 && z <= 1.3 ? z : 1; })();
 document.documentElement.style.zoom = uiZoom === 1 ? '' : uiZoom; document.documentElement.style.setProperty('--uiz', uiZoom);

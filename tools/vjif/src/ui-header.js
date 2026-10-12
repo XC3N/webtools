@@ -68,15 +68,18 @@ function bpmDigit(e){
   return { place: i < dot ? 10 ** (dot - 1 - i) : 10 ** -(i - dot), x: start + i * cw, w: cw };
 }
 const bpmMark = $('#bpmMark');
+let bpmHide = null;                                  // while the wheel turns, the pointer hides (it sat on the digits); moving the mouse brings it back
 bpmEl.addEventListener('mousemove', e => {
+  if (bpmHide && Math.hypot(e.clientX - bpmHide[0], e.clientY - bpmHide[1]) > 3){ bpmHide = null; bpmEl.style.cursor = ''; }
   if (bpmEl.disabled || document.activeElement === bpmEl){ bpmMark.style.display = 'none'; return; }
   const d = bpmDigit(e); Object.assign(bpmMark.style, { display: 'block', left: d.x + 'px', width: d.w + 'px' });
 });
-bpmEl.addEventListener('mouseleave', () => { bpmMark.style.display = 'none'; });
+bpmEl.addEventListener('mouseleave', () => { bpmMark.style.display = 'none'; bpmHide = null; bpmEl.style.cursor = ''; });
 bpmEl.addEventListener('wheel', e => {
   e.preventDefault();
   if (clock.src !== 'internal' || document.activeElement === bpmEl) return;
   const d = e.deltaY || e.deltaX; if (!d) return;
+  if (!bpmHide){ bpmHide = [e.clientX, e.clientY]; bpmEl.style.cursor = 'none'; }
   setBpm(clock.bpm + (d < 0 ? 1 : -1) * bpmDigit(e).place);
 }, { passive: false });
 // drag the tempo up / down: the digit under the pointer moves 1 step every 6 px (a click without dragging types instead)
@@ -218,18 +221,18 @@ const defParts = () => [...document.querySelectorAll('#defParts input:checked')]
 const partsTxt = ks => ks.length === 3 ? 'all' : ks.map(k => DEF_NAMES[k]).join(' + ');
 $('#defSave').addEventListener('click', () => { const ks = defParts(); if (!ks.length) return toast('Tick at least one part');
   const cur = { fx: () => JSON.parse(JSON.stringify(fxCfg)), fxPre: () => JSON.parse(JSON.stringify(fxPre)), tr: () => trPresets.map(P => ({ ...P })) };
-  const o = { ...userDef, v: 1, saved: Date.now() }; ks.forEach(k => o[k] = cur[k]()); setUserDef(o); toast2(`Saved as your defaults (${partsTxt(ks)})`); });
+  const o = { ...userDef, v: 1, fxOrd: 2, saved: Date.now() }; ks.forEach(k => o[k] = cur[k]()); setUserDef(o); toast2(`Saved as your defaults (${partsTxt(ks)})`); });
 $('#defReset').addEventListener('click', () => { const ks = defParts(); if (!ks.length) return toast('Tick at least one part');
   const o = { ...userDef }; ks.forEach(k => delete o[k]); setUserDef(DEF_KEYS.some(k => o[k] !== undefined) ? o : null);
   toast2(`Back to VJif's defaults (${partsTxt(ks)}; for new sets and resets, this set is unchanged)`); });
 $('#defExport').addEventListener('click', () => { const ks = defParts().filter(k => userDef[k] !== undefined); if (!ks.length) return toast('Save your defaults first (for the ticked parts)');
-  const out = { app: 'VJif', kind: 'defaults', v: 1, saved: userDef.saved }; ks.forEach(k => out[k] = userDef[k]);
+  const out = { app: 'VJif', kind: 'defaults', v: 1, fxOrd: 2, saved: userDef.saved }; ks.forEach(k => out[k] = userDef[k]);
   saveFile(JSON.stringify(out, null, 1), ks.length === 3 ? 'vjif-defaults.json' : `vjif-defaults-${ks.join('-').toLowerCase()}.json`, 'application/json'); });
 $('#defImport').addEventListener('click', () => $('#defFile').click());
 $('#defFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { const d = JSON.parse(await f.text()); if (d.app !== 'VJif' || d.kind !== 'defaults') throw new Error('not a VJif defaults file');
+  try { const d = JSON.parse(await f.text()); if (d.app !== 'VJif' || d.kind !== 'defaults') throw new Error('not a VJif defaults file'); fxRemapDefs(d);
     const ks = defParts().filter(k => d[k] !== undefined); if (!ks.length) throw new Error('it has none of the ticked parts');
-    const o = { ...userDef, v: 1, saved: Date.now() }; ks.forEach(k => o[k] = d[k]); setUserDef(o); toast2(`Defaults loaded (${partsTxt(ks)}): new sets and resets use them`);
+    const o = { ...userDef, v: 1, fxOrd: 2, saved: Date.now() }; ks.forEach(k => o[k] = d[k]); setUserDef(o); toast2(`Defaults loaded (${partsTxt(ks)}): new sets and resets use them`);
   } catch (err) { toast("Couldn't load those defaults: " + err.message); } });
 defNote();
 

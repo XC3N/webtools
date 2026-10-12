@@ -21,6 +21,7 @@ function cycleText(g){
 }
 function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.querySelector('.l1').textContent = a; el.querySelector('.l2').textContent = b; el.title = a + ' — ' + b; }
 function syncGifUI(){
+  queueMicrotask(markFolds);                         // (once the panel shows this GIF's values)
   const p = pads[selPad], g = p.gif;
   $('#gifSettings').classList.toggle('disabled', !g);
   $('#gifName').textContent = `${p.label}${g ? (g.keyMsg ? ' · ' + g.keyMsg : '') : ' · empty'}`; $('#gifName').title = '';
@@ -324,10 +325,11 @@ $('#gClear').addEventListener('click', () => { clearPad(selPad); toast2('Pad cle
 const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off'], ['#shS', 'soft', v => v > 0 ? Math.round(v * 100) + '%' : 'hard']];
 function syncShadowUI(g){
   const S = g.shadow || (g.shadow = { ...SHADOW_DEF });
-  $('#shOn').checked = !!S.on; $('#shCol').value = S.col;
+  $('#shOn').checked = !!S.on; $('#shCol').value = S.col; $('#shTurn').checked = !!S.turn; $('#shTurn').closest('.field').classList.toggle('dimmed', !S.on);
   SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && !(S.cut > 0))); });
 }
 SH_F.forEach(([id, k, f]) => $(id).addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, [k]: +e.target.value, on: true }; syncShadowUI(g); redraw.all = true; }));
+$('#shTurn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, turn: e.target.checked, on: true }; syncShadowUI(g); redraw.all = true; });
 $('#shOn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, on: e.target.checked }; syncShadowUI(g); redraw.all = true; });
 $('#shCol').addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, col: e.target.value, on: true }; syncShadowUI(g); redraw.all = true; });
 
@@ -339,6 +341,20 @@ document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=c
   t.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
   apply();
 });
+// a section that differs from its defaults: its fold arrow in the signal colour (readable at a glance, folded or not)
+['input', 'change', 'click'].forEach(t => $('#gPanes').addEventListener(t, () => queueMicrotask(markFolds)));
+function markFolds(){
+  document.querySelectorAll('#gPanes .sub.foldable').forEach(s => {
+    let mod = [...s.querySelectorAll('input[type=checkbox]')].some(c => c.checked);   // its own switch (Key, Shadow) on
+    for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling){
+      n.querySelectorAll('input[type=range][data-def]').forEach(r => { const d = r.dataset.def, v = d === 'min' ? +r.min : d === 'max' ? +r.max : +d; if (Math.abs(+r.value - v) > 1e-6) mod = true; });
+      n.querySelectorAll('select').forEach(q => { if (q.selectedIndex > 0) mod = true; });
+      n.querySelectorAll('input[type=checkbox][data-def]').forEach(c => { if (c.checked !== (c.dataset.def === '1')) mod = true; });
+      if (n.id === 'swList' && n.children.length) mod = true;
+    }
+    s.classList.toggle('mod', mod);
+  });
+}
 // the right column's own sections (Transform, GIF) fold too: click the heading's name
 document.querySelectorAll('#side > h2').forEach(h => {
   const name = 'h2:' + h.firstChild.textContent.trim(); h.classList.add('foldable');

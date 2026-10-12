@@ -100,9 +100,10 @@ function drawClip(ctx, c, g, img){
   const [bw, bh] = baseSize(g, c.fit), T0 = ctx.getTransform(), base = c.tile ? T0 : null, dk = Math.hypot(T0.a, T0.b) || 1;   // dk: canvas units → device pixels
   ctx.save(); ctx.globalAlpha *= (c.alpha ?? 1); applyXf(ctx, c);
   ctx.imageSmoothingEnabled = !g.crisp;
-  const S = g.shadow, shOn = S && S.on && !c.tile && S.op > 0;   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
+  const S = g.shadow, shOn = S && S.on && !c.tile && S.op > 0;
+  let ox = S ? S.x : 0, oy = S ? S.y : 0; if (shOn && S.turn && c.rot){ const r = c.rot * Math.PI / 180, cs = Math.cos(r), sn = Math.sin(r); [ox, oy] = [ox * cs - oy * sn, ox * sn + oy * cs]; }   // Turn: the offset turns with the GIF   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
   if (shOn && S.cut > 0){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
-    const M = ctx.getTransform(), I = M.inverse(), vx = S.x * dk, vy = S.y * dk, ly = I.b * vx + I.d * vy, OFF = 1e5, y0 = -bh/2 + S.cut * bh + ly, sb = (S.soft ?? 0) * bh;
+    const M = ctx.getTransform(), I = M.inverse(), vx = ox * dk, vy = oy * dk, ly = I.b * vx + I.d * vy, OFF = 1e5, y0 = -bh/2 + S.cut * bh + ly, sb = (S.soft ?? 0) * bh;
     const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF; x.shadowOffsetY = vy - M.b * OFF; x.translate(OFF, 0); drawPlain(x, c, img, bw, bh); };
     if (sb > 0){                                     // soft: drawn apart, faded in across the cut line (in the GIF's own up / down), then put down like the shadow would be
       const { c: shCv, x: shX } = shadowScratch(ctx), cw = shCv.width, ch = shCv.height;
@@ -112,7 +113,7 @@ function drawClip(ctx, c, g, img){
       shX.globalCompositeOperation = 'destination-in'; shX.fillStyle = gr; shX.fillRect(-OFF, -OFF, 2 * OFF, 2 * OFF); shX.restore();
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(shCv, 0, 0); ctx.restore();
     } else { ctx.save(); ctx.beginPath(); ctx.rect(-OFF, y0, 2 * OFF, 2 * OFF); ctx.clip(); shadowOnly(ctx); ctx.restore(); }
-  } else if (shOn){ ctx.shadowColor = hexA(S.col, S.op); ctx.shadowBlur = S.blur * dk; ctx.shadowOffsetX = S.x * dk; ctx.shadowOffsetY = S.y * dk; }
+  } else if (shOn){ ctx.shadowColor = hexA(S.col, S.op); ctx.shadowBlur = S.blur * dk; ctx.shadowOffsetX = ox * dk; ctx.shadowOffsetY = oy * dk; }
   if (c.tile){
     // fill exactly the frame, with the clip's whole transform folded into the pattern; a crop tiles the cropped part
     const cr = c.cl || c.ct || c.cr || c.cb, sw = 1 - c.cl - c.cr, sh = 1 - c.ct - c.cb;
@@ -181,7 +182,7 @@ const sceneSig = sigTracker(), overlaySig = sigTracker(), prepOutSig = sigTracke
 function sceneChanged(list, frozen, black, S = sceneSig){
   S.start(); S.add(frozen); S.add(black);
   if (!frozen) for (const { L, items } of list){
-    S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill);
+    S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill); S.add(L.mask && L.mask.on ? L.mask.mid + (L.mask.inv ? 'i' : '') : 0); S.add(maskRev);
     for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit); if (g.shadow && g.shadow.on) S.add(JSON.stringify(g.shadow));
       S.add(e.flipX); S.add(e.flipY); S.add(e.tile); S.add(e.cl); S.add(e.ct); S.add(e.cr); S.add(e.cb); S.add(e.alpha); S.add(e.H); S.add(e.S); S.add(e.V); }
   }
@@ -197,7 +198,8 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0]){
     const LU = post && LUs[L.i];
     const ek = (1 + zoomE) * (1 + (LU && LU.zoomE || 0));   // Zoom › Each: every GIF scaled around its own centre
     if (Math.abs(ek - 1) > 1e-4) items = items.map(it => ({ ...it, e: { ...it.e, sx: it.e.sx * ek, sy: it.e.sy * ek } }));
-    if (L.i === 0 && L.fillOn && L.fill && !LU){       // the Background layer's colour, under its GIFs
+    const MK = L.mask && L.mask.on ? L.mask : null;   // a painted mask: the layer is flattened first, then the mask cuts it
+    if (L.i === 0 && L.fillOn && L.fill && !LU && !MK){   // the Background layer's colour, under its GIFs
       ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     }
     if (LU){                                         // effects on this layer: flatten it (its colour too), run them, then blend
@@ -205,13 +207,19 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0]){
       if (L.i === 0 && L.fillOn && L.fill){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
       for (const { g, e, fi } of items) drawClip(b, e, g, fxImage(g, fi, e));
       post.run(LU, b.canvas, b, slot0 + L.i);   // the scene being left (and Prep's preview) keep their own Feedback history
+      if (MK) applyMask(b, MK);
       ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend; ctx.drawImage(b.canvas, 0, 0, W, H); ctx.restore();
       continue;
     }
     const vis = items.filter(it => onScreen(it.e, it.g));
-    if (!vis.length) continue;
+    if (!vis.length && !(MK && L.i === 0 && L.fillOn && L.fill)) continue;
     ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend;
-    if ((vis.length === 1 && !MASK_BLENDS.has(L.blend)) || (L.blend === 'source-over' && L.opacity >= 1)){   // (a mask is always flattened first: each draw of a GIF, its shadow, its tiles, would cut on its own)
+    if (MK){                                       // masked: flatten (the Background's colour too), cut, then blend once
+      const b = lbufs[L.i]; b.setTransform(RS, 0, 0, RS, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
+      if (L.i === 0 && L.fillOn && L.fill){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
+      for (const { g, e, fi } of vis) drawClip(b, e, g, fxImage(g, fi, e));
+      applyMask(b, MK); ctx.drawImage(b.canvas, 0, 0, W, H);
+    } else if ((vis.length === 1 && !MASK_BLENDS.has(L.blend)) || (L.blend === 'source-over' && L.opacity >= 1)){   // (a mask is always flattened first: each draw of a GIF, its shadow, its tiles, would cut on its own)
       // one GIF, or Normal at full opacity: identical result drawn straight onto the target (no buffer clear + composite)
       for (const { g, e, fi } of vis) drawClip(ctx, e, g, fxImage(g, fi, e));
     } else {                                       // several: flatten into the layer buffer, then blend once

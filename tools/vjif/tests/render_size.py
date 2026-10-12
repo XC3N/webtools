@@ -9,8 +9,8 @@ async def run(p, rs):
     for i,f in enumerate(['ring.gif','busy.gif']):
       await pg.evaluate(f"fileTarget={i}"); await pg.set_input_files('#fileIn',[str(S/f)]); await pg.wait_for_function(f"pads[{i}].gif")
     await pg.keyboard.press('KeyQ'); await pg.evaluate("setTarget(1)"); await pg.keyboard.press('KeyW'); await pg.wait_for_timeout(300)
-    await pg.evaluate("layers[1].clips[0].x = 300; layers[1].clips[0].sx = layers[1].clips[0].sy = 0.6; fxCfg[9].style='scan'; fxCfg[9].mode='latch'; fxCfg[2].target=1;")
-    await pg.keyboard.press('F10'); await pg.wait_for_timeout(400)
+    await pg.evaluate("layers[1].clips[0].x = 300; layers[1].clips[0].sx = layers[1].clips[0].sy = 0.6; fxCfg[FXI.rgb].style='scan'; fxCfg[FXI.rgb].mode='latch'; fxCfg[FXI.strobe].target=1;")
+    await pg.keyboard.press('F11'); await pg.wait_for_timeout(400)
     print(rs, 'canvas', await pg.evaluate("[master.width, master.height, CW, CH, W, H]"))
     t = await pg.evaluate("""async () => { let s = 0; for (let i = 0; i < 40; i++){ await new Promise(r => requestAnimationFrame(r)); redraw.all = true; const a = performance.now(); drawFrame(performance.now()); s += performance.now() - a; } return (s / 40).toFixed(1); }""")
     print(rs, 'drawFrame ms', t)

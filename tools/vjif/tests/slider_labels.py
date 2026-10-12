@@ -12,7 +12,7 @@ async def main():
       pg=await b.new_page(viewport={'width':w,'height':h}); errs=[]; pg.on('pageerror',lambda e:errs.append(str(e)))
       await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()")
       await pg.evaluate("fileTarget=0"); await pg.set_input_files('#fileIn',[str(S/'busy.gif')]); await pg.wait_for_function("pads[0].gif")
-      await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(300); await pg.evaluate("selectFx(9)")
+      await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(300); await pg.evaluate("selectFx(FXI.rgb)")
       res=set(await pg.evaluate(JS))
       for tab in ['gTabs [data-v=colour]','gTabs [data-v=auto]','gTabs [data-v=time]']:
         if await pg.locator('#'+tab).count(): await pg.click('#'+tab); await pg.wait_for_timeout(150); res|=set(await pg.evaluate(JS))

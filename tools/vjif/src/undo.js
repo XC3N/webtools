@@ -12,7 +12,7 @@ window.addEventListener('keydown', e => { touched.save++; if (!PLAY_KEYS.has(e.c
 function histState(){
   return JSON.stringify({
     sid: sidNow(),
-    layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, fillOn: !!L.fillOn, fill: L.fill,
+    layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, fillOn: !!L.fillOn, fill: L.fill, lock: !!L.lock, mask: L.mask ? L.mask.mid : 0,
       clips: L.clips.map(c => ({ id: c.id, pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
     gifs: pads.map(p => p.gif ? Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) : null),
   });
@@ -77,7 +77,7 @@ function histWhat(e, cur){
   const out = new Set(), same = (x, y) => JSON.stringify(x) === JSON.stringify(y), pl = k => pads[k] ? pads[k].label : '?';
   a.layers.forEach((la, li) => { const lb = b.layers[li]; if (!lb) return; const n = LNAMES[li];
     if (la.opacity !== lb.opacity) out.add(`${n} opacity`); if (la.blend !== lb.blend) out.add(`${n} blend`);
-    if (la.fillOn !== lb.fillOn || la.fill !== lb.fill) out.add(`${n} fill`);
+    if (la.fillOn !== lb.fillOn || la.fill !== lb.fill) out.add(`${n} fill`); if (la.mask !== lb.mask) out.add(`${n} mask`); if (la.lock !== lb.lock) out.add(`${n} lock`);
     const ib = new Map(lb.clips.map(c => [c.id, c])), ia = new Set(la.clips.map(c => c.id));
     la.clips.forEach(c => { const d = ib.get(c.id); if (!d) { out.add(`${pl(c.pad)} on ${n}`); return; }
       Object.keys(XF_WORDS).forEach(k => { if (!same(c[k], d[k])) out.add(`${pl(c.pad)} ${XF_WORDS[k]}`); }); });
@@ -118,7 +118,7 @@ function applyHist(s){
   layers.forEach(L => L.clips.forEach(c => byId.set(c.id, c)));      // reuse live clips so playback doesn't restart
   st.layers.forEach((sl, li) => {
     const L = layers[li], prevSel = L.sel;
-    Object.assign(L, { opacity: sl.opacity, blend: sl.blend, mode: sl.mode, fillOn: !!sl.fillOn, fill: sl.fill || L.fill });
+    Object.assign(L, { opacity: sl.opacity, blend: sl.blend, mode: sl.mode, fillOn: !!sl.fillOn, fill: sl.fill || L.fill, lock: !!sl.lock, mask: sl.mask ? maskReg.get(sl.mask) || L.mask : null });
     L.clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif)
       .map(c => Object.assign(byId.get(c.id) || Object.assign(newClip(c.pad), { startTime: now, startBeat: clock.beat }), c));
     L.sel = L.clips.includes(prevSel) ? prevSel : null;

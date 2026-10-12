@@ -4,6 +4,34 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.78.0 — 2026-10-12
+
+### Layers
+- Painted masks: the new button on a layer card opens a bar over the preview; paint where that layer is hidden with a freehand brush, rectangles or ellipses (Ctrl erases; Size and Soft; Invert shows only what's painted; On / off; Clear). One mask per layer in each scene, saved with the set, each stroke an undo step. The bar moves by its title; Esc or Done ends painting.
+- Lock is per scene now, like the layer's other settings.
+
+### Effects
+- The effect pads are grouped by row: F1–F4 the picture's look (Mono, Colour, Posterize, Strobe), F5–F8 movement (Zoom, Shake, Wobble, Mirror), F9–F12 texture and screen (Pixel, Glitch, CRT, Feedback). Sets, presets, scene effects, your saved defaults and MIDI mappings follow their effect to its new key.
+- Caps Lock + Shift + numpad on a preset that already has effects asks for a second press before replacing them.
+- FX Local: during a transition the scene being left keeps its own effects (the new scene's, a palette say, used to show on it as soon as the transition started).
+
+### Transitions
+- Slide › Bands: the frame splits into horizontal bands and the new scene's slide in one after another, from the left and the right in turn (Options: 4, 6, 8 or 12 bands).
+- Stutter › Ramp: 8 shots, each shorter than the one before.
+- TV › Channel: the number stays on for 1.6 s after the picture is back, then fades.
+
+### Preview
+- Stick, turning a GIF: it also catches at the angle of any slanted guide on show. The line it caught and the knob light up; moving, the point of the GIF that's hooked shows in yellow.
+
+### GIFs
+- Shadow › Turn: the shadow turns with the GIF (off: the light stays put, as before).
+- Key › Pick sits in the Key heading (there when the section is folded); a folded section hides its Reset; a section changed from its defaults shows its arrow in the signal colour.
+- Auto: the note under the scope is gone (it's the tooltip of the target row now).
+
+### Interface
+- Turning the mouse wheel over the tempo hides the pointer (it covered the digits) until the mouse moves.
+- Dropping a pad on another scene's tile copies it to that scene's first empty pad, without opening it.
+
 ## 0.77.0 — 2026-10-12
 
 ### Effects

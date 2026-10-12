@@ -103,7 +103,7 @@ function setClockSrc(v){
 // effect amount) follow a CC. Mappings belong to this browser (they describe the controller, not the set).
 const midiCtl = { map: [], input: 'all', learning: false, target: null, inputs: [], cc: {} };
 { const o = Prefs.json('vjif-midi'); if (o){ midiCtl.map = o.map || []; midiCtl.input = o.input || 'all'; midiCtl.inputName = o.inputName || ''; } }
-const saveMidiCtl = () => Prefs.setJson('vjif-midi', { map: midiCtl.map, input: midiCtl.input, inputName: midiCtl.inputName || '' });
+const saveMidiCtl = () => Prefs.setJson('vjif-midi', { map: midiCtl.map, input: midiCtl.input, inputName: midiCtl.inputName || '', fxOrd: 2 });   // fxOrd: effect slots in the 0.78 order
 async function getMidi(){
   if (midiAccess) return midiAccess;
   if (!navigator.requestMIDIAccess) throw new Error('Web MIDI is not available in this browser');

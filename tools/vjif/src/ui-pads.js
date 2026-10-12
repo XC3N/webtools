@@ -77,6 +77,14 @@ function padDragEnd(e, i){
   pads.forEach(p => p.el.classList.remove('drop')); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging', 'padcopy');
   if (!d || d.i !== i || !d.moved) return false;
   pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
+  const tt = e && document.elementFromPoint(e.clientX, e.clientY), sct = tt && tt.closest('#scenes .scene');
+  if (sct){                                          // let go on a scene tile: a copy onto that scene's first empty pad (you stay where you are)
+    const si = +sct.dataset.i, g = d.carry || pads[i].gif; if (!g || (si === sceneIdx && !d.carry)) return true;
+    const j = nextEmptyIn(si); if (j < 0) return toast(`Scene ${si + 1}'s 18 pads are full`), true;
+    if (si === sceneIdx){ commit(); pads[j].gif = cloneInst(g); pushStep({ kind: 'swap', pad: j, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI(); afterPadChange(j); }
+    else { const sc = scenes[si] || (scenes[si] = emptyScene()); sc.pads[j] = cloneInst(g); renderScenes(); updateMem(); }
+    toast2(`Copied to scene ${si + 1}, pad ${PAD_LABELS[j]}`); return true;
+  }
   const o = e && padDropAt(e); if (!o) return true;
   if (d.carry){                                      // carried into another scene: a copy onto an empty pad there
     if (!o.classList.contains('pad')) return toast('Drop it on an empty pad to copy it into this scene'), true;

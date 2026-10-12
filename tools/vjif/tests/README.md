@@ -55,3 +55,4 @@ python3 tools/vjif/tests/run_all.py golden crt_stack -v   # some tests, with the
 | scene_tools | Ctrl+drag a scene onto the empty one you're on; Prep goes live on the downbeat; Channel number modes and the Options row. |
 | ui_bits | F-keys don't move the effect editor; mode by key; envelope reset; Rec ▾; drop shadow and crop + tile draw. |
 | feature_bits | 0.68–0.73: layer solo, frames with hidden / covered windows, BRB linked to Prep, count-in, transition regroup and options, border deselect, Ctrl hush, folding sections, Swap › Pick, LFO gap, mask modes, shadow crop. |
+| mask_paint | 0.78: painted layer masks: freehand and ellipse strokes, saved with the set, undo per stroke, read back. |

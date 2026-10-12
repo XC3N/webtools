@@ -2,7 +2,8 @@
 // transition families, each with its styles (like the effects); a preset = family + style + its settings
 const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['tv', 'TV'], ['stutter', 'Stutter']];
 const TR_STYLES = {
-  stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes on the beat grid, faster and faster (1/8, 1/16, 1/32), landing on the new one'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
+  stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes, 8 shots, faster and faster (on the 1/32 grid), landing on the new one'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
+  slide: [['push', 'Push', 'The new scene pushes the old one out (Direction)'], ['bands', 'Bands', "The frame splits into horizontal bands: the new scene's slide in one after another, from the left and the right in turn (Options: how many)"]],
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
   wipe: [['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)'],
@@ -33,6 +34,7 @@ let trPresets = trDefaults(), trSel = 1, transCfg = trPresets[trSel];
 function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
 let trans = null;   // { cfg, from: layer states, gifs: their pads, b0: start beat, len, melt, free: GIF copies to let go after }
 function makeTrans(from, gifs, beat, free = null){
+  chOsd = null;                                      // a new transition: the last channel number goes
   if (transCfg.type === 'cut') return null;
   const cfg = { ...transCfg }; if (cfg.dir === 'rand') cfg.dir = ['left', 'right', 'up', 'down'][Math.floor(Math.random() * 4)];   // Options › Rnd: a direction picked each time
   return { cfg, from, gifs, b0: beat, len: transCfg.len, free, melt: isMelt(transCfg) ? meltTable(transCfg.px) : null, dis: null };   // (Dissolve's CPU grid is made when it's first needed: only without WebGL)
@@ -100,6 +102,14 @@ const TR_DRAW = {
     m.drawImage(A, 0, 0); m.globalAlpha = e; m.drawImage(B, 0, 0);
   },
   slide(m, A, B, e, T, dx, dy){ // the new scene pushes the old one out
+    if (trStyleOf(T) === 'bands'){                   // Bands: one after another, each from the other side, overlapping a little
+      const n = +(T.bands || 6), bh = H / n, lag = 0.55 / Math.max(1, n - 1), dur = 0.45;
+      m.drawImage(A, 0, 0);
+      for (let i = 0; i < n; i++){ const q = clamp((e - i * lag) / dur, 0, 1); if (q <= 0) continue;
+        const k = 1 - (1 - q) ** 3, x = (i % 2 ? 1 : -1) * (1 - k) * W, y0 = Math.floor(i * bh), y1 = Math.ceil((i + 1) * bh);
+        m.drawImage(B, 0, y0 * B.height / H, B.width, (y1 - y0) * B.height / H, x, y0, W, y1 - y0); }
+      return;
+    }
     m.drawImage(A, dx * e * W, dy * e * H); m.drawImage(B, dx * (e - 1) * W, dy * (e - 1) * H);
   },
   wipe(m, A, B, e, T, dx, dy){ // an edge sweeps across (or a circle opens), revealing the new scene
@@ -122,7 +132,10 @@ const TR_DRAW = {
   stutter(m, A, B, e, T, dx, dy){ // hard cuts between the two scenes on the beat grid, ending on the new one
     const L = trans ? trans.len : 4, t = e * L, ramp = trStyleOf(T) !== 'even';
     let step = +(T.grid || 0.25), t0 = 0;            // beats per cut (0.25 = a 1/16 note; Even: Options picks it)
-    if (ramp){ if (t < L / 2){ step = 0.5; } else if (t < L * 0.75){ step = 0.25; t0 = L / 2; } else { step = 0.125; t0 = L * 0.75; } }
+    if (ramp){                                       // Ramp: 8 shots, each shorter than the one before, cut on the 1/32 grid, the last one the new scene
+      let k = 0, at = 0, w = 0; for (let i = 1; i < 8; i++){ w += 12 - i; at = Math.max(at + 0.125, Math.round(w / 60 * L * 8) / 8); if (t >= at - 1e-6) k = i; }   // shots 11 : 10 : … : 4 of the length
+      m.drawImage(k % 2 ? B : A, 0, 0); return;
+    }
     let k = Math.floor((t - t0) / step + 1e-6);
     if (T.swing){ const pr = 2 * step, n = Math.floor((t - t0) / pr + 1e-6), r = t - t0 - n * pr; k = 2 * n + (r < pr * 0.62 ? 0 : 1); }   // Swing: long-short pairs (62 / 38)
     const last = e >= 1 - step / L / 2;
@@ -218,6 +231,7 @@ const TR_DRAW = {
       if (e >= inA){                                // the channel number, OSD green, top right (it stays until the transition ends)
         const txt = String(ch), p = Math.max(2, Math.round(H * 0.013)), cw = 6 * p, x0 = Math.round(W - H * 0.06 - txt.length * cw + p), y0 = Math.round(H * 0.06);
         trOverlay = [osdImage(txt, p), x0 - 2 * p, y0 - 2 * p];   // drawn once per number and size; put on after the screen effects (a TV's own text: no palette, no glitch on it)
+        chOsd = { o: trOverlay, until: performance.now() + CH_OSD_HOLD };   // and it stays a little after the picture is back
       }
       return; }
     if (gst === 'vhs'){                            // a tape switching channels: the picture tears up, dissolves into snow, and the new one comes out of it
@@ -291,8 +305,12 @@ function trSplit(m, T, tear){
   m.globalCompositeOperation = 'lighter'; m.drawImage(x.canvas, d, 0); m.restore();
 }
 // what a transition puts on top of everything, after the screen effects (Channel's number)
-let trOverlay = null;
-function drawTrOverlay(){ if (!trOverlay) return; const [im, x, y] = trOverlay; trOverlay = null; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(im, x, y); }
+let trOverlay = null, chOsd = null;
+const CH_OSD_HOLD = 1600;                            // ms the channel number stays on after a TV › Channel transition (its last 300 fade)
+function drawTrOverlay(){
+  let o = trOverlay, a = 1; trOverlay = null;
+  if (!o && chOsd){ const left = chOsd.until - performance.now(); if (left <= 0) chOsd = null; else { o = chOsd.o; a = Math.min(1, left / 300); } sceneSig.forget(); prepOutSig.forget(); }   // (the next frame is drawn again, until it's gone)
+  if (!o) return; const [im, x, y] = o; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = a; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(im, x, y); mctx.globalAlpha = 1; }
 function composeTransition(e, T){
   trOverlay = null;
   const m = mctx; m.setTransform(1, 0, 0, 1, 0, 0); m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1;
