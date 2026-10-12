@@ -129,5 +129,8 @@ async def main():
     sw = await pg.evaluate("[hsvOn({ hsv: { h: 10, s: 1, v: 1, off: true } }), hsvOn({ hsv: { h: 10, s: 1, v: 1 } }), palOn({ pal: { i: 2, off: true } }), palOn({ pal: { i: 2 } }), swapOn({ swap: [1], swapOff: true }), swapOn({ swap: [1] }), ['fOn', 'tOn', 'hOn', 'pOn', 'swOn'].every(id => !!document.getElementById(id))]")
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
     print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg
+    d82 = await pg.evaluate("""(() => { selectFx(FXI.colour); const C = fxCfg[FXI.colour], was = C.style; C.style = 'pal'; syncFxUI(); const a = $('#fxSizeRow label').textContent;
+      C.style = 'flip'; syncFxUI(); const b2 = $('#fxSizeRow label').textContent; C.style = was; syncFxUI(); return [a, b2, FX_PALS.at(-1).n, FX_PALS.at(-1).c.length, 'dots' in fxEntry(FXI.colour)]; })()""")
+    print('0.82', d82); assert d82 == ['Dots', 'Size', 'ZX Spectrum', 15, True], d82
     await b.close()
 asyncio.run(main())

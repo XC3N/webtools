@@ -4,7 +4,7 @@ const FX_KEYS = Array.from({ length: 12 }, (_, i) => 'F' + (i + 1)), FX_LABELS =
 // { id, name, title, mode (default), rate (uses Rate), styles: [[value, label, title]] }
 const FX_DEFS = [
   { id: 'mono', name: 'Mono', title: 'Black and white', mode: 'hold', styles: [['grey', 'Grey', 'Shades of grey'], ['thresh', 'Threshold', 'Hard black and white'], ['dither', 'Dither', 'Black and white dots, ordered dither (1-bit, like an old Mac screen); Size = dot size']], size: true, sizeDef: 2, sizeFor: ['dither'] },
-  { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['flip', 'Flip', 'Hue turned halfway round'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)'], ['invert', 'Invert', 'Negative colours'], ['pal', 'Palette', 'Every colour snapped to the nearest of an old computer or console palette (pick it with Palette)']] },
+  { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['flip', 'Flip', 'Hue turned halfway round'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)'], ['invert', 'Invert', 'Negative colours'], ['pal', 'Palette', 'Every colour snapped to the nearest of an old computer or console palette (pick it with Palette; Dots: a dot-matrix screen, like a Game Boy\'s)']], size: true, sizeFor: ['pal'] },
   { id: 'poster', name: 'Posterize', title: 'Flat colours / outlines', mode: 'hold', styles: [['bands', 'Bands', 'Fewer colours, flat bands'], ['edges', 'Edges', 'Neon outlines on black']] },
   { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black']] },
   { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in, around the middle of the frame'], ['out', 'Out', 'Punches out, around the middle of the frame'], ['eachin', 'Each in', 'Every GIF punches in around its own centre'], ['eachout', 'Each out', 'Every GIF punches out around its own centre']] },
@@ -44,6 +44,7 @@ const FX_PALS = [
   ['GB', 'Game Boy (1989): four greens', '0f380f 306230 8bac0f 9bbc0f'],
   ['GB Pocket', 'Game Boy Pocket: four olive greys', '1f1f1f 4d533c 8b956d c4cfa1'],
   ['GB Light', 'Game Boy Light, backlight on: four blue-greens', '004f3b 00694a 009a71 00b581'],
+  ['ZX Spectrum', 'Sinclair ZX Spectrum: black, then blue, red, magenta, green, cyan, yellow, white, plain and bright', '000000 0000d7 d70000 d700d7 00d700 00d7d7 d7d700 d7d7d7 0000ff ff0000 ff00ff 00ff00 00ffff ffff00 ffffff'],
 ].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)); return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0) }; });
 // Colour › Palette: how the in-between shades are drawn (the Size row stands in for it). Scatter: noise added before
 // snapping (soft, many colours touch). Ordered: each pixel picks one of the two nearest palette colours by a 4×4 Bayer
@@ -56,7 +57,9 @@ const FX_DITH = [[0, 'off'], ...Array.from({ length: 10 }, (_, j) => [(j + 1) / 
 const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   // 0–200 %
 // With several CRT styles stacked, the one in focus (right-click a style, or the last one switched on) decides: VHS → Dropouts, Scanlines / Crypt → Size
 const fxFocus = {};   // effect id → style in focus (editor state, not saved)
+const FX_DOTS = [[0, 'off'], [2, '2 px'], [3, '3 px'], [4, '4 px'], [5, '5 px'], [6, '6 px'], [8, '8 px'], [10, '10 px'], [12, '12 px'], [16, '16 px']];
 function sizeAlt(d, style){
+  if (d && d.id === 'colour') return style !== 'pal' ? null : { label: 'Dots', key: 'dots', def: 0, list: FX_DOTS, title: () => 'Dots: the picture as a dot-matrix screen (Game Boy LCD): blocks of this size with thin gaps in the palette\'s lightest colour (off: none)' };
   if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+'), f = P.includes(fxFocus[d.id]) ? fxFocus[d.id] : null;
   if (f === 'scan' || f === 'crypt') return null;
   if (f !== 'vhs' && (!P.includes('vhs') || P.includes('scan') || P.includes('crypt'))) return null;
@@ -182,7 +185,7 @@ function tgtToggle(t, li, solo){               // a click on a layer button: in 
   const L = [...S].sort(); return L.length === 1 ? L[0] : L;   // all four is still "each layer", which isn't the same as All (the blended picture)
 }
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => c.amt), rate: X.cfg.map(c => c.rate), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => c.size || FX_DEFS[i].sizeDef || 64), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), dots: X.cfg.map(c => c.dots || 0) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * C.amt; if (v > 0){ for (const k of tgtList(C.target)){ const m = M.get(k); m.lv[i] = v; m.env[i] = l; } } });
   X.pre.forEach((P, k) => {
@@ -190,14 +193,14 @@ function fxMix(b, X = fxLive()){
     for (const [i, e] of Object.entries(P.fx)){
       const v = l * e.amt;
       for (const k of tgtList(e.target)){ const m = M.get(k);
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; } }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = e.amt; m.rate[i] = e.rate; if (e.style) m.style[i] = e.style; if (e.size) m.size[i] = e.size; if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.dots != null) m.dots[i] = e.dots; } }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
 const FX_U_IDX = ['mono', 'colour', 'strobe', 'poster', 'zoom', 'shake', 'wobble', 'mirror', 'glitch', 'rgb', 'pixel', 'feedback'].map(k => FXI[k]);
-function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat, dots }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
   const [MO, CO, ST, PO, ZO, SH, WO, MI, GL, CR, PX, FB] = FX_U_IDX;
@@ -207,7 +210,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], monoSz: size[MO],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && lv[CO] > 0.001 && nm(CO) === 'pal' ? dots[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = 0.1 * s;
@@ -252,7 +255,7 @@ function makePost(){
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time, beat;
-      uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP,
+      uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP, palDot,
                     glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, shakeZ;
       uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
@@ -269,6 +272,7 @@ ${FX_GLSL}
           if (IS(wobS, S_wobble_wave)){ p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wob; p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wob; }
           else { vec2 q = (p - 0.5) * a; float r = length(q); p += q / max(r, 1e-4) / a * sin(r * 40.0 - wobPh) * 0.012 * wob; }
         }
+        if (palDot > 0.5){ vec2 cell = res / palDot; p = (floor(p * cell) + 0.5) / cell; }   // Palette › Dots: one colour per dot
         if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (IS(pixS, S_pixel_wide)) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
         return p;
       }
@@ -324,7 +328,10 @@ ${FX_GLSL}
       vec3 look(vec3 c){                              // the picture's own look: Mono, then Colour (flip / cycle / invert / palette)
         float y = dot(c, vec3(0.299, 0.587, 0.114));
         c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
-        if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c); }   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
+        if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c);   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
+            if (palDot > 0.5){ vec2 f = mod(gl_FragCoord.xy, palDot); float gw = max(1.0, floor(palDot * 0.2));   // Dots: thin gaps between the dots, in the palette's lightest colour (the LCD's own)
+              vec3 bg = pal[0]; float by = -1.0; for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; float y = dot(pal[i], vec3(0.299, 0.587, 0.114)); if (y > by){ by = y; bg = pal[i]; } }
+              if (f.x < gw || f.y < gw) c = mix(c, bg, 0.7 * colr); } }
           else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
         return c;
       }
@@ -498,8 +505,8 @@ ${FX_GLSL}
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); return { t, f }; };
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
-    const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz']);   // sizes given in canvas pixels
-    const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP',
+    const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz', 'palDot']);   // sizes given in canvas pixels
+    const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP', 'palDot',
                    'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
@@ -764,16 +771,14 @@ function drawOverlay(gh = ghostList()){
     if (drag.snap.y != null){ const Y = Math.round((view.y + drag.snap.y * view.h / H) * dpr) + 0.5; pctx.moveTo(view.x * dpr, Y); pctx.lineTo((view.x + view.w) * dpr, Y); }
     if (drag.snap.line){ const [x0, y0, x1, y1] = drag.snap.line, Q = (x, y) => [(view.x + x * view.w / W) * dpr, (view.y + y * view.h / H) * dpr]; pctx.moveTo(...Q(x0, y0)); pctx.lineTo(...Q(x1, y1)); }
     pctx.stroke();
-    if (drag.snap.p){ pctx.fillStyle = '#ffd400'; for (let i = 0; i < drag.snap.p.length; i += 2){ pctx.beginPath(); pctx.arc((view.x + drag.snap.p[i] * view.w / W) * dpr, (view.y + drag.snap.p[i + 1] * view.h / H) * dpr, 4 * dpr, 0, Math.PI * 2); pctx.fill(); } }   // the point of the GIF that's hooked
     pctx.restore();
   }
-  if (drag && drag.type === 'rot' && drag.snapRot){         // turning, caught: the line(s) at that angle in pink, the knob in yellow
+  if (drag && drag.type === 'rot' && drag.snapRot){         // turning, caught: the line(s) at that angle in pink (the knob turns yellow, below)
     const S = drag.snapRot, Q = (x, y) => [(view.x + x * view.w / W) * dpr, (view.y + y * view.h / H) * dpr], c = drag.c, G = clipGeom(c);
     pctx.save(); pctx.strokeStyle = '#ff5bb0'; pctx.lineWidth = dpr; pctx.beginPath();
     if (S.lines.length) for (const [x0, y0, x1, y1] of S.lines){ pctx.moveTo(...Q(x0, y0)); pctx.lineTo(...Q(x1, y1)); }
     else if (G){ const a = S.a * Math.PI / 180, R = W + H; pctx.moveTo(...Q(G.cx - Math.cos(a) * R, G.cy - Math.sin(a) * R)); pctx.lineTo(...Q(G.cx + Math.cos(a) * R, G.cy + Math.sin(a) * R)); }
     pctx.stroke();
-    if (G){ const [kx, ky] = knobPos(G); pctx.fillStyle = '#ffd400'; pctx.beginPath(); pctx.arc(...Q(kx, ky), 6 * dpr, 0, Math.PI * 2); pctx.fill(); }
     pctx.restore();
   }
   if (format === '9:16' && pvOpt.guides.safe && !pvOpt.gHide){                // where Reels / TikTok / Shorts put their own buttons and captions (approximate)
@@ -791,12 +796,18 @@ function drawOverlay(gh = ghostList()){
     pctx.lineWidth = (c === sel ? 1.5 : 1) * dpr; pctx.setLineDash(c === sel ? [] : [5*dpr, 4*dpr]);
     pctx.globalAlpha = c === sel ? 1 : 0.6; outline(G, k);
     if (c === sel && !L.lock && !maskEd){   // (painting a mask: no handles)                       // (a locked layer: its frame, no handles)
-      pctx.fillStyle = '#000'; const s = 4 * dpr;
-      for (const h of HANDLES){ const [x, y] = toWorld(G, h[0]*G.hw, h[1]*G.hh); pctx.fillRect(x*k - s, y*k - s, 2*s, 2*s); pctx.strokeRect(x*k - s, y*k - s, 2*s, 2*s); }
+      // stuck to a guide while moving: the handles (and the centre) lying on the lit line turn yellow; turning, caught: the knob
+      const HK = '#ffd400', sn = drag && drag.c === c && drag.snap, on = (x, y) => { if (!sn) return false; const e = 0.75;
+        if (sn.x != null && Math.abs(x - sn.x) < e) return true; if (sn.y != null && Math.abs(y - sn.y) < e) return true;
+        if (sn.line){ const [x0, y0, x1, y1] = sn.line, dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, t = clamp(((x - x0) * dx + (y - y0) * dy) / L2, 0, 1); if (Math.hypot(x0 + t * dx - x, y0 + t * dy - y) < e) return true; }
+        return false; };
+      const s = 4 * dpr;
+      for (const h of HANDLES){ const [x, y] = toWorld(G, h[0]*G.hw, h[1]*G.hh); pctx.fillStyle = on(x, y) ? HK : '#000'; pctx.fillRect(x*k - s, y*k - s, 2*s, 2*s); pctx.strokeRect(x*k - s, y*k - s, 2*s, 2*s); }
       const [tx, ty] = toWorld(G, 0, -G.hh), [kx, ky] = knobPos(G);
       pctx.beginPath(); pctx.moveTo(tx*k, ty*k); pctx.lineTo(kx*k, ky*k); pctx.stroke();
-      pctx.beginPath(); pctx.arc(kx*k, ky*k, 5*dpr, 0, Math.PI*2); pctx.fillStyle = LCOL[target]; pctx.fill();
-      const cs = 5 * dpr; pctx.beginPath(); pctx.moveTo(G.cx*k - cs, G.cy*k); pctx.lineTo(G.cx*k + cs, G.cy*k); pctx.moveTo(G.cx*k, G.cy*k - cs); pctx.lineTo(G.cx*k, G.cy*k + cs); pctx.stroke();   // its centre (what sticks to slanted guides)
+      pctx.beginPath(); pctx.arc(kx*k, ky*k, 5*dpr, 0, Math.PI*2); pctx.fillStyle = drag && drag.c === c && drag.type === 'rot' && drag.snapRot ? HK : LCOL[target]; pctx.fill();
+      const cs = 5 * dpr, ch = on(G.cx, G.cy); pctx.save(); if (ch){ pctx.strokeStyle = HK; pctx.lineWidth = 2 * dpr; }
+      pctx.beginPath(); pctx.moveTo(G.cx*k - cs, G.cy*k); pctx.lineTo(G.cx*k + cs, G.cy*k); pctx.moveTo(G.cx*k, G.cy*k - cs); pctx.lineTo(G.cx*k, G.cy*k + cs); pctx.stroke(); pctx.restore();   // its centre (what sticks to slanted guides)
     }
   }
   pctx.restore();

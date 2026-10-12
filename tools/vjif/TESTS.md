@@ -66,7 +66,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {fxmodekey} **Mode by key** (0.65) — hold F2, press Ins / Home / PgUp: Hold / Hit / Latch. F-keys don't move the editor.
 - [ ] {envreset} **Envelope reset** (0.65) — the ↺ above the envelope.
 - [x] {vhsblur} **VHS soft at low wear** (0.65) — CRT › VHS at 5 %: the picture is already soft and smeared.
-- [ ] {shadow} **GIF drop shadow** (0.66) — a GIF with transparency, GIF › Colour › Shadow: offset / blur / opacity / colour; it stays put when the GIF rotates.
+- [ ] {shadow} **GIF drop shadow** (0.66, level crop 0.82) — a GIF with transparency, GIF › Colour › Shadow: offset / blur / opacity / colour; Crop 50%, then turn the GIF: the shadow still only shows under it (the crop stays level), with Turn with the GIF off.
 - [ ] {croptile} **Crop + tile** (0.66) — crop a GIF, then Tile: the cropped part repeats.
 - [x] {fxlocal2} **FX Local, fresh scenes** (0.66) — FX Local, go to a scene never visited in Local: no effects on. ⏻ turns everything off.
 - [x] {toastpos} **Notes above the preview** (0.66) — any note (e.g. undo) appears between the layer cards and the preview.
@@ -83,7 +83,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {1iff1fyq0m9ucq0tcjit} **Border click deselects** (0.70) — click in the grey border around the canvas, on nothing: no GIF selected, and it stays so (a big GIF sticking out doesn't get picked).
 - [x] {0lme81rrpjbxw13t1i1o} **Music Play stays lit** (0.70) — Play: lit; Pause: still lit (play icon); Stop: off.
 - [x] {vhspal} **VHS / Phosphor over a palette** (0.70) — latch Colour › Palette, add CRT › VHS + Scanlines (or Phosphor): only palette colours, no original colours showing through.
-- [ ] {18g1ehdwbwsh9iit2nzy} **Rotation sticks** (0.71, guides 0.78) — Stick on, turn a GIF: it catches at 0 / 45 / 90° and at the diagonal / perspective guides' angles; the caught line turns pink, the knob yellow. Moving: the hooked point shows yellow.
+- [ ] {18g1ehdwbwsh9iit2nzy} **Rotation sticks** (0.71, guides 0.78) — Stick on, turn a GIF: it catches at 0 / 45 / 90° and at the diagonal / perspective guides' angles; the caught line turns pink, the knob yellow. Moving (0.82): the handles (or the centre cross) lying on the lit guide turn yellow; no extra dot.
 - [ ] {envdef} **Envelope defaults** (0.71) — an effect in Hit: ↺ gives Gate 1/8, Release 1/8; in Hold / Latch: Release 1/32.
 - [ ] {ccmisycd54ppu6dwywvg} **Folding sections** (0.72) — click Shadow (GIF › Colour) or the Transform heading: it folds; click again: back. Still folded after a reload.
 - [ ] {sxli9h0fg4vdbo0jxj1i} **Swap › Pick** (0.72) — Swap colours › Pick, click a colour of the GIF in the preview: its swatch is selected and its row shows.
@@ -99,6 +99,8 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75) — GIF › Auto › Envelope: Depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Only on Zoom: a punch per hit (Attack 0, Decay 1/4).
 - [ ] {sr1ri9phf2p3eyg1ozhe} **Section switches** (0.80) — GIF › Play / Colour: each section's switch turns it off without losing its settings (Frames: every frame; Adjust, Palette, Swaps: skipped); a slider touched turns it back on.
 - [ ] {8y575napbddy9c5nf7e2} **Resets on the heading line** (0.80) — fold Transform / Adjust / Key: Reset (Key: Pick + Clear) still there and works.
+- [ ] {7fdu5ql2eznd4hr8idda} **Palette dots** (0.82) — Colour › Palette, Game Boy, Dots 4 px: the picture as an LCD grid, thin light gaps between the dots; Dots off: plain palette.
+- [ ] {qgbns6zmu4031jfa599t} **ZX Spectrum palette** (0.82) — Colour › Palette (and GIF › Colour › Palette): ZX Spectrum is last in the list; its 15 colours, plain and bright.
 - [ ] {0g5bim1rd8zzry16be4s} **Emptied scene's picture comes back** (0.79, 0.81) — select a scene, empty it (×), go to another scene, Ctrl+Z: the emptied scene's tile shows its picture again.
 - [ ] {4ulb8padwhpii6z6g25q} **Channel switched mid-transition** (0.81) — a Palette latched, TV › Channel: switch scene again before the number is gone: the snow and the new number keep their own colours, no palette on them.
 - [ ] {r71mg79hp3mhx0fvj3d3} **Glitch › Scramble is back** (0.81) — transitions: Glitch has Slices, Blocks, Scramble (the 0.78 look) and Corrupt.

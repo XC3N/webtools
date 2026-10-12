@@ -46,4 +46,6 @@ If these tools are useful to you, consider supporting the music at [xc3n.bandcam
 
 [PolyForm Shield 1.0.0](LICENSE.md): the source is here to read; anyone can use the tools free (gigs and paid work included), change them and share them, keeping the licence and its `Required Notice` lines with every copy. What's not allowed: selling the tools, or using the code for a product that competes with them. Copies published before October 12, 2026 were under the MIT License.
 
+Exception: **Bad MOPHO** (`tools/bad-mopho/`) and the shared code in `common/` stay under the [MIT License](tools/bad-mopho/LICENSE.md).
+
 The names "VJif" and "Bad MOPHO" and their logos aren't covered — forks need their own name. See [TRADEMARKS.md](TRADEMARKS.md).

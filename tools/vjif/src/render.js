@@ -103,16 +103,23 @@ function drawClip(ctx, c, g, img){
   const S = g.shadow, shOn = S && S.on && !c.tile && S.op > 0;
   let ox = S ? S.x : 0, oy = S ? S.y : 0; if (shOn && S.turn && c.rot){ const r = c.rot * Math.PI / 180, cs = Math.cos(r), sn = Math.sin(r); [ox, oy] = [ox * cs - oy * sn, ox * sn + oy * cs]; }   // Turn: the offset turns with the GIF   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
   if (shOn && S.cut > 0){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
-    const M = ctx.getTransform(), I = M.inverse(), vx = ox * dk, vy = oy * dk, ly = I.b * vx + I.d * vy, OFF = 1e5, y0 = -bh/2 + S.cut * bh + ly, sb = (S.soft ?? 0) * bh;
+    const M = ctx.getTransform(), I = M.inverse(), vx = ox * dk, vy = oy * dk, OFF = 1e5;
+    // where the cut runs: Turn on, across the GIF's own up / down; Turn off, level on screen across the GIF's outline as it stands
+    // (so a turned GIF's shadow still only shows at its bottom: it sits on the layer)
+    let y0, sb, scr = !S.turn;
+    if (scr){ const ys = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => M.b * u * bw / 2 + M.d * v * bh / 2 + M.f), top = Math.min(...ys), hh = Math.max(...ys) - top;
+      y0 = top + S.cut * hh + vy; sb = (S.soft ?? 0) * hh; }
+    else { const ly = I.b * vx + I.d * vy; y0 = -bh/2 + S.cut * bh + ly; sb = (S.soft ?? 0) * bh; }
     const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF; x.shadowOffsetY = vy - M.b * OFF; x.translate(OFF, 0); drawPlain(x, c, img, bw, bh); };
-    if (sb > 0){                                     // soft: drawn apart, faded in across the cut line (in the GIF's own up / down), then put down like the shadow would be
+    if (sb > 0){                                     // soft: drawn apart, faded in across the cut line, then put down like the shadow would be
       const { c: shCv, x: shX } = shadowScratch(ctx), cw = shCv.width, ch = shCv.height;
       shX.save(); shX.setTransform(1, 0, 0, 1, 0, 0); shX.globalCompositeOperation = 'source-over'; shX.globalAlpha = 1; shX.clearRect(0, 0, cw, ch);
       shX.setTransform(M); shX.imageSmoothingEnabled = !g.crisp; shX.save(); shadowOnly(shX); shX.restore();
+      if (scr) shX.setTransform(1, 0, 0, 1, 0, 0);
       const gr = shX.createLinearGradient(0, y0 - sb / 2, 0, y0 + sb / 2); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, '#000');
       shX.globalCompositeOperation = 'destination-in'; shX.fillStyle = gr; shX.fillRect(-OFF, -OFF, 2 * OFF, 2 * OFF); shX.restore();
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(shCv, 0, 0); ctx.restore();
-    } else { ctx.save(); ctx.beginPath(); ctx.rect(-OFF, y0, 2 * OFF, 2 * OFF); ctx.clip(); shadowOnly(ctx); ctx.restore(); }
+    } else { ctx.save(); if (scr) ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.beginPath(); ctx.rect(-OFF, y0, 2 * OFF, 2 * OFF); ctx.clip(); ctx.setTransform(M); shadowOnly(ctx); ctx.restore(); }
   } else if (shOn){ ctx.shadowColor = hexA(S.col, S.op); ctx.shadowBlur = S.blur * dk; ctx.shadowOffsetX = ox * dk; ctx.shadowOffsetY = oy * dk; }
   if (c.tile){
     // fill exactly the frame, with the clip's whole transform folded into the pattern; a crop tiles the cropped part

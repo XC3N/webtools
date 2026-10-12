@@ -3,7 +3,7 @@ Required Notice: VJif and Bad MOPHO are designed by XC3N; the code was written b
 Required Notice: Support the music: https://xc3n.bandcamp.com
 Licensor Line of Business: browser tools for music and visuals: VJif (GIF VJ software) and Bad MOPHO (synthesizer editor) (https://github.com/XC3N/webtools)
 
-Third-party code keeps its own licence: common/vendor/mp4-muxer.js is MIT (see its header and CREDITS.md).
+Exceptions: Bad MOPHO (`tools/bad-mopho/`) and the shared code in `common/` are under the MIT License (see tools/bad-mopho/LICENSE.md). Third-party code keeps its own licence: common/vendor/mp4-muxer.js is MIT (see its header and CREDITS.md).
 Copies of this repository published before this licence (up to commit 1653956, October 2026) were under the MIT License.
 
 # PolyForm Shield License 1.0.0

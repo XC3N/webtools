@@ -4,6 +4,22 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.82.0 — 2026-10-12
+
+### Effects
+- Colour › Palette: Dots, a dot-matrix screen (the Game Boy's LCD): the picture in blocks of 2–16 px with thin gaps in the palette's lightest colour. It sits on the Size row, which Palette didn't use.
+- ZX Spectrum palette (15 colours: black, then the seven colours plain and bright), at the end of the list so saved palettes keep their place.
+
+### GIFs
+- Shadow › Crop with Turn with the GIF off: the crop line stays level on screen, across the GIF as it stands, so a turned GIF's shadow still only shows under it (it sits on the layer). With Turn on, the crop turns with the GIF as before.
+- Labels first, switch after: "Turn with the GIF [ ]", "Smooth scaling [ ]".
+
+### Preview
+- Stick: the handles (or the centre cross) that sit on the lit guide turn yellow, instead of a yellow dot drawn at the point hooked (which landed between two handles when two guides held).
+
+### Licence
+- Bad MOPHO and the shared code in `common/` are back under the MIT License; VJif and Logo Lab stay under PolyForm Shield.
+
 ## 0.81.0 — 2026-10-12
 
 ### Layers
