@@ -105,6 +105,7 @@ function renderScenes(){
 }
 $('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return;
   if (e.target.closest('.xdel')){ emptySceneAt(+b.dataset.i); return; }   // its ×
+  if (e.altKey && !e.ctrlKey && !e.metaKey){ const i = +b.dataset.i; nameEdit(b, sceneName(i), `Scene ${i + 1}`, v => setSceneName(i, v)); return; }   // Alt+click: name it (as right-click does)
   isRm(e) ? emptySceneAt(+b.dataset.i) : isDel(e) ? null : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
 // ---- BRB: scene changes by themselves every few bars, on the bar, while you step away ----
 const brb = (() => { const s = Prefs.json('vjif-brb', {});

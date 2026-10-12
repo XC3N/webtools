@@ -18,7 +18,7 @@ The code is written for these tools rather than copied from other projects, apar
 
 - VJif Colour › Palette: the C64 colours are Philip "Pepto" Timmermann's palette (pepto.de); the CGA, EGA, NES and Game Boy colours as listed in Wikipedia's "List of video game console palettes".
 
-## Ideas, not code
+## Ideas
 
 - The Dissolve › Melt transition follows the Doom screen wipe (id Software, 1993).
 - CRT › Pay-TV follows analogue cable sync suppression; Crypt follows Videocrypt's cut-and-rotate and Nagravision Syster's line shuffling.

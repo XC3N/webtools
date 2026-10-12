@@ -106,7 +106,6 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .scene.padsOnly .n{color:var(--muted);background:#000a}
 .scene.cur{box-shadow:0 0 0 2px var(--sig)}
 .scene.wait{animation:wait .25s steps(1) infinite}
-.padhead{gap:5px}.padhead #urlIn{flex:1;min-width:40px;height:var(--ch);font:400 11px var(--mono)}.padhead button{flex:none}
 .sub .info{display:inline-grid;place-items:center;width:13px;height:13px;border:1px solid var(--edge);border-radius:50%;font:600 9px var(--mono);color:var(--muted);cursor:help}.sub[title]{cursor:help}
 #guideEye .slash{display:none}#guideGrp.ghidden #guideEye .slash{display:inline}#guideGrp.ghidden [data-g].on{opacity:.45}   /* hidden: the eye is struck through, the guides that will come back stay marked, dimmed */
 #musGrp .iconbtn.on,#setBtn.on,#guideEye.on{color:var(--sig);border-color:var(--sig)}#learnBtn.on{color:var(--learn);border-color:var(--learn)}.volwrap{position:relative;display:inline-flex}
@@ -249,7 +248,7 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#111}
 .lname{font:600 13px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer.on .lname,.layer.tgt .lname{color:var(--ink)}
-body.alt .pad:not(.empty),body.alt #fxPre .fxp:not(.empty){box-shadow:inset 0 0 0 1px var(--muted)}   /* Alt held: a click renames */
+body.alt .pad:not(.empty):hover::after,body.alt #fxPre .fxp:not(.empty):hover::after,body.alt #scenes .scene:hover::after{content:'';position:absolute;inset:0;border:2px solid var(--sig);border-radius:inherit;z-index:6;pointer-events:none}   /* Alt held: what a click would rename, only under the pointer (as Ctrl does for deleting) */
 .lclr{width:var(--ch);padding:0;flex:none;font:400 14px/1 var(--mono);color:var(--muted)}
 .lclr:hover{color:var(--danger);border-color:var(--danger)}
 .llock{width:var(--ch);padding:0;flex:none;color:var(--faint)}.llock svg{display:block;margin:auto}.llock:hover{color:var(--ink)}.llock.on{color:var(--sigtxt);background:var(--amber);border-color:var(--amber)}

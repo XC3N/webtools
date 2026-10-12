@@ -1,13 +1,7 @@
 // ---------- import UI ----------
 let fileTarget = -1;
-$('#addFiles').addEventListener('click', () => { fileTarget = -1; $('#fileIn').click(); });
+// (Add… and the URL field moved to the GIF pool in 0.87: the pool's own Add… and link field do it)
 $('#fileIn').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) loadFiles(f, fileTarget); });
-function loadUrlField(){
-  const u = $('#urlIn').value.trim(); if (!/^https?:\/\//.test(u)) return toast('Enter an http(s) URL');
-  loadUrlInto(u, pads[selPad].gif ? nextEmpty(selPad) : selPad); $('#urlIn').value = '';
-}
-$('#urlIn').addEventListener('keydown', e => { if (e.key === 'Enter') loadUrlField(); });
-$('#urlIn').addEventListener('paste', () => setTimeout(() => { if (/^https?:\/\/\S+$/.test($('#urlIn').value.trim())) loadUrlField(); }, 0));   // a pasted link loads at once
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => {
   e.preventDefault();

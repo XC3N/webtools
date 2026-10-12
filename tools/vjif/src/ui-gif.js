@@ -29,7 +29,7 @@ function syncGifUI(){
   if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
   $('#gSmooth').checked = !g.crisp;
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
-  if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + FX_PALS.map((P, i) => `<option value="${i}" title="${esc(P.t)}">${esc(P.n)}</option>`).join('');
+  if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + PAL_ORDER.map(i => FX_PALS[i]).map((P, k) => `<option value="${PAL_ORDER[k]}" title="${esc(P.t)}">${esc(P.n)}</option>`).join('');   // by year
   $('#gPal').value = String(g.pal ? g.pal.i : -1); $('#gPalD').value = g.pal ? g.pal.d : 0; $('#gPalD').nextElementSibling.textContent = Math.round((g.pal ? g.pal.d : 0) * 100) + '%';
   $('#gPalD').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
   syncShadowUI(g);

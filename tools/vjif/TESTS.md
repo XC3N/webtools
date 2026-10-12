@@ -110,6 +110,13 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ni93cxo0i9rh1k2o6vco} **Swap off / on** (0.86) — Display › Swap colours: click a swap's original colour: that swap stops (row dimmed), click again: back.
 - [ ] {twgegdfw6biw7gt5pj41} **Shake overscan** (0.86) — Shake, the third slot: Overscan Off: the frame edges show while it shakes; Full: they never do.
 - [ ] {87xkaenk1bq0qgqgjmb9} **Transform changed mark** (0.86) — move or turn a GIF: Transform's heading arrow lights; Reset: it goes back.
+- [ ] {bw9g3s4h7fb2l1ae1ojq} **TV channel cut** (0.87) — Transitions › TV › Channel: the number stays its Number time, then just goes (no fade); it looks a bit sharper.
+- [ ] {pcq6tnrfwf0jpv5b0o8w} **Game Boy dots** (0.87) — Colour › Palette, a Game Boy palette: the Dither row reads Dots (Off / 2 px / 10 px); a CGA palette: Dither again.
+- [ ] {ggx5qrhygt0300zkrh0p} **Palette order** (0.87) — Colour › Palette slider and GIF › Display palette list run by year: CGA… ZX, C64, NES, EGA, GB; an older set keeps its palette.
+- [ ] {oinyj1g1tryssj506jzx} **Pads header** (0.87) — the Tt and Pool buttons sit in the Pads heading; no Add… / URL row; dropping files on pads still loads them.
+- [ ] {mdp7zws6pvip5gl0y7b7} **Alt scenes** (0.87) — hold Alt: the item under the pointer gets an outline (only that one); Alt+click a scene: rename it in place.
+- [ ] {8t4v0kvepvn69msl2akr} **Bands stagger** (0.87) — Transitions › Wipe › Bands: Stagger 0: as before; 100%: each band starts, runs and eases on its own, all done by the end.
+- [ ] {0imw8wo4qz56rtq63p6v} **Corrupt datamosh** (0.87) — Glitch › Corrupt on moving footage: runs of blocks keep the old picture and stream / swell along the motion; more Amount, more of it.
 - [ ] {0g5bim1rd8zzry16be4s} **Emptied scene comes back** (0.79, 0.81, name 0.84, 0.85) — name a scene, select it, empty it (×): its name goes too (with Settings › Interface › Permanent scene names on: it stays); go to another scene, Ctrl+Z: the emptied scene's tile shows its picture and name again.
 - [x] {4ulb8padwhpii6z6g25q} **Channel switched mid-transition** (0.81) — a Palette latched, TV › Channel: switch scene again before the number is gone: the snow and the new number keep their own colours, no palette on them.
 - [ ] {r71mg79hp3mhx0fvj3d3} **Glitch transition styles** (0.84) — transitions: Glitch has Slices, Blocks and Corrupt (no Scramble).

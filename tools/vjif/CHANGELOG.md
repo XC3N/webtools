@@ -4,6 +4,21 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.87.0 — 2026-10-12
+
+### Pads & scenes
+- The Pads heading holds the Text (Tt) and Pool buttons; the Add… / URL row is gone (drop files, or the pool).
+- Alt+click a scene to rename it in place. Holding Alt outlines only the pad, effect or scene under the pointer.
+
+### Transitions
+- TV › Channel: the number cuts out at the end of its Number time instead of fading, and is a little sharper.
+- Wipe › Bands › Stagger (0–100%): each band gets its own start, length and ease; all are done by the end.
+
+### Effects
+- Colour › Palette: the Game Boy palettes' Dots switch is in the Dither row (Dots: Off / 2 px / 10 px); the Size slot is gone from Colour.
+- Palettes run by year (CGA, ZX Spectrum, C64, NES, EGA, Game Boy) in the slider and GIF › Display.
+- Glitch › Corrupt is a datamosh now: runs of blocks repeat the motion on the stale picture (like a duplicated P-frame), so it streams and swells; others still break into wrong-coloured blocks.
+
 ## 0.86.0 — 2026-10-12
 
 ### GIFs

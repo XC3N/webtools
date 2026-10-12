@@ -180,7 +180,7 @@ function syncFxUI(){
   const kal = !!dd && dd.id === 'mirror' && (A.style || dd.styles[0][0]) === 'kal';        // Mirror › Kaleido: it sets the number of slices
   const wear = !!dd && dd.id === 'rgb' && styleParts(FXI.rgb, A.style).includes('vhs') && (styleParts(FXI.rgb, A.style).length === 1 || fxFocus.rgb === 'vhs');   // CRT › VHS (alone, or in focus in a stack): Amount is how worn the tape is
   am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : wear ? 'Wear' : 'Amount'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
-  if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: FX_PALS.length - 1, step: 1 }); am.value = pi; am.dataset.def = 0; delete am.dataset.pct;
+  if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: PAL_ORDER.length - 1, step: 1 }); am.value = Math.max(0, PAL_ORDER.indexOf(pi)); am.dataset.def = 0;   // the slider runs in PAL_ORDER (by year) delete am.dataset.pct;
     am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
   else if (kal){ const n = kalSlices(A.amt); Object.assign(am, { min: 3, max: 12, step: 1 }); am.value = n; am.dataset.def = 12; delete am.dataset.pct;
     am.nextElementSibling.textContent = n; am.closest('.field').title = 'Slices: how many wedges the kaleidoscope has'; }
@@ -188,7 +188,9 @@ function syncFxUI(){
   drawFxEnv(); syncEnvSl();
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
-    const alt = rateAlt(d, C.style || d.styles[0][0]); $('#fxRateRow').classList.toggle('altrow', !!alt);
+    const alt = rateAlt(d, C.style || d.styles[0][0], C); $('#fxRateRow').classList.toggle('altrow', !!alt);
+    $('#fxRateSeg').hidden = !(alt && alt.seg); $('#fxRate').hidden = $('#fxRate').nextElementSibling.hidden = !!(alt && alt.seg);   // a few fixed choices: a switch instead of the slider
+    if (alt && alt.seg){ setHTML($('#fxRateSeg'), alt.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxRateSeg', String(C[alt.key] ?? alt.def)); }
     $('#fxDpat').hidden = !(alt && alt.pat); $('#fxRateRow').classList.toggle('patrow', !!(alt && alt.pat)); if (alt && alt.pat) segSet('#fxDpat', String(C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
@@ -242,7 +244,7 @@ $('#fxStyle').addEventListener('contextmenu', e => { const b = e.target.closest(
   if (cur === v && was){ X.style = was; soloWas.delete(X); }                      // un-solo: the stack as it was
   else { if (cur !== v) soloWas.set(X, cur); X.style = v; }
   fxFocus[id] = v; syncFxUI(); });
-$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = +e.target.value; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
+$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = PAL_ORDER[+e.target.value]; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
 const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
@@ -360,9 +362,10 @@ $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
   if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = fxLenDef(C.mode); else C.rel = fxRelDef(C.mode);
   drawFxEnv(); });
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
+onSeg($('#fxRateSeg'), b => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ X[alt.key] = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxSizeSeg'), b => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za){ X[za.key] = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxDpat'), b => { const X = fxEd(); if (X){ X.dpat = +b.dataset.v; syncFxUI(); } });
-$('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
+$('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
   if (b){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); return; }
   const ch = e.target.closest('.pchip'); if (ch){ preEd = +ch.dataset.e; syncFxUI(); } });
