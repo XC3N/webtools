@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.87.1 — 2026-10-12
+
+### Preview
+- Fixed: clicking where GIFs overlap could freeze the whole UI (since 0.86). Choosing what to select read the GIFs' pixels one at a time from the graphics card, dozens of times per click; each frame is now read once and kept.
+
 ## 0.87.0 — 2026-10-12
 
 ### Pads & scenes

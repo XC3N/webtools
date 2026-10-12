@@ -43,15 +43,22 @@ function toLocal(G, px, py){ const dx = px - G.cx, dy = py - G.cy, co = Math.cos
 function toWorld(G, lx, ly){ const co = Math.cos(G.a), si = Math.sin(G.a); return [G.cx + lx*co - ly*si, G.cy + lx*si + ly*co]; }
 function inClip(c, px, py){ const G = clipGeom(c); if (!G) return false; const [lx, ly] = toLocal(G, px, py); return Math.abs(lx) <= G.hw && Math.abs(ly) <= G.hh; }
 // RGBA of the clip's current frame under an output-space point (src = before colour key)
-const probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
+// a frame's pixels, read back once and kept (a GIF frame lives on the GPU: each read is a full stall, so reading one pixel at a
+// time froze the UI when a click tested dozens of points over overlapping GIFs; 0.87.1)
+const framePx = new WeakMap(), probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
+function framePixels(img){
+  let d = framePx.get(img); if (d) return d;
+  const w = img.width, h = img.height; if (probe.canvas.width !== w || probe.canvas.height !== h){ probe.canvas.width = w; probe.canvas.height = h; } else probe.clearRect(0, 0, w, h);
+  probe.drawImage(img, 0, 0); d = probe.getImageData(0, 0, w, h).data; framePx.set(img, d);
+  if (w * h > 4e6){ probe.canvas.width = probe.canvas.height = 1; }   // don't keep a huge scratch canvas around
+  return d;
+}
 function sampleClip(c, px, py, src = false){
   const g = pads[c.pad].gif, G = clipGeom(c), [lx, ly] = toLocal(G, px, py);
   const u = (lx + G.ox) / (c.sx * (c.flipX ? -1 : 1) * G.fbw) + 0.5, v = (ly + G.oy) / (c.sy * (c.flipY ? -1 : 1) * G.fbh) + 0.5;
   const fi = frameIndex(c, g, performance.now()), img = (src ? g.src : g.frames)[fi];
   const ix = clamp(Math.floor(u * img.width), 0, img.width - 1), iy = clamp(Math.floor(v * img.height), 0, img.height - 1);
-  probe.clearRect(0, 0, 1, 1);
-  probe.drawImage(img, -ix, -iy);
-  const d = probe.getImageData(0, 0, 1, 1).data;
+  const px4 = framePixels(img), o = (iy * img.width + ix) * 4, d = px4.slice(o, o + 4);
   if (!src && liveFx() && g.frames === g.src && g.key.on && d[3]){   // apply the key to this one pixel
     const f = g.key.region !== 'all' ? (g.masks ? g.masks[fi][iy * img.width + ix] : 255) : (fxColor(d[0] | (d[1] << 8) | (d[2] << 16), fxParams(g)) / 16777216) | 0;
     d[3] = (d[3] * f / 255) | 0;
