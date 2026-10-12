@@ -10,8 +10,9 @@ function buildPads(){
       el.setPointerCapture(e.pointerId);
       if (isDel(e)){ padDrag = { i, x: e.clientX, y: e.clientY, moved: false, copy: true, had: true, on: layers.map(L => L.on) }; el._shift = true; return; }   // Ctrl+click: clear · Ctrl+drag: copy (decided on let go)
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
-      trigger(i, e.altKey); });   // Alt+click: swap
-    el.addEventListener('contextmenu', e => { e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
+      if (e.altKey){ padDrag = null; e.preventDefault(); setTimeout(() => renamePad(i)); return; }   // Alt+click: rename its GIF (after the press, which would take the focus back)
+      trigger(i); });
+    el.addEventListener('contextmenu', e => { if (el.querySelector('.nmEdit')) return e.preventDefault(); e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
     el.addEventListener('click', e => { if (!e.target.closest('.xdel') || !el._x) return; el._x = false; e.stopPropagation(); el._shift = true; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); }, true);
     el.addEventListener('pointerup', e => { if (el._x) return; const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); if (delHush) return; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
@@ -68,7 +69,11 @@ function padCopyMode(on){
   const d = padDrag; if (!d || !d.moved) return;
   d.copyNow = on; document.body.classList.toggle('padcopy', on); pads[d.i].el.classList.toggle('lifted', !on && !d.copy);   // a copy leaves the original where it is
   const o = d.lastE ? padDropAt(d.lastE) : null, i = d.i;
-  pads.forEach(p => p.el.classList.toggle('drop', p.el === o && p.i !== i && (!on || !p.gif)));
+  // Ctrl over a pad that isn't empty: held there COPY_HOLD ms (the red bar fills), the drop replaces it (as with scenes and presets)
+  const full = on && o && o.classList.contains('pad') && +o.dataset.i !== i && !!pads[+o.dataset.i].gif;
+  if (full){ if (!d.hold || d.hold.o !== o){ clearTimeout(d.hold && d.hold.T); d.hold = { o, at: performance.now(), T: setTimeout(() => padCopyMode(d.copyNow), COPY_HOLD + 20) }; } } else if (d.hold){ clearTimeout(d.hold.T); d.hold = null; }
+  const armed = d.armed = !!d.hold && performance.now() - d.hold.at >= COPY_HOLD;
+  pads.forEach(p => { p.el.classList.toggle('drop', p.el === o && p.i !== i && (!on || !p.gif || armed)); p.el.classList.toggle('holding', !!d.hold && p.el === o && !armed); p.el.classList.toggle('armed', armed && p.el === o); });
   layers.forEach(L => L.row.classList.toggle('dropzone', !on && L.row === o)); $('#pvWrap').classList.toggle('dropzone', !on && !!o && o.id === 'pvWrap');
 }
 addEventListener('keydown', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCopyMode(true); });
@@ -76,7 +81,8 @@ addEventListener('keyup', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCop
 function padDragEnd(e, i){
   const d = padDrag; padDrag = null; if (d) clearTimeout(d.scT); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
   if (d && d.ghost){ ghost.hide(); pads[d.i].el.classList.remove('lifted'); }
-  pads.forEach(p => p.el.classList.remove('drop')); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging', 'padcopy');
+  if (d && d.hold) clearTimeout(d.hold.T);
+  pads.forEach(p => p.el.classList.remove('drop', 'holding', 'armed')); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging', 'padcopy');
   if (!d || d.i !== i || !d.moved) return false;
   pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
   const tt = e && document.elementFromPoint(e.clientX, e.clientY), sct = tt && tt.closest('#scenes .scene');
@@ -94,7 +100,7 @@ function padDragEnd(e, i){
     commit(); pads[j].gif = cloneInst(d.carry); pushStep({ kind: 'swap', pad: j, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI();
     afterPadChange(j); toast2(`Copied to scene ${sceneIdx + 1}, pad ${pads[j].label}`); if (isDel(e)) hushDel(); return true;
   }
-  if (d.copyNow ?? d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i); hushDel(); return true; }   // Ctrl held at the drop: a copy
+  if (d.copyNow ?? d.copy){ if (o.classList.contains('pad')) copyPad(i, +o.dataset.i, !!d.armed && d.hold && d.hold.o === o); hushDel(); return true; }   // Ctrl held at the drop: a copy
   if (o.classList.contains('pad')){ const j = +o.dataset.i; if (j !== i) swapPads(i, j); }
   else if (o.id === 'pvWrap'){                       // dropped on the preview: onto the edit layer, centred where it was dropped
     const [px, py] = evtToOut(e); padToLayer(i, target);
@@ -105,12 +111,12 @@ function padDragEnd(e, i){
   return true;
 }
 // a copy of a pad's GIF onto an empty pad: its own settings, the same decoded frames (no extra memory for the picture)
-function copyPad(a, b){
-  if (a === b || !pads[a].gif) return;
-  if (pads[b].gif || pads[b].loading) return toast('Ctrl+drag onto an empty pad to copy');
-  commit(); pads[b].gif = cloneInst(pads[a].gif);
-  pushStep({ kind: 'swap', pad: b, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI();
-  afterPadChange(b); toast2(`Pad ${pads[a].label} copied to ${pads[b].label} (same frames, its own settings)`);
+function copyPad(a, b, over = false){
+  if (a === b || !pads[a].gif || pads[b].loading) return;
+  if (pads[b].gif && !over) return toast('Ctrl+drag onto an empty pad to copy (or hold over a full one until the red bar fills, to replace it)');
+  commit(); const old = pads[b].gif; pads[b].gif = cloneInst(pads[a].gif);
+  pushStep({ kind: 'swap', pad: b, g: old, sid: sidNow() }); hist.cur = histState(); updHistUI();   // (undo puts back what was there)
+  afterPadChange(b); toast2(old ? `Pad ${pads[a].label} copied over ${pads[b].label} — Ctrl+Z brings it back` : `Pad ${pads[a].label} copied to ${pads[b].label} (same frames, its own settings)`);
 }
 function swapPads(a, b, record = true){
   if (a === b || pads[a].loading || pads[b].loading) return;
@@ -208,3 +214,7 @@ function updatePadDots(){
       .map(L => `<b style="background:${LCOL[L.i]}">${L.i+1}</b>`).join('');
   });
 }
+
+// Alt+click (or Alt + its key): rename this pad's GIF (its name here; the file in the pool keeps its own)
+function renamePad(i){ const g = pads[i].gif; if (!g) return; focusPad(i);
+  nameEdit(pads[i].el, g.name || '', 'GIF name', v => { if (!v || v === g.name) return; g.name = v; touched.edit = true; renderPad(i); syncGifUI(); }); }

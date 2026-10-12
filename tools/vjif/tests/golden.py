@@ -28,7 +28,7 @@ JS = r"""
   // transitions
   pat(trA, 0); pat(trB, 1);
   for (const [ty] of TR_TYPES){ const sts = TR_STYLES[ty] ? TR_STYLES[ty].map(s => s[0]) : [''];
-    for (const st of sts) for (const dir of (ty === 'slide' || ty === 'wipe' ? ['left', 'up'] : ['left'])){
+    for (const st of sts) for (const dir of (ty === 'wipe' ? ['left', 'up'] : ['left'])){
       transCfg = normTrans({ type: ty, style: st, dir, len: 2, smooth: false, px: 12 });
       trans = makeTrans([], [], 0); const hs = [];
       for (const e of [0.1, 0.37, 0.5, 0.73, 0.9]){ if (trans) trans.b0 = clock.beat - e * trans.len; pat(trA, 0); pat(trB, 1); composeTransition(e, transCfg); drawTrOverlay(); hs.push(hash(mctx)); }

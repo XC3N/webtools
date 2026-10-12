@@ -15,7 +15,7 @@ function onKey(e){
   if (!$('#aboutPanel').hidden){ if (e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); closeAbout(); } return; }
   if (maskEd && e.key === 'Escape'){ e.preventDefault(); maskClose(); return; }   // painting a mask: Esc is Done (other keys keep playing)
   if (!$('#lpMapPanel').hidden){ if (e.key === 'Escape'){ e.preventDefault(); $('#lpMapPanel').hidden = true; } return; }
-  if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || e.key === '?'){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
+  if (!$('#helpPanel').hidden){ if (e.key === 'Escape' || (e.key === '?' && !isTyping(e))){ e.preventDefault(); $('#helpPanel').hidden = true; } return; }
   if (!$('#setPanel').hidden && e.key === 'Escape'){ e.preventDefault(); $('#setPanel').hidden = true; return; }   // a drawer: keys keep working
   if (!$('#poolPanel').hidden && e.key === 'Escape'){ e.preventDefault(); closePool(); return; }   // a floating window: keys keep working
   if (!$('#setsPanel').hidden){                      // the sets panel is modal
@@ -23,13 +23,13 @@ function onKey(e){
     else if (e.key === 'Escape' && !e.target.closest?.('.setRow')){ e.preventDefault(); closeSets(); }
     return;
   }
-  if (e.key === '?' && !isTyping(e)){ e.preventDefault(); $('#helpPanel').hidden = false; return; }
+  if (e.key === '?' && !isTyping(e)){ e.preventDefault(); $('#helpPanel').hidden = false; $('#helpQ').focus(); $('#helpQ').select(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); quickSave(); return; }
   if ((e.ctrlKey || e.metaKey) && !isTyping(e) && /^[zy]$/i.test(e.key)){
     e.preventDefault(); (e.key.toLowerCase() === 'y' || e.shiftKey) ? redo() : undo(); return;
   }
-  if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+pad: swap · Alt+1–4: the layer to edit / trigger into
-    const ap = PAD_KEYS.indexOf(e.code); if (ap >= 0){ e.preventDefault(); if (!e.repeat) trigger(ap, true); return; }
+  if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+pad: rename its GIF · Alt+1–4: the layer to edit / trigger into
+    const ap = PAD_KEYS.indexOf(e.code); if (ap >= 0){ e.preventDefault(); if (!e.repeat) renamePad(ap); return; }
     const a = /^Digit([1-4])$/.exec(e.code); if (a){ e.preventDefault(); setTarget(+a[1] - 1); } return;
   }
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -96,3 +96,10 @@ window.addEventListener('keyup', onKeyUp);
 // keep focus off controls so keys always reach the pads
 document.addEventListener('change', e => { if (e.target.matches('select, input[type=range], input[type=checkbox], input[type=radio], input[type=color]')) e.target.blur(); });
 document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
+
+// Keys & mouse: the search box shows only the entries that mention every word typed (and their group headings)
+$('#helpQ').addEventListener('input', e => { const W = e.target.value.toLowerCase().split(/\s+/).filter(Boolean); let any = false;
+  document.querySelectorAll('#helpPanel dl.keys').forEach(dl => { let n = 0;
+    dl.querySelectorAll('dt').forEach(dt => { const dd = dt.nextElementSibling, t = (dt.textContent + ' ' + dd.textContent).toLowerCase(), ok = W.every(w => t.includes(w)); dt.hidden = dd.hidden = !ok; if (ok) n++; });
+    dl.hidden = !n; dl.previousElementSibling.hidden = !n; if (n) any = true; });
+  $('#helpNone').hidden = any; });

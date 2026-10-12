@@ -155,6 +155,7 @@ function applyGifSettings(g, saved){
   const { key, hsv, pal, env, lfo, swap, shadow, hash, name, file, ...rest } = saved;
   g.pal = { i: -1, d: 0, ...(pal || {}) }; g.shadow = { ...SHADOW_DEF, ...(shadow || {}) };
   g.swap = Array.isArray(swap) ? JSON.parse(JSON.stringify(swap)).slice(0, SWAP_MAX) : [];
+  if (typeof name === 'string' && name) g.name = name;   // its own name (Alt+click renames), else the file's
   Object.assign(g, Object.fromEntries(Object.entries(rest).filter(([k]) => GIF_KEYS.includes(k))));
   if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv); if (env) Object.assign(g.env, env);
   if (lfo) g.lfo = JSON.parse(JSON.stringify(lfo));

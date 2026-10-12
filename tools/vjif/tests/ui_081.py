@@ -14,8 +14,9 @@ async def main():
     await pg.evaluate("layers.forEach(L => L.clips.forEach(c => { c.sx = c.sy = 6; c.x = 0; c.y = 0; })); redraw.all = true")
     pv0 = await pg.evaluate("[...['#layers','#pvWrap'].map(s => $(s).getBoundingClientRect().top)]")
     await pg.click('.layer:nth-child(2) .lmask'); await pg.wait_for_timeout(300)
-    geo = await pg.evaluate("(() => { const L = $('#layers').getBoundingClientRect(), M = $('#maskBar').getBoundingClientRect(), P = $('#pvWrap').getBoundingClientRect(); return [L.bottom <= M.top + 1, M.bottom <= P.top + 1, Math.round(M.height), M.width > 300]; })()")
-    print('bar', pv0, geo); assert geo[0] and geo[1] and geo[2] < 40 and geo[3], geo
+    # 0.84: the bar takes the guides' place under the picture: the preview doesn't move or shrink, the picture isn't covered
+    geo = await pg.evaluate("(() => { const M = $('#maskBar').getBoundingClientRect(), r = pv.getBoundingClientRect(); return [[...['#layers','#pvWrap'].map(s => $(s).getBoundingClientRect().top)], M.top >= r.y + view.y + view.h - 1, Math.round(M.height), M.width > 300, getComputedStyle($('#guideGrp')).display]; })()")
+    print('bar', pv0, geo); assert geo[0] == pv0 and geo[1] and geo[2] < 40 and geo[3] and geo[4] == 'none', geo
     await pg.screenshot(path=str(OUT/'mask_bar.png'), clip={'x':0,'y':0,'width':1600,'height':520})
     r = await pg.evaluate("(() => { const r = pv.getBoundingClientRect(); return [r.x + view.x, r.y + view.y, view.w, view.h]; })()")
     x0,y0,w,h = r
@@ -28,9 +29,9 @@ async def main():
     cl = await pg.evaluate("[maskEd, $('#maskBar').hidden, $('#stage').classList.contains('masking'), target]")
     print('other layer', cl); assert cl[0] is None and cl[1] and not cl[2], cl
     # transitions: the slider row
-    tr = await pg.evaluate("""(() => { const o = []; for (const [t, s] of [['fade','dip'],['stutter','ramp'],['glitch','scramble'],['wipe','line']]){ transCfg.type = t; transCfg.style = s; syncTransUI();
+    tr = await pg.evaluate("""(() => { const o = []; for (const [t, s] of [['fade','dip'],['stutter','ramp'],['glitch','corrupt'],['wipe','line'],['tv','channel']]){ transCfg.type = t; transCfg.style = s; syncTransUI();
       o.push([$('#trPxRow label').textContent, $('#trPxRow').classList.contains('dimmed'), $('#trPx').nextElementSibling.textContent]); } return o; })()""")
-    print('slider row', tr); assert [x[0] for x in tr] == ['Hold','Repeats','Pixel','Pixel'] and tr[3][1] and not tr[0][1] and tr[1][2] == '8', tr
+    print('slider row', tr); assert [x[0] for x in tr] == ['Hold','Repeats','Pixel','Pixel','Number'] and tr[3][1] and not tr[0][1] and tr[1][2] == '8' and tr[4][2] == '0.8 s', tr
     # Ramp: count the switches to the new scene over the transition
     rp = await pg.evaluate("""(() => { const out = []; for (const [len, reps] of [[2, 8], [1, 8], [4, 4]]){ const T = { type: 'stutter', style: 'ramp', reps, len, px: 12 }; trans = { len, cfg: T };
       let last = null, n = 0; for (let e = 0; e <= 1.0001; e += 0.0005){ trA.fillStyle = '#f00'; trA.fillRect(0,0,CW,CH); trB.fillStyle = '#00f'; trB.fillRect(0,0,CW,CH); composeTransition(e, T);

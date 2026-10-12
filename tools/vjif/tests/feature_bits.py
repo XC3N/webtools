@@ -39,7 +39,7 @@ async def main():
     await pg.evaluate("doGoLive()"); gl = await pg.evaluate("[!!prep, brb.on]"); print('live', gl); assert gl == [False, False], gl
     # count-in in Rec ▾, transitions regrouped
     c = await pg.evaluate("[!!document.querySelector('#recPopRows .seg[data-src=\"#recCountSeg\"]'), normTrans({ type: 'glitch', style: 'melt' }).type, normTrans({ type: 'glitch', style: 'channel' }).type, TR_TYPES.length]")
-    print('count-in / regroup', c); assert c == [True, 'dissolve', 'tv', 9], c
+    print('count-in / regroup', c); assert c == [True, 'dissolve', 'tv', 8], c   # 8 types since Slide joined Wipe (0.84)
     # a click in the border on nothing deselects, and it stays deselected (it used to fall back to the last GIF)
     bd = await pg.evaluate("""(() => { const L = layers[target]; if (!L.clips.length) return 'no clips'; L.sel = L.clips[0]; const r = pv.getBoundingClientRect();
       pv.dispatchEvent(new PointerEvent('pointerdown', { clientX: r.left + 3, clientY: r.top + 3, pointerId: 1, bubbles: true })); pv.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, bubbles: true }));
@@ -53,7 +53,7 @@ async def main():
     print('fold', fo); assert fo == [True, False], fo
     pk = await pg.evaluate("$('#swPick').click(); const a = picking; $('#swPick').click(); [a, picking]")
     print('pick', pk); assert pk == ['swap', False], pk
-    rd = await pg.evaluate("transCfg = normTrans({ type: 'slide', dir: 'rand', len: 2 }); new Set(Array.from({ length: 60 }, () => makeTrans([], [], 0).cfg.dir)).size")
+    rd = await pg.evaluate("transCfg = normTrans({ type: 'wipe', style: 'push', dir: 'rand', len: 2 }); new Set(Array.from({ length: 60 }, () => makeTrans([], [], 0).cfg.dir)).size")
     print('rand dirs', rd); assert rd == 4, rd
     # 0.73: LFO gap holds, mask blend modes, transition options, shadow crop draws
     gp = await pg.evaluate("const A = { per: 4, ph: 0, gap: 4, shape: 'up' }; [lfoPosT(A, 2), lfoPosT(A, 6), lfoPosT(A, 9)].map(v => Math.round(v * 100) / 100)")
@@ -124,7 +124,7 @@ async def main():
     g9 = await pg.evaluate("""[styleParts(FXI.glitch, 'corrupt+crunch').join('+'), styleParts(FXI.glitch, 'scramble').join(), normTrans({ type: 'glitch', style: 'scramble' }).style,
       document.querySelectorAll('.pad .xdel').length, document.querySelectorAll('#scenes .scene .xdel').length, document.querySelectorAll('#fxPre .fxp .xdel').length,
       !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('#xfPanel #gSmooth')]""")
-    print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'scramble', 18, 9, 9, True, True, True], g9
+    print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'corrupt', 18, 9, 9, True, True, True], g9
     sw = await pg.evaluate("[hsvOn({ hsv: { h: 10, s: 1, v: 1, off: true } }), hsvOn({ hsv: { h: 10, s: 1, v: 1 } }), palOn({ pal: { i: 2, off: true } }), palOn({ pal: { i: 2 } }), swapOn({ swap: [1], swapOff: true }), swapOn({ swap: [1] }), ['fOn', 'tOn', 'hOn', 'pOn', 'swOn'].every(id => !!document.getElementById(id))]")
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
     print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg

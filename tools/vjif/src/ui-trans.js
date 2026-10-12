@@ -34,8 +34,7 @@ const TR_DIR = ['dir', [['left', '←', 'Towards the left'], ['right', '→', 'T
 const TR_SOFT = ['soft', [0, 'Soft', 'A soft, feathered edge'], true];
 function trOptsOf(T){ const st = trStyleOf(T);
   switch (T.type){
-    case 'slide': return st === 'bands' ? [['bands', [['4', '4', '4 bands'], ['6', '6', '6 bands'], ['8', '8', '8 bands'], ['12', '12', '12 bands']]]] : [TR_DIR];
-    case 'wipe': return st === 'iris' ? [['from', [['mid', 'Middle', 'Opens from the middle of the frame'], ['gif', 'GIF', "Opens from the selected GIF's centre (in the new scene)"]]], TR_SOFT] : [TR_DIR, TR_SOFT];
+    case 'wipe': return st === 'bands' ? [['bands', [['4', '4', '4 bands'], ['6', '6', '6 bands'], ['8', '8', '8 bands'], ['12', '12', '12 bands']]]] : st === 'push' ? [TR_DIR] : st === 'iris' ? [['from', [['mid', 'Middle', 'Opens from the middle of the frame'], ['gif', 'GIF', "Opens from the selected GIF's centre (in the new scene)"]]], TR_SOFT] : [TR_DIR, TR_SOFT];
     case 'fade': return st === 'luma' ? [['inv', [['bright', 'Bright', 'The brightest parts change first'], ['dark', 'Dark', 'The darkest parts change first']]], TR_SOFT] : [];
     case 'zoom': return [['zoom', [['in', 'In', 'The old scene grows and fades, the new one grows in'], ['out', 'Out', 'The old scene backs away, the new one comes down from close up'], ['thru', 'Through', 'The old scene flies past the camera']]]];
     case 'dissolve': return st === 'blocks' ? [['shape', [['sq', 'Squares', 'Square blocks'], ['lines', 'Lines', 'Whole lines (Pixel = their height)'], ['dia', 'Diamonds', 'Diamond-shaped blocks']]]] : [];
@@ -54,9 +53,11 @@ $('#trPx').addEventListener('input', e => { const A = trAmtOf(transCfg); if (!A)
 // the slider row's job for each transition: the block size (Dissolve, Glitch), how long Dip / Flash stays black / white, how many times Ramp flashes the new scene
 const TR_HOLD = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7].map(v => [v, Math.round(v * 100) + '%']);
 const TR_REPS = [2, 3, 4, 5, 6, 8, 10, 12, 16].map(v => [v, String(v)]);
+const TR_OSD = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 3].map(v => [v, v ? v + ' s' : 'off']);   // TV › Channel: how long the number stays after the picture is back
 function trAmtOf(T){ const st = trStyleOf(T);
-  if (T.type === 'dissolve' || T.type === 'glitch') return { k: 'px', list: TR_PX, def: 12, lab: 'Pixel', tip: 'Block size (Dissolve, Glitch), column width (Dissolve › Melt), biggest block (Pixelate, Scramble)' };
+  if (T.type === 'dissolve' || T.type === 'glitch') return { k: 'px', list: TR_PX, def: 12, lab: 'Pixel', tip: 'Block size (Dissolve, Glitch), column width (Dissolve › Melt), biggest block (Pixelate)' };
   if (T.type === 'fade' && (st === 'dip' || st === 'flash')) return { k: 'hold', list: TR_HOLD, def: 0, lab: 'Hold', tip: 'How much of the length stays all black (Dip) or white (Flash)' };
+  if (T.type === 'tv' && st === 'channel') return { k: 'osd', list: TR_OSD, def: 0.8, lab: 'Number', tip: 'How long the channel number stays on once the new scene is back (its last 0.3 s fade out)' };
   if (T.type === 'stutter' && st === 'ramp') return { k: 'reps', list: TR_REPS, def: 8, lab: 'Repeats', tip: 'How many times the new scene flashes in' };
   return null;
 }

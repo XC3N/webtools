@@ -322,7 +322,13 @@ function pickAt(px, py){
   selectPad(c.pad); scheduleFx(g, 0);
 }
 // what a click just opened further down (a swap's editor row): scrolled into view if it's below the panel's edge
-function revealSoon(q){ requestAnimationFrame(() => { const el = typeof q === 'string' ? document.querySelector(q) : q; if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }); }
+// a row that just appeared, scrolled into view in its column (clear of the faded edges); done by hand: a smooth
+// scrollIntoView could be cut short by the next redraw and leave it out of sight
+function revealSoon(q){ requestAnimationFrame(() => { const el = typeof q === 'string' ? document.querySelector(q) : q; if (!el) return;
+  const sc = el.closest('#side, #bank'); if (!sc) return el.scrollIntoView({ block: 'nearest' });
+  const r = el.getBoundingClientRect(), s = sc.getBoundingClientRect(), m = 32, z = uiZoom || 1;
+  if (r.bottom > s.bottom - m) sc.scrollTop += Math.min(r.top - s.top - m, r.bottom - s.bottom + m) / z;
+  else if (r.top < s.top + m) sc.scrollTop -= (s.top + m - r.top) / z; }); }
 // Clearing a pad (in this scene) is undoable: its GIF instance and its sprites are kept in the undo entry,
 // and only freed when that entry leaves the history. The decoded GIF stays in the pool either way.
 function clearPad(i, fromRedo = false){

@@ -151,7 +151,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #capsTag{color:var(--sigtxt);background:var(--sig);padding:1px 6px;border-radius:2px}
 .scene.drop{outline:2px dashed var(--sig);outline-offset:-2px}
 .scene .nm{position:absolute;left:24px;right:3px;top:3px;font:600 11px/14px var(--sans);color:#fff;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}
-.scene .nmEdit{position:absolute;left:3px;right:3px;top:50%;transform:translateY(-50%);height:22px;font:600 12px var(--sans);padding:0 6px}
+.scene .nmEdit,.pad .nmEdit,.fxp .nmEdit{position:absolute;left:3px;right:3px;top:50%;transform:translateY(-50%);height:22px;font:600 12px var(--sans);padding:0 6px}
 #fxPre .fxp .n{font-weight:500;color:var(--muted)}
 #fxPre .fxp.empty .n{color:var(--faint)}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -191,7 +191,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .pchip button{width:18px;height:18px;padding:0;border:0;background:none;color:var(--muted);font:400 13px/1 var(--mono)}
 .pchip button:hover{color:var(--danger)}
 .pempty{font:400 11px var(--sans);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#fxPre .fxp.drop{border-color:var(--sig);background:var(--track)}
+#fxPre .fxp.drop{outline:2px dashed var(--sig);outline-offset:-2px}   /* a swap: dashed, like pads and scenes (a copy: solid, below) */
 #fxName.grab{cursor:grab;touch-action:none}
 body.fxdragging,body.fxdragging *{cursor:copy !important}
 #fxEdit.sized:not(.rated) #fxRateRow,#fxEdit:not(.sized) #fxSizeRow,#fxEdit.pre #fxSizeRow,#fxEdit.pre #fxStyle,#fxEdit.pre #fxRateRow,#fxEdit:not(.pre) #fxPreList,#fxEdit:not(.pre) #fxStore,#fxEdit:not(.pre) #fxClear{display:none}
@@ -249,7 +249,7 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#111}
 .lname{font:600 13px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer.on .lname,.layer.tgt .lname{color:var(--ink)}
-body.alt .pad:not(.empty){box-shadow:inset 0 0 0 2px var(--sig)}   /* Alt held: a hit swaps */
+body.alt .pad:not(.empty),body.alt #fxPre .fxp:not(.empty){box-shadow:inset 0 0 0 1px var(--muted)}   /* Alt held: a click renames */
 .lclr{width:var(--ch);padding:0;flex:none;font:400 14px/1 var(--mono);color:var(--muted)}
 .lclr:hover{color:var(--danger);border-color:var(--danger)}
 .llock{width:var(--ch);padding:0;flex:none;color:var(--faint)}.llock svg{display:block;margin:auto}.llock:hover{color:var(--ink)}.llock.on{color:var(--sigtxt);background:var(--amber);border-color:var(--amber)}
@@ -422,7 +422,8 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 .vu.hot i{background:var(--amber-dim)}.vu.clip i{background:var(--danger)}.vu.dimmed{opacity:.4}
 .sndrow{display:flex;gap:6px;min-width:0}.sndrow select{flex:1;min-width:0}
 /* mask painting bar, over the preview's top-left corner (it never moves the layout) */
-#maskBar{display:none;align-items:center;gap:8px;padding:3px 8px;min-width:0;overflow:hidden;white-space:nowrap}#stage.masking{grid-template-rows:auto auto minmax(0,1fr) auto auto}#stage.masking>#maskBar:not([hidden]){display:flex}
+/* painting a mask: the bar takes the guides' place under the preview (nothing moves, nothing covers the picture) */
+#maskBar{display:none;align-items:center;gap:8px;padding:2px 8px;min-width:0;max-width:100%;overflow:hidden;white-space:nowrap}#stage.masking #maskBar:not([hidden]){display:flex}#stage.masking #guideGrp{display:none}
 #maskBar>label:not(.tog){font-size:11px;color:var(--muted)}#maskBar input[type=range]{flex:1 1 60px;min-width:40px;max-width:140px}#maskBar output{width:46px;font:11px var(--mono);color:var(--muted)}#maskBar .seg{flex:0 0 auto}#maskName{margin:0;font-weight:600}
 .lmask{width:var(--ch);padding:0;flex:none;color:var(--faint)}.lmask svg{display:block;margin:auto}.lmask:hover{color:var(--ink)}.lmask.has{color:var(--amber)}.lmask.on{color:var(--sigtxt);background:var(--amber);border-color:var(--amber)}
 /* a folded section: its Reset is hidden (its place kept); a section changed from its defaults shows its arrow in the signal colour */
@@ -434,9 +435,9 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 .pad.empty .xdel,.scene.blank .xdel,.fxp.empty .xdel,body.noxdel .xdel{display:none}
 #fxPre .fxp .hd{justify-content:flex-start}#fxPre .fxp .hd .md{margin-right:18px}   /* a preset: its mode next to its number, the × on the right */
 /* Ctrl+drag onto a scene / preset that isn't empty: a red bar fills while you hold there; full, the drop replaces it */
-.scene.holding::before,#fxPre .fxp.holding::before{content:'';position:absolute;left:0;bottom:0;z-index:4;height:3px;width:100%;background:var(--danger);transform-origin:left;animation:holdbar 1.2s linear both}
+.scene.holding::before,#fxPre .fxp.holding::before,.pad.holding::before{content:'';position:absolute;left:0;bottom:0;z-index:4;height:3px;width:100%;background:var(--danger);transform-origin:left;animation:holdbar 1.2s linear both}
 @keyframes holdbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.scene.armed,#fxPre .fxp.armed{outline:2px solid var(--danger)!important;outline-offset:-2px}
+.scene.armed,#fxPre .fxp.armed,.pad.armed{outline:2px solid var(--danger)!important;outline-offset:-2px}
 
 h2 .h2btn{margin-left:6px;height:20px;padding:0 8px;font-size:11px}   /* a section's own button on its heading line (there when folded) */
 /* GIF › Play / Auto: the graph (and the frame readout) set apart at the bottom of the pane */
@@ -446,3 +447,9 @@ input[type=color].sw{width:26px;height:20px;padding:0;flex:none;border:1px solid
 .field>.keyrow>label{white-space:nowrap}
 [data-pane=auto].envgraph .aEnvF{display:none}   /* GIF › Auto › Envelope as a graph: the scope's points instead of the sliders */
 .field.wide{grid-template-columns:auto minmax(0,1fr)}   /* a long label and its switch: the label on one line */
+#gPanes .swr,#gPanes .field,#gPanes .sub{scroll-margin:28px 0 32px}   /* revealed rows stop clear of the column's fading edges */
+/* a slider row that stands for different settings: when nothing it could be applies, an empty grey box (no name, no value) */
+.field.blankable.dimmed{background:var(--panel-2);border-radius:var(--r);opacity:.6}.field.blankable.dimmed>*{visibility:hidden}
+/* Keys & mouse: grouped, with a search box */
+#helpQ{width:100%;margin:0 0 8px;height:var(--ch)}.khead{margin:12px 0 6px;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#helpPanel [hidden]{display:none!important}

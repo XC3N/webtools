@@ -1,15 +1,14 @@
 // ---------- scene transitions: the scene being left and the new one are each drawn whole, then combined ----------
 // transition families, each with its styles (like the effects); a preset = family + style + its settings
-const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['slide', 'Slide'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['tv', 'TV'], ['stutter', 'Stutter']];
+const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['tv', 'TV'], ['stutter', 'Stutter']];
 const TR_STYLES = {
   stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes, faster and faster (on the 1/32 grid when there is room), landing on the new one (Repeats: how many times the new scene flashes)'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
-  slide: [['push', 'Push', 'The new scene pushes the old one out (Direction)'], ['bands', 'Bands', "The frame splits into horizontal bands: the new scene's slide in one after another, from the left and the right in turn (Options: how many)"]],
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
-  wipe: [['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],
+  wipe: [['push', 'Push', 'The new scene pushes the old one out (Direction)'], ['bands', 'Bands', "The frame splits into horizontal bands: the new scene's slide in one after another, from the left and the right in turn (Options: how many)"],
+         ['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],   // (Slide's Push and Bands joined Wipe in 0.84)
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)'],
              ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
-           ['scramble', 'Scramble', 'Pixelates, scrambles the colours into the new scene, then resolves (Pixel = biggest block)'],
            ['corrupt', 'Corrupt', 'A damaged video file with its keyframe lost: the old picture smears along block motion while the new scene arrives in broken runs of blocks, then a clean keyframe (Pixel = block size)']],
   tv: [['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
            ['channel', 'Channel', 'A TV changing channels: a flick of snow, then the new scene rolls into place, with a green channel number in the top right corner']] };
@@ -18,6 +17,9 @@ const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x =>
 function normTrans(P){
   if (P.type === 'glitch' && P.style === 'melt') P.type = 'dissolve';                          // 0.69: Melt moved to Dissolve,
   if (P.type === 'glitch' && (P.style === 'vhs' || P.style === 'channel')) P.type = 'tv';      // VHS and Channel to TV
+  if (P.type === 'wipe' && !P.style) P.style = 'line';                                         // 0.84: Wipe's first style is Push now (a Wipe saved without one was Line)
+  if (P.type === 'slide'){ P.type = 'wipe'; P.style = P.style === 'bands' ? 'bands' : 'push'; }  // Slide joined Wipe
+  if (P.type === 'glitch' && P.style === 'scramble') P.style = 'corrupt';                       // Glitch › Scramble is gone (again)
   if (!TR_TYPES.some(t => t[0] === P.type)) P.type = 'cut';
   P.style = trStyleOf(P); if (!P.px) P.px = 12;
   return P;
@@ -29,7 +31,7 @@ const TR_DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const TR_KEYS = Array.from({ length: 9 }, (_, i) => 'Digit' + (i + 1));
 const trDefaults = () => userDef.tr ? userDef.tr.map(P => normTrans({ ...P })) : trFactory();
 const trFactory = () => [{ type: 'cut' }, { type: 'fade', style: 'cross', len: 2 }, { type: 'fade', style: 'cross', len: 4 }, { type: 'fade', style: 'dip', len: 2 },
-  { type: 'slide', dir: 'left', len: 2 }, { type: 'slide', dir: 'right', len: 2 }, { type: 'wipe', style: 'iris', len: 2 },
+  { type: 'wipe', style: 'push', dir: 'left', len: 2 }, { type: 'wipe', style: 'push', dir: 'right', len: 2 }, { type: 'wipe', style: 'iris', len: 2 },
   { type: 'glitch', style: 'slices', len: 1 }, { type: 'dissolve', style: 'melt', len: 4, smooth: false }].map(P => normTrans({ dir: 'left', len: 2, smooth: true, px: 12, ...P }));
 let trPresets = trDefaults(), trSel = 1, transCfg = trPresets[trSel];
 function armTrans(i){ trSel = i; transCfg = trPresets[i]; syncTransUI(); }
@@ -116,7 +118,8 @@ const TR_DRAW = {
     }
     m.drawImage(A, dx * e * W, dy * e * H); m.drawImage(B, dx * (e - 1) * W, dy * (e - 1) * H);
   },
-  wipe(m, A, B, e, T, dx, dy){ // an edge sweeps across (or a circle opens), revealing the new scene
+  wipe(m, A, B, e, T, dx, dy){ // an edge sweeps across (or a circle opens), revealing the new scene; Push and Bands move the pictures
+    const wst = trStyleOf(T); if (wst === 'push' || wst === 'bands') return TR_DRAW.slide(m, A, B, e, T, dx, dy);
     m.drawImage(A, 0, 0);
     const iris = trStyleOf(T) === 'iris', [cx, cy] = iris && T.from === 'gif' && trans && trans.ctr ? [trans.ctr[0] * W, trans.ctr[1] * H] : [W / 2, H / 2];
     if (T.soft){                                     // Options › Soft: a feathered edge (the new scene through a gradient mask)
@@ -211,23 +214,6 @@ const TR_DRAW = {
         if (p < arrive){ moshX.globalAlpha = 0.3; moshX.drawImage(B, x, y, w, bs, x, y, w, bs); moshX.globalAlpha = 1; }   // the new scene's changes bleeding into the smear
       }
       m.drawImage(moshCv, 0, 0); trSplit(m, T, Math.sin(Math.PI * e)); return; }
-    if (gst === 'scramble'){                       // pixelate up, colours scrambled block by block while the scenes swap, then resolve
-      const big = Math.max(4, (T.px || 12) * 4), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
-      const w = Math.ceil(W / bs), h = Math.ceil(H / bs), mixB = Math.min(1, Math.max(0, (e - 0.35) / 0.3));
-      pxCtx.imageSmoothingEnabled = true; pxCtx.globalAlpha = 1; pxCtx.clearRect(0, 0, w, h); pxCtx.drawImage(A, 0, 0, w, h);
-      if (mixB > 0){ pxCtx.globalAlpha = mixB; pxCtx.drawImage(B, 0, 0, w, h); pxCtx.globalAlpha = 1; }
-      if (post && post.trans(2, pxCv, null, { e, bs, stp: Math.floor(e * 30), pr: k * 0.9 })) return;   // the scramble and blow-up on the GPU (the shrinking stays a drawImage)
-      if (bs >= 3){                                // the scramble: each block's channels rotated / swapped / inverted, re-rolled ~30 times
-        const im = pxCtx.getImageData(0, 0, w, h), d = im.data, step = Math.floor(e * 30), pr = k * 0.9;
-        for (let i = 0, n = 0; i < d.length; i += 4, n++){
-          const q = fxRand(n * 0.37 + step * 17.1); if (q > pr) continue;
-          const r = d[i], g = d[i + 1], b = d[i + 2], s = (q / pr * 4) | 0;
-          if (s === 0){ d[i] = g; d[i + 1] = b; d[i + 2] = r; } else if (s === 1){ d[i] = b; d[i + 1] = r; d[i + 2] = g; }
-          else if (s === 2){ if (r > 20 || g > 20 || b > 20){ d[i] = 255 - r; d[i + 1] = 255 - g; d[i + 2] = 255 - b; } } else { d[i] = r; d[i + 1] = b; d[i + 2] = g; }
-        }
-        pxCtx.putImageData(im, 0, 0);
-      }
-      m.imageSmoothingEnabled = false; m.drawImage(pxCv, 0, 0, w, h, 0, 0, w * bs, h * bs); m.imageSmoothingEnabled = true; return; }
     if (gst === 'channel'){                        // a TV changing channels: the old picture collapses into snow, the new one rolls in, the channel number shows
       if (trans && trans.ch == null){                // what the number shows (Options): random, the new scene's name, or its number
         const m = T.ch || 'rand', nm = (liveName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 .\-]/g, '').trim().slice(0, 10);
@@ -253,7 +239,7 @@ const TR_DRAW = {
       if (e >= inA){                                // the channel number, OSD green, top right (it stays until the transition ends)
         const txt = String(ch), p = Math.max(2, Math.round(H * 0.013)), cw = 6 * p, x0 = Math.round(W - H * 0.06 - txt.length * cw + p), y0 = Math.round(H * 0.06);
         trOverlay = [osdImage(txt, p), x0 - 2 * p, y0 - 2 * p];   // drawn once per number and size; put on after the screen effects (a TV's own text: no palette, no glitch on it)
-        chOsd = { o: trOverlay, until: performance.now() + CH_OSD_HOLD };   // and it stays a little after the picture is back
+        const hold = (T.osd ?? CH_OSD_HOLD) * 1000; chOsd = hold > 0 ? { o: trOverlay, until: performance.now() + hold, fade: Math.min(300, hold) } : null;   // and it stays a little after the picture is back (the slider row: Number)
       }
       return; }
     if (gst === 'vhs'){                            // a tape switching channels: the picture tears up, dissolves into snow, and the new one comes out of it
@@ -328,10 +314,10 @@ function trSplit(m, T, tear){
 }
 // what a transition puts on top of everything, after the screen effects (Channel's number)
 let trOverlay = null, chOsd = null;
-const CH_OSD_HOLD = 1600;                            // ms the channel number stays on after a TV › Channel transition (its last 300 fade)
+const CH_OSD_HOLD = 0.8;                             // s the channel number stays on after a TV › Channel transition by default (its last 0.3 s fade)
 function drawTrOverlay(){
   let o = trOverlay, a = 1; trOverlay = null;
-  if (!o && chOsd){ const left = chOsd.until - performance.now(); if (left <= 0) chOsd = null; else { o = chOsd.o; a = Math.min(1, left / 300); } sceneSig.forget(); prepOutSig.forget(); }   // (the next frame is drawn again, until it's gone)
+  if (!o && chOsd){ const left = chOsd.until - performance.now(); if (left <= 0) chOsd = null; else { o = chOsd.o; a = Math.min(1, left / chOsd.fade); } sceneSig.forget(); prepOutSig.forget(); }   // (the next frame is drawn again, until it's gone)
   if (!o) return; const [im, x, y] = o; mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = a; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(im, x, y); mctx.globalAlpha = 1; }
 function composeTransition(e, T){
   trOverlay = null;

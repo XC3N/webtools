@@ -4,6 +4,35 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.84.0 — 2026-10-12
+
+### Layers
+- The mask bar takes the guides' place under the preview while you paint: the preview no longer shrinks or moves, and nothing covers the picture.
+
+### Pads & scenes
+- Alt+click (or Alt + its key) renames a pad's GIF; Alt+click an effect preset names it (the name replaces the effect list on its tile). The old Alt swap (the GIF taking its layer for itself) is gone.
+- Ctrl+drag a pad onto one that isn't empty: hold until the red bar fills and the drop replaces it (as with scenes and presets); Ctrl+Z brings it back.
+- Dragging an effect preset: a swap shows a dashed outline, a copy a solid one (as pads and scenes do).
+- Emptying a scene clears its name too (Ctrl+Z brings both back).
+- Sets swap on the next beat even with Snap off (the next bar with Snap › Bar).
+
+### Transitions
+- Slide joined Wipe: Wipe › Push, Bands, Line, Iris (presets saved as Slide load as Wipe › Push / Bands).
+- Glitch › Scramble is gone again (presets with it load as Corrupt).
+- TV › Channel: the slider row reads Number: how long the channel number stays after the picture is back (off to 3 s; 0.8 s by default, was 1.6).
+
+### Effects
+- Glitch › Crunch: Size is the block size, like the other styles (it was a quarter of it, so it only showed at big sizes).
+
+### Interface
+- Settings › Interface › Blackout: the fade to black and back (cut to 2 s; 120 ms as before).
+- All-layers pips moved to Settings › Theme.
+- A slider row that stands for different settings (effect Rate / Size, transition Pixel) is an empty grey box when nothing applies.
+- Keys & mouse is grouped (Getting GIFs in, Playing, Scenes & transitions, Effects, Layers & the preview, Tempo, Output, Editing, MIDI) with a search box (? opens it with the box ready).
+- Themes: Claude's VJif redone (clay on warm charcoal, cream readouts); Mopho is back in VJif's list.
+- The GIF pool's note became its title's tooltip.
+- Rows revealed in the GIF panel (a new swap row) stop clear of the column's faded edges.
+
 ## 0.83.0 — 2026-10-12
 
 ### GIFs

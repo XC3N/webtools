@@ -36,6 +36,8 @@ function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
     if (e.button) return;
+    if (e.altKey && i >= NFX){ el._edit = true; const P = fxPre[i - NFX]; selFx = i; syncFxUI();   // Alt+click a preset: name it
+      e.preventDefault(); setTimeout(() => nameEdit(el, P.name || '', fxPreName({ fx: P.fx }), v => { P.name = v || undefined; if (!v) delete P.name; touched.edit = true; el._sig = null; syncFxUI(); })); return; }
     if (e.target.closest('.xdel')){ el._edit = true; fxPre[i - NFX].fx = {}; toast2(`Preset ${i - NFX + 1} emptied`); selFx = i; syncFxUI(); return; }   // a preset's ×
     if (isRm(e) && heldPre < 0){ el._edit = true;                        // Ctrl+click: reset an effect / empty a preset
       if (i < NFX){ fxUp(i); fxCfg[i] = fxDefaults()[i]; toast2(`${FX_DEFS[i].name} back to its defaults`); }
@@ -92,7 +94,7 @@ function buildFx(){
   $('#fxRate').max = FX_RATES.length - 1; $('#fxSize').max = FX_SIZES.length - 1;
   document.querySelectorAll('#fxTgt button').forEach(b => { if (b.dataset.v !== 'out') b.style.setProperty('--lc', LCOL[+b.dataset.v]); });
 }
-const fxPreName = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
+const fxPreName = P => { if (P.name) return P.name; const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
 // short names, for when the full one doesn't fit on a pad
 const FX_SHORT = { mono: 'MN', colour: 'CLR', strobe: 'STRB', poster: 'PSTR', zoom: 'ZM', shake: 'SHK', wobble: 'WBL', mirror: 'MIR', glitch: 'GLT', rgb: 'CRT', pixel: 'PIX', feedback: 'FDBK' };
 // the full text, else the short one, else (for style names) its first letters: whichever fits first
@@ -134,7 +136,7 @@ function syncFxUI(){
     const i = +el.dataset.i, c = fxConf(i);
     if (el.classList.contains('sel') !== (i === selFx)) el.classList.toggle('sel', i === selFx);
     // names are measured (forces a layout) only when what the tile shows changed: pressing an effect key just moves the highlight
-    const sig = i < NFX ? `${c.mode}|${c.target}|${c.style}|${fxFitGen}|${allPipCol}` : `${c.mode}|${JSON.stringify(fxPre[i - NFX].fx)}|${fxFitGen}`;
+    const sig = i < NFX ? `${c.mode}|${c.target}|${c.style}|${fxFitGen}|${allPipCol}` : `${c.mode}|${JSON.stringify(fxPre[i - NFX].fx)}|${fxPre[i - NFX].name || ''}|${fxFitGen}`;
     if (el._sig === sig) return; el._sig = sig;
     el.querySelector('.md').textContent = c.mode;
     if (i < NFX){ const L = tgtList(c.target), mk = el.querySelector('.mk');   // the layers it works on: "all", or four pips lit in the layers' colours
@@ -146,11 +148,11 @@ function syncFxUI(){
     else { const k = i - NFX, P = fxPre[k], e = !Object.keys(P.fx).length;
       if (e){ el.querySelector('.n').textContent = 'empty'; el.querySelector('.s').textContent = ''; }
       else { const ks = Object.keys(P.fx), n = el.querySelector('.n'), s2 = el.querySelector('.s');   // the effects' names, and under them what each does (its style, or its palette)
-        fitText(n, ks.map(i => FX_DEFS[i].name).join(' + '), ks.map(i => FX_SHORT[FX_DEFS[i].id]).join('+'));
+        if (P.name) fitText(n, P.name, P.name); else fitText(n, ks.map(i => FX_DEFS[i].name).join(' + '), ks.map(i => FX_SHORT[FX_DEFS[i].id]).join('+'));   // its name, if given one (Alt+click)
         const dt = ks.map(i => fxDetail(i, P.fx[i])).filter(Boolean), ds = ks.map(i => fxDetail(i, P.fx[i], true)).filter(Boolean);
         fitText(s2, dt.join(' · '), ds.join('·')); }
       el.classList.toggle('empty', e);
-      el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit`; }
+      el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit · Alt+click: name it`; }
   });
   $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && !!d.size); $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);
   $('#fxName').textContent = E ? d.name : pre ? FXP_LABELS[selFx - NFX] : d.name;

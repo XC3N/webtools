@@ -55,12 +55,13 @@ function applyScn(E){
   const i = sceneOf(E.sid);
   if (i !== sceneIdx){                               // another scene: swap its contents back in place, without going there
     const sc = scenes[i] || Object.assign(emptyScene(), { name: '' });
-    const cur = { layers: sc.layers, pads: sc.pads, thumb: sc.thumb || null };   // (its tile picture goes with it: that scene isn't drawn while you're elsewhere)
-    scenes[i] = Object.assign({}, sc, { layers: E.data.layers.map((l, li) => Object.assign({}, l, { i: li })), pads: E.data.pads, thumb: E.data.thumb || null });
+    const cur = { layers: sc.layers, pads: sc.pads, thumb: sc.thumb || null, ...('name' in E.data ? { name: sc.name || '' } : {}) };   // (its tile picture goes with it: that scene isn't drawn while you're elsewhere; its name when the step changed it)
+    scenes[i] = Object.assign({}, sc, { layers: E.data.layers.map((l, li) => Object.assign({}, l, { i: li })), pads: E.data.pads, thumb: E.data.thumb || null }, 'name' in E.data ? { name: E.data.name } : {});
     E.data = cur; if (pendingScene && pendingScene.i === i) pendingScene = null;
     renderScenes(); updateMem(); renderPool(); toast2(`Scene ${i + 1} changed back`); return;
   }
-  const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? liveThumb : null };   // (its picture too, in case it's undone from another scene)
+  const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? liveThumb : null, ...('name' in E.data ? { name: liveName } : {}) };
+  if ('name' in E.data) liveName = E.data.name;   // (its picture too, in case it's undone from another scene)
   layers.forEach((L, li) => { const d = E.data.layers[li]; Object.assign(L, layerProps(d)); });
   pads.forEach((p, k) => { p.gif = E.data.pads[k]; renderPad(k); });
   E.data = cur; pending.clear();
@@ -68,7 +69,7 @@ function applyScn(E){
 }
 // what a step changes, in words, for the undo / redo toast
 const XF_WORDS = { x: 'position', y: 'position', sx: 'scale', sy: 'scale', rot: 'rotation', fit: 'fit', flipX: 'flip', flipY: 'flip', tile: 'tile', cl: 'crop', ct: 'crop', cr: 'crop', cb: 'crop', alpha: 'opacity' };
-const GIF_WORDS = { sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', swapMerge: 'colour merge', trig: 'trigger', env: 'envelope', lfo: 'auto' };
+const GIF_WORDS = { name: 'name', sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', swapMerge: 'colour merge', trig: 'trigger', env: 'envelope', lfo: 'auto' };
 function histWhat(e, cur){
   if (!e) return '';
   if (typeof e !== 'string') return STEPS[e.kind].what(e);
@@ -90,6 +91,8 @@ function histWhat(e, cur){
 let undoToast = Prefs.get('vjif-undotoast') !== '0';
 const histToast = (verb, what) => { if (undoToast) toast2(what ? `${verb}: ${what}` : verb); };
 $('#undoToastChk').checked = undoToast;
+{ const r = $('#blackMsR'), show = () => { r.value = BLACK_OPTS.indexOf(BLACK_MS); $('#blackMsV').textContent = BLACK_MS ? (BLACK_MS < 1000 ? BLACK_MS + ' ms' : BLACK_MS / 1000 + ' s') : 'cut'; };
+  r.addEventListener('input', () => { BLACK_MS = BLACK_OPTS[+r.value]; Prefs.set('vjif-blackms', BLACK_MS); show(); }); show(); }
 $('#allPipC').value = allPipCol;
 $('#allPipC').addEventListener('input', e => { allPipCol = e.target.value; Prefs.set('vjif-allpip', allPipCol); fxFitGen++; syncFxUI(); });   // (the tiles redraw their pips)
 $('#undoToastChk').addEventListener('change', e => { undoToast = e.target.checked; Prefs.set('vjif-undotoast', undoToast ? '1' : '0'); });

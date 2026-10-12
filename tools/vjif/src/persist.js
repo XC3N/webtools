@@ -1,5 +1,5 @@
 // ---------- persistence: GIF files + settings in IndexedDB (cookies cap at ~4 KB) ----------
-const GIF_KEYS = ['sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'pal', 'swap', 'swapMerge', 'swapOff', 'trimOff', 'trig', 'env', 'lfo', 'shadow'];
+const GIF_KEYS = ['name', 'sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'pal', 'swap', 'swapMerge', 'swapOff', 'trimOff', 'trig', 'env', 'lfo', 'shadow'];
 const XF_KEYS = [...Object.keys(newXf()), 'alpha'];
 // IndexedDB 'kv' store:
 //   'gif:<hash>' → { name, blob }               original files, stored once (content hash), shared by sets
@@ -162,10 +162,10 @@ async function applySnapshot(st, { wait = true } = {}){
   $('#saveStat').textContent = '';
   if (missing) toast(`${missing} GIF file(s) of this set are missing from storage`);
 }
-// swap on the next beat or bar when Snap triggers says so and something is playing (max 1 bar + slack)
+// swap on the next beat (the next bar with Snap › Bar) when something is playing (max 1 bar + slack)
 function swapPoint(){
   const playing = layers.some(L => L.on && L.clips.length);
-  if (!playing || snapMode === 'off') return Promise.resolve();
+  if (!playing) return Promise.resolve();
   const unit = snapMode === 'bar' ? 4 : 1, start = Math.floor(clock.beat / unit), t0 = performance.now();
   const limit = 4 * 60000 / clock.bpm + 300;
   return new Promise(res => { const id = setInterval(() => {

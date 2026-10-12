@@ -25,10 +25,11 @@ const Theme = (() => {
     "Claude's Mopho": { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 },
     'XC3N':           { hCtrl: 171, hLcd: 317, hEnv: 300, hMeter: 319, bh: 238, bs: 20, bv: 15 },
     'Blue Berries':   { hCtrl: 199, hLcd: 266, hEnv: 225, hMeter: 242, bh: 238, bs: 27, bv: 18 },
-    "Claude's VJif":  { hCtrl: 14, sCtrl: 58, vCtrl: 93, hLcd: 185, sLcd: 50, vLcd: 92, hEnv: 322, hMeter: 265, bh: 20, bs: 9, bv: 10 },
+    "Claude's VJif":  { hCtrl: 15, sCtrl: 55, vCtrl: 85, hLcd: 38, sLcd: 22, vLcd: 92, hEnv: 15, hMeter: 32, bh: 30, bs: 7, bv: 10 },   // clay on warm charcoal, cream readouts
+    'Mopho':          { hCtrl: 46, hLcd: 215, hEnv: 210, hMeter: 222, bh: 229, bs: 9, bv: 12 },   // VJif's copy of Claude's Mopho
   };
   // presets that belong to one tool (by its app name): only that tool lists them
-  const OWN = { "Claude's Mopho": 'mopho-programmer', "Claude's VJif": 'vjif' };
+  const OWN = { "Claude's Mopho": 'mopho-programmer', "Claude's VJif": 'vjif', 'Mopho': 'vjif' };
   // the default theme is Matte (double-clicking a slider in the editor goes back to its Matte value)
   const DEFAULT = { ...PRESETS['Matte'] };
   const CORE = ['hCtrl', 'hEnv', 'hMeter', 'bh', 'bs', 'bv'];   // hLcd is optional in older files

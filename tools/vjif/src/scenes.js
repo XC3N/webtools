@@ -164,16 +164,21 @@ function setSceneName(i, name){
   else { if (!scenes[i]) scenes[i] = emptyScene(); scenes[i].name = name; }
   renderScenes();
 }
+// a name typed in place over a scene, a pad or an effect preset: Enter or a click elsewhere keeps it, Esc doesn't
+function nameEdit(b, value, ph, set){
+  if (b.querySelector('.nmEdit')) return; const inp = document.createElement('input'), dr = b.draggable;
+  inp.className = 'nmEdit'; inp.value = value; inp.placeholder = ph; inp.spellcheck = false; b.draggable = false;
+  ['pointerdown', 'pointerup', 'click', 'dblclick', 'contextmenu'].forEach(t => inp.addEventListener(t, ev => ev.stopPropagation()));   // (typing in it plays nothing)
+  b.appendChild(inp); inp.focus(); inp.select();
+  let done = false;
+  const end = keep => { if (done) return; done = true; if (keep) set(inp.value.trim().slice(0, 40)); inp.remove(); b.draggable = dr; };
+  inp.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') end(true); else if (ev.key === 'Escape') end(false); });
+  inp.addEventListener('blur', () => end(true));
+}
 $('#scenes').addEventListener('contextmenu', e => {
   const b = e.target.closest('.scene'); if (!b) return; e.preventDefault(); if (b.querySelector('.nmEdit')) return;
   if (e.ctrlKey) return emptySceneAt(+b.dataset.i);   // a Mac's Ctrl+click arrives as a right-click
-  const i = +b.dataset.i, inp = document.createElement('input');
-  inp.className = 'nmEdit'; inp.value = sceneName(i); inp.placeholder = `Scene ${i + 1}`; inp.spellcheck = false; b.draggable = false;
-  b.appendChild(inp); inp.focus(); inp.select();
-  let done = false;
-  const end = keep => { if (done) return; done = true; if (keep) setSceneName(i, inp.value); inp.remove(); b.draggable = true; };
-  inp.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') end(true); else if (ev.key === 'Escape') end(false); });
-  inp.addEventListener('blur', () => end(true));
+  const i = +b.dataset.i; nameEdit(b, sceneName(i), `Scene ${i + 1}`, v => setSceneName(i, v));
 });
 // drag a scene onto another: they swap places (the playing one keeps playing, under its new number); hold Ctrl (⌘)
 // while dragging to copy it instead, onto an empty scene (the empty ones show a +)
@@ -253,13 +258,13 @@ $('#scDup').addEventListener('click', () => {
 });
 // empty a scene (its name stays) — undoable; another scene is emptied where it is, without going there
 function emptySceneAt(i){
-  if (!sceneCount(i) && !scenePads(i)) return;
+  if (!sceneCount(i) && !scenePads(i) && !sceneName(i)) return;
   commit();
-  const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null) };
+  const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null), name: '' };   // emptied: its name goes too (Ctrl+Z brings it back)
   let E;
   if (i === sceneIdx){ E = { kind: 'scn', sid: sceneIds[i], data: blank }; applyScn(E); liveThumb = null; }
-  else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads, thumb: sc.thumb } };   // undo swaps these back in (its picture too)
-    scenes[i] = Object.assign(emptyScene(), { name: sc.name || '' }); if (pendingScene && pendingScene.i === i) pendingScene = null; renderScenes(); renderPool(); updateMem(); }
+  else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads, thumb: sc.thumb, name: sc.name || '' } };   // undo swaps these back in (its picture too)
+    scenes[i] = Object.assign(emptyScene(), { name: '' }); if (pendingScene && pendingScene.i === i) pendingScene = null; renderScenes(); renderPool(); updateMem(); }
   pushStep(E); hist.cur = histState(); updHistUI();
   toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);
 }

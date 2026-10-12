@@ -230,8 +230,9 @@ const SLOT = { OUT: 0, LAYERS: 1, LEAVING_LAYERS: 5, PREP_LAYERS: 10, PREP_OUT: 
 const zoomEOf = U => U && U.zoomE || 0;
 // ---- blackout (0, held) and freeze (Ins, held): applied to whatever is on the output, effects included ----
 const live = { black: 0, blackOn: false, blackT: 0, freeze: false, freezeReq: false };
-const BLACK_MS = 120;
-function blackLevel(now){ const x = Math.min(1, (now - live.blackT) / BLACK_MS); return live.blackOn ? Math.max(live.black0, x) : (1 - x) * live.black0; }
+const BLACK_OPTS = [0, 60, 120, 250, 500, 1000, 2000];   // Settings › Interface › Blackout: the fade to black and back (ms)
+let BLACK_MS = BLACK_OPTS.includes(+Prefs.get('vjif-blackms', 120)) ? +Prefs.get('vjif-blackms', 120) : 120;
+function blackLevel(now){ const x = BLACK_MS > 0 ? Math.min(1, (now - live.blackT) / BLACK_MS) : 1; return live.blackOn ? Math.max(live.black0, x) : (1 - x) * live.black0; }
 function setBlack(on){ const now = performance.now(); live.black0 = blackLevel(now); live.blackOn = on; live.blackT = now; }
 live.black0 = 0; live.blackT = -1e9;
 const freezeCv = mkCanvas(), freezeCtx = freezeCv.getContext('2d');
@@ -470,7 +471,7 @@ ${FX_GLSL}
           }
         }
         if (glitch > 0.001 && HAS(glS, S_glitch_crunch)){   // crunch (a starved bit rate): per block, the detail in a few luma steps around the block's mean, the colour from its centre only
-          float bs = max(glSz * 0.25, 3.0); vec2 cell = floor(uv * res / bs), cc = (cell + 0.5) * bs / res; vec3 L3 = vec3(0.299, 0.587, 0.114);
+          float bs = max(glSz, 3.0); vec2 cell = floor(uv * res / bs), cc = (cell + 0.5) * bs / res; vec3 L3 = vec3(0.299, 0.587, 0.114);
           vec3 b = look(samp(geo(cc), 0.0).rgb); float ya = dot(b, L3), y = dot(c, L3), q = mix(0.03, 0.16, glitch);
           y = ya + floor((y - ya) / q + 0.5) * q;      // the detail stays, in a few steps (unlike Pixel, where a block is one flat colour)
           vec2 cc2 = (floor(uv * res / (bs * 2.0)) + 0.5) * bs * 2.0 / res; vec3 b2 = look(samp(geo(cc2), 0.0).rgb); float y2 = dot(b2, L3);   // the colour from blocks twice the size, so it bleeds across edges
@@ -537,7 +538,7 @@ ${FX_GLSL}
     };
     // Transitions that used to be drawn bit by bit on the CPU (hundreds of drawImage / fillRect calls, or a loop over
     // every block): Dissolve, Glitch › Scramble and TV › VHS, as one shader pass over the two scenes.
-    // mode 1 dissolve · 2 scramble · 3 vhs. Pixels: P (y down, like the canvases).
+    // mode 1 dissolve · 2 scramble (no transition uses it since 0.84; kept for now) · 3 vhs. Pixels: P (y down, like the canvases).
     const tp = gl.createProgram();
     gl.attachShader(tp, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(tp, sh(gl.FRAGMENT_SHADER, `

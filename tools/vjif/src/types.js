@@ -103,7 +103,7 @@
 
 /**
  * @typedef {Object} TransPreset
- * @property {'cut'|'fade'|'slide'|'wipe'|'zoom'|'dissolve'|'glitch'|'tv'|'stutter'} type
+ * @property {'cut'|'fade'|'wipe'|'zoom'|'dissolve'|'glitch'|'tv'|'stutter'} type
  * @property {string} style        one of TR_STYLES[type]
  * @property {'left'|'right'|'up'|'down'|'rand'} dir   Slide / Wipe (rand: one picked each time)
  * @property {number} len          beats
