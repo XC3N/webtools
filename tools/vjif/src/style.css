@@ -439,3 +439,10 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 .scene.armed,#fxPre .fxp.armed{outline:2px solid var(--danger)!important;outline-offset:-2px}
 
 h2 .h2btn{margin-left:6px;height:20px;padding:0 8px;font-size:11px}   /* a section's own button on its heading line (there when folded) */
+/* GIF › Play / Auto: the graph (and the frame readout) set apart at the bottom of the pane */
+.gbot{border-top:1px solid var(--edge);margin-top:10px;padding-top:8px}.gbot .lcd{margin-top:6px}
+.field.swm{grid-template-columns:78px minmax(0,1fr) auto}.field.swm>button{grid-column:3;grid-row:1}   /* Swap colours › Merge, with Pick at its end */
+input[type=color].sw{width:26px;height:20px;padding:0;flex:none;border:1px solid #0006;border-radius:2px;background:none}   /* the size of a Swap colours swatch */
+.field>.keyrow>label{white-space:nowrap}
+[data-pane=auto].envgraph .aEnvF{display:none}   /* GIF › Auto › Envelope as a graph: the scope's points instead of the sliders */
+.field.wide{grid-template-columns:auto minmax(0,1fr)}   /* a long label and its switch: the label on one line */

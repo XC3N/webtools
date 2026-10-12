@@ -21,7 +21,7 @@ async def m():
     await pg.reload(); await pg.wait_for_function("store.ready"); await pg.wait_for_timeout(1500)
     r2 = await pg.evaluate("pads[0].gif && JSON.stringify(pads[0].gif.pal)")
     # smoothing: in GIF › Colour (0.79)
-    r3 = await pg.evaluate("[!!$('#gSmooth').closest('[data-pane=colour]'), (() => { selectPad(0); $('#gSmooth').checked = true; $('#gSmooth').dispatchEvent(new Event('change')); return pads[0].gif && pads[0].gif.crisp })()]")
+    r3 = await pg.evaluate("[!!$('#gSmooth').closest('#xfPanel'), (() => { selectPad(0); $('#gSmooth').checked = true; $('#gSmooth').dispatchEvent(new Event('change')); return pads[0].gif && pads[0].gif.crisp })()]")
     print('colours', r, '| after reload', r2, '| smoothing', r3)
     ok = r[0] <= r[1] and __import__('json').loads(r2).get('i') == 2 and __import__('json').loads(r2).get('d') == 1 and r3 == [True, False]
     await b.close()

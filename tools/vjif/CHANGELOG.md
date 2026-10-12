@@ -4,6 +4,26 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.83.0 — 2026-10-12
+
+### GIFs
+- Play starts with a Loop section (Timing, length, Direction, Restart). Loop › Direction: Forward / Ping-pong. Once is gone: a Trigger's One shot does it (a set saved with Once loads as a One shot of one play, no fades).
+- Trigger › Hit: Loop / Hold / One shot (Stay is now Loop).
+- The frame readout sits under the envelope graph, both set apart by a line at the bottom of Play. Clear pad is gone: the pad's × clears it.
+- Smooth scaling moved to Transform (it still belongs to the GIF: every layer and scene showing it).
+- Key: the swatch sits with its Colour label, at the size of a Swap colours swatch; All / Edges / Wand get the rest of the row.
+- Swap colours › Pick moved to the Merge row, inside the section.
+- Auto: an LFO heading over Shape … Count from; Envelope › Mode reads Off / LFO depth / Bypass LFO; the graph sits apart at the bottom. Envelope has the effect editor's Reset and graph / sliders buttons (one choice for both); as a graph, drag its points: Attack, Decay with Sustain (up / down), Release.
+- Text: the preset you pick stays shown in its menu (and comes back when you edit the text).
+
+### Transitions
+- TV › Channel draws its number with the VCR OSD Mono font file itself (a 4 KB cut of the TTF, only the characters it needs) instead of a bitmap copy of it.
+
+### Fixes
+- The section switches in GIF › Play / Colour (Frames, Trigger, Adjust, Palette, Swap colours) undid themselves on a mouse click.
+- Swap colours › Clear also drops the selected swatch (and works with only a swatch selected).
+- Hit › Hold: the envelope graph follows the hit as played: it grows while the pad is held, then shows the release from where it was let go.
+
 ## 0.82.0 — 2026-10-12
 
 ### Effects

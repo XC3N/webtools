@@ -334,7 +334,7 @@ $('#envReset').addEventListener('click', () => { const C = fxConf(selFx), D = se
   if (D.mode !== C.mode){ C.len = fxLenDef(C.mode); C.rel = fxRelDef(C.mode); }   // its mode was changed: that mode's defaults
   syncFxUI(); toast2('Envelope back to its default'); });
 $('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; Prefs.set('vjif-envprev', envPrevOn ? '1' : '0'); syncEnvTg(); });
-$('#envView').addEventListener('click', () => { envSliders = !envSliders; Prefs.set('vjif-envview', envSliders ? 'sl' : 'g'); syncEnvTg(); syncEnvSl(); drawFxEnv(); });
+$('#envView').addEventListener('click', () => { envSliders = !envSliders; Prefs.set('vjif-envview', envSliders ? 'sl' : 'g'); syncEnvTg(); syncEnvSl(); drawFxEnv(); syncAEnvView(); });   // (GIF › Auto › Envelope follows the same choice)
 const ENV_SL = { a: [() => FX_ATTS, 'att'], d: [() => FX_ATTS, 'dec'], l: [() => FX_LENS, 'len'], r: [() => FX_RELS, 'rel'] };
 function syncEnvSl(){
   const C = fxEnvConf(); if (!C || !envSliders) return;

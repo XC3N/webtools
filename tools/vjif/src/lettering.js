@@ -147,6 +147,7 @@ function openText(edit = -1){
   const d = edit >= 0 ? edit : nextEmpty(selPad);
   $('#txTo').textContent = edit >= 0 ? `pad ${pads[edit].label}` : d >= 0 ? `→ pad ${pads[d].label}` : 'all pads full: pool only';
   $('#txOk').textContent = edit >= 0 ? 'Update' : 'Add to pool'; $('#txOk').hidden = edit < 0 && d >= 0; $('#txDrag').hidden = edit >= 0;   // new text: dragged onto a pad (or Enter / a click: the next empty one)
+  $('#txPreset').value = TX_PRESETS[txSpec.look] ? String(txSpec.look) : '';
   txFontStyle(); $('#textPanel').hidden = false; txUI(); $('#txText').focus();
 }
 function closeText(){ $('#textPanel').hidden = true; }
@@ -236,6 +237,6 @@ $('#txLooks').insertAdjacentHTML('beforeend', `<div class="field txlook"><label>
 $('#txLooks').addEventListener('click', e => { const b = e.target.closest('.seg button'); if (!b) return; const k = b.closest('.seg').dataset.k; txSpec[k] = k === 'acc' ? +b.dataset.v : b.dataset.v; txUI(); });
 $('#txPreset').addEventListener('change', e => { const p = TX_PRESETS[+e.target.value]; if (!p) return;
   Object.assign(txSpec, TX_LOOK0, p[1], { cut: false }); txFontSet(txSpec.font); $('#txBold').checked = txSpec.bold; $('#txItal').checked = txSpec.ital; $('#txTrack').value = txSpec.track;
-  $('#txCol').value = txSpec.color; $('#txCol2').value = txSpec.col2; e.target.value = ''; txUI(); });
+  $('#txCol').value = txSpec.color; $('#txCol2').value = txSpec.col2; txSpec.look = +e.target.value; txUI(); });   // its name stays shown (and is kept with the text)
 onSeg($('#txMarq'), (b, e) => { txSpec.marquee = +b.dataset.v; txUI(); });
 $('#textPanel').addEventListener('pointerdown', e => { if (e.target.id === 'textPanel') closeText(); });

@@ -92,7 +92,6 @@ async def main():
       document.querySelector('#aEnv [data-v=off]').click(); r.push($('#aEA').closest('.field').classList.contains('dimmed')); return r; })()""")
     print('env ui', eu); assert eu == ['only', True, True, False, True], eu
     await pg.evaluate("document.querySelector('#aEnv [data-v=depth]').click()")
-    await (await pg.query_selector('#gPanes')).screenshot(path='/tmp/claude-0/-home-claude-webtools/1b2b3a57-6428-5293-a0ca-34110d8408a2/scratchpad/autoenv.png')
     await pg.evaluate("$('#aReset').click()")
     # 0.76: Claude's VJif theme (Claude's Mopho stays Bad MOPHO's), Sound in Rec ▾ drives Settings › Sound, level meters, soft shadow crop
     th = await pg.evaluate("[...document.querySelectorAll('#themeBox .thm-preset option')].map(o => o.value)")
@@ -124,7 +123,7 @@ async def main():
     # 0.79: Glitch styles stack (Keyframe, Crunch), the Glitch transition's Scramble became Corrupt, × on pads / scenes / presets, Trigger inside Play
     g9 = await pg.evaluate("""[styleParts(FXI.glitch, 'corrupt+crunch').join('+'), styleParts(FXI.glitch, 'scramble').join(), normTrans({ type: 'glitch', style: 'scramble' }).style,
       document.querySelectorAll('.pad .xdel').length, document.querySelectorAll('#scenes .scene .xdel').length, document.querySelectorAll('#fxPre .fxp .xdel').length,
-      !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('[data-pane=colour] #gSmooth')]""")
+      !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('#xfPanel #gSmooth')]""")
     print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'scramble', 18, 9, 9, True, True, True], g9
     sw = await pg.evaluate("[hsvOn({ hsv: { h: 10, s: 1, v: 1, off: true } }), hsvOn({ hsv: { h: 10, s: 1, v: 1 } }), palOn({ pal: { i: 2, off: true } }), palOn({ pal: { i: 2 } }), swapOn({ swap: [1], swapOff: true }), swapOn({ swap: [1] }), ['fOn', 'tOn', 'hOn', 'pOn', 'swOn'].every(id => !!document.getElementById(id))]")
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
@@ -132,5 +131,12 @@ async def main():
     d82 = await pg.evaluate("""(() => { selectFx(FXI.colour); const C = fxCfg[FXI.colour], was = C.style; C.style = 'pal'; syncFxUI(); const a = $('#fxSizeRow label').textContent;
       C.style = 'flip'; syncFxUI(); const b2 = $('#fxSizeRow label').textContent; C.style = was; syncFxUI(); return [a, b2, FX_PALS.at(-1).n, FX_PALS.at(-1).c.length, 'dots' in fxEntry(FXI.colour)]; })()""")
     print('0.82', d82); assert d82 == ['Dots', 'Size', 'ZX Spectrum', 15, True], d82
+    d83 = await pg.evaluate("""(() => { const g = pads[0].gif; selectPad(0); $('#gTabs [data-v=colour]').click(); g.swap = [{ from: [1, 2, 3], to: [9, 9, 9] }]; g.swapOff = false; syncGifUI(); return [...document.querySelectorAll('#gLoop button')].map(b => b.textContent).join('/'); })()""")
+    await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); off = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
+    await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); on = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
+    m83 = await pg.evaluate("""(() => { const g = pads[0].gif, keep = gifSettings(g); applyGifSettings(g, { ...keep, loop: 'once', trig: 'stay' }); const r = [g.loop, g.trig, g.env.len];
+      applyGifSettings(g, keep); return [r, $('#tMode button').textContent, !document.querySelector('#gClear'), [...document.querySelectorAll('#aEnv button')].map(b => b.textContent).join('/'), !!$('#gSmooth').closest('#xfPanel')]; })()""")
+    print('0.83', d83, off, on, m83); assert d83 == 'Forward/Ping-pong' and off == [True, False] and on == [False, True], (d83, off, on)
+    assert m83 == [['loop', 'fade', 'gif'], 'Loop', True, 'Off/LFO depth/Bypass LFO', True], m83
     await b.close()
 asyncio.run(main())

@@ -22,10 +22,10 @@ function cycleText(g){
 function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.querySelector('.l1').textContent = a; el.querySelector('.l2').textContent = b; el.title = a + ' — ' + b; }
 function syncGifUI(){
   queueMicrotask(markFolds);                         // (once the panel shows this GIF's values)
-  const p = pads[selPad], g = p.gif;
+  const p = pads[selPad], g = p.gif; syncSwitches(g);
   $('#gifSettings').classList.toggle('disabled', !g);
   $('#gifName').textContent = `${p.label}${g ? (g.keyMsg ? ' · ' + g.keyMsg : '') : ' · empty'}`; $('#gifName').title = '';
-  $('#gText').hidden = !(g && g.media && g.media.text); $('#gClear').disabled = !g;
+  $('#gText').hidden = !(g && g.media && g.media.text);
   if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
   $('#gSmooth').checked = !g.crisp;
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
@@ -123,14 +123,14 @@ $('#swList').addEventListener('click', e => {
 $('#swMerge').addEventListener('input', e => { const g = curGif(); if (!g) return; g.swapMerge = +e.target.value;
   const pal = gifPalette(g); g.swap.forEach(x => { const c = pal.find(c => sameRgb(c, x.from)); if (c) x.tol = c.rad + 1.5; });   // existing swaps follow their new swatch
   scheduleFx(g, 150); syncSwapUI(g); clearTimeout(e.target._t); e.target._t = setTimeout(commit, 400); });
-$('#swClear').addEventListener('click', () => { const g = curGif(); if (!g || !g.swap.length) return; g.swap = []; scheduleFx(g, 0); syncSwapUI(g); renderPad(selPad); });
+$('#swClear').addEventListener('click', () => { const g = curGif(); if (!g) return; swSel = null; if (picking === 'swap') stopPick(); if (g.swap.length){ g.swap = []; scheduleFx(g, 0); renderPad(selPad); } syncSwapUI(g); markFolds(); });
 
 $('#gSmooth').addEventListener('change', e => { const g = curGif(); if (g){ g.crisp = !e.target.checked; renderPad(selPad); redraw.all = true; } });   // a setting of the GIF (in GIF › Play), not of where it's placed
 $('#gSpeed').addEventListener('input', e => { const g = curGif(); if (g){ g.speed = +e.target.value; e.target.nextElementSibling.textContent = g.speed.toFixed(2) + '×'; showCycle(g); } });
 const HSV_UI = [['#hH', 'h', v => (v > 0 ? '+' : '') + v + '°'], ['#hS', 's', v => (+v).toFixed(2) + '×'], ['#hV', 'v', v => (+v).toFixed(2) + '×']];
 HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
   const g = curGif(); if (!g) return;
-  g.hsv[k] = +e.target.value; g.hsv.off = false; e.target.nextElementSibling.textContent = fmt(g.hsv[k]);   // (touching it switches Adjust on)
+  g.hsv[k] = +e.target.value; g.hsv.off = false; e.target.nextElementSibling.textContent = fmt(g.hsv[k]); syncSwitches(g);   // (touching it switches Adjust on)
   scheduleFx(g, 150);
 }));
 $('#gPal').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { d: 0 }), i: +e.target.value, off: false }; e.target.blur(); scheduleFx(g, 0); syncGifUI(); renderPad(selPad); });
@@ -196,6 +196,28 @@ $('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.targe
 A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0])); });
 $('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value));
 onSeg($('#aEnv'), b => editLfo(A => A.em = b.dataset.v));
+// Envelope: reset, and graph or sliders (the same choice as the effect envelope's). As a graph, the scope's points drag:
+// Attack (across), Decay (across) with Sustain (up / down), Release (across), on the same steps as the sliders
+$('#aEnvReset').addEventListener('click', () => editLfo(A => { A.ea = 0; A.ed = 4; A.es = 0; A.er = 1; }));
+$('#aEnvView').addEventListener('click', () => $('#envView').click());
+function syncAEnvView(){ $('#aEnvView').innerHTML = envSliders ? ENV_IC_GRAPH : ENV_IC_SL; $('#aEnvView').title = envSliders ? 'Show the envelope as a graph (drag its points)' : 'Show the envelope as sliders';
+  $('#gPanes [data-pane=auto]').classList.toggle('envgraph', !envSliders); }
+syncAEnvView();
+let aEnvDrag = null;
+const aEnvGeo = (A, cv, span) => { const d = devicePixelRatio || 1, w = cv.width, h = cv.height, pad = 5 * d, a = A.ea ?? 0, dd = A.ed ?? 4, r = A.er ?? 1, s = A.es ?? 0, rs = Math.max(a + dd, 1);
+  span = span || Math.max(a + dd + 1 + r, 1) * 1.1; const X = b => b / span * w, Y = v => h - pad - v * (h - 2 * pad);
+  return { span, d, w, h, pad, rs, pts: [['a', X(a), Y(1)], ['d', X(a + dd), Y(s)], ['r', X(rs + r), Y(0)]] }; };
+const aEnvOn = () => { const g = curGif(), A = g && g.lfo[aSel]; return !envSliders && A && (A.em || 'off') !== 'off' ? A : null; };
+$('#aScope').addEventListener('pointerdown', e => { const A = aEnvOn(); if (!A) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv);
+  const px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d; let best = null, bd = 14 * G.d;
+  for (const [k, x, y] of G.pts){ const q = Math.hypot(px - x, py - y); if (q < bd){ bd = q; best = k; } }
+  if (!best) return; aEnvDrag = { k: best, span: G.span }; cv.setPointerCapture(e.pointerId); });
+$('#aScope').addEventListener('pointermove', e => { const cv = e.currentTarget, A = aEnvOn();
+  if (!aEnvDrag){ cv.style.cursor = A && (() => { const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv), px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d; return G.pts.some(([, x, y]) => Math.hypot(px - x, py - y) < 14 * G.d); })() ? 'grab' : ''; return; }
+  if (!A) return; const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv, aEnvDrag.span), b = (e.clientX - r.left) * G.d / G.w * G.span, v = clamp(1 - ((e.clientY - r.top) * G.d - G.pad) / (G.h - 2 * G.pad), 0, 1);
+  const near = t => ENV_OPTS.reduce((p, o) => Math.abs(o[0] - t) < Math.abs(p[0] - t) ? o : p)[0];
+  editLfo(A => { if (aEnvDrag.k === 'a') A.ea = near(b); else if (aEnvDrag.k === 'd'){ A.ed = near(b - (A.ea ?? 0)); A.es = Math.round(v * 20) / 20; } else A.er = near(b - G.rs); }); });
+$('#aScope').addEventListener('pointerup', () => { aEnvDrag = null; });
 $('#aResetAll').addEventListener('click', () => { const g = curGif(); if (!g) return; const n = LFO_T.filter(t => g.lfo[t[0]] && g.lfo[t[0]].on).length; g.lfo = {}; syncAutoUI(g); syncXfUI(); toast2(n ? `Automation off (${n} LFO${n > 1 ? 's' : ''} reset)` : 'No automation to reset'); });
 $('#aReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.lfo[aSel]; syncAutoUI(g); syncXfUI(); });
 
@@ -226,10 +248,11 @@ function drawLfoScope(g){
   const A = g.lfo[aSel] || lfoDef(aSel), i = LFO_T.findIndex(t => t[0] === aSel), c = clipOf(selPad) || { startBeat: 0 };
   const t = A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat, L = A.per + (A.gap || 0), seed = lfoSeed(g, i);
   if ((A.em || 'off') !== 'off'){                    // with an envelope: one hit held for a beat, the dot where the last hit is now
-    const a = A.ea ?? 0, dd = A.ed ?? 4, r = A.er ?? 1, span = Math.max(a + dd + 1 + r, 1) * 1.1, sh = { hitBeat: 0, relBeat: 1 };
+    const a = A.ea ?? 0, dd = A.ed ?? 4, r = A.er ?? 1, span = aEnvDrag ? aEnvDrag.span : Math.max(a + dd + 1 + r, 1) * 1.1, sh = { hitBeat: 0, relBeat: 1 };
     const val = (u, cl) => A.em === 'only' ? lfoEnv(A, cl, u) : lfoShape(A, lfoPosT(A, u), seed) * lfoEnv(A, cl, u);
     const y = scopeTrace(x, w, h, d, u => val(u * span, sh), A.on);
     const hit = c.hitBeat !== undefined ? clock.beat - c.hitBeat : -1;
+    const P = aEnvOn(); if (P){ const G = aEnvGeo(A, $('#aScope'), aEnvDrag && aEnvDrag.span); for (const [k, px, py] of G.pts){ x.fillStyle = aEnvDrag && aEnvDrag.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); } }   // graph: its points
     if (hit >= 0 && hit < span) scopeDot(x, hit / span * w, y(val(hit, { hitBeat: 0, relBeat: c.relBeat === null ? null : (c.relBeat ?? c.hitBeat) - c.hitBeat })), d);
     return;
   }
@@ -238,10 +261,13 @@ function drawLfoScope(g){
 }
 function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
-  const E = g.env, T = envTimes(g), hold = E.gate ? Math.max(E.h, 1) : T.h, span = Math.max(T.a + hold + T.r, 0.5) * 1.1;
+  const E = g.env, T = envTimes(g), c = clipOf(selPad); let hold = E.gate ? Math.max(E.h, 1) : T.h;
+  if (E.gate && g.trig === 'fade' && c && c.env && !c.env.noGate){   // Hit › Hold: the curve as this hit is played (held so far, or let go)
+    const t = clock.beat - c.env.t0, held = c.env.rel === null ? t : c.env.rel - c.env.t0;
+    if (c.env.rel === null || t < held + T.r + 1) hold = Math.max(held - T.a, 0); }
+  const span = Math.max(T.a + hold + T.r, 0.5) * 1.1;
   const shape = { env: { t0: 0, from: 0, rel: E.gate ? T.a + hold : null, noGate: false } };   // (T: the times as played, One play shrinks the fades)
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
-  const c = clipOf(selPad);
   if (g.trig === 'fade' && c && c.env){
     const lv = envLevel(c, g, clock.beat), t = clock.beat - c.env.t0;
     if (lv > 0) scopeDot(x, Math.min(w - 3 * d, t / span * w), y(lv), d);
@@ -260,7 +286,7 @@ function drawPrev(g, f){
 [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => {
   $(id).addEventListener('input', e => {
     const g = curGif(); if (!g) return;
-    const v = +e.target.value; g[k] = v; g.trimOff = false;   // (touching it switches Frames on)
+    const v = +e.target.value; g[k] = v; g.trimOff = false; syncSwitches(g);   // (touching it switches Frames on)
     if (k === 'inF' && g.outF < v) g.outF = v;          // dragging in past out pushes out along (and vice versa)
     if (k === 'outF' && g.inF > v) g.inF = v;
     rebuildSeq(g); syncRangeUI(g); drawPrev(g, g[k]); showCycle(g);
@@ -317,7 +343,6 @@ function restoreClear(E){
   afterPadChange(E.pad); return true;
 }
 function afterPadChange(i){ renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); renderPool(); redraw.all = true; }
-$('#gClear').addEventListener('click', () => { clearPad(selPad); toast2('Pad cleared — Ctrl+Z brings it back'); });
 
 // ---- drop shadow (GIF › Colour › Shadow): moving a setting switches it on ----
 const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off'], ['#shS', 'soft', v => v > 0 ? Math.round(v * 100) + '%' : 'hard']];
@@ -335,7 +360,7 @@ $('#shCol').addEventListener('input', e => { const g = curGif(); if (!g) return;
 const gFold = new Set(Prefs.json('vjif-gfold', []));
 document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=colour] > .sub, #gPanes [data-pane=auto] > .sub[data-fold]').forEach(s => {
   const t = s.querySelector('span'), name = t.textContent.trim(); s.classList.add('foldable');
-  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub') && !n.classList.contains('scope'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };   // (a scope stays: it ends the section)
+  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub') && !n.classList.contains('scope') && !n.classList.contains('gbot'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };   // (a scope stays: it ends the section)
   t.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
   apply();
 });
@@ -356,8 +381,7 @@ $('#tOn').addEventListener('change', e => { const b = $(`#tMode [data-v=${e.targ
 $('#hOn').addEventListener('change', swFx((g, on) => { g.hsv.off = !on; }));
 $('#pOn').addEventListener('change', swFx((g, on) => { if (on && !(g.pal.i >= 0)) g.pal.i = 0; g.pal.off = !on; }));
 $('#swOn').addEventListener('change', swFx((g, on) => { g.swapOff = !on; }));
-function markFolds(){
-  syncSwitches(curGif());
+function markFolds(){                                // (not the switches: on a click this runs before the switch's own change event, and would undo it)
   document.querySelectorAll('#gPanes .sub.foldable').forEach(s => {
     let mod = [...s.querySelectorAll('input[type=checkbox]')].some(c => c.checked !== (c.dataset.def === '1'));   // its own switch away from its default (Key, Shadow on; Adjust off…)
     for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling){

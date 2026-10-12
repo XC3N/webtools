@@ -84,6 +84,7 @@
     <div class="field"><label>Scale</label><div class="keyrow span" style="gap:14px"><label class="tog" title="Scale X and Y move together (keeps the shape), with the sliders and the side handles in the preview"><input type="checkbox" id="xLink">Link</label><label class="tog" title="Handles in the preview scale around the centre instead of the opposite edge (Alt while dragging does the opposite)"><input type="checkbox" id="xFromC">From centre</label></div></div>
     <div class="field"><label for="xR">Rotate</label><input id="xR" type="range" data-def="0" min="-180" max="180" step="1"><output></output></div>
     <div class="field"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
+    <div class="field wide"><label for="gSmooth" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Belongs to the GIF: applies everywhere it's used, every layer and scene">Smooth scaling</label><label class="tog span" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Belongs to the GIF: applies everywhere it's used, every layer and scene"><input type="checkbox" id="gSmooth"></label></div>
     <div class="field"><label>Flip / tile</label><div class="keyrow span" style="gap:14px"><label class="tog"><input type="checkbox" id="xFx">H</label><label class="tog"><input type="checkbox" id="xFy">V</label><label class="tog"><input type="checkbox" id="xT">Tile</label></div></div>
     <div class="field"><label>Crop</label><div class="keyrow span"><span id="xCrop" class="lcd">none</span><button id="xCropAuto" title="Crop to what is drawn: trims the see-through border, over every frame">To content</button><button id="xCropReset">Uncrop</button></div></div>
     <div class="btnrow"><button id="xFitS" title="Base size Fit, scale 1×, centred: the whole GIF visible (its cropped part)">Fit</button><button id="xFill" title="Base size Fill, scale 1×, centred: covers the whole frame, the overflow cut off">Fill</button><button id="xStr" title="Base size Stretch, scale 1×: covers the whole frame, distorted">Stretch</button></div>
@@ -93,6 +94,7 @@
     <div class="seg tabs" id="gTabs"><button data-v="play" class="on">Play</button><button data-v="colour">Colour</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
     <div id="gPanes">
       <div data-pane="play">
+        <div class="sub" style="margin-top:0"><span title="How the GIF plays when nothing triggers it: its timing, direction and restarts">Loop</span><span class="line"></span></div>
         <div class="field"><label>Timing</label><div class="seg span" id="gSync">
           <button data-v="free" title="The GIF's own frame timing × speed — ignores the tempo">Free</button>
           <button data-v="stretch" title="The whole loop fits exactly the length below, at any tempo">Fit</button>
@@ -102,10 +104,9 @@
           <div class="field" data-for="step"><label>Each frame</label><div class="seg span grid4" id="gSub"></div></div>
           <div class="field" data-for="free" style="align-self:start"><label for="gSpeed">Speed</label><input id="gSpeed" type="range" data-def="1" min="0.1" max="4" step="0.05"><output></output></div>
         </div>
-        <div class="field"><label>Loop</label><div class="seg span" id="gLoop">
-          <button data-v="loop" title="Wrap back to the start">Loop</button>
-          <button data-v="pingpong" title="Forward then backward (in Fit, the round trip fills the loop length)">Ping-pong</button>
-          <button data-v="once" title="Play through, then hold the last frame until triggered again">Once</button></div></div>
+        <div class="field"><label>Direction</label><div class="seg span" id="gLoop">
+          <button data-v="loop" title="Start to end, then wrap back to the start">Forward</button>
+          <button data-v="pingpong" title="Forward then backward (in Fit, the round trip fills the loop length)">Ping-pong</button></div></div>
         <div class="field"><label title="Jump back to the start every …">Restart</label><div class="seg span grid4" id="gRestart"></div></div>
         <div class="sub"><span title="In / Out trim the animation; Start sets the frame the loop begins on (it wraps within In–Out)">Frames</span><span class="line"></span><label class="tog" title="Frames on / off: off plays every frame from the first (In / Out / Start are kept)"><input type="checkbox" id="fOn" data-def="1"></label></div>
         <div class="frames">
@@ -114,11 +115,10 @@
           <div class="field"><label for="gStart">Start</label><input id="gStart" type="range" data-def="min" min="0" step="1"><output></output></div></div>
           <canvas id="gPrev" width="96" height="96" title="Frame under the slider you last touched"></canvas>
         </div>
-        <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div>
         <div class="field" title="Keep this GIF's frames at full, half or quarter resolution. It looks the same size; ½ uses a quarter of the memory, ¼ a sixteenth. Applies to the GIF everywhere it's used (every pad and scene). Pixel art that was saved blown up (every pixel a block of N×N) is found on load and kept at its real pixels: same picture, N² times less memory"><label>Resolution</label><div class="seg span" id="gRes"><button data-v="1">Full</button><button data-v="0.5">½</button><button data-v="0.25">¼</button></div></div>
-        <div class="sub trig"><span title="What a pad hit does: restart it and stay, or play it once">Trigger</span><span class="line"></span><label class="tog" title="On: One shot (hidden until hit) · Off: Stay"><input type="checkbox" id="tOn" data-def="0"></label></div>
+        <div class="sub trig"><span title="What a pad hit does: restart it and stay, or play it once">Trigger</span><span class="line"></span><label class="tog" title="On: One shot (hidden until hit) · Off: Loop"><input type="checkbox" id="tOn" data-def="0"></label></div>
         <div class="field trig"><label title="What a pad hit does">Hit</label><div class="seg span" id="tMode">
-          <button data-v="stay" title="A hit restarts the GIF and it stays on">Stay</button>
+          <button data-v="stay" title="A hit restarts the GIF and it keeps looping">Loop</button>
           <button data-v="hold" title="Hidden until hit: it fades in while the pad is held and fades out when it's let go">Hold</button>
           <button data-v="fade" title="Hidden until hit (a dotted ghost in the preview, nothing in the output): each hit plays it once: Fade in, Hold, Fade out. Fades at 0: a plain one-shot. Lengths follow the tempo">One shot</button></div></div>
         <div id="tEnv">
@@ -127,16 +127,16 @@
           <div class="field"><label for="tR">Fade out</label><input id="tR" type="range" data-def="5" min="0" step="1"><output></output></div>
           <div class="field" id="tLenRow"><label title="How long one hit lasts">Length</label><div class="seg span" id="tLen"><button data-v="free" title="Fade in + Hold + Fade out, as set — the GIF keeps looping if that's longer than it">As set</button><button data-v="gif" title="One play of the GIF (a marquee: once across the screen): the fade ends when it does (Hold fills the rest; fades shrink if they don't fit)">One play</button></div></div>
           <div class="field"><label>Curve</label><div class="seg span" id="tCurve"><button data-v="lin" title="Constant rate">Linear</button><button data-v="smooth" title="Eases in and out of each ramp">Smooth</button></div></div>
-          <canvas id="tScope" class="scope" title="Envelope: fade in, hold, fade out — the dot follows the last hit"></canvas>
         </div>
+        <div class="gbot tkeep"><canvas id="tScope" class="scope" title="Envelope: fade in, hold, fade out — the dot follows the last hit"></canvas>
+          <div class="lcd two" id="gCycle"><span class="l1"></span><span class="l2"></span></div></div>
       </div>
       <div data-pane="colour" class="off">
-        <div class="field tkeep"><label for="gSmooth" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used">Smooth scaling</label><label class="tog span" title="On: the GIF is smoothed when scaled · Off: crisp pixels (pixel art). Applies to this GIF everywhere it's used"><input type="checkbox" id="gSmooth"></label></div>
         <div class="sub"><span>Key</span><span class="line"></span><button id="kPick" title="Pick the key colour: then click the GIF in the preview">Pick</button><button id="kReset" title="Clear the key: back to its defaults (off)">Clear</button><label class="tog" title="Make the chosen colour transparent"><input type="checkbox" id="kOn"></label></div>
-        <div class="field"><label title="The key colour, and which matching pixels are removed">Colour</label><div class="keyrow span"><input type="color" id="kCol" value="#00ff00" title="The key colour"><div class="seg" id="kRegion" style="flex:1" title="Which matching pixels are removed">
+        <div class="field"><div class="keyrow"><label title="The key colour">Colour</label><input type="color" id="kCol" class="sw" value="#00ff00" title="The key colour"></div><div class="seg span" id="kRegion" title="Which matching pixels are removed">
           <button data-v="all" title="Every pixel of the key colour, anywhere">All</button>
           <button data-v="edges" title="Only key-coloured areas that touch the frame edges — the colour inside the subject stays">Edges</button>
-          <button data-v="point" title="Magic wand: only the key-coloured area joined to the point you picked">Wand</button></div></div></div>
+          <button data-v="point" title="Magic wand: only the key-coloured area joined to the point you picked">Wand</button></div></div>
         <div class="field"><label for="kTol">Tolerance</label><input id="kTol" type="range" data-def="0" data-pct min="0" max="0.6" step="0.005"><output></output></div>
         <div class="field"><label for="kSoft">Softness</label><input id="kSoft" type="range" data-def="0" data-pct min="0" max="0.4" step="0.005"><output></output></div>
         <div class="sub"><span>Adjust</span><span class="line"></span><button id="hReset" class="rst" title="Hue, saturation and brightness back to normal">Reset</button><label class="tog" title="Adjust on / off (the settings are kept)"><input type="checkbox" id="hOn" data-def="1"></label></div>
@@ -149,19 +149,20 @@
         <div class="sub"><span title="A shadow under the GIF, from its see-through edges, to sit it into the scene (best on GIFs with transparency)">Shadow</span><span class="line"></span><input type="color" id="shCol" value="#000000" title="Shadow colour"><label class="tog" title="Shadow on / off"><input type="checkbox" id="shOn"></label></div>
         <div class="field"><label for="shX">X</label><input id="shX" type="range" data-def="8" min="-60" max="60" step="1"><output></output></div>
         <div class="field"><label for="shY">Y</label><input id="shY" type="range" data-def="8" min="-60" max="60" step="1"><output></output></div>
-        <div class="field"><label title="Off: the light stays put: the shadow falls the same way however the GIF turns, and Cut stays level, so it only shows under the GIF · On: the shadow and its Cut turn with the GIF (X / Y along its own sides)">Turn with the GIF</label><label class="tog span" title="Off: the light stays put: the shadow falls the same way however the GIF turns, and Cut stays level, so it only shows under the GIF · On: the shadow and its Cut turn with the GIF (X / Y along its own sides)"><input type="checkbox" id="shTurn" data-def="0"></label></div>
+        <div class="field wide"><label title="Off: the light stays put: the shadow falls the same way however the GIF turns, and Cut stays level, so it only shows under the GIF · On: the shadow and its Cut turn with the GIF (X / Y along its own sides)">Turn with the GIF</label><label class="tog span" title="Off: the light stays put: the shadow falls the same way however the GIF turns, and Cut stays level, so it only shows under the GIF · On: the shadow and its Cut turn with the GIF (X / Y along its own sides)"><input type="checkbox" id="shTurn" data-def="0"></label></div>
         <div class="field"><label for="shB">Blur</label><input id="shB" type="range" data-def="12" min="0" max="80" step="1"><output></output></div>
         <div class="field"><label for="shO">Opacity</label><input id="shO" type="range" data-def="0.6" data-pct min="0" max="1" step="0.01"><output></output></div>
         <div class="field"><label for="shC" title="Take away the top of the shadow: only the part under the GIF's lower edge stays, so it seems to stand on what's behind it">Crop</label><input id="shC" type="range" data-def="0" min="0" max="0.95" step="0.01" title="Take away the top of the shadow: only the part under the GIF's lower edge stays, so it seems to stand on what's behind it"><output></output></div>
         <div class="field"><label for="shS" title="How gradually the cropped shadow fades in at its top (as a share of the GIF's height): soft and rounded instead of a straight cut">Soft</label><input id="shS" type="range" data-def="0.2" min="0" max="0.6" step="0.01" title="How gradually the cropped shadow fades in at its top (as a share of the GIF's height): soft and rounded instead of a straight cut"><output></output></div>
-        <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swPick" title="Then click the GIF in the preview: selects the swatch of that colour">Pick</button><button id="swClear" title="Remove every swap">Clear</button><label class="tog" title="Colour swaps on / off (the swaps are kept)"><input type="checkbox" id="swOn" data-def="1"></label></div>
-        <div class="field" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="0"><output></output></div>
+        <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" title="Remove every swap">Clear</button><label class="tog" title="Colour swaps on / off (the swaps are kept)"><input type="checkbox" id="swOn" data-def="1"></label></div>
+        <div class="field swm" title="Merge: colours closer than this (per channel, out of 255) count as one swatch, and its swap covers them all. Raise it for GIFs with compression noise"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="0"><output></output><button id="swPick" title="Then click the GIF in the preview: selects the swatch of that colour">Pick</button></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>
         <div id="swList"></div>
       </div>
       <div data-pane="auto" class="off">
         <div class="seg grid5" id="aTgt" title="X, Y and Rotate are added to the placement; Zoom, Width, Height, Saturation and Brightness multiply it; Opacity multiplies the sprite's opacity; Hue is added. Touching a setting switches its LFO on."></div>
         <div class="sub"><span id="aTitle">X position</span><span class="line"></span><button id="aResetAll" title="Every LFO of this GIF back to defaults (all automation off)">Reset all</button><button id="aReset" title="This LFO back to defaults (off)">Reset</button><label class="tog" title="LFO on / off"><input type="checkbox" id="aOn"></label></div>
+        <div class="sub" data-fold><span title="The LFO: a value that moves back and forth by itself, in time with the tempo">LFO</span><span class="line"></span></div>
         <div class="field"><label>Shape</label><div class="seg span grid4" id="aShape"></div></div>
         <div class="field"><label for="aMin">Min</label><input id="aMin" type="range"><output></output></div>
         <div class="field"><label for="aMax">Max</label><input id="aMax" type="range"><output></output></div>
@@ -169,17 +170,16 @@
         <div class="field"><label for="aGap" title="A pause after each cycle: the value holds where the cycle ended, then the next cycle starts">Gap</label><input id="aGap" type="range" min="0" max="8" step="1" data-def="0" title="A pause after each cycle: the value holds where the cycle ended, then the next cycle starts"><output></output></div>
         <div class="field"><label for="aPh">Phase</label><input id="aPh" type="range" data-def="0" min="0" max="1" step="0.03125"><output></output></div>
         <div class="field"><label>Count from</label><div class="seg span" id="aSync"><button data-v="clock" title="Cycles line up with the bar (and with other GIFs)">Bar</button><button data-v="trig" title="Each pad hit restarts the cycle">Trigger</button></div></div>
-        <div class="sub" data-fold><span title="Shapes this LFO on each pad hit: Attack, Decay, then Sustain while the pad is held, then Release (a quick tap still gets the whole Attack and Decay)">Envelope</span><span class="line"></span></div>
-        <div class="field"><label>Mode</label><div class="seg span" id="aEnv"><button data-v="off" title="No envelope: the LFO runs on its own">Off</button><button data-v="depth" title="Each pad hit fades the LFO's swing in and out by the envelope (it rests at Min between hits)">Depth</button><button data-v="only" title="The envelope alone moves the value from Min to Max on each hit (Shape, Cycle, Gap, Phase and Count from don't count)">Only</button></div></div>
+        <div class="sub" data-fold><span title="Shapes this LFO on each pad hit: Attack, Decay, then Sustain while the pad is held, then Release (a quick tap still gets the whole Attack and Decay)">Envelope</span><span class="line"></span><button class="iconbtn" id="aEnvReset" title="Envelope back to its defaults (Attack, Decay, Sustain, Release; the Mode stays)"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:auto"><path d="M3.5 8a4.5 4.5 0 1 0 1.4-3.3"/><path d="M4.5 1.8v3.2h3.2"/></svg></button><button class="iconbtn" id="aEnvView" title="Graph or sliders"></button></div>
+        <div class="field"><label>Mode</label><div class="seg span" id="aEnv"><button data-v="off" title="No envelope: the LFO runs on its own">Off</button><button data-v="depth" title="Each pad hit fades the LFO's swing in and out by the envelope (it rests at Min between hits)">LFO depth</button><button data-v="only" title="The envelope alone moves the value from Min to Max on each hit: the LFO is bypassed (Shape, Cycle, Gap, Phase and Count from don't count)">Bypass LFO</button></div></div>
         <div class="field aEnvF"><label for="aEA">Attack</label><input id="aEA" type="range" min="0" step="1" data-def="0"><output></output></div>
         <div class="field aEnvF"><label for="aED">Decay</label><input id="aED" type="range" min="0" step="1" data-def="6"><output></output></div>
         <div class="field aEnvF"><label for="aES" title="The level held while the pad is held, after Decay">Sustain</label><input id="aES" type="range" min="0" max="1" step="0.05" data-def="0" data-pct><output></output></div>
         <div class="field aEnvF"><label for="aER">Release</label><input id="aER" type="range" min="0" step="1" data-def="4"><output></output></div>
-        <canvas id="aScope" class="scope" title="Two cycles of the LFO — the dot is now. With an envelope: one hit, held for a beat"></canvas>
+        <div class="gbot"><canvas id="aScope" class="scope" title="Two cycles of the LFO — the dot is now. With an envelope: one hit, held for a beat"></canvas></div>
       </div>
     </div>
   </div>
-  <div class="gfoot"><button id="gClear" class="danger" title="Remove this GIF from the pad">Clear pad</button></div>
 </aside>
 <div id="perf" class="panel" title="Performance: how hard VJif is working — hover each readout for details"><span id="saveStat"></span>
   <div class="meters"><span id="mem" class="mtr"></span><span id="fps" class="mtr"><i>FPS</i>—</span><span id="load" class="mtr"><i>LOAD</i>—</span></div></div>

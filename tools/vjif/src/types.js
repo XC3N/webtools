@@ -31,7 +31,7 @@
  * @property {ImageBitmap[]} frames  what is drawn: media.src, or pre-processed copies when live colour is off
  * @property {number[]} seq        frame order after In / Out (rebuildSeq); cum / total: its timing
  * @property {'free'|'stretch'|'step'} sync   Free / Fit / Step timing
- * @property {'loop'|'pingpong'|'once'} loop
+ * @property {'loop'|'pingpong'} loop   (Direction; the old 'once' loads as a One shot)
  * @property {number} speed @property {number} beats @property {number} subdiv @property {number} restart   (beats; 0 = off)
  * @property {number} inF @property {number} outF @property {number} startF    frame range and the frame shown at rest
  * @property {boolean} crisp       no smoothing when scaled

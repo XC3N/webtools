@@ -160,6 +160,7 @@ function applyGifSettings(g, saved){
   if (lfo) g.lfo = JSON.parse(JSON.stringify(lfo));
   if (g.sync === 'restart'){ g.sync = 'free'; g.restart = g.beats; }   // pre-v0.9 sets
   if (g.restart === undefined) g.restart = 0;
+  if (g.loop === 'once'){ g.loop = 'loop'; if (g.trig !== 'fade'){ g.trig = 'fade'; Object.assign(g.env, { a: 0, r: 0, gate: false, len: 'gif' }); } }   // Once (before 0.83): now a One shot of one play
   rebuildSeq(g);
 }
 // content hash of a file: the same GIF is stored once however many sets use it
