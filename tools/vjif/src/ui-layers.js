@@ -20,7 +20,7 @@ function buildLayers(){
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
     row.querySelector('.lmask').addEventListener('click', () => maskOpen(li));
     row.querySelector('.llock').addEventListener('click', () => { L.lock = !L.lock; if (L.lock && drag && drag.c && L.clips.includes(drag.c)) drag = null; syncLayerUI(); redraw.all = true; toast2(`${LNAMES[li]} ${L.lock ? 'locked: the mouse goes through it' : 'unlocked'}`); });
-    row.querySelector('.lclr').addEventListener('click', () => { L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });
+    row.querySelector('.lclr').addEventListener('click', () => { if (li === BG_LAYER){ for (let k = BG0; k < BG0 + N_BG; k++) if (pads[k].gif) clearPad(k); return; } L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });   // (Background: its slots empty, each undoable)
     row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });
     if (li === 0){
       row.querySelector('.lfillon').addEventListener('change', e => { L.fillOn = e.target.checked; });
@@ -30,6 +30,7 @@ function buildLayers(){
     row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
     onSeg(row.querySelector('.ltr'), (b, e) => { L.tr = b.dataset.v; syncLayerUI(); });
     row.querySelector('.clips').addEventListener('click', e => {
+      const sl = e.target.closest('.bgslot'); if (sl){ const p = +sl.dataset.pad; selectPad(p); setTarget(BG_LAYER); if (pool.length) openPool(p); else { fileTarget = p; $('#fileIn').click(); } return; }   // an empty Background slot: fill it
       const chip = e.target.closest('.chip'); if (!chip) return;
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
       if (e.target.tagName === 'B' || isRm(e)) removeClip(li, c);
@@ -59,6 +60,14 @@ function buildLayers(){
       const [p, chips] = e ? gapAt(e) : [-1, [...clipsEl.querySelectorAll('.chip')]];
       chips.forEach((c, k) => { c.classList.toggle('insL', k === p); c.classList.toggle('insR', p === chips.length && k === chips.length - 1); });
     };
+    if (li === BG_LAYER){                              // Background: GIFs from the pool or files dropped on its card go into its free slots (0.88)
+      row.addEventListener('dragover', e => { if (!(e.dataTransfer.types.includes(POOL_MIME) || e.dataTransfer.types.includes('Files'))) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; row.classList.add('dropzone'); });
+      row.addEventListener('drop', e => { if (!(e.dataTransfer.types.includes(POOL_MIME) || e.dataTransfer.types.includes('Files'))) return; e.preventDefault(); e.stopPropagation(); row.classList.remove('dropzone');
+        const free = () => { for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading) return k; return -1; };
+        const ph = e.dataTransfer.getData(POOL_MIME); if (ph){ const m = pool.find(m => m.hash === ph), d = free(); if (!m) return; if (d < 0) return toast('Background\'s 6 slots are full'); putMedia(m, d); renderPool(); return; }
+        const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name)), used = new Set();
+        for (const f of files){ let d = -1; for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading && !used.has(k)){ d = k; break; } if (d < 0){ toast('Background\'s 6 slots are full'); break; } used.add(d); loadInto(d, f, f.name); } });
+    }
     row.addEventListener('dragover', e => {
       if (!e.dataTransfer.types.includes(CLIP_MIME)) return;
       e.preventDefault(); e.dataTransfer.dropEffect = 'move';
@@ -77,9 +86,12 @@ function buildLayers(){
   }
 }
 const CLIP_MIME = 'application/x-gifvj-clip';
+const LROLE = ['Background: its own 6 slots in each scene, they just play (no keys)', 'Midground: the Scene pads', 'Foreground: the Scene pads', 'Overlay: the Global pads, the same in every scene'];   // (0.88)
+const layerRule = (li, p) => li === GLOBAL_LAYER ? 'Overlay plays the Global pads (RTY FGH VBN) only' : li === BG_LAYER ? 'Background plays its own 6 slots: drop a GIF from the pool or a pad on its card' : isGlobalPad(p) ? 'Global pads stay on Overlay' : 'Background slots stay on Background';
 function moveClip(sli, sid, dli, at){
   const S = layers[sli], D = layers[dli], clip = S.clips.find(c => c.id === sid); if (!clip) return;
   const i = S.clips.indexOf(clip);
+  if (S !== D && !layerTakes(dli, clip.pad)) return toast(layerRule(dli, clip.pad));   // 0.88: Overlay = Global pads, Background = its slots, Midground / Foreground = Scene pads
   if (S !== D && D.clips.length >= MAX_CLIPS) return refuse(D);
   if (S === D && i < at) at--;                           // index shifts after removing from the same list
   S.clips.splice(i, 1); if (S.sel === clip) S.sel = null;
@@ -94,13 +106,13 @@ function syncLayerUI(){
     const r = L.row, sel = selClip(L.i);
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target); r.querySelector('.llock').classList.toggle('on', !!L.lock);
     const mb = r.querySelector('.lmask'); mb.classList.toggle('on', !!maskEd && maskEd.li === L.i); mb.classList.toggle('has', !!(L.mask && L.mask.on !== false));
-    r.querySelector('.lname').title = L.i === target ? 'Editing this layer' : `Click the card or press Alt+${L.i+1} to edit this layer`;
+    r.querySelector('.lname').title = LROLE[L.i] + ' · ' + (L.i === target ? 'editing this layer' : `click the card or press Alt+${L.i+1} to edit this layer`);
     r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
-    setHTML(r.querySelector('.clips'), L.clips.slice().reverse().map(c => {   // leftmost chip = drawn on top
-      const p = pads[c.pad];
-      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · Ctrl+click to remove"><span>${p.label}</span><b title="Remove from layer">×</b></span>`;
-    }).join(''));
+    const slots = L.i === BG_LAYER ? Array.from({ length: N_BG }, (_, k) => BG0 + k).filter(p => !pads[p].gif).map(p => `<span class="bgslot" data-pad="${p}" title="Empty Background slot: click to fill it from the pool (or a file), or drop a GIF from the pool or a pad on this card">+</span>`).join('') : '';
+    const chipHTML = c => { const p = pads[c.pad];   // leftmost chip = drawn on top
+      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · Ctrl+click to ${isBgPad(c.pad) ? 'empty the slot' : 'remove'}"><span>${p.label}</span><b title="${isBgPad(c.pad) ? 'Empty this slot' : 'Remove from layer'}">×</b></span>`; };
+    setHTML(r.querySelector('.clips'), L.clips.slice().reverse().map(chipHTML).join('') + slots);
   }
 
   updatePadDots();
@@ -129,13 +141,15 @@ function showAuto(k){
   const row = $('#aTitle').parentElement; row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   row.classList.remove('hl'); void row.offsetWidth; row.classList.add('hl');
 }
-$('#xFit').addEventListener('change', e => { const c = selClip(); if (c) c.fit = e.target.value; });
+onSeg($('#xFitSeg'), b => { const c = selClip(); if (!c) return; const v = b.dataset.v, keep = { rot: c.rot, flipX: c.flipX, flipY: c.flipY, tile: c.tile };   // Base size (0.88: one switch, was a menu + three buttons)
+  if (v === 'auto' || v === 'native'){ Object.assign(c, { fit: v, sx: 1, sy: 1 }); placeVisible(c, W / 2, H / 2); }
+  else fitScreen(c, v);                                // Fit / Fill / Stretch: its cropped part sized to the frame, centred
+  Object.assign(c, keep); syncXfUI(); });
 $('#xFx').addEventListener('change', e => { const c = selClip(); if (c) c.flipX = e.target.checked; });
 $('#xFy').addEventListener('change', e => { const c = selClip(); if (c) c.flipY = e.target.checked; });
 $('#xT').addEventListener('change', e => { const c = selClip(); if (c) c.tile = e.target.checked; });
 $('#xReset').addEventListener('click', () => { const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); } });
-[['#xFitS', 'contain'], ['#xFill', 'cover'], ['#xStr', 'stretch']].forEach(([id, fit]) =>
-  $(id).addEventListener('click', () => { const c = selClip(); if (c){ fitScreen(c, fit); syncXfUI(); } }));   // fits the cropped part
+
 // the bounds of the non-transparent pixels over all frames, as crop fractions (kept on the frame list)
 function contentCrop(src){
   if (src._cc) return src._cc;
@@ -157,21 +171,21 @@ $('#xCropReset').addEventListener('click', () => {
 });
 // Transform's heading arrow in the signal colour when the selected GIF's placement is away from the defaults (as the GIF sections do)
 const XF_MARK = ['fit', 'flipX', 'flipY', 'tile'];   // only what the preview can't show you're changing (move, size, turn and crop happen right there)
-function markXf(c = selClip()){ const h = $('#xReset').closest('h2'), d = newXf(); if (h) h.classList.toggle('mod', !!c && (XF_MARK.some(k => (c[k] ?? d[k]) !== d[k]) || (c.alpha ?? 1) !== 1)); }
+function markXf(c = selClip()){ const d = newXf(), m = !!c && (XF_MARK.some(k => (c[k] ?? d[k]) !== d[k]) || (c.alpha ?? 1) !== 1); $('#xfHead').classList.toggle('mod', m); $('#gTabs [data-v=xf]').classList.toggle('act', m); }   // (0.88: on the Transform tab, like Auto's)
 function syncXfUI(){
   const c = selClip();
   $('#xfPanel').classList.toggle('disabled', !c);
   $('#xfTag').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label}` : `${LNAMES[target]} · nothing selected`; $('#xfTag').title = c && pads[c.pad].gif ? pads[c.pad].gif.name : '';
   if (!c){ markXf(null);                           // nothing selected: show neutral values, not the last GIF's
     XF.forEach(([id]) => { const el = $(id); el.value = el.dataset.def ?? 0; el.nextElementSibling.textContent = '—'; el.nextElementSibling.classList.remove('mod'); });
-    $('#xFit').value = 'auto'; $('#xFx').checked = $('#xFy').checked = $('#xT').checked = false; $('#xCrop').textContent = 'none';
+    segSet('#xFitSeg', 'auto'); $('#xFx').checked = $('#xFy').checked = $('#xT').checked = false; $('#xCrop').textContent = 'none';
     return;
   }
   XF.forEach(([id, key, fmt]) => { $(id).value = c[key]; $(id).nextElementSibling.textContent = fmt(c[key]); });
   const g = pads[c.pad].gif;                         // automated values: readout tinted blue (it shows the base value)
   Object.entries(XF_LFO).forEach(([id, ks]) => { const o = $(id).nextElementSibling, m = !!g && ks.some(k => g.lfo[k] && g.lfo[k].on);
     o.classList.toggle('mod', m); o.title = m ? 'Automated (GIF › Auto) — this is the base value' : ''; });
-  $('#xFit').value = c.fit; $('#xFx').checked = c.flipX; $('#xFy').checked = c.flipY; $('#xT').checked = c.tile;
+  segSet('#xFitSeg', c.fit || 'auto'); $('#xFx').checked = c.flipX; $('#xFy').checked = c.flipY; $('#xT').checked = c.tile;
   const pc = v => Math.round(v * 100);
   $('#xCrop').textContent = (c.cl || c.ct || c.cr || c.cb) ? `L${pc(c.cl)} T${pc(c.ct)} R${pc(c.cr)} B${pc(c.cb)}%${c.tile ? ' (tiled)' : ''}` : 'none';
   markXf(c);

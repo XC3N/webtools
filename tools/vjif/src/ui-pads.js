@@ -18,7 +18,7 @@ function buildPads(){
     el.addEventListener('pointerup', e => { if (el._x) return; const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); if (delHush) return; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
     el.addEventListener('click', e => { if (el._shift || isDel(e)){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
-    (i < 9 ? $('#gridA') : $('#gridB')).appendChild(el);
+    if (i < 9) $('#gridA').appendChild(el); else if (i < N_KEYPADS) $('#gridB').appendChild(el);   // (a Background slot's tile isn't shown: its chip on the layer card stands for it)
     p.el = el;
   });
 }
@@ -88,7 +88,7 @@ function padDragEnd(e, i){
   const tt = e && document.elementFromPoint(e.clientX, e.clientY), sct = tt && tt.closest('#scenes .scene');
   if (sct){                                          // let go on a scene tile: a copy onto that scene's first empty pad (you stay where you are)
     const si = +sct.dataset.i, g = d.carry || pads[i].gif; if (!g || (si === sceneIdx && !d.carry)) return true;
-    const j = nextEmptyIn(si); if (j < 0) return toast(`Scene ${si + 1}'s 18 pads are full`), true;
+    const j = nextEmptyIn(si); if (j < 0) return toast(`Scene ${si + 1}'s 9 Scene pads are full`), true;
     if (si === sceneIdx){ commit(); pads[j].gif = cloneInst(g); pushStep({ kind: 'swap', pad: j, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI(); afterPadChange(j); }
     else { const sc = scenes[si] || (scenes[si] = emptyScene()); sc.pads[j] = cloneInst(g); renderScenes(); updateMem(); }
     toast2(`Copied to scene ${si + 1}, pad ${PAD_LABELS[j]}`); return true;
@@ -134,6 +134,12 @@ function applyPswap(E){ toScene(E.sid); swapPads(E.a, E.b, false); }
 // a pad dropped on a layer: its GIF moves there (on top), or starts there if it wasn't playing
 function padToLayer(p, li){
   if (li < 0 || !pads[p].gif) return;
+  if (li === BG_LAYER && !isBgPad(p)){                 // onto Background: a copy into its first free slot (0.88)
+    let d = -1; for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading){ d = k; break; }
+    if (d < 0) return toast('Background\'s 6 slots are full');
+    commit(); pads[d].gif = cloneInst(pads[p].gif); const c = newClip(d); c.startBeat = clock.beat; c.startTime = performance.now(); layers[BG_LAYER].clips.push(c);
+    pushStep({ kind: 'swap', pad: d, g: null, sid: sidNow() }); hist.cur = histState(); updHistUI(); afterPadChange(d); toast2(`Pad ${pads[p].label} copied to Background`); return; }
+  if (!layerTakes(li, p)) return toast(layerRule(li, p));
   const S = layers.findIndex(L => L.clips.some(c => c.pad === p));
   if (S === li){ setTarget(li); return; }
   if (S >= 0){ const c = layers[S].clips.find(c => c.pad === p); moveClip(S, c.id, li, layers[li].clips.length); }

@@ -44,10 +44,12 @@ function prepSwitchTo(i, beat){
   const P = prep, sc = scenes[i]; if (!P || !sc) return;
   const t0 = beatTime(beat), gifs = pads.map(() => null), free = [], used = new Set(sc.layers.flatMap(L => L.clips.map(c => c.pad)));
   sc.pads.forEach((g, k) => { if (g && used.has(k)){ gifs[k] = cloneInst(g); free.push(gifs[k]); } });
+  const ov = layers[GLOBAL_LAYER];                   // Overlay isn't the scene's: the output keeps the live one (copies of its Global GIFs)
+  ov.clips.forEach(c => { const g = pads[c.pad].gif; if (g && !gifs[c.pad]){ gifs[c.pad] = cloneInst(g); free.push(gifs[c.pad]); } });
   endPrepTr();
   const T = makeTrans(P.layers, P.gifs, beat, P.free);   // the old output picture fades / slides out (its GIF copies go when it ends)
   if (T) P.tr = T; else P.free.forEach(freeGif);
-  P.layers = sc.layers.map(L => ({ ...L, clips: L.clips.map(c => ({ ...c, startBeat: beat, startTime: t0, env: null, hitBeat: undefined })) }));
+  P.layers = sc.layers.map((L, li) => li === GLOBAL_LAYER ? { ...layerState(ov), clips: ov.clips.map(c => ({ ...c })) } : ({ ...L, clips: L.clips.map(c => ({ ...c, startBeat: beat, startTime: t0, env: null, hitBeat: undefined })) }));
   P.gifs = gifs; P.free = free; P.scene = i;
   redraw.all = true; renderScenes();
 }

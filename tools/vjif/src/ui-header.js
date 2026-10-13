@@ -23,7 +23,7 @@ bank.addEventListener('drop', e => {
   const ph = e.dataTransfer.getData(POOL_MIME);
   if (ph){                                           // a pool GIF dragged onto a pad: put it there (replacing — undoable)
     const m = pool.find(m => m.hash === ph), d = start >= 0 ? start : nextEmpty(selPad); if (!m) return;
-    if (d < 0) return toast('All 18 pads of this scene are full — drop it on a pad to replace');
+    if (d < 0) return toast('All 9 Scene pads are full — drop it on a pad to replace');
     if (pads[d].loading) return;
     putMedia(m, d); renderPool(); return;
   }

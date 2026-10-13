@@ -179,8 +179,8 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 @media (max-width:1760px){ .fxrow .field label{font-size:11px} }
 #musGrp{gap:2px}#musGrp .iconbtn{width:24px}
 /* narrower windows: the top bar keeps to one line (labels and the version go; the set name shortens) */
-@media (max-width:1560px){ #hdrVer,#clockGrp>label{display:none} #setLabel{width:64px} #brbBtn{width:62px} #musGrp .iconbtn{width:22px} #top{gap:6px} }
-@media (max-width:1340px){ #snap{width:56px!important} #undoBtn,#redoBtn{width:20px} #setLabel{width:52px} #top .grp.sect{gap:3px} }
+@media (max-width:1680px){ #hdrVer,#clockGrp>label{display:none} #setLabel{width:64px} #brbBtn{width:62px} #musGrp .iconbtn{width:22px} #top{gap:6px} }
+@media (max-width:1340px){ #snap{width:56px!important} #undoBtn,#redoBtn{width:20px} #setLabel{width:52px} #top .grp.sect{gap:3px} #top{gap:4px} #sysGrp .iconbtn,#musGrp .iconbtn{width:20px} }
 .fxrow .field{flex:1;min-width:0;margin:0;grid-template-columns:auto minmax(0,1fr);gap:6px}
 .fxrow:not(.envrow) .field{grid-template-columns:50px minmax(0,1fr)}   /* Amount / Rate / Size (and what stands in for them) labels all the same width */
 .fxrow .field.dimmed,#fxStyle.dimmed{opacity:.35;pointer-events:none}
@@ -390,7 +390,7 @@ input[type=checkbox]{width:16px;height:8px;border-radius:1px;background:transpar
 input[type=checkbox]::before{display:none}
 input[type=checkbox]:checked{background:var(--sig);border-color:var(--sig)}
 input[type=checkbox]:hover{border-color:var(--ink)}
-[data-pane=play].textpad>:not(.tkeep):not(.trig):not(#tEnv){opacity:.3;pointer-events:none}   /* lettering: the GIF-only settings dimmed (its Trigger still works) */
+[data-pane=play].textpad>:not(.tkeep):not(.trig):not(#tEnv):not(.sub){display:none}[data-pane=play].textpad>.sub:not(.trig){opacity:.35;pointer-events:none}[data-pane=play].textpad>.sub:not(.trig)>span:first-child::before{content:'▸'}   /* lettering: the GIF-only sections folded shut (headings kept, dimmed); its Trigger still works (0.88) */
 #textPanel.dragging{visibility:hidden}   /* dragging the text: the window steps aside so the pads show */
 .txchip{cursor:grab;padding:6px 12px;border:1px dashed var(--sig);border-radius:var(--r);color:var(--sig);font:600 12px var(--sans);user-select:none;touch-action:none}.txchip:hover{background:var(--sig-soft,rgba(95,211,176,.15))}
 
@@ -470,3 +470,10 @@ h2 .h2btn.iconbtn{width:auto;padding:0 5px}   /* the Tt button: room for its ico
 body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the layer chips either */
 #kPick.armed,#swPick.armed{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}   /* the eyedropper waits for a click in the preview */
 #fxRateRow.lcdrow>input,#fxRateRow.lcdrow>output{display:none}#fxRateRow.lcdrow>label{grid-column:1;grid-row:1;text-align:right;justify-self:end;white-space:nowrap}   /* Game Boy palettes: 'Dot Matrix' against its switch */
+#xfHead>span:first-child::before{content:'▾';display:inline-block;width:11px;color:var(--faint)}#xfHead.mod>span:first-child::before{color:var(--amber)}   /* Transform tab: changed from its defaults (like a section's mark) */
+#xfHead .tag{margin-left:6px}
+#maskBar .mrow{gap:4px}#maskBar .mrow>.seg{flex:1}#maskBar .iconbtn,#maskBar .icontog{width:24px;height:20px;flex:none}#maskBar #maskDone{flex:none;width:auto;padding:0 12px}   /* 0.88: two rows of icons, the GIF chips keep their place below */
+#maskBar .icontog{display:inline-grid;place-items:center;border:1px solid var(--edge);border-radius:var(--r);color:var(--muted);cursor:pointer;padding:0}#maskBar .icontog input{position:absolute;opacity:0;pointer-events:none}#maskBar .icontog:has(input:checked){color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}
+#maskBar .mpop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:40px;height:150px;box-shadow:0 6px 18px #0009}#maskBar .mpop[hidden]{display:none}
+#maskBar .mpop input{position:absolute;left:50%;top:44%;width:110px;height:22px;margin:0;transform:translate(-50%,-50%) rotate(-90deg);cursor:ns-resize}#maskBar .mpop output{position:absolute;left:0;right:0;bottom:5px;text-align:center;font:400 10px var(--mono);color:var(--lcd-ink)}
+.clips .bgslot{display:inline-grid;place-items:center;flex:0 1 44px;min-width:18px;height:38px;box-sizing:border-box;border:1px dashed var(--edge);border-radius:var(--r);color:var(--faint);font:400 16px var(--mono);cursor:pointer;flex:none}.clips .bgslot:hover{color:var(--ink);border-color:var(--muted)}   /* Background's empty slots (0.88) */

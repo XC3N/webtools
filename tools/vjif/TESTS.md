@@ -26,7 +26,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {inlab} **Labels inside sliders** (0.45) — Transform, GIF › Colour / Auto, the effect editor, Settings: labels readable over the fill, nothing cut off at 1280×720, drag and double-click still work where the label is.
 - [x] {dpat} **Palette patterns** (0.49) — F2 › Palette, Dither 100%, on a photo or a gradient: Dither: Noise, Bayer, Check each look different; Bayer reads like a DOS game.
 - [x] {mtgt} **Effect on several layers** (0.50) — GIFs on layers 1–3, Mirror: click 2 (from All): layers 1, 3, 4 mirrored each on their own; right-click 3: only layer 3; lit buttons in the layers' colours.
-- [ ] {cpy2} **Copy scenes, presets, pads** (0.51, pads 0.84) — drag a scene / an effect preset / a pad, hold Ctrl: + on the empty ones, drop: a copy (solid outline); without Ctrl: a swap (dashed outline). Ctrl over a full one: hold until the red bar fills, drop: it's replaced (Ctrl+Z brings it back).
+- [x] {cpy2} **Copy scenes, presets, pads** (0.51, pads 0.84) — drag a scene / an effect preset / a pad, hold Ctrl: + on the empty ones, drop: a copy (solid outline); without Ctrl: a swap (dashed outline). Ctrl over a full one: hold until the red bar fills, drop: it's replaced (Ctrl+Z brings it back).
 - [x] {diag} **Stick to diagonals** (0.51) — Diagonals (or Perspective) + Stick: drag a GIF near a diagonal, its centre slides onto it and the line lights up.
 - [x] {crtstack} **Stacked CRT** (0.52) — F10: click VHS, Scanlines, Phosphor: all three at once; Degauss alone; GPU LOAD with three stacked.
 - [x] {gpal} **GIF palette** (0.54) — GIF › Colour › Palette on one pad (e.g. Game Boy), Dither 50%: only that GIF changes; reload: still there.
@@ -99,13 +99,13 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75, 0.83) — GIF › Auto › Envelope: LFO depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Bypass LFO on Zoom: a punch per hit (Attack 0, Decay 1/4). The graph / sliders button: as a graph, drag the three points; Reset: back to the defaults.
 - [ ] {xmehpujfql2w83hija9t} **GIF panel layout** (0.83) — Play: a Loop section first (Direction: Forward / Ping-pong, no Once); the frame readout under the graph, below a line; no Clear pad. Transform has Smooth scaling. Key: the swatch next to Colour, the size of a Swap swatch.
 - [x] {dcj3sonof2h69okdkxtd} **Swap colours Clear** (0.83) — select a swatch, Clear: nothing stays selected; the section's switch turns the swaps off and on.
-- [ ] {4y29yh1hhph1ii4ma6x1} **Text preset name** (0.83) — Text › Preset: pick one: its name stays in the menu; edit the text later: still there.
+- [x] {4y29yh1hhph1ii4ma6x1} **Text preset name** (0.83) — Text › Preset: pick one: its name stays in the menu; edit the text later: still there.
 - [ ] {sr1ri9phf2p3eyg1ozhe} **Section switches** (0.80, click fixed 0.83) — GIF › Play / Colour: each section's switch, clicked with the mouse, turns it off without losing its settings (Frames: every frame; Adjust, Palette, Swaps: skipped); a slider touched turns it back on.
 - [x] {8y575napbddy9c5nf7e2} **Resets on the heading line** (0.80) — fold Transform / Adjust / Key: Reset (Key: Pick + Clear) still there and works.
 - [ ] {7fdu5ql2eznd4hr8idda} **Palette dots** (0.82, switch 0.85) — Colour › Palette, Game Boy: the third slot reads Dots: Off / 2 px / 10 px; 2 px: the picture as an LCD grid, thin light gaps between the dots. CGA 1: the slot is an empty grey box.
 - [x] {qgbns6zmu4031jfa599t} **ZX Spectrum palette** (0.82) — Colour › Palette (and GIF › Colour › Palette): ZX Spectrum is last in the list; its 15 colours, plain and bright.
 - [ ] {5oeugv5igouqrqyoteee} **Keys & mouse search** (0.84) — ? opens Keys & mouse with the search box ready; type “scene”: only the entries about scenes (and their headings) show; Esc closes.
-- [ ] {rafm68fmll6hdh2rm2p0} **Blank slider rows** (0.84) — an effect with no Rate (Mono): the Rate row is an empty grey box; Transition Cut: the Pixel row too.
+- [x] {rafm68fmll6hdh2rm2p0} **Blank slider rows** (0.84) — an effect with no Rate (Mono): the Rate row is an empty grey box; Transition Cut: the Pixel row too.
 - [x] {fw9lb94n3j9s503v250y} **Click to select** (0.86) — two GIFs overlapping: click in the transparent part of one's box: it's selected (the one with pixels nearest wins); click again on the same spot: the other.
 - [x] {ni93cxo0i9rh1k2o6vco} **Swap off / on** (0.86) — Display › Swap colours: click a swap's original colour: that swap stops (row dimmed), click again: back.
 - [ ] {twgegdfw6biw7gt5pj41} **Shake overscan** (0.86) — Shake, the third slot: Overscan Off: the frame edges show while it shakes; Full: they never do.
@@ -130,6 +130,17 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {2sydkhvx6xuewq65k89e} **Slanted stick** (0.87.3) — Guides › vanishing point: drag a GIF so a corner nears a ray: it hooks, that handle fills in the guide colour; Shift slides along it.
 - [ ] {d1ohm3trfhvhh0wvs6pw} **Swap reveal** (0.87.3) — with UI zoom at 125%, click a palette swatch low in Display: its swap row scrolls into view.
 - [ ] {8ywr8jgey5nd31g4ndzg} **Layer chip ×** (0.87.3) — Settings › Ctrl+click to delete only: the layer chips show no ×.
+- [ ] {2cbau8waoiu4jni0qcyj} **Scene vs Global pads** (0.88) — load GIFs on Q and R; play both: Q on Midground (or Foreground if you're editing it), R on Overlay; go to another scene: R still plays and its pad is still there, Q's isn't; come back: Q's back.
+- [ ] {e0x13n5tn6f0rhhkviej} **Global placement** (0.88) — move R's GIF on Overlay, change scene: it's in the same place.
+- [ ] {qq0fdg84lkkqakagz5bn} **Background slots** (0.88) — Background card: click a +, pick from the pool: it plays at once; drop a pool GIF and a pad on the card: they fill the next slots; × on a slot's chip empties it, Ctrl+Z brings it back; another scene has its own slots.
+- [ ] {3aap98gysnttymrg88og} **Layer rules** (0.88) — drag a Global chip to Midground, a Scene chip to Overlay: refused with a message.
+- [ ] {m4yn2xof784xo3omz8za} **Old set** (0.88) — load a set saved before 0.88: it plays; the scene you were on keeps its second-group GIFs as Global pads; Background's GIFs are in its slots.
+- [ ] {jdrnx841v78k74gy3h6j} **Transform tab** (0.88) — GIF › Transform: placement of the selected GIF; Base size switch places it (Fill covers, Fit shows all, 1:1 small); the tab lights after a flip.
+- [ ] {7lkhknsefa7e6ixeynil} **Skew + Hold** (0.88) — GIF › Auto on X: Square with Skew 25% = narrow pulse; Hold on + Random: each pad hit jumps to a new place and stays.
+- [ ] {hveb3of05qxbl98ymn17} **Shift-drag LFOs** (0.88) — Auto: two LFOs running, Shift+drag Cycle on one: both change.
+- [ ] {heatcbcvh54qpa5vdhcg} **Mask icons** (0.88) — paint a mask: two rows of icons, Size / Soft pop up a slider, the GIF chips don't cover anything.
+- [ ] {v75e07o2ljcld577pbn7} **Top bar** (0.88) — at 1600 and 1280 px wide the top bar is one line; ?, full screen and ⚙ sit together at the right.
+- [ ] {y6v6misj41rz0w7fqm1i} **Short help** (0.88) — ? : one line per entry; search still finds blackout.
 - [x] {0g5bim1rd8zzry16be4s} **Emptied scene comes back** (0.79, 0.81, name 0.84, 0.85) — name a scene, select it, empty it (×): its name goes too (with Settings › Interface › Permanent scene names on: it stays); go to another scene, Ctrl+Z: the emptied scene's tile shows its picture and name again.
 - [x] {4ulb8padwhpii6z6g25q} **Channel switched mid-transition** (0.81) — a Palette latched, TV › Channel: switch scene again before the number is gone: the snow and the new number keep their own colours, no palette on them.
 - [x] {r71mg79hp3mhx0fvj3d3} **Glitch transition styles** (0.84) — transitions: Glitch has Slices, Blocks and Corrupt (no Scramble).
@@ -156,7 +167,6 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {2ejq54kc22i63ai5t75s} **Shift + numpad presets** (0.77) — Caps Lock off: Shift + numpad 1–9 plays effect presets; without Shift, scenes. Caps on + Shift onto a full preset: a second press is needed to replace it (0.78).
 - [x] {3nncmqhey98f03a7vd3w} **Sound level meter** (0.76) — Settings › Recording › Sound on your input (after one take, so it's allowed): the meter moves with the signal; also in Rec ▾. Music player and a picked tab too.
 - [x] {aj1f2qesqolp85ln1w0i} **Sound in Rec ▾** (0.76) — Rec ▾ › Sound: pick a source; Settings › Recording › Sound shows the same.
-- [ ] {yakjn2tbslfxw9844lmq} **Claude's VJif theme** (0.76, redone 0.84) — Settings › Theme › Claude's VJif (clay on warm charcoal): readable everywhere (signal text, LCDs, graphs). Mopho is in the list too.
 - [x] {hr757smrqn2mmmwqnow0} **Launchpad preset row** (0.73) — Settings › Launchpad layout: bottom row = presets 7 8 9 4 5 6 1 2, right button 3.
 - [x] {uqfogckolx2naf4ogqdd} **Shorter right column** (0.74) — no info strips under Transform and GIF (hover the headings' tags instead), Performance on one line.
 - [ ] {idfxcorner} **Effects toolbar + Trig Follow** (0.74) — top-left of the effect editor: ⏻ and Trig Follow. Follow on: an F-key opens that effect in the editor; off: it doesn't.

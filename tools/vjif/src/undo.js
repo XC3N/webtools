@@ -62,8 +62,8 @@ function applyScn(E){
   }
   const cur = { layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? liveThumb : null, ...('name' in E.data ? { name: liveName } : {}) };
   if ('name' in E.data) liveName = E.data.name;   // (its picture too, in case it's undone from another scene)
-  layers.forEach((L, li) => { const d = E.data.layers[li]; Object.assign(L, layerProps(d)); });
-  pads.forEach((p, k) => { p.gif = E.data.pads[k]; renderPad(k); });
+  layers.forEach((L, li) => { if (li === GLOBAL_LAYER) return; const d = E.data.layers[li]; Object.assign(L, layerProps(d)); });   // (Overlay and the Global pads aren't a scene's: they stay)
+  pads.forEach((p, k) => { if (isGlobalPad(k)) return; p.gif = E.data.pads[k] || null; renderPad(k); });
   E.data = cur; pending.clear();
   selectPad(selPad); syncLayerUI(); syncXfUI(); renderScenes(); updateMem(); renderPool(); redraw.all = true;
 }

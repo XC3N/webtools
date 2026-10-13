@@ -57,6 +57,26 @@ const SNAP_STEPS = {
     o.fxOn = fxRemapArr(o.fxOn); o.sceneFx = fxRemapArr(o.sceneFx);
     (o.scenes || []).forEach(sc => { if (sc && sc.fxOn) sc.fxOn = fxRemapArr(sc.fxOn); });
   },
+  7: o => {                                          // 0.88: Scene / Global pads, Overlay the same in every scene, Background's six slots
+    const glob = k => k >= 9 && k < N_KEYPADS;
+    const fix = (P, Ls, live) => {
+      while (P.length < BG0 + N_BG) P.push(null);
+      if (!Ls) return; const room = L => L && L.clips.length < MAX_CLIPS;
+      const bg = Ls[BG_LAYER]; if (bg){ let k = 0;      // Background: its GIFs move into the slots (their pads empty)
+        bg.clips = bg.clips.filter(c => { if (k >= N_BG || !P[c.pad]) return false; const s = BG0 + k++; P[s] = P[c.pad]; if (c.pad !== s) P[c.pad] = null; c.pad = s; return true; }); }
+      const ov = Ls[GLOBAL_LAYER], down = [];          // Overlay keeps only the Global pads (the live scene's); the rest go down to Foreground / Midground
+      if (ov) ov.clips = ov.clips.filter(c => live && glob(c.pad) ? true : (down.push(c), false));
+      for (const c of down){ const L = [Ls[2], Ls[1]].find(room); if (L) L.clips.push(c); }
+      if (live) for (const li of [1, 2]){ const L = Ls[li]; if (L) L.clips = L.clips.filter(c => glob(c.pad) && room(ov) ? (ov.clips.push(c), false) : true); }   // Global pads up to Overlay
+      if (!live) for (let g = 9; g < N_KEYPADS; g++){ if (!P[g]) continue;   // another scene's second-group GIFs: to its free Scene pads, or out (the pool keeps the file)
+        const f = [0, 1, 2, 3, 4, 5, 6, 7, 8].find(k => !P[k]);
+        if (f !== undefined){ P[f] = P[g]; Ls.forEach(L => L.clips.forEach(c => { if (c.pad === g) c.pad = f; })); } else Ls.forEach(L => { L.clips = L.clips.filter(c => c.pad !== g); });
+        P[g] = null; }
+      Ls.forEach(L => { if (L && !(L.sel < L.clips.length)) L.sel = -1; });
+    };
+    o.pads = o.pads || []; fix(o.pads, o.layers, true);
+    (o.scenes || []).forEach(sc => { if (sc){ sc.pads = sc.pads || []; fix(sc.pads, sc.layers, false); } });
+  },
 };
 const SNAP_V = Math.max(...Object.keys(SNAP_STEPS).map(Number));
 function upgradeSnap(o){

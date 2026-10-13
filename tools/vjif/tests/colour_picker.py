@@ -39,6 +39,6 @@ async def main():
     # an emptied scene's layers are on
     await pg.evaluate("emptySceneAt(sceneIdx)")
     on = await pg.evaluate("layers.map(L=>L.on)")
-    print('layers', on); assert all(on), on
+    print('layers', on); assert all(on[:3]), on   # (0.88: Overlay isn't the scene's: emptying it doesn't touch it)
     await b.close()
 asyncio.run(main())

@@ -19,7 +19,7 @@ async def main():
     from _env import FIX as S
     await pg.evaluate("fileTarget=0"); await pg.set_input_files('#fileIn', [str(S/'ring.gif')]); await pg.wait_for_function("pads[0].gif")
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(200)
-    sh = await pg.evaluate("const g = pads[0].gif; selectPad(0); $('#shX').value = 30; $('#shX').dispatchEvent(new Event('input', { bubbles: true })); const c = layers[0].clips[0]; c.tile = true; c.cl = 0.25; c.cr = 0.25; redraw.all = true; [g.shadow.on, g.shadow.x, cloneInst(g).shadow.x]")
+    sh = await pg.evaluate("const g = pads[0].gif; selectPad(0); $('#shX').value = 30; $('#shX').dispatchEvent(new Event('input', { bubbles: true })); const c = layers[1].clips[0]; c.tile = true; c.cl = 0.25; c.cr = 0.25; redraw.all = true; [g.shadow.on, g.shadow.x, cloneInst(g).shadow.x]")
     await pg.wait_for_timeout(600)
     print('shadow', sh); assert sh == [True, 30, 30], sh
     await b.close()

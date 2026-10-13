@@ -40,6 +40,7 @@ function syncMaskUI(){
   $('#maskName').textContent = `Mask · ${LNAMES[maskEd.li]}`;
   segSet('#maskTool', maskOpt.tool);
   $('#maskSize').value = maskOpt.size; $('#maskSize').nextElementSibling.textContent = Math.round(maskOpt.size) + ' px';
+  $('#maskSizeBtn').title = `Size: ${Math.round(maskOpt.size)} px — click for its slider`; $('#maskSoftBtn').title = `Soft: ${Math.round(maskOpt.soft * 100)}% — click for its slider`;
   $('#maskSoft').value = maskOpt.soft; $('#maskSoft').nextElementSibling.textContent = Math.round(maskOpt.soft * 100) + '%';
   $('#maskInv').checked = !!(m && m.inv); $('#maskOn').checked = !m || m.on !== false;
 }
@@ -98,7 +99,11 @@ pv.addEventListener('pointercancel', () => { if (maskEd) maskUp(); });
 pv.addEventListener('contextmenu', e => { if (maskEd) e.preventDefault(); });   // (right button erases)
 pv.addEventListener('pointerleave', () => { if (maskEd && !maskStroke){ maskPtr = null; redraw.all = true; } });
 // the bar
-$('#maskTool').innerHTML = MASK_TOOLS.map(([v, l, t]) => `<button data-v="${v}" title="${t}">${l}</button>`).join('');
+const MASK_IC = { free: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M2 12c2-5 4-7 5.5-6s-1.5 4 .5 5 4-4 6-6"/></svg>', rect: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="2.5" y="4" width="11" height="8" rx=".5"/></svg>', ell: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><ellipse cx="8" cy="8" rx="6" ry="4.2"/></svg>' };   // (0.88: icons, the tooltips name them)
+$('#maskTool').innerHTML = MASK_TOOLS.map(([v, l, t]) => `<button data-v="${v}" title="${l}: ${t}">${MASK_IC[v]}</button>`).join('');
+// Size / Soft: an icon each, its slider pops up upright (like the music player's volume)
+document.querySelectorAll('#maskBar .mpopbtn').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); const p = b.nextElementSibling, was = p.hidden; document.querySelectorAll('#maskBar .mpop').forEach(q => q.hidden = true); p.hidden = !was; }));
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#maskBar .volwrap')) document.querySelectorAll('#maskBar .mpop').forEach(q => q.hidden = true); });
 onSeg($('#maskTool'), b => { maskOpt.tool = b.dataset.v; maskSave(); syncMaskUI(); });
 $('#maskSize').addEventListener('input', e => { maskOpt.size = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; });
 $('#maskSoft').addEventListener('input', e => { maskOpt.soft = +e.target.value; maskSave(); syncMaskUI(); });

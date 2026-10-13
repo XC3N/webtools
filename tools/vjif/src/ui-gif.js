@@ -168,18 +168,22 @@ function syncAutoUI(g){
   const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(PER_OPTS, D.per); $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
   const gi = optIdx(GAP_OPTS, A.gap || 0); $('#aGap').value = gi; $('#aGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
+  $('#aSk').value = A.sk ?? 0.5; $('#aSk').nextElementSibling.textContent = Math.round((A.sk ?? 0.5) * 100) + '%'; $('#aHold').checked = !!A.hold;
   const em = A.em || 'off'; segSet('#aEnv', em);
   A_ENV.forEach(([id, k, def]) => { const i = optIdx(ENV_OPTS, A[k] ?? def); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
   $('#aES').value = A.es ?? 0; $('#aES').nextElementSibling.textContent = Math.round((A.es ?? 0) * 100) + '%';
   document.querySelectorAll('#gPanes .aEnvF').forEach(f => f.classList.toggle('dimmed', em === 'off'));
-  ['#aShape', '#aPer', '#aGap', '#aPh', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
+  ['#aShape', '#aPer', '#aGap', '#aPh', '#aSk', '#aHold', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
   $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
 }
 // change the edited LFO; touching any setting switches it on
-function editLfo(fn, turnOn = true){
+let aShift = false;   // Shift held while dragging an Auto slider: the change goes to every running LFO of this GIF (0.88)
+$('[data-pane=auto]').addEventListener('pointerdown', e => { aShift = e.shiftKey; addEventListener('pointerup', () => { aShift = false; }, { once: true }); }, true);
+function editLfo(fn, turnOn = true, shared = false){
   const g = curGif(); if (!g) return;
   const A = g.lfo[aSel] || (g.lfo[aSel] = lfoDef(aSel));
   fn(A); if (turnOn) A.on = true;
+  if (shared && aShift) for (const k in g.lfo) if (k !== aSel && g.lfo[k] && g.lfo[k].on) fn(g.lfo[k]);   // (Min / Max aren't shared: each target has its own units)
   syncAutoUI(g); syncXfUI();
 }
 onSeg($('#aTgt'), (b, e) => { const g = curGif(); aSel = b.dataset.v; if (g) syncAutoUI(g); });
@@ -191,11 +195,13 @@ $('#aMin').addEventListener('input', e => { editLfo(A => A.min = +e.target.value
 $('#aMax').addEventListener('input', e => { editLfo(A => A.max = +e.target.value); peek('max'); });
 ['#aMin', '#aMax'].forEach(id => $(id).addEventListener('pointerdown', () => { peek(id === '#aMin' ? 'min' : 'max'); const hold = setInterval(() => lfoPeek && (lfoPeek.t = performance.now()), 200);   // held: keep showing it
   addEventListener('pointerup', () => clearInterval(hold), { once: true }); }));
-$('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0]));
-$('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value));
-$('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.target.value][0]));
-A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0])); });
-$('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value));
+$('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0], true, true));
+$('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value, true, true));
+$('#aSk').addEventListener('input', e => editLfo(A => A.sk = +e.target.value, true, true));
+$('#aHold').addEventListener('change', e => editLfo(A => A.hold = e.target.checked));
+$('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.target.value][0], true, true));
+A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0], true, true)); });
+$('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value, true, true));
 onSeg($('#aEnv'), b => editLfo(A => A.em = b.dataset.v));
 // Envelope: reset, and graph or sliders (the same choice as the effect envelope's). As a graph, the scope's points drag:
 // Attack (across), Decay (across) with Sustain (up / down), Release (across), on the same steps as the sliders
@@ -357,7 +363,11 @@ function restoreClear(E){
   for (const [li, k, c, sel] of E.removed){ const L = layers[li]; L.clips.splice(Math.min(k, L.clips.length), 0, c); if (sel) L.sel = c; }
   afterPadChange(E.pad); return true;
 }
-function afterPadChange(i){ renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); renderPool(); redraw.all = true; }
+// a Background slot plays exactly when it holds a GIF (undo / redo of a replaced GIF lands here too)
+function bgSync(i){ if (!isBgPad(i)) return; const L = layers[BG_LAYER], c = L.clips.find(c => c.pad === i);
+  if (pads[i].gif && !c){ const n = newClip(i); n.startBeat = clock.beat; n.startTime = performance.now(); L.clips.push(n); }
+  else if (!pads[i].gif && c){ L.clips = L.clips.filter(x => x !== c); if (L.sel === c) L.sel = null; } }
+function afterPadChange(i){ bgSync(i); renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); renderPool(); redraw.all = true; }
 
 // ---- drop shadow (GIF › Display › Shadow): moving a setting switches it on ----
 const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off'], ['#shS', 'soft', v => v > 0 ? Math.round(v * 100) + '%' : 'hard']];

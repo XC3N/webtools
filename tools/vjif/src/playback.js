@@ -60,8 +60,9 @@ function firePending(){
 }
 function fire(p, beat, released = false, swap = false){
   const g = pads[p].gif; if (!g) return;
-  // a GIF lives on one layer at most: if it's on any layer, restart it there; otherwise add it to the edited layer
-  let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[target];
+  // a GIF lives on one layer at most: if it's on any layer, restart it there; otherwise add it to its layer (0.88: Global pads
+  // Overlay, Background slots Background, Scene pads the edited layer when it's Midground / Foreground, else Midground)
+  let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[padLayer(p, target)];
   let c = L.clips.find(c => c.pad === p); const n0 = L.clips.length;
   if (swap){                                         // alone on the layer, where the selected GIF was
     if (!c){ c = selClip(L.i) || L.clips[0] || newClip(p); c.pad = p; c.env = null; }
@@ -130,7 +131,7 @@ function envLevel(c, g, beat){
 }
 
 // ---------- automation (LFOs) ----------
-const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, min: t[7], max: t[8], shape: t[9], per: t[10], ph: 0, sync: 'clock', gap: 0, em: 'off', ea: 0, ed: 4, es: 0, er: 1 }; };
+const lfoDef = k => { const t = LFO_T.find(t => t[0] === k); return { on: false, min: t[7], max: t[8], shape: t[9], per: t[10], ph: 0, sk: 0.5, hold: false, sync: 'clock', gap: 0, em: 'off', ea: 0, ed: 4, es: 0, er: 1 }; };
 function rnd(seed, n){ let h = Math.imul(seed ^ Math.imul(n | 0, 0x9E3779B1), 0x85EBCA6B); h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
 // position in cycles (whole part = cycle number)
 function lfoPos(A, c){ return lfoPosT(A, A.sync === 'trig' ? clock.beat - c.startBeat : clock.beat); }
@@ -141,13 +142,12 @@ function lfoPosT(A, t){
   return n + (r < A.per ? r / A.per : 0.999999);
 }
 function lfoShape(A, pos, seed){
-  const n = Math.floor(pos), f = pos - n;
+  const n = Math.floor(pos), k = A.sk ?? 0.5, f0 = pos - n, f = k === 0.5 ? f0 : f0 < k ? 0.5 * f0 / k : 0.5 + 0.5 * (f0 - k) / (1 - k);   // Skew (0.88): the cycle's first half squeezed into Skew of it (a Square at 25% = the old Pulse; a Tri peaks at Skew)
   switch (A.shape){
     case 'tri': return f < 0.5 ? 2 * f : 2 - 2 * f;
     case 'up': return f;
     case 'down': return 1 - f;
     case 'square': return f < 0.5 ? 1 : 0;
-    case 'pulse': return f < 0.25 ? 1 : 0;
     case 'sh': return rnd(seed, n);
     case 'drift': { const a = rnd(seed, n), b = rnd(seed, n + 1); return a + (b - a) * (1 - Math.cos(Math.PI * f)) / 2; }
     default: return 0.5 - 0.5 * Math.cos(2 * Math.PI * f);        // sine, starting at Min
@@ -169,7 +169,7 @@ function lfoEnv(A, c, beat){
 function lfoUnit(A, c, seed, beat){
   const m = A.em || 'off';
   if (m === 'only') return lfoEnv(A, c, beat);
-  const w = lfoShape(A, lfoPos(A, c), seed);
+  const w = lfoShape(A, A.hold ? lfoPosT(A, c.hitBeat ?? c.startBeat ?? 0) : lfoPos(A, c), seed);   // Hold: the value the LFO had at the last pad hit, kept until the next one (on the bar's clock, so each hit lands somewhere new)
   return m === 'depth' ? w * lfoEnv(A, c, beat) : w;
 }
 let lfoPeek = null;   // { g, k, end: 'min' | 'max', t }: set while Min / Max are dragged in GIF › Auto
@@ -197,6 +197,7 @@ function effClip(c, g){
 function refuse(L){ const r = L.row; r.classList.remove('refused'); void r.offsetWidth; r.classList.add('refused'); }
 function removeClip(li, c){
   const L = layers[li]; if (!c) return;
+  if (isBgPad(c.pad)) return clearPad(c.pad);         // a Background slot: its × empties the slot (Ctrl+Z brings it back)
   L.clips = L.clips.filter(x => x !== c); if (L.sel === c) L.sel = null;
   syncLayerUI(); syncXfUI();
 }

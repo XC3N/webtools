@@ -158,7 +158,7 @@ function applyGifSettings(g, saved){
   if (typeof name === 'string' && name) g.name = name;   // its own name (Alt+click renames), else the file's
   Object.assign(g, Object.fromEntries(Object.entries(rest).filter(([k]) => GIF_KEYS.includes(k))));
   if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv); if (env) Object.assign(g.env, env);
-  if (lfo) g.lfo = JSON.parse(JSON.stringify(lfo));
+  if (lfo){ g.lfo = JSON.parse(JSON.stringify(lfo)); for (const k in g.lfo){ const A = g.lfo[k]; if (A && A.shape === 'pulse'){ A.shape = 'square'; A.sk = 0.25; } } }   // Pulse (before 0.88) = Square with Skew 25%
   if (g.sync === 'restart'){ g.sync = 'free'; g.restart = g.beats; }   // pre-v0.9 sets
   if (g.restart === undefined) g.restart = 0;
   if (g.loop === 'once'){ g.loop = 'loop'; if (g.trig !== 'fade'){ g.trig = 'fade'; Object.assign(g.env, { a: 0, r: 0, gate: false, len: 'gif' }); } }   // Once (before 0.83): now a One shot of one play
@@ -191,16 +191,18 @@ async function loadInto(p, blob, name, si = sceneIdx){
 function putMedia(m, p, si = sceneIdx){
   if (si < 0) return null;                           // that scene is gone
   const g = makeInst(m);
+  if (isGlobalPad(p)) si = sceneIdx;                 // a Global pad is the same in every scene: it's always the live one
   if (si !== sceneIdx){                              // the scene was left while the file decoded: fill its pad only if still empty
     const sc = scenes[si] || (scenes[si] = emptyScene());
-    if (sc.pads[p]){ freeGif(g); return null; } sc.pads[p] = g; renderScenes(); updateMem(); renderPool(); return g;
+    if (sc.pads[p]){ freeGif(g); return null; } sc.pads[p] = g; if (isBgPad(p)) sc.layers[BG_LAYER].clips.push(newClip(p)); renderScenes(); updateMem(); renderPool(); return g;
   }
   const pad = pads[p];
   if (pad.gif){                                      // replacing: one undo step that swaps the old one back
     if (hist.ready){ commit(); pushStep({ kind: 'swap', pad: p, sid: sidNow(), g: pad.gif }); }
     else freeGif(pad.gif);
   }
-  pad.gif = g; renderPad(p); selectPad(p); updateMem(); syncLayerUI(); renderScenes(); renderPool(); redraw.all = true;
+  pad.gif = g; if (isBgPad(p) && !layers[BG_LAYER].clips.some(c => c.pad === p)){ const c = newClip(p); c.startBeat = clock.beat; c.startTime = performance.now(); layers[BG_LAYER].clips.push(c); }   // a Background slot just plays
+  renderPad(p); selectPad(p); updateMem(); syncLayerUI(); renderScenes(); renderPool(); redraw.all = true;
   if (hist.ready){                                   // fold the new GIF's settings into undo's current state (loading isn't an undo step)
     const st = JSON.parse(hist.cur); st.gifs[p] = Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])); hist.cur = JSON.stringify(st);
   }
@@ -208,7 +210,7 @@ function putMedia(m, p, si = sceneIdx){
 }
 
 async function loadUrlInto(url, p){
-  if (p < 0 && p !== POOL_ONLY) return toast('All 18 pads are full — clear one first');
+  if (p < 0 && p !== POOL_ONLY) return toast('All 9 Scene pads are full — clear one first');
   const raw = url.split(/[?#]/)[0].split('/').pop() || 'url.gif';
   let name = raw; try { name = decodeURIComponent(raw); } catch (e) {}   // a name like 100%.gif isn't valid escaping: keep it as it is
   let blob;
@@ -223,9 +225,11 @@ async function loadUrlInto(url, p){
   await loadInto(p, blob, name);
 }
 
+// (0.88: within one group — the Scene pads, or the Global ones when starting from one of those; Background's slots never)
 function nextEmpty(from = 0, exclude = new Set()){
-  for (let k = 0; k < pads.length; k++){
-    const i = (from + k) % pads.length;
+  const g0 = isGlobalPad(from) ? 9 : 0;
+  for (let k = 0; k < 9; k++){
+    const i = g0 + ((Math.max(0, from - g0) % 9) + k) % 9;
     if (!pads[i].gif && !pads[i].loading && !exclude.has(i)) return i;
   }
   return -1;
@@ -235,7 +239,7 @@ function nextEmpty(from = 0, exclude = new Set()){
 function nextEmptyIn(si, exclude = new Set()){
   if (si === sceneIdx) return nextEmpty(0, exclude);
   const sc = scenes[si], tag = sceneIds[si];
-  for (let i = 0; i < pads.length; i++) if (!(sc && sc.pads[i]) && !(pads[i].loads && pads[i].loads.get(tag)) && !exclude.has(i)) return i;
+  for (let i = 0; i < 9; i++) if (!(sc && sc.pads[i]) && !(pads[i].loads && pads[i].loads.get(tag)) && !exclude.has(i)) return i;   // (its Scene pads: the Global ones are the same everywhere)
   return -1;
 }
 // files dropped on a scene tile: each onto that scene's next empty pad (the scene you're on isn't changed)
@@ -243,7 +247,7 @@ function loadFilesToScene(files, si){
   const used = new Set(), jobs = [];
   for (let k = 0; k < files.length; k++){
     const p = nextEmptyIn(si, used);
-    if (p < 0){ toast(`Scene ${si + 1}'s 18 pads are full — ${files.length - k} file(s) skipped`); break; }
+    if (p < 0){ toast(`Scene ${si + 1}'s 9 Scene pads are full — ${files.length - k} file(s) skipped`); break; }
     used.add(p); jobs.push(loadInto(p, files[k], files[k].name, si));
   }
   if (jobs.length && si !== sceneIdx) toast2(`${jobs.length} GIF${jobs.length > 1 ? 's' : ''} going to scene ${si + 1}`);
@@ -254,7 +258,7 @@ function loadFiles(files, start = -1){
   const used = new Set(), jobs = [];
   for (let k = 0; k < files.length; k++){
     const p = (k === 0 && start >= 0) ? start : nextEmpty(start >= 0 ? start : 0, used);
-    if (p < 0){ toast(`All 18 pads are full — ${files.length - k} file(s) skipped`); break; }
+    if (p < 0){ toast(`All 9 pads of this group are full — ${files.length - k} file(s) skipped`); break; }
     used.add(p); jobs.push(loadInto(p, files[k], files[k].name));
   }
   return Promise.all(jobs);
@@ -323,7 +327,7 @@ function unplaceMedia(m){
   renderScenes();
 }
 function pickPool(m){
-  const d = poolDest(); if (d < 0) return toast('All 18 pads of this scene are full — clear one first');
+  const d = poolDest(); if (d < 0) return toast('All 9 Scene pads are full — clear one first');
   putMedia(m, d); poolTarget = -1;
   pads[d].el.classList.remove('hit'); void pads[d].el.offsetWidth; pads[d].el.classList.add('hit');
   renderPool();

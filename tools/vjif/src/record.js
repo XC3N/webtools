@@ -467,7 +467,7 @@ async function restore(){
     if (!sets.has(session.setId)) session.setId = null;
     const st = JSON.parse(await store.get('state') || 'null');
     if (st && (st.v || 1) < 2){                       // pre-sets layout: files under 'pad:<i>'
-      for (let i = 0; i < pads.length; i++){
+      for (let i = 0; i < N_KEYPADS; i++){
         const rec = await store.get('pad:' + i);
         if (!rec){ st.pads[i] = null; continue; }
         const hash = await hashBlob(rec.blob);

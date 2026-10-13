@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.87.3';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.88.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -57,7 +57,16 @@ const MAX_FRAMES = 1500;       // per GIF
 const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it flashes red)
 const MEM_WARN_MB = 1500;      // whole bank
 const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','KeyR','KeyT','KeyY','KeyF','KeyG','KeyH','KeyV','KeyB','KeyN'];
-const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','R','T','Y','F','G','H','V','B','N'];
+const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','R','T','Y','F','G','H','V','B','N', 'B1','B2','B3','B4','B5','B6'];
+// 0.88: pads 0–8 (QWE ASD ZXC) are the Scene pads, each scene its own, played on Midground / Foreground; pads 9–17
+// (RTY FGH VBN) are the Global pads, the same GIF, settings and placement in every scene, always on Overlay (layer 4,
+// which is the same in every scene too); 18–23 are Background's six slots (each scene its own): no key, nothing to
+// trigger, they just play on layer 1. A GIF still lives on one layer at a time.
+const N_KEYPADS = 18, BG0 = 18, N_BG = 6, BG_LAYER = 0, GLOBAL_LAYER = 3;
+const isGlobalPad = i => i >= 9 && i < N_KEYPADS, isBgPad = i => i >= BG0, isScenePad = i => i >= 0 && i < 9;
+// which layer a pad's GIF plays on (scene pads: Midground or Foreground, the edited one if it's one of them)
+const padLayer = (i, want) => isGlobalPad(i) ? GLOBAL_LAYER : isBgPad(i) ? BG_LAYER : want === 1 || want === 2 ? want : 1;
+const layerTakes = (li, i) => li === GLOBAL_LAYER ? isGlobalPad(i) : li === BG_LAYER ? isBgPad(i) : isScenePad(i);
 const BLENDS = [['source-over','Normal'],['lighter','Add'],['screen','Screen'],['multiply','Multiply'],['difference','Difference'],['exclusion','Exclusion'],['lighten','Lighten'],['darken','Darken'],['overlay','Overlay'],
   ['destination-out','Mask: cut out'],['destination-in','Mask: keep inside']];   // masks: this layer's GIFs cut holes in the layers below it, or keep only what's under them
 const MASK_BLENDS = new Set(['destination-out', 'destination-in']);
@@ -87,7 +96,7 @@ const LFO_T = [
   ['h', 'Hue', 'Hue shift', -180, 180, 1, '°', -180, 180, 'up', 16],
   ['s', 'Sat', 'Saturation', 0, 3, 0.01, '×', 0, 1, 'sine', 4],
   ['v', 'Bright', 'Brightness', 0, 3, 0.01, '×', 1, 1.6, 'down', 1]];
-const SHAPES = [['sine','Sine'],['tri','Tri'],['up','Ramp ↑'],['down','Ramp ↓'],['square','Square'],['pulse','Pulse'],['sh','Random'],['drift','Drift']];
+const SHAPES = [['sine','Sine'],['tri','Tri'],['up','Ramp ↑'],['down','Ramp ↓'],['square','Square'],['sh','Random'],['drift','Drift']];
 const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
 const KEY_MAX = 441.67;        // max RGB distance
 
@@ -121,7 +130,7 @@ const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) || 0);
 const rgb2hex = c => '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('');
 
 // ---------- state ----------
-const pads = PAD_KEYS.map((code, i) => ({ i, code, label: PAD_LABELS[i], gif: null, loading: false, el: null }));
+const pads = PAD_LABELS.map((label, i) => ({ i, code: PAD_KEYS[i] || null, label, gif: null, loading: false, el: null, bg: i >= BG0 }));   // (Background's slots have no key)
 const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: false, flipY: false, tile: false, cl: 0, ct: 0, cr: 0, cb: 0 });
 let clipSeq = 0, gifSeq = 0;
 // alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)

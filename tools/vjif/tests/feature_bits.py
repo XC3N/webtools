@@ -41,7 +41,7 @@ async def main():
     c = await pg.evaluate("[!!document.querySelector('#recPopRows .seg[data-src=\"#recCountSeg\"]'), normTrans({ type: 'glitch', style: 'melt' }).type, normTrans({ type: 'glitch', style: 'channel' }).type, TR_TYPES.length]")
     print('count-in / regroup', c); assert c == [True, 'dissolve', 'tv', 8], c   # 8 types since Slide joined Wipe (0.84)
     # a click in the border on nothing deselects, and it stays deselected (it used to fall back to the last GIF)
-    bd = await pg.evaluate("""(() => { const L = layers[target]; if (!L.clips.length) return 'no clips'; L.sel = L.clips[0]; const r = pv.getBoundingClientRect();
+    bd = await pg.evaluate("""(() => { const li = layers.findIndex(L => L.clips.length); if (li < 0) return 'no clips'; setTarget(li); const L = layers[li];   /* 0.88: a Scene pad plays on Midground */ L.sel = L.clips[0]; const r = pv.getBoundingClientRect();
       pv.dispatchEvent(new PointerEvent('pointerdown', { clientX: r.left + 3, clientY: r.top + 3, pointerId: 1, bubbles: true })); pv.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, bubbles: true }));
       return [L.sel, selClip()]; })()""")
     print('border', bd); assert bd == [False, None], bd
@@ -95,7 +95,7 @@ async def main():
     await pg.evaluate("$('#aReset').click()")
     # 0.76: Claude's VJif theme (Claude's Mopho stays Bad MOPHO's), Sound in Rec ▾ drives Settings › Sound, level meters, soft shadow crop
     th = await pg.evaluate("[...document.querySelectorAll('#themeBox .thm-preset option')].map(o => o.value)")
-    print('themes', th); assert "Claude's VJif" in th and "Claude's Mopho" not in th, th
+    print('themes', th); assert "Mopho" in th and "Claude's VJif" not in th and "Claude's Mopho" not in th, th   # 0.88: Claude's VJif dropped
     sn = await pg.evaluate("""(() => { $('#recCfg').click(); const p = $('#recPopSnd'), s = $('#recAudioSel'); const o = [...p.options].map(o => o.value); const v = o.find(x => x === 'music') || o[o.length - 1];
       p.value = v; p.dispatchEvent(new Event('change')); const r = [o.length === s.options.length, s.value === v, document.querySelectorAll('.vu').length]; $('#recCfg').click(); s.value = ''; s.dispatchEvent(new Event('change')); return r; })()""")
     print('rec sound', sn); assert sn == [True, True, 2], sn
@@ -105,7 +105,7 @@ async def main():
     sh = await pg.evaluate("""(() => { setCaps(false); dispatchEvent(new KeyboardEvent('keydown', { code: 'Numpad3', key: '3', shiftKey: true })); const a = fxSt[NFX + 2].held;
       dispatchEvent(new KeyboardEvent('keyup', { code: 'Numpad3', key: '3' })); return [a, fxSt[NFX + 2].held, heldPre]; })()""")
     print('shift+numpad', sh); assert sh == [True, False, -1], sh
-    lk = await pg.evaluate("""(() => { const L = layers[0], c = newClip(0); L.clips = [c]; L.on = true; L.opacity = 1; const G = clipGeom(c); const n = hitsAt(G.cx, G.cy, false).length;
+    lk = await pg.evaluate("""(() => { const L = layers[1], c = newClip(0); L.clips = [c]; L.on = true; L.opacity = 1; const G = clipGeom(c); const n = hitsAt(G.cx, G.cy, false).length;
       L.lock = true; const m = hitsAt(G.cx, G.cy, false).length, k = hitsAt(G.cx, G.cy, false, true).length; L.lock = false; L.clips = []; return [n, m, k]; })()""")
     print('lock', lk); assert lk == [1, 0, 1], lk
     gc = await pg.evaluate("[FX_DEFS[FXI.glitch].styles.map(s => s[0]).includes('corrupt'), FX_DEFS[FXI.glitch].styles[styleIdx(FXI.glitch, 'scramble')][0]]")

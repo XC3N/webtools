@@ -1,5 +1,6 @@
 // ---------- scenes ----------
-// A set holds N_SCENES scenes; a scene is its 18 pads (each a GIF instance with its own settings) plus what the 4 layers hold.
+// A set holds N_SCENES scenes; a scene is its 9 Scene pads and 6 Background slots (each a GIF instance with its own settings) plus what
+// layers 1–3 hold. Overlay (layer 4) and the 9 Global pads are the set's, the same in every scene (0.88).
 // The live `layers` and pad instances are the current scene; the others wait in `scenes` (null = empty). GIF files (the pool) belong to the set.
 const N_SCENES = 9;
 const scenes = Array(N_SCENES).fill(null);
@@ -50,7 +51,9 @@ function setFxLocal(on){
   fxScopeUI(); toast2(on ? 'FX Local: each scene keeps its own latched effects' : 'FX Global: latched effects stay on from scene to scene');
 }
 function fxScopeUI(){ const b = $('#scFx'); b.textContent = fxLocal ? 'FX Local' : 'FX Global'; b.classList.toggle('on', fxLocal); }
-const captureScene = () => ({ fxOn: fxLocal ? latchedNow() : liveFxOn, layers: layers.map(layerState), pads: pads.map(p => p.gif), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
+// (0.88: Overlay and the Global pads aren't kept per scene: they stay live, the same everywhere — a stored scene has them empty)
+const sceneLayers = () => layers.map(L => L.i === GLOBAL_LAYER ? Object.assign(emptyLayer(), { i: L.i }) : layerState(L)), scenePadGifs = () => pads.map((p, k) => isGlobalPad(k) ? null : p.gif);
+const captureScene = () => ({ fxOn: fxLocal ? latchedNow() : liveFxOn, layers: sceneLayers(), pads: scenePadGifs(), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   if (hist.ready) commit();                          // an edit still waiting for its undo step gets it now, in its own scene
@@ -62,16 +65,17 @@ function gotoScene(i, beat = clock.beat, instant = false){
   const left = pads.map(p => p.gif); scenes[sceneIdx] = captureScene(); sceneIdx = i;
   const sc = scenes[i], t0 = beatTime(beat);
   layers.forEach((L, li) => {
+    if (li === GLOBAL_LAYER) return;                 // Overlay carries on as it is (the same in every scene)
     const s = sc ? sc.layers[li] : emptyLayer();
     Object.assign(L, layerProps(s));
     L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; c.hitBeat = undefined; });   // the scene starts from the top
   });
-  pads.forEach((p, k) => { p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty)
+  pads.forEach((p, k) => { if (isGlobalPad(k)) return; p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty), the Global ones stay
   if (!trans) dropFxCache(left);                     // (with a transition: when it ends)
   scenes[i] = null; liveThumb = sc && sc.thumb; thumbKeep = liveThumb; liveName = sc && sc.name || '';
   if (fxLocal && trans && !trans.fx) trans.fx = { cfg: fxCfg, pre: fxPre, st: fxSt.map(S => ({ ...S })) };   // Local: the scene being left keeps its own effects through the transition (they used to switch at its start)
   liveFxOn = sc && sc.fxOn || null; if (fxLocal) applyLatched(liveFxOn || [], beat);   // Local: a scene with no effects of its own yet starts with none on
-  pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
+  for (const k of [...pending.keys()]) if (!isGlobalPad(k)){ pending.delete(k); pads[k].el.classList.remove('wait'); }   // (a Global pad waiting for the beat still plays)
   // what's selected: as you left this scene; else the edit layer stays and the GIF panel shows that layer's selected GIF
   if (sc && sc.pick){ target = sc.pick.target; selPad = sc.pick.pad; }
   else { const c = selClip(); if (c) selPad = c.pad; }
@@ -87,15 +91,15 @@ function sceneKey(i){
   if (at <= clock.beat) return gotoScene(i, at);
   pendingScene = { i, beat: at }; renderScenes();
 }
-const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers : []).reduce((a, l) => a + l.clips.length, 0);
-const scenePads = i => (i === sceneIdx ? pads.map(p => p.gif) : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
+const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers : []).reduce((a, l) => a + (l.i === GLOBAL_LAYER ? 0 : l.clips.length), 0);   // (its own GIFs: Overlay's are everywhere)
+const scenePads = i => (i === sceneIdx ? scenePadGifs() : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
 function renderScenes(){
   const box = $('#scenes');
   if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" draggable="true"><span class="k">${i + 1}</span><span class="xdel" title="Empty this scene (Ctrl+Z brings it back)">×</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n); b.classList.toggle('blank', !n && !np);
-    const pg = !n && np ? (i === sceneIdx ? pads.map(p => p.gif) : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
+    const pg = !n && np ? (i === sceneIdx ? scenePadGifs() : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
     const bg = n && th ? `url(${th})` : pg ? `url(${gifTile(pg)})` : ''; if (b._bg !== bg){ b._bg = bg; b.style.backgroundImage = bg; }   // (the browser rewrites url(...) with quotes: comparing with it never matched)
     b.classList.toggle('padsOnly', !!pg);
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
@@ -210,7 +214,7 @@ $('#scenes').addEventListener('drop', e => {
     const b = e.target.closest('.scene'); if (!b) return;
     e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
     const si = +b.dataset.i, ph = e.dataTransfer.getData(POOL_MIME);
-    if (ph){ const m = pool.find(m => m.hash === ph), d = nextEmptyIn(si); if (!m) return; if (d < 0) return toast(`Scene ${si + 1}'s 18 pads are full`);
+    if (ph){ const m = pool.find(m => m.hash === ph), d = nextEmptyIn(si); if (!m) return; if (d < 0) return toast(`Scene ${si + 1}'s 9 Scene pads are full`);
       putMedia(m, d, si); renderPool(); if (si !== sceneIdx) toast2(`${m.name} → scene ${si + 1}, pad ${PAD_LABELS[d]}`); return; }
     const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
     if (files.length) loadFilesToScene(files, si); return;
@@ -245,7 +249,7 @@ function swapScenes(a, b){
 function sceneCopy(i){
   const live = i === sceneIdx, sc = live ? null : scenes[i];
   if (!live && !sc) return emptyScene();             // never opened: a copy of nothing is an empty scene (not a shell without layers)
-  const P = live ? pads.map(p => p.gif) : (sc && sc.pads) || [], Ls = live ? layers : (sc && sc.layers) || [];
+  const P = live ? scenePadGifs() : (sc && sc.pads) || [], Ls = (live ? layers : (sc && sc.layers) || []).map(L => L.i === GLOBAL_LAYER ? Object.assign(emptyLayer(), { i: L.i }) : L);   // (Overlay and the Global pads aren't the scene's)
   return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, fxOn: live ? (fxLocal ? latchedNow() : liveFxOn) : sc && sc.fxOn || null, pads: P.map(g => g && cloneInst(g)),
     layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
       return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
@@ -261,7 +265,7 @@ $('#scDup').addEventListener('click', () => {
 function emptySceneAt(i){
   if (!sceneCount(i) && !scenePads(i) && (keepSceneNames || !sceneName(i))) return;
   commit();
-  const blank = { layers: layers.map(L => Object.assign(emptyLayer(), { i: L.i })), pads: pads.map(() => null), ...(keepSceneNames ? {} : { name: '' }) };   // emptied: its name goes too (Ctrl+Z brings it back), unless Settings › Permanent scene names
+  const blank = { layers: layers.map(L => L.i === GLOBAL_LAYER ? layerState(L) : Object.assign(emptyLayer(), { i: L.i })), pads: pads.map((p, k) => isGlobalPad(k) ? p.gif : null), ...(keepSceneNames ? {} : { name: '' }) };   // (Overlay and the Global pads stay: they aren't the scene's) · emptied: its name goes too (Ctrl+Z brings it back), unless Settings › Permanent scene names
   let E;
   if (i === sceneIdx){ E = { kind: 'scn', sid: sceneIds[i], data: blank }; applyScn(E); liveThumb = null; }
   else { const sc = scenes[i]; E = { kind: 'scn', sid: sceneIds[i], data: { layers: sc.layers, pads: sc.pads, thumb: sc.thumb, ...(keepSceneNames ? {} : { name: sc.name || '' }) } };   // undo swaps these back in (its picture too)

@@ -4,6 +4,30 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.88.0 — 2026-10-13
+
+### Pads & scenes
+- Two kinds of pads. **Scene** (QWE ASD ZXC): each scene its own, played on Midground or Foreground (the one you're editing, else Midground). **Global** (RTY FGH VBN): the same GIFs, settings and placement in every scene, always on Overlay.
+- Overlay (layer 4) is the same in every scene: what plays there keeps playing through scene changes.
+- Background (layer 1) has no pads: its card has 6 slots per scene. Click a + to fill one from the pool (or a file), or drop a GIF from the pool, a file or a pad on the card; they just play. A slot's × empties it (Ctrl+Z brings it back).
+- Chips only move between the layers that take them; Overlay refuses Scene pads, Midground / Foreground refuse Global pads, with a message saying why.
+- Older sets are rearranged once: the scene you're on gives the Global pads; other scenes' second-group GIFs move to their free Scene pads (or out, if full — the pool keeps them); Background's GIFs move into its slots; what was on Overlay moves down to Foreground / Midground, and the Global pads that were playing move up to Overlay.
+
+### GIFs
+- Transform is a tab of the GIF panel (Transform · Play · Display · Auto); its heading line reads Placement with the layer and pad, and the tab lights when fit, flip, tile or opacity are changed.
+- Base size is one switch: Auto · Fit · Fill · Stretch · 1:1 (was a menu plus Fit / Fill / Stretch buttons). Picking Fit / Fill / Stretch sizes the cropped part to the frame and centres it; Auto and 1:1 go back to scale 1×, centred. Rotation and flips stay.
+- Auto: Skew (where the shape turns: a Square at 25% is the old Pulse, which is gone — older sets convert) and Hold (on each pad hit the value jumps to where the LFO is and stays until the next hit; with Random, a new value per hit).
+- Auto: Shift+drag Cycle, Gap, Phase, Skew or an envelope slider: every running LFO of the GIF follows.
+- A text pad folds away the Play sections it can't use (their headings stay, dimmed).
+
+### Layers
+- Mask painting: two rows of icons (Free / Rect / Ellipse, Size and Soft as icons with an upright slider like the music volume; Invert, On, Clear, Done), so the GIF chips no longer cover them.
+
+### Interface
+- ?, full screen and Settings are their own group at the right end of the top bar; the top bar fits on one line at 1600 px wide (it wrapped before).
+- Keys & mouse is much shorter: one line per entry.
+- The Claude's VJif theme is gone (Mopho stays).
+
 ## 0.87.3 — 2026-10-13
 
 ### Effects
