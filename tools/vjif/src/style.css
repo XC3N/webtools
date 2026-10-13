@@ -451,10 +451,22 @@ input[type=color].sw{width:26px;height:20px;padding:0;flex:none;border:1px solid
 .field>.keyrow>label{white-space:nowrap}
 [data-pane=auto].envgraph .aEnvF{display:none}   /* GIF › Auto › Envelope as a graph: the scope's points instead of the sliders */
 .field.wide{grid-template-columns:auto minmax(0,1fr)}   /* a long label and its switch: the label on one line */
-#gPanes .swr,#gPanes .field,#gPanes .sub{scroll-margin:28px 0 32px}   /* revealed rows stop clear of the column's fading edges */
+#gPanes .swr,#gPanes .field,#gPanes .sub,#side .field,#side .sub{scroll-margin:28px 0 32px}   /* revealed rows stop clear of the column's fading edges */
 /* a slider row that stands for different settings: when nothing it could be applies, an empty grey box (no name, no value) */
 .field.blankable.dimmed{background:var(--panel-2);border-radius:var(--r);opacity:.6}.field.blankable.dimmed>*{visibility:hidden}
 /* Keys & mouse: grouped, with a search box */
 #helpQ{width:100%;margin:0 0 8px;height:var(--ch)}.khead{margin:12px 0 6px;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #helpPanel [hidden]{display:none!important}
 #swList .swr.off>.swTo,#swList .swr.off>button{opacity:.35}#swList .swr i[data-t]{cursor:pointer}#swList .swr.off i[data-t]{outline:1px dashed var(--muted);outline-offset:1px}   /* a swap switched off on its own */
+
+#fxSizeSeg.one{flex:none;width:auto;justify-self:start}#fxSizeSeg.one button{width:30px}   /* Shake › Edges: one icon toggle */
+svg.fxic{width:13px;height:13px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}   /* effect icons (0.87.3) */
+.fxp .fi{position:absolute;right:6px;bottom:5px;color:var(--faint);line-height:0;pointer-events:none}.fxp.on .fi,.fxp.sel .fi{color:var(--muted)}
+#fxPre .fxp .n.ics{display:flex;gap:5px;align-items:center;height:13px;color:var(--sig)}
+#fxName svg.fxic{width:12px;height:12px;vertical-align:-2px;margin-right:5px}
+#fxStrip .fxp .s{padding-right:15px}   /* room for the icon */
+
+h2 .h2btn.iconbtn{width:auto;padding:0 5px}   /* the Tt button: room for its icon */
+body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the layer chips either */
+#kPick.armed,#swPick.armed{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}   /* the eyedropper waits for a click in the preview */
+#fxRateRow.lcdrow>input,#fxRateRow.lcdrow>output{display:none}#fxRateRow.lcdrow>label{grid-column:1;grid-row:1;text-align:right;justify-self:end;white-space:nowrap}   /* Game Boy palettes: 'Dot Matrix' against its switch */

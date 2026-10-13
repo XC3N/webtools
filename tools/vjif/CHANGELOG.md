@@ -4,6 +4,33 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.87.3 — 2026-10-13
+
+### Effects
+- Each effect has a small icon: on its pad (lower right), on preset tiles (the first line shows the icons, the name or details under them) and in the editor's LCD.
+- Shake: Overscan is now one icon toggle, Edges (on: zoomed in just enough that no frame edge shows; off: the edges show). Older Some reads as on.
+- Colour › Palette with a Game Boy palette: the row reads Dot Matrix, right-aligned against its switch.
+
+### Transitions
+- Glitch › Corrupt matches the Corrupt effect: a datamosh, runs of blocks pushed along by repeated motion, a few flat wrong-coloured blocks, the new scene arriving run by run.
+- Stutter › Ramp: Intensity (10–100%) instead of Repeats; the number of flashes follows the length, so it looks alike at any length.
+- TV › Channel: the slider reads Text time.
+
+### GIFs
+- Play: Trigger comes first, then Loop. Direction has Reverse (end to start, then wrap back to the end).
+- Display: Colour Adjust (was Adjust), Palette, Swap colours, Key, Shadow; Smooth scaling is a one-line heading at the bottom.
+- Pick buttons (Key, Swap colours) are eyedroppers; they light while waiting for the click. Key › region (All / Edges / Wand) as icons.
+- Auto › Envelope: the same tooltips as an effect's envelope (points and sliders); double-click a point: its default. With LFO depth, the envelope is drawn dashed under the LFO it scales, so its points sit on a line.
+
+### Preview
+- Sticking to slanted guides (diagonals, vanishing-point rays): the box's corners and edge middles hook too, not only its centre, and the hooked handles fill in the guides' colour (was yellow).
+- Transform's heading mark only lights for what the preview can't show you changing: fit, flip, tile, opacity.
+
+### Interface
+- The Tt button fits its icon (a capital T and a lowercase t).
+- Settings › Ctrl+click to delete only also hides the × on the layer chips.
+- Rows that appear below (a swap, …) are scrolled into view at any UI zoom.
+
 ## 0.87.2 — 2026-10-12
 
 ### Effects

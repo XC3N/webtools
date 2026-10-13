@@ -213,8 +213,18 @@ $('#aScope').addEventListener('pointerdown', e => { const A = aEnvOn(); if (!A) 
   const px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d; let best = null, bd = 14 * G.d;
   for (const [k, x, y] of G.pts){ const q = Math.hypot(px - x, py - y); if (q < bd){ bd = q; best = k; } }
   if (!best) return; aEnvDrag = { k: best, span: G.span }; cv.setPointerCapture(e.pointerId); });
+const AENV_SCOPE_TIP = $('#aScope').title;
+$('#aScope').addEventListener('dblclick', e => { const cv = e.currentTarget, A = aEnvOn(); if (!A) return; const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv), px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d;   // a point back to its default, as in an effect's envelope
+  const p = G.pts.find(([, x, y]) => Math.hypot(px - x, py - y) < 14 * G.d); if (!p) return;
+  editLfo(B => { if (p[0] === 'a') B.ea = 0; else if (p[0] === 'd'){ B.ed = 4; B.es = 0; } else B.er = 1; }); });
+const A_ENV_TIPS = { a: 'Attack: how long it takes to rise to full, on each pad hit. Drag sideways · double-click: 0',
+  d: 'Decay: how long it takes to fall to Sustain (sideways); Sustain: the level it rests at while the pad is held (up / down) · double-click: its default',
+  r: 'Release: the fade out after the pad is let go · double-click: its default' };
+[['#aEA', 'a'], ['#aED', 'd'], ['#aER', 'r']].forEach(([q, k]) => { $(q).closest('.field').title = A_ENV_TIPS[k].replace(/ Drag sideways ·.*| \(sideways\).*| · double-click.*/, ''); });
+$('#aES').closest('.field').title = 'Sustain: the level it rests at while the pad is held, after Decay';
 $('#aScope').addEventListener('pointermove', e => { const cv = e.currentTarget, A = aEnvOn();
-  if (!aEnvDrag){ cv.style.cursor = A && (() => { const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv), px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d; return G.pts.some(([, x, y]) => Math.hypot(px - x, py - y) < 14 * G.d); })() ? 'grab' : ''; return; }
+  if (!aEnvDrag){ const k = A && (() => { const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv), px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d; const p = G.pts.find(([, x, y]) => Math.hypot(px - x, py - y) < 14 * G.d); return p && p[0]; })();
+    cv.style.cursor = k ? 'grab' : ''; cv.title = k ? A_ENV_TIPS[k] : A ? 'Drag a point · double-click: its default' : AENV_SCOPE_TIP; return; }   // the same explanations as an effect's envelope
   if (!A) return; const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv, aEnvDrag.span), b = (e.clientX - r.left) * G.d / G.w * G.span, v = clamp(1 - ((e.clientY - r.top) * G.d - G.pad) / (G.h - 2 * G.pad), 0, 1);
   const near = t => ENV_OPTS.reduce((p, o) => Math.abs(o[0] - t) < Math.abs(p[0] - t) ? o : p)[0];
   editLfo(A => { if (aEnvDrag.k === 'a') A.ea = near(b); else if (aEnvDrag.k === 'd'){ A.ed = near(b - (A.ea ?? 0)); A.es = Math.round(v * 20) / 20; } else A.er = near(b - G.rs); }); });
@@ -253,7 +263,10 @@ function drawLfoScope(g){
     const val = (u, cl) => A.em === 'only' ? lfoEnv(A, cl, u) : lfoShape(A, lfoPosT(A, u), seed) * lfoEnv(A, cl, u);
     const y = scopeTrace(x, w, h, d, u => val(u * span, sh), A.on);
     const hit = c.hitBeat !== undefined ? clock.beat - c.hitBeat : -1;
-    const P = aEnvOn(); if (P){ const G = aEnvGeo(A, $('#aScope'), aEnvDrag && aEnvDrag.span); for (const [k, px, py] of G.pts){ x.fillStyle = aEnvDrag && aEnvDrag.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); } }   // graph: its points
+    const P = aEnvOn(); if (P){ const G = aEnvGeo(A, $('#aScope'), aEnvDrag && aEnvDrag.span);
+      if (A.em === 'depth'){ x.save(); x.strokeStyle = TC.env; x.globalAlpha = 0.45; x.setLineDash([3 * d, 3 * d]); x.lineWidth = d; x.beginPath();   // LFO depth: the envelope itself, dashed, so its points sit on a line (the solid trace is the LFO it scales)
+        for (let i = 0; i <= 160; i++){ const u = i / 160 * G.span, px = u / G.span * G.w, py = G.h - G.pad - lfoEnv(A, sh, u) * (G.h - 2 * G.pad); i ? x.lineTo(px, py) : x.moveTo(px, py); }
+        x.stroke(); x.restore(); } for (const [k, px, py] of G.pts){ x.fillStyle = aEnvDrag && aEnvDrag.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); } }   // graph: its points
     if (hit >= 0 && hit < span) scopeDot(x, hit / span * w, y(val(hit, { hitBeat: 0, relBeat: c.relBeat === null ? null : (c.relBeat ?? c.hitBeat) - c.hitBeat })), d);
     return;
   }
@@ -306,8 +319,8 @@ $('#kCol').addEventListener('input', e => { const g = curGif(); if (g){ g.key.co
 const PICK_BTN = { key: '#kPick', swap: '#swPick' };
 $('#kPick').addEventListener('click', () => picking === 'key' ? stopPick() : startPick('key'));
 $('#swPick').addEventListener('click', () => picking === 'swap' ? stopPick() : startPick('swap'));
-function startPick(k){ stopPick(); picking = k; $(PICK_BTN[k]).classList.add('armed'); $(PICK_BTN[k]).textContent = 'Click GIF…'; pv.style.cursor = 'crosshair'; }
-function stopPick(){ picking = false; Object.values(PICK_BTN).forEach(q => { $(q).classList.remove('armed'); $(q).textContent = 'Pick'; }); pv.style.cursor = ''; }
+function startPick(k){ stopPick(); picking = k; $(PICK_BTN[k]).classList.add('armed'); pv.style.cursor = 'crosshair'; }
+function stopPick(){ picking = false; Object.values(PICK_BTN).forEach(q => { $(q).classList.remove('armed'); }); pv.style.cursor = ''; }
 function pickAt(px, py){
   const kind = picking; stopPick();
   const hit = hitsAt(px, py, true, true)[0] || hitsAt(px, py, false, true)[0]; if (!hit) return toast('No GIF under the cursor');
@@ -324,10 +337,7 @@ function pickAt(px, py){
 // a row that just appeared, scrolled into view in its column (clear of the faded edges); done by hand: a smooth
 // scrollIntoView could be cut short by the next redraw and leave it out of sight
 function revealSoon(q){ requestAnimationFrame(() => { const el = typeof q === 'string' ? document.querySelector(q) : q; if (!el) return;
-  const sc = el.closest('#side, #bank'); if (!sc) return el.scrollIntoView({ block: 'nearest' });
-  const r = el.getBoundingClientRect(), s = sc.getBoundingClientRect(), m = 32, z = uiZoom || 1;
-  if (r.bottom > s.bottom - m) sc.scrollTop += Math.min(r.top - s.top - m, r.bottom - s.bottom + m) / z;
-  else if (r.top < s.top + m) sc.scrollTop -= (s.top + m - r.top) / z; }); }
+  el.scrollIntoView({ block: 'nearest', behavior: 'instant' }); }); }   // the browser does the maths (UI zoom included); scroll-margin keeps it clear of the column's edges (0.87.3)
 // Clearing a pad (in this scene) is undoable: its GIF instance and its sprites are kept in the undo entry,
 // and only freed when that entry leaves the history. The decoded GIF stays in the pool either way.
 function clearPad(i, fromRedo = false){

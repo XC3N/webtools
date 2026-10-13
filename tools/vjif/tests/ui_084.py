@@ -17,7 +17,7 @@ async def main():
     await pg.evaluate("fxPre[0].fx = { [FXI.mono]: fxEntry(FXI.mono) }; syncFxUI()"); n0 = await pg.evaluate("NFX")
     await pg.keyboard.down('Alt'); await pg.click(f'#fxPre .fxp[data-i="{n0}"]'); await pg.keyboard.up('Alt'); await pg.wait_for_timeout(200)
     await pg.keyboard.type('Noir'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(200)
-    r2 = await pg.evaluate("[fxPre[0].name, [...document.querySelectorAll('#fxPre .fxp')].find(x => +x.dataset.i === NFX).querySelector('.n').textContent, fxPreName(fxPre[0])]")
+    r2 = await pg.evaluate("[fxPre[0].name, [...document.querySelectorAll('#fxPre .fxp')].find(x => +x.dataset.i === NFX).querySelector('.s').textContent, fxPreName(fxPre[0])]")
     # copy over a full pad: refused at once, replaced after the hold (undo brings it back)
     r3 = await pg.evaluate("""(() => { const a = pads[1].gif; copyPad(0, 1); const kept = pads[1].gif === a; copyPad(0, 1, true); const rep = pads[1].gif !== a && pads[1].gif.name === 'Sky'; undo(); return [kept, rep, pads[1].gif === a]; })()""")
     # emptied scene: its name goes, undo brings it back
@@ -43,7 +43,7 @@ async def main():
     assert r3 == [True, True, True], r3
     assert r4 == ['', 'Intro'], r4
     assert r5[0] == 'helpQ' and r5[1] and all('0' in t or 'Settings' in t or True for t in r5[1]) and r5[2] >= 1, r5
-    assert r6 == ['hidden', ['Number', '0.8 s'], ['wipe', 'bands', 'line', 'corrupt'], 8, 1000, '1 s', True], r6
+    assert r6 == ['hidden', ['Text time', '0.8 s'], ['wipe', 'bands', 'line', 'corrupt'], 8, 1000, '1 s', True], r6
     assert r7 == [True, True], r7
     assert not errs, errs
     await b.close()

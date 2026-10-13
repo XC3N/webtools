@@ -2,14 +2,14 @@
 // transition families, each with its styles (like the effects); a preset = family + style + its settings
 const TR_TYPES = [['cut', 'Cut'], ['fade', 'Fade'], ['wipe', 'Wipe'], ['zoom', 'Zoom'], ['dissolve', 'Dissolve'], ['glitch', 'Glitch'], ['tv', 'TV'], ['stutter', 'Stutter']];
 const TR_STYLES = {
-  stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes, faster and faster (on the 1/32 grid when there is room), landing on the new one (Repeats: how many times the new scene flashes)'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
+  stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes, faster and faster (on the 1/32 grid when there is room), landing on the new one (Intensity: how dense the flashes are; a longer transition gets more of them)'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
   wipe: [['push', 'Push', 'The new scene pushes the old one out (Direction)'], ['bands', 'Bands', "The frame splits into horizontal bands: the new scene's slide in one after another, from the left and the right in turn (Options: how many)"],
          ['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],   // (Slide's Push and Bands joined Wipe in 0.84)
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)'],
              ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
-           ['corrupt', 'Corrupt', 'A damaged video file with its keyframe lost: the old picture smears along block motion while the new scene arrives in broken runs of blocks, then a clean keyframe (Pixel = block size)']],
+           ['corrupt', 'Corrupt', 'Datamosh, like Glitch › Corrupt: the old picture keeps getting pushed along by repeated motion, runs of blocks streaming and swelling, a few breaking into flat wrong colours; the new scene arrives in runs, then a clean keyframe (Pixel = block size)']],
   tv: [['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
            ['channel', 'Channel', 'A TV changing channels: a flick of snow, then the new scene rolls into place, with a green channel number in the top right corner']] };
 const trStyleOf = T => { const st = TR_STYLES[T.type]; return st ? (st.some(x => x[0] === T.style) ? T.style : st[0][0]) : ''; };
@@ -142,7 +142,8 @@ const TR_DRAW = {
     const L = trans ? trans.len : 4, t = e * L, ramp = trStyleOf(T) !== 'even';
     let step = +(T.grid || 0.25), t0 = 0;            // beats per cut (0.25 = a 1/16 note; Even: Options picks it)
     if (ramp){                                       // Ramp: old, new, old, new… (Repeats = how many news), each shot shorter than the one before (11 : 4 from first to last),
-      const N = 2 * (T.reps || 8), grid = N <= L * 8;    // cut on the 1/32 grid when every shot can have at least one step of it
+      const reps = T.inten != null || !T.reps ? clamp(Math.round(L * (0.5 + 3.5 * (T.inten ?? 0.5))), 2, Math.max(2, Math.floor(L * 4))) : T.reps;   // Intensity (0.87.3): the flashes scale with the length (older sets: their Repeats)
+      const N = 2 * reps, grid = N <= L * 8;    // cut on the 1/32 grid when every shot can have at least one step of it
       let k = 0, at = 0, w = 0, S = 0; for (let i = 0; i < N; i++) S += 11 - 7 * i / (N - 1);
       const G = Math.round(L * 8);                     // the 1/32 steps in the length; each shot keeps at least one, and leaves one for each shot after it
       for (let i = 1; i < N; i++){ w += 11 - 7 * (i - 1) / (N - 1); const c = w / S * L; at = grid ? clamp(Math.round(c * 8), Math.round(at * 8) + 1, G - (N - i)) / 8 : c; if (t >= at - 1e-6) k = i; }
@@ -201,21 +202,30 @@ const TR_DRAW = {
         m.drawImage(src, sc * bs, sr * bs, bs, bs, c * bs + ox, r * bs, bs, bs);
       }
       trSplit(m, T, tear); return; }
-    if (gst === 'corrupt'){                        // a lost keyframe: the old picture smears along block motion vectors (P-frames decoded on the wrong
-      // picture) while the new scene arrives in runs of blocks, residue of it bleeding into the smear; at the end, a clean keyframe
-      const bs = Math.max(8, Math.round((T.px || 12) * 2)), cols = Math.ceil(W / bs), rows = Math.ceil(H / bs), RUN = 5, S = trans || {};
-      const seed = S.seed ?? (S.seed = Math.random() * 1000), arrive = Math.min(1, Math.max(0, (e - 0.15) / 0.75));
+    if (gst === 'corrupt'){                        // datamosh, like Glitch › Corrupt (0.87.3): the old picture is the stale keyframe; runs of blocks (6 wide, 2 tall)
+      // get the same motion vector every frame (a duplicated P-frame), whole pixels, so the picture streams and swells; the vectors follow a slow
+      // field (neighbours move alike); a few blocks break into flat wrong colours; the new scene arrives run by run, then a clean keyframe
+      const bs = Math.max(8, Math.round((T.px || 12) * 1.5)), RW = 6 * bs, RH = 2 * bs, cols = Math.ceil(W / RW), rows = Math.ceil(H / RH), S = trans || {};
+      const seed = S.seed ?? (S.seed = Math.random() * 1000), arrive = Math.min(1, Math.max(0, (e - 0.2) / 0.72)), tear = Math.sin(Math.PI * e);
       if (moshCv.width !== W || moshCv.height !== H){ moshCv.width = moshTmp.width = W; moshCv.height = moshTmp.height = H; S.moshed = false; }
       if (!S.moshed){ S.moshed = true; moshX.globalAlpha = 1; moshX.drawImage(A, 0, 0); }   // where it starts: the old picture, the last keyframe
       moshT.clearRect(0, 0, W, H); moshT.drawImage(moshCv, 0, 0);   // the last frame, to read from
-      for (let r = 0; r < rows; r++) for (let c0 = 0; c0 < cols; c0 += RUN){
-        const k = r * 977 + c0 * 1.31, w = Math.min(RUN, cols - c0) * bs, x = c0 * bs, y = r * bs, p = fxRand(k + seed);
-        if (e > 0.94 || p < arrive * arrive){ moshX.drawImage(B, x, y, w, bs, x, y, w, bs); continue; }   // decoded right: the new scene
-        const vx = (fxRand(k * 2.1 + seed) - 0.5) * bs * 0.6, vy = (fxRand(k * 3.7 + seed) - 0.5) * bs * 0.35;
-        moshX.drawImage(moshT.canvas, x - vx, y - vy, w, bs, x, y, w, bs);
-        if (p < arrive){ moshX.globalAlpha = 0.3; moshX.drawImage(B, x, y, w, bs, x, y, w, bs); moshX.globalAlpha = 1; }   // the new scene's changes bleeding into the smear
+      const G = 6, gv = (gx, gy, k) => fxRand(seed + gx * 13.7 + gy * 71.3 + k) * 2 - 1;   // the drift field: a coarse grid of vectors, blended between
+      const field = (x, y, k) => { const fx = x / (W / G), fy = y / (H / G), x0 = Math.floor(fx), y0 = Math.floor(fy), u = fx - x0, v = fy - y0, sm = t => t * t * (3 - 2 * t);
+        const a = gv(x0, y0, k) + (gv(x0 + 1, y0, k) - gv(x0, y0, k)) * sm(u), b = gv(x0, y0 + 1, k) + (gv(x0 + 1, y0 + 1, k) - gv(x0, y0 + 1, k)) * sm(u); return a + (b - a) * sm(v); };
+      const sp = Math.max(1, H / 360) * (1.5 + 3.5 * tear), step = Math.floor(e * 24);   // px per frame: grows to the middle
+      moshX.imageSmoothingEnabled = false;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){
+        const x = c * RW + (r % 2 ? -RW / 2 : 0), y = r * RH, k = r * 977 + c * 1.31, p = fxRand(k + seed);   // runs staggered row to row, like a codec's slices
+        if (e > 0.94 || p < arrive * arrive){ moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); continue; }   // decoded right: the new scene
+        if (fxRand(k * 4.7 + step * 3.3 + seed) < 0.035 * tear){ moshX.fillStyle = `hsl(${Math.floor(fxRand(k + step) * 360)},70%,${25 + 30 * fxRand(k * 1.9 + step)}%)`; moshX.fillRect(x, y, RW, RH); continue; }   // broken: one flat, wrong colour
+        if (p > 0.15 + 0.75 * tear) continue;          // not moshed this time: it holds
+        const vx = Math.round(field(x + RW / 2, y + RH / 2, 0) * sp + (fxRand(k * 2.1 + seed) - 0.5) * 2), vy = Math.round(field(x + RW / 2, y + RH / 2, 5.5) * sp * 0.6);
+        moshX.drawImage(moshT.canvas, x - vx, y - vy, RW, RH, x, y, RW, RH);
+        if (p < arrive){ moshX.globalAlpha = 0.25; moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); moshX.globalAlpha = 1; }   // the new scene's changes bleeding in
       }
-      m.drawImage(moshCv, 0, 0); trSplit(m, T, Math.sin(Math.PI * e)); return; }
+      moshX.imageSmoothingEnabled = true;
+      m.drawImage(moshCv, 0, 0); trSplit(m, T, tear); return; }
     if (gst === 'channel'){                        // a TV changing channels: the old picture collapses into snow, the new one rolls in, the channel number shows
       if (trans && trans.ch == null){                // what the number shows (Options): random, the new scene's name, or its number
         const m = T.ch || 'rand', nm = (liveName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 .\-]/g, '').trim().slice(0, 10);

@@ -3,6 +3,7 @@ function idxAt(g, t){ const c = g.cum; let lo = 0, hi = c.length - 1; while (lo 
 function timeToIdx(g, t){
   const D = g.total; let tt;
   if (g.loop === 'loop') tt = mod(t, D);
+  else if (g.loop === 'reverse') tt = D - 1e-6 - mod(t, D);   // end to start, then wrap back to the end (0.87.3)
   else if (g.loop === 'pingpong'){ const c = mod(t, 2*D); tt = c < D ? c : Math.max(0, 2*D - c - 1e-6); }
   else tt = clamp(t, 0, D - 1e-6);
   return idxAt(g, tt);
@@ -10,6 +11,7 @@ function timeToIdx(g, t){
 function stepToIdx(g, s){
   const F = g.seq.length;
   if (g.loop === 'loop') return mod(s, F);
+  if (g.loop === 'reverse') return F - 1 - mod(s, F);
   if (g.loop === 'pingpong'){ const P = Math.max(1, 2*F - 2), c = mod(s, P); return c < F ? c : P - c; }
   return clamp(s, 0, F - 1);
 }

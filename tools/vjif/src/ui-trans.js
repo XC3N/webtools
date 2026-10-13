@@ -53,13 +53,14 @@ $('#trPx').addEventListener('input', e => { const A = trAmtOf(transCfg); if (!A)
 // the slider row's job for each transition: the block size (Dissolve, Glitch), how long Dip / Flash stays black / white, how many times Ramp flashes the new scene
 const TR_HOLD = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7].map(v => [v, Math.round(v * 100) + '%']);
 const TR_REPS = [2, 3, 4, 5, 6, 8, 10, 12, 16].map(v => [v, String(v)]);
+const TR_INTEN = Array.from({ length: 10 }, (_, i) => [(i + 1) / 10, (i + 1) * 10 + '%']);   // Stutter › Ramp › Intensity
 const TR_STAG = [0, 0.25, 0.5, 0.75, 1].map(v => [v, Math.round(v * 100) + '%']);   // Wipe › Bands: how unevenly the bands come in
 const TR_OSD = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 3].map(v => [v, v ? v + ' s' : 'off']);   // TV › Channel: how long the number stays after the picture is back
 function trAmtOf(T){ const st = trStyleOf(T);
   if (T.type === 'dissolve' || T.type === 'glitch') return { k: 'px', list: TR_PX, def: 12, lab: 'Pixel', tip: 'Block size (Dissolve, Glitch), column width (Dissolve › Melt), biggest block (Pixelate)' };
   if (T.type === 'fade' && (st === 'dip' || st === 'flash')) return { k: 'hold', list: TR_HOLD, def: 0, lab: 'Hold', tip: 'How much of the length stays all black (Dip) or white (Flash)' };
   if (T.type === 'wipe' && st === 'bands') return { k: 'stag', list: TR_STAG, def: 0, lab: 'Stagger', tip: 'Stagger: 0 = the bands come in one after another, evenly; higher: each its own start, speed and ease (still all in by the end)' };
-  if (T.type === 'tv' && st === 'channel') return { k: 'osd', list: TR_OSD, def: 0.8, lab: 'Number', tip: 'How long the channel number stays on once the new scene is back (then it cuts out)' };
-  if (T.type === 'stutter' && st === 'ramp') return { k: 'reps', list: TR_REPS, def: 8, lab: 'Repeats', tip: 'How many times the new scene flashes in' };
+  if (T.type === 'tv' && st === 'channel') return { k: 'osd', list: TR_OSD, def: 0.8, lab: 'Text time', tip: 'Text time: how long the channel number stays on once the new scene is back (then it cuts out, no fade)' };
+  if (T.type === 'stutter' && st === 'ramp') return { k: 'inten', list: TR_INTEN, def: 0.5, lab: 'Intensity', tip: 'Intensity: how dense the flashes are — the number of flashes follows the length, so it looks alike at any length' };
   return null;
 }

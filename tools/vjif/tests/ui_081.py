@@ -33,7 +33,7 @@ async def main():
     # transitions: the slider row
     tr = await pg.evaluate("""(() => { const o = []; for (const [t, s] of [['fade','dip'],['stutter','ramp'],['glitch','corrupt'],['wipe','line'],['tv','channel']]){ transCfg.type = t; transCfg.style = s; syncTransUI();
       o.push([$('#trPxRow label').textContent, $('#trPxRow').classList.contains('dimmed'), $('#trPx').nextElementSibling.textContent]); } return o; })()""")
-    print('slider row', tr); assert [x[0] for x in tr] == ['Hold','Repeats','Pixel','Pixel','Number'] and tr[3][1] and not tr[0][1] and tr[1][2] == '8' and tr[4][2] == '0.8 s', tr
+    print('slider row', tr); assert [x[0] for x in tr] == ['Hold','Intensity','Pixel','Pixel','Text time'] and tr[3][1] and not tr[0][1] and tr[1][2] == '50%' and tr[4][2] == '0.8 s', tr   # 0.87.3: Ramp › Intensity, TV › Text time
     # Ramp: count the switches to the new scene over the transition
     rp = await pg.evaluate("""(() => { const out = []; for (const [len, reps] of [[2, 8], [1, 8], [4, 4]]){ const T = { type: 'stutter', style: 'ramp', reps, len, px: 12 }; trans = { len, cfg: T };
       let last = null, n = 0; for (let e = 0; e <= 1.0001; e += 0.0005){ trA.fillStyle = '#f00'; trA.fillRect(0,0,CW,CH); trB.fillStyle = '#00f'; trB.fillRect(0,0,CW,CH); composeTransition(e, T);
@@ -49,7 +49,7 @@ async def main():
     # preset tile: palette name
     pt = await pg.evaluate("""(() => { fxPre[0].fx = { [FXI.colour]: { ...fxEntry(FXI.colour), style: 'pal', pal: 2 } }; fxPre[1].fx = { [FXI.colour]: { ...fxEntry(FXI.colour), style: 'flip' }, [FXI.pixel]: fxEntry(FXI.pixel) }; syncFxUI();
       const t = k => { const el = document.querySelector(`#fxPre .fxp[data-i="${NFX + k}"]`); return [el.querySelector('.n').textContent, el.querySelector('.s').textContent]; }; return [t(0), t(1)]; })()""")
-    print('preset tiles', pt); assert pt[0] == ['Colour', 'CGA 3'] and 'Flip' in pt[1][1], pt
+    print('preset tiles', pt); assert pt[0][1] == 'CGA 3' and 'Flip' in pt[1][1], pt   # 0.87.3: the first line holds the effects' icons
     # solo
     await pg.evaluate("selectFx(FXI.rgb); fxCfg[FXI.rgb].style = 'vhs+scan+phos'; syncFxUI()")
     await pg.click('#fxStyle [data-v="scan"]', button='right', force=True); s1 = await pg.evaluate("fxCfg[FXI.rgb].style")

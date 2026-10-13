@@ -129,21 +129,21 @@ async def main():
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
     print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg
     d82 = await pg.evaluate("""(() => { selectFx(FXI.colour); const C = fxCfg[FXI.colour], was = C.style, wp = C.pal; C.style = 'pal'; C.pal = FX_PALS.findIndex(p => p.n === 'GB'); syncFxUI();
-      const a = $('#fxRateRow label').textContent + '/' + [...document.querySelectorAll('#fxDpat button')].map(b => b.title.split(':')[0]).join(',') + '/' + $('#fxRate').style.visibility;
+      const a = $('#fxRateRow label').textContent + '/' + [...document.querySelectorAll('#fxDpat button')].map(b => b.title.split(':')[0]).join(',') + '/' + getComputedStyle($('#fxRate')).display;
       C.pal = 0; syncFxUI(); const a2 = $('#fxRateRow label').textContent + '/' + $('#fxRateSeg').hidden; C.style = 'flip'; syncFxUI(); C.style = was; C.pal = wp; syncFxUI();
       return [a, a2, FX_PALS.at(-1).n, FX_PALS.at(-1).c.length, 'dots' in fxEntry(FXI.colour), PAL_ORDER.map(i => FX_PALS[i].n).join(',')]; })()""")
-    print('0.82', d82); assert d82 == ['LCD/LCD off,Game Boy pixels,Dot matrix/hidden', 'Dither/true', 'ZX Spectrum', 15, True, 'CGA 1,CGA 2,CGA 3,ZX Spectrum,C64,NES,EGA,GB,GB Pocket,GB Light'], d82   # 0.87.2: LCD icons in Dither's pattern slot for the Game Boy palettes; palettes by year
+    print('0.82', d82); assert d82 == ['Dot Matrix/LCD off,Game Boy pixels,Dot matrix/none', 'Dither/true', 'ZX Spectrum', 15, True, 'CGA 1,CGA 2,CGA 3,ZX Spectrum,C64,NES,EGA,GB,GB Pocket,GB Light'], d82   # 0.87.2: LCD icons in Dither's pattern slot for the Game Boy palettes; palettes by year
     d83 = await pg.evaluate("""(() => { const g = pads[0].gif; selectPad(0); $('#gTabs [data-v=colour]').click(); g.swap = [{ from: [1, 2, 3], to: [9, 9, 9] }]; g.swapOff = false; syncGifUI(); return [...document.querySelectorAll('#gLoop button')].map(b => b.textContent).join('/'); })()""")
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); off = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); on = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
     m83 = await pg.evaluate("""(() => { const g = pads[0].gif, keep = gifSettings(g); applyGifSettings(g, { ...keep, loop: 'once', trig: 'stay' }); const r = [g.loop, g.trig, g.env.len];
       applyGifSettings(g, keep); return [r, $('#tMode button').textContent, !document.querySelector('#gClear'), [...document.querySelectorAll('#aEnv button')].map(b => b.textContent).join('/'), !!$('#gSmooth').closest('[data-pane=colour]')]; })()""")
-    print('0.83', d83, off, on, m83); assert d83 == 'Forward/Ping-pong' and off == [True, False] and on == [False, True], (d83, off, on)
+    print('0.83', d83, off, on, m83); assert d83 == 'Forward/Reverse/Ping-pong' and off == [True, False] and on == [False, True], (d83, off, on)
     assert m83 == [['loop', 'fade', 'gif'], 'Loop', True, 'Off/LFO depth/Bypass LFO', True], m83
-    d86 = await pg.evaluate("""(() => { selectFx(FXI.shake); const a = [$('#fxSizeRow label').textContent, [...document.querySelectorAll('#fxSizeSeg button')].map(b => b.textContent).join(','), $('#fxSizeSeg button.on') && $('#fxSizeSeg button.on').textContent];
+    d86 = await pg.evaluate("""(() => { selectFx(FXI.shake); const a = [$('#fxSizeRow label').textContent, document.querySelectorAll('#fxSizeSeg button').length, !!$('#fxSizeSeg button.on')];   // 0.87.3: Shake › Edges, one icon toggle (on by default)
       const g = pads[0].gif, P = gifPalette(g); g.swap = [{ from: P[0].slice(0, 3), to: [255, 0, 0] }]; selectPad(0); syncGifUI(); const on1 = swapOn(g);
       document.querySelector('#swList i[data-t="0"]').click(); const on2 = swapOn(g), sw = fxParams(g).sw.length; document.querySelector('#swList i[data-t="0"]').click();
       return [...a, on1, on2, sw, swapOn(g), $('#gTabs [data-v=colour]').textContent, typeof pickClip]; })()""")
-    print('0.86', d86); assert d86 == ['Overscan', 'Off,Some,Full', 'Some', True, False, 0, True, 'Display', 'function'], d86
+    print('0.86', d86); assert d86 == ['Edges', 1, True, True, False, 0, True, 'Display', 'function'], d86
     await b.close()
 asyncio.run(main())

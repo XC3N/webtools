@@ -1,7 +1,7 @@
 const DPAT_HTML = $('#fxDpat').innerHTML;   // Dither's pattern icons (the slot shows the Game Boy LCD's instead with a GB palette)
 // ---------- UI: screen effect pads, the effect editor and its envelope ----------
 const NP_ORDER = [6, 7, 8, 3, 4, 5, 0, 1, 2];           // preset tiles laid out like the numpad (7 8 9 on top)
-function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span>${i < NFX ? '<span class="mk"></span>' : '<span class="xdel" title="Empty this preset">×</span>'}<span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
+function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span>${i < NFX ? '<span class="mk"></span>' : '<span class="xdel" title="Empty this preset">×</span>'}<span class="t"><span class="n"></span><span class="s"></span></span>${i < NFX ? `<span class="fi">${fxIcon(FX_DEFS[i].id)}</span>` : ''}</div>`; }
 // Filling presets: drag an effect tile onto a preset tile, or hold a preset (Caps Lock + its numpad key) and
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
@@ -147,16 +147,18 @@ function syncFxUI(){
       fitText(el.querySelector('.n'), D.name, FX_SHORT[D.id]); const many = styleParts(i, c.style).length > 1; fitText(el.querySelector('.s'), D.styles.length > 1 ? (many ? styleLabel(i, c.style) : st[1]) : '', many ? styleLabel(i, c.style, true) : STYLE_SHORT[st[0]], D.styles.length > 1 && st[1].length > 4 ? (many ? styleParts(i, c.style).length + ' styles' : st[1].slice(0, 3) + '.') : null);
       el.title = `${D.name} — ${st[2]} (${FX_LABELS[i]} · Shift+${FX_LABELS[i]} or right-click: edit)`; }
     else { const k = i - NFX, P = fxPre[k], e = !Object.keys(P.fx).length;
-      if (e){ el.querySelector('.n').textContent = 'empty'; el.querySelector('.s').textContent = ''; }
-      else { const ks = Object.keys(P.fx), n = el.querySelector('.n'), s2 = el.querySelector('.s');   // the effects' names, and under them what each does (its style, or its palette)
-        if (P.name) fitText(n, P.name, P.name); else fitText(n, ks.map(i => FX_DEFS[i].name).join(' + '), ks.map(i => FX_SHORT[FX_DEFS[i].id]).join('+'));   // its name, if given one (Alt+click)
-        const dt = ks.map(i => fxDetail(i, P.fx[i])).filter(Boolean), ds = ks.map(i => fxDetail(i, P.fx[i], true)).filter(Boolean);
-        fitText(s2, dt.join(' · '), ds.join('·')); }
+      const n = el.querySelector('.n'), s2 = el.querySelector('.s');
+      if (e){ n.classList.remove('ics'); n.textContent = ''; s2.textContent = 'empty'; }
+      else { const ks = Object.keys(P.fx);   // the effects' icons, and under them the preset's name (Alt+click) or what each does (its style, or its palette)
+        n.classList.add('ics'); n.innerHTML = ks.map(i => fxIcon(FX_DEFS[i].id)).join('');
+        if (P.name) fitText(s2, P.name, P.name);
+        else { const dt = ks.map(i => fxDetail(i, P.fx[i]) || FX_DEFS[i].name), ds = ks.map(i => fxDetail(i, P.fx[i], true) || FX_SHORT[FX_DEFS[i].id]);
+          fitText(s2, dt.join(' · '), ds.join('·')); } }
       el.classList.toggle('empty', e);
       el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit · Alt+click: name it`; }
   });
   $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && !!d.size); $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);
-  $('#fxName').textContent = E ? d.name : pre ? FXP_LABELS[selFx - NFX] : d.name;
+  $('#fxName').innerHTML = (pre && !E ? '' : fxIcon(d.id)) + (E ? d.name : pre ? FXP_LABELS[selFx - NFX] : d.name);   // the effect's icon in the LCD (names are ours: no escaping needed)
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
@@ -195,7 +197,7 @@ function syncFxUI(){
     const sw = alt && (alt.pat || alt.icons); $('#fxDpat').hidden = !sw; $('#fxRateRow').classList.toggle('patrow', !!sw);
     const dp = $('#fxDpat'), want = alt && alt.icons ? 'lcd' : 'pat'; if (sw && dp.dataset.mode !== want){ dp.dataset.mode = want;   // Dither's pattern icons, or the Game Boy LCD's in the same place
       setHTML(dp, want === 'lcd' ? alt.list.map(([v, , t]) => `<button data-v="${v}" title="${t.replace(/"/g, '&quot;')}">${alt.icons[v]}</button>`).join('') : DPAT_HTML); }
-    $('#fxRate').style.visibility = $('#fxRate').nextElementSibling.style.visibility = alt && alt.icons ? 'hidden' : '';   // the slider's room is kept: the row doesn't change width
+    $('#fxRateRow').classList.toggle('lcdrow', !!(alt && alt.icons));   // the Game Boy: its name, right-aligned against the switch, in the slider's room (the row keeps its width)
     if (sw) segSet('#fxDpat', String(alt.icons ? (C[alt.key] ?? alt.def) >= 2 ? 2 : (C[alt.key] ?? alt.def) : C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
@@ -205,7 +207,9 @@ function syncFxUI(){
     $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }
     const za = sizeAlt(d, C.style || d.styles[0][0], C); $('#fxSizeRow label').textContent = za ? za.label : 'Size';
     $('#fxSizeSeg').hidden = !(za && za.seg); $('#fxSize').hidden = $('#fxSize').nextElementSibling.hidden = !!(za && za.seg);   // a few fixed choices: a switch instead of the slider
-    if (za && za.seg){ setHTML($('#fxSizeSeg'), za.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxSizeSeg', String(C[za.key] ?? za.def)); }
+    $('#fxSizeSeg').classList.toggle('one', !!(za && za.toggle));
+    if (za && za.toggle){ const on = (C[za.key] ?? za.def) !== 0; setHTML($('#fxSizeSeg'), `<button data-v="${on ? 0 : 2}" class="${on ? 'on' : ''}" title="${za.title()}">${za.icon}</button>`); }   // one toggle: the button carries the value a click sets
+    else if (za && za.seg){ setHTML($('#fxSizeSeg'), za.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxSizeSeg', String(C[za.key] ?? za.def)); }
     if (za){ const L = za.list, ai = optIdx(L, C[za.key] ?? za.def); $('#fxSize').max = L.length - 1; $('#fxSize').value = ai; $('#fxSize').nextElementSibling.textContent = L[ai][1];
       $('#fxSize').dataset.def = optIdx(L, za.def); $('#fxSizeRow').title = za.title(); $('#fxSizeRow').classList.remove('dimmed'); }
     else { $('#fxSize').max = FX_SIZES.length - 1; $('#fxSizeRow').title = 'Size: the pixel block size at full amount';

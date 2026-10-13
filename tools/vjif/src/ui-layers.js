@@ -156,7 +156,8 @@ $('#xCropReset').addEventListener('click', () => {
   const G = clipGeom(c); Object.assign(c, { cl: 0, ct: 0, cr: 0, cb: 0 }); placeVisible(c, G.cx, G.cy); syncXfUI();
 });
 // Transform's heading arrow in the signal colour when the selected GIF's placement is away from the defaults (as the GIF sections do)
-function markXf(c = selClip()){ const h = $('#xReset').closest('h2'), d = newXf(); if (h) h.classList.toggle('mod', !!c && (Object.keys(d).some(k => (c[k] ?? d[k]) !== d[k]) || (c.alpha ?? 1) !== 1)); }
+const XF_MARK = ['fit', 'flipX', 'flipY', 'tile'];   // only what the preview can't show you're changing (move, size, turn and crop happen right there)
+function markXf(c = selClip()){ const h = $('#xReset').closest('h2'), d = newXf(); if (h) h.classList.toggle('mod', !!c && (XF_MARK.some(k => (c[k] ?? d[k]) !== d[k]) || (c.alpha ?? 1) !== 1)); }
 function syncXfUI(){
   const c = selClip();
   $('#xfPanel').classList.toggle('disabled', !c);
@@ -235,8 +236,8 @@ pv.addEventListener('pointermove', e => {
     const fx = clamp(drag.x0 + px - drag.px, -W, W), fy = clamp(drag.y0 + py - drag.py, -H, H);   // where the pointer alone puts it
     if (e.shiftKey && drag.lock){                       // Shift on a lit guide: the GIF slides along that line only
       const L = drag.lock; c.x = fx; c.y = fy;
-      if (L.line){ const G = clipGeom(c), [x0, y0, x1, y1] = L.line, dx = x1 - x0, dy = y1 - y0, t = clamp(((G.cx - x0) * dx + (G.cy - y0) * dy) / (dx * dx + dy * dy || 1), 0, 1);
-        c.x += x0 + t * dx - G.cx; c.y += y0 + t * dy - G.cy; }
+      if (L.line){ const G = clipGeom(c), ax = G.cx + (L.ox || 0), ay = G.cy + (L.oy || 0), [x0, y0, x1, y1] = L.line, dx = x1 - x0, dy = y1 - y0, t = clamp(((ax - x0) * dx + (ay - y0) * dy) / (dx * dx + dy * dy || 1), 0, 1);   // the hooked point (centre or a handle) slides on the line
+        c.x += x0 + t * dx - ax; c.y += y0 + t * dy - ay; }
       else if (L.x != null && (L.y == null || Math.abs(fy - L.cy) >= Math.abs(fx - L.cx))) c.x = L.cx;   // on a vertical line (both lit: the way the pointer goes most)
       else c.y = L.cy;
       drag.snap = L; return;
@@ -250,11 +251,13 @@ pv.addEventListener('pointermove', e => {
         const best = (pts, lines) => { let b = null; for (const p of pts) for (const l of lines){ const d = l - p; if (Math.abs(d) <= tol && (!b || Math.abs(d) < Math.abs(b.d))) b = { d, l, p }; } return b; };
         const bx = best([G.cx - rx, G.cx, G.cx + rx], LX), by = best([G.cy - ry, G.cy, G.cy + ry], LY);
         // slanted guides: the centre slides onto the nearest diagonal / perspective ray (closest point on it)
+        // (0.87.3: its corners and edge middles too, so a box edge can sit on a vanishing-point ray)
+        const anc = [[G.cx, G.cy], ...HANDLES.map(h => toWorld(G, h[0] * G.hw, h[1] * G.hh))];
         let sl = null; for (const [x0, y0, x1, y1] of guideSlants()){ const dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy; if (!L2) continue;
-          const t = clamp(((G.cx - x0) * dx + (G.cy - y0) * dy) / L2, 0, 1), qx = x0 + t * dx, qy = y0 + t * dy, d = Math.hypot(qx - G.cx, qy - G.cy);
-          if (d <= tol && (!sl || d < sl.d)) sl = { d, mx: qx - G.cx, my: qy - G.cy, line: [x0, y0, x1, y1] }; }
+          for (const [ax, ay] of anc){ const t = clamp(((ax - x0) * dx + (ay - y0) * dy) / L2, 0, 1), qx = x0 + t * dx, qy = y0 + t * dy, d = Math.hypot(qx - ax, qy - ay);
+            if (d <= tol && (!sl || d < sl.d)) sl = { d, mx: qx - ax, my: qy - ay, line: [x0, y0, x1, y1], ax: qx, ay: qy }; } }
         const sd = Math.min(bx ? Math.abs(bx.d) : Infinity, by ? Math.abs(by.d) : Infinity);
-        if (sl && sl.d < sd){ drag.snap = { x: null, y: null, line: sl.line, p: [G.cx + sl.mx, G.cy + sl.my] }; c.x += sl.mx; c.y += sl.my; }
+        if (sl && sl.d < sd){ drag.snap = { x: null, y: null, line: sl.line, p: [sl.ax, sl.ay], ox: sl.ax - (G.cx + sl.mx), oy: sl.ay - (G.cy + sl.my) }; c.x += sl.mx; c.y += sl.my; }
         else if (bx || by){ drag.snap = { x: bx ? bx.l : null, y: by ? by.l : null, p: [bx ? bx.l : (by ? G.cx : 0), by ? by.l : G.cy] }; if (bx) c.x += bx.d; if (by) c.y += by.d; } }   // p: the hooked point (an edge or the centre)
     }
     if (e.shiftKey && drag.snap) drag.lock = { ...drag.snap, cx: c.x, cy: c.y };   // Shift while a guide is lit: from now on, along that guide

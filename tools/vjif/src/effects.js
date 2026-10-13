@@ -59,13 +59,30 @@ const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   
 const fxFocus = {};   // effect id → style in focus (editor state, not saved)
 const FX_DOTS = [[0, 'Off', 'LCD off: the palette only'], [1, 'Pixels', 'Game Boy pixels: the picture in 144 rows of square pixels, like the 160 × 144 screen'], [2, 'Dots', 'Dot matrix: Game Boy pixels with thin gaps between them, in the palette\'s lightest colour (the LCD\'s own)']];   // Colour › Palette › LCD, for the Game Boy palettes (0.87.2; older 2 / 10 px sets read as Dots)
 const FX_DOTS_ICON = { 0: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>', 1: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="0" y="0" width="4" height="4" opacity="1"/><rect x="4" y="0" width="4" height="4" opacity="0.45"/><rect x="8" y="0" width="4" height="4" opacity="1"/><rect x="0" y="4" width="4" height="4" opacity="0.45"/><rect x="4" y="4" width="4" height="4" opacity="1"/><rect x="8" y="4" width="4" height="4" opacity="0.45"/><rect x="0" y="8" width="4" height="4" opacity="1"/><rect x="4" y="8" width="4" height="4" opacity="0.45"/><rect x="8" y="8" width="4" height="4" opacity="1"/></svg>', 2: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="0.5" y="0.5" width="3" height="3" opacity="1"/><rect x="4.5" y="0.5" width="3" height="3" opacity="0.45"/><rect x="8.5" y="0.5" width="3" height="3" opacity="1"/><rect x="0.5" y="4.5" width="3" height="3" opacity="0.45"/><rect x="4.5" y="4.5" width="3" height="3" opacity="1"/><rect x="8.5" y="4.5" width="3" height="3" opacity="0.45"/><rect x="0.5" y="8.5" width="3" height="3" opacity="1"/><rect x="4.5" y="8.5" width="3" height="3" opacity="0.45"/><rect x="8.5" y="8.5" width="3" height="3" opacity="1"/></svg>' };
-const FX_OVS = [[0, 'Off'], [1, 'Some'], [2, 'Full']];   // Shake › Overscan
+const FX_OVS = [[0, 'Off'], [2, 'On']];   // Shake › Edges (one toggle; 1 = the old Some, read as on)
 // the order palettes are offered in: by year (CGA 1981, ZX Spectrum and C64 1982, NES 1983, EGA 1984, Game Boy 1989, Pocket 1996,
 // Light 1998). Sets keep a palette's index in FX_PALS, which never changes, so this order is only for the menus and the slider.
 const PAL_ORDER = ['CGA 1', 'CGA 2', 'CGA 3', 'ZX Spectrum', 'C64', 'NES', 'EGA', 'GB', 'GB Pocket', 'GB Light'].map(n => FX_PALS.findIndex(P => P.n === n));
+// one small line icon per effect (0.87.3): on the effect pads (lower right), the preset tiles (first line) and the effect editor's LCD
+const FX_ICON_SVG = {
+  mono: '<circle cx="10" cy="10" r="7"/><path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/>',
+  colour: '<circle cx="7.5" cy="8" r="4"/><circle cx="12.5" cy="8" r="4"/><circle cx="10" cy="12.5" r="4"/>',
+  poster: '<rect x="3" y="3" width="14" height="14" rx="1"/><path d="M3 8h14M3 12.5h14"/><path d="M3 8h14v4.5H3z" fill="currentColor" opacity=".45"/>',
+  strobe: '<path d="M11 2 5 11h4.5L8 18l7-10h-4.5z"/>',
+  zoom: '<rect x="6.5" y="6.5" width="7" height="7"/><path d="M2.5 6V2.5H6M14 2.5h3.5V6M17.5 14v3.5H14M6 17.5H2.5V14"/>',
+  shake: '<rect x="5" y="5" width="10" height="10" rx="1"/><path d="M2 7v6M18 7v6M3.5 5v10M16.5 5v10" opacity=".7"/>',
+  wobble: '<path d="M2 7c2-3 4-3 6 0s4 3 6 0 3-2 4-1M2 13c2-3 4-3 6 0s4 3 6 0 3-2 4-1"/>',
+  mirror: '<path d="M10 2.5v15" stroke-dasharray="2 2"/><path d="M8 5 3 10l5 5zM12 5l5 5-5 5z"/>',
+  pixel: '<path d="M3 3h5v5H3zM12 3h5v5h-5zM7.5 7.5h5v5h-5zM3 12h5v5H3zM12 12h5v5h-5z" fill="currentColor" stroke="none" opacity=".85"/>',
+  glitch: '<path d="M3 4h9M6 7.5h11M2.5 11h7M8 14.5h9.5M4 17h6"/>',
+  rgb: '<rect x="2.5" y="4" width="15" height="11" rx="2.5"/><path d="M5 8h10M5 11h10" opacity=".6"/><path d="M7 18h6"/>',
+  feedback: '<rect x="2.5" y="2.5" width="15" height="15"/><rect x="5.5" y="5.5" width="9" height="9" opacity=".75"/><rect x="8.3" y="8.3" width="3.4" height="3.4" opacity=".5"/>' };
+const fxIcon = id => FX_ICON_SVG[id] ? `<svg class="fxic" viewBox="0 0 20 20" aria-hidden="true">${FX_ICON_SVG[id]}</svg>` : '';
 const palGB = i => /^GB/.test((FX_PALS[i] || {}).n || '');
 function sizeAlt(d, style, C){
-  if (d && d.id === 'shake') return { label: 'Overscan', key: 'ovs', def: 1, list: FX_OVS, seg: true, title: () => 'Overscan: how far the picture zooms in while it shakes, so the frame edges stay hidden: Off (the edges show), Some, Full (never an edge)' };
+  if (d && d.id === 'shake') return { label: 'Edges', key: 'ovs', def: 2, list: FX_OVS, toggle: true, seg: true,   // one icon: zoom in enough that no frame edge ever shows, or not (0.87.3; an older Some reads as on)
+    icon: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="5.5" y="5.5" width="9" height="9"/><path d="M2.5 6V2.5H6M14 2.5h3.5V6M17.5 14v3.5H14M6 17.5H2.5V14"/></svg>',
+    title: () => 'Edges: while it shakes, zoom in just enough that the frame edges never show (on), or let them show (off)' };
   if (d && d.id === 'colour') return null;   // (Colour › Palette › Dots moved to the Dither row in 0.87: Game Boy palettes only)
   if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+'), f = P.includes(fxFocus[d.id]) ? fxFocus[d.id] : null;
   if (f === 'scan' || f === 'crypt') return null;
@@ -77,8 +94,8 @@ const FX_KZ = Array.from({ length: 101 }, (_, i) => { const v = +(1 + i * 0.05).
 const FX_FBK = Array.from({ length: 20 }, (_, i) => [(i + 1) / 20, (i + 1) * 5 + '%']);   // no 0%: it isn't "off", only the shortest trails
 function rateAlt(d, style, C){
   if (!d) return null;
-  if (d.id === 'colour' && style === 'pal' && C && palGB(C.pal || 0)) return { label: 'LCD', key: 'dots', def: 0, list: FX_DOTS, icons: FX_DOTS_ICON,   // the Game Boy: no dithering, its screen instead (same place as Dither's pattern switch, so nothing moves)
-    title: () => 'LCD: the Game Boy screen — Off, Pixels (144 rows of square pixels, the 160 × 144 look) or Dots (the same with the dot-matrix gaps)' };
+  if (d.id === 'colour' && style === 'pal' && C && palGB(C.pal || 0)) return { label: 'Dot Matrix', key: 'dots', def: 0, list: FX_DOTS, icons: FX_DOTS_ICON,   // the Game Boy: no dithering, its screen instead (same place as Dither's pattern switch, so nothing moves)
+    title: () => 'Dot Matrix: the Game Boy screen — Off, Pixels (144 rows of square pixels, the 160 × 144 look) or Dots (the same with the dot-matrix gaps)' };
   if (d.id === 'feedback') return { label: 'Length', key: 'fbk', def: 0.7, list: FX_FBK, title: () => 'Length: how long the trails / echoes last before they fade' };
   if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, pat: true,   // the pattern: the Noise / Bayer / Check switch beside it
     title: () => 'Dither: how much of the in-between shades are drawn with the palette colours (off = flat areas). The switch beside it picks how' };
@@ -222,7 +239,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? H / 144 * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
-  U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = [0, 0.1, 0.22][ovs ? ovs[SH] ?? 1 : 1] * s;   // Overscan: off · some · full (enough for the biggest jolt and tilt)
+  U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s;   // Overscan: off · some · full (enough for the biggest jolt and tilt)
   return U;
 }
 // this frame's settings for every target: { out: U | null, layers: [U | null ×4], any }
@@ -813,8 +830,8 @@ function drawOverlay(gh = ghostList()){
     pctx.lineWidth = (c === sel ? 1.5 : 1) * dpr; pctx.setLineDash(c === sel ? [] : [5*dpr, 4*dpr]);
     pctx.globalAlpha = c === sel ? 1 : 0.6; outline(G, k);
     if (c === sel && !L.lock && !maskEd){   // (painting a mask: no handles)                       // (a locked layer: its frame, no handles)
-      // stuck to a guide while moving: the handles (and the centre) lying on the lit line turn yellow; turning, caught: the knob
-      const HK = '#ffd400', sn = drag && drag.c === c && drag.snap, on = (x, y) => { if (!sn) return false; const e = 0.75;
+      // stuck to a guide while moving: the handles (and the centre) lying on the lit line fill in the guides' colour; turning, caught: the knob
+      const HK = pvOpt.gcol || '#ffd400', sn = drag && drag.c === c && drag.snap, on = (x, y) => { if (!sn) return false; const e = 0.75;
         if (sn.x != null && Math.abs(x - sn.x) < e) return true; if (sn.y != null && Math.abs(y - sn.y) < e) return true;
         if (sn.line){ const [x0, y0, x1, y1] = sn.line, dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, t = clamp(((x - x0) * dx + (y - y0) * dy) / L2, 0, 1); if (Math.hypot(x0 + t * dx - x, y0 + t * dy - y) < e) return true; }
         return false; };
