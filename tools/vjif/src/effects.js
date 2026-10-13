@@ -57,7 +57,8 @@ const FX_DITH = [[0, 'off'], ...Array.from({ length: 10 }, (_, j) => [(j + 1) / 
 const FX_DROP = Array.from({ length: 21 }, (_, i) => [i / 10, i * 10 + '%']);   // 0–200 %
 // With several CRT styles stacked, the one in focus (right-click a style, or the last one switched on) decides: VHS → Dropouts, Scanlines / Crypt → Size
 const fxFocus = {};   // effect id → style in focus (editor state, not saved)
-const FX_DOTS = [[0, 'Off'], [2, '2 px'], [10, '10 px']];   // Colour › Palette › Dots, for the Game Boy palettes (other sizes beat against the picture: moiré)
+const FX_DOTS = [[0, 'Off', 'LCD off: the palette only'], [1, 'Pixels', 'Game Boy pixels: the picture in 144 rows of square pixels, like the 160 × 144 screen'], [2, 'Dots', 'Dot matrix: Game Boy pixels with thin gaps between them, in the palette\'s lightest colour (the LCD\'s own)']];   // Colour › Palette › LCD, for the Game Boy palettes (0.87.2; older 2 / 10 px sets read as Dots)
+const FX_DOTS_ICON = { 0: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>', 1: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="0" y="0" width="4" height="4" opacity="1"/><rect x="4" y="0" width="4" height="4" opacity="0.45"/><rect x="8" y="0" width="4" height="4" opacity="1"/><rect x="0" y="4" width="4" height="4" opacity="0.45"/><rect x="4" y="4" width="4" height="4" opacity="1"/><rect x="8" y="4" width="4" height="4" opacity="0.45"/><rect x="0" y="8" width="4" height="4" opacity="1"/><rect x="4" y="8" width="4" height="4" opacity="0.45"/><rect x="8" y="8" width="4" height="4" opacity="1"/></svg>', 2: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="0.5" y="0.5" width="3" height="3" opacity="1"/><rect x="4.5" y="0.5" width="3" height="3" opacity="0.45"/><rect x="8.5" y="0.5" width="3" height="3" opacity="1"/><rect x="0.5" y="4.5" width="3" height="3" opacity="0.45"/><rect x="4.5" y="4.5" width="3" height="3" opacity="1"/><rect x="8.5" y="4.5" width="3" height="3" opacity="0.45"/><rect x="0.5" y="8.5" width="3" height="3" opacity="1"/><rect x="4.5" y="8.5" width="3" height="3" opacity="0.45"/><rect x="8.5" y="8.5" width="3" height="3" opacity="1"/></svg>' };
 const FX_OVS = [[0, 'Off'], [1, 'Some'], [2, 'Full']];   // Shake › Overscan
 // the order palettes are offered in: by year (CGA 1981, ZX Spectrum and C64 1982, NES 1983, EGA 1984, Game Boy 1989, Pocket 1996,
 // Light 1998). Sets keep a palette's index in FX_PALS, which never changes, so this order is only for the menus and the slider.
@@ -76,8 +77,8 @@ const FX_KZ = Array.from({ length: 101 }, (_, i) => { const v = +(1 + i * 0.05).
 const FX_FBK = Array.from({ length: 20 }, (_, i) => [(i + 1) / 20, (i + 1) * 5 + '%']);   // no 0%: it isn't "off", only the shortest trails
 function rateAlt(d, style, C){
   if (!d) return null;
-  if (d.id === 'colour' && style === 'pal' && C && palGB(C.pal || 0)) return { label: 'Dots', key: 'dots', def: 0, list: FX_DOTS, seg: true,   // the Game Boy: no dithering (it couldn't), a dot-matrix screen instead
-    title: () => 'Dots: the picture as a dot-matrix LCD: Off, 2 px or 10 px dots with thin gaps in the palette\'s lightest colour' };
+  if (d.id === 'colour' && style === 'pal' && C && palGB(C.pal || 0)) return { label: 'LCD', key: 'dots', def: 0, list: FX_DOTS, icons: FX_DOTS_ICON,   // the Game Boy: no dithering, its screen instead (same place as Dither's pattern switch, so nothing moves)
+    title: () => 'LCD: the Game Boy screen — Off, Pixels (144 rows of square pixels, the 160 × 144 look) or Dots (the same with the dot-matrix gaps)' };
   if (d.id === 'feedback') return { label: 'Length', key: 'fbk', def: 0.7, list: FX_FBK, title: () => 'Length: how long the trails / echoes last before they fade' };
   if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, pat: true,   // the pattern: the Noise / Bayer / Check switch beside it
     title: () => 'Dither: how much of the in-between shades are drawn with the palette colours (off = flat areas). The switch beside it picks how' };
@@ -218,7 +219,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], monoSz: size[MO],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? dots[CO] : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? H / 144 * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = [0, 0.1, 0.22][ovs ? ovs[SH] ?? 1 : 1] * s;   // Overscan: off · some · full (enough for the biggest jolt and tilt)
@@ -281,7 +282,7 @@ ${FX_GLSL}
           if (IS(wobS, S_wobble_wave)){ p.x += sin(p.y * 14.0 + wobPh) * 0.018 * wob; p.y += sin(p.x * 10.0 + wobPh * 1.3) * 0.012 * wob; }
           else { vec2 q = (p - 0.5) * a; float r = length(q); p += q / max(r, 1e-4) / a * sin(r * 40.0 - wobPh) * 0.012 * wob; }
         }
-        if (palDot > 0.5){ vec2 cell = res / palDot; p = (floor(p * cell) + 0.5) / cell; }   // Palette › Dots: one colour per dot
+        if (abs(palDot) > 0.5){ vec2 cell = res / abs(palDot); p = (floor(p * cell) + 0.5) / cell; }   // Palette › LCD: Game Boy pixels (144 rows), one colour each (negative: no gaps)
         if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (IS(pixS, S_pixel_wide)) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
         return p;
       }

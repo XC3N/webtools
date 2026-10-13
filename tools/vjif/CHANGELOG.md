@@ -4,6 +4,16 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.87.2 — 2026-10-12
+
+### Effects
+- Colour › Palette with a Game Boy palette: the Dither row becomes LCD, three icons in the pattern switch's place (Off / Pixels / Dots); the row keeps its size, so nothing moves when you change palettes. Pixels: the picture in 144 rows of square pixels (the 160 × 144 look); Dots: the same with the dot-matrix gaps. Older 2 / 10 px settings read as Dots.
+
+### Interface
+- Settings (⚙) is at the far right of the top bar.
+- The Alt outline is grey again.
+- With the colour picker open, a press on another colour moves the picker to it (to tweak several in a row) instead of only closing it.
+
 ## 0.87.1 — 2026-10-12
 
 ### Preview

@@ -1,3 +1,4 @@
+const DPAT_HTML = $('#fxDpat').innerHTML;   // Dither's pattern icons (the slot shows the Game Boy LCD's instead with a GB palette)
 // ---------- UI: screen effect pads, the effect editor and its envelope ----------
 const NP_ORDER = [6, 7, 8, 3, 4, 5, 0, 1, 2];           // preset tiles laid out like the numpad (7 8 9 on top)
 function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class="lv"></span><span class="hd"><span class="k">${key}</span><span class="md"></span></span>${i < NFX ? '<span class="mk"></span>' : '<span class="xdel" title="Empty this preset">×</span>'}<span class="t"><span class="n"></span><span class="s"></span></span></div>`; }
@@ -191,7 +192,11 @@ function syncFxUI(){
     const alt = rateAlt(d, C.style || d.styles[0][0], C); $('#fxRateRow').classList.toggle('altrow', !!alt);
     $('#fxRateSeg').hidden = !(alt && alt.seg); $('#fxRate').hidden = $('#fxRate').nextElementSibling.hidden = !!(alt && alt.seg);   // a few fixed choices: a switch instead of the slider
     if (alt && alt.seg){ setHTML($('#fxRateSeg'), alt.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxRateSeg', String(C[alt.key] ?? alt.def)); }
-    $('#fxDpat').hidden = !(alt && alt.pat); $('#fxRateRow').classList.toggle('patrow', !!(alt && alt.pat)); if (alt && alt.pat) segSet('#fxDpat', String(C.dpat || 0));
+    const sw = alt && (alt.pat || alt.icons); $('#fxDpat').hidden = !sw; $('#fxRateRow').classList.toggle('patrow', !!sw);
+    const dp = $('#fxDpat'), want = alt && alt.icons ? 'lcd' : 'pat'; if (sw && dp.dataset.mode !== want){ dp.dataset.mode = want;   // Dither's pattern icons, or the Game Boy LCD's in the same place
+      setHTML(dp, want === 'lcd' ? alt.list.map(([v, , t]) => `<button data-v="${v}" title="${t.replace(/"/g, '&quot;')}">${alt.icons[v]}</button>`).join('') : DPAT_HTML); }
+    $('#fxRate').style.visibility = $('#fxRate').nextElementSibling.style.visibility = alt && alt.icons ? 'hidden' : '';   // the slider's room is kept: the row doesn't change width
+    if (sw) segSet('#fxDpat', String(alt.icons ? (C[alt.key] ?? alt.def) >= 2 ? 2 : (C[alt.key] ?? alt.def) : C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
       $('#fxRateRow').title = alt.title(ai); $('#fxRateRow').classList.remove('dimmed'); }
@@ -364,7 +369,8 @@ $('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
 onSeg($('#fxRateSeg'), b => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ X[alt.key] = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxSizeSeg'), b => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za){ X[za.key] = +b.dataset.v; syncFxUI(); } });
-onSeg($('#fxDpat'), b => { const X = fxEd(); if (X){ X.dpat = +b.dataset.v; syncFxUI(); } });
+onSeg($('#fxDpat'), b => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X);
+  if (alt && alt.icons) X[alt.key] = +b.dataset.v; else X.dpat = +b.dataset.v; syncFxUI(); });
 $('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
   if (b){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); return; }

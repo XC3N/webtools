@@ -248,7 +248,7 @@ body.prepping #pvWrap{box-shadow:inset 0 0 0 2px #ffb000}
 .layer.on .lon{background:var(--lc);border-color:var(--lc);color:#111}
 .lname{font:600 13px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .layer.on .lname,.layer.tgt .lname{color:var(--ink)}
-body.alt .pad:not(.empty):hover::after,body.alt #fxPre .fxp:not(.empty):hover::after,body.alt #scenes .scene:hover::after{content:'';position:absolute;inset:0;border:2px solid var(--sig);border-radius:inherit;z-index:6;pointer-events:none}   /* Alt held: what a click would rename, only under the pointer (as Ctrl does for deleting) */
+body.alt .pad:not(.empty):hover::after,body.alt #fxPre .fxp:not(.empty):hover::after,body.alt #scenes .scene:hover::after{content:'';position:absolute;inset:0;border:2px solid var(--muted);border-radius:inherit;z-index:6;pointer-events:none}   /* Alt held: what a click would rename, only under the pointer (as Ctrl does for deleting) */
 .lclr{width:var(--ch);padding:0;flex:none;font:400 14px/1 var(--mono);color:var(--muted)}
 .lclr:hover{color:var(--danger);border-color:var(--danger)}
 .llock{width:var(--ch);padding:0;flex:none;color:var(--faint)}.llock svg{display:block;margin:auto}.llock:hover{color:var(--ink)}.llock.on{color:var(--sigtxt);background:var(--amber);border-color:var(--amber)}
