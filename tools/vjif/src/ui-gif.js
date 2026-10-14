@@ -20,7 +20,18 @@ function cycleText(g){
   return [l1, warn.join(' · ') || (cb === null ? 'not tied to tempo' : 'on the grid')];
 }
 function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.querySelector('.l1').textContent = a; el.querySelector('.l2').textContent = b; el.title = a + ' — ' + b; }
+// the selected GIF's first frame, whole, on the GIF heading (keyed: on the checkerboard, like its pad)
+function drawGifThumb(){
+  const c = $('#gifThumb'), d = devicePixelRatio || 1, w = Math.round(36 * d), h = Math.round(20 * d), g = pads[selPad] && pads[selPad].gif;
+  if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+  const x = c.getContext('2d'); x.clearRect(0, 0, w, h); c.title = g ? g.name : 'No GIF on this pad';
+  if (!g) return;
+  if (g.key.on){ x.fillStyle = TC.edge2; const q = Math.round(4 * d); for (let yy = 0; yy < h; yy += q) for (let xx = (yy / q) % 2 * q; xx < w; xx += 2 * q) x.fillRect(xx, yy, q, q); }
+  const f = fxImage(g, g.startF), k = Math.min(w / f.width, h / f.height); x.imageSmoothingEnabled = !g.crisp;
+  x.drawImage(f, (w - f.width * k) / 2, (h - f.height * k) / 2, f.width * k, f.height * k);
+}
 function syncGifUI(){
+  drawGifThumb();
   queueMicrotask(markFolds);                         // (once the panel shows this GIF's values)
   const p = pads[selPad], g = p.gif; syncSwitches(g);
   $('#gifSettings').classList.toggle('disabled', !g);

@@ -185,6 +185,7 @@ function renderPad(i){
   x.drawImage(f, (c.width - f.width*s)/2, (c.height - f.height*s)/2, f.width*s, f.height*s);
   p.gif.thumb = p.gif.tileThumb = null; gifThumb(p.gif, f);
   document.querySelectorAll(`.chip[data-pad="${i}"]`).forEach(ch => ch.style.backgroundImage = `url(${p.gif.thumb})`);
+  if (i === selPad) drawGifThumb();   // its colour / start frame / key changed
 }
 // later: the GIF panel is brought up to date after the frame is drawn (a pad hit or scene change inside the frame)
 function selectPad(i, later = false){ selPad = i; pads.forEach(p => { if (p.el.classList.contains('sel') !== (p.i === i)) p.el.classList.toggle('sel', p.i === i); }); if (later) uiLater(UI.GIF); else { uiDue &= ~UI.GIF; syncGifUI(); } }

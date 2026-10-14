@@ -487,3 +487,5 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 .shaperow{display:flex;gap:4px;min-width:0}.shaperow>.seg{flex:1;display:grid;grid-template-columns:repeat(6,1fr)}.shaperow>.seg button{padding:0}.shaperow>.iconbtn{flex:none;width:26px}.shaperow>.iconbtn.on{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}   /* LFO shapes drawn, then Invert and Hold (0.89) */
 .chip.fxchip{background:var(--panel-2);display:grid;place-items:center}.chip.fxchip>i{display:flex;gap:2px;color:var(--sig);font-style:normal}.chip.fxchip>i svg.fxic{width:12px;height:12px}   /* an effect / preset being dragged (0.89) */
 #maskBar .mrow>.seg{flex:0 0 66px;grid-auto-columns:22px}#maskBar .mrow>.seg button{padding:0}#maskBar .iconbtn,#maskBar .icontog{width:22px}   /* the three drawing tools keep their size on the one row */
+
+#gifThumb{width:36px;height:20px;margin-left:6px;flex:none;border-radius:2px;background:var(--track);display:block}   /* the selected GIF on the GIF heading (0.89.4): which one this panel edits, also when it's folded */

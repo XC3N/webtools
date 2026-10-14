@@ -155,7 +155,9 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {rhg365xt6djer5fxuu8b} **Pool drop** (0.89) — drop a file from the desktop on the Pool button: it's added to the pool, no pad.
 - [ ] {q6q2sdwabbp74ns52da0} **Help top** (0.89) — ? : scroll the list; the title and search stay put; columns aligned.
 - [ ] {4bzt5icu6y0xr13f0pry} **Even dots** (0.89.1) — Dot Matrix on a moving GIF, Output window full screen: square dots, all the same size, a regular grid (no tartan).
-- [ ] {x45ql7a8kj661rb3vo3y} **Preview like output** (0.89.3) — Dot Matrix playing, output window about the size of the preview: both show the grid the same way (no moiré bands in the preview).
+- [ ] {x45ql7a8kj661rb3vo3y} **Preview eighths** (0.89.4) — Dot Matrix playing: the preview has a small border and shows an even grid (no bands); resize the window / change Windows scaling: it jumps between sizes and stays even.
+- [ ] {w6bvn9h0vyiph1iof2z2} **Output eighths** (0.89.4) — Shift+click Output: even grid in the window; resize it by hand: the picture steps between sizes, stays even; full screen fills the screen.
+- [ ] {m02ezjhzeof8cg9reb0h} **GIF heading picture** (0.89.4) — select pads: the GIF heading shows the selected GIF; readable enough?
 - [ ] {y08e3dqtjpeoa8jqrp0e} **Always on top** (0.89.3) — Right-click Output: a floating window with no address bar stays above other windows, plays, takes pad keys; right-click again closes it; click Output switches to a normal window.
 - [ ] {d3068ijx33furnsrblsv} **Reopen size** (0.89.3) — Shift+click Output, close the window, open it again: no black bars.
 - [x] {0g5bim1rd8zzry16be4s} **Emptied scene comes back** (0.79, 0.81, name 0.84, 0.85) — name a scene, select it, empty it (×): its name goes too (with Settings › Interface › Permanent scene names on: it stays); go to another scene, Ctrl+Z: the emptied scene's tile shows its picture and name again.

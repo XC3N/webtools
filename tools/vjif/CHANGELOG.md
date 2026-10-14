@@ -4,6 +4,18 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.89.4 — 2026-10-14
+
+### Preview
+- The preview shows the output at an exact eighth of the render size (3/8, 1/2, 5/8…), counted in screen pixels so Windows / browser scaling is included: the largest that fits, centred. VJif shrinks the picture itself, in exact halves then one whole-ratio step, so anything that repeats every 1, 2, 4 or 8 pixels (Dot Matrix, dither, scanlines) lands the same way everywhere: no banding. Only a box smaller than 1/8 scales freely.
+- Game Boy dots prefer a multiple of 4 pixels (4 at 720p, 8 at 1080p, 16 at 4K), so they fit the eighths.
+
+### Output
+- The output window works the same way while it's a window: an exact eighth that fits, in screen pixels. Its default and Shift+click reset size is half the render size in screen pixels (it was half in scaled units: at 125 % scaling that was really 5/8). Full screen still fills the screen.
+
+### Interface
+- GIF heading: a small picture of the selected GIF (its first frame, whole), so it's clear which GIF the panel edits, also when it's folded.
+
 ## 0.89.3 — 2026-10-14
 
 ### Preview

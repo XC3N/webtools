@@ -80,8 +80,8 @@ const FX_ICON_SVG = {
 const fxIcon = id => FX_ICON_SVG[id] ? `<svg class="fxic" viewBox="0 0 20 20" aria-hidden="true">${FX_ICON_SVG[id]}</svg>` : '';
 // the Game Boy's dot, in real pixels: a whole number (a fraction made dots of two widths and an uneven, tartan-like grid,
 // 0.89.1) near the height / 144, one that divides the canvas when there is one so the grid lines up with the frame
-function lcdDot(){ const t = CH / 144, c = [0, -1, 1, -2, 2].map(k => Math.max(2, Math.round(t) + k));
-  return c.find(d => CW % d === 0 && CH % d === 0) || c.find(d => CH % d === 0) || c[0]; }
+function lcdDot(){ const t = CH / 144, c = [0, -1, 1, -2, 2, -3, 3].map(k => Math.max(2, Math.round(t) + k)), fits = d => CW % d === 0 && CH % d === 0;
+  return c.find(d => (d === 2 || d % 4 === 0) && fits(d)) || c.find(fits) || c.find(d => CH % d === 0) || c[0]; }   // a multiple of 4 first: it lands whole in the preview's eighths
 const palGB = i => /^GB/.test((FX_PALS[i] || {}).n || '');
 function sizeAlt(d, style, C){
   if (d && d.id === 'shake') return { label: 'Edges', key: 'ovs', def: 2, list: FX_OVS, toggle: true, seg: true,   // one icon: zoom in enough that no frame edge ever shows, or not (0.87.3; an older Some reads as on)
@@ -727,7 +727,7 @@ function drawPrep(now, hidden, quiet){
   if (oF.out) post.run(oF.out); else if (post) post.idle(SLOT.OUT);
   drawTrOverlay();
   if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
-  if (outCtx) outCtx.drawImage(master, 0, 0);
+  outBlit(master);
   }
   if (hidden || quiet) return;
   const eF = post ? fxFrame(b) : NOFX, eList = frameList(now);
@@ -738,9 +738,27 @@ function drawPrep(now, hidden, quiet){
   if (eF.out) post.run(eF.out, trB.canvas, trB, SLOT.PREP_OUT); else if (post) post.idle(SLOT.PREP_OUT);
   pvBlit(trB.canvas);
 }
-// the preview holds the picture at full render size and the browser scales it onto the screen, the same way it shows the
-// output window: fine regular patterns (Dot Matrix gaps, scanlines, dither) come out the same in both, at any size (0.89.3)
-function pvBlit(src){ if (pvScene.width !== src.width || pvScene.height !== src.height){ pvScene.width = src.width; pvScene.height = src.height; } sctx.drawImage(src, 0, 0); }
+// the preview and the output window show the output at an exact eighth of the render size, in screen pixels (eighthFit):
+// halve it in exact steps (each averages 2×2 pixels), then one resample by a whole ratio, so a pattern that repeats every
+// 8 output pixels (Dot Matrix, dither, scanlines) comes out the same in every repeat (0.89.4)
+function eighthFit(aw, ah, cw = CW, ch = CH){   // available screen pixels → [w, h, eighths] (0: smaller than 1/8, fitted freely)
+  const k = Math.floor(Math.min(aw / cw, ah / ch) * 8 + 1e-6), e8 = k >= 1 ? (k > 8 ? Math.floor(k / 8) * 8 : k) : 0;
+  if (e8) return [Math.round(cw * e8 / 8), Math.round(ch * e8 / 8), e8];
+  const f = Math.min(aw / cw, ah / ch); return [Math.max(1, Math.round(cw * f)), Math.max(1, Math.round(ch * f)), 0];
+}
+function blitTo(ctx, src, cache){
+  const tw = ctx.canvas.width, th = ctx.canvas.height; let s = src, k = 0;
+  if (tw === src.width && th === src.height){ ctx.drawImage(src, 0, 0); return; }
+  while (s.width / 2 >= tw && s.height / 2 >= th && k < 3){
+    const c = cache[k] || (cache[k] = document.createElement('canvas')), w = s.width >> 1, h = s.height >> 1;
+    if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+    const x = c.getContext('2d', { alpha: false }); x.imageSmoothingQuality = 'high'; x.drawImage(s, 0, 0, w, h); s = c; k++;
+  }
+  ctx.imageSmoothingQuality = 'high'; ctx.drawImage(s, 0, 0, tw, th);
+}
+const pvHalf = [], outHalf = [];
+const pvBlit = src => blitTo(sctx, src, pvHalf);
+const outBlit = src => { if (outCtx) blitTo(outCtx, src, outHalf); };
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
@@ -778,7 +796,7 @@ function drawFrame(now){
     if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);
     drawTrOverlay();
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
-    if (outCtx) outCtx.drawImage(master, 0, 0);
+    outBlit(master);
     if (!hidden && !quiet) pvBlit(master);
   }
   }

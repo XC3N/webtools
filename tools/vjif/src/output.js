@@ -2,7 +2,16 @@
 // where the output window was last time (screen position and size); Shift+click Output forgets it
 const OUT_KEY = 'vjif-outwin';
 const outGeo = () => Prefs.json(OUT_KEY);
-function outDefault(){ const k = 960 / Math.max(W, H); return { w: Math.round(W * k), h: Math.round(H * k) }; }
+function outDefault(){ const d = devicePixelRatio || 1; return { w: Math.round(CW / 2 / d), h: Math.round(CH / 2 / d) }; }   // half the render size in screen pixels (0.89.4: an exact eighth, see eighthFit)
+// the output window's canvas: windowed, the largest exact eighth of the render size that fits, one canvas pixel per screen
+// pixel, centred; full screen, the render size, stretched to fill (a projector shouldn't get borders)
+function sizeOutCv(){
+  if (!outCtx || !outWin || outWin.closed) return;
+  const w = outWin, d = w.devicePixelRatio || 1, cv = outCtx.canvas, fs = !!w.document.fullscreenElement;
+  const [pw, ph] = fs ? [CW, CH] : eighthFit(w.innerWidth * d, w.innerHeight * d);
+  if (cv.width !== pw || cv.height !== ph){ cv.width = pw; cv.height = ph; redraw.all = true; }
+  Object.assign(cv.style, fs ? { width: '100vw', height: '100vh' } : { width: pw / d + 'px', height: ph / d + 'px' });
+}
 function openOutput(e){
   if (e && e.shiftKey){                              // reset: back to the default size, near the top left of this screen
     Prefs.set(OUT_KEY, null);
@@ -26,12 +35,13 @@ function openOutput(e){
   d.open();
   d.write(`<!doctype html><meta charset="utf-8"><title>VJif — Output</title>
 <style>html,body{margin:0;height:100%;background:#000;overflow:hidden}
-canvas{width:100vw;height:100vh;object-fit:contain;display:block;cursor:move}
+body{display:grid;place-items:center}canvas{object-fit:contain;display:block;cursor:move}
 html:fullscreen,html:fullscreen *{cursor:none}
 #h{position:fixed;left:8px;top:6px;font:12px monospace;color:#888;transition:opacity 1s}</style>
 <canvas width="${CW}" height="${CH}"></canvas><div id="h">drag to move · double-click: full screen on / off</div>`);
   d.close();
   outCtx = d.querySelector('canvas').getContext('2d', { alpha: false });
+  sizeOutCv(); outWin.addEventListener('resize', sizeOutCv); d.addEventListener('fullscreenchange', sizeOutCv);
   setTimeout(() => { const h = d.getElementById('h'); if (h) h.style.opacity = 0; }, 2500);
   d.addEventListener('dblclick', () => d.fullscreenElement ? d.exitFullscreen() : d.documentElement.requestFullscreen());
   // drag anywhere to move the window (a projector window has no use for its title bar)
@@ -56,9 +66,9 @@ async function openOutputPip(){
   const D = outDefault(); let w;
   try { w = await documentPictureInPicture.requestWindow({ width: D.w, height: D.h }); } catch (e) { return toast('Could not open the always-on-top window'); }
   outWin = w; outPip = true; const d = w.document;
-  const st = d.createElement('style'); st.textContent = 'html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{width:100vw;height:100vh;object-fit:contain;display:block}';
+  const st = d.createElement('style'); st.textContent = 'html,body{margin:0;height:100%;background:#000;overflow:hidden}body{display:grid;place-items:center}canvas{display:block}';
   const cv = d.createElement('canvas'); cv.width = CW; cv.height = CH; d.head.append(st); d.title = 'VJif — Output'; d.body.append(cv);
-  outCtx = cv.getContext('2d', { alpha: false });
+  outCtx = cv.getContext('2d', { alpha: false }); sizeOutCv(); w.addEventListener('resize', sizeOutCv);
   w.addEventListener('keydown', onKey); w.addEventListener('keyup', e => { onKeyUp(e); commit(); }); w.addEventListener('blur', releaseAll);
   w.addEventListener('pagehide', () => { outPip = false; setTimeout(restartLoop, 0); });
   d.addEventListener('visibilitychange', () => restartLoop());
@@ -80,8 +90,8 @@ function sizeCanvases(){
   CW = Math.round(W * RS); CH = Math.round(H * RS);
   [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = CW; c.height = CH; });
   if (post) post.resize();
-  if (outCtx){ outCtx.canvas.width = CW; outCtx.canvas.height = CH; }
-  pvScene.width = CW; pvScene.height = CH;
+  sizeOutCv();
+  if (typeof sizePreview === 'function') sizePreview();   // the preview's eighths follow the render size
 }
 function setRenderSize(r){
   if (r === RS) return;
@@ -100,8 +110,8 @@ function setFormat(k, { quiet = false, force = false } = {}){
   format = k; [W, H] = FORMATS[k]; retextAll();
   sizeCanvases();
   live.freeze = false; live.freezeReq = false; updLiveTag(); endTrans();
-  if (outWin && !outWin.closed && !outWin.document.fullscreenElement){ const k2 = 960 / Math.max(W, H);
-    try { outWin.resizeTo(Math.round(W * k2) + outWin.outerWidth - outWin.innerWidth, Math.round(H * k2) + outWin.outerHeight - outWin.innerHeight); } catch (e) {} }
+  if (outWin && !outWin.closed && !outPip && !outWin.document.fullscreenElement){ const D = outDefault();
+    try { outWin.resizeTo(D.w + outWin.outerWidth - outWin.innerWidth, D.h + outWin.outerHeight - outWin.innerHeight); } catch (e) {} }
   $('#xX').min = -W; $('#xX').max = W; $('#xY').min = -H; $('#xY').max = H;
   sizePreview(); syncXfUI(); updateOutStat(); syncFormatUI(); redraw.all = true;
   if (!quiet) toast(`Canvas ${W}×${H} — ${FORMATS[k][2]}`);

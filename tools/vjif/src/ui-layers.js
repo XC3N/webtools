@@ -353,12 +353,21 @@ pv.addEventListener('dblclick', e => {
 function sizePreview(){
   const wrap = $('#pvWrap'), aw = wrap.clientWidth, ah = wrap.clientHeight, dpr = devicePixelRatio || 1, M = 40;
   pv.width = Math.round(aw * dpr); pv.height = Math.round(ah * dpr);
-  view.w = Math.max(160 * Math.min(1, W / H), Math.min(aw - 2*M, (ah - 2*M) * W / H)); view.h = view.w * H / W;
-  view.x = (aw - view.w) / 2; view.y = (ah - view.h) / 2;
+  // the picture is the output at a whole number of eighths, counted in screen pixels (so the OS / browser scaling is included):
+  // anything that repeats every 1, 2, 4 or 8 output pixels (Dot Matrix, dither, scanlines) lands the same way in every repeat
+  // (0.89.4; the output window's reset size, half, is one of them). The largest eighth that fits; only a box smaller than
+  // 1/8 of the output scales freely
+  const fit = Math.min(aw - 2*M, (ah - 2*M) * W / H), [ew, eh, e8] = eighthFit(fit * dpr, fit * H / W * dpr + 1e-6);
+  let pw, ph;
+  if (e8){ pw = ew; ph = eh; view.w = pw / dpr; view.h = ph / dpr; }
+  else { view.w = Math.max(160 * Math.min(1, W / H), fit); view.h = view.w * H / W; pw = Math.round(view.w * dpr); ph = Math.round(view.h * dpr); }
+  view.x = Math.round((aw - view.w) / 2 * dpr) / dpr; view.y = Math.round((ah - view.h) / 2 * dpr) / dpr;   // on a screen pixel
+  view.e8 = e8;
   Object.assign(pvScene.style, { left: view.x + 'px', top: view.y + 'px', width: view.w + 'px', height: view.h + 'px' });
-  if (pvScene.width !== CW || pvScene.height !== CH){ pvScene.width = CW; pvScene.height = CH; }   // full render size: the browser scales it (pvBlit)
+  if (pvScene.width !== pw || pvScene.height !== ph){ pvScene.width = pw; pvScene.height = ph; }   // one canvas pixel per screen pixel
   const bar = $('#pvBar'); if (bar){ if (bar.parentElement !== wrap) wrap.appendChild(bar);   // the guides bar: halfway between the picture and the panel below
     const bh = bar.offsetHeight || 32, below = ah - (view.y + view.h); bar.style.top = Math.max(view.y + view.h + 2, Math.min(ah - bh - 2, view.y + view.h + (below - bh) / 2)) + 'px'; }
   redraw.all = true;
 }
 new ResizeObserver(sizePreview).observe($('#pvWrap'));
+(function watchDpr(){ matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', () => { sizePreview(); watchDpr(); }, { once: true }); })();   // browser zoom / moved to another screen
