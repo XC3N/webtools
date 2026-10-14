@@ -356,9 +356,14 @@ ${FX_GLSL}
         float y = dot(c, vec3(0.299, 0.587, 0.114));
         c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
         if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c);   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
-            if (palDot > 0.5){ vec2 f = mod(gl_FragCoord.xy, palDot); float gw = max(1.0, floor(palDot * 0.2));   // Dots: thin gaps between the dots, in the palette's lightest colour (the LCD's own)
+            if (palDot > 0.5){ vec2 f = mod(gl_FragCoord.xy, palDot); float gw = max(1.0, floor(palDot * 0.16));   // Dot Matrix (0.89, after the DMG's LCD): thin gaps between the dots
               vec3 bg = pal[0]; float by = -1.0; for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; float y = dot(pal[i], vec3(0.299, 0.587, 0.114)); if (y > by){ by = y; bg = pal[i]; } }
-              if (f.x < gw || f.y < gw) c = mix(c, bg, 0.7 * colr); } }
+              // the gap shows the reflective backing (the palette's lightest colour) with this dot's shadow on it: the liquid crystal
+              // sits above the reflector, so each dark dot casts a faint copy down and to the right
+              if (f.x > palDot - gw || f.y < gw) c = mix(c, mix(bg, c, 0.3), colr);
+              // the backing's fine grain (about ±4 %), seen in the light areas, lost in the dark ones
+              float gr = fract(sin(dot(floor(gl_FragCoord.xy / max(1.0, floor(palDot * 0.4))), vec2(12.9898, 78.233))) * 43758.5453);
+              c *= 1.0 + (gr - 0.5) * 0.08 * dot(c, vec3(0.299, 0.587, 0.114)) * colr; } }
           else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
         return c;
       }
@@ -521,6 +526,9 @@ ${FX_GLSL}
           // scene stayed for ever. Taking off 1.5 / 255 each frame as well lets every trail fade out completely
           c = mix(c, max(c, pv.rgb * k - 0.006), fb); al = mix(al, max(al, pv.a * k - 0.006), fb);
         }
+        if (abs(palDot) > 0.5 && colr > 0.001 && IS(colrS, S_colour_pal)){   // Dot Matrix / Pixels: the LCD's slow dots, a change shows over a few frames (ghosting)
+          vec4 pv = texture2D(prev, vec2(uv.x, 1.0 - uv.y)); if (pv.a > 0.01) c = mix(c, pv.rgb, 0.42 * colr);
+        }
         gl_FragColor = vec4(clamp(c, 0.0, 1.0), clamp(al, 0.0, 1.0));
       }`));
     gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
@@ -667,7 +675,7 @@ ${FX_GLSL}
       if (String(U.shake) !== last.shake){ last.shake = String(U.shake); gl.uniform3fv(u.shake, U.shake); }
       if (U.palI !== last.palI){ last.palI = U.palI; const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }   // the 64-colour palette only when it changes
       gl.uniform1f(u.blit, 0);
-      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1)) || (U.glitch > 0.001 && (U.glS >> FXS.glitch.corrupt & 1 || U.glS >> FXS.glitch.keyfr & 1));   // only Feedback, Phosphor and Glitch › Corrupt / Keyframe read the previous frame
+      const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1)) || (U.glitch > 0.001 && (U.glS >> FXS.glitch.corrupt & 1 || U.glS >> FXS.glitch.keyfr & 1)) || (Math.abs(U.palDot || 0) > 0.5 && U.colr > 0.001);   // only Feedback, Phosphor, Glitch › Corrupt / Keyframe and the Game Boy LCD read the previous frame
       if (!trail){                                   // straight onto the canvas: no render target, no second pass
         const S = slots[slot]; if (S){ S.fbWas = false; S.stale = true; }
         gl.uniform1f(u.fbInit, 0); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

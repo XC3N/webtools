@@ -11,14 +11,23 @@ window.addEventListener('drop', e => {
 const bank = $('#bank');
 bank.addEventListener('dragover', e => {
   e.preventDefault(); const T = e.dataTransfer.types;
-  const ok = !T.includes(SCENE_MIME) && (T.includes(POOL_MIME) || T.includes('Files') || T.includes('text/uri-list') || T.includes('text/plain'));   // GIFs, files, links: a scene tile is no GIF
+  const bgChip = T.includes(CLIP_MIME) && chipDrag && isBgPad(chipDrag.pad);   // a Background slot's chip: onto a pad, it becomes that pad's GIF (0.89)
+  const ok = !T.includes(SCENE_MIME) && (bgChip || T.includes(POOL_MIME) || T.includes('Files') || T.includes('text/uri-list') || (T.includes('text/plain') && !T.includes(CLIP_MIME)));   // GIFs, files, links: a scene tile is no GIF
   e.dataTransfer.dropEffect = ok ? 'copy' : 'none';
-  const el = ok && e.target.closest('.pad'); pads.forEach(p => p.el.classList.toggle('drop', p.el === el));
+  const el = ok && e.target.closest('.pad'); pads.forEach(p => p.el.classList.toggle('drop', p.el === el)); $('#poolBtn').classList.toggle('drop', !!ok && !!e.target.closest('#poolBtn') && !T.includes(POOL_MIME));
 });
-bank.addEventListener('dragleave', e => { if (!bank.contains(e.relatedTarget)) pads.forEach(p => p.el.classList.remove('drop')); });
+bank.addEventListener('dragleave', e => { if (!bank.contains(e.relatedTarget)){ pads.forEach(p => p.el.classList.remove('drop')); $('#poolBtn').classList.remove('drop'); } });
 bank.addEventListener('drop', e => {
   e.preventDefault(); pads.forEach(p => p.el.classList.remove('drop'));
   if (e.dataTransfer.types.includes(SCENE_MIME)) return;
+  if (e.dataTransfer.types.includes(CLIP_MIME)){ const pe = e.target.closest('.pad'), cd = chipDrag; chipDrag = null;
+    if (pe && cd && isBgPad(cd.pad)){ const j = +pe.dataset.i; swapPads(cd.pad, j); toast2(`Moved from Background to pad ${pads[j].label}`); } return; }
+  if (e.target.closest('#poolBtn')){                // dropped on the Pool button: into the pool only (0.89)
+    $('#poolBtn').classList.remove('drop');
+    const fs = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
+    if (fs.length){ loadFiles(fs, POOL_ONLY).then(() => { renderPool(); toast2(`${fs.length} GIF${fs.length > 1 ? 's' : ''} added to the pool`); }); return; }
+    const u = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '').split(/\r?\n/).map(s => s.trim()).find(s => /^https?:\/\//.test(s));
+    if (u) loadUrlInto(u, POOL_ONLY); return; }
   const padEl = e.target.closest('.pad'), start = padEl ? +padEl.dataset.i : -1;
   const ph = e.dataTransfer.getData(POOL_MIME);
   if (ph){                                           // a pool GIF dragged onto a pad: put it there (replacing — undoable)

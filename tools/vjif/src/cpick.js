@@ -65,9 +65,9 @@ const cpk = (() => {
   const colourAt = t => t.closest && (t.closest('input[type=color]') || (t.closest('label') && t.closest('label').querySelector('input[type=color]')));
   document.addEventListener('click', e => {   // the browser's picker never opens: ours does
     const i = e.target.closest && e.target.closest('input[type=color]'); if (!i || i.disabled) return; e.preventDefault(); if (performance.now() - skipT < 800){ skipT = 0; return; } open(i); }, true);
-  document.addEventListener('pointerdown', e => { if (tgt && !el.contains(e.target) && e.target !== tgt && !(e.target.closest && e.target.closest('label') && e.target.closest('label').contains(tgt))){ const o = colourAt(e.target); close();
-    if (o && o !== tgt && !o.disabled){ skipT = performance.now();   // another colour: the picker moves over to it (tweak several in a row); closing may rebuild its list, so find it again by its place
-      const host = o.closest('[id]'), sel = o.dataset.i != null ? `input[type=color][data-i="${o.dataset.i}"]` : null;
+  document.addEventListener('pointerdown', e => { if (tgt && !el.contains(e.target) && e.target !== tgt && !(e.target.closest && e.target.closest('label') && e.target.closest('label').contains(tgt))){ const o = colourAt(e.target), host = o && o.closest('[id]'), sel = o && o.dataset.i != null ? `input[type=color][data-i="${o.dataset.i}"]` : null;   // (where it is, read before closing: closing can rebuild its list)
+    close();
+    if (o && !o.disabled){ skipT = performance.now();   // another colour: the picker moves over to it (tweak several in a row; 0.89: also after a change, which rebuilt the list and lost it)
       requestAnimationFrame(() => { const n = o.isConnected ? o : (host && sel && host.querySelector(sel)); if (n && !n.disabled) open(n); }); } } }, true);
   addEventListener('keydown', e => { if (tgt && e.key === 'Escape' && document.activeElement !== hexIn){ e.stopPropagation(); close(); } }, true);
   return { el, open, close, get target(){ return tgt; } };

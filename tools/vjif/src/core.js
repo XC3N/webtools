@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.88.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.89.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -96,7 +96,9 @@ const LFO_T = [
   ['h', 'Hue', 'Hue shift', -180, 180, 1, '°', -180, 180, 'up', 16],
   ['s', 'Sat', 'Saturation', 0, 3, 0.01, '×', 0, 1, 'sine', 4],
   ['v', 'Bright', 'Brightness', 0, 3, 0.01, '×', 1, 1.6, 'down', 1]];
-const SHAPES = [['sine','Sine'],['tri','Tri'],['up','Ramp ↑'],['down','Ramp ↓'],['square','Square'],['sh','Random'],['drift','Drift']];
+// LFO shapes, drawn (0.89: Ramp ↓ is Ramp with Invert)
+const SHAPES = [['sine', 'Sine', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10C4 10 5.5 2 10 2S16 10 19 10"/></svg>'], ['tri', 'Triangle', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2l9 8"/></svg>'], ['up', 'Ramp', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2v8l9-8"/></svg>'],
+  ['square', 'Square', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10V2h9v8h9V2"/></svg>'], ['sh', 'Random (stepped)', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 7h4V3h4v6h4V5h3v4h3"/></svg>'], ['drift', 'Drift (smooth random)', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 7c2-4 4-4 6-1s3 4 5 1 3-5 4-3 2 3 3 3"/></svg>']];
 const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
 const KEY_MAX = 441.67;        // max RGB distance
 

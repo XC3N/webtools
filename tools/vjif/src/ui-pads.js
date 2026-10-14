@@ -71,9 +71,8 @@ function padCopyMode(on){
   const o = d.lastE ? padDropAt(d.lastE) : null, i = d.i;
   // Ctrl over a pad that isn't empty: held there COPY_HOLD ms (the red bar fills), the drop replaces it (as with scenes and presets)
   const full = on && o && o.classList.contains('pad') && +o.dataset.i !== i && !!pads[+o.dataset.i].gif;
-  if (full){ if (!d.hold || d.hold.o !== o){ clearTimeout(d.hold && d.hold.T); d.hold = { o, at: performance.now(), T: setTimeout(() => padCopyMode(d.copyNow), COPY_HOLD + 20) }; } } else if (d.hold){ clearTimeout(d.hold.T); d.hold = null; }
-  const armed = d.armed = !!d.hold && performance.now() - d.hold.at >= COPY_HOLD;
-  pads.forEach(p => { p.el.classList.toggle('drop', p.el === o && p.i !== i && (!on || !p.gif || armed)); p.el.classList.toggle('holding', !!d.hold && p.el === o && !armed); p.el.classList.toggle('armed', armed && p.el === o); });
+  const armed = copyHold(d, o, full, () => padCopyMode(d.copyNow));
+  markTiles(pads.map(p => p.el), o, d, x => { const p = pads[+x.dataset.i]; return p.i !== i && (!on || !p.gif || armed); });
   layers.forEach(L => L.row.classList.toggle('dropzone', !on && L.row === o)); $('#pvWrap').classList.toggle('dropzone', !on && !!o && o.id === 'pvWrap');
 }
 addEventListener('keydown', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCopyMode(true); });
@@ -81,8 +80,8 @@ addEventListener('keyup', e => { if (padDrag && DEL_KEYS.includes(e.key)) padCop
 function padDragEnd(e, i){
   const d = padDrag; padDrag = null; if (d) clearTimeout(d.scT); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
   if (d && d.ghost){ ghost.hide(); pads[d.i].el.classList.remove('lifted'); }
-  if (d && d.hold) clearTimeout(d.hold.T);
-  pads.forEach(p => p.el.classList.remove('drop', 'holding', 'armed')); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging', 'padcopy');
+  copyHoldEnd(d);
+  unmarkTiles(pads.map(p => p.el)); layers.forEach(L => L.row.classList.remove('dropzone')); $('#pvWrap').classList.remove('dropzone'); document.body.classList.remove('paddragging', 'padcopy');
   if (!d || d.i !== i || !d.moved) return false;
   pads[i].el._shift = true;                          // the click that follows the drag isn't a click on the pad
   const tt = e && document.elementFromPoint(e.clientX, e.clientY), sct = tt && tt.closest('#scenes .scene');
@@ -124,6 +123,8 @@ function swapPads(a, b, record = true){
   const map = k => k === a ? b : k === b ? a : k;
   [pads[a].gif, pads[b].gif] = [pads[b].gif, pads[a].gif];
   layers.forEach(L => L.clips.forEach(c => c.pad = map(c.pad)));
+  layers.forEach(L => { L.clips = L.clips.filter(c => layerTakes(L.i, c.pad)); if (!L.clips.includes(L.sel)) L.sel = null; });   // (0.88 groups: a GIF that changed group leaves a layer that doesn't take it)
+  bgSync(a); bgSync(b);                                // a Background slot plays when it has a GIF
   const pend = [...pending]; pending.clear(); pend.forEach(([k, q]) => pending.set(map(k), q));
   pads.forEach(p => p.el.classList.toggle('wait', pending.has(p.i)));
   if (record){ pushStep({ kind: 'pswap', a, b, sid: sidNow() }); hist.cur = histState(); updHistUI();

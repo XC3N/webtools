@@ -31,7 +31,7 @@ async def main():
       document.querySelector('#xFitSeg [data-v=cover]').click(); const c = layers[1].clips[0]; return [vis, c.fit, Math.abs(c.sx - 1) < 1e-6, $('#xFit') === null]; })()   /* uncropped: Fill as the base size already covers, so scale stays 1× */""")
     print('transform', xf); assert xf == [True, 'cover', True, True], xf
     lf = await pg.evaluate("""(() => { const A = { shape: 'square', sk: 0.25, per: 1, ph: 0, gap: 0 }; const v = [0.1, 0.3, 0.6].map(p => lfoShape(A, p, 1));
-      const g = pads[0].gif; const s = { lfo: { x: { shape: 'pulse', on: true } } }; return [v.join(','), SHAPES.some(x => x[0] === 'pulse'), !!$('#aSk'), !!$('#aHold')]; })()""")
+      const g = pads[0].gif; const s = { lfo: { x: { shape: 'pulse', on: true } } }; return [v.join(','), SHAPES.some(x => x[0] === 'pulse'), !!$('#aSk'), !!$('#aHoldBtn')]; })()""")
     print('lfo', lf); assert lf == ['1,0,0', False, True, True], lf
     assert not errs, errs
     await b.close()

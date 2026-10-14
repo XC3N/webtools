@@ -10,8 +10,7 @@ async def main():
     await pg.evaluate("fileTarget=0"); await pg.set_input_files('#fileIn', [str(S/'busy.gif')]); await pg.wait_for_function("pads[0].gif")
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(200)
     # copy scene 1 (index 0) onto scene 3 (index 2) while on scene 3, empty
-    r = await pg.evaluate("""() => { gotoScene(2, clock.beat, true); const tile = document.querySelector('#scenes .scene[data-i="2"]'), dt = new DataTransfer(); dt.setData('application/x-vjif-scene', '0');
-      tile.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true, ctrlKey: true }));
+    r = await pg.evaluate("""() => { gotoScene(2, clock.beat, true); sceneDrop(0, 2, true, false);   /* 0.89: the drop itself (scenes drag with the pointer now) */
       return [sceneIdx, layers.reduce((a, L) => a + L.clips.length, 0), pads.filter(p => p.gif).length]; }""")
     print('copy', r); assert r == [2, 1, 1], r
     # Prep → go live with Snap off: waits for the downbeat

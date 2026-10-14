@@ -210,9 +210,9 @@ const TR_DRAW = {
       if (moshCv.width !== W || moshCv.height !== H){ moshCv.width = moshTmp.width = W; moshCv.height = moshTmp.height = H; S.moshed = false; }
       if (!S.moshed){ S.moshed = true; moshX.globalAlpha = 1; moshX.drawImage(A, 0, 0); }   // where it starts: the old picture, the last keyframe
       moshT.clearRect(0, 0, W, H); moshT.drawImage(moshCv, 0, 0);   // the last frame, to read from
-      const G = 6, gv = (gx, gy, k) => fxRand(seed + gx * 13.7 + gy * 71.3 + k) * 2 - 1;   // the drift field: a coarse grid of vectors, blended between
-      const field = (x, y, k) => { const fx = x / (W / G), fy = y / (H / G), x0 = Math.floor(fx), y0 = Math.floor(fy), u = fx - x0, v = fy - y0, sm = t => t * t * (3 - 2 * t);
-        const a = gv(x0, y0, k) + (gv(x0 + 1, y0, k) - gv(x0, y0, k)) * sm(u), b = gv(x0, y0 + 1, k) + (gv(x0 + 1, y0 + 1, k) - gv(x0, y0 + 1, k)) * sm(u); return a + (b - a) * sm(v); };
+      // the motion: one way for the whole picture (the transition's direction), each row of runs at its own speed and with a slight,
+      // fixed sideways lean: streaks, not swirls (0.89: a smooth 2-D field read as a spiral)
+      const fdx = dx || 1, fdy = dy || 0, band = r => 0.45 + 1.1 * fxRand(seed + r * 3.71), lean = c => (fxRand(seed + c * 5.13) - 0.5) * 0.5;
       const sp = Math.max(1, H / 360) * (1.5 + 3.5 * tear), step = Math.floor(e * 24);   // px per frame: grows to the middle
       moshX.imageSmoothingEnabled = false;
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){
@@ -220,8 +220,8 @@ const TR_DRAW = {
         if (e > 0.94 || p < arrive * arrive){ moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); continue; }   // decoded right: the new scene
         if (fxRand(k * 4.7 + step * 3.3 + seed) < 0.035 * tear){ moshX.fillStyle = `hsl(${Math.floor(fxRand(k + step) * 360)},70%,${25 + 30 * fxRand(k * 1.9 + step)}%)`; moshX.fillRect(x, y, RW, RH); continue; }   // broken: one flat, wrong colour
         if (p > 0.15 + 0.75 * tear) continue;          // not moshed this time: it holds
-        const vx = Math.round(field(x + RW / 2, y + RH / 2, 0) * sp + (fxRand(k * 2.1 + seed) - 0.5) * 2), vy = Math.round(field(x + RW / 2, y + RH / 2, 5.5) * sp * 0.6);
-        moshX.drawImage(moshT.canvas, x - vx, y - vy, RW, RH, x, y, RW, RH);
+        const bs2 = fdx ? band(r) : band(c), ln = fdx ? lean(c) : lean(r), vx = Math.round(sp * (fdx * bs2 + fdy * ln)), vy = Math.round(sp * (fdy * bs2 + fdx * ln) * (fdx ? 0.5 : 1));   // along the direction, a band's own speed; a little across, fixed
+        moshX.drawImage(moshT.canvas, clamp(x - vx, 0, W - RW), clamp(y - vy, 0, H - RH), RW, RH, x, y, RW, RH);   // (read inside the frame: a run pulling from past the edge brought in nothing, and that spread as black)
         if (p < arrive){ moshX.globalAlpha = 0.25; moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); moshX.globalAlpha = 1; }   // the new scene's changes bleeding in
       }
       moshX.imageSmoothingEnabled = true;

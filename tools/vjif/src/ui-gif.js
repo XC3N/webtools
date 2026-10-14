@@ -152,7 +152,7 @@ onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.data
 // ---- auto tab: one LFO per target ----
 let aSel = 'x';
 $('#aTgt').innerHTML = LFO_T.map(t => `<button data-v="${t[0]}" title="${t[2]}">${t[1]}</button>`).join('');
-$('#aShape').innerHTML = segHTML(SHAPES);
+$('#aShape').innerHTML = SHAPES.map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');   // (0.89: drawn, named in the tooltip)
 $('#aPer').max = PER_OPTS.length - 1;
 const lfoFmt = (t, v) => t[6] === '%' ? Math.round(v * 100) + '%' : t[6] === '×' ? (+v).toFixed(2) + '×' : (v > 0 ? '+' : '') + Math.round(v) + (t[6] === '°' ? '°' : '');
 const A_ENV = [['#aEA', 'ea', 0], ['#aED', 'ed', 4], ['#aER', 'er', 1]];   // Envelope times (ENV_OPTS), with their defaults
@@ -168,12 +168,12 @@ function syncAutoUI(g){
   const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(PER_OPTS, D.per); $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
   const gi = optIdx(GAP_OPTS, A.gap || 0); $('#aGap').value = gi; $('#aGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
-  $('#aSk').value = A.sk ?? 0.5; $('#aSk').nextElementSibling.textContent = Math.round((A.sk ?? 0.5) * 100) + '%'; $('#aHold').checked = !!A.hold;
+  $('#aSk').value = A.sk ?? 0.5; $('#aSk').nextElementSibling.textContent = Math.round((A.sk ?? 0.5) * 100) + '%'; $('#aHoldBtn').classList.toggle('on', !!A.hold); $('#aInv').classList.toggle('on', !!A.inv);
   const em = A.em || 'off'; segSet('#aEnv', em);
   A_ENV.forEach(([id, k, def]) => { const i = optIdx(ENV_OPTS, A[k] ?? def); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
   $('#aES').value = A.es ?? 0; $('#aES').nextElementSibling.textContent = Math.round((A.es ?? 0) * 100) + '%';
   document.querySelectorAll('#gPanes .aEnvF').forEach(f => f.classList.toggle('dimmed', em === 'off'));
-  ['#aShape', '#aPer', '#aGap', '#aPh', '#aSk', '#aHold', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
+  ['#aShape', '#aPer', '#aGap', '#aPh', '#aSk', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
   $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
 }
 // change the edited LFO; touching any setting switches it on
@@ -198,7 +198,7 @@ $('#aMax').addEventListener('input', e => { editLfo(A => A.max = +e.target.value
 $('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0], true, true));
 $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value, true, true));
 $('#aSk').addEventListener('input', e => editLfo(A => A.sk = +e.target.value, true, true));
-$('#aHold').addEventListener('change', e => editLfo(A => A.hold = e.target.checked));
+[['#aHoldBtn', 'hold'], ['#aInv', 'inv']].forEach(([q, k]) => $(q).addEventListener('click', () => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (!A) return; const v = !A[k]; editLfo(B => B[k] = v, true, true); }));   // toggles; Shift+click: every running LFO of this GIF
 $('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.target.value][0], true, true));
 A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0], true, true)); });
 $('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value, true, true));
@@ -215,26 +215,25 @@ const aEnvGeo = (A, cv, span) => { const d = devicePixelRatio || 1, w = cv.width
   span = span || Math.max(a + dd + 1 + r, 1) * 1.1; const X = b => b / span * w, Y = v => h - pad - v * (h - 2 * pad);
   return { span, d, w, h, pad, rs, pts: [['a', X(a), Y(1)], ['d', X(a + dd), Y(s)], ['r', X(rs + r), Y(0)]] }; };
 const aEnvOn = () => { const g = curGif(), A = g && g.lfo[aSel]; return !envSliders && A && (A.em || 'off') !== 'off' ? A : null; };
-$('#aScope').addEventListener('pointerdown', e => { const A = aEnvOn(); if (!A) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv);
-  const px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d; let best = null, bd = 14 * G.d;
-  for (const [k, x, y] of G.pts){ const q = Math.hypot(px - x, py - y); if (q < bd){ bd = q; best = k; } }
-  if (!best) return; aEnvDrag = { k: best, span: G.span }; cv.setPointerCapture(e.pointerId); });
 const AENV_SCOPE_TIP = $('#aScope').title;
-$('#aScope').addEventListener('dblclick', e => { const cv = e.currentTarget, A = aEnvOn(); if (!A) return; const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv), px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d;   // a point back to its default, as in an effect's envelope
-  const p = G.pts.find(([, x, y]) => Math.hypot(px - x, py - y) < 14 * G.d); if (!p) return;
-  editLfo(B => { if (p[0] === 'a') B.ea = 0; else if (p[0] === 'd'){ B.ed = 4; B.es = 0; } else B.er = 1; }); });
-const A_ENV_TIPS = { a: 'Attack: how long it takes to rise to full, on each pad hit. Drag sideways · double-click: 0',
-  d: 'Decay: how long it takes to fall to Sustain (sideways); Sustain: the level it rests at while the pad is held (up / down) · double-click: its default',
-  r: 'Release: the fade out after the pad is let go · double-click: its default' };
-[['#aEA', 'a'], ['#aED', 'd'], ['#aER', 'r']].forEach(([q, k]) => { $(q).closest('.field').title = A_ENV_TIPS[k].replace(/ Drag sideways ·.*| \(sideways\).*| · double-click.*/, ''); });
+const envNear = t => ENV_OPTS.reduce((p, o) => Math.abs(o[0] - t) < Math.abs(p[0] - t) ? o : p)[0];   // a time in beats, on the envelope steps
+const envName = v => ENV_OPTS[optIdx(ENV_OPTS, v)][1];
+const aEnvEd = envEditor($('#aScope'), {   // GIF › Auto › Envelope as a graph (0.89: the shared editor)
+  on: () => !!aEnvOn(),
+  pts: () => aEnvGeo(aEnvOn(), $('#aScope'), aEnvDrag && aEnvDrag.span).pts,
+  reach: () => 14 * (devicePixelRatio || 1),
+  begin: k => { aEnvDrag = { k, span: aEnvGeo(aEnvOn(), $('#aScope')).span }; },
+  move: (k, px, py) => { const G = aEnvGeo(aEnvOn(), $('#aScope'), aEnvDrag.span), b = px / G.w * G.span, v = clamp(1 - (py - G.pad) / (G.h - 2 * G.pad), 0, 1);
+    editLfo(A => { if (k === 'a') A.ea = envNear(b); else if (k === 'd'){ A.ed = envNear(b - (A.ea ?? 0)); A.es = Math.round(v * 20) / 20; } else A.er = envNear(b - G.rs); }); },
+  end: () => { aEnvDrag = null; },
+  reset: k => editLfo(B => { if (k === 'a') B.ea = 0; else if (k === 'd'){ B.ed = 4; B.es = 0; } else B.er = 1; }),
+  tip: { a: envTip('a', ', on each pad hit'), d: envTip('d', ' while the pad is held'), r: envTip('r', ', once the pad is let go') },
+  label: k => { const A = aEnvOn(); return k === 'a' ? `Attack ${envName(A.ea ?? 0)}` : k === 'd' ? `Decay ${envName(A.ed ?? 4)} · Sustain ${Math.round((A.es ?? 0) * 100)}%` : `Release ${envName(A.er ?? 1)}`; },
+  idle: () => AENV_SCOPE_TIP,
+  redraw: () => { const g = curGif(); if (g) drawLfoScope(g); },
+});
+[['#aEA', 'a'], ['#aED', 'd'], ['#aER', 'r']].forEach(([q, k]) => { $(q).closest('.field').title = ENV_WORDS[k]; });
 $('#aES').closest('.field').title = 'Sustain: the level it rests at while the pad is held, after Decay';
-$('#aScope').addEventListener('pointermove', e => { const cv = e.currentTarget, A = aEnvOn();
-  if (!aEnvDrag){ const k = A && (() => { const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv), px = (e.clientX - r.left) * G.d, py = (e.clientY - r.top) * G.d; const p = G.pts.find(([, x, y]) => Math.hypot(px - x, py - y) < 14 * G.d); return p && p[0]; })();
-    cv.style.cursor = k ? 'grab' : ''; cv.title = k ? A_ENV_TIPS[k] : A ? 'Drag a point · double-click: its default' : AENV_SCOPE_TIP; return; }   // the same explanations as an effect's envelope
-  if (!A) return; const r = cv.getBoundingClientRect(), G = aEnvGeo(A, cv, aEnvDrag.span), b = (e.clientX - r.left) * G.d / G.w * G.span, v = clamp(1 - ((e.clientY - r.top) * G.d - G.pad) / (G.h - 2 * G.pad), 0, 1);
-  const near = t => ENV_OPTS.reduce((p, o) => Math.abs(o[0] - t) < Math.abs(p[0] - t) ? o : p)[0];
-  editLfo(A => { if (aEnvDrag.k === 'a') A.ea = near(b); else if (aEnvDrag.k === 'd'){ A.ed = near(b - (A.ea ?? 0)); A.es = Math.round(v * 20) / 20; } else A.er = near(b - G.rs); }); });
-$('#aScope').addEventListener('pointerup', () => { aEnvDrag = null; });
 $('#aResetAll').addEventListener('click', () => { const g = curGif(); if (!g) return; const n = LFO_T.filter(t => g.lfo[t[0]] && g.lfo[t[0]].on).length; g.lfo = {}; syncAutoUI(g); syncXfUI(); toast2(n ? `Automation off (${n} LFO${n > 1 ? 's' : ''} reset)` : 'No automation to reset'); });
 $('#aReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.lfo[aSel]; syncAutoUI(g); syncXfUI(); });
 
@@ -272,18 +271,39 @@ function drawLfoScope(g){
     const P = aEnvOn(); if (P){ const G = aEnvGeo(A, $('#aScope'), aEnvDrag && aEnvDrag.span);
       if (A.em === 'depth'){ x.save(); x.strokeStyle = TC.env; x.globalAlpha = 0.45; x.setLineDash([3 * d, 3 * d]); x.lineWidth = d; x.beginPath();   // LFO depth: the envelope itself, dashed, so its points sit on a line (the solid trace is the LFO it scales)
         for (let i = 0; i <= 160; i++){ const u = i / 160 * G.span, px = u / G.span * G.w, py = G.h - G.pad - lfoEnv(A, sh, u) * (G.h - 2 * G.pad); i ? x.lineTo(px, py) : x.moveTo(px, py); }
-        x.stroke(); x.restore(); } for (const [k, px, py] of G.pts){ x.fillStyle = aEnvDrag && aEnvDrag.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); } }   // graph: its points
+        x.stroke(); x.restore(); } aEnvEd.draw(x, d); }   // graph: its points (the shared editor)
     if (hit >= 0 && hit < span) scopeDot(x, hit / span * w, y(val(hit, { hitBeat: 0, relBeat: c.relBeat === null ? null : (c.relBeat ?? c.hitBeat) - c.hitBeat })), d);
     return;
   }
   const y = scopeTrace(x, w, h, d, u => lfoShape(A, lfoPosT(A, t + (u - 0.75) * 2 * L), seed), A.on);   // two cycles (with their gaps), now at 3/4
   scopeDot(x, w * 0.75, y(lfoShape(A, lfoPosT(A, t), seed)), d);
 }
+// GIF › Play › Trigger's graph: Fade in, Hold (when it's a time) and Fade out drag like an effect's envelope points (0.89)
+let tEnvGeo = null, tEnvDrag = null;
+const T_ENV_WORDS = { a: 'Fade in: how long the GIF takes to appear on a hit', h: 'Hold: how long it stays fully on', r: 'Fade out: how long it takes to disappear' };
+const tEnvEd = envEditor($('#tScope'), {
+  on: () => { const g = curGif(); return !!(g && g.trig === 'fade' && tEnvGeo && tEnvGeo.g === g); },
+  pts: () => { const G = tEnvGeo, X = b => b / G.span * G.w; return [['a', X(G.a), G.top], ...(G.editH ? [['h', X(G.a + G.hold), G.top]] : []), ['r', X(G.a + G.hold + G.r), G.bot]]; },
+  reach: () => 14 * (devicePixelRatio || 1),
+  begin: k => { tEnvDrag = { k, span: tEnvGeo.span }; },
+  move: (k, px) => { const g = curGif(), G = tEnvGeo; if (!g || !G) return; const b = px / G.w * G.span;
+    if (k === 'a') g.env.a = envNear(b); else if (k === 'h') g.env.h = envNear(b - G.a); else g.env.r = envNear(b - G.a - G.hold);
+    syncTrigSliders(g); },
+  end: () => { tEnvDrag = null; commit(); },
+  reset: k => { const g = curGif(); if (!g) return; const D = { a: 3, h: 4, r: 5 }; g.env[k] = ENV_OPTS[D[k]][0]; syncTrigSliders(g); commit(); },   // (the sliders' own defaults)
+  tip: { a: T_ENV_WORDS.a + ' · drag · double-click: its default', h: T_ENV_WORDS.h + ' · drag · double-click: its default', r: T_ENV_WORDS.r + ' · drag · double-click: its default' },
+  label: k => { const g = curGif(); return k === 'a' ? `Fade in ${envName(g.env.a)}` : k === 'h' ? `Hold ${envName(g.env.h)}` : `Fade out ${envName(g.env.r)}`; },
+  idle: () => 'Envelope: fade in, hold, fade out — the dot follows the last hit',
+  redraw: () => { const g = curGif(); if (g) drawEnvScope(g); },
+});
+function syncTrigSliders(g){ ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; }); }
 function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
-  const E = g.env, T = envTimes(g), c = clipOf(selPad), hold = E.gate ? Math.max(E.h, 1) : T.h, span = Math.max(T.a + hold + T.r, 0.5) * 1.1;
+  const E = g.env, T = envTimes(g), c = clipOf(selPad), hold = E.gate ? Math.max(E.h, 1) : T.h, span = tEnvDrag ? tEnvDrag.span : Math.max(T.a + hold + T.r, 0.5) * 1.1;   // (held steady while a point is dragged)
   const shape = { env: { t0: 0, from: 0, rel: E.gate ? T.a + hold : null, noGate: false } };   // (T: the times as played, One play shrinks the fades)
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
+  tEnvGeo = { g, span, w, a: T.a, hold, r: T.r, top: y(1), bot: y(0), editH: !E.gate && E.len !== 'gif' };   // for the points (0.89: they drag, like the other envelopes)
+  tEnvEd.draw(x, d);
   if (g.trig === 'fade' && c && c.env){
     const lv = envLevel(c, g, clock.beat); let t = clock.beat - c.env.t0;
     if (E.gate && !c.env.noGate){ const rs = T.a + hold;   // Hit › Hold: the graph keeps its shape; while the pad is held the dot waits where the fade out starts,
@@ -385,7 +405,7 @@ $('#shCol').addEventListener('input', e => { const g = curGif(); if (!g) return;
 const gFold = new Set(Prefs.json('vjif-gfold', []));
 document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=colour] > .sub, #gPanes [data-pane=auto] > .sub[data-fold]').forEach(s => {
   const t = s.querySelector('span'), name = t.textContent.trim(); s.classList.add('foldable');
-  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub') && !n.classList.contains('scope') && !n.classList.contains('gbot'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };   // (a scope stays: it ends the section)
+  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub') && !n.classList.contains('scope') && !n.classList.contains('gbot') && !n.classList.contains('nofold'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };   // (a scope stays: it ends the section)
   t.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
   apply();
 });

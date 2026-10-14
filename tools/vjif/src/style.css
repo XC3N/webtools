@@ -461,8 +461,8 @@ input[type=color].sw{width:26px;height:20px;padding:0;flex:none;border:1px solid
 
 #fxSizeSeg.one{flex:none;width:auto;justify-self:start}#fxSizeSeg.one button{width:30px}   /* Shake › Edges: one icon toggle */
 svg.fxic{width:13px;height:13px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}   /* effect icons (0.87.3) */
-.fxp .fi{position:absolute;right:6px;bottom:5px;color:var(--faint);line-height:0;pointer-events:none}.fxp.on .fi,.fxp.sel .fi{color:var(--muted)}
-#fxPre .fxp .n.ics{display:flex;gap:5px;align-items:center;height:13px;color:var(--sig)}
+.fxp .fi{position:absolute;right:6px;bottom:5px;color:var(--faint);line-height:0;pointer-events:none}.fxp.sel .fi{color:var(--muted)}.fxp.on .fi{color:var(--sigtxt);opacity:.85}   /* lit: the same ink as its name (0.89) */
+#fxPre .fxp .n.ics{display:flex;gap:5px;align-items:center;height:13px;margin-bottom:4px;color:var(--sig)}#fxPre .fxp.on .n.ics{color:var(--sigtxt)}   /* (0.89: room under the icons) */
 #fxName svg.fxic{width:12px;height:12px;vertical-align:-2px;margin-right:5px}
 #fxStrip .fxp .s{padding-right:15px}   /* room for the icon */
 
@@ -477,3 +477,13 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #maskBar .mpop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:40px;height:150px;box-shadow:0 6px 18px #0009}#maskBar .mpop[hidden]{display:none}
 #maskBar .mpop input{position:absolute;left:50%;top:44%;width:110px;height:22px;margin:0;transform:translate(-50%,-50%) rotate(-90deg);cursor:ns-resize}#maskBar .mpop output{position:absolute;left:0;right:0;bottom:5px;text-align:center;font:400 10px var(--mono);color:var(--lcd-ink)}
 .clips .bgslot{display:inline-grid;place-items:center;flex:0 1 44px;min-width:18px;height:38px;box-sizing:border-box;border:1px dashed var(--edge);border-radius:var(--r);color:var(--faint);font:400 16px var(--mono);cursor:pointer;flex:none}.clips .bgslot:hover{color:var(--ink);border-color:var(--muted)}   /* Background's empty slots (0.88) */
+#helpPanel .modalBox{width:min(820px,94vw);padding-top:0}#helpPanel .modalBox>h2,#helpPanel #helpQ{position:sticky;z-index:2;background:var(--panel)}#helpPanel .modalBox>h2{top:0;margin:0;padding:18px 0 8px}#helpPanel #helpQ{top:52px;margin:0;box-shadow:0 8px 8px -2px var(--panel)}   /* the title and the search stay on top while the list scrolls (0.89) */
+#helpPanel .keys{grid-template-columns:190px minmax(0,1fr)}   /* every description starts at the same place, in every section */
+#fxSizeRow.onerow{grid-template-columns:minmax(0,1fr) auto!important}#fxSizeRow.onerow>label{text-align:right;justify-self:end}#fxSizeRow.onerow>#fxSizeSeg{grid-column:2;grid-row:1}   /* Shake › Edges: the word against its button (0.89) */
+#gSmoothRow{margin-top:10px;padding-top:8px;border-top:1px solid var(--edge)}   /* Smooth scaling: no section, after the last one (folding Shadow doesn't hide it) */
+#poolBtn.drop{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}   /* files over the Pool button: they go to the pool */
+.layer.masking>#maskBar{align-content:start}#maskBar .mpop{width:54px}#maskBar .mpop output{font-size:10px;white-space:nowrap}   /* 0.89: one row; the pop-up wide enough for "400 px" */
+#layers .clips>.chip,#layers .clips>.bgslot{flex:0 0 calc((100% - 15px) / 6);min-width:0;width:auto}   /* six to a row, filled or empty, always the same size (0.89) */
+.shaperow{display:flex;gap:4px;min-width:0}.shaperow>.seg{flex:1;display:grid;grid-template-columns:repeat(6,1fr)}.shaperow>.seg button{padding:0}.shaperow>.iconbtn{flex:none;width:26px}.shaperow>.iconbtn.on{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}   /* LFO shapes drawn, then Invert and Hold (0.89) */
+.chip.fxchip{background:var(--panel-2);display:grid;place-items:center}.chip.fxchip>i{display:flex;gap:2px;color:var(--sig);font-style:normal}.chip.fxchip>i svg.fxic{width:12px;height:12px}   /* an effect / preset being dragged (0.89) */
+#maskBar .mrow>.seg{flex:0 0 66px;grid-auto-columns:22px}#maskBar .mrow>.seg button{padding:0}#maskBar .iconbtn,#maskBar .icontog{width:22px}   /* the three drawing tools keep their size on the one row */

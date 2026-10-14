@@ -45,7 +45,7 @@ $('#musLoop').classList.toggle('on', mus.el.loop);
 $('#musEject').addEventListener('click', () => $('#musFile').click());
 $('#musStop').addEventListener('click', () => { mus.el.pause(); mus.el.currentTime = 0; musUI(); });
 $('#musVolBtn').addEventListener('click', e => { e.stopPropagation(); $('#musVolPop').hidden = !$('#musVolPop').hidden; });
-document.addEventListener('pointerdown', e => { if (!$('#musVolPop').hidden && !e.target.closest('.volwrap')) $('#musVolPop').hidden = true; });
+document.addEventListener('pointerdown', e => { if (!$('#musVolPop').hidden && !(e.target.closest && e.target.closest('.volwrap') && e.target.closest('.volwrap').contains($('#musVolPop')))) $('#musVolPop').hidden = true; });   // (a press anywhere else, other pop-up sliders included, closes it)
 $('#musSync').addEventListener('change', musSave);
 $('#musFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) musSet(f, f.name); });
 $('#musUrl').addEventListener('keydown', e => { if (e.key !== 'Enter') return; const u = e.target.value.trim(); if (!u) return;

@@ -158,7 +158,7 @@ function applyGifSettings(g, saved){
   if (typeof name === 'string' && name) g.name = name;   // its own name (Alt+click renames), else the file's
   Object.assign(g, Object.fromEntries(Object.entries(rest).filter(([k]) => GIF_KEYS.includes(k))));
   if (key) Object.assign(g.key, key); if (hsv) Object.assign(g.hsv, hsv); if (env) Object.assign(g.env, env);
-  if (lfo){ g.lfo = JSON.parse(JSON.stringify(lfo)); for (const k in g.lfo){ const A = g.lfo[k]; if (A && A.shape === 'pulse'){ A.shape = 'square'; A.sk = 0.25; } } }   // Pulse (before 0.88) = Square with Skew 25%
+  if (lfo){ g.lfo = JSON.parse(JSON.stringify(lfo)); for (const k in g.lfo){ const A = g.lfo[k]; if (A && A.shape === 'pulse'){ A.shape = 'square'; A.sk = 0.25; } if (A && A.shape === 'down'){ A.shape = 'up'; A.inv = !A.inv; } } }   // Pulse (before 0.88) = Square with Skew 25%; Ramp ↓ (before 0.89) = Ramp inverted
   if (g.sync === 'restart'){ g.sync = 'free'; g.restart = g.beats; }   // pre-v0.9 sets
   if (g.restart === undefined) g.restart = 0;
   if (g.loop === 'once'){ g.loop = 'loop'; if (g.trig !== 'fade'){ g.trig = 'fade'; Object.assign(g.env, { a: 0, r: 0, gate: false, len: 'gif' }); } }   // Once (before 0.83): now a One shot of one play

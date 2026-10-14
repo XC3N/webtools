@@ -19,10 +19,8 @@ function fxDropMark(cp){
   const t = d.lastE && document.elementFromPoint(d.lastE.clientX, d.lastE.clientY), o = t && t.closest('#fxPre .fxp');
   // Ctrl over a preset with effects: held there COPY_HOLD ms (the red bar fills), the drop replaces it
   const full = pre && d.copy && o && +o.dataset.i !== d.i && !preEmpty(+o.dataset.i - NFX);
-  if (full){ if (!d.hold || d.hold.o !== o){ clearTimeout(d.hold && d.hold.T); d.hold = { o, at: performance.now(), T: setTimeout(() => fxDropMark(d.copy), COPY_HOLD + 20) }; } } else if (d.hold){ clearTimeout(d.hold.T); d.hold = null; }
-  const armed = !!d.hold && performance.now() - d.hold.at >= COPY_HOLD; d.armed = armed;
-  document.querySelectorAll('#fxPre .fxp').forEach(x => { x.classList.toggle('holding', !!d.hold && x === o && !armed); x.classList.toggle('armed', armed && x === o);
-    x.classList.toggle('drop', x === o && (!pre || (+x.dataset.i !== d.i && (!d.copy || preEmpty(+x.dataset.i - NFX) || armed)))); });
+  const armed = copyHold(d, o, full, () => fxDropMark(d.copy));
+  markTiles(document.querySelectorAll('#fxPre .fxp'), o, d, x => !pre || (+x.dataset.i !== d.i && (!d.copy || preEmpty(+x.dataset.i - NFX) || armed)));
 }
 addEventListener('keydown', e => { if (fxDrag && DEL_KEYS.includes(e.key)) fxDropMark(true); });
 addEventListener('keyup', e => { if (fxDrag && DEL_KEYS.includes(e.key)) fxDropMark(false); });
@@ -32,7 +30,10 @@ function movePre(a, b, copy, over = false){
   selFx = NFX + b; syncFxUI();
 }
 function addPreFx(k, i){ fxPre[k].fx[i] = fxEntry(i); selFx = NFX + k; syncFxUI(); toast2(`${FXP_LABELS[k]}: ${fxPreName(fxPre[k])}`); }
-function fxGhost(i){ const el = document.createElement('span'); el.className = 'fxghost'; el.textContent = i < NFX ? FX_DEFS[i].name : 'Preset ' + (i - NFX + 1); ghost.show(el); }
+// what you carry: a slanted chip like a pad's (0.89), with the effect's icon, or the preset's icons
+function fxGhost(i){ const el = document.createElement('span'); el.className = 'chip fxchip';
+  const ids = i < NFX ? [i] : Object.keys(fxPre[i - NFX].fx).map(Number);
+  el.innerHTML = `<span>${i < NFX ? FX_LABELS[i] : FXP_LABELS[i - NFX]}</span><i>${ids.map(k => fxIcon(FX_DEFS[k].id)).join('') || '·'}</i>`; ghost.show(el); }
 function wireFxTile(el){
   const i = +el.dataset.i;
   el.addEventListener('pointerdown', e => {
@@ -52,7 +53,7 @@ function wireFxTile(el){
     if (i >= NFX) heldPre = i - NFX;   // holding a preset tile: F keys edit it; dragging it moves / copies it
   });
   el.addEventListener('pointermove', e => {
-    if (!fxDrag || fxDrag.i !== i) return;
+    if (!fxDrag || fxDrag.i !== i || fxDrag.cancel) return;
     if (!fxDrag.moved && Math.hypot(e.clientX - fxDrag.x, e.clientY - fxDrag.y) > 6){ fxDrag.moved = true; clearTimeout(fxDrag.timer); if (i >= NFX) heldPre = -1; if (fxDrag.fired){ for (const k in fxSt[i]) delete fxSt[i][k]; Object.assign(fxSt[i], fxDrag.was); } document.body.classList.add('fxdragging'); fxGhost(i); }   // a drag leaves the effect as it was: the press is undone
     if (fxDrag.moved){ ghost.move(e.clientX, e.clientY); fxDrag.lastE = e; fxDropMark(isDel(e)); }
   });
@@ -61,11 +62,11 @@ function wireFxTile(el){
     if (fxDrag && fxDrag.i === i && !fxDrag.moved){ clearTimeout(fxDrag.timer); if (!fxDrag.fired) fxDown(i); }   // let go before it played: a click
     if (!(fxDrag && fxDrag.i === i && fxDrag.moved)) fxUp(i); if (i >= NFX && heldPre === i - NFX) heldPre = -1;
     if (fxDrag && fxDrag.i === i && fxDrag.moved){
-      const t = document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp'), cp = fxDrag.copy;
+      const t = fxDrag.cancel ? null : document.elementFromPoint(e.clientX, e.clientY), d = t && t.closest('#fxPre .fxp'), cp = fxDrag.copy;   // (cancelled by a right click: dropped nowhere)
       if (d && i < NFX) addPreFx(+d.dataset.i - NFX, i);
       else if (d && +d.dataset.i !== i){ movePre(i - NFX, +d.dataset.i - NFX, cp, !!fxDrag.armed); if (cp) hushDel(); }
-      if (fxDrag.hold) clearTimeout(fxDrag.hold.T);
-      document.querySelectorAll('#fxPre .fxp').forEach(x => x.classList.remove('drop', 'holding', 'armed')); document.body.classList.remove('fxdragging', 'precopy');
+      copyHoldEnd(fxDrag);
+      unmarkTiles(document.querySelectorAll('#fxPre .fxp')); document.body.classList.remove('fxdragging', 'precopy');
     }
     if (fxDrag && fxDrag.moved) ghost.hide();
     fxDrag = null;
@@ -207,7 +208,7 @@ function syncFxUI(){
     $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }
     const za = sizeAlt(d, C.style || d.styles[0][0], C); $('#fxSizeRow label').textContent = za ? za.label : 'Size';
     $('#fxSizeSeg').hidden = !(za && za.seg); $('#fxSize').hidden = $('#fxSize').nextElementSibling.hidden = !!(za && za.seg);   // a few fixed choices: a switch instead of the slider
-    $('#fxSizeSeg').classList.toggle('one', !!(za && za.toggle));
+    $('#fxSizeSeg').classList.toggle('one', !!(za && za.toggle)); $('#fxSizeRow').classList.toggle('onerow', !!(za && za.toggle));   // one toggle: its label right-aligned against it
     if (za && za.toggle){ const on = (C[za.key] ?? za.def) !== 0; setHTML($('#fxSizeSeg'), `<button data-v="${on ? 0 : 2}" class="${on ? 'on' : ''}" title="${za.title()}">${za.icon}</button>`); }   // one toggle: the button carries the value a click sets
     else if (za && za.seg){ setHTML($('#fxSizeSeg'), za.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxSizeSeg', String(C[za.key] ?? za.def)); }
     if (za){ const L = za.list, ai = optIdx(L, C[za.key] ?? za.def); $('#fxSize').max = L.length - 1; $('#fxSize').value = ai; $('#fxSize').nextElementSibling.textContent = L[ai][1];
@@ -257,10 +258,6 @@ $('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); 
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
 const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
-const ENV_TIPS = { a: 'Attack: how long it takes to rise to full. Drag sideways · double-click: 0',
-  d: 'Decay: how long it takes to fall to Sustain (sideways); Sustain: the level it rests at (up / down) · double-click: 0 and 100%',
-  l: 'Gate (Hit only): how long it stays at Sustain, as if the key were held · double-click: 0',
-  r: 'Release: the fade out after the Gate, or after letting go of Hold / switching off Latch · double-click: its default' };
 const envZoom = new WeakMap();   // per envelope: how many steps the graph's width shows
 const envGeo = (C, w, h, d) => {
   const ia = optIdx(FX_ATTS, C.att || 0), id = optIdx(FX_ATTS, C.dec || 0), il = optIdx(FX_LENS, C.len || 0), ir = optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode));
@@ -272,7 +269,7 @@ const envGeo = (C, w, h, d) => {
   const x0 = 7 * d, xA = x0 + (ia ? base + ia * u : 0), xD = xA + base + id * u, xL = xD + (hit ? base + il * u : base + 6 * u * 0.5), xR = xL + base + ir * u;
   return { ia, id, il, ir, base, u, top, bot, ys, x0, xA, xD, xL, xR, hit, sus };
 };
-let fxEnvDrag = null, fxEnvHover = null;
+let fxEnvDrag = null, fxEnvEd = null;   // fxEnvDrag: { k, u } while a point is dragged (the steps keep their width)
 function drawFxEnv(){
   const cv = $('#fxEnv'); if (!cv) return; const S = scopeCtx(cv); if (!S) return; const [x, w, h, d] = S;
   const C = fxEnvConf(); if (!C) return;
@@ -286,46 +283,35 @@ function drawFxEnv(){
   if (!G.hit){ x.stroke(); x.setLineDash([3 * d, 3 * d]); x.beginPath(); x.moveTo(G.xD, G.ys); x.lineTo(G.xL, G.ys); x.stroke(); x.setLineDash([]); x.beginPath(); x.moveTo(G.xL, G.ys); x.lineTo(G.xR, G.bot); }
   else { x.lineTo(G.xL, G.ys); for (let k = 1; k <= 12; k++){ const q = k / 12; x.lineTo(G.xL + (G.xR - G.xL) * q, G.bot - (G.bot - G.ys) * (1 - q) * (1 - q)); } }
   x.stroke();
-  const pts = [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]];
-  for (const [k, px, py] of pts){ x.fillStyle = fxEnvDrag && fxEnvDrag.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); }
-  const lab = `A ${FX_ATTS[G.ia][1]} · D ${FX_ATTS[G.id][1]} · S ${Math.round(G.sus * 100)}%${G.hit ? ' · G ' + FX_LENS[G.il][1] : ''} · R ${FX_RELS[G.ir][1]}`;
-  const k = fxEnvDrag ? fxEnvDrag.k : fxEnvHover;      // the value of the point under the pointer, next to it
-  if (k){ const P = pts.find(p => p[0] === k); if (P){
-    const t = k === 'a' ? `Attack ${FX_ATTS[G.ia][1]}` : k === 'd' ? `Decay ${FX_ATTS[G.id][1]} · Sustain ${Math.round(G.sus * 100)}%` : k === 'l' ? `Gate ${FX_LENS[G.il][1]}` : `Release ${FX_RELS[G.ir][1]}`;
-    x.font = `600 ${10 * d}px ui-monospace, monospace`; const tw = x.measureText(t).width + 8 * d, tx = clamp(P[1] + 6 * d, 2 * d, w - tw - 2 * d), ty = 3 * d;
-    x.fillStyle = 'rgba(0,0,0,.75)'; x.fillRect(tx, ty, tw, 13 * d); x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText(t, tx + 4 * d, ty + 10 * d); } }
-  const tip = !k ? 'Drag a point · double-click: its default' : ENV_TIPS[k];   // the hovered point's own explanation
-  if (cv.title !== tip) cv.title = tip;
+  if (fxEnvEd) fxEnvEd.draw(x, d);                  // its points, and the value of the one under the pointer (the shared editor)
   const lv = selFx < NFX || preEd == null ? fxLevel(selFx, clock.beat) : 0;   // where it is now
   if (lv > 0.001){ x.fillStyle = '#fff'; x.fillRect(w - 5 * d, G.bot - (G.bot - G.top) * lv, 3 * d, (G.bot - G.top) * lv); }
 }
 const fxEnvConf = () => fxConf(selFx);              // the envelope belongs to the effect / preset (not to one effect inside a preset)
-$('#fxEnv').addEventListener('pointerdown', e => {
-  const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
-  const px = (e.clientX - r.left) / r.width * cv.width, py = (e.clientY - r.top) / r.height * cv.height, G = envGeo(C, cv.width, cv.height, d);
-  const pts = [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]];
-  let best = null; for (const p of pts){ const dd = Math.abs(p[1] - px) + Math.abs(p[2] - py) * 0.3; if (!best || dd < best.dd) best = { k: p[0], dd }; }
-  fxEnvDrag = { k: best.k, u: G.u }; cv.setPointerCapture(e.pointerId); envPrevStart(); fxEnvMove(e);
-});
-function fxEnvMove(e){
-  if (!fxEnvDrag) return; const C = fxEnvConf(); if (!C) return; const cv = $('#fxEnv'), r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
-  const px = (e.clientX - r.left) / r.width * cv.width, py = (e.clientY - r.top) / r.height * cv.height, G = envGeo(C, cv.width, cv.height, d);
+function fxEnvMove(k, px, py){
+  const C = fxEnvConf(); if (!C) return; const cv = $('#fxEnv'), d = devicePixelRatio || 1, G = envGeo(C, cv.width, cv.height, d);
   const idx = (from, n) => clamp(Math.round((px - from - G.base) / G.u), 0, n);
-  if (fxEnvDrag.k === 'a') C.att = FX_ATTS[px - G.x0 < G.base / 2 ? 0 : idx(G.x0, FX_ATTS.length - 1)][0];
-  else if (fxEnvDrag.k === 'd'){ C.dec = FX_ATTS[idx(G.xA, FX_ATTS.length - 1)][0]; C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; }
-  else if (fxEnvDrag.k === 'l') C.len = FX_LENS[idx(G.xD, FX_LENS.length - 1)][0];
+  if (k === 'a') C.att = FX_ATTS[px - G.x0 < G.base / 2 ? 0 : idx(G.x0, FX_ATTS.length - 1)][0];
+  else if (k === 'd'){ C.dec = FX_ATTS[idx(G.xA, FX_ATTS.length - 1)][0]; C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; }
+  else if (k === 'l') C.len = FX_LENS[idx(G.xD, FX_LENS.length - 1)][0];
   else C.rel = FX_RELS[idx(G.xL, FX_RELS.length - 1)][0];
   // the dragged point would leave the box: zoom out now (not on letting go), keeping the steps steady from here on
-  const G2 = envGeo(C, cv.width, cv.height, d), xk = { a: G2.xA, d: G2.xD, l: G2.xL, r: G2.xR }[fxEnvDrag.k];
+  const G2 = envGeo(C, cv.width, cv.height, d), xk = { a: G2.xA, d: G2.xD, l: G2.xL, r: G2.xR }[k];
   if (G2.xR > cv.width - 6 * d || xk > cv.width - 6 * d){ fxEnvDrag.u = 0; envZoom.delete(C); fxEnvDrag.u = envGeo(C, cv.width, cv.height, d).u; }
-  envPrevChanged(C); drawFxEnv(); paintFxPads(clock.beat);
+  envPrevChanged(C); paintFxPads(clock.beat);
 }
-$('#fxEnv').addEventListener('pointermove', e => { if (fxEnvDrag) return fxEnvMove(e);
-  const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
-  const k = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
-  if (k !== fxEnvHover){ fxEnvHover = k; drawFxEnv(); } });
-$('#fxEnv').addEventListener('pointerleave', () => { fxEnvHover = null; drawFxEnv(); });
-$('#fxEnv').addEventListener('pointerup', () => { fxEnvDrag = null; envPrevStop(); drawFxEnv(); });
+fxEnvEd = envEditor($('#fxEnv'), {
+  on: () => !!fxEnvConf(),
+  pts: () => { const C = fxEnvConf(), cv = $('#fxEnv'), G = envGeo(C, cv.width, cv.height, devicePixelRatio || 1); return [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]]; },
+  begin: k => { const C = fxEnvConf(), cv = $('#fxEnv'); fxEnvDrag = { k, u: envGeo(C, cv.width, cv.height, devicePixelRatio || 1).u }; envPrevStart(); },
+  move: fxEnvMove,
+  end: () => { fxEnvDrag = null; envPrevStop(); },
+  reset: k => { const C = fxEnvConf(); if (k === 'a') C.att = 0; else if (k === 'd'){ C.dec = 0; C.sus = 1; } else if (k === 'l') C.len = fxLenDef(C.mode); else C.rel = fxRelDef(C.mode); },
+  tip: { a: envTip('a'), d: envTip('d'), l: envTip('l'), r: envTip('r', ', after the Gate, or after letting go of Hold / switching off Latch') },
+  label: k => { const C = fxEnvConf(), sus = C.sus ?? 1; return k === 'a' ? `Attack ${FX_ATTS[optIdx(FX_ATTS, C.att || 0)][1]}` : k === 'd' ? `Decay ${FX_ATTS[optIdx(FX_ATTS, C.dec || 0)][1]} · Sustain ${Math.round(sus * 100)}%`
+    : k === 'l' ? `Gate ${FX_LENS[optIdx(FX_LENS, C.len || 0)][1]}` : `Release ${FX_RELS[optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode))][1]}`; },
+  redraw: () => drawFxEnv(),
+});
 // preview while editing: the envelope plays as a hit, over and over, restarting when a value changes
 let envPrevOn = Prefs.get('vjif-envprev') !== '0';
 let envSliders = Prefs.get('vjif-envview') === 'sl';
@@ -364,12 +350,7 @@ $('#fxEnvSl').addEventListener('input', e => { const el = e.target, C = fxEnvCon
   envPrevChanged(C); syncEnvSl(); drawFxEnv(); paintFxPads(clock.beat); });
 $('#fxEnvSl').addEventListener('change', envPrevStop);
 syncEnvTg();
-document.querySelectorAll('#fxEnvSl input').forEach(el => { el.closest('.sl').title = { a: 'Attack: how long it takes to rise to full', d: 'Decay: how long it takes to fall to Sustain', s: 'Sustain: the level it rests at after Decay', l: 'Gate (Hit only): how long it stays at Sustain', r: 'Release: the fade out at the end' }[el.dataset.k]; });
-$('#fxEnv').addEventListener('dblclick', e => {   // a point back to its default
-  const C = fxEnvConf(); if (!C) return; const cv = e.currentTarget, r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, px = (e.clientX - r.left) / r.width * cv.width, G = envGeo(C, cv.width, cv.height, d);
-  const near = [['a', G.xA], ['d', G.xD], ...(G.hit ? [['l', G.xL]] : []), ['r', G.xR]].reduce((a, b) => Math.abs(b[1] - px) < Math.abs(a[1] - px) ? b : a)[0];
-  if (near === 'a') C.att = 0; else if (near === 'd'){ C.dec = 0; C.sus = 1; } else if (near === 'l') C.len = fxLenDef(C.mode); else C.rel = fxRelDef(C.mode);
-  drawFxEnv(); });
+document.querySelectorAll('#fxEnvSl input').forEach(el => { el.closest('.sl').title = { a: ENV_WORDS.a, d: 'Decay: how long it takes to fall to Sustain', s: 'Sustain: the level it rests at after Decay', l: ENV_WORDS.l, r: ENV_WORDS.r }[el.dataset.k]; });
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
 onSeg($('#fxRateSeg'), b => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ X[alt.key] = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxSizeSeg'), b => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za){ X[za.key] = +b.dataset.v; syncFxUI(); } });

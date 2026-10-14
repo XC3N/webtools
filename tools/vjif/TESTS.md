@@ -96,11 +96,11 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {ji9c5cqlzozra079aeix} **Scramble from the centre** (0.73) — Glitch › Scramble with a growing Amount: blocks grow from the middle, not towards a corner.
 - [x] {g8ly5v6hm5rljvfab49h} **Scene over pads** (0.73) — drag a scene tile over the pads: no dotted outline, nothing happens on drop.
 - [x] {ocv7fifdfkezjtcdvqtn} **Dragging an effect leaves it alone** (0.77) — drag an effect tile (to a preset, or off and back): an effect that was off never flashes on, a latched one stays on; a click still plays it.
-- [ ] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75, 0.83) — GIF › Auto › Envelope: LFO depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Bypass LFO on Zoom: a punch per hit (Attack 0, Decay 1/4). The graph / sliders button: as a graph, drag the three points; Reset: back to the defaults.
+- [x] {6ehia9scebhs8gx0dtj6} **LFO envelope** (0.75, 0.83) — GIF › Auto › Envelope: LFO depth on a Sine X LFO: each hit swings then fades back; hold the key with Sustain up: it keeps swinging until you let go. Bypass LFO on Zoom: a punch per hit (Attack 0, Decay 1/4). The graph / sliders button: as a graph, drag the three points; Reset: back to the defaults.
 - [ ] {xmehpujfql2w83hija9t} **GIF panel layout** (0.83) — Play: a Loop section first (Direction: Forward / Ping-pong, no Once); the frame readout under the graph, below a line; no Clear pad. Transform has Smooth scaling. Key: the swatch next to Colour, the size of a Swap swatch.
 - [x] {dcj3sonof2h69okdkxtd} **Swap colours Clear** (0.83) — select a swatch, Clear: nothing stays selected; the section's switch turns the swaps off and on.
 - [x] {4y29yh1hhph1ii4ma6x1} **Text preset name** (0.83) — Text › Preset: pick one: its name stays in the menu; edit the text later: still there.
-- [ ] {sr1ri9phf2p3eyg1ozhe} **Section switches** (0.80, click fixed 0.83) — GIF › Play / Colour: each section's switch, clicked with the mouse, turns it off without losing its settings (Frames: every frame; Adjust, Palette, Swaps: skipped); a slider touched turns it back on.
+- [x] {sr1ri9phf2p3eyg1ozhe} **Section switches** (0.80, click fixed 0.83) — GIF › Play / Colour: each section's switch, clicked with the mouse, turns it off without losing its settings (Frames: every frame; Adjust, Palette, Swaps: skipped); a slider touched turns it back on.
 - [x] {8y575napbddy9c5nf7e2} **Resets on the heading line** (0.80) — fold Transform / Adjust / Key: Reset (Key: Pick + Clear) still there and works.
 - [ ] {7fdu5ql2eznd4hr8idda} **Palette dots** (0.82, switch 0.85) — Colour › Palette, Game Boy: the third slot reads Dots: Off / 2 px / 10 px; 2 px: the picture as an LCD grid, thin light gaps between the dots. CGA 1: the slot is an empty grey box.
 - [x] {qgbns6zmu4031jfa599t} **ZX Spectrum palette** (0.82) — Colour › Palette (and GIF › Colour › Palette): ZX Spectrum is last in the list; its 15 colours, plain and bright.
@@ -109,7 +109,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {fw9lb94n3j9s503v250y} **Click to select** (0.86) — two GIFs overlapping: click in the transparent part of one's box: it's selected (the one with pixels nearest wins); click again on the same spot: the other.
 - [x] {ni93cxo0i9rh1k2o6vco} **Swap off / on** (0.86) — Display › Swap colours: click a swap's original colour: that swap stops (row dimmed), click again: back.
 - [ ] {twgegdfw6biw7gt5pj41} **Shake overscan** (0.86) — Shake, the third slot: Overscan Off: the frame edges show while it shakes; Full: they never do.
-- [ ] {87xkaenk1bq0qgqgjmb9} **Transform changed mark** (0.86, 0.87.3) — flip, tile, fit or fade a GIF: Transform's heading arrow lights; moving, sizing, turning or cropping it in the preview doesn't; Reset: it goes back.
+- [x] {87xkaenk1bq0qgqgjmb9} **Transform changed mark** (0.86, 0.87.3) — flip, tile, fit or fade a GIF: Transform's heading arrow lights; moving, sizing, turning or cropping it in the preview doesn't; Reset: it goes back.
 - [ ] {bw9g3s4h7fb2l1ae1ojq} **TV channel cut** (0.87) — Transitions › TV › Channel: the number stays its Number time, then just goes (no fade); it looks a bit sharper.
 - [ ] {pcq6tnrfwf0jpv5b0o8w} **Game Boy dots** (0.87) — Colour › Palette, a Game Boy palette: the Dither row reads Dots (Off / 2 px / 10 px); a CGA palette: Dither again.
 - [ ] {ggx5qrhygt0300zkrh0p} **Palette order** (0.87) — Colour › Palette slider and GIF › Display palette list run by year: CGA… ZX, C64, NES, EGA, GB; an older set keeps its palette.
@@ -141,10 +141,23 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {heatcbcvh54qpa5vdhcg} **Mask icons** (0.88) — paint a mask: two rows of icons, Size / Soft pop up a slider, the GIF chips don't cover anything.
 - [ ] {v75e07o2ljcld577pbn7} **Top bar** (0.88) — at 1600 and 1280 px wide the top bar is one line; ?, full screen and ⚙ sit together at the right.
 - [ ] {y6v6misj41rz0w7fqm1i} **Short help** (0.88) — ? : one line per entry; search still finds blackout.
+- [ ] {qgg1s7r1n9io567xdbsc} **Envelope graphs** (0.89) — effect envelope, GIF › Auto envelope and GIF › Play › Trigger graph: hover a point (tip, value beside it), drag, double-click (default) — the same feel on all three.
+- [ ] {v5avbb3xw31ifu1n4add} **Trigger graph** (0.89) — One shot: drag Fade in / Hold / Fade out on the graph; the sliders follow; Ctrl+Z undoes.
+- [ ] {kjennnot8w73z7jy5l2j} **Scene drag** (0.89) — drag a scene onto another: swaps; Ctrl+drag onto an empty one: copies; onto a full one: hold until the bar fills.
+- [ ] {be6wrghacadzhl54uwt0} **Right-click cancel** (0.89) — while moving a GIF in the preview (or dragging a pad, scene or preset), right-click: it goes back / nothing happens.
+- [ ] {xhnlm015tzj8bp59ud7j} **Background to pad** (0.89) — drag a Background slot's chip onto an empty Scene pad: it's now on that pad, the slot is empty.
+- [ ] {pwz0h0804jlore3mw38h} **No bad targets** (0.89) — drag an Overlay chip over Midground: no drop target shows.
+- [ ] {dw0okfznda09rm27m6vq} **Shapes** (0.89) — Auto: shape icons; Ramp + Invert = falling ramp; Shift+click Hold: all running LFOs.
+- [ ] {gz47sgbkxtep7vr4whu8} **Dot Matrix LCD** (0.89) — Colour › Palette › GB, Dot Matrix: grid with faint shadows, grain in the light areas, slow dots (ghosting) on moving GIFs.
+- [ ] {u8p9if679fvwlo1a46hn} **Corrupt streaks** (0.89) — Transition Glitch › Corrupt: streams one way, no swirl.
+- [ ] {9bwmnotc36yw7orzyiey} **Picker hop** (0.89) — Display › Swap colours: change one colour, then click another: the picker moves to it.
+- [ ] {9f7glkwz0pmwppos4xxw} **Mask row** (0.89) — mask painting: one row of icons, no Done; the mask button ends it.
+- [ ] {rhg365xt6djer5fxuu8b} **Pool drop** (0.89) — drop a file from the desktop on the Pool button: it's added to the pool, no pad.
+- [ ] {q6q2sdwabbp74ns52da0} **Help top** (0.89) — ? : scroll the list; the title and search stay put; columns aligned.
 - [x] {0g5bim1rd8zzry16be4s} **Emptied scene comes back** (0.79, 0.81, name 0.84, 0.85) — name a scene, select it, empty it (×): its name goes too (with Settings › Interface › Permanent scene names on: it stays); go to another scene, Ctrl+Z: the emptied scene's tile shows its picture and name again.
 - [x] {4ulb8padwhpii6z6g25q} **Channel switched mid-transition** (0.81) — a Palette latched, TV › Channel: switch scene again before the number is gone: the snow and the new number keep their own colours, no palette on them.
 - [x] {r71mg79hp3mhx0fvj3d3} **Glitch transition styles** (0.84) — transitions: Glitch has Slices, Blocks and Corrupt (no Scramble).
-- [ ] {ua33ly01a08mz2zq2e7d} **Stutter › Ramp repeats** (0.81) — the slider row reads Repeats: 8 = the new scene flashes in 8 times, faster and faster (1/2 bar or longer for the 1/32 grid).
+- [x] {ua33ly01a08mz2zq2e7d} **Stutter › Ramp repeats** (0.81) — the slider row reads Repeats: 8 = the new scene flashes in 8 times, faster and faster (1/2 bar or longer for the 1/32 grid).
 - [x] {q9ht8c8dz2xaq87rczen} **Dip / Flash hold, Blackout fade** (0.81, 0.84) — Fade › Dip: the slider row reads Hold; 50% = half the length all black, then the new scene fades in. Settings › Interface › Blackout 1 s: hold 0: the output fades to black over a second, and back when let go.
 - [x] {wyr6y8vriz85mhh8o5uc} **Hit › Hold** (0.81, graph 0.83) — GIF › Play › Trigger › Hit: Loop / Hold / One shot. Hold: hidden until hit, fades in while the pad is held, out when let go (the old Gate switch). Hold a pad: the dot waits where the fade out starts, then runs down it when you let go (the graph keeps its shape).
 - [x] {jaynivxj9t3eg7c1b0oq} **Preset tiles say what they do** (0.81, names 0.84) — an effect preset with Colour › Palette CGA 3: its tile reads Colour / CGA 3; with Flip + Pixel: the styles on the second line. Alt+click a preset: type a name, Enter: the tile shows it. Alt+click a pad (or Alt + its key): rename its GIF.
@@ -154,7 +167,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {e2unhzisreav5qtiykow} **Glitch › Corrupt looks digital** (0.81) — F10 › Corrupt: the smeared blocks move in whole-pixel steps, sharp, no soft analogue drift.
 - [x] {2q5ovua4n4d57ky23c92} **Crunch vs Pixel** (0.81, Size 0.84) — Glitch › Crunch keeps the detail in bands and the colour bleeds in bigger blocks; Pixel is flat blocks. Crunch's Size is its block size (8 px: small JPEG-like blocks).
 - [x] {z3nn98qy05fsovfh9j46} **One shot fade in** (0.79) — Snap Bar, One shot with Fade in 1/16 or 1/8: the fade in shows on every hit, also hits just after the bar; the scope matches.
-- [ ] {jmfzwwsc1irpkbzmnqyv} **× to delete** (0.79) — hover a pad, a scene, a preset: × deletes it (Ctrl+Z back); Settings › Interface › Ctrl+click to delete only hides them; pad layers next to the key, preset mode next to its number.
+- [x] {jmfzwwsc1irpkbzmnqyv} **× to delete** (0.79) — hover a pad, a scene, a preset: × deletes it (Ctrl+Z back); Settings › Interface › Ctrl+click to delete only hides them; pad layers next to the key, preset mode next to its number.
 - [x] {j77v227xl0hjqb61x0bn} **One shot banner** (0.79) — a marquee text pad, Trigger One shot, Length One play, fades 0: a hit sends it once across the screen, then it's gone.
 - [ ] {g1} **Learn colour** (0.79) — MIDI learn: the learn colour is the theme's signal at the opposite hue, readable in every theme.
 - [x] {e7jlnjm4knt9j0f65o3a} **Effect pads regrouped** (0.78) — F1–F4 Mono Colour Posterize Strobe · F5–F8 Zoom Shake Wobble Mirror · F9–F12 Pixel Glitch CRT Feedback; an older set opens with every effect where it belongs (presets, latched effects, MIDI, defaults).

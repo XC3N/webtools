@@ -9,7 +9,7 @@ function buildLayers(){
       <span class="lname" title="Click the card, PgUp / PgDn or Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
       ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
       <button class="llock iconbtn" title="Lock: the mouse can't select, move or resize this layer's GIFs in the preview (clicks go through to the layers below). The Transform panel and the arrow keys still work"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor" stroke="none"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg></button>
-      <button class="lmask iconbtn" title="Mask: paint where this layer is hidden (freehand, rectangles, ellipses; right button erases), or Invert to show only what's painted. One per layer in each scene"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="1.5"/><circle cx="8" cy="8" r="3.4" fill="currentColor" stroke="none"/></svg></button>
+      <button class="lmask iconbtn" title="Mask: paint where this layer is hidden (freehand, rectangles, ellipses; right button erases), or Invert to show only what's painted. One per layer in each scene · click again (or Esc) when you're done"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="1.5"/><circle cx="8" cy="8" r="3.4" fill="currentColor" stroke="none"/></svg></button>
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
       <div class="lrow">      <select class="lbl" title="Layer blend mode. Mask: cut out — this layer's GIFs cut holes in the layers below it (they show black); Mask: keep inside — only what's under this layer's GIFs stays of the layers below">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
       <span class="lopw"><input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity"></span>
@@ -44,10 +44,10 @@ function buildLayers(){
     const clipsEl = row.querySelector('.clips');
     clipsEl.addEventListener('dragstart', e => {
       const chip = e.target.closest('.chip'); if (!chip) return;
-      e.dataTransfer.setData(CLIP_MIME, `${li}:${chip.dataset.id}`); e.dataTransfer.effectAllowed = 'copyMove';
+      e.dataTransfer.setData(CLIP_MIME, `${li}:${chip.dataset.id}`); e.dataTransfer.effectAllowed = 'copyMove'; chipDrag = { li, pad: +chip.dataset.pad };
       chip.classList.add('dragging'); e.dataTransfer.setDragImage(NO_IMG, 0, 0); ghost.chip(+chip.dataset.pad, e.clientX, e.clientY, LCOL[li]);   // in its layer's colour
     });
-    clipsEl.addEventListener('dragend', e => { const chip = e.target.closest('.chip'); if (chip) chip.classList.remove('dragging');
+    clipsEl.addEventListener('dragend', e => { chipDrag = null; const chip = e.target.closest('.chip'); if (chip) chip.classList.remove('dragging');
       layers.forEach(l => { l.row.classList.remove('dropzone'); l.row.querySelectorAll('.insL,.insR').forEach(c => c.classList.remove('insL', 'insR')); }); });
     // where a dragged chip would land: a gap in the chip row (0 = far left = on top), shown as a bar
     const gapAt = e => {
@@ -70,6 +70,7 @@ function buildLayers(){
     }
     row.addEventListener('dragover', e => {
       if (!e.dataTransfer.types.includes(CLIP_MIME)) return;
+      if (chipDrag && chipDrag.li !== li && !layerTakes(li, chipDrag.pad)){ e.dataTransfer.dropEffect = 'none'; row.classList.remove('dropzone'); return; }   // a layer that doesn't take it isn't a target at all (0.89)
       e.preventDefault(); e.dataTransfer.dropEffect = 'move';
       layers.forEach(l => l.row.classList.toggle('dropzone', l === L));
       showGap(e);
@@ -86,6 +87,7 @@ function buildLayers(){
   }
 }
 const CLIP_MIME = 'application/x-gifvj-clip';
+let chipDrag = null;   // the chip being dragged: { li, pad } (dragover can't read the drag's data)
 const LROLE = ['Background: its own 6 slots in each scene, they just play (no keys)', 'Midground: the Scene pads', 'Foreground: the Scene pads', 'Overlay: the Global pads, the same in every scene'];   // (0.88)
 const layerRule = (li, p) => li === GLOBAL_LAYER ? 'Overlay plays the Global pads (RTY FGH VBN) only' : li === BG_LAYER ? 'Background plays its own 6 slots: drop a GIF from the pool or a pad on its card' : isGlobalPad(p) ? 'Global pads stay on Overlay' : 'Background slots stay on Background';
 function moveClip(sli, sid, dli, at){
@@ -301,6 +303,21 @@ pv.addEventListener('pointermove', e => {
   syncXfUI();
 });
 pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.style.cursor = 'grab'; drag = null; commit(); });
+// a right click during a drag cancels it (0.89): the preview's move / size / turn / crop put back as they were, a carried pad dropped nowhere
+pv.addEventListener('pointerdown', () => { if (drag && !drag.orig && drag.c) drag.orig = Object.fromEntries(XF_KEYS.map(k => [k, drag.c[k]])); });   // (after the handler above made the drag)
+let dragCancelT = 0;
+function cancelDrags(){
+  let any = false;
+  if (drag && drag.c){ if (drag.orig) Object.assign(drag.c, drag.orig); drag = null; pv.style.cursor = ''; syncXfUI(); redraw.all = true; any = true; }
+  if (padDrag && padDrag.moved){ const i = padDrag.i; padDragEnd(null, i); any = true; }
+  if (scDrag && scDrag.moved){ scDragStop(null); any = true; }
+  if (fxDrag && fxDrag.moved && !fxDrag.cancel){ fxDrag.cancel = true; copyHoldEnd(fxDrag); unmarkTiles(document.querySelectorAll('#fxPre .fxp')); ghost.hide(); any = true; }
+  if (any){ dragCancelT = performance.now(); toast2('Cancelled'); }
+  return any;
+}
+addEventListener('pointermove', e => { if (e.buttons & 2) cancelDrags(); }, true);   // the right button pressed while the left one is held arrives as a move
+addEventListener('pointerdown', e => { if (e.button === 2 && cancelDrags()) e.stopPropagation(); }, true);
+addEventListener('contextmenu', e => { if (performance.now() - dragCancelT < 800 || cancelDrags()){ e.preventDefault(); e.stopPropagation(); } }, true);
 // preview tools: guides, stick, ghosts (per browser)
 const pvSave = () => { Prefs.setJson('vjif-pvopt', pvOpt); redraw.all = true; };
 const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', !!pvOpt.guides[b.dataset.g])); $('#guideGrp').classList.toggle('ghidden', !!pvOpt.gHide); $('#guideEye').classList.toggle('on', !pvOpt.gHide && anyGuide());

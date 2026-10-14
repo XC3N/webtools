@@ -23,12 +23,11 @@ async def main():
     await m.move(*t); await m.down(); await m.move(t[0]+15,t[1],steps=3); await m.move(*t3,steps=5); await m.up(); await pg.wait_for_timeout(100)
     r2=await pg.evaluate("[Object.keys(fxPre[1].fx), Object.keys(fxPre[2].fx)]")
     # scenes: synthetic drag scene 0 (live) to scene 1 with ctrl
-    r3=await pg.evaluate("""(() => { const s0=$('#scenes .scene[data-i="0"]'), s1=$('#scenes .scene[data-i="1"]'); const dt=new DataTransfer();
-      s0.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:dt}));
-      s1.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:dt,ctrlKey:true}));
-      const cls=$('#scenes').classList.contains('copying');
-      s1.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:dt,ctrlKey:true}));
-      return [cls, sceneCount(1), scenePads(1), sceneIdx]; })()""")
-    print(st, r1, r2, r3, errs)
+    # 0.89: scenes drag like pads (pointer): Ctrl held while dragging scene 1 onto scene 2 copies it
+    s0=await c('#scenes .scene[data-i="0"]'); s1=await c('#scenes .scene[data-i="1"]')
+    await m.move(*s0); await m.down(); await m.move(s0[0]+15,s0[1],steps=3); await pg.keyboard.down('Control'); await m.move(*s1,steps=5)
+    cls=await pg.evaluate("$('#scenes').classList.contains('copying')"); await m.up(); await pg.keyboard.up('Control'); await pg.wait_for_timeout(100)
+    r3=await pg.evaluate(f"[{'true' if cls else 'false'}, sceneCount(1), scenePads(1), sceneIdx]")
+    print(st, r1, r2, r3, errs); assert r3 == [True, 1, 1, 0], r3   # 0.89: scenes drag with the pointer; Ctrl copies
     await b.close()
 asyncio.run(main())

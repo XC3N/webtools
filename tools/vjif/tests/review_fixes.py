@@ -9,7 +9,7 @@ async def main():
     await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()")
     bad = []
     r = await pg.evaluate("""(() => { const s0 = $('#scenes .scene[data-i="4"]'), s1 = $('#scenes .scene[data-i="5"]'), dt = new DataTransfer();
-      s0.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt })); s1.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt, ctrlKey: true }));
+      sceneDrop(4, 5, true, false);   /* 0.89: the drop itself (scenes drag with the pointer now) */
       try { gotoScene(5, clock.beat, true); gotoScene(0, clock.beat, true); return sceneIdx === 0 } catch (e) { return String(e) } })()""")
     if r is not True: bad.append(f'empty scene copy: {r}')
     r = await pg.evaluate("(async () => { try { await loadUrlInto('http://127.0.0.1:9/100%.gif', 3); return true } catch (e) { return String(e) } })()")

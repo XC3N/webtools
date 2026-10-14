@@ -4,6 +4,40 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.89.0 — 2026-10-14
+
+### Under the hood
+- One envelope editor behind the three graphs (an effect's envelope, GIF › Auto's, GIF › Play › Trigger's): the same nearest-point grab, hover tip, value shown beside the point, double-click to its default, and the same words in the tips.
+- One drag routine for pads, scenes and effect presets: the slanted chip under the pointer, Ctrl to copy, the hold-to-replace bar over a full one.
+
+### Pads, scenes & layers
+- Scenes drag like pads (no more browser drag): the chip follows the pointer; Ctrl+drag copies, held over a full scene until its bar fills replaces it.
+- Effects and presets carry a chip with their icons while dragged.
+- A right click during a drag cancels it (moving / sizing / turning / cropping in the preview, pads, scenes, presets).
+- Background: filled and empty slots are the same size (every layer's chips are a sixth of the card). A slot's chip dragged onto a pad becomes that pad's GIF (and leaves Background).
+- A chip can't be dragged onto a layer that won't take it (no target shows) instead of being refused after the drop.
+- Overlay's faded-out one-shot ghosts only show while you edit Overlay.
+- Files or links dropped on the Pool button go into the pool only.
+
+### GIFs
+- Trigger's graph is editable: drag Fade in, Hold (when it's a time) and Fade out, like an effect's envelope.
+- Auto: shapes drawn (Sine, Triangle, Ramp, Square, Random, Drift; Ramp ↓ is Ramp with Invert — older sets convert); Invert and Hold are icon toggles beside them; Shift+click either sets it on every running LFO of the GIF.
+- Smooth scaling has no section again: its own line after the last one (folding Shadow doesn't hide it).
+- Key region icons: All a transparency checkerboard, Edges a frame round a hollow square, Wand with its sparkles further out. The pick buttons are a proper eyedropper.
+- The colour picker moved on to the next colour after a change only if nothing had changed: after a change it closed instead. It now always moves to the colour you press.
+
+### Effects
+- Colour › Palette › Dot Matrix looks more like the Game Boy's LCD: the gaps show the backing with each dot's faint shadow down-right of it, the backing's fine grain shows in the light areas, and the dots are slow (a change ghosts over a few frames).
+- Glitch › Corrupt transition: the mosh streams one way (the transition's direction), each row of runs at its own speed — no more swirl.
+- Shake › Edges: the word sits against its button. Effect icons on a lit pad use the pad's text colour; preset icons have room under them.
+
+### Layers
+- Mask tools on one row; no Done (the layer's mask button again, or Esc, ends painting); Clear is a reset icon; the Size / Soft pop-ups fit "400 px".
+
+### Interface
+- Keys & mouse: the title and search stay on top while the list scrolls; every description starts at the same place; a wider box.
+- Opening another pop-up slider closes the music volume.
+
 ## 0.88.0 — 2026-10-13
 
 ### Pads & scenes

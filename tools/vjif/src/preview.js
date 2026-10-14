@@ -26,7 +26,7 @@ const safeLines = () => pvOpt.gHide || !pvOpt.guides.safe || format === '9:16' ?
 const anyGuide = () => !pvOpt.gHide && Object.values(pvOpt.guides).some(Boolean);
 function ghostList(){
   const out = []; if (!pvOpt.ghosts) return out;
-  for (const L of layers){ if (!L.on) continue; for (const c of L.clips){ const g = pads[c.pad].gif; if (g && g.trig === 'fade' && !(envLevel(c, g, clock.beat) > 0)) out.push([c, g]); } }
+  for (const L of layers){ if (!L.on || (L.i === GLOBAL_LAYER && target !== GLOBAL_LAYER)) continue; for (const c of L.clips){ const g = pads[c.pad].gif; if (g && g.trig === 'fade' && !(envLevel(c, g, clock.beat) > 0)) out.push([c, g]); } }   // (Overlay's one-shots only while you edit Overlay: they're everywhere, 0.89)
   return out;
 }
 const ghostCv = document.createElement('canvas'), gctx = ghostCv.getContext('2d');

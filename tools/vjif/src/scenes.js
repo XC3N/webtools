@@ -95,7 +95,7 @@ const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers 
 const scenePads = i => (i === sceneIdx ? scenePadGifs() : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
 function renderScenes(){
   const box = $('#scenes');
-  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}" draggable="true"><span class="k">${i + 1}</span><span class="xdel" title="Empty this scene (Ctrl+Z brings it back)">×</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
+  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}"><span class="k">${i + 1}</span><span class="xdel" title="Empty this scene (Ctrl+Z brings it back)">×</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
   [...box.children].forEach((b, i) => {
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n); b.classList.toggle('blank', !n && !np);
@@ -107,7 +107,7 @@ function renderScenes(){
     b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
   });
 }
-$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit')) return; const b = e.target.closest('.scene'); if (!b) return;
+$('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit') || performance.now() - scDragEnd < 300) return; const b = e.target.closest('.scene'); if (!b) return;
   if (e.target.closest('.xdel')){ emptySceneAt(+b.dataset.i); return; }   // its ×
   if (e.altKey && !e.ctrlKey && !e.metaKey){ const i = +b.dataset.i; nameEdit(b, sceneName(i), `Scene ${i + 1}`, v => setSceneName(i, v)); return; }   // Alt+click: name it (as right-click does)
   isRm(e) ? emptySceneAt(+b.dataset.i) : isDel(e) ? null : sceneKey(+b.dataset.i); });   // Ctrl+click: empty it
@@ -186,54 +186,62 @@ $('#scenes').addEventListener('contextmenu', e => {
   const i = +b.dataset.i; nameEdit(b, sceneName(i), `Scene ${i + 1}`, v => setSceneName(i, v));
 });
 // drag a scene onto another: they swap places (the playing one keeps playing, under its new number); hold Ctrl (⌘)
-// while dragging to copy it instead, onto an empty scene (the empty ones show a +)
-const SCENE_MIME = 'application/x-vjif-scene';
-$('#scenes').addEventListener('dragstart', e => { const b = e.target.closest('.scene'); if (!b) return; e.dataTransfer.setData(SCENE_MIME, b.dataset.i); e.dataTransfer.effectAllowed = 'copyMove';
-  e.dataTransfer.setDragImage(NO_IMG, 0, 0);
-  const g = document.createElement('span'); g.className = 'chip scghost'; g.innerHTML = `<span>${+b.dataset.i + 1}</span>`; g.style.backgroundImage = b.style.backgroundImage;
-  ghost.show(g, e.clientX, e.clientY); });
-const gifDrag = e => e.dataTransfer.types.includes('Files') || e.dataTransfer.types.includes(POOL_MIME);   // a file, or a GIF from the pool
-$('#scenes').addEventListener('dragover', e => {
-  if (gifDrag(e) && !e.dataTransfer.types.includes(SCENE_MIME)){ const b = e.target.closest('.scene'); if (!b) return;
-    e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy';
-    document.querySelectorAll('#scenes .scene').forEach(x => x.classList.toggle('drop', x === b)); return; }
-  if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
-  e.preventDefault(); e.stopPropagation(); const cp = isDel(e); e.dataTransfer.dropEffect = cp ? 'copy' : 'move'; $('#scenes').classList.toggle('copying', cp);
-  const b = e.target.closest('.scene'), full = b && !b.classList.contains('blank');
-  // Ctrl over a scene that isn't empty: held there COPY_HOLD ms (the red bar fills), the drop replaces it
-  if (cp && full){ if (!scHold || scHold.b !== b){ scHold = { b, at: performance.now() }; } } else scHold = null;
-  const armed = !!scHold && performance.now() - scHold.at >= COPY_HOLD;
-  document.querySelectorAll('#scenes .scene').forEach(x => { x.classList.toggle('holding', !!scHold && x === b && !armed); x.classList.toggle('armed', armed && x === b);
-    x.classList.toggle('drop', x === b && (!cp || !full || armed)); });
-});
-let scHold = null; const COPY_HOLD = 1200;            // Ctrl+drag onto a scene / preset that isn't empty: held this long, the drop replaces it
-const scHoldOff = () => { scHold = null; document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('holding', 'armed')); };
-$('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)){ scHoldOff(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); } });
-$('#scenes').addEventListener('drop', e => {
-  if (gifDrag(e) && !e.dataTransfer.types.includes(SCENE_MIME)){   // GIFs dropped on a scene: onto its first empty pads
-    const b = e.target.closest('.scene'); if (!b) return;
-    e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop'));
-    const si = +b.dataset.i, ph = e.dataTransfer.getData(POOL_MIME);
-    if (ph){ const m = pool.find(m => m.hash === ph), d = nextEmptyIn(si); if (!m) return; if (d < 0) return toast(`Scene ${si + 1}'s 9 Scene pads are full`);
-      putMedia(m, d, si); renderPool(); if (si !== sceneIdx) toast2(`${m.name} → scene ${si + 1}, pad ${PAD_LABELS[d]}`); return; }
-    const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
-    if (files.length) loadFilesToScene(files, si); return;
-  }
-  if (!e.dataTransfer.types.includes(SCENE_MIME)) return;
-  e.preventDefault(); e.stopPropagation(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying');
-  const b = e.target.closest('.scene'); if (!b) return;
-  const a = +e.dataTransfer.getData(SCENE_MIME), t = +b.dataset.i, armed = !!scHold && scHold.b === b && performance.now() - scHold.at >= COPY_HOLD; scHoldOff();
-  if (isDel(e)){ hushDel(); if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy');
-    if (sceneCount(t) || scenePads(t)){                // onto a scene with something in it: only after holding there (one undo step)
+// while dragging to copy it instead, onto an empty scene, or held over a full one until its bar fills, over it.
+// 0.89: dragged like a pad (the pointer, the slanted chip, a right click cancels), with the same hold-to-replace (tiledrag.js)
+const SCENE_MIME = 'application/x-vjif-scene';   // (no longer a browser drag: kept so drops elsewhere can still tell it isn't a GIF)
+let scDrag = null, scDragEnd = 0;
+const scTiles = () => [...document.querySelectorAll('#scenes .scene')];
+const scFull = t => !!(sceneCount(t) || scenePads(t));
+function scDragMark(){
+  const d = scDrag; if (!d || !d.moved) return; const o = d.lastE && document.elementFromPoint(d.lastE.clientX, d.lastE.clientY), b = o && o.closest('#scenes .scene'), t = b ? +b.dataset.i : -1;
+  $('#scenes').classList.toggle('copying', d.copy);
+  copyHold(d, b, d.copy && b && t !== d.i && scFull(t), scDragMark);
+  markTiles(scTiles(), b, d, x => +x.dataset.i !== d.i && (!d.copy || !scFull(+x.dataset.i) || d.armed));
+}
+$('#scenes').addEventListener('pointerdown', e => { const b = e.target.closest('.scene'); if (e.button || !b || e.altKey || e.target.closest('.xdel, .nmEdit') || isRm(e)) return;
+  scDrag = { i: +b.dataset.i, x: e.clientX, y: e.clientY, moved: false, copy: isDel(e), b }; b.setPointerCapture(e.pointerId); });
+$('#scenes').addEventListener('pointermove', e => { const d = scDrag; if (!d) return;
+  if (!d.moved){ if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) return; d.moved = true; document.body.classList.add('scdragging');
+    const g = document.createElement('span'); g.className = 'chip scghost'; g.innerHTML = `<span>${d.i + 1}</span>`; g.style.backgroundImage = d.b.style.backgroundImage; ghost.show(g, e.clientX, e.clientY); }
+  ghost.move(e.clientX, e.clientY); d.lastE = e; d.copy = isDel(e); scDragMark(); });
+function scDragStop(drop){
+  const d = scDrag; scDrag = null; if (!d) return; copyHoldEnd(d); unmarkTiles(scTiles()); $('#scenes').classList.remove('copying'); document.body.classList.remove('scdragging');
+  if (!d.moved) return; ghost.hide(); scDragEnd = performance.now();   // (the click that follows isn't a click on the scene)
+  if (!drop) return; const o = document.elementFromPoint(drop.clientX, drop.clientY), b = o && o.closest('#scenes .scene'); if (!b) return;
+  sceneDrop(d.i, +b.dataset.i, isDel(drop), !!d.armed);
+}
+$('#scenes').addEventListener('pointerup', e => scDragStop(e));
+$('#scenes').addEventListener('pointercancel', () => scDragStop(null));
+addEventListener('keydown', e => { if (scDrag && DEL_KEYS.includes(e.key)){ scDrag.copy = true; scDragMark(); } });
+addEventListener('keyup', e => { if (scDrag && DEL_KEYS.includes(e.key)){ scDrag.copy = false; scDragMark(); } });
+function sceneDrop(a, t, copy, armed){
+  if (copy){ hushDel(); if (a === t) return; if (!sceneCount(a) && !scenePads(a)) return toast('That scene is empty: nothing to copy');
+    if (scFull(t)){                                     // onto a scene with something in it: only after holding there (one undo step)
       if (!armed) return toast(`Scene ${t + 1} isn't empty: hold over it until the bar fills, then drop, to replace it`);
       const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads, thumb: cp.thumb } };
-      commit(); applyScn(E); pushStep(E); hist.cur = histState(); updHistUI(); renderScenes(); toast2(`Scene ${a + 1} copied over ${t + 1} — Ctrl+Z brings it back`); return; } if (t === sceneIdx){ const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads } };   // into the scene you're on: it fills in place (one undo step)
+      commit(); applyScn(E); pushStep(E); hist.cur = histState(); updHistUI(); renderScenes(); toast2(`Scene ${a + 1} copied over ${t + 1} — Ctrl+Z brings it back`); return; }
+    if (t === sceneIdx){ const cp = sceneCopy(a), E = { kind: 'scn', sid: sceneIds[t], data: { layers: cp.layers, pads: cp.pads } };   // into the scene you're on: it fills in place (one undo step)
       commit(); applyScn(E); pushStep(E); hist.cur = histState(); updHistUI(); }
     else scenes[t] = sceneCopy(a);
     renderScenes(); toast2(`Scene ${a + 1} copied to ${t + 1}`); return; }
-  swapScenes(a, t);
+  if (a !== t) swapScenes(a, t);
+}
+// GIFs from the pool or files dropped on a scene tile (a browser drag): onto that scene's first empty pads
+const gifDrag = e => e.dataTransfer.types.includes('Files') || e.dataTransfer.types.includes(POOL_MIME);   // a file, or a GIF from the pool
+$('#scenes').addEventListener('dragover', e => {
+  if (!gifDrag(e)) return; const b = e.target.closest('.scene'); if (!b) return;
+  e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy';
+  scTiles().forEach(x => x.classList.toggle('drop', x === b)); });
+$('#scenes').addEventListener('dragleave', e => { if (!$('#scenes').contains(e.relatedTarget)) scTiles().forEach(x => x.classList.remove('drop')); });
+$('#scenes').addEventListener('drop', e => {
+  if (!gifDrag(e)) return; const b = e.target.closest('.scene'); if (!b) return;
+  e.preventDefault(); e.stopPropagation(); scTiles().forEach(x => x.classList.remove('drop'));
+  const si = +b.dataset.i, ph = e.dataTransfer.getData(POOL_MIME);
+  if (ph){ const m = pool.find(m => m.hash === ph), d = nextEmptyIn(si); if (!m) return; if (d < 0) return toast(`Scene ${si + 1}'s 9 Scene pads are full`);
+    putMedia(m, d, si); renderPool(); if (si !== sceneIdx) toast2(`${m.name} → scene ${si + 1}, pad ${PAD_LABELS[d]}`); return; }
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
+  if (files.length) loadFilesToScene(files, si);
 });
-$('#scenes').addEventListener('dragend', () => { scHoldOff(); document.querySelectorAll('#scenes .scene').forEach(x => x.classList.remove('drop')); $('#scenes').classList.remove('copying'); });
 function swapScenes(a, b){
   if (a === b || !(a >= 0 && b >= 0)) return;
   const map = i => i === a ? b : i === b ? a : i;

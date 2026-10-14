@@ -110,7 +110,7 @@ $('#maskSoft').addEventListener('input', e => { maskOpt.soft = +e.target.value; 
 $('#maskInv').addEventListener('change', e => { const L = layers[maskEd.li]; if (L.mask) L.mask = maskWith(L.mask, { inv: e.target.checked }); else { const m = maskNew(null, { inv: e.target.checked }); m.url = m.cv.toDataURL('image/png'); L.mask = m; } maskRev++; redraw.all = true; syncLayerUI(); });
 $('#maskOn').addEventListener('change', e => { const L = layers[maskEd.li]; if (L.mask){ L.mask = maskWith(L.mask, { on: e.target.checked }); maskRev++; redraw.all = true; syncLayerUI(); } });
 $('#maskClear').addEventListener('click', () => { const L = layers[maskEd.li]; if (!L.mask) return; L.mask = null; maskRev++; redraw.all = true; syncMaskUI(); syncLayerUI(); toast2(`${LNAMES[maskEd.li]}: mask cleared — Ctrl+Z brings it back`); });
-$('#maskDone').addEventListener('click', maskClose);
+// (0.89: no Done button: the layer's mask button again, or Esc, ends painting)
 // the preview while painting: the mask tinted in the layer's colour, and the brush
 const maskTint = document.createElement('canvas'), maskTx = maskTint.getContext('2d');
 function drawMaskOverlay(dpr){
