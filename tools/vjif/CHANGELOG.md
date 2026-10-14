@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.89.2 — 2026-10-14
+
+### Preview
+- Dot Matrix in the preview: the gaps no longer shimmer into moiré. The preview fills the gaps with their dot's colour, scales the picture down, then draws the gaps again at its own pixel size, evenly, with the same overall tone as the output.
+- The preview scales the output down in exact halves first, so fine regular patterns (scanlines, pixel art) stay even.
+
 ## 0.89.1 — 2026-10-14
 
 ### Effects
