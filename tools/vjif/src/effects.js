@@ -807,6 +807,8 @@ function drawFrame(now){
   [format, pvOpt.gcol, pvOpt.gx, pvOpt.gy, drag && drag.snapRot ? drag.snapRot.a : null, drag && drag.snap && drag.snap.p ? drag.snap.p.join() : null, drag && drag.snap ? drag.snap.x : null, drag && drag.snap ? drag.snap.y : null, drag && drag.snap && drag.snap.line ? drag.snap.line.join() : null, target, sel && sel.id, view.w, view.h].forEach(O.add);
   for (const k of GUIDE_KEYS) O.add(!!Gd[k]); O.add(!!pvOpt.gHide);
   for (const c of L.clips){ const G = clipGeom(c); O.add('|'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }
+  O.add('hov'); O.add(pvHover ? pvHover[1].id : -1); if (pvHover && !drag){ const G = clipGeom(liveClip(pvHover[1])); if (G){ O.add(G.cx); O.add(G.cy); } }
+  { const c = selClip(), e = c && liveClip(c), G = e && e !== c && clipGeom(e); O.add('live'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }   // Auto moving the selected GIF: its live outline follows
   if (maskEd){ O.add('m'); O.add(maskEd.li); O.add(maskRev); O.add(layers[maskEd.li].mask && layers[maskEd.li].mask.mid); O.add(maskPtr ? maskPtr[0] : -1); O.add(maskPtr ? maskPtr[1] : -1); O.add(maskOpt.size); O.add(maskOpt.tool); }
   for (const [c, g] of gh){ const G = clipGeom(c); O.add(';'); [c.id, G.cx, G.cy, G.hw, G.hh, G.a, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, g.fxVer, g.startF, g.crisp].forEach(O.add); }
   if (O.changed() || force) drawOverlay(gh);
@@ -862,6 +864,9 @@ function drawOverlay(gh = ghostList()){
     const G = clipGeom(c); if (!G) continue;
     pctx.lineWidth = (c === sel ? 1.5 : 1) * dpr; pctx.setLineDash(c === sel ? [] : [5*dpr, 4*dpr]);
     pctx.globalAlpha = c === sel ? 1 : 0.6; outline(G, k);
+    if (c === sel){ const e = liveClip(c), GE = e !== c && clipGeom(e);   // Auto moves it: a dotted outline where it shows now (the box is where you edit it)
+      if (GE && (Math.abs(GE.cx - G.cx) + Math.abs(GE.cy - G.cy) + Math.abs(GE.hw - G.hw) + Math.abs(GE.hh - G.hh) + Math.abs(GE.a - G.a) > 0.5)){
+        pctx.save(); pctx.lineWidth = dpr; pctx.setLineDash([2 * dpr, 3 * dpr]); pctx.globalAlpha = 0.7; outline(GE, k); pctx.restore(); } }
     if (c === sel && !L.lock && !maskEd){   // (painting a mask: no handles)                       // (a locked layer: its frame, no handles)
       // stuck to a guide while moving: the handles (and the centre) lying on the lit line fill in the guides' colour; turning, caught: the knob
       const HK = pvOpt.gcol || '#ffd400', sn = drag && drag.c === c && drag.snap, on = (x, y) => { if (!sn) return false; const e = 0.75;
@@ -878,6 +883,8 @@ function drawOverlay(gh = ghostList()){
     }
   }
   pctx.restore();
+  if (pvHover && !drag && !maskEd && !picking){ const [hl, hc] = pvHover, G = clipGeom(liveClip(hc));   // what a press would take: its outline where it shows now
+    if (G){ pctx.save(); pctx.translate(view.x * dpr, view.y * dpr); pctx.strokeStyle = LCOL[hl]; pctx.lineWidth = 1.5 * dpr; pctx.globalAlpha = 0.9; outline(G, k); pctx.restore(); } }
   if (maskEd) drawMaskOverlay(dpr);
 }
 $('#fxFollow').classList.toggle('on', fxFollow);

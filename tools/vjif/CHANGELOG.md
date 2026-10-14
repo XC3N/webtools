@@ -4,6 +4,17 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.89.5 — 2026-10-14
+
+### Preview
+- Picking a GIF, new rules, no timing:
+  - Hovering outlines the GIF a press would take. On the selected GIF, that's the selected one; elsewhere it's the GIF you actually see at that point: how much of its colour shows there, counting its opacity (Auto, fade), its layer's opacity and blend (black adds nothing in Add / Screen), and what covers it. Where nothing shows, the GIF with the closest visible pixels.
+  - Press takes the outlined GIF and drags it at once.
+  - A click without moving on the selected GIF steps to the next GIF under the pointer; the outline shows it right away. (Before: two clicks within 1.5 s cycled, so a press meant as a drag often cycled instead.)
+  - Alt+click still cycles through everything under the pointer.
+- A large GIF that shows nothing at a point (faded out, opacity 0, a mask layer's GIF, a transparent area) no longer takes the click from the GIF you see there.
+- Auto: clicks find a GIF where Auto shows it now, not only in its box; the selected GIF gets a dotted outline at its live position.
+
 ## 0.89.4 — 2026-10-14
 
 ### Preview

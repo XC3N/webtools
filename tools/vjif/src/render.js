@@ -53,12 +53,23 @@ function framePixels(img){
   if (w * h > 4e6){ probe.canvas.width = probe.canvas.height = 1; }   // don't keep a huge scratch canvas around
   return d;
 }
-function sampleClip(c, px, py, src = false){
+// picking and hovering: one frame per GIF, read again at most every 250 ms (a hover reads on every mouse move; keeping
+// every frame of every GIF read back would grow without end, and a read per move would stall like 0.87.0's clicks did)
+const pickPx = new WeakMap();
+function pickPixels(g, img){
+  const P = pickPx.get(g), now = performance.now();
+  if (P && P.w === img.width && P.h === img.height && (P.img === img || now - P.t < 250)) return P.d;
+  const w = img.width, h = img.height; if (probe.canvas.width !== w || probe.canvas.height !== h){ probe.canvas.width = w; probe.canvas.height = h; } else probe.clearRect(0, 0, w, h);
+  probe.drawImage(img, 0, 0); const d = probe.getImageData(0, 0, w, h).data; pickPx.set(g, { img, d, w, h, t: now });
+  if (w * h > 4e6){ probe.canvas.width = probe.canvas.height = 1; }
+  return d;
+}
+function sampleClip(c, px, py, src = false, pick = false){
   const g = pads[c.pad].gif, G = clipGeom(c), [lx, ly] = toLocal(G, px, py);
   const u = (lx + G.ox) / (c.sx * (c.flipX ? -1 : 1) * G.fbw) + 0.5, v = (ly + G.oy) / (c.sy * (c.flipY ? -1 : 1) * G.fbh) + 0.5;
   const fi = frameIndex(c, g, performance.now()), img = (src ? g.src : g.frames)[fi];
   const ix = clamp(Math.floor(u * img.width), 0, img.width - 1), iy = clamp(Math.floor(v * img.height), 0, img.height - 1);
-  const px4 = framePixels(img), o = (iy * img.width + ix) * 4, d = px4.slice(o, o + 4);
+  const px4 = pick ? pickPixels(g, img) : framePixels(img), o = (iy * img.width + ix) * 4, d = px4.slice(o, o + 4);
   if (!src && liveFx() && g.frames === g.src && g.key.on && d[3]){   // apply the key to this one pixel
     const f = g.key.region !== 'all' ? (g.masks ? g.masks[fi][iy * img.width + ix] : 255) : (fxColor(d[0] | (d[1] << 8) | (d[2] << 16), fxParams(g)) / 16777216) | 0;
     d[3] = (d[3] * f / 255) | 0;
@@ -72,30 +83,44 @@ function hitsAt(px, py, opaqueOnly = true, locked = false){   // locked: a locke
   for (let li = 3; li >= 0; li--){
     const L = layers[li]; if (!L.on || L.opacity <= 0 || (L.lock && !locked)) continue;
     for (let k = L.clips.length - 1; k >= 0; k--){
-      const c = L.clips[k];
-      if (inClip(c, px, py) && (!opaqueOnly || sampleClip(c, px, py)[3] > 16)) out.push([li, c]);
+      const c = L.clips[k], e = liveClip(c);   // its box where you edit it, or the picture where automation shows it now
+      if ((inClip(c, px, py) || (e !== c && inClip(e, px, py))) && (!opaqueOnly || sampleClip(e, px, py)[3] > 16)) out.push([li, c]);
     }
   }
   return out;
 }
+// the clip as it shows this moment: Auto's position / size / turn applied (the same as frameList draws it); c itself when nothing moves it
+function liveClip(c){ const g = pads[c.pad] && pads[c.pad].gif; return g ? effClip(c, g) : c; }
 function hitAny(px, py){ return hitsAt(px, py)[0] || null; }
-// a click in the preview: every GIF whose box is under the pointer counts; the one whose own (non-transparent) pixels are
-// closest to it comes first (searched in rings out to 64 output px), ties in visual order. A second click on the same
-// spot soon after moves on to the next one (cycling through what overlaps there).
-let lastPick = null;
-function pickClip(px, py){
-  const all = hitsAt(px, py, false); if (!all.length) return null;
-  const near = c => { if (sampleClip(c, px, py)[3] > 16) return 0;
-    for (const r of [4, 8, 16, 32, 64]){ const R = r * W / view.w; for (let k = 0; k < 12; k++){ const a = k * Math.PI / 6, x = px + Math.cos(a) * R, y = py + Math.sin(a) * R;
-      if (inClip(c, x, y) && sampleClip(c, x, y)[3] > 16) return r; } }
-    return 1e3; };
-  const ranked = all.map((h, i) => [h, near(h[1]), i]).sort((a, b) => a[1] - b[1] || a[2] - b[2]).map(x => x[0]);
-  const now = performance.now(), again = lastPick && now - lastPick.t < 1500 && Math.hypot(px - lastPick.x, py - lastPick.y) < 6 * W / view.w;
-  let pick = ranked[0];
-  if (again && ranked.length > 1){ const i = ranked.findIndex(h => h[1] === lastPick.c); pick = ranked[(i + 1) % ranked.length]; }
-  lastPick = { x: px, y: py, t: now, c: pick[1] };
-  return pick;
+// ---- picking a GIF in the preview (0.89.5) ----
+// how much of the GIF shows at this point, 0..1: its pixel's alpha × its opacity now (Auto, fade) × its layer's opacity,
+// and for a lightening / darkening blend how much it changes what's below (black adds nothing to Add or Screen); a mask
+// layer's GIFs show nothing themselves
+function visAt(li, c, px, py){
+  const e = liveClip(c), L = layers[li]; if (!inClip(e, px, py) || MASK_BLENDS.has(L.blend)) return 0;
+  const d = sampleClip(e, px, py, false, true); let v = d[3] / 255 * clamp(e.alpha ?? 1, 0, 1) * L.opacity;
+  const hi = Math.max(d[0], d[1], d[2]) / 255, lo = Math.min(d[0], d[1], d[2]) / 255;
+  if (L.blend === 'lighter' || L.blend === 'screen' || L.blend === 'lighten') v *= hi; else if (L.blend === 'multiply' || L.blend === 'darken') v *= 1 - lo;
+  return v;
 }
+// every GIF under the pointer (its box, or where Auto shows it), best first: the one you see there (most of the colour at
+// that point, counting what covers it), else the one whose visible pixels are closest (rings out to 64 screen px)
+function rankAt(px, py){
+  const all = hitsAt(px, py, false); if (!all.length) return [];
+  let left = 1; const T = 0.06;
+  const rows = all.map(([li, c], i) => { const v = visAt(li, c, px, py), own = v * left; if (v > 0 && !MASK_BLENDS.has(layers[li].blend) && ['source-over', 'overlay', 'difference', 'exclusion'].includes(layers[li].blend)) left *= 1 - v;
+    let r = v > T ? 0 : 1e3;
+    if (r){ outer: for (const q of [4, 8, 16, 32, 64]){ const R = q * W / view.w; for (let k = 0; k < 12; k++){ const a = k * Math.PI / 6; if (visAt(li, c, px + Math.cos(a) * R, py + Math.sin(a) * R) > T){ r = q; break outer; } } } }
+    return { h: [li, c], r, own, i }; });
+  return rows.sort((a, b) => a.r - b.r || b.own - a.own || a.i - b.i).map(x => x.h);
+}
+// what a press takes: the selected GIF while the pointer is on it (its box or its picture), else the best under the pointer
+function pickClip(px, py){
+  const c = editSel(); if (c && (inClip(c, px, py) || inClip(liveClip(c), px, py))) return [target, c];
+  return rankAt(px, py)[0] || null;
+}
+// a click without moving on the selected GIF: the next one under the pointer
+function nextPick(px, py, c){ const R = rankAt(px, py); if (R.length < 2) return null; const i = R.findIndex(h => h[1] === c); return R[(i + 1) % R.length]; }
 const KNOB = 26;    // rotate knob distance above the box, preview px
 function knobPos(G){ return toWorld(G, 0, -G.hh - KNOB * W / view.w); }
 function hitHandle(c, px, py){

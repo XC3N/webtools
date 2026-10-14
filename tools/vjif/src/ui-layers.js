@@ -194,7 +194,7 @@ function syncXfUI(){
 }
 
 // ---------- preview mouse: select, move, resize handles ----------
-let drag = null, wheelT = 0;
+let drag = null, wheelT = 0, pvHover = null;   // pvHover: [layer, clip] a press would take, when it isn't the selected one
 const editSel = () => layers[target].lock ? null : selClip();   // what the mouse may change: nothing on a locked layer
 function evtToOut(e){ const r = pv.getBoundingClientRect(), z = r.width / (pv.clientWidth || r.width); return [((e.clientX - r.left) / z - view.x) * W / view.w, ((e.clientY - r.top) / z - view.y) * H / view.h]; }
 function cursorFor(h, shift){ if (!h) return ''; if (h === 'rot') return 'grab'; if (shift) return 'crosshair'; if (h[0] && h[1]) return h[0] * h[1] > 0 ? 'nwse-resize' : 'nesw-resize'; return h[0] ? 'ew-resize' : 'ns-resize'; }
@@ -207,21 +207,24 @@ pv.addEventListener('pointerdown', e => {
   let c = editSel(); const h = hitHandle(c, px, py);
   if (h === 'rot'){ const G = clipGeom(c); drag = { type: 'rot', c, cx: G.cx, cy: G.cy, a0: Math.atan2(py - G.cy, px - G.cx), r0: c.rot }; pv.style.cursor = 'grabbing'; return; }
   if (h){ drag = { type: e.shiftKey ? 'crop' : 'resize', h, c, G0: clipGeom(c), sx0: c.sx, sy0: c.sy }; return; }
-  let hit; const outside = px < 0 || px > W || py < 0 || py > H;   // outside the canvas nothing shows, so only a handle counts there
+  let hit, cyc = false; const outside = px < 0 || px > W || py < 0 || py > H;   // outside the canvas nothing shows, so only a handle counts there
   if (outside) hit = null;
   else if (e.altKey){                                         // Alt+click: cycle down through what's under the cursor
     const all = hitsAt(px, py, false), i = all.findIndex(h => h[1] === c);
     hit = all.length ? all[(i + 1) % all.length] : null;
-  } else hit = pickClip(px, py);                             // in a GIF's box: the closest pixels win; clicking again there cycles
+  } else { hit = pickClip(px, py); cyc = !!hit && hit[1] === c; }   // what the hover outline shows: the selected GIF while on it (a click without moving then steps to the next), else the one you see there
   if (hit){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); c = hit[1]; }
   if (!hit && outside){   // a click in the border around the canvas, on nothing: no GIF selected (its frame and handles go)
     if (layers[target].sel !== false){ layers[target].sel = false; syncLayerUI(); syncXfUI(); redraw.all = true; } return; }
-  if (c) drag = { type: 'move', c, px, py, x0: c.x, y0: c.y };
+  if (c) drag = { type: 'move', c, px, py, x0: c.x, y0: c.y, cyc };
 });
 pv.addEventListener('pointermove', e => {
   const [px, py] = evtToOut(e);
   if (maskEd){ pv.style.cursor = maskOpt.tool === 'free' ? 'none' : 'crosshair'; return; }
-  if (!drag){ if (!picking) pv.style.cursor = cursorFor(hitHandle(editSel(), px, py), e.shiftKey) || (hitsAt(px, py, false).length ? 'move' : 'default'); return; }
+  if (!drag){ if (picking) return; const hh = hitHandle(editSel(), px, py), out = px < 0 || px > W || py < 0 || py > H, hp = hh || out || e.altKey ? null : pickClip(px, py);
+    pv.style.cursor = cursorFor(hh, e.shiftKey) || (hp ? 'move' : 'default');
+    const hc = hp && hp[1] !== editSel() ? hp : null; if ((hc && hc[1]) !== (pvHover && pvHover[1])){ pvHover = hc; redraw.all = true; }   // the outline of what a press would take
+    return; }
   const c = drag.c;
   if (drag.type === 'rot'){
     let r = drag.r0 + (Math.atan2(py - drag.cy, px - drag.cx) - drag.a0) * 180 / Math.PI;
@@ -249,6 +252,8 @@ pv.addEventListener('pointermove', e => {
       if (h[1] > 0) c[B] = clamp(1 - vs, 0, 1 - c[T] - MIN); else c[T] = clamp(vs, 0, 1 - c[B] - MIN);
     }
   } else if (drag.type === 'move'){
+    if (!drag.moved && Math.hypot(px - drag.px, py - drag.py) < 3 * W / view.w) return;   // a click, not a drag yet (a hand's jitter doesn't nudge it)
+    drag.moved = true;
     const fx = clamp(drag.x0 + px - drag.px, -W, W), fy = clamp(drag.y0 + py - drag.py, -H, H);   // where the pointer alone puts it
     if (e.shiftKey && drag.lock){                       // Shift on a lit guide: the GIF slides along that line only
       const L = drag.lock; c.x = fx; c.y = fy;
@@ -302,7 +307,14 @@ pv.addEventListener('pointermove', e => {
   }
   syncXfUI();
 });
-pv.addEventListener('pointerup', () => { if (drag && drag.type === 'rot') pv.style.cursor = 'grab'; drag = null; commit(); });
+pv.addEventListener('pointerup', e => {
+  if (drag && drag.type === 'rot') pv.style.cursor = 'grab';
+  // a click (no drag) on the GIF that was already selected: the next GIF under the pointer (no timing: the outline shows it
+  // at once); pressing on it and dragging moves it (0.89.5: a click within 1.5 s used to cycle, even one meant as a drag)
+  if (drag && drag.type === 'move' && drag.cyc && !drag.moved){ const [px, py] = evtToOut(e), hit = nextPick(px, py, drag.c);
+    if (hit && hit[1] !== drag.c){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); redraw.all = true; } }
+  drag = null; commit();
+});
 // a right click during a drag cancels it (0.89): the preview's move / size / turn / crop put back as they were, a carried pad dropped nowhere
 pv.addEventListener('pointerdown', () => { if (drag && !drag.orig && drag.c) drag.orig = Object.fromEntries(XF_KEYS.map(k => [k, drag.c[k]])); });   // (after the handler above made the drag)
 let dragCancelT = 0;
@@ -338,6 +350,7 @@ const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const
 $('#guideCol').addEventListener('input', e => { pvOpt.gcol = e.target.value; pvSave(); });
 [['#gridX', 'gx'], ['#gridY', 'gy']].forEach(([id, k]) => $(id).addEventListener('wheel', e => { e.preventDefault(); setGrid(k, pvOpt[k] + (e.deltaY < 0 ? 1 : -1)); }, { passive: false }));
 pv.addEventListener('pointercancel', () => drag = null);
+pv.addEventListener('pointerleave', () => { if (pvHover){ pvHover = null; redraw.all = true; } });
 pv.addEventListener('wheel', e => {
   e.preventDefault();
   const c = selClip(); if (!c) return;
