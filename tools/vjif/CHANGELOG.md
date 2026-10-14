@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.89.3 — 2026-10-14
+
+### Preview
+- The preview holds the picture at full render size and lets the browser scale it onto the screen, exactly like the output window. Fine patterns (Dot Matrix gaps, scanlines, dither) look the same in both, at any size. Replaces 0.89.2's preview-only gap redraw.
+
+### Output
+- Right-click Output: the output in an always-on-top window (Chrome / Edge 116+ Picture-in-Picture) with no address bar. Chrome picks where it opens and caps its size; it can't go full screen. Right-click again closes it; a click switches back to a normal window.
+- Reopening the output window after Shift+click reset: the picture area is measured and corrected, so no thin black bars.
+
 ## 0.89.2 — 2026-10-14
 
 ### Preview

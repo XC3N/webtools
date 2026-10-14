@@ -736,39 +736,11 @@ function drawPrep(now, hidden, quiet){
   if (!eF.any && !sceneChanged(eList, false, false, prepEdSig) && !force) return;
   render(eList, trB, SLOT.PREP_LAYERS, eF.layers, zoomEOf(eF.out));
   if (eF.out) post.run(eF.out, trB.canvas, trB, SLOT.PREP_OUT); else if (post) post.idle(SLOT.PREP_OUT);
-  pvBlit(trB.canvas, eF.out, eF.layers);
+  pvBlit(trB.canvas);
 }
-// the preview is the output scaled down: halve it in exact steps first (each step averages 2×2 pixels), then one small resample —
-// a fine regular pattern (scanlines, pixel art) stays even instead of beating into moiré.
-// Dot Matrix (0.89.2): its 1-pixel gaps can't survive a non-whole scale (they'd come and go across the picture), so the preview
-// fills them in with their dot's colour, scales that down, and lays the gaps back on at its own pixel size
-const pvHalf = [], pvFill = document.createElement('canvas');
-function pvBlit(src, U, LUs, bl = 0){
-  const tw = pvScene.width, th = pvScene.height, dotOf = u => u && u.palDot > 0.5 && u.colr > 0.001 ? u.palDot : 0;
-  const pOut = dotOf(U), p = pOut || (LUs || []).reduce((m, u) => m || dotOf(u), 0); let s = src, k = 0;
-  if (p){
-    const w = src.width, h = src.height, gw = Math.max(1, Math.floor(p * 0.14 + 0.5)), x = pvFill.getContext('2d', { alpha: false });
-    if (pvFill.width !== w || pvFill.height !== h){ pvFill.width = w; pvFill.height = h; }
-    x.drawImage(src, 0, 0);
-    x.save(); x.beginPath(); for (let c = p - gw; c < w; c += p) x.rect(c, 0, gw, h); x.clip(); x.drawImage(src, gw, 0); x.restore();   // a gap column takes the pixels just left of it
-    x.save(); x.beginPath(); for (let r = h - gw; r > -gw; r -= p) x.rect(0, r, w, gw); x.clip(); x.drawImage(pvFill, 0, gw); x.restore();   // a gap row (each dot's bottom: the shader counts from the bottom) the ones above it
-    s = pvFill;
-  }
-  while (s.width / 2 >= tw * 0.9 && s.height / 2 >= th * 0.9 && k < 3){
-    const c = pvHalf[k] || (pvHalf[k] = document.createElement('canvas')), w = s.width >> 1, h = s.height >> 1;
-    if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
-    const x = c.getContext('2d', { alpha: false }); x.imageSmoothingQuality = 'high'; x.drawImage(s, 0, 0, w, h); s = c; k++;
-  }
-  sctx.imageSmoothingQuality = 'high'; sctx.drawImage(s, 0, 0, tw, th);
-  if (!pOut || bl >= 1) return;                       // gaps on a layer only: shown filled in (where they fall isn't known here)
-  const P = FX_PALS[U.palI] || FX_PALS[0], f = P.f; let bg = [1, 1, 1], by = -1;
-  for (let i = 0; i < P.c.length; i++){ const y = f[i*3] * 0.299 + f[i*3+1] * 0.587 + f[i*3+2] * 0.114; if (y > by){ by = y; bg = [f[i*3], f[i*3+1], f[i*3+2]]; } }
-  const w = src.width, h = src.height, gw = Math.max(1, Math.floor(p * 0.14 + 0.5)), sx = tw / w, sy = th / h, R = v => Math.round(v);
-  sctx.save(); sctx.beginPath();
-  for (let c = p - gw; c < w; c += p){ const a = R(c * sx); sctx.rect(a, 0, Math.max(1, R((c + gw) * sx) - a), th); }
-  for (let r = h - gw; r > -gw; r -= p){ const a = R(Math.max(0, r) * sy); sctx.rect(0, a, tw, Math.max(1, R((r + gw) * sy) - a)); }
-  sctx.fillStyle = `rgb(${bg.map(v => R(v * 255)).join(',')})`; sctx.globalAlpha = 0.44 * Math.min(1, U.colr) * (1 - bl) * Math.min(1, gw * sx); sctx.fill('nonzero'); sctx.restore();   // the shader's mix(c, mix(bg, c, 0.45), 0.8 × level), thinned as a gap narrower than a pixel would be: the same overall tone
-}
+// the preview holds the picture at full render size and the browser scales it onto the screen, the same way it shows the
+// output window: fine regular patterns (Dot Matrix gaps, scanlines, dither) come out the same in both, at any size (0.89.3)
+function pvBlit(src){ if (pvScene.width !== src.width || pvScene.height !== src.height){ pvScene.width = src.width; pvScene.height = src.height; } sctx.drawImage(src, 0, 0); }
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
@@ -807,7 +779,7 @@ function drawFrame(now){
     drawTrOverlay();
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
     if (outCtx) outCtx.drawImage(master, 0, 0);
-    if (!hidden && !quiet) pvBlit(master, fxU, LUs, bl);
+    if (!hidden && !quiet) pvBlit(master);
   }
   }
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going

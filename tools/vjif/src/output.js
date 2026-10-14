@@ -11,11 +11,17 @@ function openOutput(e){
       outWin.resizeTo(D.w + outWin.outerWidth - outWin.innerWidth, D.h + outWin.outerHeight - outWin.innerHeight); } catch (err) {} outWin.focus(); }
     toast2('Output window position reset'); if (outWin && !outWin.closed) return;
   }
+  if (outWin && !outWin.closed && outPip){ outWin.close(); outWin = null; outCtx = null; }   // from the always-on-top window back to a normal one
   if (outWin && !outWin.closed){ outWin.focus(); return; }
   const G = outGeo(), D = outDefault();
   const feat = G ? `popup,left=${G.x},top=${G.y},width=${G.w},height=${G.h}` : `popup,width=${D.w},height=${D.h}`;
-  outWin = window.open('', 'gifvj_output', feat);
+  outWin = window.open('', 'gifvj_output', feat); outPip = false;
   if (!outWin){ toast('Popup blocked — allow popups for this page, then click Open output again'); return; }
+  // Chrome counts its address bar into a reopened popup's size but not into a resize, so the picture area can come out a few
+  // pixels off the size asked for (black bars): measure it once the window is up and resize by the difference
+  const want = G ? { w: G.w, h: G.h } : D;
+  setTimeout(() => { try { if (!outWin || outWin.closed || outPip || outWin.document.fullscreenElement) return; const dw = want.w - outWin.innerWidth, dh = want.h - outWin.innerHeight;
+    if (dw || dh) outWin.resizeBy(dw, dh); } catch (e) {} }, 120);
   const d = outWin.document;
   d.open();
   d.write(`<!doctype html><meta charset="utf-8"><title>VJif — Output</title>
@@ -41,14 +47,32 @@ html:fullscreen,html:fullscreen *{cursor:none}
   redraw.all = true; restartLoop();
   updateOutStat();
 }
+// Right-click Output: the output in a Picture-in-Picture window (Chrome 116+): always on top, no address bar.
+// Chrome decides where it opens and how big it can get, it can't go full screen, and it closes with this page
+let outPip = false;
+async function openOutputPip(){
+  if (!('documentPictureInPicture' in window)) return toast('This browser has no always-on-top window (Chrome or Edge 116+ needed)');
+  if (outWin && !outWin.closed){ const was = outPip; outWin.close(); outWin = null; outCtx = null; updateOutStat(); if (was) return; }   // right-click again: back to closed
+  const D = outDefault(); let w;
+  try { w = await documentPictureInPicture.requestWindow({ width: D.w, height: D.h }); } catch (e) { return toast('Could not open the always-on-top window'); }
+  outWin = w; outPip = true; const d = w.document;
+  const st = d.createElement('style'); st.textContent = 'html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{width:100vw;height:100vh;object-fit:contain;display:block}';
+  const cv = d.createElement('canvas'); cv.width = CW; cv.height = CH; d.head.append(st); d.title = 'VJif — Output'; d.body.append(cv);
+  outCtx = cv.getContext('2d', { alpha: false });
+  w.addEventListener('keydown', onKey); w.addEventListener('keyup', e => { onKeyUp(e); commit(); }); w.addEventListener('blur', releaseAll);
+  w.addEventListener('pagehide', () => { outPip = false; setTimeout(restartLoop, 0); });
+  d.addEventListener('visibilitychange', () => restartLoop());
+  redraw.all = true; restartLoop(); updateOutStat();
+}
 function saveOutGeo(){
-  if (!outWin || outWin.closed || outWin.document.fullscreenElement) return;
+  if (!outWin || outWin.closed || outPip || outWin.document.fullscreenElement) return;
   Prefs.setJson(OUT_KEY, { x: outWin.screenX, y: outWin.screenY, w: outWin.innerWidth, h: outWin.innerHeight });
 }
 setInterval(saveOutGeo, 2000);                       // catches moves and resizes made with the window's own frame too
 function updateOutStat(){
   $('#outLed').classList.toggle('on', !!outCtx);
-  $('#outBtn').title = outCtx ? `Output window is live (${CW}×${CH}) — click to bring it to the front · Shift+click: reset its position` : 'Open the output window (it reopens where you left it) · Shift+click: reset its position';
+  $('#outBtn').title = (outCtx ? `Output ${outPip ? 'window (always on top)' : 'window'} is live (${CW}×${CH}) — click: ${outPip ? 'switch to a normal window' : 'bring it to the front'}` : 'Open the output window (it reopens where you left it)')
+    + ' · Shift+click: reset its position · Right-click: always-on-top window (no address bar, no full screen)';
 }
 // ---------- canvas format ----------
 // the drawing canvases follow the format and the render size
@@ -57,6 +81,7 @@ function sizeCanvases(){
   [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = CW; c.height = CH; });
   if (post) post.resize();
   if (outCtx){ outCtx.canvas.width = CW; outCtx.canvas.height = CH; }
+  pvScene.width = CW; pvScene.height = CH;
 }
 function setRenderSize(r){
   if (r === RS) return;

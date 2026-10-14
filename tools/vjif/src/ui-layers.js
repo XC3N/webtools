@@ -356,7 +356,7 @@ function sizePreview(){
   view.w = Math.max(160 * Math.min(1, W / H), Math.min(aw - 2*M, (ah - 2*M) * W / H)); view.h = view.w * H / W;
   view.x = (aw - view.w) / 2; view.y = (ah - view.h) / 2;
   Object.assign(pvScene.style, { left: view.x + 'px', top: view.y + 'px', width: view.w + 'px', height: view.h + 'px' });
-  pvScene.width = Math.round(view.w * dpr); pvScene.height = Math.round(view.h * dpr);
+  if (pvScene.width !== CW || pvScene.height !== CH){ pvScene.width = CW; pvScene.height = CH; }   // full render size: the browser scales it (pvBlit)
   const bar = $('#pvBar'); if (bar){ if (bar.parentElement !== wrap) wrap.appendChild(bar);   // the guides bar: halfway between the picture and the panel below
     const bh = bar.offsetHeight || 32, below = ah - (view.y + view.h); bar.style.top = Math.max(view.y + view.h + 2, Math.min(ah - bh - 2, view.y + view.h + (below - bh) / 2)) + 'px'; }
   redraw.all = true;

@@ -113,6 +113,7 @@ $('#midiIn').addEventListener('change', bindMidiInput);
 $('#midiIn').addEventListener('pointerdown', async () => { if (midiAccess) return; try { await getMidi(); fillMidi(); } catch (e) {} });   // list the inputs before MIDI is on
 $('#snap').addEventListener('change', e => snapMode = e.target.value);
 $('#outBtn').addEventListener('click', openOutput);   // Shift+click: reset its position and size
+$('#outBtn').addEventListener('contextmenu', e => { e.preventDefault(); openOutputPip(); });   // right-click: always on top
 $('#helpBtn').addEventListener('click', () => { $('#helpPanel').hidden = false; });
 $('#setBtn').addEventListener('click', () => { $('#setPanel').hidden = !$('#setPanel').hidden; if (!$('#setPanel').hidden) placeSettings(); });
 // a click anywhere outside the Settings window closes it (the click still reaches what's under it)
