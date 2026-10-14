@@ -50,7 +50,7 @@ function setFxLocal(on){
   if (on){ if (liveFxOn) applyLatched(liveFxOn); else liveFxOn = latchedNow(); } else liveFxOn = latchedNow();   // (the scene you're on keeps what's on)
   fxScopeUI(); toast2(on ? 'FX Local: each scene keeps its own latched effects' : 'FX Global: latched effects stay on from scene to scene');
 }
-function fxScopeUI(){ const b = $('#scFx'); b.textContent = fxLocal ? 'FX Local' : 'FX Global'; b.classList.toggle('on', fxLocal); }
+function fxScopeUI(){ const b = $('#scFx'); b.classList.toggle('on', fxLocal); b.setAttribute('aria-pressed', fxLocal); }   // (0.90: an icon toggle in the Effects editor's top row; it was a labelled button on the Scenes bar)
 // (0.88: Overlay and the Global pads aren't kept per scene: they stay live, the same everywhere — a stored scene has them empty)
 const sceneLayers = () => layers.map(L => L.i === GLOBAL_LAYER ? Object.assign(emptyLayer(), { i: L.i }) : layerState(L)), scenePadGifs = () => pads.map((p, k) => isGlobalPad(k) ? null : p.gif);
 const captureScene = () => ({ fxOn: fxLocal ? latchedNow() : liveFxOn, layers: sceneLayers(), pads: scenePadGifs(), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
@@ -70,7 +70,7 @@ function gotoScene(i, beat = clock.beat, instant = false){
     Object.assign(L, layerProps(s));
     L.clips.forEach(c => { c.startBeat = beat; c.startTime = t0; c.env = null; c.hitBeat = undefined; });   // the scene starts from the top
   });
-  pads.forEach((p, k) => { if (isGlobalPad(k)) return; p.gif = sc ? sc.pads[k] : null; renderPad(k); });   // each scene has its own pads (a new one starts empty), the Global ones stay
+  pads.forEach((p, k) => { if (isGlobalPad(k)) return; p.gif = sc ? sc.pads[k] || null : null; renderPad(k); });   // each scene has its own pads (a new one starts empty), the Global ones stay
   if (!trans) dropFxCache(left);                     // (with a transition: when it ends)
   scenes[i] = null; liveThumb = sc && sc.thumb; thumbKeep = liveThumb; liveName = sc && sc.name || '';
   if (fxLocal && trans && !trans.fx) trans.fx = { cfg: fxCfg, pre: fxPre, st: fxSt.map(S => ({ ...S })) };   // Local: the scene being left keeps its own effects through the transition (they used to switch at its start)

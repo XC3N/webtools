@@ -159,9 +159,11 @@ function lfoEnv(A, c, beat){
   if (c.hitBeat === undefined) return 0;
   const a = A.ea ?? 0, d = A.ed ?? 4, s = A.es ?? 0, r = A.er ?? 1, x = beat - c.hitBeat;
   if (x < 0) return 0;
-  const ad = t => t < a ? t / a : t < a + d ? 1 - (1 - s) * (t - a) / d : s;
+  const L = A.eloop ? a + d + r : 0;   // Loop (0.90): Attack, Decay, then down to 0 over Release, over and over while held
+  const ad = !L || L <= 1e-6 ? t => t < a ? t / a : t < a + d ? 1 - (1 - s) * (t - a) / d : s
+    : t => { t %= L; return t < a ? t / a : t < a + d ? 1 - (1 - s) * (t - a) / d : r > 0 ? s * (1 - (t - a - d) / r) : 0; };
   if (c.relBeat === null) return ad(x);
-  const rs = Math.max(a + d, (c.relBeat ?? c.hitBeat) - c.hitBeat);
+  const rs = L ? Math.max(0, (c.relBeat ?? c.hitBeat) - c.hitBeat) : Math.max(a + d, (c.relBeat ?? c.hitBeat) - c.hitBeat);   // (looping: let go fades from wherever it is)
   if (x < rs) return ad(x);
   const top = ad(rs); return r > 0 && x - rs < r ? top * (1 - (x - rs) / r) : 0;
 }

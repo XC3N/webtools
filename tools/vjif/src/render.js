@@ -106,7 +106,7 @@ function visAt(li, c, px, py){
 // every GIF under the pointer (its box, or where Auto shows it), best first: the one you see there (most of the colour at
 // that point, counting what covers it), else the one whose visible pixels are closest (rings out to 64 screen px)
 function rankAt(px, py){
-  const all = hitsAt(px, py, false); if (!all.length) return [];
+  const all = hitsAt(px, py, false).filter(h => !pvOpt.pickLayer || h[0] === target); if (!all.length) return [];   // This layer only (the preview bar's toggle)
   let left = 1; const T = 0.06;
   const rows = all.map(([li, c], i) => { const v = visAt(li, c, px, py), own = v * left; if (v > 0 && !MASK_BLENDS.has(layers[li].blend) && ['source-over', 'overlay', 'difference', 'exclusion'].includes(layers[li].blend)) left *= 1 - v;
     let r = v > T ? 0 : 1e3;

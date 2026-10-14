@@ -60,7 +60,7 @@ const SNAP_STEPS = {
   7: o => {                                          // 0.88: Scene / Global pads, Overlay the same in every scene, Background's six slots
     const glob = k => k >= 9 && k < N_KEYPADS;
     const fix = (P, Ls, live) => {
-      while (P.length < BG0 + N_BG) P.push(null);
+      while (P.length < pads.length) P.push(null);
       if (!Ls) return; const room = L => L && L.clips.length < MAX_CLIPS;
       const bg = Ls[BG_LAYER]; if (bg){ let k = 0;      // Background: its GIFs move into the slots (their pads empty)
         bg.clips = bg.clips.filter(c => { if (k >= N_BG || !P[c.pad]) return false; const s = BG0 + k++; P[s] = P[c.pad]; if (c.pad !== s) P[c.pad] = null; c.pad = s; return true; }); }

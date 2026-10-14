@@ -89,7 +89,7 @@ function buildLayers(){
 const CLIP_MIME = 'application/x-gifvj-clip';
 let chipDrag = null;   // the chip being dragged: { li, pad } (dragover can't read the drag's data)
 const LROLE = ['Background: its own 6 slots in each scene, they just play (no keys)', 'Midground: the Scene pads', 'Foreground: the Scene pads', 'Overlay: the Global pads, the same in every scene'];   // (0.88)
-const layerRule = (li, p) => li === GLOBAL_LAYER ? 'Overlay plays the Global pads (RTY FGH VBN) only' : li === BG_LAYER ? 'Background plays its own 6 slots: drop a GIF from the pool or a pad on its card' : isGlobalPad(p) ? 'Global pads stay on Overlay' : 'Background slots stay on Background';
+const layerRule = (li, p) => li === GLOBAL_LAYER ? 'Overlay plays the Global pads (UIO JKL M,.) only' : li === BG_LAYER ? 'Background plays its own 6 slots: drop a GIF from the pool or a pad on its card' : isGlobalPad(p) ? 'Global pads stay on Overlay' : 'Background slots stay on Background';
 function moveClip(sli, sid, dli, at){
   const S = layers[sli], D = layers[dli], clip = S.clips.find(c => c.id === sid); if (!clip) return;
   const i = S.clips.indexOf(clip);
@@ -210,7 +210,7 @@ pv.addEventListener('pointerdown', e => {
   let hit, cyc = false; const outside = px < 0 || px > W || py < 0 || py > H;   // outside the canvas nothing shows, so only a handle counts there
   if (outside) hit = null;
   else if (e.altKey){                                         // Alt+click: cycle down through what's under the cursor
-    const all = hitsAt(px, py, false), i = all.findIndex(h => h[1] === c);
+    const all = hitsAt(px, py, false).filter(h => !pvOpt.pickLayer || h[0] === target), i = all.findIndex(h => h[1] === c);
     hit = all.length ? all[(i + 1) % all.length] : null;
   } else { hit = pickClip(px, py); cyc = !!hit && hit[1] === c; }   // what the hover outline shows: the selected GIF while on it (a click without moving then steps to the next), else the one you see there
   if (hit){ layers[hit[0]].sel = hit[1]; if (hit[0] !== target) setTarget(hit[0]); else { syncLayerUI(); syncXfUI(); } selectPad(hit[1].pad); c = hit[1]; }
@@ -323,6 +323,7 @@ function cancelDrags(){
   if (drag && drag.c){ if (drag.orig) Object.assign(drag.c, drag.orig); drag = null; pv.style.cursor = ''; syncXfUI(); redraw.all = true; any = true; }
   if (padDrag && padDrag.moved){ const i = padDrag.i; padDragEnd(null, i); any = true; }
   if (scDrag && scDrag.moved){ scDragStop(null); any = true; }
+  if (typeof trDrag !== 'undefined' && trDrag && trDrag.moved){ trDragStop(null); any = true; }
   if (fxDrag && fxDrag.moved && !fxDrag.cancel){ fxDrag.cancel = true; copyHoldEnd(fxDrag); unmarkTiles(document.querySelectorAll('#fxPre .fxp')); ghost.hide(); any = true; }
   if (any){ dragCancelT = performance.now(); toast2('Cancelled'); }
   return any;
@@ -333,12 +334,13 @@ addEventListener('contextmenu', e => { if (performance.now() - dragCancelT < 800
 // preview tools: guides, stick, ghosts (per browser)
 const pvSave = () => { Prefs.setJson('vjif-pvopt', pvOpt); redraw.all = true; };
 const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', !!pvOpt.guides[b.dataset.g])); $('#guideGrp').classList.toggle('ghidden', !!pvOpt.gHide); $('#guideEye').classList.toggle('on', !pvOpt.gHide && anyGuide());
-  $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
+  $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#pickLayerBtn').classList.toggle('on', pvOpt.pickLayer); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
 pvUI();
 $('#guideEye').addEventListener('click', () => { pvOpt.gHide = !pvOpt.gHide; pvUI(); pvSave(); });
 $('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; const k = b.dataset.g; if (pvOpt.gHide){ pvOpt.gHide = false; if (pvOpt.guides[k]){ pvUI(); pvSave(); return; } } pvOpt.guides[k] = !pvOpt.guides[k]; if (!pvOpt.guides[k]) delete pvOpt.guides[k]; pvUI(); pvSave(); });
 $('#stickBtn').addEventListener('click', () => { pvOpt.stick = !pvOpt.stick; pvUI(); pvSave(); });
 $('#ghostBtn').addEventListener('click', () => { pvOpt.ghosts = !pvOpt.ghosts; pvUI(); pvSave(); });
+$('#pickLayerBtn').addEventListener('click', () => { pvOpt.pickLayer = !pvOpt.pickLayer; pvUI(); pvSave(); toast2(pvOpt.pickLayer ? 'Picking on the selected layer only' : 'Picking on any layer'); });
 const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const o = k === 'gx' ? 'gy' : 'gx'; if (v === 1 && pvOpt[o] === 1) pvOpt[o] = 2;   // 1×1 draws nothing
   pvOpt.guides.grid = true; pvUI(); pvSave(); };
 [['#gridX', 'gx'], ['#gridY', 'gy']].forEach(([id, k]) => { const el = $(id);

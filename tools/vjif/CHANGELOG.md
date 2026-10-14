@@ -4,6 +4,36 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.90.0 — 2026-10-14
+
+### Pads & scenes
+- Scene pads have a second bank: nine more per scene, played with Shift + QWE / ASD / ZXC. Tab (or the 1 / 2 switch on the Scene heading) flips which bank the grid shows; both play from the keys either way. A MIDI control mapped to a first-bank pad plays the bank on show.
+- The Global pads moved to UIO / JKL / M,. — a free column between the two groups. Their pads, GIFs and MIDI mappings are the same.
+- Shift + a Scene key plays bank 2 now; selecting a pad without playing it: right-click it (or Shift + a Global key).
+- Transition presets drag like pads: onto another one swaps them; Ctrl (⌘) held copies, replacing the other once held over it until the red bar fills; a right click cancels.
+
+### Preview
+- "This layer only" (preview bar): clicks and hovering pick only GIFs on the selected layer.
+
+### Effects
+- Wobble › Edges, like Shake's: zoom in just enough that the frame edges never show (on by default).
+- Glitch › Corrupt (effect and transition): broken blocks keep the picture's detail with the colour thrown off, instead of one flat colour each. The mosh kept copying those flat blocks, so after a while most of the picture went flat. In the effect, about one moshed block in 16 decodes right again each Rate; in the transition, broken runs show for one frame only.
+- FX Local is an icon toggle in the effect editor's top row (with All off and Follow); it was a labelled button on the Scenes bar. Follow has a new icon: an arrow from the list down into the editor.
+
+### GIFs
+- The selected GIF's picture (the Play tab's frame preview) sits at the top right of the GIF panel, beside the heading and tabs, on every tab. The GIF heading no longer folds.
+- The Transform / Play / Display / Auto tabs have their own highlight, so they read as the main categories over the choices inside them.
+- Auto › Envelope › Loop: while the pad is held, the envelope starts over after Attack, Decay and Release; let go, it fades from where it is.
+- Auto: Shift+click on Hold or Invert now sets every running LFO (it did nothing: the click came after the Shift state was cleared). The Sine icon is a true sine.
+- The swap eyedropper's bulb is slimmer.
+
+### Interface
+- Layer mask tools take the blend mode's row only: opacity and the on / off transition stay visible. Every mask icon is the same size, centred.
+- Mask Size / Soft: press the button and drag up / down to set it straight away; a click still opens the slider.
+- Pool: the header shows the number of GIFs, their file size (what an export carries) and their memory once decoded (hover for details).
+- The Pool button shows the same dashed frame as a pad when files are held over it.
+- Keys & mouse: a small search box in the title bar (nothing shows through a gap any more), dotted leaders from each key to its description, and section titles ruled to the edge.
+
 ## 0.89.5 — 2026-10-14
 
 ### Preview

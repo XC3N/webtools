@@ -87,6 +87,9 @@ function sizeAlt(d, style, C){
   if (d && d.id === 'shake') return { label: 'Edges', key: 'ovs', def: 2, list: FX_OVS, toggle: true, seg: true,   // one icon: zoom in enough that no frame edge ever shows, or not (0.87.3; an older Some reads as on)
     icon: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="5.5" y="5.5" width="9" height="9"/><path d="M2.5 6V2.5H6M14 2.5h3.5V6M17.5 14v3.5H14M6 17.5H2.5V14"/></svg>',
     title: () => 'Edges: while it shakes, zoom in just enough that the frame edges never show (on), or let them show (off)' };
+  if (d && d.id === 'wobble') return { label: 'Edges', key: 'ovs', def: 2, list: FX_OVS, toggle: true, seg: true,   // 0.90: like Shake's
+    icon: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="5.5" y="5.5" width="9" height="9"/><path d="M2.5 6V2.5H6M14 2.5h3.5V6M17.5 14v3.5H14M6 17.5H2.5V14"/></svg>',
+    title: () => 'Edges: while it wobbles, zoom in just enough that the frame edges never show (on), or let them show (off)' };
   if (d && d.id === 'colour') return null;   // (Colour › Palette › Dots moved to the Dither row in 0.87: Game Boy palettes only)
   if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+'), f = P.includes(fxFocus[d.id]) ? fxFocus[d.id] : null;
   if (f === 'scan' || f === 'crypt') return null;
@@ -243,7 +246,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
-  U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s;   // Overscan: off · some · full (enough for the biggest jolt and tilt)
+  U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s; U.wobZ = (ovs && ovs[WO] === 0 ? 0 : (S(WO) === 0 ? 0.04 : 0.026)) * lv[WO];   // Wobble › Edges: its largest push (0.018 of the width for Wave, 0.012 for Ripple) kept inside the frame   // Overscan: off · some · full (enough for the biggest jolt and tilt)
   return U;
 }
 // this frame's settings for every target: { out: U | null, layers: [U | null ×4], any }
@@ -287,7 +290,7 @@ function makePost(){
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time, beat;
       uniform float mono, monoS, colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP, palDot,
-                    glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, shakeZ;
+                    glitch, glS, gseed, glSz, rgb, rgbS, crtSz, monoSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, shakeZ, wobZ;
       uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -296,7 +299,7 @@ ${FX_GLSL}
       vec2 A(){ return vec2(res.x / res.y, 1.0); }
       vec2 geo(vec2 p){                              // zoom, shake, wobble, pixelate: where to read the frame from
         vec2 a = A(), d = (p - 0.5) * a;
-        d /= (1.0 + zoom) * (1.0 + shakeZ);
+        d /= (1.0 + zoom) * (1.0 + shakeZ) * (1.0 + wobZ);
         float c = cos(shake.z), s = sin(shake.z); d = mat2(c, s, -s, c) * d + shake.xy;
         p = d / a + 0.5;
         if (wob > 0.001){
@@ -502,12 +505,13 @@ ${FX_GLSL}
             vec2 n01 = vec2(h2(i0 + vec2(0.0, 1.0) + gseed), h2((i0 + vec2(0.0, 1.0)) * 1.7 + gseed)) - 0.5, n11 = vec2(h2(i0 + 1.0 + gseed), h2((i0 + 1.0) * 1.7 + gseed)) - 0.5;
             vec2 drift = mix(mix(n00, n10, fr.x), mix(n01, n11, fr.x), fr.y) * 2.0;
             vec2 mv = floor(flow * mix(2.0, 6.0, glitch) + drift * (1.0 + 5.0 * glitch) + 0.5) / res;
-            vec4 pv = texture2D(prev, vec2(uv.x + mv.x, 1.0 - uv.y - mv.y)); float has = step(0.02, pv.a);   // (nothing drawn there yet: the picture)
+            vec4 pv = texture2D(prev, vec2(uv.x + mv.x, 1.0 - uv.y - mv.y)); float has = step(0.02, pv.a) * step(0.06, h2(cell * 1.3 + gseed + 9.1));   // (nothing drawn there yet: the picture; and each Rate about one block in 16 decodes right again, so the mosh doesn't wear down to flat smears, 0.90)
             c = mix(c, pv.rgb, has); al = mix(al, pv.a, has);
-          } else if (r < glitch * 0.3){                // broken: the block's colour flattened, a stray cosine pattern on it, the colour difference thrown off (green / pink)
-            vec2 ctr = (cell + 0.5) * bs / res; vec3 b = look(samp(geo(ctr), 0.0).rgb);
-            float y = dot(b, vec3(0.299, 0.587, 0.114)), u2 = (b.b - y) * 0.565, v2 = (b.r - y) * 0.713;
-            y += cos(f.x * 3.14159 * floor(1.0 + h2(cell + 7.7) * 3.0)) * cos(f.y * 3.14159 * floor(1.0 + h2(cell + 5.3) * 3.0)) * 0.1;
+          } else if (r < glitch * 0.3){                // broken: the detail kept but coarse (a few luma steps), the colour taken from the block's centre and thrown off (green / pink), a stray cosine pattern on it
+            vec2 ctr = (cell + 0.5) * bs / res; vec3 b = look(samp(geo(ctr), 0.0).rgb);   // (0.90: it was one flat colour per block, and the mosh kept copying those, so the picture went flat)
+            float yb = dot(b, vec3(0.299, 0.587, 0.114)), y = dot(c, vec3(0.299, 0.587, 0.114)), u2 = (b.b - yb) * 0.565, v2 = (b.r - yb) * 0.713;
+            y = yb + floor((y - yb) / 0.08 + 0.5) * 0.08;
+            y += cos(f.x * 3.14159 * floor(1.0 + h2(cell + 7.7) * 3.0)) * cos(f.y * 3.14159 * floor(1.0 + h2(cell + 5.3) * 3.0)) * 0.06;
             u2 += (h2(run + gseed + 1.9) - 0.5) * 0.35; v2 += (h2(run + gseed + 4.4) - 0.5) * 0.35;
             c = vec3(y + 1.403 * v2, y - 0.344 * u2 - 0.714 * v2, y + 1.770 * u2); al = max(al, samp(geo(ctr), 0.0).a);
           }
@@ -553,7 +557,7 @@ ${FX_GLSL}
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz']);   // (palDot is worked out in real pixels: lcdDot)   // sizes given in canvas pixels
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP', 'palDot',
-                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'time', 'beat'];
+                   'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'wobZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);

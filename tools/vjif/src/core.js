@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.89.5';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.90.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -56,14 +56,19 @@ const MAX_DIM = 1920;          // larger frames are downscaled on decode
 const MAX_FRAMES = 1500;       // per GIF
 const MAX_CLIPS = 6;           // GIFs per layer; a full layer refuses more (it flashes red)
 const MEM_WARN_MB = 1500;      // whole bank
-const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','KeyR','KeyT','KeyY','KeyF','KeyG','KeyH','KeyV','KeyB','KeyN'];
-const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','R','T','Y','F','G','H','V','B','N', 'B1','B2','B3','B4','B5','B6'];
+// 0.90: the Global pads moved to UIO / JKL / M,. (a free column between the two groups); the Scene pads got a second bank,
+// played with Shift + their key, shown with Tab (pads 24–32)
+const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','KeyU','KeyI','KeyO','KeyJ','KeyK','KeyL','KeyM','Comma','Period'];
+const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','U','I','O','J','K','L','M',',','.', 'B1','B2','B3','B4','B5','B6', '⇧Q','⇧W','⇧E','⇧A','⇧S','⇧D','⇧Z','⇧X','⇧C'];
 // 0.88: pads 0–8 (QWE ASD ZXC) are the Scene pads, each scene its own, played on Midground / Foreground; pads 9–17
-// (RTY FGH VBN) are the Global pads, the same GIF, settings and placement in every scene, always on Overlay (layer 4,
+// (UIO JKL M,.) are the Global pads, the same GIF, settings and placement in every scene, always on Overlay (layer 4,
 // which is the same in every scene too); 18–23 are Background's six slots (each scene its own): no key, nothing to
 // trigger, they just play on layer 1. A GIF still lives on one layer at a time.
-const N_KEYPADS = 18, BG0 = 18, N_BG = 6, BG_LAYER = 0, GLOBAL_LAYER = 3;
-const isGlobalPad = i => i >= 9 && i < N_KEYPADS, isBgPad = i => i >= BG0, isScenePad = i => i >= 0 && i < 9;
+const N_KEYPADS = 18, BG0 = 18, N_BG = 6, BG_LAYER = 0, GLOBAL_LAYER = 3, B2 = 24;   // B2: the Scene pads' second bank, 24–32
+const isGlobalPad = i => i >= 9 && i < N_KEYPADS, isBgPad = i => i >= BG0 && i < BG0 + N_BG, isScenePad = i => (i >= 0 && i < 9) || (i >= B2 && i < B2 + 9);
+const SCENE_PADS = [0, 1, 2, 3, 4, 5, 6, 7, 8, ...Array.from({ length: 9 }, (_, k) => B2 + k)];
+let padBank = 0;   // which Scene bank the pad grid shows (Tab flips it); both play from the keys either way
+const bankPad = k => k + (padBank ? B2 : 0);   // a Scene pad slot (0–8) in the shown bank
 // which layer a pad's GIF plays on (scene pads: Midground or Foreground, the edited one if it's one of them)
 const padLayer = (i, want) => isGlobalPad(i) ? GLOBAL_LAYER : isBgPad(i) ? BG_LAYER : want === 1 || want === 2 ? want : 1;
 const layerTakes = (li, i) => li === GLOBAL_LAYER ? isGlobalPad(i) : li === BG_LAYER ? isBgPad(i) : isScenePad(i);
@@ -97,7 +102,7 @@ const LFO_T = [
   ['s', 'Sat', 'Saturation', 0, 3, 0.01, '×', 0, 1, 'sine', 4],
   ['v', 'Bright', 'Brightness', 0, 3, 0.01, '×', 1, 1.6, 'down', 1]];
 // LFO shapes, drawn (0.89: Ramp ↓ is Ramp with Invert)
-const SHAPES = [['sine', 'Sine', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10C4 10 5.5 2 10 2S16 10 19 10"/></svg>'], ['tri', 'Triangle', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2l9 8"/></svg>'], ['up', 'Ramp', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2v8l9-8"/></svg>'],
+const SHAPES = [['sine', 'Sine', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1.0 6.0 1.5 5.2 2.0 4.5 2.5 3.8 3.0 3.1 3.5 2.6 4.0 2.1 4.5 1.8 5.0 1.6 5.5 1.5 6.0 1.6 6.5 1.8 7.0 2.1 7.5 2.6 8.0 3.1 8.5 3.7 9.0 4.5 9.5 5.2 10.0 6.0 10.5 6.8 11.0 7.5 11.5 8.2 12.0 8.9 12.5 9.4 13.0 9.9 13.5 10.2 14.0 10.4 14.5 10.5 15.0 10.4 15.5 10.2 16.0 9.9 16.5 9.4 17.0 8.9 17.5 8.2 18.0 7.5 18.5 6.8 19.0 6.0"/></svg>'], ['tri', 'Triangle', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2l9 8"/></svg>'], ['up', 'Ramp', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2v8l9-8"/></svg>'],
   ['square', 'Square', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10V2h9v8h9V2"/></svg>'], ['sh', 'Random (stepped)', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 7h4V3h4v6h4V5h3v4h3"/></svg>'], ['drift', 'Drift (smooth random)', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 7c2-4 4-4 6-1s3 4 5 1 3-5 4-3 2 3 3 3"/></svg>']];
 const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
 const KEY_MAX = 441.67;        // max RGB distance
@@ -132,7 +137,7 @@ const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) || 0);
 const rgb2hex = c => '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('');
 
 // ---------- state ----------
-const pads = PAD_LABELS.map((label, i) => ({ i, code: PAD_KEYS[i] || null, label, gif: null, loading: false, el: null, bg: i >= BG0 }));   // (Background's slots have no key)
+const pads = PAD_LABELS.map((label, i) => ({ i, code: PAD_KEYS[i] || null, label, gif: null, loading: false, el: null, bg: isBgPad(i) }));   // (Background's slots have no key)
 const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: false, flipY: false, tile: false, cl: 0, ct: 0, cr: 0, cb: 0 });
 let clipSeq = 0, gifSeq = 0;
 // alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)

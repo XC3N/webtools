@@ -214,18 +214,22 @@ const TR_DRAW = {
       // fixed sideways lean: streaks, not swirls (0.89: a smooth 2-D field read as a spiral)
       const fdx = dx || 1, fdy = dy || 0, band = r => 0.45 + 1.1 * fxRand(seed + r * 3.71), lean = c => (fxRand(seed + c * 5.13) - 0.5) * 0.5;
       const sp = Math.max(1, H / 360) * (1.5 + 3.5 * tear), step = Math.floor(e * 24);   // px per frame: grows to the middle
-      moshX.imageSmoothingEnabled = false;
+      moshX.imageSmoothingEnabled = false; const broken = [];
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){
         const x = c * RW + (r % 2 ? -RW / 2 : 0), y = r * RH, k = r * 977 + c * 1.31, p = fxRand(k + seed);   // runs staggered row to row, like a codec's slices
         if (e > 0.94 || p < arrive * arrive){ moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); continue; }   // decoded right: the new scene
-        if (fxRand(k * 4.7 + step * 3.3 + seed) < 0.035 * tear){ moshX.fillStyle = `hsl(${Math.floor(fxRand(k + step) * 360)},70%,${25 + 30 * fxRand(k * 1.9 + step)}%)`; moshX.fillRect(x, y, RW, RH); continue; }   // broken: one flat, wrong colour
+        if (fxRand(k * 4.7 + step * 3.3 + seed) < 0.035 * tear) broken.push([x, y, Math.floor(fxRand(k + step) * 360)]);   // broken this frame: shown wrong-coloured below, not kept
         if (p > 0.15 + 0.75 * tear) continue;          // not moshed this time: it holds
         const bs2 = fdx ? band(r) : band(c), ln = fdx ? lean(c) : lean(r), vx = Math.round(sp * (fdx * bs2 + fdy * ln)), vy = Math.round(sp * (fdy * bs2 + fdx * ln) * (fdx ? 0.5 : 1));   // along the direction, a band's own speed; a little across, fixed
         moshX.drawImage(moshT.canvas, clamp(x - vx, 0, W - RW), clamp(y - vy, 0, H - RH), RW, RH, x, y, RW, RH);   // (read inside the frame: a run pulling from past the edge brought in nothing, and that spread as black)
         if (p < arrive){ moshX.globalAlpha = 0.25; moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); moshX.globalAlpha = 1; }   // the new scene's changes bleeding in
       }
       moshX.imageSmoothingEnabled = true;
-      m.drawImage(moshCv, 0, 0); trSplit(m, T, tear); return; }
+      m.drawImage(moshCv, 0, 0);
+      // broken runs: the picture keeps its detail, its colour thrown off (a wrong hue over it), for this frame only (0.90: they used to be
+      // painted flat into the mosh, which kept copying them, so after a second most of the picture was flat blocks)
+      if (broken.length){ m.save(); m.globalCompositeOperation = 'color'; for (const [x, y, h] of broken){ m.fillStyle = `hsl(${h},80%,50%)`; m.fillRect(x, y, RW, RH); } m.restore(); }
+      trSplit(m, T, tear); return; }
     if (gst === 'channel'){                        // a TV changing channels: the old picture collapses into snow, the new one rolls in, the channel number shows
       if (trans && trans.ch == null){                // what the number shows (Options): random, the new scene's name, or its number
         const m = T.ch || 'rand', nm = (liveName || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9 .\-]/g, '').trim().slice(0, 10);

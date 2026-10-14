@@ -52,9 +52,9 @@ const lpDim = (c, k) => c.map(v => v * k);
 function lpColour(m, t){
   const blink = (t / 250 | 0) % 2 === 0, R = lpRegion(m), at = k => lpDim(R, k);
   switch (m.t){
-    case 'pad': { const g = pads[m.i] && pads[m.i].gif; if (!g) return at(LP_LOW);
-      if (pending.has(m.i)) return blink ? [255, 255, 255] : at(LP_MID);
-      return layers.some(L => L.on && L.clips.some(c => c.pad === m.i)) ? R : at(LP_MID); }
+    case 'pad': { const pi = m.i < 9 ? bankPad(m.i) : m.i, g = pads[pi] && pads[pi].gif; if (!g) return at(LP_LOW);   // (the Scene bank on show)
+      if (pending.has(pi)) return blink ? [255, 255, 255] : at(LP_MID);
+      return layers.some(L => L.on && L.clips.some(c => c.pad === pi)) ? R : at(LP_MID); }
     case 'scene': if (pendingScene && pendingScene.i === m.i) return blink ? [255, 255, 255] : at(LP_MID);
       if (m.i === sceneIdx) return R;
       return sceneCount(m.i) || scenePads(m.i) ? at(LP_MID) : at(LP_LOW);
@@ -82,7 +82,7 @@ function lpTick(){
   for (let i = 0; i < s.length; i += 400) lpSys(0x03, ...s.slice(i, i + 400));
 }
 // ---- a ready-made layout for the 8×8 grid (Programmer mode: the pad in row r (1 = bottom), column c is note r·10 + c) ----
-//   rows 8–6: the 18 GIF pads, laid out like the keyboard (QWE ASD ZXC | RTY FGH VBN), then layers 1–4, Blackout, Freeze
+//   rows 8–6: the 18 GIF pads, laid out like the keyboard (QWE ASD ZXC | UIO JKL M,.), then layers 1–4, Blackout, Freeze
 //   rows 5–3: scenes as on the numpad (7 8 9 / 4 5 6 / 1 2 3), effects F1–F12 in 3 rows of 4, then Tap, Sync, BRB
 //   row 2: transition presets 1–8 (9 on the right-hand button) · row 1: effect presets in numpad order 7 8 9 4 5 6 1 2 (3 on the right-hand button)
 function lpLayout(){

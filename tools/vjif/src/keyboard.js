@@ -75,7 +75,9 @@ function onKey(e){
   if (e.code === 'Space') e.preventDefault();
   const pi = PAD_KEYS.indexOf(e.code);
   if (e.repeat) return;
-  if (pi >= 0){ e.preventDefault(); e.shiftKey ? focusPad(pi) : trigger(pi); return; }   // Shift = select without playing
+  if (pi >= 0){ e.preventDefault(); const p = pi < 9 && e.shiftKey ? B2 + pi : pi;   // Shift + a Scene key: its bank-2 pad (0.90); Shift + a Global key: select it without playing
+    if (pi >= 9 && e.shiftKey) focusPad(pi); else { keyPad.set(e.code, p); trigger(p); } return; }
+  if (e.code === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey){ e.preventDefault(); setPadBank(padBank ? 0 : 1); return; }
   if (e.code === 'Space'){ e.shiftKey ? resync() : tap(); return; }
   if (e.code === 'Escape'){ stopPick(); return; }
   if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
@@ -83,9 +85,10 @@ function onKey(e){
   if (e.code === 'End'){ e.preventDefault(); toggleLayer(target); return; }                  // the edit layer on / off
   if (e.code === 'PageUp' || e.code === 'PageDown'){ e.preventDefault(); setTarget(clamp(target + (e.code === 'PageUp' ? -1 : 1), 0, 3)); return; }   // PgUp: the layer to the left (cards are 1→4 left to right), PgDn: to the right
 }
+const keyPad = new Map();   // a held pad key → the pad it played (bank 1 or 2)
 function onKeyUp(e){                                // releases always count, even if focus moved into a text field meanwhile
   if (e.code === 'Space' && !isTyping(e)) e.preventDefault();
-  const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0) release(pi);
+  const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0){ release(keyPad.has(e.code) ? keyPad.get(e.code) : pi); keyPad.delete(e.code); }   // the pad that key started (Shift may be let go first)
   const xi = FX_KEYS.indexOf(e.code); if (xi >= 0){ fxUp(xi); if (heldFxKey === xi) heldFxKey = -1; }
   const qi = FXP_KEYS.indexOf(e.code); if (qi >= 0){ fxUp(NFX + qi); if (heldPre === qi) heldPre = -1; }
   if (e.code === 'Digit0' && live.blackOn){ setBlack(false); updLiveTag(); }

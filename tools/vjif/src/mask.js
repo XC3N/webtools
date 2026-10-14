@@ -29,7 +29,7 @@ function maskOpen(li){
   maskEd = { li }; if (target !== li) setTarget(li);
   const bar = $('#maskBar'), card = layers[li].row, top = card.querySelector('.lrow'), clips = card.querySelector('.clips');
   layers.forEach(L => L.row.classList.remove('masking'));
-  bar.style.height = (clips.offsetTop - top.offsetTop - 6) + 'px';   // exactly the rows it stands in for: the card keeps its height
+  bar.style.height = top.offsetHeight + 'px';   // the blend mode's row, which it stands in for: the card keeps its height (0.90: opacity and the transition row stay)
   card.insertBefore(bar, top); card.classList.add('masking'); bar.hidden = false;
   $('#stage').classList.add('masking'); syncMaskUI(); syncLayerUI(); redraw.all = true;
 }
@@ -40,7 +40,7 @@ function syncMaskUI(){
   $('#maskName').textContent = `Mask · ${LNAMES[maskEd.li]}`;
   segSet('#maskTool', maskOpt.tool);
   $('#maskSize').value = maskOpt.size; $('#maskSize').nextElementSibling.textContent = Math.round(maskOpt.size) + ' px';
-  $('#maskSizeBtn').title = `Size: ${Math.round(maskOpt.size)} px — click for its slider`; $('#maskSoftBtn').title = `Soft: ${Math.round(maskOpt.soft * 100)}% — click for its slider`;
+  $('#maskSizeBtn').title = `Size: ${Math.round(maskOpt.size)} px — drag up / down on it, or click for its slider`; $('#maskSoftBtn').title = `Soft: ${Math.round(maskOpt.soft * 100)}% — drag up / down on it, or click for its slider`;
   $('#maskSoft').value = maskOpt.soft; $('#maskSoft').nextElementSibling.textContent = Math.round(maskOpt.soft * 100) + '%';
   $('#maskInv').checked = !!(m && m.inv); $('#maskOn').checked = !m || m.on !== false;
 }
@@ -102,7 +102,18 @@ pv.addEventListener('pointerleave', () => { if (maskEd && !maskStroke){ maskPtr 
 const MASK_IC = { free: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M2 12c2-5 4-7 5.5-6s-1.5 4 .5 5 4-4 6-6"/></svg>', rect: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="2.5" y="4" width="11" height="8" rx=".5"/></svg>', ell: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><ellipse cx="8" cy="8" rx="6" ry="4.2"/></svg>' };   // (0.88: icons, the tooltips name them)
 $('#maskTool').innerHTML = MASK_TOOLS.map(([v, l, t]) => `<button data-v="${v}" title="${l}: ${t}">${MASK_IC[v]}</button>`).join('');
 // Size / Soft: an icon each, its slider pops up upright (like the music player's volume)
-document.querySelectorAll('#maskBar .mpopbtn').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); const p = b.nextElementSibling, was = p.hidden; document.querySelectorAll('#maskBar .mpop').forEach(q => q.hidden = true); p.hidden = !was; }));
+// Size / Soft: press the button and drag up / down to set it straight away (the pop-up shows the value, then closes);
+// a click without dragging opens the pop-up as before, click again to close (0.90)
+document.querySelectorAll('#maskBar .mpopbtn').forEach(b => {
+  const p = b.nextElementSibling, inp = p.querySelector('input'); let d = null;
+  b.addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); e.stopPropagation(); const was = !p.hidden; document.querySelectorAll('#maskBar .mpop').forEach(q => q.hidden = true); p.hidden = false;
+    d = { y: e.clientY, v: +inp.value, moved: false, was }; b.setPointerCapture(e.pointerId); });
+  b.addEventListener('pointermove', e => { if (!d) return; const dy = d.y - e.clientY; if (!d.moved && Math.abs(dy) < 3) return; d.moved = true;
+    const lo = +inp.min, hi = +inp.max, st = +inp.step || 1, v = clamp(Math.round((d.v + dy / 110 * (hi - lo)) / st) * st, lo, hi);   // the pop-up's slider is 110 px tall: the same feel as dragging it
+    if (+inp.value !== v){ inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); } });
+  const end = () => { if (!d) return; if (d.moved || d.was) p.hidden = true; d = null; };
+  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+});
 document.addEventListener('pointerdown', e => { if (!e.target.closest('#maskBar .volwrap')) document.querySelectorAll('#maskBar .mpop').forEach(q => q.hidden = true); });
 onSeg($('#maskTool'), b => { maskOpt.tool = b.dataset.v; maskSave(); syncMaskUI(); });
 $('#maskSize').addEventListener('input', e => { maskOpt.size = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; });

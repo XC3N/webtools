@@ -159,6 +159,14 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {w6bvn9h0vyiph1iof2z2} **Output eighths** (0.89.4) — Shift+click Output: even grid in the window; resize it by hand: the picture steps between sizes, stays even; full screen fills the screen.
 - [ ] {m02ezjhzeof8cg9reb0h} **GIF heading picture** (0.89.4) — select pads: the GIF heading shows the selected GIF; readable enough?
 - [ ] {ua4fbz1qwwafkwcpnfac} **Picking overlaps** (0.89.5) — several overlapping GIFs, one large and mostly transparent or faded: hover shows the outline of the one you see; press-drag moves it; click without moving steps to the next; a GIF moved by Auto is picked where it shows.
+- [ ] {pnvx4k94xh157dahbxjo} **Bank 2** (0.90) — Shift+Q… plays the second bank; Tab / the 1·2 switch shows it; Global pads on UIO JKL M,.; a MIDI pad mapped to bank 1 plays the bank on show.
+- [ ] {cuctq29mblf5zjft5hwu} **Transition preset drag** (0.90) — drag a preset onto another: swap; Ctrl-drag and hold: copy; right-click cancels.
+- [ ] {me3438yne3j78ji6mahd} **This layer only** (0.90) — with the toggle on, hovering / clicking picks only GIFs on the selected layer.
+- [ ] {innnlarreyyzlc88h5y2} **Corrupt detail** (0.90) — Glitch › Corrupt effect and transition over a few seconds: blocks keep picture detail, no wall of flat colour.
+- [ ] {di5jvp5cjq62dd4cohaf} **Wobble Edges** (0.90) — Wobble at full: no frame edge shows with Edges on; shows with it off.
+- [ ] {4usm8zzkfup052k5zea1} **Env loop** (0.90) — Auto › Envelope › Loop on, hold the pad: the envelope repeats; let go: it fades.
+- [ ] {khc4dan4rel4srlhubed} **Mask drag** (0.90) — mask Size / Soft: press and drag up / down sets it; mask tools in the blend row only.
+- [ ] {4bpps0nrwhfclhtdtb6d} **Panel picture** (0.90) — the GIF panel's picture at the top right on every tab, readable enough?
 - [ ] {y08e3dqtjpeoa8jqrp0e} **Always on top** (0.89.3) — Right-click Output: a floating window with no address bar stays above other windows, plays, takes pad keys; right-click again closes it; click Output switches to a normal window.
 - [ ] {d3068ijx33furnsrblsv} **Reopen size** (0.89.3) — Shift+click Output, close the window, open it again: no black bars.
 - [x] {0g5bim1rd8zzry16be4s} **Emptied scene comes back** (0.79, 0.81, name 0.84, 0.85) — name a scene, select it, empty it (×): its name goes too (with Settings › Interface › Permanent scene names on: it stays); go to another scene, Ctrl+Z: the emptied scene's tile shows its picture and name again.

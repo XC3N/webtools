@@ -185,9 +185,13 @@ onSeg($('#recACodecSeg'), (b, e) => { recACodec = b.dataset.a; recSave('vjif-rec
 // interface size
 // pad sections fold away to give the space below more room; a folded one shows how many of its pads hold GIFs
 var padFold = Prefs.json('vjif-padfold', {});
-function syncPadFold(){ document.querySelectorAll('.padsub').forEach(h => { const g = h.dataset.g, n = pads.slice(g === 'A' ? 0 : 9, g === 'A' ? 9 : 18).filter(p => p.gif).length;
+function syncPadFold(){ document.querySelectorAll('.padsub').forEach(h => { const g = h.dataset.g, n = (g === 'A' ? SCENE_PADS : pads.slice(9, 18).map(p => p.i)).filter(i => pads[i].gif).length;
   h.classList.toggle('fold', !!padFold[g]); h.querySelector('.cnt').textContent = `· ${n} GIF${n === 1 ? '' : 's'}`; }); }
 syncPadFold();
+// the Scene pads' two banks (0.90): Tab or the bank switch flips which one the grid shows; both play from the keys (Shift: bank 2)
+function setPadBank(b){ padBank = b ? 1 : 0; $('#gridA').classList.toggle('b2', !!padBank); $('#bankBtn').querySelectorAll('button').forEach(x => x.classList.toggle('on', +x.dataset.v === padBank));
+  if (isScenePad(selPad) && (selPad >= B2) !== !!padBank){ const j = selPad >= B2 ? selPad - B2 : selPad + B2; selectPad(j); } }
+$('#bankBtn').addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('button'); if (b) setPadBank(+b.dataset.v); });
 document.querySelectorAll('.padsub').forEach(h => h.addEventListener('click', () => { padFold[h.dataset.g] = !padFold[h.dataset.g]; Prefs.setJson('vjif-padfold', padFold); syncPadFold(); }));
 const syncZoomUI = () => { $('#uiZoomR').value = uiZoom; $('#uiZoomV').textContent = Math.round(uiZoom * 100) + '%'; };
 syncZoomUI();

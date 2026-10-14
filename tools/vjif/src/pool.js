@@ -227,11 +227,9 @@ async function loadUrlInto(url, p){
 
 // (0.88: within one group — the Scene pads, or the Global ones when starting from one of those; Background's slots never)
 function nextEmpty(from = 0, exclude = new Set()){
-  const g0 = isGlobalPad(from) ? 9 : 0;
-  for (let k = 0; k < 9; k++){
-    const i = g0 + ((Math.max(0, from - g0) % 9) + k) % 9;
-    if (!pads[i].gif && !pads[i].loading && !exclude.has(i)) return i;
-  }
+  const G = isGlobalPad(from) ? Array.from({ length: 9 }, (_, k) => 9 + k) : padBank ? [...SCENE_PADS.slice(9), ...SCENE_PADS.slice(0, 9)] : SCENE_PADS;   // (Scene: the bank on show first, 0.90)
+  const s0 = Math.max(0, G.indexOf(from));
+  for (let k = 0; k < G.length; k++){ const i = G[(s0 + k) % G.length]; if (!pads[i].gif && !pads[i].loading && !exclude.has(i)) return i; }
   return -1;
 }
 
@@ -239,7 +237,7 @@ function nextEmpty(from = 0, exclude = new Set()){
 function nextEmptyIn(si, exclude = new Set()){
   if (si === sceneIdx) return nextEmpty(0, exclude);
   const sc = scenes[si], tag = sceneIds[si];
-  for (let i = 0; i < 9; i++) if (!(sc && sc.pads[i]) && !(pads[i].loads && pads[i].loads.get(tag)) && !exclude.has(i)) return i;   // (its Scene pads: the Global ones are the same everywhere)
+  for (const i of SCENE_PADS) if (!(sc && sc.pads[i]) && !(pads[i].loads && pads[i].loads.get(tag)) && !exclude.has(i)) return i;   // (its Scene pads: the Global ones are the same everywhere)
   return -1;
 }
 // files dropped on a scene tile: each onto that scene's next empty pad (the scene you're on isn't changed)
@@ -285,6 +283,15 @@ function renderPool(){
   if (!pb || $('#poolPanel').hidden) return;
   const d = poolDest();
   $('#poolTo').textContent = d >= 0 ? `→ pad ${pads[d].label}` : 'all pads of this scene are full';
+  { // the pool's weight (0.90): GIFs, their files (what a .vjif export carries) and what they take in memory once decoded (with the
+    // colour versions made from them: palette, key, swaps on each pad)
+    const MB = b => b >= 1073741824 ? (b / 1073741824).toFixed(1) + ' GB' : (b / 1048576).toFixed(b < 10485760 ? 1 : 0) + ' MB';
+    const file = pool.reduce((a, m) => a + (m.blob ? m.blob.size : 0), 0), dec = pool.reduce((a, m) => a + (m.srcBytes || 0), 0);
+    const extra = [...new Set(pads.map(p => p.gif).filter(Boolean))].reduce((a, g) => a + Math.max(0, (g.bytes || 0) - (g.srcBytes || 0)), 0);
+    const fr = pool.reduce((a, m) => a + (m.src ? m.src.length : 0), 0), el = $('#poolStats');
+    el.textContent = `${pool.length} GIF${pool.length === 1 ? '' : 's'} · ${MB(file)} files · ${MB(dec + extra)} in memory`;
+    el.title = `${pool.length} GIFs, ${fr} frames\nFiles: ${MB(file)} (about what an exported .vjif carries for them)\nIn memory: ${MB(dec)} of decoded frames${extra ? ` + ${MB(extra)} of colour versions (palette, key, swaps)` : ''}`;
+  }
   const grid = $('#poolGrid'); grid.textContent = '';
   pool.forEach(m => {
     const u = poolUse(m), t = document.createElement('div');

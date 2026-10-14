@@ -24,6 +24,35 @@ function syncTransUI(){
 }
 onSeg($('#trPre'), (b, e) => { const k = +b.dataset.v;
   if (isRm(e)){ trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); } armTrans(k); });   // Ctrl+click: reset it
+// dragging a preset onto another, like pads, scenes and effect presets (tiledrag.js): they swap; Ctrl (⌘) held: a copy, which
+// replaces the other one once held over it until the red bar fills; a right click cancels (0.90)
+let trDrag = null, trDragT = 0;
+function trDropMark(cp){
+  const d = trDrag; if (!d || !d.moved) return; d.copy = cp; document.body.classList.toggle('trcopy', cp);
+  const t = d.lastE && document.elementFromPoint(d.lastE.clientX, d.lastE.clientY), o = t && t.closest('#trPre button');
+  const armed = copyHold(d, o, !!(cp && o && +o.dataset.v !== d.i), () => trDropMark(d.copy));
+  markTiles(document.querySelectorAll('#trPre button'), o, d, x => +x.dataset.v !== d.i && (!d.copy || armed));
+}
+function trDragStop(e){
+  const d = trDrag; trDrag = null; if (!d || !d.moved) return;
+  const t = e && document.elementFromPoint(e.clientX, e.clientY), o = t && t.closest('#trPre button'), b = o ? +o.dataset.v : -1, a = d.i;
+  if (b >= 0 && b !== a){
+    if (d.copy){ if (d.armed){ trPresets[b] = JSON.parse(JSON.stringify(trPresets[a])); toast2(`Transition ${a + 1} copied to ${b + 1}`); armTrans(b); hushDel(); }
+      else toast(`Transition ${b + 1} is set: hold over it until the bar fills, then drop, to replace it`); }
+    else { [trPresets[a], trPresets[b]] = [trPresets[b], trPresets[a]]; toast2(`Transitions ${a + 1} and ${b + 1} swapped`); armTrans(trSel === a ? b : trSel === b ? a : trSel); }
+  }
+  copyHoldEnd(d); unmarkTiles(document.querySelectorAll('#trPre button')); document.body.classList.remove('trcopy'); ghost.hide(); trDragT = performance.now();
+}
+$('#trPre').addEventListener('pointerdown', e => { const b = e.target.closest('button'); if (!b || e.button) return; trDrag = { i: +b.dataset.v, x: e.clientX, y: e.clientY, moved: false }; b.setPointerCapture(e.pointerId); });
+$('#trPre').addEventListener('pointermove', e => { const d = trDrag; if (!d) return;
+  if (!d.moved){ if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return; d.moved = true;
+    const el = document.createElement('span'); el.className = 'chip trchip'; el.innerHTML = `<span>${d.i + 1} · ${trLabel(trPresets[d.i])}</span>`; ghost.show(el, e.clientX, e.clientY); }
+  ghost.move(e.clientX, e.clientY); d.lastE = e; trDropMark(isDel(e)); });
+$('#trPre').addEventListener('pointerup', e => trDragStop(e));
+$('#trPre').addEventListener('pointercancel', () => trDragStop(null));
+$('#trPre').addEventListener('click', e => { if (performance.now() - trDragT < 300){ e.stopImmediatePropagation(); e.preventDefault(); } }, true);   // the click after a drag isn't a click
+addEventListener('keydown', e => { if (trDrag && DEL_KEYS.includes(e.key)) trDropMark(true); });
+addEventListener('keyup', e => { if (trDrag && DEL_KEYS.includes(e.key)) trDropMark(false); });
 $('#trPre').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || !e.ctrlKey) return; e.preventDefault(); const k = +b.dataset.v; trPresets[k] = trDefaults()[k]; toast2(`Transition ${k + 1} back to its default`); armTrans(k); });
 onSeg($('#trType'), (b, e) => { transCfg.type = b.dataset.v; transCfg.style = trStyleOf(transCfg); syncTransUI(); });
 onSeg($('#trStyle'), (b, e) => {

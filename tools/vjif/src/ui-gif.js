@@ -20,16 +20,8 @@ function cycleText(g){
   return [l1, warn.join(' · ') || (cb === null ? 'not tied to tempo' : 'on the grid')];
 }
 function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.querySelector('.l1').textContent = a; el.querySelector('.l2').textContent = b; el.title = a + ' — ' + b; }
-// the selected GIF's first frame, whole, on the GIF heading (keyed: on the checkerboard, like its pad)
-function drawGifThumb(){
-  const c = $('#gifThumb'), d = devicePixelRatio || 1, w = Math.round(36 * d), h = Math.round(20 * d), g = pads[selPad] && pads[selPad].gif;
-  if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
-  const x = c.getContext('2d'); x.clearRect(0, 0, w, h); c.title = g ? g.name : 'No GIF on this pad';
-  if (!g) return;
-  if (g.key.on){ x.fillStyle = TC.edge2; const q = Math.round(4 * d); for (let yy = 0; yy < h; yy += q) for (let xx = (yy / q) % 2 * q; xx < w; xx += 2 * q) x.fillRect(xx, yy, q, q); }
-  const f = fxImage(g, g.startF), k = Math.min(w / f.width, h / f.height); x.imageSmoothingEnabled = !g.crisp;
-  x.drawImage(f, (w - f.width * k) / 2, (h - f.height * k) / 2, f.width * k, f.height * k);
-}
+// the panel's picture of the selected GIF (its first frame; the In / Out / Start sliders show theirs while touched); empty pad: blank
+function drawGifThumb(){ const g = pads[selPad] && pads[selPad].gif; if (g) drawPrev(g, g.startF); else { const c = $('#gPrev'); c.getContext('2d').clearRect(0, 0, c.width, c.height); } }
 function syncGifUI(){
   drawGifThumb();
   queueMicrotask(markFolds);                         // (once the panel shows this GIF's values)
@@ -182,6 +174,7 @@ function syncAutoUI(g){
   $('#aSk').value = A.sk ?? 0.5; $('#aSk').nextElementSibling.textContent = Math.round((A.sk ?? 0.5) * 100) + '%'; $('#aHoldBtn').classList.toggle('on', !!A.hold); $('#aInv').classList.toggle('on', !!A.inv);
   const em = A.em || 'off'; segSet('#aEnv', em);
   A_ENV.forEach(([id, k, def]) => { const i = optIdx(ENV_OPTS, A[k] ?? def); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
+  $('#aEnvLoop').classList.toggle('on', !!A.eloop);
   $('#aES').value = A.es ?? 0; $('#aES').nextElementSibling.textContent = Math.round((A.es ?? 0) * 100) + '%';
   document.querySelectorAll('#gPanes .aEnvF').forEach(f => f.classList.toggle('dimmed', em === 'off'));
   ['#aShape', '#aPer', '#aGap', '#aPh', '#aSk', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
@@ -190,11 +183,11 @@ function syncAutoUI(g){
 // change the edited LFO; touching any setting switches it on
 let aShift = false;   // Shift held while dragging an Auto slider: the change goes to every running LFO of this GIF (0.88)
 $('[data-pane=auto]').addEventListener('pointerdown', e => { aShift = e.shiftKey; addEventListener('pointerup', () => { aShift = false; }, { once: true }); }, true);
-function editLfo(fn, turnOn = true, shared = false){
+function editLfo(fn, turnOn = true, shared = false, sh = aShift){
   const g = curGif(); if (!g) return;
   const A = g.lfo[aSel] || (g.lfo[aSel] = lfoDef(aSel));
   fn(A); if (turnOn) A.on = true;
-  if (shared && aShift) for (const k in g.lfo) if (k !== aSel && g.lfo[k] && g.lfo[k].on) fn(g.lfo[k]);   // (Min / Max aren't shared: each target has its own units)
+  if (shared && sh) for (const k in g.lfo) if (k !== aSel && g.lfo[k] && g.lfo[k].on) fn(g.lfo[k]);   // (Min / Max aren't shared: each target has its own units)
   syncAutoUI(g); syncXfUI();
 }
 onSeg($('#aTgt'), (b, e) => { const g = curGif(); aSel = b.dataset.v; if (g) syncAutoUI(g); });
@@ -209,7 +202,7 @@ $('#aMax').addEventListener('input', e => { editLfo(A => A.max = +e.target.value
 $('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0], true, true));
 $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value, true, true));
 $('#aSk').addEventListener('input', e => editLfo(A => A.sk = +e.target.value, true, true));
-[['#aHoldBtn', 'hold'], ['#aInv', 'inv']].forEach(([q, k]) => $(q).addEventListener('click', () => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (!A) return; const v = !A[k]; editLfo(B => B[k] = v, true, true); }));   // toggles; Shift+click: every running LFO of this GIF
+[['#aHoldBtn', 'hold'], ['#aInv', 'inv']].forEach(([q, k]) => $(q).addEventListener('click', e => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (!A) return; const v = !A[k]; editLfo(B => B[k] = v, true, true, e.shiftKey); }));   // toggles; Shift+click: every running LFO of this GIF (the click's own Shift: the pointerup before it already cleared aShift, 0.89.0's bug)
 $('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.target.value][0], true, true));
 A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0], true, true)); });
 $('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value, true, true));
@@ -217,6 +210,7 @@ onSeg($('#aEnv'), b => editLfo(A => A.em = b.dataset.v));
 // Envelope: reset, and graph or sliders (the same choice as the effect envelope's). As a graph, the scope's points drag:
 // Attack (across), Decay (across) with Sustain (up / down), Release (across), on the same steps as the sliders
 $('#aEnvReset').addEventListener('click', () => editLfo(A => { A.ea = 0; A.ed = 4; A.es = 0; A.er = 1; }));
+$('#aEnvLoop').addEventListener('click', e => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (!A) return; const v = !A.eloop; editLfo(B => B.eloop = v, true, true, e.shiftKey); });
 $('#aEnvView').addEventListener('click', () => $('#envView').click());
 function syncAEnvView(){ $('#aEnvView').innerHTML = envSliders ? ENV_IC_GRAPH : ENV_IC_SL; $('#aEnvView').title = envSliders ? 'Show the envelope as a graph (drag its points)' : 'Show the envelope as sliders';
   $('#gPanes [data-pane=auto]').classList.toggle('envgraph', !envSliders); }
@@ -450,7 +444,7 @@ function markFolds(){                                // (not the switches: on a 
   });
 }
 // the right column's own sections (Transform, GIF) fold too: click the heading's name
-document.querySelectorAll('#side > h2').forEach(h => {
+document.querySelectorAll('#side > h2').forEach(h => { if (h.firstChild.textContent.trim() === 'GIF'){ gFold.delete('h2:GIF'); return; }   // (0.90: GIF is the whole panel, not a fold)
   const name = 'h2:' + h.firstChild.textContent.trim(); h.classList.add('foldable');
   const apply = () => { const shut = gFold.has(name); h.classList.toggle('shut', shut); for (let n = h.nextElementSibling; n && n.tagName !== 'H2' && !n.classList.contains('gfoot'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };
   const lab = document.createElement('span'); lab.className = 'fname'; lab.textContent = h.firstChild.textContent; h.firstChild.replaceWith(lab);

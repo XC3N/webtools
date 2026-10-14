@@ -9,7 +9,7 @@ async def main():
     await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()")
     on = "fxSt.slice(0, 3).map(S => S.on ? 1 : 0).join('')"
     await pg.evaluate("[0,1,2].forEach(i => fxCfg[i].mode = 'latch')")
-    await pg.click('#scFx'); txt = await pg.evaluate("$('#scFx').textContent")
+    await pg.click('#scFx'); txt = await pg.evaluate("$('#scFx').classList.contains('on') ? 'FX Local' : 'FX Global'")
     await pg.evaluate("fxDown(0)"); a = await pg.evaluate(on)                       # scene 1: Mono
     await pg.evaluate("gotoScene(1, clock.beat, true)"); b1 = await pg.evaluate(on)    # scene 2 (new, Local): starts with none on
     await pg.evaluate("fxDown(1)"); c = await pg.evaluate(on)            # scene 2: Colour only

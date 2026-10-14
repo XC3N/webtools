@@ -121,7 +121,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #bank h2:not(:first-child){margin-top:12px}
 
 /* ---------- frames tab ---------- */
-.frames{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:10px;align-items:start}
+.frames{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
 .frames .field{grid-template-columns:40px minmax(0,1fr)}
 #swPal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin:7px 3px 7px}   /* room for a swatch's outline (3 px out) clear of the Merge row and the edges */
 #swPal button{height:16px;min-width:0;padding:0;border:1px solid #0006;border-radius:2px}
@@ -134,7 +134,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #swList .swTo input{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);opacity:0;cursor:pointer}
 #swList .swr.pending .swTo{animation:swwait 1s ease-in-out infinite}@keyframes swwait{50%{box-shadow:0 0 0 2px var(--sig)}}
 #swList .swr button{width:18px;height:18px;padding:0}
-#gPrev{width:72px;height:72px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}
+#side{position:relative}#gPrev{position:absolute;top:10px;right:12px;width:56px;height:56px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}#side>h2,#gTabs{margin-right:64px}   /* the selected GIF at the top right of the GIF panel, beside its heading and tabs (0.90; it was in Play › Frames) */
 
 /* ---------- stage: layer strip, preview, footer ---------- */
 #stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
@@ -156,7 +156,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #fxEdit{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fxrow{display:flex;gap:6px;align-items:center;min-width:0;height:30px}
 .fxrow.fxtop{display:grid;grid-template-columns:1fr minmax(0,150px) 1fr}.fxtop #fxName{width:auto!important;max-width:none;min-width:0}.fxtop #fxTgt{justify-self:end}   /* all effects (left) · this effect's name (middle) · where it plays (right) */
-.fxglob{display:flex;gap:3px;justify-self:start;padding:2px;border:1px dashed var(--edge);border-radius:var(--r)}#fxFollow.on{color:var(--sig);border-color:var(--sig)}#fxStyleRow #fxStyle{flex:1;min-width:0;display:flex;flex-wrap:wrap}#fxStyleRow #fxStyle button{height:var(--ch);flex:1 0 auto;min-width:64px;padding:0 8px}   /* each style as wide as its name (rows share out the rest), wrapping when they don't fit */#fxStyleRow{height:auto;min-height:26px}
+.fxglob{display:flex;gap:3px;justify-self:start;padding:2px;border:1px dashed var(--edge);border-radius:var(--r)}#fxFollow.on,#scFx.on{color:var(--sig);border-color:var(--sig)}#fxStyleRow #fxStyle{flex:1;min-width:0;display:flex;flex-wrap:wrap}#fxStyleRow #fxStyle button{height:var(--ch);flex:1 0 auto;min-width:64px;padding:0 8px}   /* each style as wide as its name (rows share out the rest), wrapping when they don't fit */#fxStyleRow{height:auto;min-height:26px}
 .fxrow .lcd{flex:none;width:12ch;text-align:center;font-size:11px}
 .fxrow .seg{flex:1;min-width:0}
 #fxStyle button{flex:1 1 0;min-width:0;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* every style shrinks a little, rather than the last one vanishing */
@@ -405,7 +405,7 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 #fxRateRow.patrow{grid-template-columns:minmax(0,1fr) auto!important;column-gap:4px;flex:1.4}#fxRateRow.patrow>.seg{grid-column:2;grid-row:1;width:78px;flex:none}
 .fxrow:has(#fxRateRow.patrow)>.field:first-child{flex:1}   /* the Palette slider gives up some room for Dither + its switch */
 #fxRateRow.patrow>.seg button{padding:0}   /* the three patterns as little pictures (the tooltips name them) */
-#scFx{min-width:68px}#scFx.on{color:var(--sig);border-color:var(--sig)}   /* FX: Local / Global: the same width either way */
+
 #recWrap{position:relative;display:inline-flex;gap:2px}#recWrap>#recCfg{border:1px solid var(--edge)}#recPop{width:270px}#recPopRows{display:grid;gap:6px}#recPopRows .poprow{display:grid;grid-template-columns:62px minmax(0,1fr);align-items:center;gap:6px}#recPopRows .poprow>span{font-size:11px;color:var(--muted)}   /* Rec ▾: like BRB's */
 #musGrp{position:relative}#musSeek{position:absolute;left:0;right:0;bottom:-6px;height:4px;border-radius:2px;background:var(--track);cursor:pointer}#musSeek i{display:block;height:100%;width:0;border-radius:2px;background:var(--sig)}#musSeek.off{opacity:.35;pointer-events:none}#musSeek:hover{height:6px;bottom:-7px}   /* seek bar under the player (absolute: nothing moves) */
 #fxAllOff{flex:none;width:var(--ch)}
@@ -424,7 +424,7 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 /* painting a mask: in that layer's card, the mask tools take the place of blend / opacity / transition (same height:
    nothing moves; the GIF chips stay) */
 #maskBar{display:none}.layer.masking>#maskBar{display:grid;align-content:space-between;gap:4px;margin-top:6px}
-.layer.masking>.lrow,.layer.masking>.lopw,.layer.masking>.ltr{display:none}
+.layer.masking>.lrow{display:none}   /* 0.90: the mask tools take the blend mode's row only; opacity and the on / off transition stay */
 #maskBar .mrow{display:flex;align-items:center;gap:4px;min-width:0}#maskBar .mrow.two{display:grid;grid-template-columns:1fr 1fr}
 #maskBar .seg{flex:1;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;height:20px}#maskBar .seg button{font-size:11px;padding:0 2px;width:100%;height:20px}
 #maskBar .field{margin:0;grid-template-columns:28px minmax(0,1fr);gap:4px;min-height:0}#maskBar .field label{font-size:10px;color:var(--muted)}#maskBar input[type=range]{height:20px}
@@ -439,9 +439,9 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 .pad.empty .xdel,.scene.blank .xdel,.fxp.empty .xdel,body.noxdel .xdel{display:none}
 #fxPre .fxp .hd{justify-content:flex-start}#fxPre .fxp .hd .md{margin-right:18px}   /* a preset: its mode next to its number, the × on the right */
 /* Ctrl+drag onto a scene / preset that isn't empty: a red bar fills while you hold there; full, the drop replaces it */
-.scene.holding::before,#fxPre .fxp.holding::before,.pad.holding::before{content:'';position:absolute;left:0;bottom:0;z-index:4;height:3px;width:100%;background:var(--danger);transform-origin:left;animation:holdbar 1.2s linear both}
+.scene.holding::before,#fxPre .fxp.holding::before,.pad.holding::before,#trPre button.holding::before{content:'';position:absolute;left:0;bottom:0;z-index:4;height:3px;width:100%;background:var(--danger);transform-origin:left;animation:holdbar 1.2s linear both}
 @keyframes holdbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.scene.armed,#fxPre .fxp.armed,.pad.armed{outline:2px solid var(--danger)!important;outline-offset:-2px}
+.scene.armed,#fxPre .fxp.armed,.pad.armed,#trPre button.armed{outline:2px solid var(--danger)!important;outline-offset:-2px}
 
 h2 .h2btn{margin-left:6px;height:20px;padding:0 8px;font-size:11px}   /* a section's own button on its heading line (there when folded) */
 /* GIF › Play / Auto: the graph (and the frame readout) set apart at the bottom of the pane */
@@ -455,7 +455,7 @@ input[type=color].sw{width:26px;height:20px;padding:0;flex:none;border:1px solid
 /* a slider row that stands for different settings: when nothing it could be applies, an empty grey box (no name, no value) */
 .field.blankable.dimmed{background:var(--panel-2);border-radius:var(--r);opacity:.6}.field.blankable.dimmed>*{visibility:hidden}
 /* Keys & mouse: grouped, with a search box */
-#helpQ{width:100%;margin:0 0 8px;height:var(--ch)}.khead{margin:12px 0 6px;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.khead{margin:12px 0 6px;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #helpPanel [hidden]{display:none!important}
 #swList .swr.off>.swTo,#swList .swr.off>button{opacity:.35}#swList .swr i[data-t]{cursor:pointer}#swList .swr.off i[data-t]{outline:1px dashed var(--muted);outline-offset:1px}   /* a swap switched off on its own */
 
@@ -477,15 +477,21 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #maskBar .mpop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:40px;height:150px;box-shadow:0 6px 18px #0009}#maskBar .mpop[hidden]{display:none}
 #maskBar .mpop input{position:absolute;left:50%;top:44%;width:110px;height:22px;margin:0;transform:translate(-50%,-50%) rotate(-90deg);cursor:ns-resize}#maskBar .mpop output{position:absolute;left:0;right:0;bottom:5px;text-align:center;font:400 10px var(--mono);color:var(--lcd-ink)}
 .clips .bgslot{display:inline-grid;place-items:center;flex:0 1 44px;min-width:18px;height:38px;box-sizing:border-box;border:1px dashed var(--edge);border-radius:var(--r);color:var(--faint);font:400 16px var(--mono);cursor:pointer;flex:none}.clips .bgslot:hover{color:var(--ink);border-color:var(--muted)}   /* Background's empty slots (0.88) */
-#helpPanel .modalBox{width:min(820px,94vw);padding-top:0}#helpPanel .modalBox>h2,#helpPanel #helpQ{position:sticky;z-index:2;background:var(--panel)}#helpPanel .modalBox>h2{top:0;margin:0;padding:18px 0 8px}#helpPanel #helpQ{top:52px;margin:0;box-shadow:0 8px 8px -2px var(--panel)}   /* the title and the search stay on top while the list scrolls (0.89) */
+#helpPanel .modalBox{width:min(820px,94vw);padding-top:0}#helpPanel .modalBox>h2{position:sticky;z-index:2;background:var(--panel);top:0;margin:0;padding:18px 0 10px;box-shadow:0 6px 6px -2px var(--panel)}#helpPanel #helpQ{width:170px;flex:none;height:24px;margin:0 6px 0 2px;font-size:12px}   /* the title bar, with a small search at its right, stays on top while the list scrolls (0.90: one bar, nothing shows through a gap) */
 #helpPanel .keys{grid-template-columns:190px minmax(0,1fr)}   /* every description starts at the same place, in every section */
+#helpPanel .keys{column-gap:0}#helpPanel .keys dt{display:flex;align-items:baseline;gap:8px;padding-right:10px}#helpPanel .keys dt::after{content:'';flex:1;min-width:10px;border-bottom:1px dotted var(--edge);transform:translateY(-3px)}   /* a leader from each key to its description */
+#helpPanel .khead{display:flex;align-items:baseline;gap:10px}#helpPanel .khead::after{content:'';flex:1;border-bottom:1px solid var(--edge);transform:translateY(-3px)}   /* a section title rules out to the box's edge */
 #fxSizeRow.onerow{grid-template-columns:minmax(0,1fr) auto!important}#fxSizeRow.onerow>label{text-align:right;justify-self:end}#fxSizeRow.onerow>#fxSizeSeg{grid-column:2;grid-row:1}   /* Shake › Edges: the word against its button (0.89) */
 #gSmoothRow{margin-top:10px;padding-top:8px;border-top:1px solid var(--edge)}   /* Smooth scaling: no section, after the last one (folding Shadow doesn't hide it) */
-#poolBtn.drop{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}   /* files over the Pool button: they go to the pool */
+#poolBtn.drop{outline:2px dashed var(--sig);outline-offset:-2px}   /* files over the Pool button: they go to the pool (0.90: the same dashed frame as a pad or scene taking a drop) */
 .layer.masking>#maskBar{align-content:start}#maskBar .mpop{width:54px}#maskBar .mpop output{font-size:10px;white-space:nowrap}   /* 0.89: one row; the pop-up wide enough for "400 px" */
 #layers .clips>.chip,#layers .clips>.bgslot{flex:0 0 calc((100% - 15px) / 6);min-width:0;width:auto}   /* six to a row, filled or empty, always the same size (0.89) */
 .shaperow{display:flex;gap:4px;min-width:0}.shaperow>.seg{flex:1;display:grid;grid-template-columns:repeat(6,1fr)}.shaperow>.seg button{padding:0}.shaperow>.iconbtn{flex:none;width:26px}.shaperow>.iconbtn.on{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}   /* LFO shapes drawn, then Invert and Hold (0.89) */
 .chip.fxchip{background:var(--panel-2);display:grid;place-items:center}.chip.fxchip>i{display:flex;gap:2px;color:var(--sig);font-style:normal}.chip.fxchip>i svg.fxic{width:12px;height:12px}   /* an effect / preset being dragged (0.89) */
 #maskBar .mrow>.seg{flex:0 0 66px;grid-auto-columns:22px}#maskBar .mrow>.seg button{padding:0}#maskBar .iconbtn,#maskBar .icontog{width:22px}   /* the three drawing tools keep their size on the one row */
 
-#gifThumb{width:36px;height:20px;margin-left:6px;flex:none;border-radius:2px;background:var(--track);display:block}   /* the selected GIF on the GIF heading (0.89.4): which one this panel edits, also when it's folded */
+#gTabs button.on{background:var(--ink);color:var(--bg)}   /* the GIF's main categories: a different highlight from the choices inside them (0.90) */
+#maskBar{margin-top:0!important}#maskBar .mrow{justify-content:center;gap:4px}#maskBar .mrow>.seg{flex:0 0 auto;grid-auto-columns:24px}#maskBar .mrow>.seg button,#maskBar .iconbtn,#maskBar .icontog{width:24px;height:20px;padding:0;display:grid;place-items:center}#maskBar svg{width:12px;height:12px;display:block;margin:0}   /* every mask icon the same size, centred on its line (0.90) */
+#trPre button.drop{outline:2px dashed var(--sig);outline-offset:-2px}body.trcopy #trPre button.drop{outline-style:solid}#trPre button{position:relative}.chip.trchip{width:auto;padding:0 8px;background:var(--panel-2);display:flex;align-items:center;white-space:nowrap}   /* transition presets dragged like pads (0.90) */
+#aEnvLoop.on{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}
+#gridA .pad[data-b="2"],#gridA.b2 .pad[data-b="1"]{display:none}#gridA.b2 .pad[data-b="2"]{display:block}#bankBtn{flex:none;width:44px;height:16px;margin-left:6px}#bankBtn button{height:14px;font-size:10px;padding:0}   /* the Scene pads' two banks (0.90) */

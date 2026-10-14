@@ -18,7 +18,7 @@ function buildPads(){
     el.addEventListener('pointerup', e => { if (el._x) return; const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); if (delHush) return; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
     el.addEventListener('pointercancel', () => { padDragEnd(null, i); release(i); });
     el.addEventListener('click', e => { if (el._shift || isDel(e)){ el._shift = false; return; } if (!p.gif && !p.loading){ selectPad(i); if (pool.length) openPool(i); else { fileTarget = i; $('#fileIn').click(); } } });
-    if (i < 9) $('#gridA').appendChild(el); else if (i < N_KEYPADS) $('#gridB').appendChild(el);   // (a Background slot's tile isn't shown: its chip on the layer card stands for it)
+    if (isScenePad(i)){ el.dataset.b = i >= B2 ? 2 : 1; $('#gridA').appendChild(el); } else if (i < N_KEYPADS) $('#gridB').appendChild(el);   // (a Background slot's tile isn't shown: its chip on the layer card stands for it)
     p.el = el;
   });
 }

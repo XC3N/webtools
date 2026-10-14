@@ -101,7 +101,7 @@ function setClockSrc(v){
 // A mapping is { key: 'n<ch>.<note>' | 'c<ch>.<cc>', t: target kind, i: index }. Buttons (pads, scenes, transition
 // presets, effects, layers, blackout, freeze, tap, sync) react to notes, or to a CC crossing 64; faders (layer opacity,
 // effect amount) follow a CC. Mappings belong to this browser (they describe the controller, not the set).
-const midiCtl = { map: [], input: 'all', learning: false, target: null, inputs: [], cc: {} };
+const midiCtl = { map: [], input: 'all', learning: false, target: null, inputs: [], cc: {} }, midiPad = new Map();   // midiPad: a held control → the pad it played
 { const o = Prefs.json('vjif-midi'); if (o){ midiCtl.map = o.map || []; midiCtl.input = o.input || 'all'; midiCtl.inputName = o.inputName || ''; } }
 const saveMidiCtl = () => Prefs.setJson('vjif-midi', { map: midiCtl.map, input: midiCtl.input, inputName: midiCtl.inputName || '', fxOrd: 2 });   // fxOrd: effect slots in the 0.78 order
 async function getMidi(){
@@ -168,7 +168,7 @@ function ctlApply(m, kind, val, key){
   midiCtl.cc[key] = down;
   const i = m.i;
   switch (m.t){
-    case 'pad': down ? trigger(i) : release(i); break;
+    case 'pad': if (down){ const p = i < 9 ? bankPad(i) : i; midiPad.set(key, p); trigger(p); } else { release(midiPad.has(key) ? midiPad.get(key) : i); midiPad.delete(key); } break;   // a Scene pad (1st bank) plays the bank on show (0.90)
     case 'scene': if (down) sceneKey(i); break;
     case 'trans': if (down) armTrans(i); break;
     case 'fx': down ? fxPlay(i) : fxUp(i); break;

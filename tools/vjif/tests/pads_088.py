@@ -9,7 +9,7 @@ async def main():
     await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()")
     for k,f in [(0,'busy.gif'),(9,'ring.gif'),(18,'grad.gif')]:
       await pg.evaluate(f"fileTarget = {k}"); await pg.set_input_files('#fileIn', [str(FIX/f)]); await pg.wait_for_function(f"pads[{k}].gif")
-    await pg.keyboard.press('KeyQ'); await pg.keyboard.press('KeyR'); await pg.wait_for_timeout(300)
+    await pg.keyboard.press('KeyQ'); await pg.keyboard.press('KeyU'); await pg.wait_for_timeout(300)
     lay = "layers.map(L => L.clips.map(c => c.pad).join(',')).join('|')"
     a = await pg.evaluate(lay)
     await pg.evaluate("gotoScene(1, clock.beat, true)"); b1 = await pg.evaluate(lay); g1 = await pg.evaluate("[!!pads[9].gif, !!pads[0].gif, !!pads[18].gif]")
