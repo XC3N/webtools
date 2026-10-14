@@ -78,6 +78,10 @@ const FX_ICON_SVG = {
   rgb: '<rect x="2.5" y="4" width="15" height="11" rx="2.5"/><path d="M5 8h10M5 11h10" opacity=".6"/><path d="M7 18h6"/>',
   feedback: '<rect x="2.5" y="2.5" width="15" height="15"/><rect x="5.5" y="5.5" width="9" height="9" opacity=".75"/><rect x="8.3" y="8.3" width="3.4" height="3.4" opacity=".5"/>' };
 const fxIcon = id => FX_ICON_SVG[id] ? `<svg class="fxic" viewBox="0 0 20 20" aria-hidden="true">${FX_ICON_SVG[id]}</svg>` : '';
+// the Game Boy's dot, in real pixels: a whole number (a fraction made dots of two widths and an uneven, tartan-like grid,
+// 0.89.1) near the height / 144, one that divides the canvas when there is one so the grid lines up with the frame
+function lcdDot(){ const t = CH / 144, c = [0, -1, 1, -2, 2].map(k => Math.max(2, Math.round(t) + k));
+  return c.find(d => CW % d === 0 && CH % d === 0) || c.find(d => CH % d === 0) || c[0]; }
 const palGB = i => /^GB/.test((FX_PALS[i] || {}).n || '');
 function sizeAlt(d, style, C){
   if (d && d.id === 'shake') return { label: 'Edges', key: 'ovs', def: 2, list: FX_OVS, toggle: true, seg: true,   // one icon: zoom in enough that no frame edge ever shows, or not (0.87.3; an older Some reads as on)
@@ -236,7 +240,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], monoSz: size[MO],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? H / 144 * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s;   // Overscan: off · some · full (enough for the biggest jolt and tilt)
@@ -356,11 +360,11 @@ ${FX_GLSL}
         float y = dot(c, vec3(0.299, 0.587, 0.114));
         c = mix(c, IS(monoS, S_mono_grey) ? vec3(y) : IS(monoS, S_mono_thresh) ? vec3(step(0.5, y)) : vec3(step(bay8(gl_FragCoord.xy / max(monoSz, 1.0)) + 0.0078, y)), mono);   // dither: Size-px dots, 8×8 pattern
         if (colr > 0.001){ if (IS(colrS, S_colour_pal)){ if (bayer4(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)) + 7.0) < colr * 1.0001) c = palSnap(c);   // palette: pixels switch over in a dither pattern as the envelope rises / falls (no muddy mix)
-            if (palDot > 0.5){ vec2 f = mod(gl_FragCoord.xy, palDot); float gw = max(1.0, floor(palDot * 0.16));   // Dot Matrix (0.89, after the DMG's LCD): thin gaps between the dots
+            if (palDot > 0.5){ vec2 f = mod(gl_FragCoord.xy, palDot); float gw = max(1.0, floor(palDot * 0.14 + 0.5));   // Dot Matrix (0.89, after the DMG's LCD): thin gaps between the dots
               vec3 bg = pal[0]; float by = -1.0; for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; float y = dot(pal[i], vec3(0.299, 0.587, 0.114)); if (y > by){ by = y; bg = pal[i]; } }
               // the gap shows the reflective backing (the palette's lightest colour) with this dot's shadow on it: the liquid crystal
               // sits above the reflector, so each dark dot casts a faint copy down and to the right
-              if (f.x > palDot - gw || f.y < gw) c = mix(c, mix(bg, c, 0.3), colr);
+              if (f.x > palDot - gw || f.y < gw) c = mix(c, mix(bg, c, 0.45), 0.8 * colr);   // (the gaps a touch quieter: a grid, not a tartan)
               // the backing's fine grain (about ±4 %), seen in the light areas, lost in the dark ones
               float gr = fract(sin(dot(floor(gl_FragCoord.xy / max(1.0, floor(palDot * 0.4))), vec2(12.9898, 78.233))) * 43758.5453);
               c *= 1.0 + (gr - 0.5) * 0.08 * dot(c, vec3(0.299, 0.587, 0.114)) * colr; } }
@@ -547,7 +551,7 @@ ${FX_GLSL}
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); return { t, f }; };
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
-    const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz', 'palDot']);   // sizes given in canvas pixels
+    const PX_NAMES = new Set(['crtSz', 'monoSz', 'pixSize', 'glSz']);   // (palDot is worked out in real pixels: lcdDot)   // sizes given in canvas pixels
     const NAMES = ['mono', 'monoS', 'colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP', 'palDot',
                    'glitch', 'glS', 'gseed', 'glSz', 'rgb', 'rgbS', 'crtSz', 'monoSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)

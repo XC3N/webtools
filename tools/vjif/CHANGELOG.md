@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.89.1 — 2026-10-14
+
+### Effects
+- Colour › Palette › Dot Matrix / Pixels: the dots are whole pixels (8 at 1080p: 135 rows), square and all the same size, on a grid that lines up with the frame. A fractional dot size (7.5 px) gave dots of two widths and an uneven, tartan-like grid. The gaps are a little quieter.
+
 ## 0.89.0 — 2026-10-14
 
 ### Under the hood
