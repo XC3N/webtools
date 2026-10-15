@@ -535,7 +535,8 @@ setInterval(async () => {
   if (id !== vu.key && !vu.busy){ vu.busy = true; vuStop(); if (id) await vuStart(id.replace(/:live$/, '')).catch(() => {}); vu.key = id; vu.busy = false; }
   let peak = 0; if (vu.an){ vu.an.getFloatTimeDomainData(vu.buf); for (let i = 0; i < vu.buf.length; i++){ const a = Math.abs(vu.buf[i]); if (a > peak) peak = a; } }
   const db = peak > 0 ? 20 * Math.log10(peak) : -99, v = Math.max(0, Math.min(1, (db + 60) / 60));   // −60 dB … 0 dB
-  vu.lv = Math.max(v, vu.lv - 0.08);                 // falls back gently
+  const was = vu.lv; vu.lv = Math.max(v, vu.lv - 0.08);   // falls back gently
+  if (!vu.an && was === 0 && vu.lv === 0) return;   // (0.97: no meter running and nothing to fade: no DOM work 20 times a second)
   document.querySelectorAll('.vu').forEach(m => { m.firstChild.style.transform = `scaleX(${vu.lv})`; m.classList.toggle('hot', db > -6); m.classList.toggle('clip', db > -0.5); m.classList.toggle('dimmed', !vu.an); });
 }, 50);
 

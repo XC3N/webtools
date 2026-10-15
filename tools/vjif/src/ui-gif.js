@@ -476,7 +476,7 @@ function buildGfx(){
     return `<div class="sub gfxh" data-id="${id}"><span title="${esc(d.title)}">${esc(d.name)}</span><span class="line"></span><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
       <div class="gfxrow" data-id="${id}"><div class="seg" data-gst="${id}">${GFX_STYLES(id).map(s => `<button data-v="${s[0]}" title="${esc(s[1])}: ${esc(s[2])}">${esc(STYLE_BTN[s[0]] || STYLE_SHORT[s[0]] || s[1])}</button>`).join('')}</div>
       <input type="range" min="0.05" max="1" step="0.01" data-def="0.8" data-gamt="${id}" title="Amount"><output></output></div>`; }).join('');
-  const edit = (id, f) => { const g = curGif(); if (!g) return; g.gfx = g.gfx || {}; g.gfx[id] = { ...gfxDef(id), ...(g.gfx[id] || {}) }; f(g.gfx[id]); redraw.all = true; syncGfxUI(g); };
+  const edit = (id, f) => { const g = curGif(); if (!g) return; const x = { ...gfxDef(id), ...((g.gfx && g.gfx[id]) || {}) }; f(x); g.gfx = { ...(g.gfx || {}), [id]: x };   /* a new object each time: the redraw check keys on it */ redraw.all = true; syncGfxUI(g); };
   $('#gfxList').addEventListener('change', e => { const id = e.target.dataset.gon; if (id) edit(id, x => x.on = e.target.checked); });
   $('#gfxList').addEventListener('input', e => { const id = e.target.dataset.gamt; if (id) edit(id, x => { x.amt = +e.target.value; x.on = true; }); });
   $('#gfxList').addEventListener('click', e => { const b = e.target.closest('[data-gst] button'); if (!b) return; const id = b.closest('[data-gst]').dataset.gst; edit(id, x => { x.style = b.dataset.v; x.on = true; }); });

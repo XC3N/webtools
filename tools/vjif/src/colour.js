@@ -91,7 +91,7 @@ const palOn = g => !!g.pal && !g.pal.off && g.pal.i >= 0 && !!FX_PALS[g.pal.i]; 
 // the image to draw for frame `fi` of GIF `g`: run through the colour shader when live colour is on.
 // e = the clip as drawn this frame; its H/S/V (from automation) shift the GIF's own colour settings.
 // Connected key: the frame's mask (from the flood fill) replaces the per-pixel colour test.
-// The result is kept per GIF (two frames' worth: the playing one and the preview / ghost's) until its frame or colour changes: a 10 fps GIF on a 60 Hz screen
+// The result is kept per GIF (every frame, up to FXC_BYTES; 0.97) until its colour settings change: a 10 fps GIF on a 60 Hz screen
 // goes through the shader (and is copied back from the GPU) 10 times a second, not 60.
 function fxImage(g, fi, e){
   const img = g.frames[fi];
@@ -103,15 +103,21 @@ function fxImage(g, fi, e){
     const B = hsvOf(g), h = B.h + (e.H ?? 0), s = B.s * (e.S ?? 1), v = B.v * (e.V ?? 1);
     return fxGL.render(img, Object.assign({}, base, { doHsv: h !== 0 || s !== 1 || v !== 1, H: h, S: s, V: v }), mask);
   }
-  let C = g.fxC; if (!C || C.p !== base || C.m !== g.masks) C = g.fxC = { p: base, m: g.masks, list: [] };   // new colour settings or masks: start over
-  const hit = C.list.find(x => x.k === fi); if (hit) return hit.cv;
+  let C = g.fxC; if (!C || C.p !== base || C.m !== g.masks) C = g.fxC = { p: base, m: g.masks, map: new Map(), order: [] };   // new colour settings or masks: start over
+  C.t = performance.now();
+  const hit = C.map.get(fi); if (hit) return hit.cv;
   const out = fxGL.render(img, base, mask);
-  const ent = C.list.length >= 2 ? C.list.shift() : { cv: new OffscreenCanvas(1, 1) };   // the older slot is reused
+  // Performance (0.97): every frame of the loop is kept (up to FXC_BYTES per GIF), so once the GIF has played through, its
+  // coloured frames come from memory: no shader pass and no copy back from the GPU per new frame (it was two frames' worth)
+  const cap = Math.max(2, Math.min(g.src.length, Math.floor(Math.max(FXC_BYTES, Math.min(4 * FXC_BYTES, g.srcBytes || 0)) / Math.max(1, out.width * out.height * 4))));   // (as much again as its own frames, up to 128 MB)
+  let ent; if (C.order.length >= cap){ const old = C.order.shift(); ent = C.map.get(old); C.map.delete(old); } else ent = { cv: new OffscreenCanvas(1, 1) };   // full: the oldest slot is reused
   if (!ent.x) ent.x = ent.cv.getContext('2d');
   if (ent.cv.width !== out.width || ent.cv.height !== out.height){ ent.cv.width = out.width; ent.cv.height = out.height; } else ent.x.clearRect(0, 0, out.width, out.height);
-  ent.x.drawImage(out, 0, 0); ent.k = fi; C.list.push(ent);
+  ent.x.drawImage(out, 0, 0); ent.k = fi; C.map.set(fi, ent); C.order.push(fi);
   return ent.cv;
 }
+const FXC_BYTES = 32 * 1048576;                       // coloured frames kept per GIF
+setInterval(() => { const t = performance.now(); insts.forEach(g => { if (g.fxC && t - (g.fxC.t || 0) > 15000) g.fxC = null; }); }, 5000);   // a GIF not drawn for 15 s lets its coloured frames go
 function scheduleFx(g, ms){
   if (liveFx()){ applyFx(g); return; }               // live: nothing to wait for
   clearTimeout(g.keyT); g.keyT = setTimeout(() => applyFx(g), ms);

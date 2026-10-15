@@ -260,11 +260,14 @@ function splitNoFx(list){
 }
 const sceneSig = sigTracker(), overlaySig = sigTracker(), prepOutSig = sigTracker(), prepEdSig = sigTracker();   // (Prep: the output and the editor's picture, each its own)
 // the picture: frozen / black, and each visible layer and GIF as drawn
+// an object's settings as one string, made once per object (0.97: shadows and GIF effects are replaced, never edited in place,
+// so a new setting is a new object; the string was rebuilt for every GIF on every frame)
+const objSigs = new WeakMap(), objSig = o => { let s = objSigs.get(o); if (s === undefined){ s = JSON.stringify(o); objSigs.set(o, s); } return s; };
 function sceneChanged(list, frozen, black, S = sceneSig){
   S.start(); S.add(frozen); S.add(black);
   if (!frozen) for (const { L, items } of list){
     S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill); S.add(L.mask && L.mask.on ? L.mask.mid + (L.mask.inv ? 'i' : '') : 0); S.add(maskRev);
-    for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(!!g.nofx); if (g.gfx) S.add(JSON.stringify(g.gfx)); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit); if (g.shadow && g.shadow.on) S.add(JSON.stringify(g.shadow));
+    for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(!!g.nofx); if (g.gfx) S.add(objSig(g.gfx)); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit); if (g.shadow && g.shadow.on) S.add(objSig(g.shadow));
       S.add(e.flipX); S.add(e.flipY); S.add(e.tile); S.add(e.cl); S.add(e.ct); S.add(e.cr); S.add(e.cb); S.add(e.alpha); S.add(e.blend); S.add(e.H); S.add(e.S); S.add(e.V); }
   }
   return S.changed();

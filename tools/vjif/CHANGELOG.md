@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.97.0 — 2026-10-15
+
+### Performance
+- A GIF with Colour settings or GIF › FX has each coloured frame worked out once and kept for the whole loop (up to 32–128 MB per GIF, dropped 15 s after the GIF stops being drawn). Before, only the last 2 were kept, so the GPU redid every frame on every loop.
+- The live scene tile is redrawn only when the scene's make-up changes (GIFs, placement, layers, colour settings), not every second while GIFs play. Drawing it read the picture back from the GPU, which stalled a frame; it was the largest single cost in profiles.
+- The preview and the output window share one downscale of each frame instead of each making its own.
+- The redraw check no longer rebuilds each GIF's shadow and GIF-effect settings as text every frame.
+- The sound meter does nothing while there's no sound.
+
 ## 0.96.0 — 2026-10-15
 
 ### GIFs

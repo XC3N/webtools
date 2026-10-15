@@ -19,7 +19,7 @@ async def main():
     print('re-hit Q (no new step)', await pg.evaluate("hist.undo.length"), 'touched', await pg.evaluate("touched.edit"))
     # colour cache: hue shift on pad 0
     await pg.evaluate("pads[0].gif.hsv.h = 90; applyFx(pads[0].gif); redraw.all = true"); await pg.wait_for_timeout(300)
-    print('fxC entries', await pg.evaluate("pads[0].gif.fxC && pads[0].gif.fxC.list.length"))
+    print('fxC entries', await pg.evaluate("pads[0].gif.fxC && pads[0].gif.fxC.map.size"))
     # scene change
     await pg.wait_for_timeout(1100)
     print('liveThumb', await pg.evaluate("!!liveThumb && liveThumb.length"))

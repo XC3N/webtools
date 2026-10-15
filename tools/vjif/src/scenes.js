@@ -26,10 +26,16 @@ function sceneThumb(){
   return c.toDataURL('image/jpeg', 0.7);
 }
 // the live tile, once a second, only when the picture was redrawn since the last one
-let thumbDrawn = -1;
+let thumbDrawn = -1, thumbSig = '';
 function refreshLiveThumb(){
   if (!layers.some(L => L.clips.length)){ if (liveThumb){ liveThumb = null; renderScenes(); } return; }
   if (drawn === thumbDrawn) return; thumbDrawn = drawn;
+  // Performance (0.97): only when the scene's make-up changed (GIFs, placement, layers, colour settings), not each time a
+  // GIF moves on to its next frame. Drawing the tile reads the GIFs' pictures back from the GPU, which stalled a frame or
+  // more every second while anything played (it was the largest single cost in profiles)
+  const sig = layers.map(L => [L.on, L.opacity, L.blend, L.fillOn && L.fill, L.mask && L.mask.mid, ...L.clips.map(c => { const g = pads[c.pad] && pads[c.pad].gif;
+    return [c.id, c.pad, c.x, c.y, c.sx, c.sy, c.rot, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, c.alpha, c.off, c.blend, g && g.fxVer, g && g.shadow && g.shadow.on].join(); })].join('|')).join('/');
+  if (sig === thumbSig && liveThumb) return; thumbSig = sig;
   liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb;
 }
 // a layer's settings and clip list (the clips themselves are shared, not copied)

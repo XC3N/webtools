@@ -789,7 +789,7 @@ function drawPrep(now, hidden, quiet){
   if (oF.out) post.run(oF.out); else if (post) post.idle(SLOT.OUT);
   drawTrOverlay();
   if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
-  outBlit(master);
+  blitGen++; outBlit(master);
   }
   if (hidden || quiet) return;
   const eF = post ? fxFrame(b) : NOFX, eList = frameList(now);
@@ -808,13 +808,19 @@ function eighthFit(aw, ah, cw = CW, ch = CH){   // available screen pixels → [
   if (e8) return [Math.round(cw * e8 / 8), Math.round(ch * e8 / 8), e8];
   const f = Math.min(aw / cw, ah / ch); return [Math.max(1, Math.round(cw * f)), Math.max(1, Math.round(ch * f)), 0];
 }
+// Performance (0.97): the halves are shared by the preview and the output window within a frame (one chain per source
+// and frame): with the output at ½ and the preview at ¼, the ½ step is made once, not twice
+const halfChain = { src: null, gen: -1, n: 0, cv: [] };
+let blitGen = 0;                                     // bumped once per drawn frame
 function blitTo(ctx, src, cache){
   const tw = ctx.canvas.width, th = ctx.canvas.height; let s = src, k = 0;
   if (tw === src.width && th === src.height){ ctx.drawImage(src, 0, 0); return; }
+  const H = halfChain; if (H.src !== src || H.gen !== blitGen){ H.src = src; H.gen = blitGen; H.n = 0; }
   while (s.width / 2 >= tw && s.height / 2 >= th && k < 3){
-    const c = cache[k] || (cache[k] = document.createElement('canvas')), w = s.width >> 1, h = s.height >> 1;
+    if (k < H.n){ s = H.cv[k]; k++; continue; }       // made already this frame (for the other window)
+    const c = H.cv[k] || (H.cv[k] = document.createElement('canvas')), w = s.width >> 1, h = s.height >> 1;
     if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
-    const x = c.getContext('2d', { alpha: false }); x.imageSmoothingQuality = 'high'; x.drawImage(s, 0, 0, w, h); s = c; k++;
+    const x = c.getContext('2d', { alpha: false }); x.imageSmoothingQuality = 'high'; x.drawImage(s, 0, 0, w, h); s = c; k++; H.n = k;
   }
   ctx.imageSmoothingQuality = 'high'; ctx.drawImage(s, 0, 0, tw, th);
 }
@@ -873,7 +879,7 @@ function drawFrame(now){
     if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);
     drawTrOverlay();
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
-    outBlit(master);
+    blitGen++; outBlit(master);
     if (!hidden && !quiet){ if (pvOnly && bl <= 0) drawPvOnly(list, noFx); else pvBlit(master); }
   }
   }
