@@ -164,7 +164,7 @@ async function applySnapshot(st, { wait = true } = {}){
     const gs = pads.map((_, k) => mk(ss.pads[k]));
     scenes[i] = { pads: gs, layers: deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li })), thumb: st.thumbs && st.thumbs[i] || null, name: ss.name || '', fxOn: ss.fxOn || null };
   }
-  sceneIdx = idx; pendingScene = null; liveThumb = st.thumbs && st.thumbs[idx] || null; liveName = st.sceneName || ''; endTrans(); dropPrep(); renderScenes();
+  sceneIdx = idx; pendingScene = null; liveThumb = st.thumbs && st.thumbs[idx] || null; liveName = st.sceneName || ''; endTrans(); dropPrep(); scBank = Math.floor(idx / SC_BANK); setScBank(scBank); renderScenes();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait')); heldPre = -1;
   trPresets = trDefaults(); trSel = st.transP && st.transP.length === 9 ? st.transSel ?? 1 : 1;
   if (st.transP && st.transP.length === 9) st.transP.forEach((P, k) => normTrans(Object.assign(trPresets[k], P)));
@@ -225,7 +225,7 @@ async function newEmptySet(){
   [...insts.values()].forEach(freeGif); pool.slice().forEach(freeMedia);
   pads.forEach((p, i) => { p.gif = null; renderPad(i); }); renderPool();
   layers.forEach(L => Object.assign(L, emptyLayer()));
-  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; endTrans(); dropPrep(); renderScenes();
+  scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; endTrans(); dropPrep(); setScBank(0); renderScenes();
   trPresets = trDefaults(); armTrans(1);
   fxCfg = fxDefaults(); fxPre = fxPreDefaults(); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); heldPre = -1; syncFxUI();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));

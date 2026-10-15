@@ -14,7 +14,7 @@
   --bg:#18191b;--panel:#202124;--panel-2:#28292d;--track:#313236;--edge:#34363a;--edge-2:#3e4045;
   --ink:#dddbd5;--muted:#8e8d88;--faint:#5f5e5a;
   --amber:#6db3a2;--acc-rgb:109,179,162;--amber-dim:#4c7d71;--acc-hi:#7fc4b3;--acc-lo:#609e8f;
-  --lcd-bg:#0a100e;--lcd-ink:#6db3a2;--meter-rgb:120,160,210;--env:#6db3a2;--env-rgb:109,179,162;
+  --lcd-bg:#0a100e;--lcd-ink:#6db3a2;--meter-rgb:120,160,210;--meter:#78a0d2;--metertxt:#0d1110;--env:#6db3a2;--env-rgb:109,179,162;
   --sig:var(--amber);--sigtxt:#0d1412;
   --danger:#ff8f8f;--ok:#6db3a2;
   --r:3px;--ch:24px;--fs:12px;

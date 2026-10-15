@@ -170,7 +170,7 @@ Theme.onApply(t => { const rgb = Theme.hsv2rgb((t.hCtrl + 180) % 360, t.sCtrl ??
   R.setProperty('--learn', `rgb(${rgb.join(',')})`); R.setProperty('--learntxt', 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] > 140 ? '#111' : '#fff'); });
 Theme.mount($('#themeBox'), { app: 'vjif', toast: toast2,
   roles: [['hCtrl', 'Signal', 'What is selected or on: chosen buttons, switches, the selected pad and scene', true], ['hLcd', 'LCD', 'Readouts, the tempo, the cycle display', true],
-          ['hEnv', 'Graphs', 'Fade and automation graphs; automated values in Transform']],
+          ['hEnv', 'Graphs', 'Fade and automation graphs; automated values in Transform'], ['hMeter', 'Second', 'The choices inside the GIF panel\'s tabs (the tabs themselves take Signal), changed values, pool stats']],
   onChange: t => Prefs.setJson('vjif-theme2', t) });
 Controls.init();
 restore();

@@ -21,7 +21,7 @@ function cycleText(g){
 }
 function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.querySelector('.l1').textContent = a; el.querySelector('.l2').textContent = b; el.title = a + ' — ' + b; }
 // the panel's picture of the selected GIF (its first frame; the In / Out / Start sliders show theirs while touched); empty pad: blank
-function drawGifThumb(){ const g = pads[selPad] && pads[selPad].gif; if (g) drawPrev(g, g.startF); else { const c = $('#gPrev'); c.getContext('2d').clearRect(0, 0, c.width, c.height); } }
+function drawGifThumb(){ const g = pads[selPad] && pads[selPad].gif; if (g) drawPrev(g, g.startF); else for (const c of [$('#gPrev'), $('#gPrevPlay')]) c.getContext('2d').clearRect(0, 0, c.width, c.height); }
 function syncGifUI(){
   drawGifThumb();
   queueMicrotask(markFolds);                         // (once the panel shows this GIF's values)
@@ -320,11 +320,10 @@ function syncRangeUI(g){
   const F = g.src.length;
   [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => { const el = $(id); el.max = F - 1; el.value = g[k]; el.nextElementSibling.textContent = g[k]; });
 }
-function drawPrev(g, f){
-  const c = $('#gPrev'), x = c.getContext('2d'), img = fxImage(g, f);
-  x.clearRect(0, 0, c.width, c.height);
-  const s = Math.min(c.width / img.width, c.height / img.height);
-  x.drawImage(img, (c.width - img.width*s)/2, (c.height - img.height*s)/2, img.width*s, img.height*s);
+function drawPrev(g, f){   // the panel's picture at the top right, and Play › Frames' own (0.91: both)
+  const img = fxImage(g, f);
+  for (const c of [$('#gPrev'), $('#gPrevPlay')]){ const x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height);
+    const s = Math.min(c.width / img.width, c.height / img.height); x.drawImage(img, (c.width - img.width*s)/2, (c.height - img.height*s)/2, img.width*s, img.height*s); }
 }
 [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => {
   $(id).addEventListener('input', e => {
@@ -354,15 +353,19 @@ function startPick(k){ stopPick(); picking = k; $(PICK_BTN[k]).classList.add('ar
 function stopPick(){ picking = false; Object.values(PICK_BTN).forEach(q => { $(q).classList.remove('armed'); }); pv.style.cursor = ''; }
 function pickAt(px, py){
   const kind = picking; stopPick();
-  const hit = hitsAt(px, py, true, true)[0] || hitsAt(px, py, false, true)[0]; if (!hit) return toast('No GIF under the cursor');
-  const c = hit[1], g = pads[c.pad].gif, d = sampleClip(c, px, py, true);
+  // the eyedropper reads the GIF this panel edits, under the cursor, even where another GIF covers it, and the selection
+  // stays as it is (0.91: it took whatever was on top, and selected it)
+  const g = curGif(); if (!g) return toast('Select a GIF first');
+  const mine = layers.flatMap(L => L.clips).filter(c => pads[c.pad].gif === g), on = mine.filter(c => inClip(liveClip(c), px, py));
+  const c0 = on.find(c => sampleClip(liveClip(c), px, py, true)[3] > 16) || on[0]; if (!c0) return toast(`Click on ${g.name} in the preview`);
+  const c = c0, d = sampleClip(liveClip(c), px, py, true);
   if (kind === 'swap'){                              // the swatch nearest that colour (the GIF's own colours, before its swaps)
     const pal = gifPalette(g), dist = q => Math.abs(q[0] - d[0]) + Math.abs(q[1] - d[1]) + Math.abs(q[2] - d[2]);
     const best = pal.reduce((a, q) => !a || dist(q) < dist(a) ? q : a, null); if (!best) return;
-    selectPad(c.pad); swSel = best.slice(); syncSwapUI(g); revealSoon('#swList .swr.sel'); return;
+    swSel = best.slice(); syncSwapUI(g); revealSoon('#swList .swr.sel'); return;
   }
   g.key.color = [d[0], d[1], d[2]]; g.key.seed = [d.u, d.v]; g.key.on = true;
-  selectPad(c.pad); scheduleFx(g, 0);
+  syncGifUI(); scheduleFx(g, 0);
 }
 // what a click just opened further down (a swap's editor row): scrolled into view if it's below the panel's edge
 // a row that just appeared, scrolled into view in its column (clear of the faded edges); done by hand: a smooth

@@ -56,6 +56,8 @@ const Theme = (() => {
     const M = T.hMeter;
     set('--meter-hi', hsv2hex(M, 75, 90)); set('--meter-lo', hsv2hex(M, 85, 63)); set('--meter-dk', hsv2hex(M, 68, 22));
     set('--meter', hsv2hex(M, 75, 90)); set('--meter-rgb', hsv2rgb(M, 75, 90).join(','));
+    const mg = hsv2rgb(M, 75, 90).map(v => { v /= 255; return v <= 0.04 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    set('--metertxt', 0.2126 * mg[0] + 0.7152 * mg[1] + 0.0722 * mg[2] > 0.3 ? '#0d1110' : '#ffffff');   // readable text on the secondary accent
     set('--bg', hsv2hex(T.bh, T.bs, T.bv));
     set('--panel', hsv2hex(T.bh, T.bs, cl(T.bv + 3.5))); set('--panel-2', hsv2hex(T.bh, T.bs, cl(T.bv + 6.5)));
     set('--track', hsv2hex(T.bh, T.bs, cl(T.bv + 11)));

@@ -20,10 +20,10 @@ function musSet(src, name, save = true){
   mus.name = name; musUI();
 }
 async function musPlay(){ musGraph(); try { await mus.ctx.resume(); await mus.el.play(); } catch (e) { toast("Can't play that track: " + (e.message || e.name)); } musUI(); }
-// With Sync: Sync (beat 1) also starts the track from the top, so the song and the beat grid start together. Recording
-// never touches the track: a take records whatever is playing, and the track carries on when the take ends.
-// (To record a song from its start: Rec, then Sync. The waiting take starts on Sync's downbeat, with the song.)
-function musOnSync(){ if ($('#musSync').checked && mus.el.src && clock.src === 'internal'){ mus.el.currentTime = 0; musPlay(); } }
+// Sync on play (0.91; it was the other way round, Sync starting the track): Play from the top of the track is also Sync
+// (beat 1), so the song and the beat grid start together. Recording never touches the track. To record a song from its
+// start: Rec, then Play (the waiting take starts on that downbeat, with the song).
+function musPlayTop(){ if (mus.el.paused && mus.el.currentTime < 0.05 && $('#musSync').checked && clock.src === 'internal') resync(); return musPlay(); }
 const mmss = t => isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` : '–:––';
 function musUI(){
   $('#musName').textContent = mus.name || 'no track'; $('#musPlay').disabled = $('#musStop').disabled = !mus.el.src;
@@ -51,7 +51,7 @@ $('#musFile').addEventListener('change', e => { const f = e.target.files[0]; e.t
 $('#musUrl').addEventListener('keydown', e => { if (e.key !== 'Enter') return; const u = e.target.value.trim(); if (!u) return;
   if (/youtube\.com|youtu\.be|spotify\.com|soundcloud\.com/i.test(u)) return toast('That page can\'t be played here: open it in another tab and pick Tab audio as the sound');
   musSet(u, decodeURIComponent(u.split(/[?#]/)[0].split('/').pop() || 'link')); e.target.value = ''; });
-$('#musPlay').addEventListener('click', () => mus.el.paused ? musPlay() : mus.el.pause());
+$('#musPlay').addEventListener('click', () => mus.el.paused ? musPlayTop() : mus.el.pause());
 $('#musVol').addEventListener('input', e => { if (mus.gain) mus.gain.gain.value = +e.target.value; musSave(); });
 $('#musLoop').addEventListener('click', () => { mus.el.loop = !mus.el.loop; $('#musLoop').classList.toggle('on', mus.el.loop); musSave(); });
 $('#setPanel').addEventListener('dragover', e => { if ([...e.dataTransfer.items].some(i => i.type.startsWith('audio/'))) e.preventDefault(); });

@@ -55,9 +55,10 @@ function lpColour(m, t){
     case 'pad': { const pi = m.i < 9 ? bankPad(m.i) : m.i, g = pads[pi] && pads[pi].gif; if (!g) return at(LP_LOW);   // (the Scene bank on show)
       if (pending.has(pi)) return blink ? [255, 255, 255] : at(LP_MID);
       return layers.some(L => L.on && L.clips.some(c => c.pad === pi)) ? R : at(LP_MID); }
-    case 'scene': if (pendingScene && pendingScene.i === m.i) return blink ? [255, 255, 255] : at(LP_MID);
-      if (m.i === sceneIdx) return R;
-      return sceneCount(m.i) || scenePads(m.i) ? at(LP_MID) : at(LP_LOW);
+    case 'scene': { const si = m.i < SC_BANK ? bankScene(m.i) : m.i;   // (the bank on show)
+      if (pendingScene && pendingScene.i === si) return blink ? [255, 255, 255] : at(LP_MID);
+      if (si === sceneIdx) return R;
+      return sceneCount(si) || scenePads(si) ? at(LP_MID) : at(LP_LOW); }
     case 'trans': return m.i === trSel ? R : at(LP_MID);
     case 'fx': return fxLevel(m.i, clock.beat) > 0.05 ? R : at(LP_MID);
     case 'layer': return layers[m.i].on ? R : at(LP_MID);

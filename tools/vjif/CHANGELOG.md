@@ -4,6 +4,35 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.91.0 — 2026-10-14
+
+### Pads & scenes
+- Scenes have four banks of nine (36 scenes). Numpad / and * step to the bank before / after, or use the 1–4 switch on the Scenes heading; the numpad plays the bank on show, and so does a MIDI control mapped to a first-bank scene. The strip follows the live scene when it changes from elsewhere (MIDI, BRB). BRB picks from every bank. Older sets open in bank 1.
+- The Empty and Duplicate buttons under Scenes are gone: a scene's × (or Ctrl+click) empties it, Ctrl-drag copies it.
+
+### GIFs
+- The GIF tabs take the Signal colour and the choices inside them a second colour, set in Settings › Theme › Second.
+- The eyedropper (Key, Swap) reads the GIF the panel edits, under the cursor, even where another GIF covers it, and no longer changes the selection.
+- Auto › LFO: "Count from" is now "Sync to". Envelope › Loop has a square loop icon.
+- Play › Frames keeps its own frame picture too (besides the one at the top right).
+
+### Effects
+- Shake and Wobble: the Edges toggle stands alone (no label); Rate's slider runs up to it.
+- The effect editor's top row: FX Local, Follow, then All off.
+
+### Transitions
+- Glitch › Corrupt: the runs move only along the transition's direction (the slight sideways lean read as a drift down). Glitch's colour Split is stronger and shows from the start, so Clean / Split / Wide differ clearly.
+- Transition presets: the dragged chip is the size of the preset.
+
+### Interface
+- Layer mask: opening the tools no longer moves anything on the card (the row keeps its margins).
+- The Pool button shows its drop frame when files are held over it (its own drop handler stopped the one that set it).
+- Pool stats are coloured (memory turns red past the warning level).
+- Preview bar: "Current layer only" (was "This layer only").
+
+### Music & rec
+- Music player: "Sync on play" replaces "Music starts with Sync": playing the track from its start is also Sync (beat 1). To record a song from its start: Rec, then Play.
+
 ## 0.90.0 — 2026-10-14
 
 ### Pads & scenes

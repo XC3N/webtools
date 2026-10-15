@@ -121,7 +121,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #bank h2:not(:first-child){margin-top:12px}
 
 /* ---------- frames tab ---------- */
-.frames{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
+.frames{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:10px;align-items:start}#gPrevPlay{width:72px;height:72px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}
 .frames .field{grid-template-columns:40px minmax(0,1fr)}
 #swPal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin:7px 3px 7px}   /* room for a swatch's outline (3 px out) clear of the Merge row and the edges */
 #swPal button{height:16px;min-width:0;padding:0;border:1px solid #0006;border-radius:2px}
@@ -490,8 +490,11 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 .chip.fxchip{background:var(--panel-2);display:grid;place-items:center}.chip.fxchip>i{display:flex;gap:2px;color:var(--sig);font-style:normal}.chip.fxchip>i svg.fxic{width:12px;height:12px}   /* an effect / preset being dragged (0.89) */
 #maskBar .mrow>.seg{flex:0 0 66px;grid-auto-columns:22px}#maskBar .mrow>.seg button{padding:0}#maskBar .iconbtn,#maskBar .icontog{width:22px}   /* the three drawing tools keep their size on the one row */
 
-#gTabs button.on{background:var(--ink);color:var(--bg)}   /* the GIF's main categories: a different highlight from the choices inside them (0.90) */
-#maskBar{margin-top:0!important}#maskBar .mrow{justify-content:center;gap:4px}#maskBar .mrow>.seg{flex:0 0 auto;grid-auto-columns:24px}#maskBar .mrow>.seg button,#maskBar .iconbtn,#maskBar .icontog{width:24px;height:20px;padding:0;display:grid;place-items:center}#maskBar svg{width:12px;height:12px;display:block;margin:0}   /* every mask icon the same size, centred on its line (0.90) */
-#trPre button.drop{outline:2px dashed var(--sig);outline-offset:-2px}body.trcopy #trPre button.drop{outline-style:solid}#trPre button{position:relative}.chip.trchip{width:auto;padding:0 8px;background:var(--panel-2);display:flex;align-items:center;white-space:nowrap}   /* transition presets dragged like pads (0.90) */
+#gTabs button.on{background:var(--sig);color:var(--sigtxt)}#gPanes .seg button.on{background:var(--meter);color:var(--metertxt, #fff)}   /* the GIF's main categories take the Signal colour, the choices inside them the Second colour (Settings › Theme) (0.91) */
+#maskBar .mrow{justify-content:center;gap:4px}#maskBar .mrow>.seg{flex:0 0 auto;grid-auto-columns:24px}#maskBar .mrow>.seg button,#maskBar .iconbtn,#maskBar .icontog{width:24px;height:20px;padding:0;display:grid;place-items:center}#maskBar svg{width:12px;height:12px;display:block;margin:0}   /* every mask icon the same size, centred on its line (0.90) */
+#trPre button.drop{outline:2px dashed var(--sig);outline-offset:-2px}body.trcopy #trPre button.drop{outline-style:solid}#trPre button{position:relative}.chip.trchip{padding:0;background:var(--sig);color:var(--sigtxt);display:flex;align-items:center;justify-content:center;font:600 12px var(--sans)}   /* transition presets dragged like pads (0.90) */
 #aEnvLoop.on{color:var(--sig);border-color:var(--sig);background:var(--sig-soft)}
 #gridA .pad[data-b="2"],#gridA.b2 .pad[data-b="1"]{display:none}#gridA.b2 .pad[data-b="2"]{display:block}#bankBtn{flex:none;width:44px;height:16px;margin-left:6px}#bankBtn button{height:14px;font-size:10px;padding:0}   /* the Scene pads' two banks (0.90) */
+#fxSizeRow.onerow{flex:0 0 auto!important;grid-template-columns:auto!important;min-width:0}#fxSizeRow.onerow>label{display:none}#fxSizeRow.onerow>#fxSizeSeg{grid-column:1}   /* Shake / Wobble › Edges: the toggle alone; Rate's slider runs up to it (0.91) */
+#poolStats{font:400 11px var(--mono);color:var(--muted);background:var(--panel-2);border:1px solid var(--edge);border-radius:var(--r);padding:1px 6px;margin-right:6px}#poolStats b{font-weight:600}#poolStats .psn{color:var(--sig)}#poolStats .psf{color:rgb(var(--meter-rgb))}#poolStats .psm{color:var(--ink)}#poolStats .psm.hot{color:var(--danger)}   /* pool stats (0.91) */
+#scenes .scene{display:none}#scenes[data-bank="0"] .scene[data-b="0"],#scenes[data-bank="1"] .scene[data-b="1"],#scenes[data-bank="2"] .scene[data-b="2"],#scenes[data-bank="3"] .scene[data-b="3"]{display:block}#scBankSeg{flex:none;width:84px;height:18px}#scBankSeg button{height:16px;font-size:10px;padding:0}   /* scene banks (0.91) */

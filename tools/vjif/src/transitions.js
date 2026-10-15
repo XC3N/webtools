@@ -210,9 +210,9 @@ const TR_DRAW = {
       if (moshCv.width !== W || moshCv.height !== H){ moshCv.width = moshTmp.width = W; moshCv.height = moshTmp.height = H; S.moshed = false; }
       if (!S.moshed){ S.moshed = true; moshX.globalAlpha = 1; moshX.drawImage(A, 0, 0); }   // where it starts: the old picture, the last keyframe
       moshT.clearRect(0, 0, W, H); moshT.drawImage(moshCv, 0, 0);   // the last frame, to read from
-      // the motion: one way for the whole picture (the transition's direction), each row of runs at its own speed and with a slight,
-      // fixed sideways lean: streaks, not swirls (0.89: a smooth 2-D field read as a spiral)
-      const fdx = dx || 1, fdy = dy || 0, band = r => 0.45 + 1.1 * fxRand(seed + r * 3.71), lean = c => (fxRand(seed + c * 5.13) - 0.5) * 0.5;
+      // the motion: one way for the whole picture (the transition's direction), each row of runs at its own speed, nothing across
+      // it: streaks, not swirls (0.89: a smooth 2-D field read as a spiral; 0.91: a slight sideways lean read as a drift down)
+      const fdx = dx || 1, fdy = dy || 0, band = r => 0.45 + 1.1 * fxRand(seed + r * 3.71);
       const sp = Math.max(1, H / 360) * (1.5 + 3.5 * tear), step = Math.floor(e * 24);   // px per frame: grows to the middle
       moshX.imageSmoothingEnabled = false; const broken = [];
       for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){
@@ -220,7 +220,7 @@ const TR_DRAW = {
         if (e > 0.94 || p < arrive * arrive){ moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); continue; }   // decoded right: the new scene
         if (fxRand(k * 4.7 + step * 3.3 + seed) < 0.035 * tear) broken.push([x, y, Math.floor(fxRand(k + step) * 360)]);   // broken this frame: shown wrong-coloured below, not kept
         if (p > 0.15 + 0.75 * tear) continue;          // not moshed this time: it holds
-        const bs2 = fdx ? band(r) : band(c), ln = fdx ? lean(c) : lean(r), vx = Math.round(sp * (fdx * bs2 + fdy * ln)), vy = Math.round(sp * (fdy * bs2 + fdx * ln) * (fdx ? 0.5 : 1));   // along the direction, a band's own speed; a little across, fixed
+        const bs2 = fdx ? band(r) : band(c), vx = Math.round(sp * fdx * bs2), vy = Math.round(sp * fdy * bs2);   // along the direction only, each band at its own speed (0.91: the slight sideways lean read as the bands drifting down)
         moshX.drawImage(moshT.canvas, clamp(x - vx, 0, W - RW), clamp(y - vy, 0, H - RH), RW, RH, x, y, RW, RH);   // (read inside the frame: a run pulling from past the edge brought in nothing, and that spread as black)
         if (p < arrive){ moshX.globalAlpha = 0.25; moshX.drawImage(B, x, y, RW, RH, x, y, RW, RH); moshX.globalAlpha = 1; }   // the new scene's changes bleeding in
       }
@@ -322,7 +322,7 @@ const TR_DRAW = {
 // draw (block / slice sizes shrink with the render size so they look the same)
 // Glitch › Options › Split: the red channel pulled sideways from the rest, as hard as the tear (Wide: further)
 function trSplit(m, T, tear){
-  const d = Math.round((T.split === 'wide' ? 0.02 : T.split === 'on' ? 0.008 : 0) * W * tear); if (d < 1) return;
+  const d = Math.round((T.split === 'wide' ? 0.035 : T.split === 'on' ? 0.014 : 0) * W * (0.35 + 0.65 * tear)); if (d < 1) return;   // (0.91: wider, and there from the start: Split and Wide were hard to tell from Clean)
   const x = trM; x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; x.drawImage(m.canvas, 0, 0);
   x.globalCompositeOperation = 'multiply'; x.fillStyle = '#f00'; x.fillRect(0, 0, W, H); x.globalCompositeOperation = 'source-over';   // the red alone
   m.save(); m.setTransform(1, 0, 0, 1, 0, 0); m.globalAlpha = 1; m.globalCompositeOperation = 'multiply'; m.fillStyle = '#0ff'; m.fillRect(0, 0, W, H);   // the rest without its red

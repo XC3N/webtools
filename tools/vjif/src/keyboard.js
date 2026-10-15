@@ -44,6 +44,7 @@ function onKey(e){
   if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat && !(e.target && e.target.closest && e.target.closest('button, select, a, input, textarea'))){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // Enter: Prep / go live (a focused control keeps its own Enter)
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
   if (xi >= 0){ e.preventDefault(); if (!e.repeat){ if (heldPre < 0 && !e.shiftKey) heldFxKey = xi; heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxPlay(xi); } return; }
+  if ((e.code === 'NumpadDivide' || e.code === 'NumpadMultiply') && !isTyping(e)){ e.preventDefault(); if (!e.repeat) setScBank(scBank + (e.code === 'NumpadDivide' ? -1 : 1)); return; }   // / and *: the scene bank before / after
   const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
   if (np){
     e.preventDefault(); if (e.repeat) return;
@@ -51,7 +52,7 @@ function onKey(e){
     setCaps(e.getModifierState('CapsLock'));
     // Shift: on Windows, Shift+numpad with NumLock on arrives as Home / ↑ / PgUp… without the Shift flag
     const shifted = e.shiftKey || (e.getModifierState('NumLock') && !/^[0-9]$/.test(e.key));
-    if (!capsOn && !shifted) return sceneKey(k);
+    if (!capsOn && !shifted) return sceneKey(bankScene(k));   // the bank on show (0.91)
     // Caps Lock: the numpad plays effect presets (Shift stores into one) · Caps Lock off, Shift held: plays them too
     if (capsOn && shifted){                         // storing over a preset that has effects: press again within 1.5 s (Caps Lock left on by mistake can't wipe one)
       const full = Object.keys(fxPre[k].fx).length, now = performance.now();

@@ -289,7 +289,7 @@ function renderPool(){
     const file = pool.reduce((a, m) => a + (m.blob ? m.blob.size : 0), 0), dec = pool.reduce((a, m) => a + (m.srcBytes || 0), 0);
     const extra = [...new Set(pads.map(p => p.gif).filter(Boolean))].reduce((a, g) => a + Math.max(0, (g.bytes || 0) - (g.srcBytes || 0)), 0);
     const fr = pool.reduce((a, m) => a + (m.src ? m.src.length : 0), 0), el = $('#poolStats');
-    el.textContent = `${pool.length} GIF${pool.length === 1 ? '' : 's'} · ${MB(file)} files · ${MB(dec + extra)} in memory`;
+    el.innerHTML = `<b class="psn">${pool.length}</b> GIF${pool.length === 1 ? '' : 's'} · <b class="psf">${MB(file)}</b> files · <b class="psm${(dec + extra) / 1048576 > MEM_WARN_MB ? ' hot' : ''}">${MB(dec + extra)}</b> in memory`;   // (0.91: coloured, so it stands out)
     el.title = `${pool.length} GIFs, ${fr} frames\nFiles: ${MB(file)} (about what an exported .vjif carries for them)\nIn memory: ${MB(dec)} of decoded frames${extra ? ` + ${MB(extra)} of colour versions (palette, key, swaps)` : ''}`;
   }
   const grid = $('#poolGrid'); grid.textContent = '';
@@ -362,11 +362,12 @@ $('#poolUrl').addEventListener('keydown', e => { if (e.key === 'Enter') $('#pool
 const poolFiles = dt => [...dt.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
 const dtLink = dt => (dt.getData('text/uri-list') || dt.getData('text/plain') || '').split(/\r?\n/).map(s => s.trim()).find(s => /^https?:\/\//.test(s));
 [$('#poolPanel .modalBox'), $('#poolBtn')].forEach(el => {
-  el.addEventListener('dragover', e => { if (e.dataTransfer.types.includes(POOL_MIME)) return; e.preventDefault(); e.stopPropagation(); $('#poolPanel').classList.add('dropping'); });
-  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) $('#poolPanel').classList.remove('dropping'); });
+  const mark = on => (el.id === 'poolBtn' ? el : $('#poolPanel')).classList.toggle(el.id === 'poolBtn' ? 'drop' : 'dropping', on);   // the button: the dashed frame of a tile taking a drop (0.91: this handler stopped the pads panel's, which set it)
+  el.addEventListener('dragover', e => { if (e.dataTransfer.types.includes(POOL_MIME)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; mark(true); });
+  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) mark(false); });
   el.addEventListener('drop', e => {
     if (e.dataTransfer.types.includes(POOL_MIME)) return;
-    e.preventDefault(); e.stopPropagation(); $('#poolPanel').classList.remove('dropping');
+    e.preventDefault(); e.stopPropagation(); mark(false);
     const f = poolFiles(e.dataTransfer); if (f.length) return loadFiles(f, POOL_ONLY);
     const u = dtLink(e.dataTransfer); if (u) loadUrlInto(u, POOL_ONLY);
   });

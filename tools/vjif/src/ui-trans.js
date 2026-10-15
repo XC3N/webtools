@@ -46,7 +46,8 @@ function trDragStop(e){
 $('#trPre').addEventListener('pointerdown', e => { const b = e.target.closest('button'); if (!b || e.button) return; trDrag = { i: +b.dataset.v, x: e.clientX, y: e.clientY, moved: false }; b.setPointerCapture(e.pointerId); });
 $('#trPre').addEventListener('pointermove', e => { const d = trDrag; if (!d) return;
   if (!d.moved){ if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return; d.moved = true;
-    const el = document.createElement('span'); el.className = 'chip trchip'; el.innerHTML = `<span>${d.i + 1} · ${trLabel(trPresets[d.i])}</span>`; ghost.show(el, e.clientX, e.clientY); }
+    const src = document.querySelector(`#trPre button[data-v="${d.i}"]`), r = src.getBoundingClientRect(), el = document.createElement('span'); el.className = 'chip trchip'; el.textContent = d.i + 1;   // the size of the preset it carries (0.91)
+    el.style.width = r.width / uiZoom + 'px'; el.style.height = r.height / uiZoom + 'px'; el.title = trLabel(trPresets[d.i]); ghost.show(el, e.clientX, e.clientY); }
   ghost.move(e.clientX, e.clientY); d.lastE = e; trDropMark(isDel(e)); });
 $('#trPre').addEventListener('pointerup', e => trDragStop(e));
 $('#trPre').addEventListener('pointercancel', () => trDragStop(null));

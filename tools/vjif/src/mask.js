@@ -29,7 +29,7 @@ function maskOpen(li){
   maskEd = { li }; if (target !== li) setTarget(li);
   const bar = $('#maskBar'), card = layers[li].row, top = card.querySelector('.lrow'), clips = card.querySelector('.clips');
   layers.forEach(L => L.row.classList.remove('masking'));
-  bar.style.height = top.offsetHeight + 'px';   // the blend mode's row, which it stands in for: the card keeps its height (0.90: opacity and the transition row stay)
+  const cs = getComputedStyle(top); bar.style.height = top.offsetHeight + 'px'; bar.style.marginTop = cs.marginTop; bar.style.marginBottom = cs.marginBottom;   // (and its margins: nothing below moves, 0.91)   // the blend mode's row, which it stands in for: the card keeps its height (0.90: opacity and the transition row stay)
   card.insertBefore(bar, top); card.classList.add('masking'); bar.hidden = false;
   $('#stage').classList.add('masking'); syncMaskUI(); syncLayerUI(); redraw.all = true;
 }

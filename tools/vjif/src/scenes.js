@@ -2,7 +2,9 @@
 // A set holds N_SCENES scenes; a scene is its 9 Scene pads and 6 Background slots (each a GIF instance with its own settings) plus what
 // layers 1–3 hold. Overlay (layer 4) and the 9 Global pads are the set's, the same in every scene (0.88).
 // The live `layers` and pad instances are the current scene; the others wait in `scenes` (null = empty). GIF files (the pool) belong to the set.
-const N_SCENES = 9;
+const N_SCENES = 36, SC_BANK = 9;   // 0.91: four banks of nine (numpad / and * step through them; the strip shows one bank)
+let scBank = 0;
+const bankScene = k => scBank * SC_BANK + k;   // numpad / Launchpad scene k (0–8) in the bank on show
 const scenes = Array(N_SCENES).fill(null);
 const sceneIds = Array.from({ length: N_SCENES }, (_, i) => i);   // which scene sits at each number (swapped with the scenes)
 let sceneIdx = 0, pendingScene = null, liveThumb = null, liveName = '';   // liveName: the current scene's name
@@ -80,10 +82,11 @@ function gotoScene(i, beat = clock.beat, instant = false){
   if (sc && sc.pick){ target = sc.pick.target; selPad = sc.pick.pad; }
   else { const c = selClip(); if (c) selPad = c.pad; }
   selectPad(selPad, true); uiLater(UI.LAYERS | UI.XF | UI.SCENES | UI.POOL); redraw.all = true;
+  if (Math.floor(i / SC_BANK) !== scBank) setScBank(Math.floor(i / SC_BANK));   // the strip follows the live scene (MIDI, BRB, a drop…)
   if (hist.ready) hist.cur = histState();             // switching isn't an undo step
 }
 // key 1–9 / click: with Snap, waits for the next beat / bar like a pad (a hit just after one counts as on it)
-function sceneKey(i){
+function sceneKey(i){   // (an absolute scene index; the numpad and the Launchpad pass bankScene(k))
   const back = brb.on && !(prep && brb.link); if (back) brbStop();          // you're back (linked to Prep: BRB keeps the output going while you edit): a scene key takes control again (on the downbeat, whatever Snap is)
   if (i === sceneIdx){ pendingScene = null; renderScenes(); return; }
   if (prep) return gotoScene(i, clock.beat, true);   // preparing: just open that scene (the output doesn't change)
@@ -93,10 +96,17 @@ function sceneKey(i){
 }
 const sceneCount = i => (i === sceneIdx ? layers : scenes[i] ? scenes[i].layers : []).reduce((a, l) => a + (l.i === GLOBAL_LAYER ? 0 : l.clips.length), 0);   // (its own GIFs: Overlay's are everywhere)
 const scenePads = i => (i === sceneIdx ? scenePadGifs() : scenes[i] ? scenes[i].pads : []).filter(Boolean).length;
+// which bank of nine the strip shows (0–3): numpad / and * step through them, or the 1–4 switch on the heading; it follows
+// the live scene when that changes from elsewhere (MIDI, BRB)
+function setScBank(b){ b = clamp(b, 0, N_SCENES / SC_BANK - 1); scBank = b;
+  document.querySelectorAll('#scBankSeg button').forEach(x => x.classList.toggle('on', +x.dataset.v === b)); renderScenes(); if (typeof lpRefresh === 'function') lpRefresh(); }
+$('#scBankSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setScBank(+b.dataset.v); });
 function renderScenes(){
   const box = $('#scenes');
-  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" style="order:${(2 - Math.floor(i / 3)) * 3 + i % 3}"><span class="k">${i + 1}</span><span class="xdel" title="Empty this scene (Ctrl+Z brings it back)">×</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
+  if (!box.children.length) box.innerHTML = Array.from({ length: N_SCENES }, (_, i) => `<button class="scene" data-i="${i}" data-b="${Math.floor(i / SC_BANK)}" style="order:${(2 - Math.floor(i % SC_BANK / 3)) * 3 + i % 3}"><span class="k">${i % SC_BANK + 1}</span><span class="xdel" title="Empty this scene (Ctrl+Z brings it back)">×</span><span class="nm"></span><span class="n"></span></button>`).join('');   // laid out like the numpad
+  box.dataset.bank = scBank;
   [...box.children].forEach((b, i) => {
+    if (Math.floor(i / SC_BANK) !== scBank && i !== sceneIdx) return;   // (another bank's tiles aren't on show: brought up to date when they are)
     const n = sceneCount(i), np = scenePads(i), th = i === sceneIdx ? liveThumb : scenes[i] && scenes[i].thumb;
     b.classList.toggle('cur', i === sceneIdx); b.classList.toggle('onair', !!prep && i === prep.scene); b.classList.toggle('wait', !!pendingScene && pendingScene.i === i); b.classList.toggle('empty', !n); b.classList.toggle('blank', !n && !np);
     const pg = !n && np ? (i === sceneIdx ? scenePadGifs() : scenes[i].pads).find(Boolean) : null;   // pads loaded but nothing playing: show the first GIF, dimmed
@@ -104,7 +114,7 @@ function renderScenes(){
     b.classList.toggle('padsOnly', !!pg);
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
     const nm = sceneName(i), ne = b.querySelector('.nm'); if (ne.textContent !== nm) ne.textContent = nm;
-    b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (numpad ${i + 1}) · right-click to name it · drag onto another scene to swap them`;
+    b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (bank ${Math.floor(i / SC_BANK) + 1}, numpad ${i % SC_BANK + 1}) · right-click to name it · drag onto another scene to swap them · Ctrl-drag: copy · ×: empty it`;
   });
 }
 $('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit') || performance.now() - scDragEnd < 300) return; const b = e.target.closest('.scene'); if (!b) return;
@@ -125,7 +135,7 @@ function brbPick(){
   const c = brbChoices(); if (!c.length) return -1;
   if (brb.scn === 'rand') return c[Math.floor(Math.random() * c.length)];
   // in order = the numpad's reading order: 7 8 9, 4 5 6, 1 2 3
-  const ord = Array.from({ length: N_SCENES }, (_, k) => k).sort((a, b) => (Math.floor(b / 3) - Math.floor(a / 3)) || (a % 3 - b % 3)), at = ord.indexOf(brbCur());
+  const ord = Array.from({ length: N_SCENES }, (_, k) => k).sort((a, b) => (Math.floor(a / SC_BANK) - Math.floor(b / SC_BANK)) || (Math.floor(b % SC_BANK / 3) - Math.floor(a % SC_BANK / 3)) || (a % 3 - b % 3)), at = ord.indexOf(brbCur());   // bank by bank, each in numpad order
   for (let k = 1; k <= N_SCENES; k++){ const i = ord[(at + k) % N_SCENES]; if (c.includes(i)) return i; }
   return -1;
 }
@@ -262,13 +272,6 @@ function sceneCopy(i){
     layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]]))));
       return { i: L.i, on: L.on, opacity: L.opacity, blend: L.blend, clips, sel: clips[L.clips.indexOf(L.sel)] || null, fillOn: !!L.fillOn, fill: L.fill }; }) };
 }
-// copy the current scene into the next empty one (new clip ids, same placement) and go there
-$('#scDup').addEventListener('click', () => {
-  let t = -1; for (let k = 1; k < N_SCENES && t < 0; k++){ const i = (sceneIdx + k) % N_SCENES; if (!sceneCount(i) && !scenePads(i)) t = i; }
-  if (t < 0) return toast('No empty scene to copy into — clear one first');
-  scenes[t] = sceneCopy(sceneIdx);
-  gotoScene(t, clock.beat, !!prep); toast2(`Copied to scene ${t + 1}`);
-});
 // empty a scene (its name stays) — undoable; another scene is emptied where it is, without going there
 function emptySceneAt(i){
   if (!sceneCount(i) && !scenePads(i) && (keepSceneNames || !sceneName(i))) return;
@@ -281,7 +284,6 @@ function emptySceneAt(i){
   pushStep(E); hist.cur = histState(); updHistUI();
   toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);
 }
-$('#scEmpty').addEventListener('click', () => emptySceneAt(sceneIdx));
 $('#scFx').addEventListener('click', () => setFxLocal(!fxLocal));
 $('#fxAllOff').addEventListener('click', () => { const n = latchedNow().filter(Boolean).length; applyLatched([]); toast2(n ? `All effects off (${n})` : 'No effects on'); });
 let thumbKeep = null, thumbTick = 0;                 // the live tile's picture as saved: refreshed every 20 s (not every second), so autosave doesn't rewrite the set constantly
