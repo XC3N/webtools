@@ -188,7 +188,7 @@ function syncAutoUI(g){
   $('#aES').value = A.es ?? 0; $('#aES').nextElementSibling.textContent = Math.round((A.es ?? 0) * 100) + '%';
   document.querySelectorAll('#gPanes .aEnvF').forEach(f => f.classList.toggle('dimmed', em === 'off'));
   ['#aShape', '#aPer', '#aGap', '#aPh', '#aSk', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
-  $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g));
+  $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g)); syncGfxUI(g);
 }
 // change the edited LFO; touching any setting switches it on
 let aShift = false;   // Shift held while dragging an Auto slider: the change goes to every running LFO of this GIF (0.88)
@@ -409,11 +409,11 @@ function bgSync(i){ if (!isBgPad(i)) return; const L = layers[BG_LAYER], c = L.c
 function afterPadChange(i){ bgSync(i); renderScenes(); renderPad(i); selectPad(i); syncLayerUI(); syncXfUI(); updateMem(); renderPool(); redraw.all = true; }
 
 // ---- drop shadow (GIF › Display › Shadow): moving a setting switches it on ----
-const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off'], ['#shS', 'soft', v => v > 0 ? Math.round(v * 100) + '%' : 'hard']];
+const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off'], ['#shS', 'soft', v => v > 0 ? Math.round(v * 100) + '%' : 'hard'], ['#shK', 'skew', v => v ? (v > 0 ? '+' : '') + Math.round(v * 45) + '°' : '0°']];   // (Skew 0.96: the slant, as the angle at ±1)
 function syncShadowUI(g){
   const S = g.shadow || (g.shadow = { ...SHADOW_DEF });
   $('#shOn').checked = !!S.on; $('#shCol').value = S.col; $('#shTurn').checked = !!S.turn; $('#shTurn').closest('.field').classList.toggle('dimmed', !S.on);
-  SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && !(S.cut > 0))); });
+  SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); $(id).value = S[k] ?? 0; $(id).nextElementSibling.textContent = f(S[k] ?? 0); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && !(S.cut > 0))); });
 }
 SH_F.forEach(([id, k, f]) => $(id).addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, [k]: +e.target.value, on: true }; syncShadowUI(g); redraw.all = true; }));
 $('#shTurn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, turn: e.target.checked, on: true }; syncShadowUI(g); redraw.all = true; });
@@ -466,3 +466,28 @@ document.querySelectorAll('#side > h2').forEach(h => { if (h.firstChild.textCont
   lab.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
   apply();
 });
+
+// ---- GIF › FX (0.97, ID-223): this GIF's own effects, each on / off with a style and an Amount ----
+let gfxBuilt = false;
+const gfxDef = id => ({ on: false, amt: 0.8, style: GFX_STYLES(id)[0][0] });
+function buildGfx(){
+  gfxBuilt = true;
+  $('#gfxList').innerHTML = GFX_IDS.map(id => { const d = FX_DEFS[FXI[id]];
+    return `<div class="sub gfxh" data-id="${id}"><span title="${esc(d.title)}">${esc(d.name)}</span><span class="line"></span><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
+      <div class="gfxrow" data-id="${id}"><div class="seg" data-gst="${id}">${GFX_STYLES(id).map(s => `<button data-v="${s[0]}" title="${esc(s[1])}: ${esc(s[2])}">${esc(STYLE_BTN[s[0]] || STYLE_SHORT[s[0]] || s[1])}</button>`).join('')}</div>
+      <input type="range" min="0.05" max="1" step="0.01" data-def="0.8" data-gamt="${id}" title="Amount"><output></output></div>`; }).join('');
+  const edit = (id, f) => { const g = curGif(); if (!g) return; g.gfx = g.gfx || {}; g.gfx[id] = { ...gfxDef(id), ...(g.gfx[id] || {}) }; f(g.gfx[id]); redraw.all = true; syncGfxUI(g); };
+  $('#gfxList').addEventListener('change', e => { const id = e.target.dataset.gon; if (id) edit(id, x => x.on = e.target.checked); });
+  $('#gfxList').addEventListener('input', e => { const id = e.target.dataset.gamt; if (id) edit(id, x => { x.amt = +e.target.value; x.on = true; }); });
+  $('#gfxList').addEventListener('click', e => { const b = e.target.closest('[data-gst] button'); if (!b) return; const id = b.closest('[data-gst]').dataset.gst; edit(id, x => { x.style = b.dataset.v; x.on = true; }); });
+  $('#gfxReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.gfx; redraw.all = true; syncGfxUI(g); });
+}
+function syncGfxUI(g){
+  if (!gfxReady || !g) return; if (!gfxBuilt) buildGfx();
+  for (const id of GFX_IDS){ const x = { ...gfxDef(id), ...((g.gfx && g.gfx[id]) || {}) };
+    $(`[data-gon="${id}"]`).checked = !!x.on;
+    $(`[data-gst="${id}"]`).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === x.style));
+    const r = $(`[data-gamt="${id}"]`); r.value = x.amt; r.nextElementSibling.textContent = Math.round(x.amt * 100) + '%';
+    document.querySelector(`.gfxrow[data-id="${id}"]`).classList.toggle('dimmed', !x.on); }
+  $('#gTabs [data-v=gfx]').classList.toggle('act', gfxOn(g));
+}

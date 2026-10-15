@@ -4,6 +4,19 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.96.0 — 2026-10-15
+
+### GIFs
+- GIF › FX: the GIF's own effects (Colour, Posterize, Pixel, Wobble, Glitch, Codec, CRT), each on / off with a style and an Amount. They run on that GIF alone, every frame while it plays, before its layer's effects and the effects on All. Each one costs a GPU pass. Saved with the GIF.
+- Shadow › Skew: the shadow leans sideways from the GIF's bottom edge, like a light low to one side. Works with Crop.
+
+### Music & rec
+- Count-in › Play: after Rec, the take waits for the music player's Play and starts with it (the Rec button reads Play…).
+
+### Interface
+- Settings › Theme: Background folds its saturation and brightness away like the roles (click its heading).
+- A window's × sits right in its corner.
+
 ## 0.95.0 — 2026-10-15
 
 ### Pads & scenes

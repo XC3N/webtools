@@ -129,7 +129,11 @@ const Theme = (() => {
         lab.addEventListener('click', () => { g.classList.toggle('shut'); try { localStorage.setItem(fk, g.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }
     });
     const bg = host.querySelector('.thm-bg');
-    row(bg, 'bh', 'Hue', 'Background hue', 0, 360); row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22);
+    row(bg, 'bh', 'Hue', 'Background hue', 0, 360); row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50, ' thm-sv'); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22, ' thm-sv');
+    { const sub = host.querySelector('.thm-sub'), fk = 'thm-fold-bg'; bg.classList.add('thm-fold'); sub.classList.add('thm-subfold');   // Background folds like the roles: click its heading (its hue stays)
+      try { if (localStorage.getItem(fk) === '1') bg.classList.add('shut'); } catch (e) {}
+      const mark = () => sub.classList.toggle('shut', bg.classList.contains('shut')); mark();
+      sub.addEventListener('click', () => { bg.classList.toggle('shut'); mark(); try { localStorage.setItem(fk, bg.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }
     function sync(){
       for (const k in sliders){
         const r = sliders[k], inp = r.querySelector('input'), sw = r.querySelector('.thm-sw');

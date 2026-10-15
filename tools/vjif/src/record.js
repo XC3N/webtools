@@ -19,7 +19,8 @@ function musSet(src, name, save = true){
   else { mus.el.src = src; if (save) store.put('music', { name, url: src }); }
   mus.name = name; musUI();
 }
-async function musPlay(){ musGraph(); try { await mus.ctx.resume(); await mus.el.play(); } catch (e) { toast("Can't play that track: " + (e.message || e.name)); } musUI(); }
+async function musPlay(){ if (rec.wait && rec.wait.play) recStart(rec.wait.mime, clock.beat);   // Count-in › Play (0.96): the take starts with the music
+  musGraph(); try { await mus.ctx.resume(); await mus.el.play(); } catch (e) { toast("Can't play that track: " + (e.message || e.name)); } musUI(); }
 // Sync on play (0.91; it was the other way round, Sync starting the track): Play from the top of the track is also Sync
 // (beat 1), so the song and the beat grid start together. Recording never touches the track. To record a song from its
 // start: Rec, then Play (the waiting take starts on that downbeat, with the song).
@@ -202,7 +203,8 @@ async function recPrepare(){
     catch (e) { if (e.name === 'AbortError'){ recDropAudio(); return; } rec.writer = null; }
   }
   // every take starts on the next downbeat (Snap or not), so you know when it begins; with a stopped MIDI clock it waits for the clock
-  rec.wait = { beat: (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4 + recCount * 4, mime }; rec.last = clock.beat; recUI();   // + the count-in
+  if (recCount < 0 && !mus.el.src) toast('Count-in › Play waits for the music player, and no track is loaded (Settings › Recording › Music)');
+  rec.wait = { beat: recCount < 0 ? Infinity : (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4 + recCount * 4, play: recCount < 0, mime }; rec.last = clock.beat; recUI();   // + the count-in (Play: until the music starts)
 }
 function recStart(mime, beat = clock.beat){
   if (mime === WC_MP4) return wcStart(beat);
@@ -354,13 +356,14 @@ function recUI(){
     $('#recTxt').textContent = rec.stopAt ? `${Math.max(1, Math.ceil((rec.stopAt - clock.beat) / 4))} bar${Math.ceil((rec.stopAt - clock.beat) / 4) > 1 ? 's' : ''}` : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
   else { const left = rec.wait ? Math.ceil((rec.wait.beat - clock.beat) / 4 - 1e-9) : 0;
-    $('#recTxt').textContent = rec.wait ? (recCount && left > 0 ? 'In ' + left : 'Wait') : 'Rec';
-    b.title = rec.wait ? (recCount ? `Count-in: recording starts in ${left} bar${left > 1 ? 's' : ''} — click to cancel` : 'Starts recording on the next bar — click to cancel') : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${CW}×${CH}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
+    $('#recTxt').textContent = rec.wait ? (rec.wait.play ? 'Play…' : recCount > 0 && left > 0 ? 'In ' + left : 'Wait') : 'Rec';
+    b.title = rec.wait ? rec.wait.play ? 'Waiting for the music player: the take starts when you press its Play — click to cancel' : (recCount > 0 ? `Count-in: recording starts in ${left} bar${left > 1 ? 's' : ''} — click to cancel` : 'Starts recording on the next bar — click to cancel') : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${CW}×${CH}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
 }
 function recTick(){
   const b = clock.beat, back = b < (rec.last ?? b) - 0.5; rec.last = b;   // the beat count jumps back on Sync or a MIDI Start
   if (rec.wait){
-    if (back){ if (recCount) rec.wait.beat = b + recCount * 4; else recStart(rec.wait.mime, b); }   // restarted on a downbeat: go now (or count in from it)
+    if (rec.wait.play) {}                                // (Play: musPlay starts it)
+    else if (back){ if (recCount) rec.wait.beat = b + recCount * 4; else recStart(rec.wait.mime, b); }   // restarted on a downbeat: go now (or count in from it)
     else if (b >= rec.wait.beat - 1e-9) recStart(rec.wait.mime, rec.wait.beat);
   } else if (rec.mr && rec.stopAt){
     if (back){ rec.stopAt = b + Math.max(0, rec.stopAt - rec.lastFwd); }   // keep the length still to go

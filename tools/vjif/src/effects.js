@@ -260,6 +260,18 @@ const fxMod = (C, k, b) => C && C.mod && C.mod[k] && C.mod[k].on ? fxModV(C.mod[
 const modAmt = (C, b) => { const v = fxMod(C, 'amt', b); return v === null ? C.amt : clamp(v, 0.05, 1); };
 const modRate = (C, b) => { const v = fxMod(C, 'rate', b); return v === null ? C.rate : FX_RATES[clamp(Math.round(v), 0, FX_RATES.length - 1)][0]; };
 const modSize = (C, b, def) => { const v = fxMod(C, 'size', b); return v === null ? (C.size || def) : FX_SIZES[clamp(Math.round(v), 0, FX_SIZES.length - 1)][0]; };
+// ---- a GIF's own effects (0.97, ID-223): GIF › FX. g.gfx = { [effect id]: { on, amt, style } }, run on that GIF alone ----
+const GFX_IDS = ['colour', 'poster', 'pixel', 'wobble', 'glitch', 'codec', 'rgb'];
+const GFX_STYLES = id => FX_DEFS[FXI[id]].styles.filter(s => !(id === 'colour' && s[0] === 'pal'));   // (Display has its own Palette)
+var gfxReady = true;   // (ui-gif runs before this file: it waits for this)
+const gfxOn = g => !!(g && g.gfx && GFX_IDS.some(id => g.gfx[id] && g.gfx[id].on && g.gfx[id].amt > 0));
+function gfxU(g, b){
+  const n = FX_DEFS.length, z = v => FX_DEFS.map(() => v), F = fxFactory();
+  const M = { lv: z(0), env: z(0), amt: z(1), rate: F.map(c => c.rate), style: FX_DEFS.map(d => d.styles[0][0]), size: FX_DEFS.map(d => d.sizeDef || 64), pal: z(0), kz: z(1), fbk: z(0.7), vdrop: z(1), dith: z(0), dpat: z(0), dots: z(0), ovs: z(0), pamt: [] };
+  for (const id of GFX_IDS){ const e = g.gfx[id], i = FXI[id]; if (!e || !e.on || !(e.amt > 0)) continue;
+    M.lv[i] = e.amt; M.env[i] = 1; M.amt[i] = e.amt; if (e.style) M.style[i] = e.style; if (e.size) M.size[i] = e.size; if (e.rate) M.rate[i] = e.rate; }
+  return fxU(b, M);
+}
 function fxMix(b, X = fxLive()){
   const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => modAmt(c, b)), rate: X.cfg.map(c => modRate(c, b)), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => modSize(c, b, FX_DEFS[i].sizeDef || 64)), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0), pamt: X.cfg.map(c => c.pamt || null) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));

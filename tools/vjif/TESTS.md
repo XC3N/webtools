@@ -88,7 +88,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {ccmisycd54ppu6dwywvg} **Folding sections** (0.72) — click Shadow (GIF › Colour) or the Transform heading: it folds; click again: back. Still folded after a reload.
 - [x] {sxli9h0fg4vdbo0jxj1i} **Swap › Pick** (0.72, on the Merge row 0.83) — Swap colours › Pick (end of the Merge row), click a colour of the GIF in the preview: its swatch is selected and its row shows.
 - [x] {spwmb1r0v2aujdqh5oo3} **Random direction** (0.72) — a Slide preset, Options › Rnd: each scene change slides a different way.
-- [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.72) — the right column scrolled so Swap is at the bottom, click a swatch: the panel scrolls to show its row.
+- [x] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.72) — the right column scrolled so Swap is at the bottom, click a swatch: the panel scrolls to show its row.
 - [x] {4etro6ow3de4f12yceir} **Layer masks** (0.73, painted 0.78, bar 0.81) — blend Mask: cut out / keep inside on layer 4; and the mask button on a layer card: its card swaps blend / opacity / transition for the mask tools (same card height, chips stay; the guides stay under the preview); paint with the left button, erase with the right (Free, Rect, Ellipse; Soft; Invert): that layer hides where painted, per scene, saved, Ctrl+Z per stroke. Click another layer: the bar closes.
 - [x] {a5gwta1vqomj7j9e8ov4} **Shadow crop** (0.73, Soft 0.76) — a GIF with a shadow, Shadow › Crop 60 %: only the shadow under its lower part stays; Soft 20–40 %: it fades in at its top, no straight line.
 - [x] {yt2qowv5cyezsz6war3v} **LFO gap** (0.73) — Auto › X, Cycle 1 bar, Gap 1 bar: it moves for a bar, waits a bar, moves again.
@@ -168,17 +168,17 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {4bpps0nrwhfclhtdtb6d} **Panel picture** (0.90) — the GIF panel's picture at the top right on every tab, readable enough?
 - [x] {kldkn4oajzzfhtas8v3q} **Scene banks** (0.91) — numpad / and *: the strip shows the other banks; numpad plays the bank on show; a scene changed by MIDI or BRB in another bank brings the strip with it.
 - [ ] {e0h5m8q7vouuzbyz1bov} **Eyedropper under cover** (0.91) — Key or Swap eyedropper on the selected GIF where another GIF covers it: the colour comes from the selected GIF, the selection doesn't change.
-- [ ] {m9srsa4hhp3tse6bs2s4} **Sync on play** (0.91) — music loaded, Sync on play ticked: Stop, then Play: the beat restarts with the song.
-- [ ] {y6mx7ojsbj3d95hw2qut} **Tab colours** (0.91) — GIF tabs in the Signal colour, choices inside in Settings › Theme › Second.
+- [x] {m9srsa4hhp3tse6bs2s4} **Sync on play** (0.91) — music loaded, Sync on play ticked: Stop, then Play: the beat restarts with the song.
+- [x] {y6mx7ojsbj3d95hw2qut} **Tab colours** (0.91) — GIF tabs in the Signal colour, choices inside in Settings › Theme › Second.
 - [x] {p56ylllzg8u7c55yl8pg} **Stacked amounts** (0.92) — Glitch with Corrupt + Crunch: focus Corrupt, lower Amount: only the moshing gets weaker; focus Crunch: its own Amount shows.
 - [x] {9ukepbvmsy7uidtpnqcu} **Preset preview** (0.92) — select an effect preset, drag a slider in the editor: the preset plays while you drag, stops when you let go.
-- [ ] {2gtntzprn9zmpzp1ly3i} **Theme roles** (0.92) — Settings › Theme: Primary, Secondary (with saturation / brightness), Info, Graphs; clicking a name folds its rows.
+- [x] {2gtntzprn9zmpzp1ly3i} **Theme roles** (0.92) — Settings › Theme: Primary, Secondary (with saturation / brightness), Info, Graphs; clicking a name folds its rows.
 - [ ] {wque66ok3m28vnn4ipdf} **Loupe** (0.93) — Preview toolbar › magnifier: a 4× close-up follows the cursor in the preview's corner, the guides and mask outline included; off again with the same button.
 - [ ] {uesiwk4vvbnozw47b6p7} **Colour brush** (0.93) — Mask mode, Free tool: Alt+drag from a pixel paints only where the edited layer has a colour close to it (Soft widens the range); a plain drag paints everywhere.
 - [ ] {v32zcomlz5ubyhsa6tuo} **Mask copy / paste** (0.93) — Mask bar: Copy on a layer with a mask, Paste on another layer: same mask there; Ctrl+Z takes it back. Paste is dimmed until something is copied.
 - [ ] {ec3gicl9a6gmznw5m14s} **Brush size on the wheel** (0.93) — Mask mode: Ctrl+wheel over the preview grows / shrinks the brush (the Size slider follows), the page doesn't zoom.
 - [x] {czujwxv0gzk1bz544cqu} **Bank 2 on RTY FGH VBN** (0.93) — R T Y F G H V B N play scene pads bank 2 (pads show those letters); Shift+QWE… still does too; holding a key and letting go works like the other pads.
-- [ ] {6xw15nw4mpnit9a4dhvy} **Background drop selects** (0.93) — Drop a GIF file on the Background card: it lands in a slot and becomes the selected GIF (Background the edit layer), its panel shows it.
+- [x] {6xw15nw4mpnit9a4dhvy} **Background drop selects** (0.93) — Drop a GIF file on the Background card: it lands in a slot and becomes the selected GIF (Background the edit layer), its panel shows it.
 - [ ] {cp2l8g1owxxsyg7f5044} **Bypass FX** (0.93) — GIF › Display › Bypass FX on, a screen effect latched: that GIF stays clean, on top of the effected picture, the other GIFs get the effect.
 - [ ] {vxehm695slyu1uihonz7} **One shot repeat** (0.93) — One shot, Play › Trigger › Repeat 1 bar: without a hit the GIF plays on every bar by itself; a hit still plays it at once.
 - [x] {1yxuwdv7lakpn7awg4be} **Loop length slider** (0.93) — Timing Fit: Loop length is a slider, 1/16 to 16 bars (with 3 and 6 beats, 3 and 6 bars); the cycle line below follows.
@@ -206,7 +206,11 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {x3kyifayvkoy78u18non} **Skew around 0** (0.95) — Auto › Skew reads 0% in the middle, −90 to +90% either side.
 - [ ] {qmq0osb1abxyl7i9bxey} **Retrigger graph** (0.95) — One shot with a long fade, hit it again mid-fade: the Trigger graph redraws from the level it was at, and the dot stays on the line.
 - [ ] {4idgk2trdr8eggbwqbt7} **Mask bar icons** (0.95) — Mask mode: the three tool icons sit centred like the others, and the layer card keeps its height (the buttons were 2 px too tall for the row).
-- [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.87.3) — at 80% and 125% UI zoom (Settings › Interface), click a swatch low in Display › Swap colours: the row that opens is scrolled into view.
+- [ ] {y9lcs7yt449tweqkoqny} **Shadow skew** (0.96) — GIF › Display › Shadow › Skew: the shadow leans sideways from the GIF's bottom edge (the bottom stays, the top slants); works with Crop too.
+- [ ] {4njnjmp45ta9bhknq4u7} **Count-in Play** (0.96) — Music loaded, Rec › Count-in › Play, Rec: the button reads Play… and waits; press the music player's Play: the take starts right then (with Sync on play, on that beat 1).
+- [ ] {ynqwp5rkp5zkgf92lruz} **Background folds** (0.96) — Settings › Theme: click Background: its saturation and brightness fold away like the roles' (remembered). Every window's × sits right in its corner.
+- [ ] {7dh08qiwyity4911xclo} **GIF effects** (0.96) — Two GIFs side by side, select one, GIF › FX › Colour › Invert: only that GIF inverts, the other doesn't; the FX tab shows a dot; save / reload keeps it; Reset all clears it. Try Pixel, Codec, CRT too (watch LOAD).
+- [x] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.87.3) — at 80% and 125% UI zoom (Settings › Interface), click a swatch low in Display › Swap colours: the row that opens is scrolled into view.
 - [ ] {y08e3dqtjpeoa8jqrp0e} **Always on top** (0.89.3) — Right-click Output: a floating window with no address bar stays above other windows, plays, takes pad keys; right-click again closes it; click Output switches to a normal window.
 - [ ] {d3068ijx33furnsrblsv} **Reopen size** (0.89.3) — Shift+click Output, close the window, open it again: no black bars.
 - [x] {0g5bim1rd8zzry16be4s} **Emptied scene comes back** (0.79, 0.81, name 0.84, 0.85) — name a scene, select it, empty it (×): its name goes too (with Settings › Interface › Permanent scene names on: it stays); go to another scene, Ctrl+Z: the emptied scene's tile shows its picture and name again.

@@ -20,7 +20,9 @@ async def main():
       await pg.keyboard.press(f'F{i+1}'); await pg.wait_for_timeout(150)
     assert hit is not None, 'no effect changed the picture'
     await pg.evaluate("selectPad(0)"); await pg.click('#gTabs [data-pane=display]') if await pg.locator('#gTabs [data-pane=display]').count() else None
-    await pg.evaluate("$('#gNoFx').checked = true; $('#gNoFx').dispatchEvent(new Event('change', { bubbles: true }))"); await pg.wait_for_timeout(400)
+    await pg.evaluate("$('#gNoFx').checked = true; $('#gNoFx').dispatchEvent(new Event('change', { bubbles: true }))")
+    try: await pg.wait_for_function(PX.replace('return [d[0], d[1], d[2]];', 'return Math.abs(d[0] - %d) + Math.abs(d[1] - %d) + Math.abs(d[2] - %d) < 30;' % tuple(base)), timeout=8000)   # (slow machines: wait for the frame)
+    except Exception: pass
     by = await pg.evaluate(PX); nofx = await pg.evaluate("pads[0].gif.nofx")
     print('base', base, 'fx', hit, fx, 'bypass', by)
     assert nofx and sum(abs(a-b) for a,b in zip(by, base)) < 30, (base, fx, by)
@@ -45,7 +47,7 @@ async def main():
     sub = await pg.evaluate("""(async () => { const L = layers[0]; pads[18].gif = pads[0].gif; pads[19].gif = pads[0].gif; L.clips = [newClip(18), newClip(19)];
       L.clips.forEach(c => { c.sx = c.sy = 6; }); layers.slice(1).forEach(l => l.on = false); L.sel = L.clips[1]; syncLayerUI();
       const s = L.row.querySelector('.lbl'); const dis = s.disabled; s.value = 'destination-out'; s.dispatchEvent(new Event('change', { bubbles: true }));
-      redraw.all = true; await new Promise(r => setTimeout(r, 300)); const d = mctx.getImageData(master.width/2|0, master.height/2|0, 1, 1).data;
+      redraw.all = true; let d; for (let t = 0; t < 40; t++){ await new Promise(r => setTimeout(r, 100)); d = mctx.getImageData(master.width/2|0, master.height/2|0, 1, 1).data; if (d[0] < 40) break; }
       const blend = L.clips[1].blend, saved = JSON.parse(snapshot()).layers[0].clips[1].blend;
       L.clips = []; pads[18].gif = pads[19].gif = null; layers.forEach(l => l.on = true); syncLayerUI(); return [dis, blend, saved, d[0]]; })()""")
     print('bg sublayer', sub); assert sub[0] is False and sub[1] == 'destination-out' and sub[2] == 'destination-out' and sub[3] < 40, sub

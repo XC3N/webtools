@@ -145,13 +145,27 @@ function shadowScratch(ctx){
   return s;
 }
 const hexA = (h, a) => `rgba(${hex2rgb(h).join(',')},${a})`;
+// a GIF with its own effects (GIF › FX, 0.97): drawn alone into a scratch buffer, the effects run on that, then the buffer is
+// drawn where the GIF would have been (with the target's opacity / blend state, as drawClip would). One history slot per
+// GIF on screen this frame (Codec / Phosphor keep a trail).
+let gfxSlot = 0; const gfxBufs = [];
+function drawClipFx(ctx, c, g, img){
+  if (!post || !gfxOn(g)){ drawClip(ctx, c, g, img); return; }
+  const U = gfxU(g, clock.beat); if (!U){ drawClip(ctx, c, g, img); return; }
+  const k = gfxSlot++, b = gfxBufs[k] || (gfxBufs[k] = mkCanvas().getContext('2d'));
+  if (b.canvas.width !== CW || b.canvas.height !== CH){ b.canvas.width = CW; b.canvas.height = CH; }
+  b.setTransform(RS, 0, 0, RS, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
+  drawClip(b, c, g, img); post.run(U, b.canvas, b, 40 + (k % 24));
+  ctx.drawImage(b.canvas, 0, 0, W, H);             // (the target's transform maps the canvas, as for a layer buffer)
+}
 function drawClip(ctx, c, g, img){
   const [bw, bh] = baseSize(g, c.fit), T0 = ctx.getTransform(), base = c.tile ? T0 : null, dk = Math.hypot(T0.a, T0.b) || 1;   // dk: canvas units → device pixels
   ctx.save(); ctx.globalAlpha *= (c.alpha ?? 1); applyXf(ctx, c);
   ctx.imageSmoothingEnabled = !g.crisp;
   const S = g.shadow, shOn = S && S.on && !c.tile && S.op > 0;
   let ox = S ? S.x : 0, oy = S ? S.y : 0; if (shOn && S.turn && c.rot){ const r = c.rot * Math.PI / 180, cs = Math.cos(r), sn = Math.sin(r); [ox, oy] = [ox * cs - oy * sn, ox * sn + oy * cs]; }   // Turn: the offset turns with the GIF   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
-  if (shOn && S.cut > 0){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
+  const sk = shOn ? S.skew || 0 : 0;   // Skew (0.96): the shadow slanted from the GIF's bottom edge
+  if (shOn && (S.cut > 0 || sk)){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
     const M = ctx.getTransform(), I = M.inverse(), vx = ox * dk, vy = oy * dk, OFF = 1e5;
     // where the cut runs: Turn on, across the GIF's own up / down; Turn off, level on screen across the GIF's outline as it stands
     // (so a turned GIF's shadow still only shows at its bottom: it sits on the layer)
@@ -159,8 +173,11 @@ function drawClip(ctx, c, g, img){
     if (scr){ const ys = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => M.b * u * bw / 2 + M.d * v * bh / 2 + M.f), top = Math.min(...ys), hh = Math.max(...ys) - top;
       y0 = top + S.cut * hh + vy; sb = (S.soft ?? 0) * hh; }
     else { const ly = I.b * vx + I.d * vy; y0 = -bh/2 + S.cut * bh + ly; sb = (S.soft ?? 0) * bh; }
-    const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF; x.shadowOffsetY = vy - M.b * OFF; x.translate(OFF, 0); drawPlain(x, c, img, bw, bh); };
-    if (sb > 0){                                     // soft: drawn apart, faded in across the cut line, then put down like the shadow would be
+    const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF; x.shadowOffsetY = vy - M.b * OFF;
+      if (sk){ x.translate(0, bh / 2); x.transform(1, 0, -sk, 1, 0, 0); x.translate(0, -bh / 2); }   // (a shear keeps the first column: the far-off trick's offset still lands)
+      x.translate(OFF, 0); drawPlain(x, c, img, bw, bh); };
+    if (!(S.cut > 0)){ ctx.save(); shadowOnly(ctx); ctx.restore(); }   // skewed, not cropped
+    else if (sb > 0){                                     // soft: drawn apart, faded in across the cut line, then put down like the shadow would be
       const { c: shCv, x: shX } = shadowScratch(ctx), cw = shCv.width, ch = shCv.height;
       shX.save(); shX.setTransform(1, 0, 0, 1, 0, 0); shX.globalCompositeOperation = 'source-over'; shX.globalAlpha = 1; shX.clearRect(0, 0, cw, ch);
       shX.setTransform(M); shX.imageSmoothingEnabled = !g.crisp; shX.save(); shadowOnly(shX); shX.restore();
@@ -247,20 +264,21 @@ function sceneChanged(list, frozen, black, S = sceneSig){
   S.start(); S.add(frozen); S.add(black);
   if (!frozen) for (const { L, items } of list){
     S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill); S.add(L.mask && L.mask.on ? L.mask.mid + (L.mask.inv ? 'i' : '') : 0); S.add(maskRev);
-    for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(!!g.nofx); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit); if (g.shadow && g.shadow.on) S.add(JSON.stringify(g.shadow));
+    for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(!!g.nofx); if (g.gfx) S.add(JSON.stringify(g.gfx)); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit); if (g.shadow && g.shadow.on) S.add(JSON.stringify(g.shadow));
       S.add(e.flipX); S.add(e.flipY); S.add(e.tile); S.add(e.cl); S.add(e.ct); S.add(e.cr); S.add(e.cb); S.add(e.alpha); S.add(e.blend); S.add(e.H); S.add(e.S); S.add(e.V); }
   }
   return S.changed();
 }
 // xf: the context's transform from canvas pixels (W×H) to its real pixels (default: the render size)
 function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], over = false){   // over: drawn on top of what's there (Bypass FX)
+  if (!over) gfxSlot = 0;
   ctx.setTransform(...xf); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   if (!over){ ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); }
   let masked = false;
   for (let { L, items } of list){
     if (MASK_BLENDS.has(L.blend)) masked = true;
     const sub = L.i === BG_LAYER && items.some(it => it.e.blend && it.e.blend !== 'source-over');   // Background's GIFs as sublayers, each with its own blend (0.94)
-    const drawAll = (t, its) => { for (const { g, e, fi } of its){ if (sub) t.globalCompositeOperation = e.blend || 'source-over'; drawClip(t, e, g, fxImage(g, fi, e)); } if (sub) t.globalCompositeOperation = 'source-over'; };
+    const drawAll = (t, its) => { for (const { g, e, fi } of its){ if (sub) t.globalCompositeOperation = e.blend || 'source-over'; drawClipFx(t, e, g, fxImage(g, fi, e)); } if (sub) t.globalCompositeOperation = 'source-over'; };
     const LU = post && LUs[L.i];
     const ek = (1 + zoomE) * (1 + (LU && LU.zoomE || 0));   // Zoom › Each: every GIF scaled around its own centre
     if (Math.abs(ek - 1) > 1e-4) items = items.map(it => ({ ...it, e: { ...it.e, sx: it.e.sx * ek, sy: it.e.sy * ek } }));
@@ -288,7 +306,7 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], ove
       applyMask(b, MK); ctx.drawImage(b.canvas, 0, 0, W, H);
     } else if (!sub && ((vis.length === 1 && !MASK_BLENDS.has(L.blend)) || (L.blend === 'source-over' && L.opacity >= 1))){   // (a mask is always flattened first: each draw of a GIF, its shadow, its tiles, would cut on its own)
       // one GIF, or Normal at full opacity: identical result drawn straight onto the target (no buffer clear + composite)
-      for (const { g, e, fi } of vis) drawClip(ctx, e, g, fxImage(g, fi, e));
+      for (const { g, e, fi } of vis) drawClipFx(ctx, e, g, fxImage(g, fi, e));
     } else {                                       // several: flatten into the layer buffer, then blend once
       const b = lbufs[L.i]; b.setTransform(RS, 0, 0, RS, 0, 0); b.clearRect(0, 0, W, H);
       if (sub && L.fillOn && L.fill && !over){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }   // the GIFs blend with the colour too

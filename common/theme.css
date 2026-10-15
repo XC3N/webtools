@@ -11,3 +11,4 @@
 .thm-row output{text-align:center}
 .thm-sw{width:14px;height:14px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.5) inset}
 .thm-fold>.thm-row:first-child>label{cursor:pointer;user-select:none}.thm-fold>.thm-row:first-child>label::before{content:'▾';display:inline-block;width:11px;color:var(--faint)}.thm-fold.shut>.thm-row:first-child>label::before{content:'▸'}.thm-fold.shut>.thm-sv{display:none}   /* a role's saturation / brightness fold away */
+.thm-bg.thm-fold>.thm-row:first-child>label{cursor:default}.thm-bg.thm-fold>.thm-row:first-child>label::before{content:none}.thm-subfold{cursor:pointer;user-select:none}.thm-subfold::before{content:'▾';display:inline-block;width:11px;color:var(--faint)}.thm-subfold.shut::before{content:'▸'}   /* Background folds from its heading */
