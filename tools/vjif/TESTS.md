@@ -170,6 +170,9 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {e0h5m8q7vouuzbyz1bov} **Eyedropper under cover** (0.91) — Key or Swap eyedropper on the selected GIF where another GIF covers it: the colour comes from the selected GIF, the selection doesn't change.
 - [ ] {m9srsa4hhp3tse6bs2s4} **Sync on play** (0.91) — music loaded, Sync on play ticked: Stop, then Play: the beat restarts with the song.
 - [ ] {y6mx7ojsbj3d95hw2qut} **Tab colours** (0.91) — GIF tabs in the Signal colour, choices inside in Settings › Theme › Second.
+- [ ] {p56ylllzg8u7c55yl8pg} **Stacked amounts** (0.92) — Glitch with Corrupt + Crunch: focus Corrupt, lower Amount: only the moshing gets weaker; focus Crunch: its own Amount shows.
+- [ ] {9ukepbvmsy7uidtpnqcu} **Preset preview** (0.92) — select an effect preset, drag a slider in the editor: the preset plays while you drag, stops when you let go.
+- [ ] {2gtntzprn9zmpzp1ly3i} **Theme roles** (0.92) — Settings › Theme: Primary, Secondary (with saturation / brightness), Info, Graphs; clicking a name folds its rows.
 - [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.87.3) — at 80% and 125% UI zoom (Settings › Interface), click a swatch low in Display › Swap colours: the row that opens is scrolled into view.
 - [ ] {y08e3dqtjpeoa8jqrp0e} **Always on top** (0.89.3) — Right-click Output: a floating window with no address bar stays above other windows, plays, takes pad keys; right-click again closes it; click Output switches to a normal window.
 - [ ] {d3068ijx33furnsrblsv} **Reopen size** (0.89.3) — Shift+click Output, close the window, open it again: no black bars.

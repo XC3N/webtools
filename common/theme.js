@@ -33,7 +33,7 @@ const Theme = (() => {
   const DEFAULT = { ...PRESETS['Matte'] };
   const CORE = ['hCtrl', 'hEnv', 'hMeter', 'bh', 'bs', 'bv'];   // hLcd is optional in older files
   let cur = { ...DEFAULT };
-  const OPT = ['sCtrl', 'vCtrl', 'sLcd', 'vLcd'];
+  const OPT = ['sCtrl', 'vCtrl', 'sLcd', 'vLcd', 'sMeter', 'vMeter'];
   const listeners = [];
 
   function apply(t = cur){
@@ -53,10 +53,10 @@ const Theme = (() => {
     set('--env-f', hsv2hex(Ef, 78, 100)); set('--env-f-rgb', hsv2rgb(Ef, 78, 100).join(','));
     set('--env-a', hsv2hex(E, 78, 100)); set('--env-a-rgb', hsv2rgb(E, 78, 100).join(','));
     set('--env-3', hsv2hex(E3, 78, 100)); set('--env-3-rgb', hsv2rgb(E3, 78, 100).join(','));
-    const M = T.hMeter;
-    set('--meter-hi', hsv2hex(M, 75, 90)); set('--meter-lo', hsv2hex(M, 85, 63)); set('--meter-dk', hsv2hex(M, 68, 22));
-    set('--meter', hsv2hex(M, 75, 90)); set('--meter-rgb', hsv2rgb(M, 75, 90).join(','));
-    const mg = hsv2rgb(M, 75, 90).map(v => { v /= 255; return v <= 0.04 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    const M = T.hMeter, ms = T.sMeter ?? 75, mv = T.vMeter ?? 90;   // saturation / brightness optional too (missing: the classic 75 / 90)
+    set('--meter-hi', hsv2hex(M, ms, mv)); set('--meter-lo', hsv2hex(M, Math.min(100, ms * 1.13), mv * 0.7)); set('--meter-dk', hsv2hex(M, ms * 0.9, mv * 0.24));
+    set('--meter', hsv2hex(M, ms, mv)); set('--meter-rgb', hsv2rgb(M, ms, mv).join(','));
+    const mg = hsv2rgb(M, ms, mv).map(v => { v /= 255; return v <= 0.04 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
     set('--metertxt', 0.2126 * mg[0] + 0.7152 * mg[1] + 0.0722 * mg[2] > 0.3 ? '#0d1110' : '#ffffff');   // readable text on the secondary accent
     set('--bg', hsv2hex(T.bh, T.bs, T.bv));
     set('--panel', hsv2hex(T.bh, T.bs, cl(T.bv + 3.5))); set('--panel-2', hsv2hex(T.bh, T.bs, cl(T.bv + 6.5)));
@@ -79,7 +79,7 @@ const Theme = (() => {
   const color = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
   // the colour a role actually shows (what its swatch must match)
-  const OPT_DEF = { sCtrl: 100, vCtrl: 100, sLcd: 60, vLcd: 100 };
+  const OPT_DEF = { sCtrl: 100, vCtrl: 100, sLcd: 60, vLcd: 100, sMeter: 75, vMeter: 90 };
   function roleColor(k, t = cur){
     if (k === 'hCtrl') return hsv2hex(t.hCtrl, t.sCtrl ?? 100, t.vCtrl ?? 100);
     if (k === 'hLcd') return hsv2hex(t.hLcd, t.sLcd ?? 60, t.vLcd ?? 100);
@@ -96,7 +96,7 @@ const Theme = (() => {
   function mount(host, opts = {}){
     const roles = opts.roles || [['hCtrl', 'Controls', 'Buttons, sliders, highlights'], ['hLcd', 'LCD', 'Readouts'],
                                  ['hEnv', 'Curves', 'Envelopes and curves'], ['hMeter', 'Meters', 'Meters and secondary accents']];
-    const SV = { hCtrl: ['sCtrl', 'vCtrl'], hLcd: ['sLcd', 'vLcd'] };
+    const SV = { hCtrl: ['sCtrl', 'vCtrl'], hLcd: ['sLcd', 'vLcd'], hMeter: ['sMeter', 'vMeter'] };
     const say = m => opts.toast && opts.toast(m), changed = () => opts.onChange && opts.onChange(get());
     const HUE = 'linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)';
     host.classList.add('thm');
@@ -123,7 +123,10 @@ const Theme = (() => {
       const g = document.createElement('div'); g.className = 'thm-group'; rb.appendChild(g);
       row(g, k, l, t, 0, 360);
       if (sv && SV[k]){ const [s, v] = SV[k]; owner[s] = owner[v] = k;
-        row(g, s, 'Saturation', `${l}: saturation`, 0, 100, ' thm-sv'); row(g, v, 'Brightness', `${l}: brightness`, 10, 100, ' thm-sv'); }
+        row(g, s, 'Saturation', `${l}: saturation`, 0, 100, ' thm-sv'); row(g, v, 'Brightness', `${l}: brightness`, 10, 100, ' thm-sv');
+        // a role with saturation / brightness folds them away: click its name (remembered in this browser)
+        const lab = g.querySelector('label'), fk = 'thm-fold-' + k; g.classList.add('thm-fold'); try { if (localStorage.getItem(fk) === '1') g.classList.add('shut'); } catch (e) {}
+        lab.addEventListener('click', () => { g.classList.toggle('shut'); try { localStorage.setItem(fk, g.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }
     });
     const bg = host.querySelector('.thm-bg');
     row(bg, 'bh', 'Hue', 'Background hue', 0, 360); row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22);

@@ -4,6 +4,16 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.92.0 — 2026-10-15
+
+### Effects
+- Glitch and CRT with several styles stacked: Amount sets the style in focus only (click a lit style to focus it); each stacked style keeps its own Amount. With one style, or none in focus, Amount is the effect's, as before. Presets keep the per-style amounts.
+- Dragging any slider in the effect editor (Amount, Rate, Size, a preset's effect's own) plays the effect, or the preset, over and over while you drag, so the change shows (with Preview on).
+
+### Interface
+- Settings › Theme: Signal is now Primary, Second is Secondary (right under Primary, with its own saturation and brightness), LCD is Info. Click a role's name to fold its saturation / brightness away (remembered).
+- A window's × sits in its top right corner (Settings, Pool, Keys & mouse, About…).
+
 ## 0.91.0 — 2026-10-14
 
 ### Pads & scenes

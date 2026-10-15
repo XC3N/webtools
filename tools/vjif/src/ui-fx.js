@@ -6,7 +6,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
 const FX_DRAG_WAIT = 120;   // ms a tile press waits (held still) before it plays: time for a drag to show itself
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1 });   // an effect as a preset holds it
+const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1, ...(fxCfg[i].pamt ? { pamt: { ...fxCfg[i].pamt } } : {}) });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -188,7 +188,8 @@ function syncFxUI(){
     am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
   else if (kal){ const n = kalSlices(A.amt); Object.assign(am, { min: 3, max: 12, step: 1 }); am.value = n; am.dataset.def = 12; delete am.dataset.pct;
     am.nextElementSibling.textContent = n; am.closest('.field').title = 'Slices: how many wedges the kaleidoscope has'; }
-  else { Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = A.amt; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(A.amt * 100) + '%'; am.closest('.field').title = wear ? 'Wear: how worn the tape is (tracking, colour bleed, dropouts, noise)' : 'Amount: how strong'; }
+  else { const pp = amtPart(dd, A), v = pp ? A.pamt?.[pp] ?? A.amt : A.amt; Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = v; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(v * 100) + '%';
+    am.closest('.field').title = (wear ? 'Wear: how worn the tape is (tracking, colour bleed, dropouts, noise)' : 'Amount: how strong') + (pp ? ` — for ${dd.styles[FXS[dd.id][pp]][1]} only (the style in focus; each stacked style has its own)` : ''); }
   drawFxEnv(); syncEnvSl();
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
@@ -254,7 +255,10 @@ $('#fxStyle').addEventListener('contextmenu', e => { const b = e.target.closest(
   if (cur === v && was){ X.style = was; soloWas.delete(X); }                      // un-solo: the stack as it was
   else { if (cur !== v) soloWas.set(X, cur); X.style = v; }
   fxFocus[id] = v; syncFxUI(); });
-$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = PAL_ORDER[+e.target.value]; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value); else X.amt = +e.target.value; syncFxUI(); });
+// Glitch / CRT with several styles stacked: Amount sets the style in focus only (0.92); one style, or none in focus: the effect's
+const amtPart = (dd, A) => { if (!dd || !FX_MULTI[dd.id]) return null; const P = styleParts(FXI[dd.id], A.style); return P.length > 1 && P.includes(fxFocus[dd.id]) ? fxFocus[dd.id] : null; };
+$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = PAL_ORDER[+e.target.value]; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value);
+  else { const dd = selFx < NFX ? FX_DEFS[selFx] : preEd != null ? FX_DEFS[preEd] : null, pp = amtPart(dd, X); if (pp) (X.pamt || (X.pamt = {}))[pp] = +e.target.value; else X.amt = +e.target.value; } syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
 const FX_ATTS = [[0, '0'], [0.125, '1/32'], [0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar'], [8, '2 bars']];
@@ -319,7 +323,11 @@ let fxPrev = null, fxPrevSig = '';
 // drawn on the pixel grid at 1:1 (14 px, half-pixel lines) so they stay sharp
 const ENV_IC_SL = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1" shape-rendering="crispEdges" style="display:block;margin:auto"><path d="M1 3.5h12M1 7.5h12M1 11.5h12"/><rect x="3" y="2" width="3" height="3" fill="currentColor" stroke="none"/><rect x="8" y="6" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="10" width="3" height="3" fill="currentColor" stroke="none"/></svg>';
 const ENV_IC_GRAPH = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.2" style="display:block;margin:auto"><path d="M1.5 12.5L3.5 2.5l3 5h3.5l2.5 5"/></svg>';
-function envPrevStart(){ if (envPrevOn && selFx < NFX) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }
+function envPrevStart(){ if (envPrevOn) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }   // (0.92: a preset previews too)
+// any slider in the effect editor (Amount, Rate, Size, a preset's effect's own): while it's dragged the effect or preset plays
+// its envelope over and over, so the change shows (Preview on, the ▶ beside the envelope) (0.92)
+$('#fxEdit').addEventListener('pointerdown', e => { if (!e.target.matches('input[type=range]') || (fxPrev && fxPrev.loop)) return; envPrevStart();
+  addEventListener('pointerup', envPrevStop, { once: true }); }, true);
 function envPrevChanged(C){ const sg = [C.att, C.dec, C.sus, C.len, C.rel].join(); if (fxPrev && sg !== fxPrevSig) fxPrev.b0 = clock.beat; fxPrevSig = sg; }
 function envPrevStop(){ if (fxPrev) fxPrev.loop = false; }
 // the preview's level: a hit (Hold / Latch get a 1-beat length so Sustain shows), looping with a short gap
