@@ -6,7 +6,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
 const FX_DRAG_WAIT = 120;   // ms a tile press waits (held still) before it plays: time for a drag to show itself
-const fxEntry = i => ({ amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1, ...(fxCfg[i].pamt ? { pamt: { ...fxCfg[i].pamt } } : {}) });   // an effect as a preset holds it
+const fxEntry = i => ({ ...(fxCfg[i].mod ? { mod: JSON.parse(JSON.stringify(fxCfg[i].mod)) } : {}), amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1, ...(fxCfg[i].pamt ? { pamt: { ...fxCfg[i].pamt } } : {}) });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -98,7 +98,7 @@ function buildFx(){
 }
 const fxPreName = P => { if (P.name) return P.name; const ks = Object.keys(P.fx); return ks.length ? ks.map(i => FX_DEFS[i].name).join(' + ') : 'empty'; };
 // short names, for when the full one doesn't fit on a pad
-const FX_SHORT = { mono: 'MN', colour: 'CLR', strobe: 'STRB', poster: 'PSTR', zoom: 'ZM', shake: 'SHK', wobble: 'WBL', mirror: 'MIR', glitch: 'GLT', rgb: 'CRT', pixel: 'PIX', feedback: 'FDBK' };
+const FX_SHORT = { colour: 'CLR', codec: 'CDC', strobe: 'STRB', poster: 'PSTR', zoom: 'ZM', shake: 'SHK', wobble: 'WBL', mirror: 'MIR', glitch: 'GLT', rgb: 'CRT', pixel: 'PIX', feedback: 'FDBK' };
 // the full text, else the short one, else (for style names) its first letters: whichever fits first
 function fitText(el, full, short, tiny){ el.textContent = full; for (const t of [short, tiny]) if (t && el.scrollWidth > el.clientWidth + 1) el.textContent = t; }
 // what an effect in a preset does, in a word or two: its palette (Colour › Palette) or its style(s)
@@ -129,7 +129,8 @@ function paintFxPads(b){
   });
 }
 let preEd = null, preEdOf = -1;                      // an effect inside the selected preset being edited (its index), or null
-function syncFxUI(){
+function syncFxUI(){ syncFxUI0(); if (fxModReady) syncFxMod(); }   // (the LFO box is set up at the end of this file)
+function syncFxUI0(){
   if (selFx !== preEdOf){ preEd = null; preEdOf = selFx; }
   const pre = selFx >= NFX, C = fxConf(selFx);
   if (pre && preEd != null && !C.fx[preEd]) preEd = null;
@@ -158,7 +159,7 @@ function syncFxUI(){
       el.classList.toggle('empty', e);
       el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit · Alt+click: name it`; }
   });
-  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && (!!d.size || d.id === 'wobble'));   // (Wobble: no size, but its Edges toggle sits in that row, 0.93) $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);
+  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && (!!d.size || d.id === 'wobble')); $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);   // (Wobble: no size, but its Edges toggle sits in that row, 0.93; 0.94: the comment had swallowed 'rated', hiding Rate)
   $('#fxName').innerHTML = (pre && !E ? '' : fxIcon(d.id)) + (E ? d.name : pre ? FXP_LABELS[selFx - NFX] : d.name);   // the effect's icon in the LCD (names are ours: no escaping needed)
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
@@ -370,3 +371,42 @@ $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const 
   const ch = e.target.closest('.pchip'); if (ch){ preEd = +ch.dataset.e; syncFxUI(); } });
 $('#fxStore').addEventListener('click', () => { if (selFx >= NFX) storeFxPre(selFx - NFX); });
 $('#fxClear').addEventListener('click', () => { if (selFx >= NFX){ fxPre[selFx - NFX].fx = {}; syncFxUI(); } });
+// ---- an effect setting's LFO (0.94, ID-185): right-click Amount, Rate or Size; the envelope's box shows that setting's LFO ----
+// (ui-fx runs before effects.js: FX_RATES / FX_SIZES are read when used.) The LFO lives with the effect (fxCfg[i].mod[k], or a preset's entry: fxEd()), saved with the set and copied into presets.
+let fxModK = null;   // 'amt' | 'rate' | 'size' while the box shows an LFO
+const FXM = { amt: { name: 'Amount', el: '#fxAmt', row: '#fxAmt', min: 5, max: 100, fmt: v => Math.round(v) + '%', toV: i => i / 100, toI: v => Math.round(v * 100) },
+  rate: { name: 'Rate', el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_RATES.length - 1; }, fmt: i => FX_RATES[i][1], toV: i => i, toI: v => Math.round(v) },
+  size: { name: 'Size', el: '#fxSize', row: '#fxSizeRow', min: 0, get max(){ return FX_SIZES.length - 1; }, fmt: i => FX_SIZES[i][1], toV: i => i, toI: v => Math.round(v) } };
+const fxModPlain = k => { const X = fxEd(), d = FX_DEFS[selFx < NFX ? selFx : preEd]; if (!X || !d) return false;   // only a slider in its plain meaning (not a palette, Dither, Dropouts…)
+  if (k === 'amt') return !$('#fxAmt').dataset.palAmt && !$('#fxAmt').dataset.kal;
+  if (k === 'rate') return !!d.rate && !rateAlt(d, X.style, X);
+  return !!d.size && !sizeAlt(d, X.style, X); };
+$('#fxLfoShape').innerHTML = SHAPES.filter(s => ['sine', 'tri', 'up', 'square', 'sh', 'drift'].includes(s[0])).map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');
+$('#fxLfoPer').max = PER_OPTS.length - 1;
+function fxModOpen(k){
+  if (!fxModPlain(k)) return toast(`${FXM[k].name} has no LFO here (it's set by its own list for this style)`);
+  const X = fxEd(); X.mod = X.mod || {};
+  if (!X.mod[k]){ const cur = k === 'amt' ? X.amt : k === 'rate' ? optIdx(FX_RATES, X.rate) : optIdx(FX_SIZES, X.size || FX_DEFS[selFx < NFX ? selFx : preEd].sizeDef || 64);
+    X.mod[k] = { on: true, shape: 'sine', per: 4, lo: k === 'amt' ? 0.05 : FXM[k].min, hi: cur }; }
+  fxModK = k; syncFxMod();
+}
+function syncFxMod(){
+  const X = fxEd(), M = fxModK && X && X.mod && X.mod[fxModK];
+  if (fxModK && !M) fxModK = null;
+  $('#fxEdit .envrow').classList.toggle('lfo', !!fxModK);
+  for (const k in FXM){ const r = $(FXM[k].row); const f = r && (r.classList.contains('field') ? r : r.closest('.field')); if (f) f.classList.toggle('mod', !!(X && X.mod && X.mod[k] && X.mod[k].on && fxModPlain(k))); }
+  if (!M) return; const F = FXM[fxModK];
+  $('#fxLfoT').textContent = 'LFO · ' + F.name; $('#fxLfoOn').checked = !!M.on;
+  $('#fxLfoShape').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === M.shape));
+  const pi = optIdx(PER_OPTS, M.per); $('#fxLfoPer').value = pi; $('#fxLfoPer').nextElementSibling.textContent = PER_OPTS[pi][1];
+  for (const [id, key] of [['#fxLfoLo', 'lo'], ['#fxLfoHi', 'hi']]){ const el = $(id); el.min = F.min; el.max = F.max;
+    const i = fxModK === 'amt' ? F.toI(M[key]) : M[key]; el.value = i; el.nextElementSibling.textContent = F.fmt(i); }
+}
+for (const k in FXM) $(FXM[k].row).closest('.field').addEventListener('contextmenu', e => { e.preventDefault(); if (fxModK === k) { fxModK = null; syncFxMod(); } else fxModOpen(k); });
+$('#fxLfoBack').addEventListener('click', () => { fxModK = null; syncFxMod(); });
+$('#fxLfoOn').addEventListener('change', e => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].on = e.target.checked; syncFxMod(); } });
+onSeg($('#fxLfoShape'), b => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].shape = b.dataset.v; X.mod[fxModK].on = true; syncFxMod(); } });
+$('#fxLfoPer').addEventListener('input', e => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].per = PER_OPTS[+e.target.value][0]; syncFxMod(); } });
+for (const [id, key] of [['#fxLfoLo', 'lo'], ['#fxLfoHi', 'hi']]) $(id).addEventListener('input', e => { const X = fxEd(); if (!(X && X.mod && X.mod[fxModK])) return;
+  X.mod[fxModK][key] = fxModK === 'amt' ? FXM.amt.toV(+e.target.value) : +e.target.value; X.mod[fxModK].on = true; syncFxMod(); });
+var fxModReady = true;

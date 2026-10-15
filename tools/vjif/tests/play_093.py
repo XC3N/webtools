@@ -9,7 +9,7 @@ async def main():
     await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()")
     await pg.evaluate("fileTarget = 0"); await pg.set_input_files('#fileIn', [str(FIX/'red.gif')]); await pg.wait_for_function("pads[0].gif")
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(200)
-    await pg.evaluate("layers.forEach(L => L.clips.forEach(c => { c.sx = c.sy = 6; c.x = 0; c.y = 0; })); redraw.all = true")
+    await pg.evaluate("layers.forEach(L => L.clips.forEach(c => { c.sx = c.sy = 6; c.x = 0; c.y = 0; })); Object.assign(pads[0].gif, { inF: 0, outF: 0, startF: 0 }); redraw.all = true")   # one frame: the moving white bar stays at the left
     await pg.wait_for_function("(() => { const d = mctx.getImageData(master.width/2|0, master.height/2|0, 1, 1).data; return d[0] > 100; })()"); base = await pg.evaluate(PX)
     # each effect in turn until one changes the centre pixel
     hit = None
@@ -40,6 +40,14 @@ async def main():
     # Background: a loaded slot always has its chip (0.93.1)
     bg = await pg.evaluate("""(async () => { pads[18].gif = pads[0].gif; layers[0].clips = []; syncLayerUI(); const r = layers[0].row.querySelectorAll('.clips .chip, .clips .bgslot').length; pads[18].gif = null; layers[0].clips = []; syncLayerUI(); return r; })()""")
     print('bg slots', bg); assert bg == 6, bg
+    # Background sublayers (0.94): a BG GIF set to Multiply over another darkens only where they overlap
+    sub = await pg.evaluate("""(async () => { const L = layers[0]; pads[18].gif = pads[0].gif; pads[19].gif = pads[0].gif; L.clips = [newClip(18), newClip(19)];
+      L.clips.forEach(c => { c.sx = c.sy = 6; }); layers.slice(1).forEach(l => l.on = false); L.sel = L.clips[1]; syncLayerUI();
+      const s = L.row.querySelector('.lbl'); const dis = s.disabled; s.value = 'destination-out'; s.dispatchEvent(new Event('change', { bubbles: true }));
+      redraw.all = true; await new Promise(r => setTimeout(r, 300)); const d = mctx.getImageData(master.width/2|0, master.height/2|0, 1, 1).data;
+      const blend = L.clips[1].blend, saved = JSON.parse(snapshot()).layers[0].clips[1].blend;
+      L.clips = []; pads[18].gif = pads[19].gif = null; layers.forEach(l => l.on = true); syncLayerUI(); return [dis, blend, saved, d[0]]; })()""")
+    print('bg sublayer', sub); assert sub[0] is False and sub[1] == 'destination-out' and sub[2] == 'destination-out' and sub[3] < 40, sub
     # pool: all at ½
     await pg.evaluate("openPool ? openPool() : $('#poolBtn').click()"); await pg.wait_for_timeout(200)
     await pg.click('#poolRes [data-v="0.5"]'); await pg.wait_for_function("pool.every(m => m.scale === 0.5)", timeout=8000)

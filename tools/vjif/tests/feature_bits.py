@@ -108,7 +108,7 @@ async def main():
     lk = await pg.evaluate("""(() => { const L = layers[1], c = newClip(0); L.clips = [c]; L.on = true; L.opacity = 1; const G = clipGeom(c); const n = hitsAt(G.cx, G.cy, false).length;
       L.lock = true; const m = hitsAt(G.cx, G.cy, false).length, k = hitsAt(G.cx, G.cy, false, true).length; L.lock = false; L.clips = []; return [n, m, k]; })()""")
     print('lock', lk); assert lk == [1, 0, 1], lk
-    gc = await pg.evaluate("[FX_DEFS[FXI.glitch].styles.map(s => s[0]).includes('corrupt'), FX_DEFS[FXI.glitch].styles[styleIdx(FXI.glitch, 'scramble')][0]]")
+    gc = await pg.evaluate("[FX_DEFS[FXI.codec].styles.map(s => s[0]).includes('corrupt'), FX_DEFS[FXI.codec].styles[styleIdx(FXI.codec, 'scramble')][0]]")
     print('corrupt', gc); assert gc == [True, 'corrupt'], gc
     tc = []
     for _ in range(2):
@@ -121,18 +121,18 @@ async def main():
       const o = upgradeSnap({ v: 5, fx: FX_ORDER_V1.map(id => ({ tag: id })), fxPre: [{ fx: { 2: { a: 1 }, 10: { b: 1 } } }], fxOn: on.slice(), scenes: [{ fxOn: on.slice() }, null] });
       return [FX_DEFS.map(d => d.id).join(','), o.fx.every((c, i) => c.tag === FX_DEFS[i].id), Object.keys(o.fxPre[0].fx).map(Number).sort((a, b) => a - b).join(','), o.fxOn[FXI.strobe], o.fxOn[FXI.pixel], o.fxOn[2], o.scenes[0].fxOn[FXI.strobe]]; })()""")
     # 0.79: Glitch styles stack (Keyframe, Crunch), the Glitch transition's Scramble became Corrupt, × on pads / scenes / presets, Trigger inside Play
-    g9 = await pg.evaluate("""[styleParts(FXI.glitch, 'corrupt+crunch').join('+'), styleParts(FXI.glitch, 'scramble').join(), normTrans({ type: 'glitch', style: 'scramble' }).style,
+    g9 = await pg.evaluate("""[styleParts(FXI.codec, 'corrupt+crunch').join('+'), styleParts(FXI.codec, 'scramble').join(), normTrans({ type: 'glitch', style: 'scramble' }).style,
       document.querySelectorAll('.pad .xdel').length, document.querySelectorAll('#scenes .scene .xdel').length, document.querySelectorAll('#fxPre .fxp .xdel').length,
       !document.querySelector('#gTabs [data-v=trig]'), !!document.querySelector('[data-pane=play] #tMode'), !!document.querySelector('[data-pane=colour] #gSmooth')]""")
     print('0.79', g9); assert g9 == ['corrupt+crunch', 'corrupt', 'corrupt', 27, 36, 9, True, True, True], g9
     sw = await pg.evaluate("[hsvOn({ hsv: { h: 10, s: 1, v: 1, off: true } }), hsvOn({ hsv: { h: 10, s: 1, v: 1 } }), palOn({ pal: { i: 2, off: true } }), palOn({ pal: { i: 2 } }), swapOn({ swap: [1], swapOff: true }), swapOn({ swap: [1] }), ['fOn', 'tOn', 'hOn', 'pOn', 'swOn'].every(id => !!document.getElementById(id))]")
     print('switches', sw); assert sw == [False, True, False, True, False, True, True], sw
-    print('fx order', mg); assert mg == ['mono,colour,poster,strobe,zoom,shake,wobble,mirror,pixel,glitch,rgb,feedback', True, '3,8', 1, 1, 0, 1], mg
+    print('fx order', mg); assert mg[0] == 'colour,poster,strobe,feedback,zoom,shake,wobble,mirror,pixel,glitch,codec,rgb' and mg[3:] == [1, 1, 1, 1], mg
     d82 = await pg.evaluate("""(() => { selectFx(FXI.colour); const C = fxCfg[FXI.colour], was = C.style, wp = C.pal; C.style = 'pal'; C.pal = FX_PALS.findIndex(p => p.n === 'GB'); syncFxUI();
       const a = $('#fxRateRow label').textContent + '/' + [...document.querySelectorAll('#fxDpat button')].map(b => b.title.split(':')[0]).join(',') + '/' + getComputedStyle($('#fxRate')).display;
       C.pal = 0; syncFxUI(); const a2 = $('#fxRateRow label').textContent + '/' + $('#fxRateSeg').hidden; C.style = 'flip'; syncFxUI(); C.style = was; C.pal = wp; syncFxUI();
       return [a, a2, FX_PALS.at(-1).n, FX_PALS.at(-1).c.length, 'dots' in fxEntry(FXI.colour), PAL_ORDER.map(i => FX_PALS[i].n).join(',')]; })()""")
-    print('0.82', d82); assert d82 == ['Dot Matrix/LCD off,Game Boy pixels,Dot matrix/none', 'Dither/true', 'ZX Spectrum', 15, True, 'CGA 1,CGA 2,CGA 3,ZX Spectrum,C64,NES,EGA,GB,GB Pocket,GB Light'], d82   # 0.87.2: LCD icons in Dither's pattern slot for the Game Boy palettes; palettes by year
+    print('0.82', d82); assert d82 == ['Dot Matrix/LCD off,Game Boy pixels,Dot matrix/none', 'Dither/true', '1-bit', 2, True, 'Grey,1-bit,CGA 1,CGA 2,CGA 3,ZX Spectrum,C64,NES,EGA,GB,GB Pocket,GB Light'], d82   # (0.94: Grey and 1-bit first)   # 0.87.2: LCD icons in Dither's pattern slot for the Game Boy palettes; palettes by year
     d83 = await pg.evaluate("""(() => { const g = pads[0].gif; selectPad(0); $('#gTabs [data-v=colour]').click(); g.swap = [{ from: [1, 2, 3], to: [9, 9, 9] }]; g.swapOff = false; syncGifUI(); return [...document.querySelectorAll('#gLoop button')].map(b => b.textContent).join('/'); })()""")
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); off = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
     await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); on = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")

@@ -10,7 +10,7 @@ async def main():
     for k,(f,key) in enumerate([('busy.gif','KeyQ'),('grad.gif','KeyW')]):
       await pg.evaluate(f"setTarget({k}); fileTarget = {k}"); await pg.set_input_files('#fileIn', [str(FIX/f)]); await pg.wait_for_function(f"pads[{k}].gif")
       await pg.keyboard.press(key); await pg.wait_for_timeout(200)
-    await pg.evaluate("fxCfg[FXI.glitch].style = 'corrupt'; fxCfg[FXI.glitch].mode = 'latch'; fxCfg[FXI.glitch].amt = 0.8; fxCfg[FXI.glitch].rate = fxCfg[FXI.glitch].rate; fxDown(FXI.glitch)")
+    await pg.evaluate("fxCfg[FXI.codec].style = 'corrupt'; fxCfg[FXI.codec].mode = 'latch'; fxCfg[FXI.codec].amt = 0.8; fxCfg[FXI.codec].rate = fxCfg[FXI.codec].rate; fxDown(FXI.codec)")
     for i in range(3):
       await pg.wait_for_timeout(1500)
       bb = await pg.evaluate("(() => { const r = pv.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; })()"); await pg.screenshot(path=f'{SP}/corrupt{i}.png', clip={'x':bb[0],'y':bb[1],'width':bb[2],'height':bb[3]}, timeout=180000)

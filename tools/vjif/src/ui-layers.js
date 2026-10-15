@@ -27,7 +27,8 @@ function buildLayers(){
       row.querySelector('.lfill').addEventListener('input', e => { L.fill = e.target.value; L.fillOn = true; row.querySelector('.lfillon').checked = true; });
     }
     row.querySelector('.lop').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
-    row.querySelector('.lbl').addEventListener('change', e => { L.blend = e.target.value; });
+    row.querySelector('.lbl').addEventListener('change', e => { if (li !== BG_LAYER) L.blend = e.target.value; else if (L.sel){ L.sel.blend = e.target.value; redraw.all = true; } });   // Background: the selected GIF's own blend (0.94)
+    if (li === BG_LAYER) row.querySelector('.lbl').title = "Blend of the selected Background GIF with the Background GIFs under it: each one is its own sublayer (Background itself has only black under it). Mask: cut out — it cuts holes in the ones below it; Mask: keep inside — only what's under it stays";
     onSeg(row.querySelector('.ltr'), (b, e) => { L.tr = b.dataset.v; syncLayerUI(); });
     row.querySelector('.clips').addEventListener('click', e => {
       const sl = e.target.closest('.bgslot'); if (sl){ const p = +sl.dataset.pad; selectPad(p); setTarget(BG_LAYER); if (pool.length) openPool(p); else { fileTarget = p; $('#fileIn').click(); } return; }   // an empty Background slot: fill it
@@ -112,8 +113,9 @@ function syncLayerUI(){
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target); r.querySelector('.llock').classList.toggle('on', !!L.lock);
     const mb = r.querySelector('.lmask'); mb.classList.toggle('on', !!maskEd && maskEd.li === L.i); mb.classList.toggle('has', !!(L.mask && L.mask.on !== false));
     r.querySelector('.lname').title = LROLE[L.i] + ' · ' + (L.i === target ? 'editing this layer' : `click the card or press Alt+${L.i+1} to edit this layer`);
-    r.querySelector('.lop').value = L.opacity; r.querySelector('.lbl').value = L.blend; r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
+    r.querySelector('.lop').value = L.opacity; { const s = r.querySelector('.lbl'); if (L.i === BG_LAYER){ s.value = (L.sel && L.sel.blend) || 'source-over'; s.disabled = !L.sel; } else s.value = L.blend; } r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
+    if (L.i === BG_LAYER && L.blend !== 'source-over') L.blend = 'source-over';   // 0.94: nothing under Background to blend with: its select sets the selected GIF's blend instead
     if (L.i === BG_LAYER) for (let p = BG0; p < BG0 + N_BG; p++) if (pads[p].gif && !L.clips.some(c => c.pad === p)) L.clips.push(newClip(p));   // a filled slot always has its chip (0.93.1: one could go missing and the card showed 5)
     const slots = L.i === BG_LAYER ? Array.from({ length: N_BG }, (_, k) => BG0 + k).filter(p => !pads[p].gif).map(p => `<span class="bgslot" data-pad="${p}" title="Empty Background slot: click to fill it from the pool (or a file), or drop a GIF from the pool or a pad on this card">+</span>`).join('') : '';
     const chipHTML = c => { const p = pads[c.pad];   // leftmost chip = drawn on top

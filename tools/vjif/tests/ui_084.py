@@ -14,7 +14,7 @@ async def main():
     await pg.keyboard.type('Sky'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(200)
     r1 = await pg.evaluate("[pads[0].gif.name, layers.some(L => L.clips.some(c => c.pad === 0))]")
     # Alt+click a preset: name it
-    await pg.evaluate("fxPre[0].fx = { [FXI.mono]: fxEntry(FXI.mono) }; syncFxUI()"); n0 = await pg.evaluate("NFX")
+    await pg.evaluate("fxPre[0].fx = { [FXI.poster]: fxEntry(FXI.poster) }; syncFxUI()"); n0 = await pg.evaluate("NFX")
     await pg.keyboard.down('Alt'); await pg.click(f'#fxPre .fxp[data-i="{n0}"]'); await pg.keyboard.up('Alt'); await pg.wait_for_timeout(200)
     await pg.keyboard.type('Noir'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(200)
     r2 = await pg.evaluate("[fxPre[0].name, [...document.querySelectorAll('#fxPre .fxp')].find(x => +x.dataset.i === NFX).querySelector('.s').textContent, fxPreName(fxPre[0])]")
@@ -28,7 +28,7 @@ async def main():
     r5 = await pg.evaluate("[document.activeElement.id, [...document.querySelectorAll('#helpPanel dt')].filter(d => !d.hidden).map(d => d.textContent), [...document.querySelectorAll('#helpPanel .khead')].filter(h => !h.hidden).length]")
     await pg.keyboard.press('Escape')
     # blank rows, Number row, Slide → Wipe, Blackout fade
-    r6 = await pg.evaluate("""(() => { selectFx(FXI.mono); const a = $('#fxRateRow').classList.contains('dimmed') && getComputedStyle($('#fxRateRow label')).visibility;
+    r6 = await pg.evaluate("""(() => { selectFx(FXI.poster); const a = $('#fxRateRow').classList.contains('dimmed') && getComputedStyle($('#fxRateRow label')).visibility;
       transCfg = normTrans({ type: 'tv', style: 'channel', len: 2 }); syncTransUI(); const n = [$('#trPxRow label').textContent, $('#trPx').nextElementSibling.textContent];
       const w = normTrans({ type: 'slide', style: 'bands' }), w2 = normTrans({ type: 'wipe' }), w3 = normTrans({ type: 'glitch', style: 'scramble' });
       $('#blackMsR').value = 5; $('#blackMsR').dispatchEvent(new Event('input'));

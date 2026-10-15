@@ -118,7 +118,13 @@ async function recToggle(){
   if (rec.busy || rec.starting) return;              // the save dialog is still open, or a take is getting ready
   rec.busy = true; try { await recPrepare(); } finally { rec.busy = false; }
 }
-function recDropAudio(){ if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; } if (rec.audio){ rec.audio.getTracks().forEach(t => t.stop()); rec.audio = null; } }
+// Chrome may keep its voice processing on despite the request (some drivers): say so, since it rides the level (0.94)
+function micCheck(st){
+  const t = st.getAudioTracks()[0], S = t && t.getSettings ? t.getSettings() : {};
+  const on = [S.autoGainControl && 'auto gain', S.noiseSuppression && 'noise suppression', S.echoCancellation && 'echo cancelling'].filter(Boolean);
+  if (on.length) toast(`The browser kept ${on.join(', ')} on for this input: its level may move by itself`);
+}
+function recDropAudio(){ if (rec.win){ rec.win.getTracks().forEach(t => t.stop()); rec.win = null; } if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; } if (rec.audio){ rec.audio.getTracks().forEach(t => t.stop()); rec.audio = null; } }
 function recCancelWait(){
   if (!rec.wait) return;
   rec.wait = null; recDropAudio(); if (rec.writer){ try { rec.writer.abort(); } catch (e) {} rec.writer = null; }   // the chosen file is dropped, not left empty
@@ -162,17 +168,22 @@ async function recDirFile(name){
   } catch (e) { toast(`Couldn't write in ${rec.dir.name} (${e.message || e.name}) — asking where to save instead`); return null; }
 }
 async function recPrepare(){
-  rec.audio = null;
+  rec.audio = null; rec.win = null;
+  if (recSrc === 'win'){                              // the whole window (0.94): Chrome asks which tab to share (this one is offered first)
+    try { rec.win = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: recFps, displaySurface: 'browser' }, audio: false, preferCurrentTab: true, selfBrowserSurface: 'include', surfaceSwitching: 'exclude' }); }
+    catch (e) { toast(e.name === 'NotAllowedError' ? 'No window shared: nothing recorded' : `Window capture didn't start (${e.message || e.name})`); return; }
+  }
   if (recAudio && recAudio.id === 'music'){          // the music player, straight from the file
     if (!mus.el.src) toast('No track loaded (Settings › Recording › Music) — recording without sound');
     else { musGraph(); try { await mus.ctx.resume(); } catch (e) {} rec.audio = new MediaStream(mus.dest.stream.getAudioTracks().map(t => t.clone())); }
   } else if (recAudio && recAudio.id === 'tab'){     // another tab's sound: the tab picked in Settings, else Chrome asks now
     if (!recTabLive()) await recTabAsk();
     if (recTabLive()) rec.audio = new MediaStream(rec.tab.getAudioTracks().map(t => t.clone()));   // a copy per take: the picked tab stays shared
-    else if (!rec.tabAsked) return;                  // the picker was cancelled
+    else if (!rec.tabAsked){ recDropAudio(); return; }   // the picker was cancelled
   } else if (recAudio){                              // the chosen sound input, raw (no echo cancelling / noise gate / level riding)
     try { rec.audio = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: recAudio.id }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
     catch (e) { toast(`Can't open the sound input (${recAudio.label || 'chosen input'}) — recording without sound`); }
+    if (rec.audio) micCheck(rec.audio);
   }
   // a tab or an input gets its capture going now, while the take waits for its bar: a capture started on the bar itself
   // could stumble for its first few blocks (a hiccup at the start of the clip)
@@ -198,9 +209,10 @@ function recStart(mime, beat = clock.beat){
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
   // this take owns its writer, chunks, name and sound input: a quick next take can't step on them while this one saves
   if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; }   // the browser's own recorder takes the sound itself
-  const writer = rec.writer, name = rec.name, chunks = [], audio = rec.audio; rec.audio = null;
+  const writer = rec.writer, name = rec.name, chunks = [], audio = rec.audio, win = rec.win; rec.audio = null; rec.win = null;
   let pend = Promise.resolve();
-  const stream = master.captureStream(recFps);
+  const stream = win || master.captureStream(recFps);
+  if (win) win.getVideoTracks()[0].addEventListener('ended', () => { if (rec.mr === mr) recStop(); });   // sharing stopped from Chrome's bar: the take ends
   if (audio) audio.getAudioTracks().forEach(t => stream.addTrack(t));
   const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: recMbps * 1e6, audioBitsPerSecond: 256e3 });
   mr.ondataavailable = e => { if (!e.data || !e.data.size) return; rec.bytes += e.data.size;
@@ -226,8 +238,10 @@ async function wcStart(beat = clock.beat){
 }
 async function wcSetup(beat){
   rec.last = rec.lastFwd = clock.beat; rec.wait = null; rec.bytes = 0; rec.stopAt = recBars ? beat + recBars * 4 : 0;
-  const writer = rec.writer, name = rec.name, audio = rec.audio; rec.audio = null;
-  const w = CW & ~1, h = CH & ~1;                    // H.264 wants even sizes (recorded at the render size)
+  const writer = rec.writer, name = rec.name, audio = rec.audio, win = rec.win; rec.audio = null; rec.win = null;
+  let winEl = null, ws = null;
+  if (win){ winEl = document.createElement('video'); winEl.muted = true; winEl.srcObject = win; try { await winEl.play(); } catch (e) {} ws = win.getVideoTracks()[0].getSettings(); }
+  const w = (win ? ws.width || winEl.videoWidth || CW : CW) & ~1, h = (win ? ws.height || winEl.videoHeight || CH : CH) & ~1;   // H.264 wants even sizes (the output: the render size; the window: its size on screen)
   const fps = recFps, us = 1e6 / fps;
   const tryList = async list => { for (const codec of list){
     const c = { codec, width: w, height: h, bitrate: recMbps * 1e6, framerate: fps,
@@ -241,10 +255,10 @@ async function wcSetup(beat){
   }
   if (!vcfg){                                        // no H.264 here: fall back to MediaRecorder (WebM when nothing else)
     const m = REC_MIMES_AV.mp4.concat(REC_MIMES.mp4).find(recOk) || (audio ? REC_MIMES_AV.webm : REC_MIMES.webm).find(recOk);
-    if (!m){ if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; } if (audio) audio.getTracks().forEach(t => t.stop()); toast('This browser can\'t record video'); return; }
+    if (!m){ if (rec.capPre){ rec.capPre.then(c => c && c.release()); rec.capPre = null; } if (audio) audio.getTracks().forEach(t => t.stop()); if (win) win.getTracks().forEach(t => t.stop()); toast('This browser can\'t record video'); return; }
     if (!writer && !m.startsWith('video/mp4')) rec.name = name.replace(/\.mp4$/, '.webm');
     toast2(`No ${WC_NAMES[recCodec]}${recCodec !== 'h264' ? ' or H.264' : ''} encoder here — recording with the browser's own recorder instead`);
-    rec.audio = audio; return recStart(m, beat);
+    rec.audio = audio; rec.win = win; return recStart(m, beat);
   }
   // The sound is captured on the audio thread (an AudioWorklet), so nothing is lost when the page is busy drawing: the blocks
   // queue up and arrive late at worst. Each block is stamped from its sample count, so the sound is one unbroken stream.
@@ -272,7 +286,7 @@ async function wcSetup(beat){
   const fail = e => { toast('Recording failed: ' + (e && e.message || e)); recStop(); };
   // the clip's clock starts on the bar it was asked to start on (getting the encoders ready took a few ms), so a bar-length take is exactly that long
   const C = { venc: null, aenc: null, cap: null, audio, muxer, target, writer, name, fps, us, n: 0, t0: performance.now() - Math.max(0, clock.beat - beat) * 60000 / clock.bpm,
-              stopping: false, vOn: false, aHold: [], aOff: null, aNext: null, dropped: 0, warned: false };
+              win, winEl, winCv: win ? new OffscreenCanvas(w, h) : null, stopping: false, vOn: false, aHold: [], aOff: null, aNext: null, dropped: 0, warned: false };
   C.venc = new VideoEncoder({ output: (ch, meta) => { rec.bytes += ch.byteLength; muxer.addVideoChunk(ch, meta);
     if (!C.vOn){ C.vOn = true; C.aHold.forEach(a => muxer.addAudioChunkRaw(...a)); C.aHold = null; } }, error: fail });
   C.venc.configure(vcfg);
@@ -294,7 +308,8 @@ async function wcSetup(beat){
     });
   } else if (audio) audio.getTracks().forEach(t => t.stop());
   rec.wc = C;
-  rec.mr = { stop: () => wcStop(C) };                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
+  rec.mr = { stop: () => wcStop(C) };
+  if (win) win.getVideoTracks()[0].addEventListener('ended', () => { if (rec.wc === C) recStop(); });   // sharing stopped from Chrome's bar: the take ends                 // the rest of the recorder (Rec button, bars, UI) treats it like MediaRecorder
   rec.t0 = C.t0; redraw.all = true; recUI();
 }
 // called every frame while recording: one encoded frame per frame slot of real time (a slow frame repeats the picture,
@@ -312,7 +327,9 @@ function wcCapture(now){
       if (!C.warned && C.dropped > C.fps){ C.warned = true; toast(`The video encoder can't keep up — frames are being skipped. Try H.264, a lower frame rate or bitrate (Settings › Recording)`); }
       continue;
     }
-    const f = new VideoFrame(master, { timestamp: C.n * C.us, duration: C.us });
+    let src = master;
+    if (C.win){ if (C.winEl.readyState < 2) continue; const x = C.winCv.getContext('2d'); x.drawImage(C.winEl, 0, 0, C.winCv.width, C.winCv.height); src = C.winCv; }   // the window, scaled to the size the take started at
+    const f = new VideoFrame(src, { timestamp: C.n * C.us, duration: C.us });
     C.venc.encode(f, { keyFrame: C.n % (C.fps * 2) === 0 }); f.close();   // a keyframe every 2 s
   }
 }
@@ -321,6 +338,7 @@ async function wcStop(C){
   try {
     if (C.cap) C.cap.stop();
     if (C.audio) C.audio.getTracks().forEach(t => t.stop());
+    if (C.win) C.win.getTracks().forEach(t => t.stop());
     await C.venc.flush(); if (C.aenc) await C.aenc.flush();
     if (!C.vOn){ C.venc.close(); if (C.aenc) C.aenc.close(); if (C.writer) await C.writer.abort().catch(() => {}); toast('The take stopped before its first frame — nothing was saved'); return; }
     C.muxer.finalize(); C.venc.close(); if (C.aenc) C.aenc.close();
@@ -520,7 +538,7 @@ setInterval(async () => {
 
 // ---- Rec ▾: the take's length, frame rate and quality at hand (the same settings as Settings › Recording, kept in step) ----
 {
-  const ROWS = [['Bars', '#recBarsSeg'], ['Count-in', '#recCountSeg'], ['Frame rate', '#recFpsSeg'], ['Mb/s', '#recMbpsSeg']];
+  const ROWS = [['Source', '#recSrcSeg'], ['Bars', '#recBarsSeg'], ['Count-in', '#recCountSeg'], ['Frame rate', '#recFpsSeg'], ['Mb/s', '#recMbpsSeg']];
   $('#recPopRows').innerHTML = ROWS.map(([n, q], k) => `<span class="poprow"><span>${n}</span><div class="seg" data-src="${q}">${$(q).innerHTML.replace('4 bars', '4')}</div></span>`).join('');
   const sync = () => document.querySelectorAll('#recPopRows .seg').forEach(g => { const src = $(g.dataset.src).querySelectorAll('button');
     g.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', src[i].classList.contains('on'))); });

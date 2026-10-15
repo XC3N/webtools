@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.93.1';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.94.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -43,6 +43,7 @@ let format = '16:9';
 let allPipCol = /^#[0-9a-f]{6}$/i.test(Prefs.get('vjif-allpip', '')) ? Prefs.get('vjif-allpip', '') : '#c8c6c0';   // effect tiles: the pips of an effect on all layers
 let recCount = [0, 1, 2, 4].includes(+Prefs.get('vjif-reccount', 0)) ? +Prefs.get('vjif-reccount', 0) : 0;   // count-in: bars to wait after the next bar
 let recBars = +Prefs.get('vjif-recbars') || 0;   // 0 = until stopped
+let recSrc = Prefs.get('vjif-recsrc') === 'win' ? 'win' : 'out';   // what Rec records: the output, or the whole window (0.94)
 let recAudio = Prefs.json('vjif-recaudio');   // { id, label } of the sound input recorded with the video, or null
 // recording settings (Settings › Recording), kept per browser
 const REC_CODECS = ['h264', 'hevc', 'av1', 'vp9', 'vp8'];
@@ -89,7 +90,7 @@ const lenLabel = b => { const o = LEN_OPTS.find(o => Math.abs(o[0] - b) < 1e-6);
 // fade one-shot lengths and LFO cycles, in beats
 const ENV_OPTS = [[0,'0'],[0.125,'1/32'],[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars']];
 const GAP_OPTS = [[0, 'off'], [0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];   // LFO Gap: a pause after each cycle
-const PER_OPTS = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars'],[64,'16 bars']];
+const PER_OPTS = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[1.5,'3/8'],[2,'1/2'],[3,'3/4'],[4,'1 bar'],[6,'1½ bars'],[8,'2 bars'],[12,'3 bars'],[16,'4 bars'],[24,'6 bars'],[32,'8 bars'],[48,'12 bars'],[64,'16 bars']];   // (0.94: dotted / triple steps)
 const optIdx = (opts, v) => opts.reduce((bi, o, i) => Math.abs(o[0] - v) < Math.abs(opts[bi][0] - v) ? i : bi, 0);
 // LFO targets: [key, button, title, slider min, max, step, unit, default min, max, shape, cycle (beats)]
 // Defaults are a usable starting move, not a neutral one: a gentle sway, a zoom punch on the beat, a hue cycle…

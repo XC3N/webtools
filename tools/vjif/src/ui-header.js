@@ -154,6 +154,9 @@ const syncRecFmt = () => {
   document.querySelectorAll('#recACodecSeg button').forEach(b => { b.classList.toggle('on', recFmt === 'webm' ? b.dataset.a === 'opus' : b.dataset.a === recACodec); b.disabled = recFmt === 'webm'; });
 };
 syncRecFmt();
+const syncRecSrc2 = () => document.querySelectorAll('#recSrcSeg button').forEach(b => b.classList.toggle('on', b.dataset.s === recSrc));
+syncRecSrc2();
+onSeg($('#recSrcSeg'), b => { recSrc = b.dataset.s; Prefs.set('vjif-recsrc', recSrc); syncRecSrc2(); });
 const syncRecBars = () => document.querySelectorAll('#recBarsSeg button').forEach(b => b.classList.toggle('on', +b.dataset.b === recBars));
 syncRecBars();
 onSeg($('#recBarsSeg'), (b, e) => { recBars = +b.dataset.b; Prefs.set('vjif-recbars', recBars); syncRecBars(); });
@@ -233,18 +236,18 @@ const defParts = () => [...document.querySelectorAll('#defParts input:checked')]
 const partsTxt = ks => ks.length === 3 ? 'all' : ks.map(k => DEF_NAMES[k]).join(' + ');
 $('#defSave').addEventListener('click', () => { const ks = defParts(); if (!ks.length) return toast('Tick at least one part');
   const cur = { fx: () => JSON.parse(JSON.stringify(fxCfg)), fxPre: () => JSON.parse(JSON.stringify(fxPre)), tr: () => trPresets.map(P => ({ ...P })) };
-  const o = { ...userDef, v: 1, fxOrd: 2, saved: Date.now() }; ks.forEach(k => o[k] = cur[k]()); setUserDef(o); toast2(`Saved as your defaults (${partsTxt(ks)})`); });
+  const o = { ...userDef, v: 1, fxOrd: 3, saved: Date.now() }; ks.forEach(k => o[k] = cur[k]()); setUserDef(o); toast2(`Saved as your defaults (${partsTxt(ks)})`); });
 $('#defReset').addEventListener('click', () => { const ks = defParts(); if (!ks.length) return toast('Tick at least one part');
   const o = { ...userDef }; ks.forEach(k => delete o[k]); setUserDef(DEF_KEYS.some(k => o[k] !== undefined) ? o : null);
   toast2(`Back to VJif's defaults (${partsTxt(ks)}; for new sets and resets, this set is unchanged)`); });
 $('#defExport').addEventListener('click', () => { const ks = defParts().filter(k => userDef[k] !== undefined); if (!ks.length) return toast('Save your defaults first (for the ticked parts)');
-  const out = { app: 'VJif', kind: 'defaults', v: 1, fxOrd: 2, saved: userDef.saved }; ks.forEach(k => out[k] = userDef[k]);
+  const out = { app: 'VJif', kind: 'defaults', v: 1, fxOrd: 3, saved: userDef.saved }; ks.forEach(k => out[k] = userDef[k]);
   saveFile(JSON.stringify(out, null, 1), ks.length === 3 ? 'vjif-defaults.json' : `vjif-defaults-${ks.join('-').toLowerCase()}.json`, 'application/json'); });
 $('#defImport').addEventListener('click', () => $('#defFile').click());
 $('#defFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { const d = JSON.parse(await f.text()); if (d.app !== 'VJif' || d.kind !== 'defaults') throw new Error('not a VJif defaults file'); fxRemapDefs(d);
     const ks = defParts().filter(k => d[k] !== undefined); if (!ks.length) throw new Error('it has none of the ticked parts');
-    const o = { ...userDef, v: 1, fxOrd: 2, saved: Date.now() }; ks.forEach(k => o[k] = d[k]); setUserDef(o); toast2(`Defaults loaded (${partsTxt(ks)}): new sets and resets use them`);
+    const o = { ...userDef, v: 1, fxOrd: 3, saved: Date.now() }; ks.forEach(k => o[k] = d[k]); setUserDef(o); toast2(`Defaults loaded (${partsTxt(ks)}): new sets and resets use them`);
   } catch (err) { toast("Couldn't load those defaults: " + err.message); } });
 defNote();
 

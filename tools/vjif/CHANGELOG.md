@@ -4,6 +4,27 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.94.0 — 2026-10-15
+
+### Effects
+- The effect pads are regrouped. F1–F12 are now Colour, Posterize, Strobe, Feedback · Zoom, Shake, Wobble, Mirror · Pixel, Glitch, Codec, CRT.
+  - Mono is gone: Colour › Palette starts with Grey and 1-bit (1-bit with Dither › Bayer is the old Mono › Dither).
+  - Glitch keeps Slices, Blocks and Melt. Corrupt, Keyframe and Crunch move to the new Codec effect, so the two stack with their own Amount, Rate and Size.
+  - Degauss moves to Strobe, where it swells and fades without flashing on the beat.
+  - Older sets, presets, your saved defaults and MIDI mappings move with the effects.
+- Effect LFOs: right-click Amount (or Rate / Size, where they have their plain meaning) and the envelope's box becomes that setting's LFO (shape, Cycle, Min, Max). A setting with an LFO shows ~ after its name. Saved with the set and copied into presets.
+- Fixed: effects with both Rate and Size (Glitch, Shake…) showed only Size in 0.93.
+
+### GIFs
+- Auto › LFO › Cycle has dotted and triple steps: 3/8, 3/4, 1½, 3, 6 and 12 bars.
+
+### Pads & scenes
+- Background's GIFs are sublayers: with a Background GIF selected, the card's blend menu sets that GIF's own blend with the Background GIFs under it (Mask: cut out / keep inside work between them). Background as a whole always draws Normal (there is only black under it).
+
+### Music & rec
+- Settings › Recording › Source (also in Rec ▾): Output, or Window to record the whole VJif window for tutorials (Chrome asks which tab to share).
+- With a microphone as the sound, a message says if Chrome kept its auto gain, noise suppression or echo cancelling on (they make the level move).
+
 ## 0.93.1 — 2026-10-15
 
 ### GIFs

@@ -23,7 +23,7 @@ async def main():
     m = await pg.evaluate("fxCfg[3].target = [0, 2]; syncFxUI(); [document.querySelector('#fxPads .fxp[data-i=\"3\"] .mk').querySelectorAll('i.on').length, document.querySelector('#fxPads .fxp[data-i=\"4\"] .mk').querySelectorAll('i.on').length]")
     print('mask', m); assert m == [2, 4], m
     # dither pattern switch
-    r = await pg.evaluate("selectFx(1); fxCfg[1].style = 'pal'; syncFxUI(); const vis = !$('#fxDpat').hidden; document.querySelector('#fxDpat [data-v=\"1\"]').click(); [vis, fxCfg[1].dpat, $('#fxRateRow label').textContent]")
+    r = await pg.evaluate("selectFx(FXI.colour); fxCfg[FXI.colour].style = 'pal'; syncFxUI(); const vis = !$('#fxDpat').hidden; document.querySelector('#fxDpat [data-v=\"1\"]').click(); [vis, fxCfg[FXI.colour].dpat, $('#fxRateRow label').textContent]")
     print('dpat', r); assert r == [True, 1, 'Dither'], r
     await b.close()
 asyncio.run(main())

@@ -20,7 +20,7 @@ const store = {
 // (the current one null); `scene` = which is current; `v` = the format's step (SNAP_STEPS).
 const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut',
   ...(L.lock ? { lock: true } : {}), ...(L.mask && L.mask.url ? { mask: { url: L.mask.url, inv: !!L.mask.inv, on: L.mask.on !== false } } : {}),
-  clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) }));
+  clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])), ...(c.blend && c.blend !== 'source-over' ? { blend: c.blend } : {}) })) }));
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
@@ -76,6 +76,11 @@ const SNAP_STEPS = {
     };
     o.pads = o.pads || []; fix(o.pads, o.layers, true);
     (o.scenes || []).forEach(sc => { if (sc){ sc.pads = sc.pads || []; fix(sc.pads, sc.layers, false); } });
+  },
+  8: o => {                                          // 0.94: Mono into Colour, Glitch split into Glitch + Codec, Degauss to Strobe, pads regrouped
+    o.fx = fxMig3Cfg(o.fx); (o.fxPre || []).forEach(P => { if (P) P.fx = fxMig3Keys(P.fx); });
+    o.fxOn = fxMig3On(o.fxOn); o.sceneFx = fxMig3On(o.sceneFx);
+    (o.scenes || []).forEach(sc => { if (sc && sc.fxOn) sc.fxOn = fxMig3On(sc.fxOn); });
   },
 };
 const SNAP_V = Math.max(...Object.keys(SNAP_STEPS).map(Number));
