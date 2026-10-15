@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.98.0 — 2026-10-15
+
+### Performance
+- Hovering the preview no longer reads GIF frames back from the GPU once they've been seen: each frame keeps a small copy (160 px on its long side) for picking. Before, the whole frame was read again every 250 ms while the pointer moved, about 80 stalls per 2 s over three GIFs.
+- The full-size frame copies kept for clicks stay under 96 MB (oldest dropped first, and those of replaced GIFs). Before, every frame ever clicked on kept its copy while its GIF stayed loaded.
+
 ## 0.97.0 — 2026-10-15
 
 ### Performance

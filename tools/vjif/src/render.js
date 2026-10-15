@@ -45,33 +45,41 @@ function inClip(c, px, py){ const G = clipGeom(c); if (!G) return false; const [
 // RGBA of the clip's current frame under an output-space point (src = before colour key)
 // a frame's pixels, read back once and kept (a GIF frame lives on the GPU: each read is a full stall, so reading one pixel at a
 // time froze the UI when a click tested dozens of points over overlapping GIFs; 0.87.1)
-const framePx = new WeakMap(), probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
+const framePx = new Map(), probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
+// 0.98: kept up to FRAMEPX_BYTES, oldest read dropped first (before, every frame ever clicked on kept its full-size copy
+// for as long as its GIF was loaded: a few clicks around a big GIF could hold hundreds of MB)
+const FRAMEPX_BYTES = 96 * 1048576; let framePxBytes = 0;
 function framePixels(img){
-  let d = framePx.get(img); if (d) return d;
+  let d = framePx.get(img); if (d){ framePx.delete(img); framePx.set(img, d); return d; }   // (moved to the end: most recent)
   const w = img.width, h = img.height; if (probe.canvas.width !== w || probe.canvas.height !== h){ probe.canvas.width = w; probe.canvas.height = h; } else probe.clearRect(0, 0, w, h);
-  probe.drawImage(img, 0, 0); d = probe.getImageData(0, 0, w, h).data; framePx.set(img, d);
+  probe.drawImage(img, 0, 0); d = probe.getImageData(0, 0, w, h).data; framePx.set(img, d); framePxBytes += d.length;
+  for (const [k, v] of framePx) if (k !== img && (!k.width || framePxBytes > FRAMEPX_BYTES)){ framePx.delete(k); framePxBytes -= v.length; }   // (a closed frame reads 0 wide: its GIF was replaced)
   if (w * h > 4e6){ probe.canvas.width = probe.canvas.height = 1; }   // don't keep a huge scratch canvas around
   return d;
 }
-// picking and hovering: one frame per GIF, read again at most every 250 ms (a hover reads on every mouse move; keeping
-// every frame of every GIF read back would grow without end, and a read per move would stall like 0.87.0's clicks did)
-const pickPx = new WeakMap();
+// picking and hovering: a small copy of each frame (at most PICK_PX on its long side), read back once and kept with the
+// frame, so once a GIF has played a loop under the pointer, hovering reads nothing back from the GPU (0.98; before, the
+// whole frame was read again every 250 ms while the pointer moved). A GIF's frame not read yet: at most one read per
+// 250 ms per GIF, the last copy standing in meanwhile
+const PICK_PX = 160, pickPx = new WeakMap(), pickLast = new WeakMap(), pickCv = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
 function pickPixels(g, img){
-  const P = pickPx.get(g), now = performance.now();
-  if (P && P.w === img.width && P.h === img.height && (P.img === img || now - P.t < 250)) return P.d;
-  const w = img.width, h = img.height; if (probe.canvas.width !== w || probe.canvas.height !== h){ probe.canvas.width = w; probe.canvas.height = h; } else probe.clearRect(0, 0, w, h);
-  probe.drawImage(img, 0, 0); const d = probe.getImageData(0, 0, w, h).data; pickPx.set(g, { img, d, w, h, t: now });
-  if (w * h > 4e6){ probe.canvas.width = probe.canvas.height = 1; }
-  return d;
+  let P = pickPx.get(img); if (P) return P;
+  const L = pickLast.get(g), now = performance.now();
+  if (L && now - L.t < 250) return L.P;
+  const k = Math.min(1, PICK_PX / Math.max(img.width, img.height)), w = Math.max(1, Math.round(img.width * k)), h = Math.max(1, Math.round(img.height * k));
+  if (pickCv.canvas.width !== w || pickCv.canvas.height !== h){ pickCv.canvas.width = w; pickCv.canvas.height = h; } else pickCv.clearRect(0, 0, w, h);
+  pickCv.drawImage(img, 0, 0, w, h); P = { d: pickCv.getImageData(0, 0, w, h).data, w, h };
+  pickPx.set(img, P); pickLast.set(g, { P, t: now }); return P;
 }
 function sampleClip(c, px, py, src = false, pick = false){
   const g = pads[c.pad].gif, G = clipGeom(c), [lx, ly] = toLocal(G, px, py);
   const u = (lx + G.ox) / (c.sx * (c.flipX ? -1 : 1) * G.fbw) + 0.5, v = (ly + G.oy) / (c.sy * (c.flipY ? -1 : 1) * G.fbh) + 0.5;
   const fi = frameIndex(c, g, performance.now()), img = (src ? g.src : g.frames)[fi];
-  const ix = clamp(Math.floor(u * img.width), 0, img.width - 1), iy = clamp(Math.floor(v * img.height), 0, img.height - 1);
-  const px4 = pick ? pickPixels(g, img) : framePixels(img), o = (iy * img.width + ix) * 4, d = px4.slice(o, o + 4);
+  const P = pick ? pickPixels(g, img) : { d: framePixels(img), w: img.width, h: img.height };
+  const ix = clamp(Math.floor(u * P.w), 0, P.w - 1), iy = clamp(Math.floor(v * P.h), 0, P.h - 1), o = (iy * P.w + ix) * 4, d = P.d.slice(o, o + 4);
   if (!src && liveFx() && g.frames === g.src && g.key.on && d[3]){   // apply the key to this one pixel
-    const f = g.key.region !== 'all' ? (g.masks ? g.masks[fi][iy * img.width + ix] : 255) : (fxColor(d[0] | (d[1] << 8) | (d[2] << 16), fxParams(g)) / 16777216) | 0;
+    const mi = clamp(Math.floor(v * img.height), 0, img.height - 1) * img.width + clamp(Math.floor(u * img.width), 0, img.width - 1);
+    const f = g.key.region !== 'all' ? (g.masks ? g.masks[fi][mi] : 255) : (fxColor(d[0] | (d[1] << 8) | (d[2] << 16), fxParams(g)) / 16777216) | 0;
     d[3] = (d[3] * f / 255) | 0;
   }
   d.u = clamp(u, 0, 1); d.v = clamp(v, 0, 1);         // where in the frame (0..1), for the key's seed point
