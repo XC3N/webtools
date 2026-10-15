@@ -132,6 +132,7 @@ function targetName(T){
     case 'opacity': return `Layer ${T.i + 1} opacity`;
     case 'amount': return T.i < NFX ? `${FX_DEFS[T.i].name} amount` : `Preset ${T.i - NFX + 1} amount`;
     case 'black': return 'Blackout'; case 'freeze': return 'Freeze'; case 'tap': return 'Tap tempo'; case 'sync': return 'Sync'; case 'brb': return 'BRB';
+    case 'padbank': return `Scene pads bank ${T.i + 1}`; case 'scbank': return T.i < 0 ? 'Scene bank before' : 'Scene bank after';
   }
   return '?';
 }
@@ -177,6 +178,8 @@ function ctlApply(m, kind, val, key){
     case 'tap': if (down) tap(); break;
     case 'sync': if (down) resync(); break;
     case 'brb': if (down) brb.on ? brbStop() : brbStart(); break;
+    case 'padbank': if (down) setPadBank(i); break;   // 0.95: Launchpad ◀ / ▶
+    case 'scbank': if (down){ const nb = N_SCENES / SC_BANK; setScBank((scBank + i + nb) % nb); } break;   // ▲ / ▼, wrapping like the numpad's / and *
   }
 }
 // ---- learn mode: click a target, then press / move the control ----

@@ -9,12 +9,12 @@ async def main():
     await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()")
     await pg.evaluate("fileTarget = 0"); await pg.set_input_files('#fileIn', [str(FIX/'red.gif')]); await pg.wait_for_function("pads[0].gif")
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(200)
-    await pg.evaluate("layers.forEach(L => L.clips.forEach(c => { c.sx = c.sy = 6; c.x = 0; c.y = 0; })); Object.assign(pads[0].gif, { inF: 0, outF: 0, startF: 0 }); redraw.all = true")   # one frame: the moving white bar stays at the left
-    await pg.wait_for_function("(() => { const d = mctx.getImageData(master.width/2|0, master.height/2|0, 1, 1).data; return d[0] > 100; })()"); base = await pg.evaluate(PX)
+    await pg.evaluate("layers.forEach(L => L.clips.forEach(c => { c.sx = c.sy = 6; c.x = 0; c.y = 0; })); Object.assign(pads[0].gif, { inF: 0, outF: 0, startF: 0 }); rebuildSeq(pads[0].gif); redraw.all = true")   # one frame: the moving white bar stays at the left
+    await pg.wait_for_function("(() => { const d = mctx.getImageData(master.width/2|0, master.height/2|0, 1, 1).data; return d[0] > 100 && d[1] < 100; })()"); base = await pg.evaluate(PX)
     # each effect in turn until one changes the centre pixel
     hit = None
     for i in range(12):
-      await pg.evaluate(f"selectFx({i}); fxCfg[{i}].mode = 'latch'; fxCfg[{i}].target = [0]"); await pg.keyboard.press(f'F{i+1}'); await pg.wait_for_timeout(400)
+      await pg.evaluate(f"selectFx({i}); fxCfg[{i}].mode = 'latch'; fxCfg[{i}].target = [layers.findIndex(L => L.clips.some(c => c.pad === 0))]"); await pg.keyboard.press(f'F{i+1}'); await pg.wait_for_timeout(400)
       fx = await pg.evaluate(PX)
       if sum(abs(a-b) for a,b in zip(fx, base)) > 60: hit = i; break
       await pg.keyboard.press(f'F{i+1}'); await pg.wait_for_timeout(150)
@@ -24,7 +24,8 @@ async def main():
     by = await pg.evaluate(PX); nofx = await pg.evaluate("pads[0].gif.nofx")
     print('base', base, 'fx', hit, fx, 'bypass', by)
     assert nofx and sum(abs(a-b) for a,b in zip(by, base)) < 30, (base, fx, by)
-    assert await pg.evaluate("JSON.parse(snapshot()).scenes ? true : true")
+    await pg.evaluate(f"fxCfg[{hit}].target = 'out'"); await pg.wait_for_timeout(400); allfx = await pg.evaluate(PX)   # 0.95: an effect on All applies to a bypassed GIF too
+    print('bypass under All', allfx); assert sum(abs(a-b) for a,b in zip(allfx, base)) > 60, allfx
     await pg.keyboard.press(f'F{hit+1}'); await pg.evaluate("$('#gNoFx').checked = false; $('#gNoFx').dispatchEvent(new Event('change', { bubbles: true }))")
     # Loop length slider
     ll = await pg.evaluate("(() => { const el = $('#gBeats'); el.value = 7; el.dispatchEvent(new Event('input', { bubbles: true })); return [pads[0].gif.beats, el.nextElementSibling.textContent]; })()")

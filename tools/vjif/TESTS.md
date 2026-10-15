@@ -193,6 +193,19 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {h0ghlsujkv2pkt5i5c68} **Mic processing warning** (0.94) — Record with a microphone as the sound: if Chrome kept auto gain / noise suppression / echo cancelling on for it, a message says so when the take is set up.
 - [ ] {wggn693o7h6md3kkcu3o} **LFO cycle steps** (0.94) — GIF › Auto › Cycle: 3/8, 3/4, 1½, 3, 6 and 12 bars between the old steps; an existing LFO keeps its value.
 - [ ] {thxz69l2wppdbiybojgx} **Rate row back** (0.94) — Glitch, Codec, Shake, Pixel…: effects with both Rate and Size show both rows again (0.93 hid Rate).
+- [ ] {nm0n2dwbl1sns35ccbiv} **Hide a GIF from its chip** (0.95) — Right-click a GIF chip on a layer card: it greys out and its GIF is neither drawn nor picked (LOAD drops if it was the heavy one); right-click again: back. Saved with the set.
+- [ ] {ycqverpl5fk144epkaew} **Scene export / import** (0.95) — Scenes heading › ↓: a .vjscene file of the scene you are on (GIFs inside). ↑ (or drop the file on the scenes): it lands in the first empty scene of the bank on show (or the empty tile it was dropped on), pads, layers, masks and name intact; Ctrl+Z takes it out.
+- [ ] {vc52kikti0ygo0pkl6g0} **Launchpad arrows** (0.95) — Settings › MIDI › Launchpad layout again, then on the Launchpad: ▲ / ▼ step the scene banks (wrapping), ◀ / ▶ show scene pads bank 1 / 2 (the one on show is lit).
+- [ ] {jhjtz84jxa9smlech8kn} **Effect preview off the output** (0.95) — Output window open (or recording): drag an effect slider with Preview on: the effect plays in the preview only; the output window stays clean.
+- [ ] {wwuuyr4dc3r7392qm6qm} **Scene copy keeps masks** (0.95) — Paint a mask on a layer, Ctrl-drag the scene onto another tile: the copy has the mask (and the layer lock / transition).
+- [ ] {a5hjsigm8hsc3y6shxti} **Bypass FX vs All** (0.95) — A GIF with Bypass FX on: an effect on its layer leaves it alone, an effect on All changes it too.
+- [ ] {2wpq2k5n7szzuiozx62n} **Flip LFOs** (0.95) — GIF › Auto: Flip H / Flip V (6 per row now): with Square, the GIF flips every half cycle; Min / Max move the halfway point.
+- [ ] {qbvl0b9reg2lg7amaq6f} **Display bottom** (0.95) — GIF › Display ends with Opacity (moved from Transform), then Smooth scaling and Bypass FX on one line.
+- [ ] {em3d1qhtbbqyxhk2deqz} **Reset / Clear switch off** (0.95) — Colour Adjust › Reset and Swap colours › Clear also switch their section off (like Key › Clear); Shadow has a Reset (defaults, off).
+- [ ] {b9lgnmx9epumyio9xn0n} **Panel picture** (0.95) — The GIF picture at the top right is bigger (beside the heading, the tabs full width below) and stays on the first frame when In / Out / Start move (Play › Frames shows those).
+- [ ] {x3kyifayvkoy78u18non} **Skew around 0** (0.95) — Auto › Skew reads 0% in the middle, −90 to +90% either side.
+- [ ] {qmq0osb1abxyl7i9bxey} **Retrigger graph** (0.95) — One shot with a long fade, hit it again mid-fade: the Trigger graph redraws from the level it was at, and the dot stays on the line.
+- [ ] {4idgk2trdr8eggbwqbt7} **Mask bar icons** (0.95) — Mask mode: the three tool icons sit centred like the others, and the layer card keeps its height (the buttons were 2 px too tall for the row).
 - [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.87.3) — at 80% and 125% UI zoom (Settings › Interface), click a swatch low in Display › Swap colours: the row that opens is scrolled into view.
 - [ ] {y08e3dqtjpeoa8jqrp0e} **Always on top** (0.89.3) — Right-click Output: a floating window with no address bar stays above other windows, plays, takes pad keys; right-click again closes it; click Output switches to a normal window.
 - [ ] {d3068ijx33furnsrblsv} **Reopen size** (0.89.3) — Shift+click Output, close the window, open it again: no black bars.

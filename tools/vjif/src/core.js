@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.94.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.95.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -104,7 +104,9 @@ const LFO_T = [
   ['op', 'Opac', 'Opacity', 0, 1, 0.01, '%', 0, 1, 'square', 1],
   ['h', 'Hue', 'Hue shift', -180, 180, 1, '°', -180, 180, 'up', 16],
   ['s', 'Sat', 'Saturation', 0, 3, 0.01, '×', 0, 1, 'sine', 4],
-  ['v', 'Bright', 'Brightness', 0, 3, 0.01, '×', 1, 1.6, 'down', 1]];
+  ['v', 'Bright', 'Brightness', 0, 3, 0.01, '×', 1, 1.6, 'down', 1],
+  ['fx', 'Flip H', 'Flip horizontally: flipped while the LFO is above halfway', 0, 1, 0.01, '%', 0, 1, 'square', 2],   // (0.95: a switch, so it flips at 50 %)
+  ['fy', 'Flip V', 'Flip vertically: flipped while the LFO is above halfway', 0, 1, 0.01, '%', 0, 1, 'square', 4]];
 // LFO shapes, drawn (0.89: Ramp ↓ is Ramp with Invert)
 const SHAPES = [['sine', 'Sine', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1.0 6.0 1.5 5.2 2.0 4.5 2.5 3.8 3.0 3.1 3.5 2.6 4.0 2.1 4.5 1.8 5.0 1.6 5.5 1.5 6.0 1.6 6.5 1.8 7.0 2.1 7.5 2.6 8.0 3.1 8.5 3.7 9.0 4.5 9.5 5.2 10.0 6.0 10.5 6.8 11.0 7.5 11.5 8.2 12.0 8.9 12.5 9.4 13.0 9.9 13.5 10.2 14.0 10.4 14.5 10.5 15.0 10.4 15.5 10.2 16.0 9.9 16.5 9.4 17.0 8.9 17.5 8.2 18.0 7.5 18.5 6.8 19.0 6.0"/></svg>'], ['tri', 'Triangle', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2l9 8"/></svg>'], ['up', 'Ramp', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10 10 2v8l9-8"/></svg>'],
   ['square', 'Square', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 10V2h9v8h9V2"/></svg>'], ['sh', 'Random (stepped)', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 7h4V3h4v6h4V5h3v4h3"/></svg>'], ['drift', 'Drift (smooth random)', '<svg viewBox="0 0 20 12" width="20" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M1 7c2-4 4-4 6-1s3 4 5 1 3-5 4-3 2 3 3 3"/></svg>']];

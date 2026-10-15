@@ -4,6 +4,31 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.95.0 — 2026-10-15
+
+### Pads & scenes
+- Scene export / import: ↓ on the Scenes heading saves the scene you're on as a .vjscene file (its pads, Background slots, layers, masks and name, with the GIF files). ↑, or dropping the file on the scenes, puts it in the first empty scene of the bank on show (or the empty tile it was dropped on); its GIFs join the pool. Ctrl+Z takes it out.
+- Right-click a GIF chip on a layer card to hide that GIF (not drawn, not picked), to find which one is heavy; right-click again to bring it back.
+- Copying a scene keeps its layers' masks, locks and transitions.
+
+### Effects
+- The editor's preview (dragging a slider or an envelope point) shows only in the preview while an output window is open or a take is recording; the output stays clean.
+- Bypass FX now skips only its layer's effects: effects on All apply to it too.
+
+### GIFs
+- Auto: Flip H and Flip V targets (flipped while the LFO is above halfway). The targets sit six to a row.
+- Auto › Skew reads 0% in the middle (−90 to +90%).
+- Display: Opacity moved here from Transform; Smooth scaling and Bypass FX share a line.
+- Colour Adjust › Reset and Swap colours › Clear also switch their section off, like Key › Clear. Shadow has a Reset.
+- The picture at the top right is bigger (the tabs run full width under it) and stays on the first frame; Play › Frames' picture follows In / Out / Start.
+- One shot: hitting it again mid-fade redraws the Trigger graph from the level it was at.
+
+### Gear
+- Launchpad layout: ▲ / ▼ step the scene banks, ◀ / ▶ show scene pads bank 1 / 2. Load the layout again to get them.
+
+### Interface
+- The envelope headers have Reset on the right. The mask tool icons are centred.
+
 ## 0.94.0 — 2026-10-15
 
 ### Effects

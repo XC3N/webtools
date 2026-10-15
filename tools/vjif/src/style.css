@@ -134,7 +134,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 #swList .swTo input{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);opacity:0;cursor:pointer}
 #swList .swr.pending .swTo{animation:swwait 1s ease-in-out infinite}@keyframes swwait{50%{box-shadow:0 0 0 2px var(--sig)}}
 #swList .swr button{width:18px;height:18px;padding:0}
-#side{position:relative}#gPrev{position:absolute;top:10px;right:12px;width:56px;height:56px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}#side>h2,#gTabs{margin-right:64px}   /* the selected GIF at the top right of the GIF panel, beside its heading and tabs (0.90; it was in Play › Frames) */
+#side{position:relative}#gPrev{position:absolute;top:10px;right:12px;width:84px;height:84px;background:var(--bg);border-radius:var(--r);image-rendering:pixelated}#side>h2{margin-right:92px;min-height:84px;align-items:flex-start}   /* 0.95: bigger, beside the heading only; the tabs run full width under it */   /* the selected GIF at the top right of the GIF panel, beside its heading and tabs (0.90; it was in Play › Frames) */
 
 /* ---------- stage: layer strip, preview, footer ---------- */
 #stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:var(--gap);overflow:hidden;padding:0;background:var(--bg)}
@@ -482,7 +482,7 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #helpPanel .keys{column-gap:0}#helpPanel .keys dt{display:flex;align-items:baseline;gap:8px;padding-right:10px}#helpPanel .keys dt::after{content:'';flex:1;min-width:10px;border-bottom:1px dotted var(--edge);transform:translateY(-3px)}   /* a leader from each key to its description */
 #helpPanel .khead{display:flex;align-items:baseline;gap:10px}#helpPanel .khead::after{content:'';flex:1;border-bottom:1px solid var(--edge);transform:translateY(-3px)}   /* a section title rules out to the box's edge */
 #fxSizeRow.onerow{grid-template-columns:minmax(0,1fr) auto!important}#fxSizeRow.onerow>label{text-align:right;justify-self:end}#fxSizeRow.onerow>#fxSizeSeg{grid-column:2;grid-row:1}   /* Shake › Edges: the word against its button (0.89) */
-#gSmoothRow{margin-top:10px;padding-top:8px;border-top:1px solid var(--edge)}   /* Smooth scaling: no section, after the last one (folding Shadow doesn't hide it) */
+#gOpRow{margin-top:10px;padding-top:8px;border-top:1px solid var(--edge)}#gSmoothRow{display:flex;justify-content:space-between;gap:12px;margin-top:6px}#gSmoothRow .twotog{display:flex;align-items:center;gap:8px}   /* 0.95: Opacity (from Transform), then Smooth scaling and Bypass FX on one line */   /* Smooth scaling: no section, after the last one (folding Shadow doesn't hide it) */
 #poolBtn.drop{outline:2px dashed var(--sig);outline-offset:-2px}   /* files over the Pool button: they go to the pool (0.90: the same dashed frame as a pad or scene taking a drop) */
 .layer.masking>#maskBar{align-content:start}#maskBar .mpop{width:54px}#maskBar .mpop output{font-size:10px;white-space:nowrap}   /* 0.89: one row; the pop-up wide enough for "400 px" */
 #layers .clips>.chip,#layers .clips>.bgslot{flex:0 0 calc((100% - 15px) / 6);min-width:0;width:auto}   /* six to a row, filled or empty, always the same size (0.89) */
@@ -511,3 +511,5 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #fxLfoSl output{grid-column:2;grid-row:1;justify-self:end;padding-right:6px;pointer-events:none;color:var(--lcd);white-space:nowrap;position:relative;z-index:1}
 #fxLfoShape{display:flex}#fxLfoShape button{flex:1;padding:0;min-width:0}
 .fxrow .field.mod>label{color:var(--sig)}.fxrow .field.mod>label::after{content:' ~'}
+#maskBar .mrow,#maskBar .mrow>.seg{height:20px;min-height:20px}#maskBar .mrow>.seg{overflow:visible;align-items:stretch;padding:0;border:0}#maskBar .mrow>.seg button,#maskBar .mpopbtn,#maskBar .iconbtn,#maskBar .icontog,#maskBar .mrow>button{height:20px!important;margin:0}   /* 0.95: the buttons as tall as the row they sit in (they were 22 in a 20 px row: the icons sat low, their boxes cut); the card keeps its height
+.chip.off{opacity:.35;filter:grayscale(1)}.chip.off>span{text-decoration:line-through}   /* 0.95: a GIF hidden from its chip (right-click) */

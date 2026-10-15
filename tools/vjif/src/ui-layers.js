@@ -37,10 +37,10 @@ function buildLayers(){
       if (e.target.tagName === 'B' || isRm(e)) removeClip(li, c);
       else { L.sel = c; selectPad(c.pad); setTarget(li); }
     });
-    row.querySelector('.clips').addEventListener('contextmenu', e => {   // right-click a chip: select it (a Mac's Ctrl+click arrives here: delete)
+    row.querySelector('.clips').addEventListener('contextmenu', e => {   // right-click a chip: hide / show that GIF (0.95; a Mac's Ctrl+click arrives here: delete)
       const chip = e.target.closest('.chip'); if (!chip) return; e.preventDefault();
       const c = L.clips.find(c => c.id === +chip.dataset.id); if (!c) return;
-      if (e.ctrlKey) removeClip(li, c); else { L.sel = c; selectPad(c.pad); setTarget(li); }
+      if (e.ctrlKey) removeClip(li, c); else { c.off = !c.off; if (!c.off) delete c.off; touched.edit = true; redraw.all = true; syncLayerUI(); }
     });
     const clipsEl = row.querySelector('.clips');
     clipsEl.addEventListener('dragstart', e => {
@@ -119,7 +119,7 @@ function syncLayerUI(){
     if (L.i === BG_LAYER) for (let p = BG0; p < BG0 + N_BG; p++) if (pads[p].gif && !L.clips.some(c => c.pad === p)) L.clips.push(newClip(p));   // a filled slot always has its chip (0.93.1: one could go missing and the card showed 5)
     const slots = L.i === BG_LAYER ? Array.from({ length: N_BG }, (_, k) => BG0 + k).filter(p => !pads[p].gif).map(p => `<span class="bgslot" data-pad="${p}" title="Empty Background slot: click to fill it from the pool (or a file), or drop a GIF from the pool or a pad on this card">+</span>`).join('') : '';
     const chipHTML = c => { const p = pads[c.pad];   // leftmost chip = drawn on top
-      return `<span class="chip${c === sel ? ' sel' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · Ctrl+click to ${isBgPad(c.pad) ? 'empty the slot' : 'remove'}"><span>${p.label}</span><b title="${isBgPad(c.pad) ? 'Empty this slot' : 'Remove from layer'}">×</b></span>`; };
+      return `<span class="chip${c === sel ? ' sel' : ''}${c.off ? ' off' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · right-click: hide / show (find a heavy one) · Ctrl+click to ${isBgPad(c.pad) ? 'empty the slot' : 'remove'}"><span>${p.label}</span><b title="${isBgPad(c.pad) ? 'Empty this slot' : 'Remove from layer'}">×</b></span>`; };
     setHTML(r.querySelector('.clips'), L.clips.slice().reverse().map(chipHTML).join('') + slots);
   }
 

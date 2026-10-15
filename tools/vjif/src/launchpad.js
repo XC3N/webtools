@@ -43,7 +43,7 @@ function lpUI(){
 // full = playing / on / live, LP_MID = loaded / has something, LP_LOW = empty (still shows where the region is)
 const LP_MID = 0.35, LP_LOW = 0.1;
 const LP_REG = { pad: [255, 160, 0], scene: [0, 110, 255], trans: [0, 220, 190], fx: [255, 30, 170], pre: [150, 60, 255],
-  black: [255, 0, 0], freeze: [190, 225, 255], tap: [255, 255, 255], sync: [255, 90, 0], brb: [255, 220, 0], opacity: [120, 120, 120], amount: [120, 120, 120] };
+  padbank: [255, 160, 0], scbank: [0, 110, 255], black: [255, 0, 0], freeze: [190, 225, 255], tap: [255, 255, 255], sync: [255, 90, 0], brb: [255, 220, 0], opacity: [120, 120, 120], amount: [120, 120, 120] };
 const lpCx = new OffscreenCanvas(1, 1).getContext('2d');
 const hexRgb3 = css => { lpCx.fillStyle = '#000'; lpCx.fillStyle = css; const h = lpCx.fillStyle; return h[0] === '#' ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : [255, 255, 255]; };   // any CSS colour → r, g, b
 const lpRegion = m => m.t === 'layer' ? hexRgb3(LCOL[m.i]) : m.t === 'fx' && m.i >= NFX ? LP_REG.pre : LP_REG[m.t] || [120, 120, 120];
@@ -67,6 +67,8 @@ function lpColour(m, t){
     case 'tap': return (clock.beat % 1) < 0.15 ? R : at(LP_MID);     // the beat
     case 'sync': return (clock.beat % 4) < 0.15 ? R : at(LP_MID);    // the downbeat
     case 'brb': return brb.on ? (blink ? R : at(LP_MID)) : at(LP_MID);
+    case 'padbank': return m.i === padBank ? R : at(LP_MID);
+    case 'scbank': return at(LP_MID);
     default: return null;                             // faders: nothing to light
   }
 }
@@ -96,6 +98,7 @@ function lpLayout(){
   const PRE_ORD = [6, 7, 8, 3, 4, 5, 0, 1, 2];        // effect presets in numpad order (they live on the numpad with Caps): 7 8 9 4 5 6 1 2, then 3 on the right-hand button
   for (let k = 0; k < 8; k++){ map.push({ key: note(2, 1 + k), t: 'trans', i: k }); map.push({ key: note(1, 1 + k), t: 'fx', i: NFX + PRE_ORD[k] }); }
   map.push({ key: cc(29), t: 'trans', i: 8 }, { key: cc(19), t: 'fx', i: NFX + PRE_ORD[8] });
+  map.push({ key: cc(91), t: 'scbank', i: -1 }, { key: cc(92), t: 'scbank', i: 1 }, { key: cc(93), t: 'padbank', i: 0 }, { key: cc(94), t: 'padbank', i: 1 });   // the arrows (0.95): ▲ ▼ scene banks, ◀ ▶ scene pad banks
   const keys = new Set(map.map(m => m.key));
   midiCtl.map = midiCtl.map.filter(m => !keys.has(m.key)).concat(map); saveMidiCtl(); renderMidiCtl(); markLearn();
   if (!midiAccess) getMidi().then(() => { bindCtlInputs(); fillMidi(); renderMidiCtl(); }).catch(() => {});
@@ -110,6 +113,7 @@ function lpShort(m){
     case 'fx': return m.i < NFX ? FX_LABELS[m.i] : 'P' + (m.i - NFX + 1); case 'layer': return 'L' + (m.i + 1);
     case 'opacity': return 'L' + (m.i + 1) + '%'; case 'amount': return 'amt';
     case 'black': return 'BLK'; case 'freeze': return 'FRZ'; case 'tap': return 'TAP'; case 'sync': return 'SYNC'; case 'brb': return 'BRB';
+    case 'padbank': return 'BK' + (m.i + 1); case 'scbank': return m.i < 0 ? 'SC▲' : 'SC▼';
   }
   return '?';
 }

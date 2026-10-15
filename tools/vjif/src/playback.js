@@ -198,9 +198,11 @@ function effClip(c, g){
       case 'sx': e.sx *= v; break;        case 'sy': e.sy *= v; break;
       case 'rot': e.rot += v; break;      case 'op': e.alpha *= v; break;
       case 'h': e.H = v; break;           case 's': e.S = v; break;         case 'v': e.V = v; break;
+      case 'fx': if (v > 0.5) e.flipX = !e.flipX; break;   case 'fy': if (v > 0.5) e.flipY = !e.flipY; break;
     }
   }
   if (g.trig === 'fade'){ if (!e) e = Object.assign({}, c); e.alpha *= envLevel(c, g, clock.beat); }
+  if (c.off){ if (!e) e = Object.assign({}, c); e.alpha = 0; }   // hidden from its chip (0.95): not drawn, not picked
   return e || c;
 }
 function refuse(L){ const r = L.row; r.classList.remove('refused'); void r.offsetWidth; r.classList.add('refused'); }

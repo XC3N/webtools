@@ -191,7 +191,7 @@ function fxAD(C, t){
 function fxLevel(i, b, X = null){
   const C = X ? (i < NFX ? X.cfg[i] : X.pre[i - NFX]) : fxConf(i), S = (X ? X.st : fxSt)[i];
   const rel = C.rel ?? fxRelDef(C.mode);
-  if ((!X || X.st === fxSt) && fxPrev && fxPrev.i === i) return Math.max(fxPrevLevel(i, C, b), fxLevelRaw(C, S, b, rel));
+  if ((!X || X.st === fxSt) && fxPrev && fxPrev.i === i && !fxNoPrev) return Math.max(fxPrevLevel(i, C, b), fxLevelRaw(C, S, b, rel));
   return fxLevelRaw(C, S, b, rel);
 }
 function fxLevelRaw(C, S, b, rel){
@@ -304,7 +304,7 @@ function fxFrame(b, X){
 const NO_LAYER_FX = [null, null, null, null];
 // Effect-history slots of the GPU pass (each keeps its own Feedback / Phosphor trail): the output, its layers (+0…3),
 // the scene being left during a transition (its layers, then the whole), and Prep's preview of the scene being edited.
-const SLOT = { OUT: 0, LAYERS: 1, LEAVING_LAYERS: 5, PREP_LAYERS: 10, PREP_OUT: 14, ARRIVING_OUT: 14, LEAVING_OUT: 15 };   // going live ends Prep: the arriving scene carries on its preview's trail
+const SLOT = { OUT: 0, LAYERS: 1, LEAVING_LAYERS: 5, PREP_LAYERS: 10, PREP_OUT: 14, ARRIVING_OUT: 14, LEAVING_OUT: 15, PV_LAYERS: 30, PV_OUT: 34 };   // PV: the editor's preview-only picture (0.95)   // going live ends Prep: the arriving scene carries on its preview's trail
 const zoomEOf = U => U && U.zoomE || 0;
 // ---- blackout (0, held) and freeze (Ins, held): applied to whatever is on the output, effects included ----
 const live = { black: 0, blackOn: false, blackT: 0, freeze: false, freezeReq: false };
@@ -810,6 +810,18 @@ const pvHalf = [], outHalf = [];
 let pvLast = null; const pvSrc = () => pvLast || master;   // what the preview shows (the output, or Prep's scene)
 const pvBlit = src => { pvLast = src; blitTo(sctx, src, pvHalf); if (pvOpt.loupe && loupeAt) drawLoupe(); };
 const outBlit = src => { if (outCtx) blitTo(outCtx, src, outHalf); };
+// the effect editor's preview (dragging a slider or a point) shows in the preview only, not on the output (0.95, ID-212):
+// while one plays and something watches the output (its window, a recording), the output's frame is drawn without it and
+// the preview gets a frame of its own with it
+let fxNoPrev = false, pvCv = null;
+function drawPvOnly(list, noFx){
+  if (!pvCv || pvCv.width !== CW || pvCv.height !== CH){ pvCv = new OffscreenCanvas(CW, CH); }
+  const x = pvCv.getContext('2d'), F = fxFrame(clock.beat);
+  render(list, x, SLOT.PV_LAYERS, F.layers, zoomEOf(F.out));
+  if (noFx) render(noFx, x, SLOT.PV_LAYERS, [], 0, undefined, true);
+  if (F.out && post) post.run(F.out, pvCv, x, SLOT.PV_OUT);
+  pvBlit(pvCv);
+}
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
@@ -818,10 +830,11 @@ function drawFrame(now){
   const full = frameList(now), [list, noFx] = splitNoFx(full);
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ if (trans.sideFx && post) post.swap(SLOT.OUT, SLOT.ARRIVING_OUT); endTrans(); redraw.all = true; } }   // the arriving scene's trail carries on
-  const fxF = post ? fxFrame(clock.beat) : NOFX, fxU = fxF.out, bl = blackLevel(now);
+  const pvOnly = !!(fxPrev && post && (outCtx || rec.mr) && !trans && !live.freeze);   // (one picture for both when nothing else watches)
+  fxNoPrev = pvOnly; const fxF = post ? fxFrame(clock.beat) : NOFX, fxU = fxF.out, bl = blackLevel(now); fxNoPrev = false;
   const LUs = fxF.layers, zE = zoomEOf(fxU); LUs.forEach((U, li) => { if ((!U || !layers[li].on) && post) post.idle(SLOT.LAYERS + li); });   // off: its trail starts over when it comes back
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
-  const moving = (trans && !live.freeze) || fxF.any || (bl > 0 && bl < 1) || (noFx && live.freeze);   // (Bypass FX GIFs keep playing over a frozen picture)
+  const moving = (trans && !live.freeze) || fxF.any || (bl > 0 && bl < 1) || (noFx && live.freeze) || pvOnly;   // (Bypass FX GIFs keep playing over a frozen picture)
   if (moving) sceneSig.forget();
   if (moving || sceneChanged(full, live.freeze, bl >= 1) || force){
     drawn++; let sideFx = false;
@@ -844,12 +857,12 @@ function drawFrame(now){
       composeTransition(trEase(tp, trans.cfg), trans.cfg);
     } else render(list, mctx, SLOT.LAYERS, LUs, zE);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
+    if (noFx) render(noFx, mctx, SLOT.LAYERS, [], 0, undefined, true);   // Bypass FX: over the layers and their effects, under the effects on All (0.95)
     if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);
-    if (noFx) render(noFx, mctx, SLOT.LAYERS, [], 0, undefined, true);   // Bypass FX: on top of the effects
     drawTrOverlay();
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
     outBlit(master);
-    if (!hidden && !quiet) pvBlit(master);
+    if (!hidden && !quiet){ if (pvOnly && bl <= 0) drawPvOnly(list, noFx); else pvBlit(master); }
   }
   }
   if (hidden || quiet) return;                     // quiet: the control window is being restyled — the output keeps going
