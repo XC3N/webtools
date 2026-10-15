@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.92.0';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.93.0';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -59,7 +59,8 @@ const MEM_WARN_MB = 1500;      // whole bank
 // 0.90: the Global pads moved to UIO / JKL / M,. (a free column between the two groups); the Scene pads got a second bank,
 // played with Shift + their key, shown with Tab (pads 24–32)
 const PAD_KEYS   = ['KeyQ','KeyW','KeyE','KeyA','KeyS','KeyD','KeyZ','KeyX','KeyC','KeyU','KeyI','KeyO','KeyJ','KeyK','KeyL','KeyM','Comma','Period'];
-const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','U','I','O','J','K','L','M',',','.', 'B1','B2','B3','B4','B5','B6', '⇧Q','⇧W','⇧E','⇧A','⇧S','⇧D','⇧Z','⇧X','⇧C'];
+const PAD_LABELS = ['Q','W','E','A','S','D','Z','X','C','U','I','O','J','K','L','M',',','.', 'B1','B2','B3','B4','B5','B6', 'R','T','Y','F','G','H','V','B','N'];
+const B2_KEYS = ['KeyR','KeyT','KeyY','KeyF','KeyG','KeyH','KeyV','KeyB','KeyN'];   // the Scene pads' bank 2 (0.93: RTY FGH VBN, next to QWE ASD ZXC; Shift + QWE… plays it too)
 // 0.88: pads 0–8 (QWE ASD ZXC) are the Scene pads, each scene its own, played on Midground / Foreground; pads 9–17
 // (UIO JKL M,.) are the Global pads, the same GIF, settings and placement in every scene, always on Overlay (layer 4,
 // which is the same in every scene too); 18–23 are Background's six slots (each scene its own): no key, nothing to
@@ -80,6 +81,8 @@ const LNAMES = ['Background', 'Midground', 'Foreground', 'Overlay'];
 // musical lengths in beats (4/4): [beats, label]
 const LEN_OPTS     = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];
 const FRAME_OPTS   = [[1/8,'1/32'],[1/6,'1/16T'],[1/4,'1/16'],[1/3,'1/8T'],[1/2,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar']];
+const LOOP_OPTS    = [0.25, 0.5, 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64].map(b => [b, '']);   // GIF › Play › Loop length (slider steps, beats)
+const EVERY_OPTS   = [[0,'off'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars'],[64,'16 bars']];   // One shot › Repeat (beats)
 const RESTART_OPTS = [[0,'off'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];
 const BEAT_OPTS = LEN_OPTS.map(o => o[0]);
 const lenLabel = b => { const o = LEN_OPTS.find(o => Math.abs(o[0] - b) < 1e-6); return o ? o[1] : b % 4 === 0 ? `${b/4} bars` : `${+b.toFixed(2)} beats`; };
@@ -137,7 +140,7 @@ const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) || 0);
 const rgb2hex = c => '#' + c.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('');
 
 // ---------- state ----------
-const pads = PAD_LABELS.map((label, i) => ({ i, code: PAD_KEYS[i] || null, label, gif: null, loading: false, el: null, bg: isBgPad(i) }));   // (Background's slots have no key)
+const pads = PAD_LABELS.map((label, i) => ({ i, code: PAD_KEYS[i] || (i >= B2 ? B2_KEYS[i - B2] : null), label, gif: null, loading: false, el: null, bg: isBgPad(i) }));   // (Background's slots have no key)
 const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: false, flipY: false, tile: false, cl: 0, ct: 0, cr: 0, cb: 0 });
 let clipSeq = 0, gifSeq = 0;
 // alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)

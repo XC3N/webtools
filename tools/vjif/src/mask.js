@@ -21,7 +21,7 @@ function applyMask(b, m){                            // b: a flattened layer; cu
 }
 
 // ---- painting: Mask on a layer card opens the bar between the layer cards and the preview; the preview then paints instead of selecting ----
-const MASK_TOOLS = [['free', 'Free', 'Freehand brush'], ['rect', 'Rect', 'Rectangle: drag from corner to corner (Shift: square)'], ['ell', 'Ellipse', 'Ellipse: drag across it (Shift: circle)']];
+const MASK_TOOLS = [['free', 'Free', 'Freehand brush · Alt+drag: colour brush, it masks only the colour under where you start (on this layer), within Soft'], ['rect', 'Rect', 'Rectangle: drag from corner to corner (Shift: square)'], ['ell', 'Ellipse', 'Ellipse: drag across it (Shift: circle)']];
 const maskOpt = Prefs.json('vjif-maskopt', { tool: 'free', size: 80, soft: 0.4 });
 let maskStroke = null, maskPtr = null;
 function maskOpen(li){
@@ -37,7 +37,7 @@ function maskClose(){ if (maskStroke) maskUp(); maskEd = null; maskStroke = null
   $('#stage').classList.remove('masking'); syncLayerUI(); redraw.all = true; pv.style.cursor = ''; }
 function syncMaskUI(){
   if (!maskEd) return; const L = layers[maskEd.li], m = L.mask;
-  $('#maskName').textContent = `Mask · ${LNAMES[maskEd.li]}`;
+  $('#maskName').textContent = `Mask · ${LNAMES[maskEd.li]}`; $('#maskPaste').classList.toggle('empty', !maskClip); $('#maskCopy').disabled = !L.mask;
   segSet('#maskTool', maskOpt.tool);
   $('#maskSize').value = maskOpt.size; $('#maskSize').nextElementSibling.textContent = Math.round(maskOpt.size) + ' px';
   $('#maskSizeBtn').title = `Size: ${Math.round(maskOpt.size)} px — drag up / down on it, or click for its slider`; $('#maskSoftBtn').title = `Soft: ${Math.round(maskOpt.soft * 100)}% — drag up / down on it, or click for its slider`;
@@ -59,6 +59,29 @@ function maskShape(x, S, px, py, shift){
   x.fill(); x.filter = 'none';
 }
 // draw on the stroke's canvas, in canvas pixels (W × H)
+// Alt + the brush: a colour brush. The layer being masked is drawn alone (its GIFs as they are now, at the mask's size); the
+// colour under the stroke's start is the one it looks for; each dab covers only the mask pixels whose colour is within
+// Soft (here: how far a colour may be, 0–100 %) of it, so blades of grass get masked and what's between them doesn't
+function colourBrushStart(S, px, py){
+  const w = S.m.cv.width, h = S.m.cv.height, k = w / W, ref = document.createElement('canvas'); ref.width = w; ref.height = h;
+  const x = ref.getContext('2d', { willReadFrequently: true }), list = frameList(performance.now()).filter(it => it.L.i === maskEd.li).map(it => ({ L: { ...it.L, mask: null }, items: it.items }));
+  render(list, x, 0, [], 0, [k, 0, 0, k, 0, 0]);
+  const d = x.getImageData(0, 0, w, h).data, ix = clamp(Math.floor(px * k), 0, w - 1), iy = clamp(Math.floor(py * k), 0, h - 1), o = (iy * w + ix) * 4;
+  S.col = { d, w, h, k, c: [d[o], d[o + 1], d[o + 2]], tol: Math.max(0.02, maskOpt.soft) * 0.6 * 441.7, stamp: document.createElement('canvas') };
+}
+function colourDab(x, px, py){
+  const C = maskStroke.col, r = maskOpt.size / 2 * C.k, cx = px * C.k, cy = py * C.k, x0 = Math.max(0, Math.floor(cx - r)), y0 = Math.max(0, Math.floor(cy - r)), x1 = Math.min(C.w, Math.ceil(cx + r)), y1 = Math.min(C.h, Math.ceil(cy + r));
+  if (x1 <= x0 || y1 <= y0) return;
+  const sw = x1 - x0, sh = y1 - y0, st = C.stamp; st.width = sw; st.height = sh; const sx = st.getContext('2d'), im = sx.createImageData(sw, sh);
+  for (let j = 0; j < sh; j++) for (let i = 0; i < sw; i++){
+    const dd = Math.hypot(x0 + i + 0.5 - cx, y0 + j + 0.5 - cy); if (dd > r) continue;
+    const o = ((y0 + j) * C.w + x0 + i) * 4, dc = Math.hypot(C.d[o] - C.c[0], C.d[o + 1] - C.c[1], C.d[o + 2] - C.c[2]);
+    const a = clamp(1 - (dc - C.tol * 0.7) / (C.tol * 0.3 + 1e-6), 0, 1) * clamp((r - dd) / Math.max(1, r * 0.25), 0, 1);   // in range (soft at its edge), and the brush's own soft rim
+    const q = (j * sw + i) * 4; im.data[q] = im.data[q + 1] = im.data[q + 2] = 255; im.data[q + 3] = Math.round(a * 255);
+  }
+  sx.putImageData(im, 0, 0);
+  x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = maskStroke.erase ? 'destination-out' : 'source-over'; x.drawImage(st, x0, y0); x.restore();
+}
 function maskDraw(fn){
   const S = maskStroke, x = S.m.cv.getContext('2d'), k = S.m.cv.width / W;
   x.save(); x.setTransform(k, 0, 0, k, 0, 0); x.globalCompositeOperation = S.erase ? 'destination-out' : 'source-over'; fn(x); x.restore();
@@ -71,7 +94,8 @@ function maskDown(e){
   const m = maskNew(base && base.cv, { inv: base ? base.inv : false, on: base ? base.on : true });   // paint on a copy
   L.mask = m;
   maskStroke = { m, base, tool: maskOpt.tool, erase: e.button === 2 || isDel(e), x0: px, y0: py, last: [px, py] };
-  if (maskStroke.tool === 'free') maskDraw(x => maskDab(x, px, py, maskOpt.size / 2, maskOpt.soft));
+  if (maskStroke.tool === 'free' && e.altKey) colourBrushStart(maskStroke, px, py);   // Alt: the brush sticks to the colour under where the stroke starts (0.93)
+  if (maskStroke.tool === 'free') maskDraw(x => maskStroke.col ? colourDab(x, px, py) : maskDab(x, px, py, maskOpt.size / 2, maskOpt.soft));
   syncMaskUI();
 }
 function maskMove(e){
@@ -80,7 +104,7 @@ function maskMove(e){
   if (S.tool === 'free'){
     const [lx, ly] = S.last, d = Math.hypot(px - lx, py - ly), r = maskOpt.size / 2, step = Math.max(1, r * 0.25), n = Math.floor(d / step);
     if (!n) return;
-    maskDraw(x => { for (let i = 1; i <= n; i++){ const t = i * step / d; maskDab(x, lx + (px - lx) * t, ly + (py - ly) * t, r, maskOpt.soft); } });
+    maskDraw(x => { for (let i = 1; i <= n; i++){ const t = i * step / d, qx = lx + (px - lx) * t, qy = ly + (py - ly) * t; S.col ? colourDab(x, qx, qy) : maskDab(x, qx, qy, r, maskOpt.soft); } });
     S.last = [lx + (px - lx) * n * step / d, ly + (py - ly) * n * step / d];
   } else {                                           // a shape: the mask as it was, plus the shape as dragged so far
     const x = S.m.cv.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, S.m.cv.width, S.m.cv.height);
@@ -99,7 +123,7 @@ pv.addEventListener('pointercancel', () => { if (maskEd) maskUp(); });
 pv.addEventListener('contextmenu', e => { if (maskEd) e.preventDefault(); });   // (right button erases)
 pv.addEventListener('pointerleave', () => { if (maskEd && !maskStroke){ maskPtr = null; redraw.all = true; } });
 // the bar
-const MASK_IC = { free: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M2 12c2-5 4-7 5.5-6s-1.5 4 .5 5 4-4 6-6"/></svg>', rect: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="2.5" y="4" width="11" height="8" rx=".5"/></svg>', ell: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><ellipse cx="8" cy="8" rx="6" ry="4.2"/></svg>' };   // (0.88: icons, the tooltips name them)
+const MASK_IC = { free: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M2 13C3.5 6 5.5 2.5 7.5 4s-2 7 .5 8 3.5-6 6-10"/></svg>', rect: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="2.5" y="2.5" width="11" height="11" rx="1"/></svg>', ell: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><circle cx="8" cy="8" r="5.8"/></svg>' };   // (0.93: each fills the same 11–12 px box as the other mask icons)
 $('#maskTool').innerHTML = MASK_TOOLS.map(([v, l, t]) => `<button data-v="${v}" title="${l}: ${t}">${MASK_IC[v]}</button>`).join('');
 // Size / Soft: an icon each, its slider pops up upright (like the music player's volume)
 // Size / Soft: press the button and drag up / down to set it straight away (the pop-up shows the value, then closes);
@@ -120,6 +144,10 @@ $('#maskSize').addEventListener('input', e => { maskOpt.size = +e.target.value; 
 $('#maskSoft').addEventListener('input', e => { maskOpt.soft = +e.target.value; maskSave(); syncMaskUI(); });
 $('#maskInv').addEventListener('change', e => { const L = layers[maskEd.li]; if (L.mask) L.mask = maskWith(L.mask, { inv: e.target.checked }); else { const m = maskNew(null, { inv: e.target.checked }); m.url = m.cv.toDataURL('image/png'); L.mask = m; } maskRev++; redraw.all = true; syncLayerUI(); });
 $('#maskOn').addEventListener('change', e => { const L = layers[maskEd.li]; if (L.mask){ L.mask = maskWith(L.mask, { on: e.target.checked }); maskRev++; redraw.all = true; syncLayerUI(); } });
+// copy / paste a mask between layers and scenes (0.93): masks are never changed in place, so the copy is the mask itself
+let maskClip = null;
+$('#maskCopy').addEventListener('click', () => { const L = layers[maskEd.li]; if (!L.mask) return toast('This layer has no mask to copy'); maskClip = L.mask; syncMaskUI(); toast2(`${LNAMES[maskEd.li]}'s mask copied`); });
+$('#maskPaste').addEventListener('click', () => { if (!maskClip) return toast('Copy a mask first'); const L = layers[maskEd.li]; L.mask = maskWith(maskClip, {}); maskRev++; redraw.all = true; syncMaskUI(); syncLayerUI(); commit(); toast2(`Mask pasted on ${LNAMES[maskEd.li]} — Ctrl+Z undoes`); });
 $('#maskClear').addEventListener('click', () => { const L = layers[maskEd.li]; if (!L.mask) return; L.mask = null; maskRev++; redraw.all = true; syncMaskUI(); syncLayerUI(); toast2(`${LNAMES[maskEd.li]}: mask cleared — Ctrl+Z brings it back`); });
 // (0.89: no Done button: the layer's mask button again, or Esc, ends painting)
 // the preview while painting: the mask tinted in the layer's colour, and the brush

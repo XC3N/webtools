@@ -766,22 +766,23 @@ function blitTo(ctx, src, cache){
   ctx.imageSmoothingQuality = 'high'; ctx.drawImage(s, 0, 0, tw, th);
 }
 const pvHalf = [], outHalf = [];
-const pvBlit = src => blitTo(sctx, src, pvHalf);
+let pvLast = null; const pvSrc = () => pvLast || master;   // what the preview shows (the output, or Prep's scene)
+const pvBlit = src => { pvLast = src; blitTo(sctx, src, pvHalf); if (pvOpt.loupe && loupeAt) drawLoupe(); };
 const outBlit = src => { if (outCtx) blitTo(outCtx, src, outHalf); };
 function drawFrame(now){
   if (outWin && outWin.closed){ outWin = null; outCtx = null; updateOutStat(); }
   const hidden = document.hidden, force = redraw.all, quiet = now < uiQuiet;
   if (!outCtx && hidden && !rec.mr && !rec.wc) return;   // nobody is looking (and nothing is recording)
   if (prep) drawPrep(now, hidden, quiet); else {
-  const list = frameList(now);
+  const full = frameList(now), [list, noFx] = splitNoFx(full);
   let tp = 1;
   if (trans){ tp = transProgress(); if (tp >= 1){ if (trans.sideFx && post) post.swap(SLOT.OUT, SLOT.ARRIVING_OUT); endTrans(); redraw.all = true; } }   // the arriving scene's trail carries on
   const fxF = post ? fxFrame(clock.beat) : NOFX, fxU = fxF.out, bl = blackLevel(now);
   const LUs = fxF.layers, zE = zoomEOf(fxU); LUs.forEach((U, li) => { if ((!U || !layers[li].on) && post) post.idle(SLOT.LAYERS + li); });   // off: its trail starts over when it comes back
   // a running transition / effect / blackout fade redraws every frame; a frozen output only when that changes
-  const moving = (trans && !live.freeze) || fxF.any || (bl > 0 && bl < 1);
+  const moving = (trans && !live.freeze) || fxF.any || (bl > 0 && bl < 1) || (noFx && live.freeze);   // (Bypass FX GIFs keep playing over a frozen picture)
   if (moving) sceneSig.forget();
-  if (moving || sceneChanged(list, live.freeze, bl >= 1) || force){
+  if (moving || sceneChanged(full, live.freeze, bl >= 1) || force){
     drawn++; let sideFx = false;
     if (live.freeze){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalAlpha = 1; mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(freezeCv, 0, 0); }
     else if (trans && trans.still){                   // from a still of the interrupted transition
@@ -803,6 +804,7 @@ function drawFrame(now){
     } else render(list, mctx, SLOT.LAYERS, LUs, zE);
     if (live.freezeReq){ freezeCtx.drawImage(master, 0, 0); live.freeze = true; live.freezeReq = false; updLiveTag(); }   // the clean frame, before effects
     if (fxU && !sideFx) post.run(fxU); else if (post && !sideFx) post.idle(SLOT.OUT);
+    if (noFx) render(noFx, mctx, SLOT.LAYERS, [], 0, undefined, true);   // Bypass FX: on top of the effects
     drawTrOverlay();
     if (bl > 0){ mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.globalAlpha = bl; mctx.fillStyle = '#000'; mctx.fillRect(0, 0, CW, CH); mctx.globalAlpha = 1; }
     outBlit(master);

@@ -4,6 +4,26 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.93.0 — 2026-10-15
+
+### GIFs
+- Display › Bypass FX: that GIF is drawn on top of the effected picture, untouched by screen and layer effects (with its layer's opacity, blend and mask).
+- Play › Loop length is a slider (1/16 to 16 bars).
+- Play › Trigger › Repeat (One shot): plays the GIF by itself every 1/4 … 16 bars, on the beat grid; a hit still plays it at once.
+- Pool: All full / ½ / ¼ sets the resolution of every GIF of the set at once.
+- A GIF dropped on the Background card becomes the selected one.
+
+### Pads & scenes
+- Scene pads bank 2 play on R T Y F G H V B N (Shift+Q W E… still works); the pads show those letters. The scene bank keys wrap around (bank 1 back to 4).
+
+### Interface
+- Preview toolbar: a loupe (4× close-up at the cursor) for mask painting and pixel hunting.
+- Mask mode: Alt+drag with the Free tool paints only where the layer has the colour you started on; Ctrl+wheel changes the brush size; Copy / Paste a mask between layers. The mask bar icons are all the same size.
+- Effects panel: Follow comes first, All off has an X. Ghost and Current layer swapped places in the preview toolbar. A dragged transition chip is drawn smaller and offset, so the target shows.
+
+### Fixes
+- Wobble: the Edges (overscan) toggle shows again.
+
 ## 0.92.0 — 2026-10-15
 
 ### Effects

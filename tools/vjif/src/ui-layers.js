@@ -60,13 +60,16 @@ function buildLayers(){
       const [p, chips] = e ? gapAt(e) : [-1, [...clipsEl.querySelectorAll('.chip')]];
       chips.forEach((c, k) => { c.classList.toggle('insL', k === p); c.classList.toggle('insR', p === chips.length && k === chips.length - 1); });
     };
+    // a GIF dropped into a Background slot is the selected one: Background becomes the edit layer, its clip selected (0.93: it
+    // showed as selected in the card, preview and GIF panel, but the edit layer stayed where it was)
+    const selectBgSlot = d => { const c = layers[BG_LAYER].clips.find(c => c.pad === d); if (!c) return; layers[BG_LAYER].sel = c; if (target !== BG_LAYER) setTarget(BG_LAYER); else { syncLayerUI(); syncXfUI(); } selectPad(d); redraw.all = true; };
     if (li === BG_LAYER){                              // Background: GIFs from the pool or files dropped on its card go into its free slots (0.88)
       row.addEventListener('dragover', e => { if (!(e.dataTransfer.types.includes(POOL_MIME) || e.dataTransfer.types.includes('Files'))) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; row.classList.add('dropzone'); });
       row.addEventListener('drop', e => { if (!(e.dataTransfer.types.includes(POOL_MIME) || e.dataTransfer.types.includes('Files'))) return; e.preventDefault(); e.stopPropagation(); row.classList.remove('dropzone');
         const free = () => { for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading) return k; return -1; };
-        const ph = e.dataTransfer.getData(POOL_MIME); if (ph){ const m = pool.find(m => m.hash === ph), d = free(); if (!m) return; if (d < 0) return toast('Background\'s 6 slots are full'); putMedia(m, d); renderPool(); return; }
+        const ph = e.dataTransfer.getData(POOL_MIME); if (ph){ const m = pool.find(m => m.hash === ph), d = free(); if (!m) return; if (d < 0) return toast('Background\'s 6 slots are full'); putMedia(m, d); renderPool(); selectBgSlot(d); return; }
         const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name)), used = new Set();
-        for (const f of files){ let d = -1; for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading && !used.has(k)){ d = k; break; } if (d < 0){ toast('Background\'s 6 slots are full'); break; } used.add(d); loadInto(d, f, f.name); } });
+        for (const f of files){ let d = -1; for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading && !used.has(k)){ d = k; break; } if (d < 0){ toast('Background\'s 6 slots are full'); break; } used.add(d); const dd = d; loadInto(dd, f, f.name).then(() => selectBgSlot(dd)); } });
     }
     row.addEventListener('dragover', e => {
       if (!e.dataTransfer.types.includes(CLIP_MIME)) return;
@@ -334,12 +337,28 @@ addEventListener('contextmenu', e => { if (performance.now() - dragCancelT < 800
 // preview tools: guides, stick, ghosts (per browser)
 const pvSave = () => { Prefs.setJson('vjif-pvopt', pvOpt); redraw.all = true; };
 const pvUI = () => { document.querySelectorAll('#guideGrp [data-g]').forEach(b => b.classList.toggle('on', !!pvOpt.guides[b.dataset.g])); $('#guideGrp').classList.toggle('ghidden', !!pvOpt.gHide); $('#guideEye').classList.toggle('on', !pvOpt.gHide && anyGuide());
-  $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#pickLayerBtn').classList.toggle('on', pvOpt.pickLayer); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
+  $('#stickBtn').classList.toggle('on', pvOpt.stick); $('#ghostBtn').classList.toggle('on', pvOpt.ghosts); $('#pickLayerBtn').classList.toggle('on', pvOpt.pickLayer); $('#loupeBtn').classList.toggle('on', pvOpt.loupe); $('#gridX').value = pvOpt.gx; $('#gridY').value = pvOpt.gy; $('#guideCol').value = pvOpt.gcol; $('#xLink').checked = pvOpt.link; $('#xFromC').checked = pvOpt.fromC; };
 pvUI();
 $('#guideEye').addEventListener('click', () => { pvOpt.gHide = !pvOpt.gHide; pvUI(); pvSave(); });
 $('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; const k = b.dataset.g; if (pvOpt.gHide){ pvOpt.gHide = false; if (pvOpt.guides[k]){ pvUI(); pvSave(); return; } } pvOpt.guides[k] = !pvOpt.guides[k]; if (!pvOpt.guides[k]) delete pvOpt.guides[k]; pvUI(); pvSave(); });
 $('#stickBtn').addEventListener('click', () => { pvOpt.stick = !pvOpt.stick; pvUI(); pvSave(); });
 $('#ghostBtn').addEventListener('click', () => { pvOpt.ghosts = !pvOpt.ghosts; pvUI(); pvSave(); });
+$('#loupeBtn').addEventListener('click', () => { pvOpt.loupe = !pvOpt.loupe; pvUI(); pvSave(); if (!pvOpt.loupe) $('#loupe').hidden = true; });
+// the loupe (0.93): 4× the preview around the pointer, the picture and what's drawn over it (handles, mask tint), crisp pixels
+let loupeAt = null;
+function drawLoupe(){
+  const L = $('#loupe'); if (!pvOpt.loupe || !loupeAt){ if (!L.hidden) L.hidden = true; return; }
+  const dpr = devicePixelRatio || 1, Z = 4, n = L.width / dpr, [px, py] = loupeAt, sx = pvScene.width / CW;   // device px per render px in the preview
+  if (L.hidden) L.hidden = false; L.style.width = L.style.height = n + 'px';
+  const x = L.getContext('2d'), src = L.width / (sx * Z), mx = px * CW / W - src / 2, my = py * CH / H - src / 2;
+  x.imageSmoothingEnabled = false; x.fillStyle = '#000'; x.fillRect(0, 0, L.width, L.height);
+  x.drawImage(pvSrc(), mx, my, src, src, 0, 0, L.width, L.height);
+  const ox = (view.x + px * view.w / W) * dpr - L.width / Z / 2, oy = (view.y + py * view.h / H) * dpr - L.height / Z / 2;
+  x.drawImage(pv, ox, oy, L.width / Z, L.height / Z, 0, 0, L.width, L.height);
+  x.strokeStyle = '#fff8'; x.lineWidth = 1; x.beginPath(); x.moveTo(L.width / 2, L.height / 2 - 8 * dpr); x.lineTo(L.width / 2, L.height / 2 + 8 * dpr); x.moveTo(L.width / 2 - 8 * dpr, L.height / 2); x.lineTo(L.width / 2 + 8 * dpr, L.height / 2); x.stroke();
+}
+pv.addEventListener('pointermove', e => { if (!pvOpt.loupe) return; loupeAt = evtToOut(e); drawLoupe(); });
+pv.addEventListener('pointerleave', () => { loupeAt = null; drawLoupe(); });
 $('#pickLayerBtn').addEventListener('click', () => { pvOpt.pickLayer = !pvOpt.pickLayer; pvUI(); pvSave(); toast2(pvOpt.pickLayer ? 'Current layer only: picking on the selected layer' : 'Picking on any layer'); });
 const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const o = k === 'gx' ? 'gy' : 'gx'; if (v === 1 && pvOpt[o] === 1) pvOpt[o] = 2;   // 1×1 draws nothing
   pvOpt.guides.grid = true; pvUI(); pvSave(); };
@@ -355,6 +374,7 @@ pv.addEventListener('pointercancel', () => drag = null);
 pv.addEventListener('pointerleave', () => { if (pvHover){ pvHover = null; redraw.all = true; } });
 pv.addEventListener('wheel', e => {
   e.preventDefault();
+  if (maskEd && (e.ctrlKey || e.metaKey)){ const d = e.deltaY || e.deltaX, el = $('#maskSize'); el.value = clamp(Math.round(maskOpt.size * (d < 0 ? 1.12 : 1 / 1.12)), +el.min, +el.max); el.dispatchEvent(new Event('input')); toast2(`Brush ${el.value} px`); return; }   // painting a mask: Ctrl+wheel sizes the brush (0.93)
   const c = selClip(); if (!c) return;
   const d = e.deltaY || e.deltaX;
   if (e.shiftKey || e.altKey) c.rot = mod(c.rot + Math.sign(d) * 5 + 180, 360) - 180;

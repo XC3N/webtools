@@ -154,14 +154,14 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {9f7glkwz0pmwppos4xxw} **Mask row** (0.89) — mask painting: one row of icons, no Done; the mask button ends it.
 - [ ] {rhg365xt6djer5fxuu8b} **Pool drop** (0.89) — drop a file from the desktop on the Pool button: it's added to the pool, no pad.
 - [ ] {q6q2sdwabbp74ns52da0} **Help top** (0.89) — ? : scroll the list; the title and search stay put; columns aligned.
-- [ ] {4bzt5icu6y0xr13f0pry} **Even dots** (0.89.1) — Dot Matrix on a moving GIF, Output window full screen: square dots, all the same size, a regular grid (no tartan).
-- [ ] {x45ql7a8kj661rb3vo3y} **Preview eighths** (0.89.4) — Dot Matrix playing: the preview has a small border and shows an even grid (no bands); resize the window / change Windows scaling: it jumps between sizes and stays even.
-- [ ] {w6bvn9h0vyiph1iof2z2} **Output eighths** (0.89.4) — Shift+click Output: even grid in the window; resize it by hand: the picture steps between sizes, stays even; full screen fills the screen.
-- [ ] {ua4fbz1qwwafkwcpnfac} **Picking overlaps** (0.89.5) — several overlapping GIFs, one large and mostly transparent or faded: hover shows the outline of the one you see; press-drag moves it; click without moving steps to the next; a GIF moved by Auto is picked where it shows.
+- [x] {4bzt5icu6y0xr13f0pry} **Even dots** (0.89.1) — Dot Matrix on a moving GIF, Output window full screen: square dots, all the same size, a regular grid (no tartan).
+- [x] {x45ql7a8kj661rb3vo3y} **Preview eighths** (0.89.4) — Dot Matrix playing: the preview has a small border and shows an even grid (no bands); resize the window / change Windows scaling: it jumps between sizes and stays even.
+- [x] {w6bvn9h0vyiph1iof2z2} **Output eighths** (0.89.4) — Shift+click Output: even grid in the window; resize it by hand: the picture steps between sizes, stays even; full screen fills the screen.
+- [x] {ua4fbz1qwwafkwcpnfac} **Picking overlaps** (0.89.5) — several overlapping GIFs, one large and mostly transparent or faded: hover shows the outline of the one you see; press-drag moves it; click without moving steps to the next; a GIF moved by Auto is picked where it shows.
 - [ ] {pnvx4k94xh157dahbxjo} **Bank 2** (0.90) — Shift+Q… plays the second bank; Tab / the 1·2 switch shows it; Global pads on UIO JKL M,.; a MIDI pad mapped to bank 1 plays the bank on show.
 - [ ] {cuctq29mblf5zjft5hwu} **Transition preset drag** (0.90) — drag a preset onto another: swap; Ctrl-drag and hold: copy; right-click cancels.
-- [ ] {me3438yne3j78ji6mahd} **Current layer only** (0.90) — with the toggle on, hovering / clicking picks only GIFs on the selected layer.
-- [ ] {innnlarreyyzlc88h5y2} **Corrupt detail** (0.90) — Glitch › Corrupt effect and transition over a few seconds: blocks keep picture detail, no wall of flat colour.
+- [x] {me3438yne3j78ji6mahd} **Current layer only** (0.90) — with the toggle on, hovering / clicking picks only GIFs on the selected layer.
+- [x] {innnlarreyyzlc88h5y2} **Corrupt detail** (0.90) — Glitch › Corrupt effect and transition over a few seconds: blocks keep picture detail, no wall of flat colour.
 - [ ] {di5jvp5cjq62dd4cohaf} **Wobble Edges** (0.90) — Wobble at full: no frame edge shows with Edges on; shows with it off.
 - [ ] {4usm8zzkfup052k5zea1} **Env loop** (0.90) — Auto › Envelope › Loop on, hold the pad: the envelope repeats; let go: it fades.
 - [ ] {khc4dan4rel4srlhubed} **Mask drag** (0.90) — mask Size / Soft: press and drag up / down sets it; mask tools in the blend row only.
@@ -173,6 +173,16 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {p56ylllzg8u7c55yl8pg} **Stacked amounts** (0.92) — Glitch with Corrupt + Crunch: focus Corrupt, lower Amount: only the moshing gets weaker; focus Crunch: its own Amount shows.
 - [ ] {9ukepbvmsy7uidtpnqcu} **Preset preview** (0.92) — select an effect preset, drag a slider in the editor: the preset plays while you drag, stops when you let go.
 - [ ] {2gtntzprn9zmpzp1ly3i} **Theme roles** (0.92) — Settings › Theme: Primary, Secondary (with saturation / brightness), Info, Graphs; clicking a name folds its rows.
+- [ ] {wque66ok3m28vnn4ipdf} **Loupe** (0.93) — Preview toolbar › magnifier: a 4× close-up follows the cursor in the preview's corner, the guides and mask outline included; off again with the same button.
+- [ ] {uesiwk4vvbnozw47b6p7} **Colour brush** (0.93) — Mask mode, Free tool: Alt+drag from a pixel paints only where the edited layer has a colour close to it (Soft widens the range); a plain drag paints everywhere.
+- [ ] {v32zcomlz5ubyhsa6tuo} **Mask copy / paste** (0.93) — Mask bar: Copy on a layer with a mask, Paste on another layer: same mask there; Ctrl+Z takes it back. Paste is dimmed until something is copied.
+- [ ] {ec3gicl9a6gmznw5m14s} **Brush size on the wheel** (0.93) — Mask mode: Ctrl+wheel over the preview grows / shrinks the brush (the Size slider follows), the page doesn't zoom.
+- [ ] {czujwxv0gzk1bz544cqu} **Bank 2 on RTY FGH VBN** (0.93) — R T Y F G H V B N play scene pads bank 2 (pads show those letters); Shift+QWE… still does too; holding a key and letting go works like the other pads.
+- [ ] {6xw15nw4mpnit9a4dhvy} **Background drop selects** (0.93) — Drop a GIF file on the Background card: it lands in a slot and becomes the selected GIF (Background the edit layer), its panel shows it.
+- [ ] {cp2l8g1owxxsyg7f5044} **Bypass FX** (0.93) — GIF › Display › Bypass FX on, a screen effect latched: that GIF stays clean, on top of the effected picture, the other GIFs get the effect.
+- [ ] {vxehm695slyu1uihonz7} **One shot repeat** (0.93) — One shot, Play › Trigger › Repeat 1 bar: without a hit the GIF plays on every bar by itself; a hit still plays it at once.
+- [ ] {1yxuwdv7lakpn7awg4be} **Loop length slider** (0.93) — Timing Fit: Loop length is a slider, 1/16 to 16 bars (with 3 and 6 beats, 3 and 6 bars); the cycle line below follows.
+- [ ] {j0qdczvjiqfcsxsf98cq} **Pool resolution** (0.93) — Pool: All full / ½ / ¼ sets every GIF of the set at once; the memory figure drops and a note says by how much.
 - [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.87.3) — at 80% and 125% UI zoom (Settings › Interface), click a swatch low in Display › Swap colours: the row that opens is scrolled into view.
 - [ ] {y08e3dqtjpeoa8jqrp0e} **Always on top** (0.89.3) — Right-click Output: a floating window with no address bar stays above other windows, plays, takes pad keys; right-click again closes it; click Output switches to a normal window.
 - [ ] {d3068ijx33furnsrblsv} **Reopen size** (0.89.3) — Shift+click Output, close the window, open it again: no black bars.
@@ -186,7 +196,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {jcudlq0f3erc7a71e4p1} **Solo a style** (0.81) — CRT or Glitch with three styles on: right-click one: only it; right-click it again: the three back. A click on a style that's on but not outlined shows its settings; a second click takes it out.
 - [x] {3stjfqy18x1q3sw4rpoc} **Settings sections fold** (0.81) — Settings: click a section's name (Canvas, Recording, Interface…): it folds, and stays folded after a reload.
 - [x] {h09u0zq2j98igyy0r4dl} **All-layers pip colour** (0.81, in Theme 0.84) — Settings › Theme › All-layers pips: the picker opens and Settings stays open; the effect tiles' pips change while you drag.
-- [ ] {e2unhzisreav5qtiykow} **Glitch › Corrupt looks digital** (0.81) — F10 › Corrupt: the smeared blocks move in whole-pixel steps, sharp, no soft analogue drift.
+- [x] {e2unhzisreav5qtiykow} **Glitch › Corrupt looks digital** (0.81) — F10 › Corrupt: the smeared blocks move in whole-pixel steps, sharp, no soft analogue drift.
 - [x] {2q5ovua4n4d57ky23c92} **Crunch vs Pixel** (0.81, Size 0.84) — Glitch › Crunch keeps the detail in bands and the colour bleeds in bigger blocks; Pixel is flat blocks. Crunch's Size is its block size (8 px: small JPEG-like blocks).
 - [x] {z3nn98qy05fsovfh9j46} **One shot fade in** (0.79) — Snap Bar, One shot with Fade in 1/16 or 1/8: the fade in shows on every hit, also hits just after the bar; the scope matches.
 - [x] {jmfzwwsc1irpkbzmnqyv} **× to delete** (0.79) — hover a pad, a scene, a preset: × deletes it (Ctrl+Z back); Settings › Interface › Ctrl+click to delete only hides them; pad layers next to the key, preset mode next to its number.
@@ -204,7 +214,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {aj1f2qesqolp85ln1w0i} **Sound in Rec ▾** (0.76) — Rec ▾ › Sound: pick a source; Settings › Recording › Sound shows the same.
 - [x] {hr757smrqn2mmmwqnow0} **Launchpad preset row** (0.73) — Settings › Launchpad layout: bottom row = presets 7 8 9 4 5 6 1 2, right button 3.
 - [x] {uqfogckolx2naf4ogqdd} **Shorter right column** (0.74) — no info strips under Transform and GIF (hover the headings' tags instead), Performance on one line.
-- [ ] {idfxcorner} **Effects toolbar + Trig Follow** (0.74) — top-left of the effect editor: ⏻ and Trig Follow. Follow on: an F-key opens that effect in the editor; off: it doesn't.
+- [x] {idfxcorner} **Effects toolbar + Trig Follow** (0.74) — top-left of the effect editor: ⏻ and Trig Follow. Follow on: an F-key opens that effect in the editor; off: it doesn't.
 - [x] {le351226yqjllwldpp40} **VCR channel font** (0.74, the TTF 0.83) — TV › Channel: the number in VCR OSD Mono, soft green, held 0.8 s after the picture is back (the slider row: Number, 0.84); it looks the same as before (now drawn from the font file).
 - [x] {credits} **Credits window** (0.74) — About › Credits: the list opens over About; Esc closes it.
 - [x] {thumbspeed} **Smoother with effects** (0.74) — heavy effects on, watch FPS: no hitch once a second (the scene tile's refresh).
@@ -286,7 +296,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 
 ## Next up
 - [ ] {i4} **Launchpad MK3** — first hardware integration: LED feedback (colours per GIF, playing / live / on states) and a layout for the 8×8 grid. After the basic MIDI learn test.
-- [ ] {i3} **Hercules P32 DJ** (parked) — probably not needed if the Launchpad's fader mode covers knobs.
+- [x] {i3} **Hercules P32 DJ** (parked) — probably not needed if the Launchpad's fader mode covers knobs.
 
 ## Open questions
 - none right now (Alt shortcuts: fine on Windows; controller: Hercules P32 DJ, layout to follow)

@@ -18,8 +18,15 @@ function stepToIdx(g, s){
 function frameIndex(c, g, now){ return g.seq[seqIndex(c, g, now)]; }
 // Timing maps time since trigger to a position; Loop (inside timeToIdx/stepToIdx) handles the end;
 // Restart (any timing) jumps back to the start every N beats.
+// One shot › Repeat: it plays again by itself on every N-beat grid line; the hit or the latest grid line, whichever is later, counts
+function envOf(c, g, beat){
+  const E = c.env, N = g.trig === 'fade' && !g.env.gate && g.env.every; if (!N) return E;
+  const t = Math.floor(beat / N + 1e-9) * N;
+  return !E || t > E.t0 + 1e-9 ? { t0: t, from: 0, rel: null, noGate: true, auto: true } : E;
+}
 function seqIndex(c, g, now){
-  let b = clock.beat - c.startBeat;
+  const AE = g.trig === 'fade' && g.env.every ? envOf(c, g, clock.beat) : null, auto = AE && AE.auto;
+  let b = clock.beat - (auto ? AE.t0 : c.startBeat);
   if (g.restart) b = mod(b, g.restart);
   switch (g.sync){
     case 'stretch':                                  // Fit: one cycle = loop length (ping-pong: the round trip)
@@ -27,7 +34,7 @@ function seqIndex(c, g, now){
     case 'step':                                     // Step: every frame lasts `subdiv` frames per beat
       return stepToIdx(g, Math.floor(b * g.subdiv + 1e-6));
     default:                                         // Free: own timing × speed (beat-based while restarting)
-      return timeToIdx(g, (g.restart ? b * 60000 / clock.bpm : now - c.startTime) * g.speed);
+      return timeToIdx(g, (g.restart || auto ? b * 60000 / clock.bpm : now - c.startTime) * g.speed);
   }
 }
 // one cycle in beats (null = free-running, tempo-independent)
@@ -116,7 +123,7 @@ function envTimes(g){
   return { a, h, r };
 }
 function envLevel(c, g, beat){
-  const E = c.env; if (!E) return 0;
+  const E = envOf(c, g, beat); if (!E) return 0;
   const S = g.env, T = envTimes(g), gate = S.gate && !E.noGate, aDur = T.a * (1 - E.from);
   const att = x => x < 0 ? E.from : (aDur > 0 && x < aDur) ? E.from + (1 - E.from) * ease(g, x / aDur) : 1;
   const x = beat - E.t0;

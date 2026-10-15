@@ -19,7 +19,7 @@ async def main():
     await pg.keyboard.press('Tab'); t2 = await pg.evaluate("padBank")
     print('bank2', a, u, lbl, t, t2, errs)
     assert '24' in a.split('|')[1] and '9' in u.split('|')[3], (a, u)
-    assert lbl[:3] == ['U', '.', '⇧Q'] and lbl[3] == 'gridA' and lbl[4] == 'none', lbl
+    assert lbl[:3] == ['U', '.', 'R'] and lbl[3] == 'gridA' and lbl[4] == 'none', lbl
     assert t == [1, True, 'block', 'none'] and t2 == 0, (t, t2)
     # an older scene (pads up to 23): going there and back keeps working, bank 2 empty there
     old = await pg.evaluate("(() => { scenes[2] = { layers: [0,1,2,3].map(i => Object.assign(emptyLayer(), { i })), pads: new Array(24).fill(null), thumb: null }; gotoScene(2, clock.beat, true); const r = pads.slice(24).every(p => p.gif === null); gotoScene(0, clock.beat, true); return [r, !!pads[24].gif]; })()")

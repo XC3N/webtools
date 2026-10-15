@@ -158,7 +158,7 @@ function syncFxUI(){
       el.classList.toggle('empty', e);
       el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit · Alt+click: name it`; }
   });
-  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && !!d.size); $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);
+  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && (!!d.size || d.id === 'wobble'));   // (Wobble: no size, but its Edges toggle sits in that row, 0.93) $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);
   $('#fxName').innerHTML = (pre && !E ? '' : fxIcon(d.id)) + (E ? d.name : pre ? FXP_LABELS[selFx - NFX] : d.name);   // the effect's icon in the LCD (names are ours: no escaping needed)
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);

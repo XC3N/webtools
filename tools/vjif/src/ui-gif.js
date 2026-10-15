@@ -1,11 +1,12 @@
 // ---------- UI: gif settings ----------
 const segHTML = opts => opts.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('');
-$('#gBeats').innerHTML = segHTML(LEN_OPTS);
+$('#gBeats').max = LOOP_OPTS.length - 1;
+$('#gBeats').addEventListener('input', e => { const g = curGif(); if (!g) return; g.beats = LOOP_OPTS[+e.target.value][0]; e.target.nextElementSibling.textContent = lenLabel(g.beats); syncGifUI(); });
 $('#gSub').innerHTML = segHTML(FRAME_OPTS.map(([b, l]) => [1 / b, l]));   // stored as frames per beat
 $('#gRestart').innerHTML = segHTML(RESTART_OPTS);
 const segSet = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - v) < 1e-6 || b.dataset.v === v));
 // one handler per button group: sets the GIF's field from the clicked button
-[['#gSync', 'sync', false], ['#gLoop', 'loop', false], ['#gBeats', 'beats', true], ['#gSub', 'subdiv', true], ['#gRestart', 'restart', true]].forEach(([id, key, num]) =>
+[['#gSync', 'sync', false], ['#gLoop', 'loop', false], ['#gSub', 'subdiv', true], ['#gRestart', 'restart', true]].forEach(([id, key, num]) =>
   onSeg($(id), (b, e) => { const g = curGif(); if (!g) return;
     g[key] = num ? +b.dataset.v : b.dataset.v; syncGifUI();
   }));
@@ -30,7 +31,7 @@ function syncGifUI(){
   $('#gifName').textContent = `${p.label}${g ? (g.keyMsg ? ' · ' + g.keyMsg : '') : ' · empty'}`; $('#gifName').title = '';
   $('#gText').hidden = !(g && g.media && g.media.text);
   if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
-  $('#gSmooth').checked = !g.crisp;
+  $('#gSmooth').checked = !g.crisp; $('#gNoFx').checked = !!g.nofx;
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
   if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + PAL_ORDER.map(i => FX_PALS[i]).map((P, k) => `<option value="${PAL_ORDER[k]}" title="${esc(P.t)}">${esc(P.n)}</option>`).join('');   // by year
   $('#gPal').value = String(g.pal ? g.pal.i : -1); $('#gPalD').value = g.pal ? g.pal.d : 0; $('#gPalD').nextElementSibling.textContent = Math.round((g.pal ? g.pal.d : 0) * 100) + '%';
@@ -38,7 +39,7 @@ function syncGifUI(){
   syncShadowUI(g);
   segSet('#gSync', g.sync); segSet('#gLoop', g.loop); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
-  segSet('#gBeats', g.beats); segSet('#gSub', g.subdiv); segSet('#gRestart', g.restart);
+  { const el = $('#gBeats'); el.value = optIdx(LOOP_OPTS, g.beats); el.nextElementSibling.textContent = lenLabel(g.beats); } segSet('#gSub', g.subdiv); segSet('#gRestart', g.restart);
   showCycle(g);
   document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = !f.dataset.for.split(' ').includes(g.sync));
   $('#kOn').checked = g.key.on; $('#kCol').value = rgb2hex(g.key.color); segSet('#kRegion', g.key.region || 'all');
@@ -51,7 +52,8 @@ function syncGifUI(){
   ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
   segSet('#tLen', g.env.len || 'free');
   $('#tEnv').classList.toggle('dimmed', g.trig !== 'fade'); $('#tHoldRow').classList.toggle('dimmed', g.env.gate || g.env.len === 'gif');
-  $('#tLenRow').classList.toggle('dimmed', g.env.gate);
+  $('#tLenRow').classList.toggle('dimmed', g.env.gate); $('#tEveryRow').classList.toggle('dimmed', g.env.gate);
+  { const i = optIdx(EVERY_OPTS, g.env.every || 0); $('#tEvery').value = i; $('#tEvery').nextElementSibling.textContent = EVERY_OPTS[i][1]; }
   syncAutoUI(g);
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
   $('#gifName').title = `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h}${g.media && g.media.px ? ` (pixel art ×${g.media.px[0]}${g.media.px[1] !== g.media.px[0] ? '×' + g.media.px[1] : ''}, kept at ${g.w / g.media.px[0]}×${g.h / g.media.px[1]})` : ''} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
@@ -65,6 +67,10 @@ document.addEventListener('pointerover', e => { const el = e.target.closest && e
 onSeg($('#gRes'), (b, e) => { const g = curGif(); if (!g || g.media.text) return;
   const sc = +b.dataset.v, m = g.media, was = m.srcBytes; segSet('#gRes', b.dataset.v);
   setMediaScale(m, sc).then(() => toast2(`${m.name}: ${(was / 1048576).toFixed(0)} → ${(m.srcBytes / 1048576).toFixed(0)} MB`)); });
+onSeg($('#poolRes'), async b => { const sc = +b.dataset.v, was = pool.reduce((t, m) => t + (m.srcBytes || 0), 0);
+  for (const m of pool.slice()) await setMediaScale(m, sc);
+  const now = pool.reduce((t, m) => t + (m.srcBytes || 0), 0); syncGifUI();
+  toast2(`Pool: ${(was / 1048576).toFixed(0)} → ${(now / 1048576).toFixed(0)} MB`); });
 // ---- colour swaps: the GIF's palette (most used colours first), each swap = one palette colour → another ----
 function gifPalette(g){
   const m = g.media, CL = g.swapMerge ?? 0; m.palettes = m.palettes || {}; if (m.palettes[CL]) return m.palettes[CL];
@@ -129,6 +135,7 @@ $('#swMerge').addEventListener('input', e => { const g = curGif(); if (!g) retur
   scheduleFx(g, 150); syncSwapUI(g); clearTimeout(e.target._t); e.target._t = setTimeout(commit, 400); });
 $('#swClear').addEventListener('click', () => { const g = curGif(); if (!g) return; swSel = null; if (picking === 'swap') stopPick(); if (g.swap.length){ g.swap = []; scheduleFx(g, 0); renderPad(selPad); } syncSwapUI(g); markFolds(); });
 
+$('#gNoFx').addEventListener('change', e => { const g = curGif(); if (g){ g.nofx = e.target.checked; redraw.all = true; } });
 $('#gSmooth').addEventListener('change', e => { const g = curGif(); if (g){ g.crisp = !e.target.checked; renderPad(selPad); redraw.all = true; } });   // a setting of the GIF (in GIF › Play), not of where it's placed
 $('#gSpeed').addEventListener('input', e => { const g = curGif(); if (g){ g.speed = +e.target.value; e.target.nextElementSibling.textContent = g.speed.toFixed(2) + '×'; showCycle(g); } });
 const HSV_UI = [['#hH', 'h', v => (v > 0 ? '+' : '') + v + '°'], ['#hS', 's', v => (+v).toFixed(2) + '×'], ['#hV', 'v', v => (+v).toFixed(2) + '×']];
@@ -149,6 +156,8 @@ onSeg($('#tMode'), (b, e) => { const g = curGif(); if (!g) return;
   const v = b.dataset.v; g.trig = v === 'stay' ? 'stay' : 'fade'; if (v !== 'stay') g.env.gate = v === 'hold'; layers.forEach(L => L.clips.forEach(c => { if (c.pad === selPad) c.env = null; }));   // switching hides / shows it at once
   syncGifUI(); redraw.all = true;
 });
+$('#tEvery').max = EVERY_OPTS.length - 1;
+$('#tEvery').addEventListener('input', e => { const g = curGif(); if (!g) return; const o = EVERY_OPTS[+e.target.value]; g.env.every = o[0]; e.target.nextElementSibling.textContent = o[1]; redraw.all = true; });
 onSeg($('#tLen'), (b, e) => { const g = curGif(); if (g){ g.env.len = b.dataset.v; syncGifUI(); } });
 onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.dataset.v; syncGifUI(); } });
 
@@ -309,8 +318,9 @@ function drawEnvScope(g){
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
   tEnvGeo = { g, span, w, a: T.a, hold, r: T.r, top: y(1), bot: y(0), editH: !E.gate && E.len !== 'gif' };   // for the points (0.89: they drag, like the other envelopes)
   tEnvEd.draw(x, d);
-  if (g.trig === 'fade' && c && c.env){
-    const lv = envLevel(c, g, clock.beat); let t = clock.beat - c.env.t0;
+  const ce = c && envOf(c, g, clock.beat);
+  if (g.trig === 'fade' && ce){
+    const lv = envLevel(c, g, clock.beat); let t = clock.beat - ce.t0;
     if (E.gate && !c.env.noGate){ const rs = T.a + hold;   // Hit › Hold: the graph keeps its shape; while the pad is held the dot waits where the fade out starts,
       t = c.env.rel === null ? Math.min(t, rs) : rs + Math.max(0, clock.beat - c.env.rel); }   // and once let go it runs down the fade out from there
     if (lv > 0) scopeDot(x, Math.min(w - 3 * d, t / span * w), y(lv), d);

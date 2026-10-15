@@ -29,7 +29,7 @@ function onKey(e){
     e.preventDefault(); (e.key.toLowerCase() === 'y' || e.shiftKey) ? redo() : undo(); return;
   }
   if (!isTyping(e) && e.altKey && !e.ctrlKey && !e.metaKey){            // Alt+pad: rename its GIF · Alt+1–4: the layer to edit / trigger into
-    const ap = PAD_KEYS.indexOf(e.code); if (ap >= 0){ e.preventDefault(); if (!e.repeat) renamePad(ap); return; }
+    const ap = PAD_KEYS.indexOf(e.code), ab = B2_KEYS.indexOf(e.code); if (ap >= 0 || ab >= 0){ e.preventDefault(); if (!e.repeat) renamePad(ap >= 0 ? ap : B2 + ab); return; }
     const a = /^Digit([1-4])$/.exec(e.code); if (a){ e.preventDefault(); setTarget(+a[1] - 1); } return;
   }
   if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -44,7 +44,7 @@ function onKey(e){
   if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat && !(e.target && e.target.closest && e.target.closest('button, select, a, input, textarea'))){ e.preventDefault(); prep ? goLive() : startPrep(); return; }   // Enter: Prep / go live (a focused control keeps its own Enter)
   const xi = FX_KEYS.indexOf(e.code);                // F1–F12: screen effects (Shift: edit without playing)
   if (xi >= 0){ e.preventDefault(); if (!e.repeat){ if (heldPre < 0 && !e.shiftKey) heldFxKey = xi; heldPre >= 0 ? togglePreFx(heldPre, xi) : e.shiftKey ? selectFx(xi) : fxPlay(xi); } return; }
-  if ((e.code === 'NumpadDivide' || e.code === 'NumpadMultiply') && !isTyping(e)){ e.preventDefault(); if (!e.repeat) setScBank(scBank + (e.code === 'NumpadDivide' ? -1 : 1)); return; }   // / and *: the scene bank before / after
+  if ((e.code === 'NumpadDivide' || e.code === 'NumpadMultiply') && !isTyping(e)){ e.preventDefault(); if (!e.repeat){ const nb = N_SCENES / SC_BANK; setScBank((scBank + (e.code === 'NumpadDivide' ? -1 : 1) + nb) % nb); } return; }   // / and *: the scene bank before / after (round: before 1 is 4, 0.93)
   const np = /^Numpad([1-9])$/.exec(e.code);         // numpad 1–9 (by position): scenes, or effect presets with Caps Lock
   if (np){
     e.preventDefault(); if (e.repeat) return;
@@ -74,8 +74,9 @@ function onKey(e){
   }
   if (ti >= 0){ e.preventDefault(); if (e.shiftKey){ if (ti < 4) toggleLayer(ti); } else armTrans(ti); return; }
   if (e.code === 'Space') e.preventDefault();
-  const pi = PAD_KEYS.indexOf(e.code);
+  const pi = PAD_KEYS.indexOf(e.code), bi = B2_KEYS.indexOf(e.code);
   if (e.repeat) return;
+  if (bi >= 0 && !e.altKey){ e.preventDefault(); keyPad.set(e.code, B2 + bi); trigger(B2 + bi); return; }   // RTY FGH VBN: the Scene pads' bank 2
   if (pi >= 0){ e.preventDefault(); const p = pi < 9 && e.shiftKey ? B2 + pi : pi;   // Shift + a Scene key: its bank-2 pad (0.90); Shift + a Global key: select it without playing
     if (pi >= 9 && e.shiftKey) focusPad(pi); else { keyPad.set(e.code, p); trigger(p); } return; }
   if (e.code === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey){ e.preventDefault(); setPadBank(padBank ? 0 : 1); return; }
@@ -89,7 +90,7 @@ function onKey(e){
 const keyPad = new Map();   // a held pad key → the pad it played (bank 1 or 2)
 function onKeyUp(e){                                // releases always count, even if focus moved into a text field meanwhile
   if (e.code === 'Space' && !isTyping(e)) e.preventDefault();
-  const pi = PAD_KEYS.indexOf(e.code); if (pi >= 0){ release(keyPad.has(e.code) ? keyPad.get(e.code) : pi); keyPad.delete(e.code); }   // the pad that key started (Shift may be let go first)
+  const pi = PAD_KEYS.indexOf(e.code), bi = B2_KEYS.indexOf(e.code); if (pi >= 0 || bi >= 0){ release(keyPad.has(e.code) ? keyPad.get(e.code) : pi >= 0 ? pi : B2 + bi); keyPad.delete(e.code); }   // the pad that key started (Shift may be let go first)
   const xi = FX_KEYS.indexOf(e.code); if (xi >= 0){ fxUp(xi); if (heldFxKey === xi) heldFxKey = -1; }
   const qi = FXP_KEYS.indexOf(e.code); if (qi >= 0){ fxUp(NFX + qi); if (heldPre === qi) heldPre = -1; }
   if (e.code === 'Digit0' && live.blackOn){ setBlack(false); updLiveTag(); }

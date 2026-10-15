@@ -5,7 +5,7 @@ const hist = { ready: false, cur: '', undo: [], redo: [] };
 //   edit: since the last undo check, a control was used or an editing key / MIDI control came in (playing keys don't count)
 //   save: bumped on any input at all (playing keys change what's saved: latched effects, the tempo, the scene)
 const touched = { edit: true, save: 0 };
-const PLAY_KEYS = new Set([...PAD_KEYS, ...FX_KEYS, ...FXP_KEYS, ...Array.from({ length: 10 }, (_, i) => 'Digit' + i), 'Space', 'Insert', 'End', 'NumpadEnter', 'Enter']);
+const PLAY_KEYS = new Set([...PAD_KEYS, ...B2_KEYS, ...FX_KEYS, ...FXP_KEYS, ...Array.from({ length: 10 }, (_, i) => 'Digit' + i), 'Space', 'Insert', 'End', 'NumpadEnter', 'Enter']);
 function touch(){ touched.edit = true; touched.save++; }
 ['pointerdown', 'click', 'input', 'change', 'drop', 'paste'].forEach(t => window.addEventListener(t, touch, true));   // (click too: pointerup's check runs before a button's own click handler)
 window.addEventListener('keydown', e => { touched.save++; if (!PLAY_KEYS.has(e.code) || e.altKey || e.ctrlKey || e.metaKey) touched.edit = true; }, true);
@@ -69,7 +69,7 @@ function applyScn(E){
 }
 // what a step changes, in words, for the undo / redo toast
 const XF_WORDS = { x: 'position', y: 'position', sx: 'scale', sy: 'scale', rot: 'rotation', fit: 'fit', flipX: 'flip', flipY: 'flip', tile: 'tile', cl: 'crop', ct: 'crop', cr: 'crop', cb: 'crop', alpha: 'opacity' };
-const GIF_WORDS = { name: 'name', sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', swapMerge: 'colour merge', trig: 'trigger', env: 'envelope', lfo: 'auto' };
+const GIF_WORDS = { name: 'name', sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', nofx: 'bypass FX', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', swapMerge: 'colour merge', trig: 'trigger', env: 'envelope', lfo: 'auto' };
 function histWhat(e, cur){
   if (!e) return '';
   if (typeof e !== 'string') return STEPS[e.kind].what(e);
