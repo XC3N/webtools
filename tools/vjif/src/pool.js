@@ -266,6 +266,16 @@ function loadFiles(files, start = -1){
 let poolTarget = -1;                                 // the pad the next pick goes to (-1: next empty from the selected pad)
 const poolDest = () => poolTarget >= 0 && !pads[poolTarget].gif && !pads[poolTarget].loading ? poolTarget : nextEmpty(poolTarget >= 0 ? poolTarget : selPad);
 const POOL_MIME = 'application/x-vjif-pool', POOL_ONLY = -2;
+// the original file, as loaded (not the decoded, resized frames)
+async function poolSaveAs(m){
+  if (m.text) return toast('A text has no file to save');
+  const ext = (m.name.match(/\.(gif|webp|png|apng)$/i) || [, (m.blob.type.split('/')[1] || 'gif')])[1].toLowerCase(), name = /\.\w+$/.test(m.name) ? m.name : m.name + '.' + ext;
+  if (window.showSaveFilePicker){
+    try { const h = await showSaveFilePicker({ suggestedName: name, types: [{ description: ext.toUpperCase() + ' image', accept: { [m.blob.type || 'image/gif']: ['.' + ext] } }] });
+      const w = await h.createWritable(); await w.write(m.blob); await w.close(); toast2(`Saved ${h.name}`); }
+    catch (e) { if (e.name !== 'AbortError') toast('Saving failed: ' + (e.message || e.name)); }
+  } else saveFile(m.blob, name);
+}
 function openPool(i = -1){ poolTarget = i; const was = $('#poolPanel').hidden; $('#poolPanel').hidden = false; if (was) placeMovable($('#poolPanel .modalBox'), 'vjif-poolpos'); renderPool(); }
 function closePool(){ $('#poolPanel').hidden = true; }
 // where each GIF is used: scenes (1-based) and this scene's pad keys
@@ -295,7 +305,7 @@ function renderPool(){
   const grid = $('#poolGrid'); grid.textContent = '';
   pool.forEach(m => {
     const u = poolUse(m), t = document.createElement('div');
-    t.className = 'ptile' + (u.sc.length ? '' : ' unused'); t.title = m.name + ' — click: next empty pad · drag onto a pad: put it there'; t.draggable = true;
+    t.className = 'ptile' + (u.sc.length ? '' : ' unused'); t.title = m.name + ' — click: next empty pad · drag onto a pad: put it there · right-click: save the file'; t.draggable = true;
     t.addEventListener('dragstart', e => { e.dataTransfer.setData(POOL_MIME, m.hash); e.dataTransfer.effectAllowed = 'copy';
       e.dataTransfer.setDragImage(NO_IMG, 0, 0);
       const gh = document.createElement('span'); gh.className = 'chip'; gh.style.backgroundImage = `url(${t.querySelector('canvas').toDataURL()})`; ghost.show(gh, e.clientX, e.clientY); });
@@ -309,7 +319,7 @@ function renderPool(){
     t.addEventListener('pointerdown', e => { if (e.button === 0 && (e.target.closest('.px') || isRm(e)) && poolUse(m).sc.length) poolHold(t, m, e); });
     t.addEventListener('click', e => { if (t._held){ t._held = false; return; }   // the end of a held press, not a click
       if (e.target.closest('.px') || isRm(e)){ if (!poolUse(m).sc.length) removeMedia(m); return; } pickPool(m); });
-    t.addEventListener('contextmenu', e => { if (!e.ctrlKey) return; e.preventDefault(); if (!poolUse(m).sc.length) removeMedia(m); });   // (a Mac's Ctrl+click)
+    t.addEventListener('contextmenu', e => { e.preventDefault(); if (e.ctrlKey){ if (!poolUse(m).sc.length) removeMedia(m); return; } poolSaveAs(m); });   // (a Mac's Ctrl+click) · right-click: save the file (0.93.1)   // (a Mac's Ctrl+click)
     grid.appendChild(t);
   });
 }

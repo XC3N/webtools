@@ -183,6 +183,8 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {vxehm695slyu1uihonz7} **One shot repeat** (0.93) — One shot, Play › Trigger › Repeat 1 bar: without a hit the GIF plays on every bar by itself; a hit still plays it at once.
 - [ ] {1yxuwdv7lakpn7awg4be} **Loop length slider** (0.93) — Timing Fit: Loop length is a slider, 1/16 to 16 bars (with 3 and 6 beats, 3 and 6 bars); the cycle line below follows.
 - [ ] {j0qdczvjiqfcsxsf98cq} **Pool resolution** (0.93) — Pool: All full / ½ / ¼ sets every GIF of the set at once; the memory figure drops and a note says by how much.
+- [ ] {1y92otzl68vpswy0f1l2} **Background keeps 6 slots** (0.93.1) — Background with 3 GIFs in slots: Alt+hit one of them: the other two stay (chips and slots: 6 in all on the card).
+- [ ] {fm222xin70qprcv6n57p} **Pool save as** (0.93.1) — Pool: right-click a GIF: a Save dialog with its name; the saved file is the original (opens as the same GIF). Ctrl+right-click an unused one still removes it.
 - [ ] {5q2g5ddfh2lc6nluvmgb} **New rows scroll into view** (0.87.3) — at 80% and 125% UI zoom (Settings › Interface), click a swatch low in Display › Swap colours: the row that opens is scrolled into view.
 - [ ] {y08e3dqtjpeoa8jqrp0e} **Always on top** (0.89.3) — Right-click Output: a floating window with no address bar stays above other windows, plays, takes pad keys; right-click again closes it; click Output switches to a normal window.
 - [ ] {d3068ijx33furnsrblsv} **Reopen size** (0.89.3) — Shift+click Output, close the window, open it again: no black bars.

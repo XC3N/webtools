@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.93.1 — 2026-10-15
+
+### GIFs
+- Pool: right-click a GIF to save its file (the original, as loaded). Ctrl+right-click still removes an unused one.
+
+### Fixes
+- The Background card could show 5 slots: Alt+hit (swap) on a Background GIF took the layer for itself and dropped the other slots' chips while their GIFs stayed loaded. Background now ignores swap, and a loaded slot always shows its chip.
+
 ## 0.93.0 — 2026-10-15
 
 ### GIFs

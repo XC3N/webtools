@@ -37,9 +37,15 @@ async def main():
     print('repeat', rep); assert rep == [0, 1, 0, 1], rep
     ui = await pg.evaluate("(() => { const el = $('#tEvery'); el.value = 3; el.dispatchEvent(new Event('input', { bubbles: true })); return [pads[0].gif.env.every, el.nextElementSibling.textContent]; })()")
     print('repeat ui', ui); assert ui == [4, '1 bar'], ui
+    # Background: a loaded slot always has its chip (0.93.1)
+    bg = await pg.evaluate("""(async () => { pads[18].gif = pads[0].gif; layers[0].clips = []; syncLayerUI(); const r = layers[0].row.querySelectorAll('.clips .chip, .clips .bgslot').length; pads[18].gif = null; layers[0].clips = []; syncLayerUI(); return r; })()""")
+    print('bg slots', bg); assert bg == 6, bg
     # pool: all at ½
     await pg.evaluate("openPool ? openPool() : $('#poolBtn').click()"); await pg.wait_for_timeout(200)
     await pg.click('#poolRes [data-v="0.5"]'); await pg.wait_for_function("pool.every(m => m.scale === 0.5)", timeout=8000)
     print('pool', await pg.evaluate("pool.map(m => m.scale)"))
+    sv = await pg.evaluate("""(async () => { let got = null; window.showSaveFilePicker = async o => ({ name: o.suggestedName, createWritable: async () => ({ write: async b => { got = [o.suggestedName, b.size]; }, close: async () => {} }) });
+      $('#poolGrid .ptile').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })); await new Promise(r => setTimeout(r, 300)); return [got, pool.length, pool[0].blob.size]; })()""")
+    print('save as', sv); assert sv[0] and sv[0][0] == 'red.gif' and sv[0][1] == sv[2] and sv[1] == 1, sv
     await b.close()
 asyncio.run(main())

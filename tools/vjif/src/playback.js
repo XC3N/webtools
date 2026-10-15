@@ -71,7 +71,7 @@ function fire(p, beat, released = false, swap = false){
   // Overlay, Background slots Background, Scene pads the edited layer when it's Midground / Foreground, else Midground)
   let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[padLayer(p, target)];
   let c = L.clips.find(c => c.pad === p); const n0 = L.clips.length;
-  if (swap){                                         // alone on the layer, where the selected GIF was
+  if (swap && L.i !== BG_LAYER){                     // alone on the layer, where the selected GIF was (Background keeps its slots: 0.93.1)
     if (!c){ c = selClip(L.i) || L.clips[0] || newClip(p); c.pad = p; c.env = null; }
     L.clips = [c];
   } else if (!c){
