@@ -10,7 +10,7 @@ bad = []
 for t in TESTS:
     if only and t not in only: continue
     t0 = time.time()
-    r = subprocess.run([sys.executable, str(HERE / (t + '.py'))], cwd=HERE, capture_output=True, text=True, timeout=600)
+    r = subprocess.run([sys.executable, str(HERE / (t + '.py'))], cwd=HERE, capture_output=True, text=True, timeout=1200)   # (golden takes ~10 min on a software GPU)
     out = '\n'.join(l for l in (r.stdout + r.stderr).splitlines() if 'agent-proxy' not in l and 'googleapis' not in l)
     ok = r.returncode == 0 and 'Traceback' not in out
     print(f"{'ok  ' if ok else 'FAIL'} {t} ({time.time() - t0:.0f} s)")

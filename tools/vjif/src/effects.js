@@ -79,7 +79,8 @@ const FX_PALS = [
   // 0.99: fewer greys, so Dither shows (with 64 steps there's next to nothing between two shades to dither). Added at the end: saved palettes keep their numbers
   ['Grey 16', 'Sixteen shades of grey: Dither shows as fine grain', Array.from({ length: 16 }, (_, i) => Math.round(i * 255 / 15).toString(16).padStart(2, '0').repeat(3)).join(' ')],
   ['Grey 4', 'Four shades of grey, like a 2-bit screen: Dither shows as clear patterns', '000000 555555 aaaaaa ffffff'],
-].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)); return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0) }; });
+].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)), ok = c.map(okLab);
+  return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0), ok: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? ok[i / 3 | 0][i % 3] : 0) }; });
 // Colour › Palette: how the in-between shades are drawn (the Size row stands in for it). Scatter: noise added before
 // snapping (soft, many colours touch). Ordered: each pixel picks one of the two nearest palette colours by a 4×4 Bayer
 // threshold, like DOS-era / 8-bit art. Checker: the two colours only ever as a 50% checkerboard (hand-pixelled look)
@@ -98,6 +99,12 @@ const FX_OVS = [[0, 'Off'], [2, 'On']];   // Shake › Edges (one toggle; 1 = th
 // Light 1998). Sets keep a palette's index in FX_PALS, which never changes, so this order is only for the menus and the slider.
 const PAL_GREY = FX_PALS.findIndex(P => P.n === 'Grey'), PAL_1BIT = FX_PALS.findIndex(P => P.n === '1-bit');
 const PAL_ORDER = ['Grey', 'Grey 16', 'Grey 4', '1-bit', 'CGA 1', 'CGA 2', 'CGA 3', 'ZX Spectrum', 'C64', 'NES', 'EGA', 'GB', 'GB Pocket', 'GB Light'].map(n => FX_PALS.findIndex(P => P.n === n));
+// 0.99.3: the Palette slider steps through families; a family's variants are a switch beside Dither (saved sets keep the
+// palette's own number, so nothing to convert)
+const PAL_FAM = [['Grey', [['Grey', 'Full'], ['Grey 16', '16'], ['Grey 4', '4'], ['1-bit', '1']]], ['CGA', [['CGA 1', '1'], ['CGA 2', '2'], ['CGA 3', '3']]], ['ZX Spectrum'], ['C64'], ['NES'], ['EGA'],
+  ['GB', [['GB', 'DMG'], ['GB Pocket', 'Pocket', 'Pkt'], ['GB Light', 'Light', 'Lt']]]].map(([n, m]) => ({ n, m: (m || [[n, n]]).map(([p, l, s]) => ({ i: FX_PALS.findIndex(P => P.n === p), l, s: s || l })) }));   // s: the short name, on narrow screens
+const palFam = i => { const f = PAL_FAM.findIndex(F => F.m.some(x => x.i === i)); return f < 0 ? [0, 0] : [f, PAL_FAM[f].m.findIndex(x => x.i === i)]; };
+const palLast = {};   // the variant picked last in each family (this session)
 // (run once the palettes exist: a Mono pad's migration names them)
 if (userDef && (userDef.fx || userDef.fxPre) && !(userDef.fxOrd >= 3)){ fxRemapDefs(userDef); Prefs.set('vjif-userdef', JSON.stringify(userDef)); }
 { const o = Prefs.json('vjif-midi'); if (o && !(o.fxOrd >= 3) && midiCtl.map.length){ midiCtl.map.forEach(m => { if (m.t === 'fx'){ if (!o.fxOrd) m.i = fxRemapIdx(m.i); m.i = fxIdx3(m.i); } }); saveMidiCtl(); } }   // MIDI mappings of effect pads
@@ -352,7 +359,8 @@ ${FX_GLSL}
       uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP, palDot, palLum,
                     glitch, glS, gseed, glSz, codec, cdS, cseed, cdSz, dgs, rgb, rgbS, crtSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, shakeZ, wobZ;
       uniform float glA[12], rgA[12], cdA[12];   // Glitch / CRT: each stacked style's own Amount, as a share of the effect's (0.92)
-      uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
+      uniform vec3 shake; uniform vec3 pal[64], palOk[64]; uniform float palN; varying vec2 uv;
+      ${OKLAB_GLSL}
       float h1(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       float h2(vec2 v){ return fract(sin(dot(v, vec2(12.9898, 78.233))) * 43758.5453); }
       float bay2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }        // ordered (Bayer) dither thresholds
@@ -406,14 +414,17 @@ ${FX_GLSL}
       vec3 palSnap(vec3 c){                          // nearest palette colour, weighted like the eye (green counts most)
         vec2 q = floor(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)));   // dither cells: chunky dots at any output size
         if (palD > 0.001 && palP < 0.5) c += (bayer4(q) - 0.47) * palD * 0.9 / pow(palN, 0.333);   // Scatter: noise, then the nearest colour
-        vec3 W = vec3(0.55, 0.75, 0.35), best = pal[0], sec = pal[0]; float bd = 1e9, sd = 1e9;
-        for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = (c - pal[i]) * W; float e = dot(d, d);
-          if (e < bd){ sd = bd; sec = best; bd = e; best = pal[i]; } else if (e < sd){ sd = e; sec = pal[i]; } }
+        vec3 W = vec3(0.55, 0.75, 0.35), best = pal[0], sec = pal[0], k = okLab(c), bk = palOk[0]; float bd = 1e9, t = 0.0;
+        for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = k - palOk[i]; float e = dot(d, d); if (e < bd){ bd = e; best = pal[i]; bk = palOk[i]; } }   // the nearest, in OKLab
+        if (palLum < 0.5 && palD > 0.001 && palP > 0.5 && palN > 1.5){   // Dither: the colour that, mixed with the nearest, comes closest to c (0.99.3: it was the second nearest, often a grey)
+          float br = 1e9; vec3 kb = k - bk;
+          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 ab = palOk[i] - bk; float L = dot(ab, ab); if (L < 1e-8) continue;
+            float u = dot(kb, ab) / L; if (u <= 0.0) continue; u = min(u, 1.0); vec3 r = kb - u * ab; float e = dot(r, r); if (e < br){ br = e; sec = pal[i]; t = u; } } }
         if (palLum > 0.5){                         // the Game Boys: four shades by brightness, evenly (0.99: the nearest colour lost most of the picture on GB Light, whose greens are all dark)
           float y = clamp(dot(c, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, k = floor(y), k2 = clamp(y - k < 0.5 ? k - 1.0 : k + 1.0, 0.0, palN - 1.0);
-          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == k) best = pal[i]; if (float(i) == k2) sec = pal[i]; } }
+          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == k) best = pal[i]; if (float(i) == k2) sec = pal[i]; }
+          vec3 ab = (sec - best) * W; t = clamp(dot((c - best) * W, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0); }   // how far c sits from the nearest towards the second
         if (palD < 0.001 || palP < 0.5 || palN < 1.5) return best;
-        vec3 ab = (sec - best) * W; float t = clamp(dot((c - best) * W, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);   // how far c sits from the nearest towards the second
         t = clamp((t - 0.5) / palD + 0.5, 0.0, 1.0) * step(0.001, t);   // less Dither: the pattern only where c is near halfway
         if (palP > 1.5) t = t < 0.25 ? 0.0 : t > 0.75 ? 1.0 : 0.5 + 0.01;   // Checker: flat, or exactly half and half
         float th = palP > 1.5 ? mod(q.x + q.y, 2.0) * 0.5 + 0.25 : bayer4(q) + 0.03125;
@@ -622,7 +633,7 @@ ${FX_GLSL}
     const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP', 'palDot', 'palLum',
                    'glitch', 'glS', 'gseed', 'glSz', 'codec', 'cdS', 'cseed', 'cdSz', 'dgs', 'rgb', 'rgbS', 'crtSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'wobZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
-    const u = {}; [...NAMES, 'glA', 'rgA', 'cdA', 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
+    const u = {}; [...NAMES, 'glA', 'rgA', 'cdA', 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palOk', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
     gl.uniform1i(u.tex, 0); gl.uniform1i(u.prev, 1);
     gl.viewport(0, 0, CW, CH);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.clearColor(0, 0, 0, 0);
@@ -745,7 +756,7 @@ ${FX_GLSL}
       for (const k of NAMES){ const v = (U[k] || 0) * (PX_NAMES.has(k) ? RS : 1); if (last[k] !== v){ last[k] = v; gl.uniform1f(u[k], v); } }
       for (const k of ['glA', 'rgA', 'cdA']){ const v = U[k] || ONES12, sg = v.join(); if (last[k] !== sg){ last[k] = sg; gl.uniform1fv(u[k], v); } }   // sizes in canvas pixels → real pixels; only what changed is sent
       if (String(U.shake) !== last.shake){ last.shake = String(U.shake); gl.uniform3fv(u.shake, U.shake); }
-      if (U.palI !== last.palI){ last.palI = U.palI; const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform1f(u.palN, P.c.length); }   // the 64-colour palette only when it changes
+      if (U.palI !== last.palI){ last.palI = U.palI; const P = FX_PALS[U.palI] || FX_PALS[0]; gl.uniform3fv(u.pal, P.f); gl.uniform3fv(u.palOk, P.ok); gl.uniform1f(u.palN, P.c.length); }   // the 64-colour palette only when it changes
       gl.uniform1f(u.blit, 0);
       const fbOn = U.fb > 0.001, trail = fbOn || (U.rgb > 0.001 && (U.rgbS >> FXS.rgb.phos & 1)) || (U.codec > 0.001 && (U.cdS >> FXS.codec.corrupt & 1 || U.cdS >> FXS.codec.keyfr & 1)) || (Math.abs(U.palDot || 0) > 0.5 && U.colr > 0.001);   // only Feedback, Phosphor, Glitch › Corrupt / Keyframe and the Game Boy LCD read the previous frame
       if (!trail){                                   // straight onto the canvas: no render target, no second pass

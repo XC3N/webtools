@@ -124,8 +124,12 @@ function envTimes(g){
 }
 function envLevel(c, g, beat){
   const E = envOf(c, g, beat); if (!E) return 0;
-  const S = g.env, T = envTimes(g), gate = S.gate && !E.noGate, aDur = T.a * (1 - E.from);
-  const att = x => x < 0 ? E.from : (aDur > 0 && x < aDur) ? E.from + (1 - E.from) * ease(g, x / aDur) : 1;
+  const S = g.env, T = envTimes(g), gate = S.gate && !E.noGate;
+  // a retrigger mid-fade (from > 0) carries on along the same fade-in curve from the point that's at that level (0.99.3: Smooth
+  // used to start a new S-curve there): u0 is where on the curve that is, found once per hit
+  if (E.from > 0 && E.u0 === undefined){ let lo = 0, hi = 1; for (let k = 0; k < 20; k++){ const m = (lo + hi) / 2; if (ease(g, m) < E.from) lo = m; else hi = m; } E.u0 = lo; }
+  const u0 = E.from > 0 ? E.u0 : 0, aDur = T.a * (1 - u0);
+  const att = x => x < 0 ? E.from : (aDur > 0 && x < aDur) ? ease(g, u0 + x / T.a) : 1;
   const x = beat - E.t0;
   let rs;                                            // release start, beats after t0
   if (gate){ if (E.rel === null) return att(x); rs = E.rel - E.t0; }

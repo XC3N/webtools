@@ -129,7 +129,7 @@ const Theme = (() => {
         lab.addEventListener('click', () => { g.classList.toggle('shut'); try { localStorage.setItem(fk, g.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }
     });
     const bg = host.querySelector('.thm-bg');
-    row(bg, 'bh', 'Background', 'Background hue', 0, 360);   // (named like the roles, on its hue's row: it was a heading of its own above a Hue row) row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50, ' thm-sv'); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22, ' thm-sv');
+    row(bg, 'bh', 'Background', 'Background hue', 0, 360); row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50, ' thm-sv'); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22, ' thm-sv');   // (Background is named like the roles, on its hue's row: it was a heading of its own above a Hue row)
     { const lab = bg.querySelector('label'), fk = 'thm-fold-bg'; bg.classList.add('thm-fold');   // Background folds like the roles: click its name (its hue stays)
       try { if (localStorage.getItem(fk) === '1') bg.classList.add('shut'); } catch (e) {}
       lab.addEventListener('click', () => { bg.classList.toggle('shut'); try { localStorage.setItem(fk, bg.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }

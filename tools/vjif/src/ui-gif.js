@@ -317,13 +317,18 @@ function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
   const E = g.env, T = envTimes(g), c = clipOf(selPad), hold = E.gate ? Math.max(E.h, 1) : T.h, span = tEnvDrag ? tEnvDrag.span : Math.max(T.a + hold + T.r, 0.5) * 1.1;   // (held steady while a point is dragged)
   const ce0 = c && g.trig === 'fade' && !tEnvDrag ? envOf(c, g, clock.beat) : null, live0 = ce0 && envLevel(c, g, clock.beat) > 0;
-  const shape = { env: { t0: 0, from: live0 ? ce0.from || 0 : 0, rel: E.gate ? T.a + hold : null, noGate: false } };   // (T: the times as played, One play shrinks the fades; 0.95: a retrigger mid-fade starts from where it was, and the graph shows that hit, so the dot stays on it)
+  const shape = { env: { t0: 0, from: 0, rel: E.gate ? T.a + hold : null, noGate: false } };   // the envelope as set (T: the times as played, One play shrinks the fades)
+  // 0.99.3: a retrigger mid-fade starts from where it was, and runs the rest of this same curve (the fade in keeps its speed), so the
+  // graph stays put and the dot starts further along it, where the fade in reaches that level (0.95 redrew the curve from that level,
+  // which tilted the fade in on every retrigger)
+  const from = live0 ? ce0.from || 0 : 0; let skip = 0;
+  if (from > 0 && T.a > 0){ let lo = 0, hi = 1; for (let k = 0; k < 20; k++){ const m = (lo + hi) / 2; if (ease(g, m) < from) lo = m; else hi = m; } skip = lo * T.a; }
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
   tEnvGeo = { g, span, w, a: T.a, hold, r: T.r, top: y(1), bot: y(0), editH: !E.gate && E.len !== 'gif' };   // for the points (0.89: they drag, like the other envelopes)
   tEnvEd.draw(x, d);
   const ce = c && envOf(c, g, clock.beat);
   if (g.trig === 'fade' && ce){
-    const lv = envLevel(c, g, clock.beat); let t = clock.beat - ce.t0;
+    const lv = envLevel(c, g, clock.beat); let t = clock.beat - ce.t0 + (ce === ce0 ? skip : 0);
     if (E.gate && !c.env.noGate){ const rs = T.a + hold;   // Hit › Hold: the graph keeps its shape; while the pad is held the dot waits where the fade out starts,
       t = c.env.rel === null ? Math.min(t, rs) : rs + Math.max(0, clock.beat - c.env.rel); }   // and once let go it runs down the fade out from there
     if (lv > 0) scopeDot(x, Math.min(w - 3 * d, t / span * w), y(lv), d);

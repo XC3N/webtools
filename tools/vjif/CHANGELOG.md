@@ -4,6 +4,20 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.3 — 2026-10-16
+
+### Effects
+- Colour › Palette: the slider steps through palette families (Grey, CGA, ZX Spectrum, C64, NES, EGA, Game Boy). A family's variants are a switch beside Dither: Grey Full | 16 | 4 | 1, CGA 1 | 2 | 3, Game Boy DMG | Pocket | Light. Saved sets keep their palettes.
+- Palettes match colours in OKLab, a space where distance follows what the eye sees, here and in GIF › Display › Palette. With the old weighted-RGB match, greys beat real colours, so EGA and CGA pictures came out mostly grey with or without Dither. Every palette (except the Game Boys, which go by brightness) looks a little different, closer to the original colours.
+- Dither (Bayer / Check) mixes the nearest colour with the one that brings the mix closest to the original. It used to take the second nearest, often a grey.
+
+### GIFs
+- One shot with fades: the Trigger graph keeps its shape on a retrigger. The dot starts further along the fade in, where it reaches the level the GIF was at. A retrigger on Smooth carries on along the same curve instead of starting a new one.
+- A mostly black (or see-through) GIF's chip on a layer card has a dark grey outline, so it doesn't look like an empty square.
+
+### Fixes
+- Settings › Theme: Background's Saturation and Brightness were missing since 0.99.1 (the line that made them ended up inside a comment). The comment check in the tests now covers the shared code too.
+
 ## 0.99.2 — 2026-10-16
 
 ### Preview

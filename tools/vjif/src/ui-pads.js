@@ -161,6 +161,8 @@ function gifThumb(g, f = fxImage(g, g.startF)){
   if (g.thumb) return g.thumb;
   const [t, tx] = cpuCanvas(52, 48), k = Math.max(t.width / f.width, t.height / f.height);
   tx.imageSmoothingEnabled = !g.crisp; tx.drawImage(f, (t.width - f.width*k)/2, (t.height - f.height*k)/2, f.width*k, f.height*k);
+  { const d = tx.getImageData(0, 0, t.width, t.height).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) * d[i + 3] / 255;
+    g.thumbDark = s / (d.length / 4) < 28; }   // mostly black (or see-through): its chip gets an outline (0.99.3; a CPU canvas, so reading it back is cheap)
   return g.thumb = t.toDataURL();
 }
 function renderPad(i){

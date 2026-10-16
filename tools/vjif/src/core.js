@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.2';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.3';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -89,6 +89,17 @@ const BEAT_OPTS = LEN_OPTS.map(o => o[0]);
 const lenLabel = b => { const o = LEN_OPTS.find(o => Math.abs(o[0] - b) < 1e-6); return o ? o[1] : b % 4 === 0 ? `${b/4} bars` : `${+b.toFixed(2)} beats`; };
 // fade one-shot lengths and LFO cycles, in beats
 const ENV_OPTS = [[0,'0'],[0.125,'1/32'],[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars']];
+// a colour (0–1 sRGB) in OKLab, where distances match what the eye sees (0.99.3: the palettes match colours there; the old
+// weighted-RGB distance let greys win over colours, so EGA / CGA pictures came out mostly grey, with or without Dither)
+function okLab(c){
+  const lin = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4), [r, g, b] = c.map(v => lin(Math.min(1, Math.max(0, v))));
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+}
+// the same in GLSL, for both shaders (effects and the GIF colour pass)
+const OKLAB_GLSL = `vec3 okLab(vec3 c){ c = clamp(c, 0.0, 1.0); c = mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+  vec3 q = pow(max(vec3(dot(c, vec3(0.4122214708, 0.5363325363, 0.0514459929)), dot(c, vec3(0.2119034982, 0.6806995451, 0.1073969566)), dot(c, vec3(0.0883024619, 0.2817188376, 0.6299787005))), vec3(1e-7)), vec3(1.0 / 3.0));
+  return vec3(dot(q, vec3(0.2104542553, 0.7936177850, -0.0040720468)), dot(q, vec3(1.9779984951, -2.4285922050, 0.4505937099)), dot(q, vec3(0.0259040371, 0.7827717662, -0.8086757660))); }`;
 const GAP_OPTS = [[0, 'off'], [0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];   // LFO Gap: a pause after each cycle
 const PER_OPTS = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[1.5,'3/8'],[2,'1/2'],[3,'3/4'],[4,'1 bar'],[6,'1½ bars'],[8,'2 bars'],[12,'3 bars'],[16,'4 bars'],[24,'6 bars'],[32,'8 bars'],[48,'12 bars'],[64,'16 bars']];   // (0.94: dotted / triple steps)
 const optIdx = (opts, v) => opts.reduce((bi, o, i) => Math.abs(o[0] - v) < Math.abs(opts[bi][0] - v) ? i : bi, 0);

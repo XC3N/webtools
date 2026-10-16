@@ -185,8 +185,8 @@ function syncFxUI0(){
   const kal = !!dd && dd.id === 'mirror' && (A.style || dd.styles[0][0]) === 'kal';        // Mirror › Kaleido: it sets the number of slices
   const wear = !!dd && dd.id === 'rgb' && styleParts(FXI.rgb, A.style).includes('vhs') && (styleParts(FXI.rgb, A.style).length === 1 || fxFocus.rgb === 'vhs');   // CRT › VHS (alone, or in focus in a stack): Amount is how worn the tape is
   am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : wear ? 'Wear' : 'Amount'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
-  if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: PAL_ORDER.length - 1, step: 1 }); am.value = Math.max(0, PAL_ORDER.indexOf(pi)); am.dataset.def = 0; delete am.dataset.pct;   // the slider runs in PAL_ORDER (by year)
-    am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
+  if (palAmt){ const pi = A.pal || 0, [fi] = palFam(pi); Object.assign(am, { min: 0, max: PAL_FAM.length - 1, step: 1 }); am.value = fi; am.dataset.def = 0; delete am.dataset.pct;   // the slider runs in PAL_ORDER (by year)
+    am.nextElementSibling.textContent = PAL_FAM[fi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
   else if (kal){ const n = kalSlices(A.amt); Object.assign(am, { min: 3, max: 12, step: 1 }); am.value = n; am.dataset.def = 12; delete am.dataset.pct;
     am.nextElementSibling.textContent = n; am.closest('.field').title = 'Slices: how many wedges the kaleidoscope has'; }
   else { const pp = amtPart(dd, A), v = pp ? A.pamt?.[pp] ?? A.amt : A.amt; Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = v; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(v * 100) + '%';
@@ -200,7 +200,10 @@ function syncFxUI0(){
     const sw = alt && (alt.pat || alt.icons); $('#fxDpat').hidden = !sw; $('#fxRateRow').classList.toggle('patrow', !!sw);
     const dp = $('#fxDpat'), want = alt && alt.icons ? 'lcd' : 'pat'; if (sw && dp.dataset.mode !== want){ dp.dataset.mode = want;   // Dither's pattern icons, or the Game Boy LCD's in the same place
       setHTML(dp, want === 'lcd' ? alt.list.map(([v, , t]) => `<button data-v="${v}" title="${t.replace(/"/g, '&quot;')}">${alt.icons[v]}</button>`).join('') : DPAT_HTML); }
-    $('#fxRateRow').classList.toggle('lcdrow', !!(alt && alt.icons));   // the Game Boy: its name, right-aligned against the switch, in the slider's room (the row keeps its width)
+    $('#fxRateRow').classList.toggle('lcdrow', !!(alt && alt.icons));
+    { const isPal = !!d && d.id === 'colour' && (C.style || d.styles[0][0]) === 'pal', [fi, vi] = palFam(C.pal || 0), F = PAL_FAM[fi], many = isPal && F.m.length > 1;   // the palette's variants (0.99.3)
+      $('#fxPalVar').hidden = !many; $('#fxRateRow').classList.toggle('varrow', many);
+      if (many){ const h = F.m.map((x, k) => `<button data-v="${k}" title="${esc(FX_PALS[x.i].t)}"><span class="lng">${esc(x.l)}</span><span class="sht">${esc(x.s)}</span></button>`).join(''); if ($('#fxPalVar').dataset.f !== String(fi)){ setHTML($('#fxPalVar'), h); $('#fxPalVar').dataset.f = fi; } segSet('#fxPalVar', String(vi)); } }   // the Game Boy: its name, right-aligned against the switch, in the slider's room (the row keeps its width)
     if (sw) segSet('#fxDpat', String(alt.icons ? (C[alt.key] ?? alt.def) >= 2 ? 2 : (C[alt.key] ?? alt.def) : C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
@@ -259,7 +262,7 @@ $('#fxStyle').addEventListener('contextmenu', e => { const b = e.target.closest(
   fxFocus[id] = v; syncFxUI(); });
 // Glitch / CRT with several styles stacked: Amount sets the style in focus only (0.92); one style, or none in focus: the effect's
 const amtPart = (dd, A) => { if (!dd || !FX_MULTI[dd.id]) return null; const P = styleParts(FXI[dd.id], A.style); return P.length > 1 && P.includes(fxFocus[dd.id]) ? fxFocus[dd.id] : null; };
-$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt) X.pal = PAL_ORDER[+e.target.value]; else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value);
+$('#fxAmt').addEventListener('input', e => { const X = fxEd() || fxConf(selFx); if (e.target.dataset.palAmt){ const F = PAL_FAM[+e.target.value]; X.pal = palLast[+e.target.value] ?? F.m[0].i; } else if (e.target.dataset.kal) X.amt = kalAmt(+e.target.value);
   else { const dd = selFx < NFX ? FX_DEFS[selFx] : preEd != null ? FX_DEFS[preEd] : null, pp = amtPart(dd, X); if (pp) (X.pamt || (X.pamt = {}))[pp] = +e.target.value; else X.amt = +e.target.value; } syncFxUI(); });
 $('#fxName').addEventListener('click', () => { if (preEd != null){ preEd = null; syncFxUI(); } });
 // ---- the effect envelope editor: points dragged along fixed steps (like the sliders were), so it reads at a glance ----
@@ -366,6 +369,7 @@ document.querySelectorAll('#fxEnvSl input').forEach(el => { el.closest('.sl').ti
 $('#fxSize').addEventListener('input', e => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za) X[za.key] = za.list[+e.target.value][0]; else X.size = FX_SIZES[+e.target.value][0]; syncFxUI(); });
 onSeg($('#fxRateSeg'), b => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ X[alt.key] = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxSizeSeg'), b => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za){ X[za.key] = +b.dataset.v; syncFxUI(); } });
+onSeg($('#fxPalVar'), b => { const X = fxEd() || fxConf(selFx); if (!X) return; const fi = +$('#fxPalVar').dataset.f, x = PAL_FAM[fi].m[+b.dataset.v]; X.pal = x.i; palLast[fi] = x.i; syncFxUI(); });
 onSeg($('#fxDpat'), b => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X);
   if (alt && alt.icons) X[alt.key] = +b.dataset.v; else X.dpat = +b.dataset.v; syncFxUI(); });
 $('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
