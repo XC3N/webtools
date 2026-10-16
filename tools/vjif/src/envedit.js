@@ -7,13 +7,18 @@
 function envEditor(cv, E){
   const st = { k: null, hover: null };
   const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * cv.width, (e.clientY - r.top) / r.height * cv.height]; };
-  const nearest = (px, py) => { const max = E.reach ? E.reach() : Infinity; let b = null;
-    for (const [k, x, y] of E.pts()){ const d = Math.abs(x - px) + Math.abs(y - py) * 0.3; if (d <= max && (!b || d < b.d)) b = { k, d }; } return b && b.k; };
+  // a point, or (0.99) a level line between two points: E.segs() → [key, x0, x1, y]; the Sustain line drags up and down.
+  // A point within 8 px wins over the line, so the ends of the line still move their points
+  const nearest = (px, py) => { const max = E.reach ? E.reach() : Infinity, dp = devicePixelRatio || 1; let b = null;
+    for (const [k, x, y] of E.pts()){ const d = Math.abs(x - px) + Math.abs(y - py) * 0.3; if (d <= max && (!b || d < b.d)) b = { k, d }; }
+    if (b && b.d <= 8 * dp) return b.k;
+    for (const [k, x0, x1, y] of E.segs ? E.segs() : []) if (x1 - x0 > 8 * dp && px > x0 + 4 * dp && px < x1 - 4 * dp && Math.abs(py - y) <= 6 * dp) return k;
+    return b && b.k; };
   cv.addEventListener('pointerdown', e => { if (e.button || !E.on()) return; const [px, py] = pos(e), k = nearest(px, py); if (!k) return;
     st.k = k; if (E.begin) E.begin(k); cv.setPointerCapture(e.pointerId); E.move(k, px, py); E.redraw(); });
   cv.addEventListener('pointermove', e => { const [px, py] = pos(e);
     if (st.k){ E.move(st.k, px, py); E.redraw(); return; }
-    const k = E.on() ? nearest(px, py) : null; cv.style.cursor = k ? 'grab' : '';
+    const k = E.on() ? nearest(px, py) : null; cv.style.cursor = !k ? '' : k === 's' ? 'ns-resize' : 'grab';
     const t = k ? E.tip[k] : E.on() ? 'Drag a point · double-click: its default' : (E.idle ? E.idle() : ''); if (cv.title !== t) cv.title = t;
     if (k !== st.hover){ st.hover = k; E.redraw(); } });
   cv.addEventListener('pointerleave', () => { if (st.hover){ st.hover = null; E.redraw(); } });
@@ -26,7 +31,8 @@ function envEditor(cv, E){
     draw(x, d){
       if (!E.on()) return; const P = E.pts(), w = cv.width;
       for (const [k, px, py] of P){ x.fillStyle = st.k === k ? '#fff' : TC.env; x.beginPath(); x.arc(px, py, 3.2 * d, 0, Math.PI * 2); x.fill(); }
-      const k = st.k || st.hover, p = k && P.find(p => p[0] === k); if (!p || !E.label) return;
+      const k = st.k || st.hover, sg = k && E.segs && E.segs().find(s => s[0] === k), p = k && (P.find(p => p[0] === k) || (sg && [k, (sg[1] + sg[2]) / 2, sg[3]])); if (!p || !E.label) return;
+      if (sg){ x.strokeStyle = st.k === k ? '#fff' : TC.env; x.lineWidth = 2.5 * d; x.beginPath(); x.moveTo(sg[1], sg[3]); x.lineTo(sg[2], sg[3]); x.stroke(); }   // the line under the pointer, bold
       const t = E.label(k); x.font = `600 ${10 * d}px ui-monospace, monospace`; const tw = x.measureText(t).width + 8 * d, tx = clamp(p[1] + 6 * d, 2 * d, w - tw - 2 * d), ty = 3 * d;
       x.fillStyle = 'rgba(0,0,0,.75)'; x.fillRect(tx, ty, tw, 13 * d); x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText(t, tx + 4 * d, ty + 10 * d);
     },

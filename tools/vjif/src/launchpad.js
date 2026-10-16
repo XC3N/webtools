@@ -98,9 +98,12 @@ function lpLayout(){
   const PRE_ORD = [6, 7, 8, 3, 4, 5, 0, 1, 2];        // effect presets in numpad order (they live on the numpad with Caps): 7 8 9 4 5 6 1 2, then 3 on the right-hand button
   for (let k = 0; k < 8; k++){ map.push({ key: note(2, 1 + k), t: 'trans', i: k }); map.push({ key: note(1, 1 + k), t: 'fx', i: NFX + PRE_ORD[k] }); }
   map.push({ key: cc(29), t: 'trans', i: 8 }, { key: cc(19), t: 'fx', i: NFX + PRE_ORD[8] });
-  map.push({ key: cc(91), t: 'scbank', i: -1 }, { key: cc(92), t: 'scbank', i: 1 }, { key: cc(93), t: 'padbank', i: 0 }, { key: cc(94), t: 'padbank', i: 1 });   // the arrows (0.95): ▲ ▼ scene banks, ◀ ▶ scene pad banks
-  const keys = new Set(map.map(m => m.key));
-  midiCtl.map = midiCtl.map.filter(m => !keys.has(m.key)).concat(map); saveMidiCtl(); renderMidiCtl(); markLearn();
+  // the arrows (0.99): ◀ ▶ step the scene banks, ▲ ▼ show scene pads bank 1 / 2. The Pro MK3 has ◀ ▶ at the top left
+  // (91, 92: 93 / 94 are Session and Note) and ▲ ▼ down its left side (80, 70); the X and the Mini have ▲ ▼ ◀ ▶ as 91–94
+  const pro = !lp.name || /Pro/.test(lp.name), [L, R, U, D] = pro ? [91, 92, 80, 70] : [93, 94, 91, 92];
+  map.push({ key: cc(L), t: 'scbank', i: -1 }, { key: cc(R), t: 'scbank', i: 1 }, { key: cc(U), t: 'padbank', i: 0 }, { key: cc(D), t: 'padbank', i: 1 });
+  const keys = new Set(map.map(m => m.key)), was = new Set([91, 92, 93, 94, 80, 70].map(cc));
+  midiCtl.map = midiCtl.map.filter(m => !keys.has(m.key) && !(was.has(m.key) && (m.t === 'scbank' || m.t === 'padbank'))).concat(map); saveMidiCtl(); renderMidiCtl(); markLearn();   // (the arrows' earlier places are cleared)
   if (!midiAccess) getMidi().then(() => { bindCtlInputs(); fillMidi(); renderMidiCtl(); }).catch(() => {});
   toast2(`Launchpad layout loaded: ${map.length} pads and buttons mapped (your other mappings are kept)`);
 }
@@ -113,7 +116,7 @@ function lpShort(m){
     case 'fx': return m.i < NFX ? FX_LABELS[m.i] : 'P' + (m.i - NFX + 1); case 'layer': return 'L' + (m.i + 1);
     case 'opacity': return 'L' + (m.i + 1) + '%'; case 'amount': return 'amt';
     case 'black': return 'BLK'; case 'freeze': return 'FRZ'; case 'tap': return 'TAP'; case 'sync': return 'SYNC'; case 'brb': return 'BRB';
-    case 'padbank': return 'BK' + (m.i + 1); case 'scbank': return m.i < 0 ? 'SC▲' : 'SC▼';
+    case 'padbank': return 'BK' + (m.i + 1); case 'scbank': return m.i < 0 ? 'SC◀' : 'SC▶';
   }
   return '?';
 }

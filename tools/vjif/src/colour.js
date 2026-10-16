@@ -11,7 +11,7 @@ const fxGL = (() => {
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 pal[64]; uniform float palN, palD; uniform vec3 swF[8], swT[8]; uniform float swR[8], swK[8]; uniform int swN; varying vec2 uv;
+      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 pal[64]; uniform float palN, palD, palLum; uniform vec3 swF[8], swT[8]; uniform float swR[8], swK[8]; uniform int swN; varying vec2 uv;
       void main(){
         vec4 px = texture2D(tex, uv);
         if (px.a == 0.0){ gl_FragColor = vec4(0.0); return; }
@@ -36,6 +36,9 @@ const fxGL = (() => {
           vec3 W = vec3(0.55, 0.75, 0.35), best = pal[0], sec = pal[0]; float bd = 1e9, sd = 1e9;
           for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = (o - pal[i]) * W; float e = dot(d, d);
             if (e < bd){ sd = bd; sec = best; bd = e; best = pal[i]; } else if (e < sd){ sd = e; sec = pal[i]; } }
+          if (palLum > 0.5){                         // the Game Boys: four shades by brightness, evenly (0.99: the nearest colour lost most of the picture on GB Light, whose greens are all dark)
+            float y = clamp(dot(o, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, k = floor(y), k2 = clamp(y - k < 0.5 ? k - 1.0 : k + 1.0, 0.0, palN - 1.0);
+            for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == k) best = pal[i]; if (float(i) == k2) sec = pal[i]; } }
           if (palD > 0.001 && palN > 1.5){ vec3 ab = (sec - best) * W; float t = clamp(dot((o - best) * W, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
             t = clamp((t - 0.5) / palD + 0.5, 0.0, 1.0) * step(0.001, t);
             vec2 q = floor(gl_FragCoord.xy); float b2 = fract(q.x / 2.0 + q.y * q.y * 0.75), b4 = fract(floor(q.x / 2.0) / 2.0 + floor(q.y / 2.0) * floor(q.y / 2.0) * 0.75) * 0.25 + b2;
@@ -56,7 +59,7 @@ const fxGL = (() => {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);            // mask rows are 1 byte per pixel, any width
-    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swR', 'swK', 'swN', 'pal', 'palN', 'palD'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swR', 'swK', 'swN', 'pal', 'palN', 'palD', 'palLum'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
     const swF = new Float32Array(24), swT = new Float32Array(24), swR = new Float32Array(8), swK = new Float32Array(8);
     gl.uniform1i(U.tex, 0); gl.uniform1i(U.mtex, 1);
     let lost = false;
@@ -73,7 +76,7 @@ const fxGL = (() => {
         gl.uniform3f(U.key, p.kr, p.kg, p.kb); gl.uniform1f(U.t0, p.t0); gl.uniform1f(U.t1sq, p.t1sq); gl.uniform1f(U.span, p.span);
         gl.uniform1f(U.H, p.H); gl.uniform1f(U.S, p.S); gl.uniform1f(U.V, p.V); gl.uniform1i(U.doKey, p.doKey); gl.uniform1i(U.doHsv, p.doHsv);
         const sw = p.sw || []; swF.fill(0); swT.fill(0); swR.fill(1.5); swK.fill(0); sw.forEach((x, i) => { swF.set(x.slice(0, 3), i * 3); swT.set(x.slice(3, 6), i * 3); swR[i] = x[6] || 1.5; swK[i] = x[7] ? 1 : 0; });
-        if (p.palF){ gl.uniform3fv(U.pal, p.palF); gl.uniform1f(U.palN, p.palN); gl.uniform1f(U.palD, p.palD); } else gl.uniform1f(U.palN, 0);
+        if (p.palF){ gl.uniform3fv(U.pal, p.palF); gl.uniform1f(U.palN, p.palN); gl.uniform1f(U.palD, p.palD); gl.uniform1f(U.palLum, p.palLum || 0); } else gl.uniform1f(U.palN, 0);
         gl.uniform3fv(U.swF, swF); gl.uniform3fv(U.swT, swT); gl.uniform1fv(U.swR, swR); gl.uniform1fv(U.swK, swK); gl.uniform1i(U.swN, sw.length);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -147,6 +150,7 @@ function fxColor(c, p){
   if (p.doHsv){ const o = hsvShift(sr, sg, sb, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
   if (p.palN){ const R = (rgb & 255) / 255, G = ((rgb >> 8) & 255) / 255, B = ((rgb >> 16) & 255) / 255; let bd = 1e9, bi = 0;   // palette: the nearest colour (no dither on this path)
     for (let i = 0; i < p.palN; i++){ const dr = (R - p.palF[i * 3]) * 0.55, dg = (G - p.palF[i * 3 + 1]) * 0.75, db = (B - p.palF[i * 3 + 2]) * 0.35, e = dr * dr + dg * dg + db * db; if (e < bd){ bd = e; bi = i; } }
+    if (p.palLum) bi = Math.min(p.palN - 1, Math.floor((0.299 * R + 0.587 * G + 0.114 * B) * p.palN));   // the Game Boys: by brightness (as the shader)
     rgb = Math.round(p.palF[bi * 3] * 255) | (Math.round(p.palF[bi * 3 + 1] * 255) << 8) | (Math.round(p.palF[bi * 3 + 2] * 255) << 16); }
   return f * 16777216 + rgb;
 }
@@ -192,7 +196,7 @@ function fxParams(g, hsv = hsvOf(g)){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
            region: g.key.region || 'all', seed: g.key.seed || null,
-           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palN: FX_PALS[g.pal.i].c.length, palD: g.pal.d || 0 } : {}), sw: (swapOn(g) ? g.swap.filter(x => !x.off) : []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palN: FX_PALS[g.pal.i].c.length, palD: g.pal.d || 0, palLum: palGB(g.pal.i) ? 1 : 0 } : {}), sw: (swapOn(g) ? g.swap.filter(x => !x.off) : []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
 }
 // The worker gets the same functions as source text, so both paths run identical code.
 const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels].map(f => f.toString()).join('\n') + `

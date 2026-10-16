@@ -21,10 +21,10 @@ async def main():
       const a = effClip(c, g).flipX; return [a, document.querySelectorAll('#aTgt button').length, skFmt(0.5), skFmt(0.25), skFmt(0.8)]; })()""")
     print('flip / skew', fl); assert fl[1] == 12 and fl[2:] == ['0%', '-50%', '+60%'], fl
     # Launchpad arrows
-    lpm = await pg.evaluate("""(() => { lpLayout(); const m = k => midiCtl.map.find(x => x.key === k); const r = [m('c0.91').t + m('c0.91').i, m('c0.92').t + m('c0.92').i, m('c0.93').t + m('c0.93').i, m('c0.94').t + m('c0.94').i];
-      onCtl({ data: [0xB0, 94, 127] }); const pb = padBank; onCtl({ data: [0xB0, 94, 0] }); onCtl({ data: [0xB0, 92, 127] }); const sb = scBank; onCtl({ data: [0xB0, 92, 0] }); onCtl({ data: [0xB0, 91, 127] }); onCtl({ data: [0xB0, 91, 0] });
-      onCtl({ data: [0xB0, 93, 127] }); onCtl({ data: [0xB0, 93, 0] }); return [r.join(','), pb, sb, scBank, padBank]; })()""")
-    print('launchpad', lpm); assert lpm == ['scbank-1,scbank1,padbank0,padbank1', 1, 1, 0, 0], lpm
+    lpm = await pg.evaluate("""(() => { midiCtl.map.push({ key: 'c0.93', t: 'padbank', i: 0 }); lpLayout(); const m = k => midiCtl.map.find(x => x.key === k), f = x => x ? x.t + x.i : '-'; const r = ['c0.91', 'c0.92', 'c0.80', 'c0.70', 'c0.93', 'c0.94'].map(k => f(m(k)));
+      onCtl({ data: [0xB0, 70, 127] }); const pb = padBank; onCtl({ data: [0xB0, 70, 0] }); onCtl({ data: [0xB0, 92, 127] }); const sb = scBank; onCtl({ data: [0xB0, 92, 0] }); onCtl({ data: [0xB0, 91, 127] }); onCtl({ data: [0xB0, 91, 0] });
+      onCtl({ data: [0xB0, 80, 127] }); onCtl({ data: [0xB0, 80, 0] }); return [r.join(','), pb, sb, scBank, padBank]; })()""")   # (0.99: the Pro MK3: ◀ ▶ 91 / 92 scene banks, ▲ ▼ 80 / 70 pad banks; Session / Note cleared)
+    print('launchpad', lpm); assert lpm == ['scbank-1,scbank1,padbank0,padbank1,-,-', 1, 1, 0, 0], lpm
     # Reset / Clear switch the feature off; Shadow has a Reset
     rs = await pg.evaluate("""(() => { selectPad(0); const g = pads[0].gif; g.hsv = { h: 30, s: 1, v: 1 }; g.shadow = { ...g.shadow, on: true, blur: 40 }; syncGifUI();
       $('#hReset').click(); $('#shReset').click(); return [g.hsv.off, g.hsv.h, g.shadow.on, g.shadow.blur]; })()""")
@@ -38,8 +38,10 @@ async def main():
     ex = await pg.evaluate("""(async () => { window.showSaveFilePicker = undefined; let got = null; const o = saveFile; saveFile = (bl, n) => { got = [bl, n]; }; await exportScene(); saveFile = o;
       const f = new File([got[0]], got[1]); const n0 = sceneCount(1); await importScene(f); const k = [...Array(N_SCENES).keys()].find(k => k !== sceneIdx && sceneCount(k));
       const sc = scenes[k]; const r = [got[1].endsWith('.vjscene'), n0, k, sc.layers.reduce((a, L) => a + L.clips.length, 0), sc.pads.filter(Boolean).length, sc.layers.some(L => !!L.mask)];
-      undo(); r.push(sceneCount(k)); return r; })()""")
-    print('scene file', ex); assert ex[0] and ex[1] == 0 and ex[2] >= 0 and ex[3] == 2 and ex[4] == 2 and ex[6] == 0, ex
+      undo(); r.push(sceneCount(k));
+      const s0 = sceneIdx, e = [...Array(N_SCENES).keys()].find(k => k !== sceneIdx && !sceneCount(k) && !scenePads(k)); gotoScene(e, clock.beat, true); await importScene(f);   // 0.99: into the scene you're on when it's empty
+      r.push(sceneIdx === e, layers.reduce((a, L) => a + L.clips.length, 0), liveName, got[1]); undo(); r.push(layers.reduce((a, L) => a + L.clips.length, 0)); gotoScene(s0, clock.beat, true); return r; })()""")
+    print('scene file', ex); assert ex[0] and ex[1] == 0 and ex[2] >= 0 and ex[3] == 2 and ex[4] == 2 and ex[6] == 0 and ex[7:10] == [True, 2, ''] and ex[10].startswith('scene-') and ex[11] == 0, ex
     # the panel picture: frame 0 whatever the sliders say
     pp = await pg.evaluate("""(() => { selectPad(1); const g = pads[1].gif; const sig = () => $('#gPrev').toDataURL().length; const a = sig(); $('#gStart').value = Math.min(3, g.src.length - 1); $('#gStart').dispatchEvent(new Event('input', { bubbles: true })); return [a === sig(), g.startF > 0]; })()""")
     print('panel picture', pp); assert pp == [True, True], pp

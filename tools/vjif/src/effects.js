@@ -76,6 +76,9 @@ const FX_PALS = [
   ['ZX Spectrum', 'Sinclair ZX Spectrum: black, then blue, red, magenta, green, cyan, yellow, white, plain and bright', '000000 0000d7 d70000 d700d7 00d700 00d7d7 d7d700 d7d7d7 0000ff ff0000 ff00ff 00ff00 00ffff ffff00 ffffff'],
   ['Grey', 'Shades of grey (64 steps)', Array.from({ length: 64 }, (_, i) => Math.round(i * 255 / 63).toString(16).padStart(2, '0').repeat(3)).join(' ')],
   ['1-bit', 'Black and white only: hard (Dither off) or dotted like an old Mac screen (Dither › Bayer)', '000000 ffffff'],
+  // 0.99: fewer greys, so Dither shows (with 64 steps there's next to nothing between two shades to dither). Added at the end: saved palettes keep their numbers
+  ['Grey 16', 'Sixteen shades of grey: Dither shows as fine grain', Array.from({ length: 16 }, (_, i) => Math.round(i * 255 / 15).toString(16).padStart(2, '0').repeat(3)).join(' ')],
+  ['Grey 4', 'Four shades of grey, like a 2-bit screen: Dither shows as clear patterns', '000000 555555 aaaaaa ffffff'],
 ].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)); return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0) }; });
 // Colour › Palette: how the in-between shades are drawn (the Size row stands in for it). Scatter: noise added before
 // snapping (soft, many colours touch). Ordered: each pixel picks one of the two nearest palette colours by a 4×4 Bayer
@@ -94,7 +97,7 @@ const FX_OVS = [[0, 'Off'], [2, 'On']];   // Shake › Edges (one toggle; 1 = th
 // the order palettes are offered in: by year (CGA 1981, ZX Spectrum and C64 1982, NES 1983, EGA 1984, Game Boy 1989, Pocket 1996,
 // Light 1998). Sets keep a palette's index in FX_PALS, which never changes, so this order is only for the menus and the slider.
 const PAL_GREY = FX_PALS.findIndex(P => P.n === 'Grey'), PAL_1BIT = FX_PALS.findIndex(P => P.n === '1-bit');
-const PAL_ORDER = ['Grey', '1-bit', 'CGA 1', 'CGA 2', 'CGA 3', 'ZX Spectrum', 'C64', 'NES', 'EGA', 'GB', 'GB Pocket', 'GB Light'].map(n => FX_PALS.findIndex(P => P.n === n));
+const PAL_ORDER = ['Grey', 'Grey 16', 'Grey 4', '1-bit', 'CGA 1', 'CGA 2', 'CGA 3', 'ZX Spectrum', 'C64', 'NES', 'EGA', 'GB', 'GB Pocket', 'GB Light'].map(n => FX_PALS.findIndex(P => P.n === n));
 // (run once the palettes exist: a Mono pad's migration names them)
 if (userDef && (userDef.fx || userDef.fxPre) && !(userDef.fxOrd >= 3)){ fxRemapDefs(userDef); Prefs.set('vjif-userdef', JSON.stringify(userDef)); }
 { const o = Prefs.json('vjif-midi'); if (o && !(o.fxOrd >= 3) && midiCtl.map.length){ midiCtl.map.forEach(m => { if (m.t === 'fx'){ if (!o.fxOrd) m.i = fxRemapIdx(m.i); m.i = fxIdx3(m.i); } }); saveMidiCtl(); } }   // MIDI mappings of effect pads
@@ -255,7 +258,7 @@ function tgtToggle(t, li, solo){               // a click on a layer button: in 
 }
 // 0.94 (ID-185): an effect setting's own LFO (C.mod.amt / rate / size: { on, shape, per, lo, hi }); Rate and Size swing over
 // their slider steps (FX_RATES / FX_SIZES indices), Amount over its value
-const fxModV = (M, b) => M.lo + (M.hi - M.lo) * lfoShape({ shape: M.shape || 'sine', sk: 0.5 }, b / (M.per || 4), 7);
+const fxModV = (M, b) => M.lo + (M.hi - M.lo) * lfoShape({ shape: M.shape || 'sine', sk: M.sk ?? 0.5, inv: !!M.inv }, lfoPosT({ per: M.per || 4, ph: M.ph || 0, gap: M.gap || 0 }, b), 7);   // (0.99: Phase, Skew, Invert, Gap as the GIF LFOs)
 const fxMod = (C, k, b) => C && C.mod && C.mod[k] && C.mod[k].on ? fxModV(C.mod[k], b) : null;
 const modAmt = (C, b) => { const v = fxMod(C, 'amt', b); return v === null ? C.amt : clamp(v, 0.05, 1); };
 const modRate = (C, b) => { const v = fxMod(C, 'rate', b); return v === null ? C.rate : FX_RATES[clamp(Math.round(v), 0, FX_RATES.length - 1)][0]; };
@@ -298,7 +301,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], codec: lv[CD], cdS: styleMask(CD, style[CD]), cseed: st(CD) * 7.13 % 100, cdSz: size[CD],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s; U.wobZ = (ovs && ovs[WO] === 0 ? 0 : (S(WO) === 0 ? 0.04 : 0.026)) * lv[WO];
@@ -346,7 +349,7 @@ function makePost(){
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time, beat;
-      uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP, palDot,
+      uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP, palDot, palLum,
                     glitch, glS, gseed, glSz, codec, cdS, cseed, cdSz, dgs, rgb, rgbS, crtSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, shakeZ, wobZ;
       uniform float glA[12], rgA[12], cdA[12];   // Glitch / CRT: each stacked style's own Amount, as a share of the effect's (0.92)
       uniform vec3 shake; uniform vec3 pal[64]; uniform float palN; varying vec2 uv;
@@ -406,6 +409,9 @@ ${FX_GLSL}
         vec3 W = vec3(0.55, 0.75, 0.35), best = pal[0], sec = pal[0]; float bd = 1e9, sd = 1e9;
         for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = (c - pal[i]) * W; float e = dot(d, d);
           if (e < bd){ sd = bd; sec = best; bd = e; best = pal[i]; } else if (e < sd){ sd = e; sec = pal[i]; } }
+        if (palLum > 0.5){                         // the Game Boys: four shades by brightness, evenly (0.99: the nearest colour lost most of the picture on GB Light, whose greens are all dark)
+          float y = clamp(dot(c, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, k = floor(y), k2 = clamp(y - k < 0.5 ? k - 1.0 : k + 1.0, 0.0, palN - 1.0);
+          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == k) best = pal[i]; if (float(i) == k2) sec = pal[i]; } }
         if (palD < 0.001 || palP < 0.5 || palN < 1.5) return best;
         vec3 ab = (sec - best) * W; float t = clamp(dot((c - best) * W, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);   // how far c sits from the nearest towards the second
         t = clamp((t - 0.5) / palD + 0.5, 0.0, 1.0) * step(0.001, t);   // less Dither: the pattern only where c is near halfway
@@ -613,7 +619,7 @@ ${FX_GLSL}
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const PX_NAMES = new Set(['crtSz', 'pixSize', 'glSz', 'cdSz']);   // (palDot is worked out in real pixels: lcdDot)   // sizes given in canvas pixels
-    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP', 'palDot',
+    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP', 'palDot', 'palLum',
                    'glitch', 'glS', 'gseed', 'glSz', 'codec', 'cdS', 'cseed', 'cdSz', 'dgs', 'rgb', 'rgbS', 'crtSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'shakeZ', 'wobZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'glA', 'rgA', 'cdA', 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));

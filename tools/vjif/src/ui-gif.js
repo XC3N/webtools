@@ -228,7 +228,7 @@ syncAEnvView();
 let aEnvDrag = null;
 const aEnvGeo = (A, cv, span) => { const d = devicePixelRatio || 1, w = cv.width, h = cv.height, pad = 5 * d, a = A.ea ?? 0, dd = A.ed ?? 4, r = A.er ?? 1, s = A.es ?? 0, rs = Math.max(a + dd, 1);
   span = span || Math.max(a + dd + 1 + r, 1) * 1.1; const X = b => b / span * w, Y = v => h - pad - v * (h - 2 * pad);
-  return { span, d, w, h, pad, rs, pts: [['a', X(a), Y(1)], ['d', X(a + dd), Y(s)], ['r', X(rs + r), Y(0)]] }; };
+  return { span, d, w, h, pad, rs, pts: [['a', X(a), Y(1)], ['d', X(a + dd), Y(s)], ['r', X(rs + r), Y(0)]], segs: [['s', X(a + dd), X(rs), Y(s)]] }; };
 const aEnvOn = () => { const g = curGif(), A = g && g.lfo[aSel]; return !envSliders && A && (A.em || 'off') !== 'off' ? A : null; };
 const AENV_SCOPE_TIP = $('#aScope').title;
 const envNear = t => ENV_OPTS.reduce((p, o) => Math.abs(o[0] - t) < Math.abs(p[0] - t) ? o : p)[0];   // a time in beats, on the envelope steps
@@ -236,14 +236,15 @@ const envName = v => ENV_OPTS[optIdx(ENV_OPTS, v)][1];
 const aEnvEd = envEditor($('#aScope'), {   // GIF › Auto › Envelope as a graph (0.89: the shared editor)
   on: () => !!aEnvOn(),
   pts: () => aEnvGeo(aEnvOn(), $('#aScope'), aEnvDrag && aEnvDrag.span).pts,
+  segs: () => aEnvGeo(aEnvOn(), $('#aScope'), aEnvDrag && aEnvDrag.span).segs,
   reach: () => 14 * (devicePixelRatio || 1),
   begin: k => { aEnvDrag = { k, span: aEnvGeo(aEnvOn(), $('#aScope')).span }; },
   move: (k, px, py) => { const G = aEnvGeo(aEnvOn(), $('#aScope'), aEnvDrag.span), b = px / G.w * G.span, v = clamp(1 - (py - G.pad) / (G.h - 2 * G.pad), 0, 1);
-    editLfo(A => { if (k === 'a') A.ea = envNear(b); else if (k === 'd'){ A.ed = envNear(b - (A.ea ?? 0)); A.es = Math.round(v * 20) / 20; } else A.er = envNear(b - G.rs); }); },
+    editLfo(A => { if (k === 's') A.es = Math.round(v * 20) / 20; else if (k === 'a') A.ea = envNear(b); else if (k === 'd'){ A.ed = envNear(b - (A.ea ?? 0)); A.es = Math.round(v * 20) / 20; } else A.er = envNear(b - G.rs); }); },
   end: () => { aEnvDrag = null; },
-  reset: k => editLfo(B => { if (k === 'a') B.ea = 0; else if (k === 'd'){ B.ed = 4; B.es = 0; } else B.er = 1; }),
-  tip: { a: envTip('a', ', on each pad hit'), d: envTip('d', ' while the pad is held'), r: envTip('r', ', once the pad is let go') },
-  label: k => { const A = aEnvOn(); return k === 'a' ? `Attack ${envName(A.ea ?? 0)}` : k === 'd' ? `Decay ${envName(A.ed ?? 4)} · Sustain ${Math.round((A.es ?? 0) * 100)}%` : `Release ${envName(A.er ?? 1)}`; },
+  reset: k => editLfo(B => { if (k === 's') B.es = 0; else if (k === 'a') B.ea = 0; else if (k === 'd'){ B.ed = 4; B.es = 0; } else B.er = 1; }),
+  tip: { a: envTip('a', ', on each pad hit'), d: envTip('d', ' while the pad is held'), r: envTip('r', ', once the pad is let go'), s: 'Sustain: drag the line up or down (held while the pad is held) · double-click: 0' },
+  label: k => { const A = aEnvOn(); return k === 's' ? `Sustain ${Math.round((A.es ?? 0) * 100)}%` : k === 'a' ? `Attack ${envName(A.ea ?? 0)}` : k === 'd' ? `Decay ${envName(A.ed ?? 4)} · Sustain ${Math.round((A.es ?? 0) * 100)}%` : `Release ${envName(A.er ?? 1)}`; },
   idle: () => AENV_SCOPE_TIP,
   redraw: () => { const g = curGif(); if (g) drawLfoScope(g); },
 });
@@ -332,8 +333,13 @@ function syncRangeUI(g){
   const F = g.src.length;
   [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => { const el = $(id); el.max = F - 1; el.value = g[k]; el.nextElementSibling.textContent = g[k]; });
 }
+// the panel's picture: as it's drawn (its key, colour, palette, swaps) or, right-click (0.99), as loaded; remembered
+let gPrevRaw = Prefs.get('vjif-gprevraw') === '1';
+const gPrevUI = () => { const c = $('#gPrev'); c.classList.toggle('raw', gPrevRaw); c.title = (gPrevRaw ? 'The selected GIF as loaded (its first frame, no key, colour or palette)' : 'The selected GIF as drawn: its first frame with its key, colour, palette and swaps (not its GIF effects)') + ' · right-click: ' + (gPrevRaw ? 'as drawn' : 'as loaded'); };
+$('#gPrev').addEventListener('contextmenu', e => { e.preventDefault(); gPrevRaw = !gPrevRaw; Prefs.set('vjif-gprevraw', gPrevRaw ? '1' : '0'); gPrevUI(); drawGifThumb(); });
+gPrevUI();
 function drawPrev(g, f, top = true){   // Play › Frames' picture: frame f; the panel's picture at the top right: always the first frame (0.95: the sliders don't move it)
-  for (const c of top ? [$('#gPrev'), $('#gPrevPlay')] : [$('#gPrevPlay')]){ const img = fxImage(g, c.id === 'gPrev' ? 0 : f), x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height);
+  for (const c of top ? [$('#gPrev'), $('#gPrevPlay')] : [$('#gPrevPlay')]){ const img = c.id === 'gPrev' && gPrevRaw ? g.src[0] : fxImage(g, c.id === 'gPrev' ? 0 : f), x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height);
     const s = Math.min(c.width / img.width, c.height / img.height); x.drawImage(img, (c.width - img.width*s)/2, (c.height - img.height*s)/2, img.width*s, img.height*s); }
 }
 [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => {
@@ -473,21 +479,28 @@ const gfxDef = id => ({ on: false, amt: 0.8, style: GFX_STYLES(id)[0][0] });
 function buildGfx(){
   gfxBuilt = true;
   $('#gfxList').innerHTML = GFX_IDS.map(id => { const d = FX_DEFS[FXI[id]];
-    return `<div class="sub gfxh" data-id="${id}"><span title="${esc(d.title)}">${esc(d.name)}</span><span class="line"></span><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
+    return `<div class="sub gfxh" data-id="${id}"><span title="${esc(d.title)}">${fxIcon(id)}${esc(d.name)}</span><span class="line"></span><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
       <div class="gfxrow" data-id="${id}"><div class="seg" data-gst="${id}">${GFX_STYLES(id).map(s => `<button data-v="${s[0]}" title="${esc(s[1])}: ${esc(s[2])}">${esc(STYLE_BTN[s[0]] || STYLE_SHORT[s[0]] || s[1])}</button>`).join('')}</div>
       <input type="range" min="0.05" max="1" step="0.01" data-def="0.8" data-gamt="${id}" title="Amount"><output></output></div>`; }).join('');
   const edit = (id, f) => { const g = curGif(); if (!g) return; const x = { ...gfxDef(id), ...((g.gfx && g.gfx[id]) || {}) }; f(x); g.gfx = { ...(g.gfx || {}), [id]: x };   /* a new object each time: the redraw check keys on it */ redraw.all = true; syncGfxUI(g); };
   $('#gfxList').addEventListener('change', e => { const id = e.target.dataset.gon; if (id) edit(id, x => x.on = e.target.checked); });
   $('#gfxList').addEventListener('input', e => { const id = e.target.dataset.gamt; if (id) edit(id, x => { x.amt = +e.target.value; x.on = true; }); });
-  $('#gfxList').addEventListener('click', e => { const b = e.target.closest('[data-gst] button'); if (!b) return; const id = b.closest('[data-gst]').dataset.gst; edit(id, x => { x.style = b.dataset.v; x.on = true; }); });
+  // a style: switches the effect on with it (0.99: the row of an effect that was off ignored clicks). Glitch, Codec and CRT
+  // stack like the effect pads: a click takes a style in or out, right-click solos it, right-click again brings the stack back
+  const soloWas = {};
+  $('#gfxList').addEventListener('click', e => { const b = e.target.closest('[data-gst] button'); if (!b) return; const id = b.closest('[data-gst]').dataset.gst, i = FXI[id], v = b.dataset.v;
+    edit(id, x => { if (!x.on){ x.on = true; if (!styleParts(i, x.style).includes(v)) x.style = v; } else x.style = styleToggle(i, x.style, v); delete soloWas[id]; }); });
+  $('#gfxList').addEventListener('contextmenu', e => { const b = e.target.closest('[data-gst] button'); if (!b) return; e.preventDefault(); const id = b.closest('[data-gst]').dataset.gst, i = FXI[id], v = b.dataset.v;
+    edit(id, x => { x.on = true; if (!FX_MULTI[id]){ x.style = v; return; } const cur = styleNorm(i, x.style);
+      if (cur === v && soloWas[id]){ x.style = soloWas[id]; delete soloWas[id]; } else { if (cur !== v) soloWas[id] = cur; x.style = v; } }); });
   $('#gfxReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.gfx; redraw.all = true; syncGfxUI(g); });
 }
 function syncGfxUI(g){
   if (!gfxReady || !g) return; if (!gfxBuilt) buildGfx();
   for (const id of GFX_IDS){ const x = { ...gfxDef(id), ...((g.gfx && g.gfx[id]) || {}) };
     $(`[data-gon="${id}"]`).checked = !!x.on;
-    $(`[data-gst="${id}"]`).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === x.style));
+    const P = styleParts(FXI[id], x.style); $(`[data-gst="${id}"]`).querySelectorAll('button').forEach(b => b.classList.toggle('on', P.includes(b.dataset.v)));
     const r = $(`[data-gamt="${id}"]`); r.value = x.amt; r.nextElementSibling.textContent = Math.round(x.amt * 100) + '%';
-    document.querySelector(`.gfxrow[data-id="${id}"]`).classList.toggle('dimmed', !x.on); }
+    document.querySelector(`.gfxrow[data-id="${id}"]`).classList.toggle('off', !x.on); }   // (shown faint, but still takes clicks)
   $('#gTabs [data-v=gfx]').classList.toggle('act', gfxOn(g));
 }

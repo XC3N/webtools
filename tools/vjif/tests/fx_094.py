@@ -32,9 +32,16 @@ async def main():
     await pg.evaluate("$('#fxLfoPer').value = PER_OPTS.findIndex(o => o[0] === 1); $('#fxLfoPer').dispatchEvent(new Event('input', { bubbles: true }))")
     pr = await pg.evaluate("[fxCfg[FXI.pixel].mod.amt.per, $('#fxLfoPer').nextElementSibling.textContent, JSON.parse(snapshot()).fx[FXI.pixel].mod.amt.per]")
     print('per', pr); assert pr == [1, '1/4', 1], pr
+    # 0.99: Invert, Phase, Skew, Gap (as the GIF LFOs); labels inside the sliders
+    await pg.click('#fxLfoInv'); i0 = await pg.evaluate("Math.round(modAmt(fxCfg[FXI.pixel], 0) * 100)")
+    await pg.evaluate("$('#fxLfoPh').value = 0.5; $('#fxLfoPh').dispatchEvent(new Event('input', { bubbles: true })); $('#fxLfoGap').value = GAP_OPTS.findIndex(o => o[0] === 1); $('#fxLfoGap').dispatchEvent(new Event('input', { bubbles: true }))")
+    ex = await pg.evaluate("[Math.round(modAmt(fxCfg[FXI.pixel], 0) * 100), $('#fxLfoPh').nextElementSibling.textContent, $('#fxLfoGap').nextElementSibling.textContent, JSON.parse(snapshot()).fx[FXI.pixel].mod.amt.gap, [...document.querySelectorAll('#fxLfoSl label')].map(l => l.textContent).join(',')]")
+    print('invert / phase / gap', i0, ex); assert i0 == 100 and ex == [5, '180°', '1/4', 1, 'Cycle,Min value,Max value,Phase,Skew,Gap'], (i0, ex)
     await pg.evaluate("$('#fxRateRow').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))"); rr = await pg.evaluate("[fxModK, $('#fxLfoT').textContent]")   # Pixel has no Rate: refused
     await pg.click('#fxLfoBack'); bk = await pg.evaluate("$('#fxEdit .envrow').classList.contains('lfo')")
     print('rate / back', rr, bk); assert rr == ['amt', 'LFO · Amount'] and bk is False, (rr, bk)
+    await pg.click('#envLfo'); ev = await pg.evaluate("[fxModK, $('#fxEdit .envrow').classList.contains('lfo')]"); await pg.click('#fxLfoBack')   # the envelope's LFO view button
+    print('lfo view', ev); assert ev == ['amt', True], ev
     rt = await pg.evaluate("[FXI.glitch, FXI.codec, FXI.shake].map(i => { selectFx(i); return getComputedStyle($('#fxRateRow')).display; })")   # (0.93 hid Rate wherever Size showed)
     print('rate rows', rt); assert 'none' not in rt, rt
     # LFO Cycle steps, Rec › Source

@@ -41,7 +41,7 @@ const MUS_IC_PLAY = $('#musPlay').innerHTML, MUS_IC_PAUSE = '<svg viewBox="0 0 1
 // the player's settings stay in this browser: loop, level, With Sync
 const musOpt = Prefs.json('vjif-mus', {});
 const musSave = () => Prefs.setJson('vjif-mus', { loop: mus.el.loop, vol: +$('#musVol').value, sync: $('#musSync').checked });
-mus.el.loop = !!musOpt.loop; if (musOpt.vol > 0.02) $('#musVol').value = musOpt.vol;   // a level saved at 0 (the old upright slider could get stuck there) starts at the default if (musOpt.sync != null) $('#musSync').checked = musOpt.sync;
+mus.el.loop = !!musOpt.loop; if (musOpt.vol > 0.02) $('#musVol').value = musOpt.vol;   /* a level saved at 0 (the old upright slider could get stuck there) starts at the default */ if (musOpt.sync != null) $('#musSync').checked = musOpt.sync;   // (0.99: this was inside the comment, so Sync on play didn't come back after a reload)
 $('#musLoop').classList.toggle('on', mus.el.loop);
 $('#musEject').addEventListener('click', () => $('#musFile').click());
 $('#musStop').addEventListener('click', () => { mus.el.pause(); mus.el.currentTime = 0; musUI(); });

@@ -326,7 +326,7 @@ async function exportScene(i = sceneIdx){
   if (!live && !sc) return toast(`Scene ${i + 1} is empty`);
   const P = (live ? scenePadGifs() : sc.pads).map((g, k) => isGlobalPad(k) ? null : g), Ls = (live ? layers : sc.layers).map(L => L.i === GLOBAL_LAYER ? Object.assign(emptyLayer(), { i: L.i }) : L);
   if (!P.some(Boolean)) return toast(`Scene ${i + 1} has no GIFs`);
-  const name = (live ? liveName : sc.name) || `Scene ${i + 1}`, files = [], pl = [], enc = new TextEncoder();
+  const name = (live ? liveName : sc.name) || '', files = []   /* (0.99: an unnamed scene stays unnamed: only the file gets a number) */, pl = [], enc = new TextEncoder();
   for (const m of new Set(P.filter(Boolean).map(g => g.media))){
     const rec = await store.get('gif:' + m.hash); if (!rec) continue;
     const base = (rec.name || 'gif').replace(/\.[a-z0-9]+$/i, '').replace(/[^\w.-]+/g, '_').slice(0, 60);
@@ -335,7 +335,7 @@ async function exportScene(i = sceneIdx){
   }
   const ss = { pads: serPads(P), layers: serLayers(Ls), name, fxOn: live ? (fxLocal ? latchedNow() : null) : sc.fxOn || null };
   files.unshift({ name: 'scene.json', data: enc.encode(JSON.stringify({ app: 'VJif', kind: 'scene', format: 1, v: SNAP_V, exported: new Date().toISOString(), pool: pl, scene: ss }, null, 1)) });
-  const blob = buildZip(files), fn = name.replace(/[^\w .-]+/g, '_').trim() + '.vjscene';
+  const blob = buildZip(files), fn = (name.replace(/[^\w .-]+/g, '_').trim() || `scene-${i + 1}`) + '.vjscene';
   if (window.showSaveFilePicker){
     try { const h = await showSaveFilePicker({ suggestedName: fn, types: [{ description: 'VJif scene', accept: { 'application/zip': ['.vjscene'] } }] });
       const w = await h.createWritable(); await w.write(blob); await w.close(); return toast2(`Exported ${h.name}`); }
@@ -349,10 +349,13 @@ async function importScene(file, at = -1){
     const zf = await readZip(file), meta = zf.get('scene.json'); if (!meta) throw new Error('no scene.json inside');
     const info = JSON.parse(new TextDecoder().decode(meta)); if (info.app !== 'VJif' || info.kind !== 'scene') throw new Error('not a VJif scene');
     const o = upgradeSnap({ v: info.v || SNAP_V, scenes: [info.scene], pool: info.pool || [] }), ss = o.scenes[0];
+    if (/^Scene \d+$/.test(ss.name || '')) ss.name = '';   // (0.95 files named an unnamed scene after its number)
     let i = at;
+    const liveEmpty = !layers.some(L => L.i !== GLOBAL_LAYER && L.clips.length) && !scenePadGifs().some(Boolean);
+    if (i < 0 && liveEmpty) i = sceneIdx;            // 0.99: the scene you're on, when it's empty
     if (i < 0){ const b0 = scBank * SC_BANK; i = [...Array(N_SCENES).keys()].map(k => (b0 + k) % N_SCENES).find(k => k !== sceneIdx && !sceneCount(k) && !scenePads(k)) ?? -1; }
     if (i < 0) return toast('No empty scene to import into');
-    if (i === sceneIdx || sceneCount(i) || scenePads(i)) return toast(`Scene ${i + 1} isn't empty`);
+    if (i === sceneIdx ? !liveEmpty : sceneCount(i) || scenePads(i)) return toast(`Scene ${i + 1} isn't empty`);
     const gen = setGen, byHash = new Map(); let missing = 0;
     for (const e of o.pool){
       const data = e.file && zf.get(e.file); if (!data){ missing++; continue; }
@@ -363,10 +366,19 @@ async function importScene(file, at = -1){
     const mk = sp => { const m = sp && byHash.get(sp.hash); if (!m) return null; const g = makeInst(m, sp); if (g.key.on || hsvOn(g)) applyFx(g); return g; };
     const gs = pads.map((_, k) => isGlobalPad(k) ? null : mk(ss.pads[k])), now = performance.now();
     const Ls = deserLayers(ss.layers, now, gs).map((l, li) => Object.assign(l, { i: li }));
-    commit(); const old = scenes[i] || Object.assign(emptyScene(), { name: '' });
-    const E = { kind: 'scn', sid: sceneIds[i], data: { layers: old.layers, pads: old.pads, thumb: old.thumb || null, name: old.name || '' } };
-    scenes[i] = { pads: gs, layers: Ls, thumb: null, name: ss.name || '', fxOn: ss.fxOn || null };
-    pushStep(E); hist.cur = histState(); updHistUI();
+    commit();
+    if (i === sceneIdx){                             // into the live scene: the same swap as an undo step (Overlay and the Global pads stay)
+      const E = { kind: 'scn', sid: sceneIds[i], data: { layers: Ls, pads: gs, thumb: null, name: ss.name || liveName || '' } };
+      applyScn(E); liveThumb = null; liveFxOn = ss.fxOn || null; if (fxLocal) applyLatched(liveFxOn || []);
+      layers.forEach(L => L.clips.forEach(c => { c.startBeat = clock.beat; c.startTime = now; }));
+      pushStep(E);
+    } else {
+      const old = scenes[i] || Object.assign(emptyScene(), { name: '' });
+      const E = { kind: 'scn', sid: sceneIds[i], data: { layers: old.layers, pads: old.pads, thumb: old.thumb || null, name: old.name || '' } };
+      scenes[i] = { pads: gs, layers: Ls, thumb: null, name: ss.name || old.name || '', fxOn: ss.fxOn || null };
+      pushStep(E);
+    }
+    hist.cur = histState(); updHistUI();
     if (Math.floor(i / SC_BANK) !== scBank) setScBank(Math.floor(i / SC_BANK));
     renderScenes(); renderPool(); updateMem();
     toast2(`Imported "${ss.name || file.name}" into scene ${i + 1}${missing ? ` (${missing} GIF file(s) missing)` : ''} — Ctrl+Z takes it back`);
@@ -379,4 +391,4 @@ $('#scFile').addEventListener('change', e => { const f = e.target.files[0]; e.ta
 $('#scenes').addEventListener('dragover', e => { if ([...e.dataTransfer.items].some(it => it.kind === 'file') && e.dataTransfer.types.includes('Files')) e.preventDefault(); }, true);
 $('#scenes').addEventListener('drop', e => { const f = [...(e.dataTransfer ? e.dataTransfer.files : [])].find(f => /\.vjscene$/i.test(f.name)); if (!f) return;
   e.preventDefault(); e.stopPropagation(); const t = e.target.closest('.scene'), k = t ? +t.dataset.i : -1;
-  importScene(f, k >= 0 && k !== sceneIdx && !sceneCount(k) && !scenePads(k) ? k : -1); }, true);
+  importScene(f, k >= 0 && k !== sceneIdx && !sceneCount(k) && !scenePads(k) ? k : -1); }, true);   // (dropped on the live tile: -1 picks it when it's empty)

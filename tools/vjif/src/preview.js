@@ -1,6 +1,6 @@
 // ---------- preview overlays: ghosts of invisible clips, guides, safe areas, the selection outline ----------
 // fade one-shot clips that are currently invisible: shown in the preview only, as a dotted ghost of their start frame
-const pvOpt = (() => { const o = Prefs.json('vjif-pvopt', {}), r = { guides: o.guides, gHide: !!o.gHide, stick: o.stick !== false, ghosts: o.ghosts !== false, pickLayer: !!o.pickLayer, loupe: !!o.loupe, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff' };
+const pvOpt = (() => { const o = Prefs.json('vjif-pvopt', {}), r = { guides: o.guides, gHide: !!o.gHide, stick: o.stick !== false, ghosts: o.ghosts !== false, pickLayer: !!o.pickLayer, loupe: !!o.loupe, gx: o.gx || 4, gy: o.gy || 4, link: !!o.link, fromC: !!o.fromC, gcol: o.gcol || '#ffffff', lpos: Array.isArray(o.lpos) ? o.lpos : null };   // lpos: where the loupe was dragged (fractions of the preview area)
   if (r.guides === 'thirds'){ r.guides = 'grid'; r.gx = r.gy = 3; } else if (r.guides === 'centre'){ r.guides = 'grid'; r.gx = r.gy = 2; }   // thirds = grid 3×3, centre = 2×2
   if (typeof r.guides !== 'object' || !r.guides){ const g = r.guides; r.guides = {}; if (g) r.guides[g] = true;   // one guide at a time before 0.31; they combine now
   }

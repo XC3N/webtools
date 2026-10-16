@@ -185,7 +185,7 @@ function syncFxUI0(){
   const kal = !!dd && dd.id === 'mirror' && (A.style || dd.styles[0][0]) === 'kal';        // Mirror › Kaleido: it sets the number of slices
   const wear = !!dd && dd.id === 'rgb' && styleParts(FXI.rgb, A.style).includes('vhs') && (styleParts(FXI.rgb, A.style).length === 1 || fxFocus.rgb === 'vhs');   // CRT › VHS (alone, or in focus in a stack): Amount is how worn the tape is
   am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : wear ? 'Wear' : 'Amount'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
-  if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: PAL_ORDER.length - 1, step: 1 }); am.value = Math.max(0, PAL_ORDER.indexOf(pi)); am.dataset.def = 0;   // the slider runs in PAL_ORDER (by year) delete am.dataset.pct;
+  if (palAmt){ const pi = A.pal || 0; Object.assign(am, { min: 0, max: PAL_ORDER.length - 1, step: 1 }); am.value = Math.max(0, PAL_ORDER.indexOf(pi)); am.dataset.def = 0; delete am.dataset.pct;   // the slider runs in PAL_ORDER (by year)
     am.nextElementSibling.textContent = FX_PALS[pi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
   else if (kal){ const n = kalSlices(A.amt); Object.assign(am, { min: 3, max: 12, step: 1 }); am.value = n; am.dataset.def = 12; delete am.dataset.pct;
     am.nextElementSibling.textContent = n; am.closest('.field').title = 'Slices: how many wedges the kaleidoscope has'; }
@@ -240,7 +240,8 @@ const tgtSet = t => { const L = tgtList(t); $('#fxTgt').querySelectorAll('button
 onSeg($('#fxTgt'), (b, e) => { const X = fxEd(); if (X){ if (b.dataset.v === 'out') allToggle(X); else X.target = tgtToggle(X.target, +b.dataset.v, false); syncFxUI(); } });
 $('#fxTgt').addEventListener('contextmenu', e => { const b = e.target.closest('button'); if (!b || b.dataset.v === 'out') return; e.preventDefault(); const X = fxEd(); if (X){ X.target = +b.dataset.v; syncFxUI(); } });
 const styleSet = (i, v) => { const P = styleParts(i, v), f = fxFocus[FX_DEFS[i].id], multi = FX_MULTI[FX_DEFS[i].id] && P.length > 1;
-  $('#fxStyle').querySelectorAll('button').forEach(b => { b.classList.toggle('on', P.includes(b.dataset.v)); b.classList.toggle('focus', !!multi && b.dataset.v === f && P.includes(f)); }); };
+  $('#fxStyle').querySelectorAll('button').forEach(b => { b.classList.toggle('on', P.includes(b.dataset.v)); b.classList.toggle('focus', !!multi && b.dataset.v === f && P.includes(f)); });
+  $('#fxStyle').classList.toggle('hasfocus', !!multi && P.includes(f)); };   // (0.99: the other lit styles dim, so the one whose settings show stands out)
 // stacked styles (Glitch, CRT): a click takes a style in or out (one that's on but not the one shown: shows its settings first);
 // right-click solos it (only it on), right-click it again brings the stack back
 const soloWas = new WeakMap();
@@ -299,6 +300,7 @@ function fxEnvMove(k, px, py){
   if (k === 'a') C.att = FX_ATTS[px - G.x0 < G.base / 2 ? 0 : idx(G.x0, FX_ATTS.length - 1)][0];
   else if (k === 'd'){ C.dec = FX_ATTS[idx(G.xA, FX_ATTS.length - 1)][0]; C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; }
   else if (k === 'l') C.len = FX_LENS[idx(G.xD, FX_LENS.length - 1)][0];
+  else if (k === 's'){ C.sus = Math.round(clamp((G.bot - py) / (G.bot - G.top), 0, 1) * 20) / 20; envPrevChanged(C); paintFxPads(clock.beat); return; }   // the Sustain line, up and down only
   else C.rel = FX_RELS[idx(G.xL, FX_RELS.length - 1)][0];
   // the dragged point would leave the box: zoom out now (not on letting go), keeping the steps steady from here on
   const G2 = envGeo(C, cv.width, cv.height, d), xk = { a: G2.xA, d: G2.xD, l: G2.xL, r: G2.xR }[k];
@@ -309,11 +311,12 @@ fxEnvEd = envEditor($('#fxEnv'), {
   on: () => !!fxEnvConf(),
   pts: () => { const C = fxEnvConf(), cv = $('#fxEnv'), G = envGeo(C, cv.width, cv.height, devicePixelRatio || 1); return [['a', G.xA, G.top], ['d', G.xD, G.ys], ...(G.hit ? [['l', G.xL, G.ys]] : []), ['r', G.xR, G.bot]]; },
   begin: k => { const C = fxEnvConf(), cv = $('#fxEnv'); fxEnvDrag = { k, u: envGeo(C, cv.width, cv.height, devicePixelRatio || 1).u }; envPrevStart(); },
+  segs: () => { const C = fxEnvConf(), cv = $('#fxEnv'), G = envGeo(C, cv.width, cv.height, devicePixelRatio || 1); return [['s', G.xD, G.xL, G.ys]]; },
   move: fxEnvMove,
   end: () => { fxEnvDrag = null; envPrevStop(); },
-  reset: k => { const C = fxEnvConf(); if (k === 'a') C.att = 0; else if (k === 'd'){ C.dec = 0; C.sus = 1; } else if (k === 'l') C.len = fxLenDef(C.mode); else C.rel = fxRelDef(C.mode); },
-  tip: { a: envTip('a'), d: envTip('d'), l: envTip('l'), r: envTip('r', ', after the Gate, or after letting go of Hold / switching off Latch') },
-  label: k => { const C = fxEnvConf(), sus = C.sus ?? 1; return k === 'a' ? `Attack ${FX_ATTS[optIdx(FX_ATTS, C.att || 0)][1]}` : k === 'd' ? `Decay ${FX_ATTS[optIdx(FX_ATTS, C.dec || 0)][1]} · Sustain ${Math.round(sus * 100)}%`
+  reset: k => { const C = fxEnvConf(); if (k === 'a') C.att = 0; else if (k === 's') C.sus = 1; else if (k === 'd'){ C.dec = 0; C.sus = 1; } else if (k === 'l') C.len = fxLenDef(C.mode); else C.rel = fxRelDef(C.mode); },
+  tip: { a: envTip('a'), d: envTip('d'), l: envTip('l'), r: envTip('r', ', after the Gate, or after letting go of Hold / switching off Latch'), s: 'Sustain: drag the line up or down · double-click: full' },
+  label: k => { const C = fxEnvConf(), sus = C.sus ?? 1; return k === 's' ? `Sustain ${Math.round(sus * 100)}%` : k === 'a' ? `Attack ${FX_ATTS[optIdx(FX_ATTS, C.att || 0)][1]}` : k === 'd' ? `Decay ${FX_ATTS[optIdx(FX_ATTS, C.dec || 0)][1]} · Sustain ${Math.round(sus * 100)}%`
     : k === 'l' ? `Gate ${FX_LENS[optIdx(FX_LENS, C.len || 0)][1]}` : `Release ${FX_RELS[optIdx(FX_RELS, C.rel ?? fxRelDef(C.mode))][1]}`; },
   redraw: () => drawFxEnv(),
 });
@@ -373,7 +376,7 @@ $('#fxStore').addEventListener('click', () => { if (selFx >= NFX) storeFxPre(sel
 $('#fxClear').addEventListener('click', () => { if (selFx >= NFX){ fxPre[selFx - NFX].fx = {}; syncFxUI(); } });
 // ---- an effect setting's LFO (0.94, ID-185): right-click Amount, Rate or Size; the envelope's box shows that setting's LFO ----
 // (ui-fx runs before effects.js: FX_RATES / FX_SIZES are read when used.) The LFO lives with the effect (fxCfg[i].mod[k], or a preset's entry: fxEd()), saved with the set and copied into presets.
-let fxModK = null;   // 'amt' | 'rate' | 'size' while the box shows an LFO
+let fxModK = null, fxModLast = null;   // 'amt' | 'rate' | 'size' while the box shows an LFO
 const FXM = { amt: { name: 'Amount', el: '#fxAmt', row: '#fxAmt', min: 5, max: 100, fmt: v => Math.round(v) + '%', toV: i => i / 100, toI: v => Math.round(v * 100) },
   rate: { name: 'Rate', el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_RATES.length - 1; }, fmt: i => FX_RATES[i][1], toV: i => i, toI: v => Math.round(v) },
   size: { name: 'Size', el: '#fxSize', row: '#fxSizeRow', min: 0, get max(){ return FX_SIZES.length - 1; }, fmt: i => FX_SIZES[i][1], toV: i => i, toI: v => Math.round(v) } };
@@ -382,13 +385,13 @@ const fxModPlain = k => { const X = fxEd(), d = FX_DEFS[selFx < NFX ? selFx : pr
   if (k === 'rate') return !!d.rate && !rateAlt(d, X.style, X);
   return !!d.size && !sizeAlt(d, X.style, X); };
 $('#fxLfoShape').innerHTML = SHAPES.filter(s => ['sine', 'tri', 'up', 'square', 'sh', 'drift'].includes(s[0])).map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');
-$('#fxLfoPer').max = PER_OPTS.length - 1;
+$('#fxLfoPer').max = PER_OPTS.length - 1; $('#fxLfoGap').max = GAP_OPTS.length - 1; $('#fxLfoBack').innerHTML = ENV_IC_GRAPH;
 function fxModOpen(k){
   if (!fxModPlain(k)) return toast(`${FXM[k].name} has no LFO here (it's set by its own list for this style)`);
   const X = fxEd(); X.mod = X.mod || {};
   if (!X.mod[k]){ const cur = k === 'amt' ? X.amt : k === 'rate' ? optIdx(FX_RATES, X.rate) : optIdx(FX_SIZES, X.size || FX_DEFS[selFx < NFX ? selFx : preEd].sizeDef || 64);
     X.mod[k] = { on: true, shape: 'sine', per: 4, lo: k === 'amt' ? 0.05 : FXM[k].min, hi: cur }; }
-  fxModK = k; syncFxMod();
+  fxModK = fxModLast = k; syncFxMod();
 }
 function syncFxMod(){
   const X = fxEd(), M = fxModK && X && X.mod && X.mod[fxModK];
@@ -401,9 +404,20 @@ function syncFxMod(){
   const pi = optIdx(PER_OPTS, M.per); $('#fxLfoPer').value = pi; $('#fxLfoPer').nextElementSibling.textContent = PER_OPTS[pi][1];
   for (const [id, key] of [['#fxLfoLo', 'lo'], ['#fxLfoHi', 'hi']]){ const el = $(id); el.min = F.min; el.max = F.max;
     const i = fxModK === 'amt' ? F.toI(M[key]) : M[key]; el.value = i; el.nextElementSibling.textContent = F.fmt(i); }
+  $('#fxLfoPh').value = M.ph || 0; $('#fxLfoPh').nextElementSibling.textContent = Math.round((M.ph || 0) * 360) + '°';
+  $('#fxLfoSk').value = M.sk ?? 0.5; $('#fxLfoSk').nextElementSibling.textContent = skFmt(M.sk ?? 0.5);
+  const gi = optIdx(GAP_OPTS, M.gap || 0); $('#fxLfoGap').value = gi; $('#fxLfoGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
+  $('#fxLfoInv').classList.toggle('on', !!M.inv);
 }
 for (const k in FXM) $(FXM[k].row).closest('.field').addEventListener('contextmenu', e => { e.preventDefault(); if (fxModK === k) { fxModK = null; syncFxMod(); } else fxModOpen(k); });
 $('#fxLfoBack').addEventListener('click', () => { fxModK = null; syncFxMod(); });
+// the envelope's LFO view button (0.99): the LFO last open here, else Amount's, else the first setting that can have one
+$('#envLfo').addEventListener('click', () => { const k = [fxModLast, 'amt', 'rate', 'size'].find(k => k && FXM[k] && fxModPlain(k)); if (k) fxModOpen(k); else toast('No setting of this effect can have an LFO here'); });
+const fxModSet = f => { const X = fxEd(), M = X && X.mod && X.mod[fxModK]; if (M){ f(M); M.on = true; syncFxMod(); } };
+$('#fxLfoPh').addEventListener('input', e => fxModSet(M => M.ph = +e.target.value));
+$('#fxLfoSk').addEventListener('input', e => fxModSet(M => M.sk = +e.target.value));
+$('#fxLfoGap').addEventListener('input', e => fxModSet(M => M.gap = GAP_OPTS[+e.target.value][0]));
+$('#fxLfoInv').addEventListener('click', () => fxModSet(M => M.inv = !M.inv));
 $('#fxLfoOn').addEventListener('change', e => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].on = e.target.checked; syncFxMod(); } });
 onSeg($('#fxLfoShape'), b => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].shape = b.dataset.v; X.mod[fxModK].on = true; syncFxMod(); } });
 $('#fxLfoPer').addEventListener('input', e => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].per = PER_OPTS[+e.target.value][0]; syncFxMod(); } });

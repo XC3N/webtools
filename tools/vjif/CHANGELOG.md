@@ -4,6 +4,35 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.0 — 2026-10-15
+
+### Effects
+- The LFO box (right-click Amount, Rate or Size): Invert, Phase, Skew and Gap like the GIF LFOs; the sliders are smaller, with their names inside (Cycle, Min value, Max value). The envelope has an LFO view button (a sine) and the LFO box an envelope view button.
+- Effect envelopes (and GIF › Auto › Envelope): drag the line between Decay and Gate up or down to set Sustain.
+- Stacked styles (Glitch, Codec, CRT): the style whose settings show stays lit, the others dim.
+- Colour › Palette: Grey 16 and Grey 4, where Dither shows (64 greys left nothing between two shades to dither).
+- The Game Boy palettes (GB, GB Pocket, GB Light, also in GIF › Display) give each of their four shades an even share of the brightness range. GB Light's greens are all dark, so nearest-colour matching used to put most of the picture on one shade.
+
+### GIFs
+- GIF › FX: each effect has its icon. A click on a style switches the effect on (it used to need the switch first). Glitch, Codec and CRT stack like the effect pads: a click takes a style in or out, right-click solos it, right-click again brings the stack back.
+- The GIF tabs: FX comes before Auto.
+- Right-click the panel picture: the GIF as loaded (no key, colour, palette) or as drawn. Remembered.
+- A GIF hidden from its chip (right-click) shows its chip greyed and crossed out. A CSS comment that was never closed had hidden that style since 0.95.
+
+### Pads & scenes
+- Scene import goes into the scene you're on when it's empty (else the first empty one of the bank on show). A scene with no name exports with no name (the file is called scene-N).
+- The Scenes heading: numpad / CAPS·FX keep their full width, export and import sit before the bank buttons.
+
+### Preview
+- The loupe can be dragged anywhere on the preview (remembered; double-click: back to the corner). Right-click pins it on the spot it shows (blue border); right-click again lets it follow the pointer.
+
+### Gear
+- Launchpad layout: on the Pro MK3, ◀ ▶ (top left) step the scene banks and ▲ ▼ (left side) show scene pads bank 1 / 2. On the X and the Mini, the four arrows at the top. Loading the layout clears the arrows' 0.95 places (Session / Note).
+
+### Fixes
+- Music › Sync on play wasn't restored after a reload (the line was inside a comment).
+- New test check: code or CSS rules hidden inside a comment fail the suite.
+
 ## 0.98.0 — 2026-10-15
 
 ### Performance
