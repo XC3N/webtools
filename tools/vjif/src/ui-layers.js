@@ -207,6 +207,7 @@ function cursorFor(h, shift){ if (!h) return ''; if (h === 'rot') return 'grab';
 
 pv.addEventListener('pointerdown', e => {
   if (maskEd){ maskDown(e); return; }               // painting a mask: the preview is the canvas
+  if (e.button !== 0) return;                        // 0.99.2: only the left button grabs (a right click made a drag that the right-click cancel then reported as "Cancelled")
   const [px, py] = evtToOut(e);
   if (picking){ pickAt(px, py); return; }
   pv.setPointerCapture(e.pointerId);
