@@ -121,15 +121,17 @@ document.addEventListener('pointerdown', e => { if (!$('#setPanel').hidden && !e
 // floating windows (Settings, Pool): drag the title bar to move them out of the way; the spot is remembered
 function movable(box, key){
   const hd = box.querySelector('h2'); hd.style.cursor = 'move'; hd.title = 'Drag to move';
-  hd.addEventListener('pointerdown', e => {
-    if (e.button || e.target.closest('button')) return;
+  box.addEventListener('pointermove', e => { if (e.target === box) box.style.cursor = 'move'; else if (box.style.cursor) box.style.cursor = ''; });
+  const start = e => {
     const r = box.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
-    hd.setPointerCapture(e.pointerId);
+    const el = e.currentTarget; el.setPointerCapture(e.pointerId);
     const mv = ev => moveBox(box, ev.clientX - ox, ev.clientY - oy);
-    const up = () => { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up);
+    const up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up);
       Prefs.setJson(key, [parseFloat(box.style.left), parseFloat(box.style.top)]); };
-    hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up);
-  });
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up);
+  };
+  hd.addEventListener('pointerdown', e => { if (e.button || e.target.closest('button')) return; start(e); });
+  box.addEventListener('pointerdown', e => { if (!e.button && e.target === box) start(e); });   // 0.99.1: its empty border too (the padding around what's inside)
 }
 function moveBox(box, x, y){
   const w = box.offsetWidth;

@@ -437,7 +437,7 @@ document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=c
 });
 // Settings' sections fold the same way (remembered on their own)
 { const sFold = new Set(Prefs.json('vjif-setfold', []));
-  document.querySelectorAll('#setPanel .modalBox > .sub').forEach(s => {
+  document.querySelectorAll('#setPanel .setBody > .sub').forEach(s => {
     const t = s.querySelector('span'), name = t.textContent.trim(); s.classList.add('foldable');
     const apply = () => { const shut = sFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };
     t.addEventListener('click', () => { sFold.has(name) ? sFold.delete(name) : sFold.add(name); Prefs.setJson('vjif-setfold', [...sFold]); apply(); });

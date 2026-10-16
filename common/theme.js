@@ -104,7 +104,7 @@ const Theme = (() => {
       <button type="button" class="thm-exp" title="Export this theme to a .json file">Export</button><button type="button" class="thm-imp" title="Import a theme .json (from any XC3N tool)">Import</button>
       <input type="file" accept=".json,application/json" hidden></div>
       <div class="thm-roles"></div>
-      <div class="thm-sub">Background</div><div class="thm-bg"></div>`;
+      <div class="thm-bg"></div>`;
     const sliders = {}, owner = {};       // owner: s / v key → its hue key
     let next = null;
     const flush = () => { const t = next; next = null; if (t){ apply(t); sync(); } };
@@ -129,11 +129,10 @@ const Theme = (() => {
         lab.addEventListener('click', () => { g.classList.toggle('shut'); try { localStorage.setItem(fk, g.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }
     });
     const bg = host.querySelector('.thm-bg');
-    row(bg, 'bh', 'Hue', 'Background hue', 0, 360); row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50, ' thm-sv'); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22, ' thm-sv');
-    { const sub = host.querySelector('.thm-sub'), fk = 'thm-fold-bg'; bg.classList.add('thm-fold'); sub.classList.add('thm-subfold');   // Background folds like the roles: click its heading (its hue stays)
+    row(bg, 'bh', 'Background', 'Background hue', 0, 360);   // (named like the roles, on its hue's row: it was a heading of its own above a Hue row) row(bg, 'bs', 'Saturation', 'Background saturation', 0, 50, ' thm-sv'); row(bg, 'bv', 'Brightness', 'Background brightness', 2, 22, ' thm-sv');
+    { const lab = bg.querySelector('label'), fk = 'thm-fold-bg'; bg.classList.add('thm-fold');   // Background folds like the roles: click its name (its hue stays)
       try { if (localStorage.getItem(fk) === '1') bg.classList.add('shut'); } catch (e) {}
-      const mark = () => sub.classList.toggle('shut', bg.classList.contains('shut')); mark();
-      sub.addEventListener('click', () => { bg.classList.toggle('shut'); mark(); try { localStorage.setItem(fk, bg.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }
+      lab.addEventListener('click', () => { bg.classList.toggle('shut'); try { localStorage.setItem(fk, bg.classList.contains('shut') ? '1' : '0'); } catch (e) {} }); }
     function sync(){
       for (const k in sliders){
         const r = sliders[k], inp = r.querySelector('input'), sw = r.querySelector('.thm-sw');

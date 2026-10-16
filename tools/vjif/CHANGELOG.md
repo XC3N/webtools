@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.1 — 2026-10-16
+
+### Interface
+- Settings: the window can be dragged from its empty border as well as its title bar, and only its contents scroll (the scroll bar starts under the title bar, which stays put).
+- Settings › Theme: Background is a row like the roles (its name on its hue's row, folding its saturation and brightness away), and every name lines up whether it folds or not (Graphs, Background, All-layers pips).
+
 ## 0.99.0 — 2026-10-15
 
 ### Effects
