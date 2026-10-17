@@ -4,6 +4,28 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.4 — 2026-10-17
+
+### Effects
+- Colour › Palette: the Palette slider keeps the same width for every family, so the row no longer shifts as you step through them. Families without variants give the room to Dither.
+- Greys are named by bits: 6 | 4 | 2 | 1 (64, 16, 4 and 2 shades). GIF › Display › Palette lists them as Grey 6-bit … Grey 1-bit.
+- Dither works the same way on every palette. The second colour is still the one whose mix with the nearest comes closest to the original, but how much of it to use is now measured in linear light, the way the eye averages neighbouring pixels. A dithered area keeps the picture's brightness, where it used to come out darker or lighter depending on the palette. In a test over a range of colours, the dithered picture's error dropped by about a third on CGA, ZX Spectrum, EGA and 1-bit.
+- Noise is now a dither pattern like the other two: the same two colours, with a fine even grain as the threshold instead of the Bayer grid. It used to nudge the colour before matching, so it behaved differently from palette to palette.
+- The Game Boy palettes have Dither again (Bayer, in their four shades). The switch beside it is still the LCD (Off / Pixels / Dots); with Pixels or Dots the pattern follows the LCD's pixels.
+- An Amount LFO now moves stacked CRT, Glitch and Codec styles that have their own Amount (VHS Wear, for example). Their share was worked out against the moving Amount, so the movement cancelled itself out.
+- A slider under an LFO now moves with it: the effect's Amount, Rate and Size, and GIF › Transform, Opacity and Colour Adjust under GIF › Auto. It holds still while you drag it, and returns to its set value when the LFO stops.
+- The LFO shape icons stay centred when the buttons are narrow (they ran off to the right below 1600 px).
+- Codec › Crunch alone: Rate is dimmed. Crunch doesn't move, so Rate never did anything there.
+
+### Pads & scenes
+- Background: each GIF has its own mask. With a Background GIF selected, Mask paints on that GIF only, and what you mask shows the Background GIFs and colour under it. With none selected it is the whole layer's mask, as before. Saved with the set and scene files, copied with scenes, undoable.
+
+### GIFs
+- GIF › FX: each effect's icon comes after its name, like the effect pads.
+
+### Interface
+- Right-click MIDI in the top bar: Settings opens at the MIDI section.
+
 ## 0.99.3 — 2026-10-16
 
 ### Effects

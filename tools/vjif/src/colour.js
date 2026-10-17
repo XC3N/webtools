@@ -13,6 +13,7 @@ const fxGL = (() => {
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
       uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 pal[64], palOk[64]; uniform float palN, palD, palLum; uniform vec3 swF[8], swT[8]; uniform float swR[8], swK[8]; uniform int swN; varying vec2 uv;
       ${OKLAB_GLSL}
+      ${PALSNAP_GLSL}
       void main(){
         vec4 px = texture2D(tex, uv);
         if (px.a == 0.0){ gl_FragColor = vec4(0.0); return; }
@@ -33,22 +34,7 @@ const fxGL = (() => {
           vec3 r = h < 60.0 ? vec3(C, X, 0.0) : h < 120.0 ? vec3(X, C, 0.0) : h < 180.0 ? vec3(0.0, C, X) : h < 240.0 ? vec3(0.0, X, C) : h < 300.0 ? vec3(X, 0.0, C) : vec3(C, 0.0, X);
           o = floor((r + m) * 255.0 + 0.5) / 255.0;
         }
-        if (palN > 0.5){                               // palette: the nearest of its colours (weighted like the eye); Dither mixes the two nearest in a 4×4 Bayer pattern, on the GIF's own pixels
-          vec3 W = vec3(0.55, 0.75, 0.35), best = pal[0], sec = pal[0], k = okLab(o), bk = palOk[0]; float bd = 1e9, t = 0.0;
-          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = k - palOk[i]; float e = dot(d, d); if (e < bd){ bd = e; best = pal[i]; bk = palOk[i]; } }   // nearest in OKLab (0.99.3)
-          if (palLum < 0.5 && palD > 0.001 && palN > 1.5){   // Dither: the colour that, mixed with the nearest, comes closest
-            float br = 1e9; vec3 kb = k - bk;
-            for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 ab = palOk[i] - bk; float L = dot(ab, ab); if (L < 1e-8) continue;
-              float u = dot(kb, ab) / L; if (u <= 0.0) continue; u = min(u, 1.0); vec3 r = kb - u * ab; float e = dot(r, r); if (e < br){ br = e; sec = pal[i]; t = u; } } }
-          if (palLum > 0.5){                         // the Game Boys: four shades by brightness, evenly (0.99: the nearest colour lost most of the picture on GB Light, whose greens are all dark)
-            float y = clamp(dot(o, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, k = floor(y), k2 = clamp(y - k < 0.5 ? k - 1.0 : k + 1.0, 0.0, palN - 1.0);
-            for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == k) best = pal[i]; if (float(i) == k2) sec = pal[i]; }
-            vec3 ab = (sec - best) * W; t = clamp(dot((o - best) * W, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0); }
-          if (palD > 0.001 && palN > 1.5){
-            t = clamp((t - 0.5) / palD + 0.5, 0.0, 1.0) * step(0.001, t);
-            vec2 q = floor(gl_FragCoord.xy); float b2 = fract(q.x / 2.0 + q.y * q.y * 0.75), b4 = fract(floor(q.x / 2.0) / 2.0 + floor(q.y / 2.0) * floor(q.y / 2.0) * 0.75) * 0.25 + b2;
-            o = b4 + 0.03125 < t ? sec : best; } else o = best;
-        }
+        if (palN > 0.5) o = palPick(o, palD, 1.0, floor(gl_FragCoord.xy));   // palette: the nearest of its colours; Dither: Bayer, on the GIF's own pixels (PALSNAP_GLSL)
         float a = px.a * f;
         gl_FragColor = vec4(o * a, a);
       }`));

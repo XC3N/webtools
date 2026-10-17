@@ -20,7 +20,7 @@ const store = {
 // (the current one null); `scene` = which is current; `v` = the format's step (SNAP_STEPS).
 const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.blend, sel: L.clips.indexOf(L.sel), fillOn: !!L.fillOn, fill: L.fill || '#1e2a3a', tr: L.tr || 'cut',
   ...(L.lock ? { lock: true } : {}), ...(L.mask && L.mask.url ? { mask: { url: L.mask.url, inv: !!L.mask.inv, on: L.mask.on !== false } } : {}),
-  clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])), ...(c.blend && c.blend !== 'source-over' ? { blend: c.blend } : {}), ...(c.off ? { off: true } : {}) })) }));
+  clips: L.clips.map(c => ({ pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])), ...(c.blend && c.blend !== 'source-over' ? { blend: c.blend } : {}), ...(c.off ? { off: true } : {}), ...(c.mask && c.mask.url ? { mask: { url: c.mask.url, inv: !!c.mask.inv, on: c.mask.on !== false } } : {}) })) }));
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
@@ -99,7 +99,7 @@ function contentSig(snap){
 }
 // saved layers → live layer states (only GIFs that loaded; a GIF lives on one layer: the topmost wins)
 function deserLayers(sls, now, gifs = pads.map(p => p.gif)){
-  const out = sls.map(sl => { const clips = sl.clips.filter(c => gifs[c.pad]).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }));
+  const out = sls.map(sl => { const clips = sl.clips.filter(c => gifs[c.pad]).map(c => Object.assign(newClip(c.pad), c, { startTime: now, startBeat: clock.beat }, { mask: c.mask && c.mask.url ? maskFromUrl(c.mask.url, c.mask.inv, c.mask.on) : null }));   // (0.99.4: a Background GIF's own mask)
     return { on: sl.on, opacity: sl.opacity, blend: sl.blend, mode: sl.mode, clips, sel: clips[sl.sel] || null, fillOn: !!sl.fillOn, fill: sl.fill || '#1e2a3a', tr: sl.tr || 'cut',
       lock: !!sl.lock, mask: sl.mask && sl.mask.url ? maskFromUrl(sl.mask.url, sl.mask.inv, sl.mask.on) : null }; });
   const seen = new Set();

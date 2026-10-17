@@ -103,7 +103,7 @@ const FX_SHORT = { colour: 'CLR', codec: 'CDC', strobe: 'STRB', poster: 'PSTR', 
 function fitText(el, full, short, tiny){ el.textContent = full; for (const t of [short, tiny]) if (t && el.scrollWidth > el.clientWidth + 1) el.textContent = t; }
 // what an effect in a preset does, in a word or two: its palette (Colour › Palette) or its style(s)
 const fxDetail = (i, E, short) => { const D = FX_DEFS[i], st = E.style || D.styles[0][0];
-  if (D.id === 'colour' && st === 'pal') return (FX_PALS[E.pal || 0] || FX_PALS[0]).n;
+  if (D.id === 'colour' && st === 'pal') return (FX_PALS[E.pal || 0] || FX_PALS[0]).d;
   return D.styles.length > 1 ? styleLabel(i, st, short) : ''; };
 const fxPreLong = P => { const ks = Object.keys(P.fx); return ks.length ? ks.map(i => `${FX_DEFS[i].name} (${fxDetail(i, P.fx[i]) || FX_DEFS[i].styles[0][1]}, ${Math.round(P.fx[i].amt * 100)}%)`).join(' + ') : 'empty'; };
 // store the effects that are on right now (from their own keys) into preset slot k
@@ -197,20 +197,19 @@ function syncFxUI0(){
     const alt = rateAlt(d, C.style || d.styles[0][0], C); $('#fxRateRow').classList.toggle('altrow', !!alt);
     $('#fxRateSeg').hidden = !(alt && alt.seg); $('#fxRate').hidden = $('#fxRate').nextElementSibling.hidden = !!(alt && alt.seg);   // a few fixed choices: a switch instead of the slider
     if (alt && alt.seg){ setHTML($('#fxRateSeg'), alt.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxRateSeg', String(C[alt.key] ?? alt.def)); }
-    const sw = alt && (alt.pat || alt.icons); $('#fxDpat').hidden = !sw; $('#fxRateRow').classList.toggle('patrow', !!sw);
-    const dp = $('#fxDpat'), want = alt && alt.icons ? 'lcd' : 'pat'; if (sw && dp.dataset.mode !== want){ dp.dataset.mode = want;   // Dither's pattern icons, or the Game Boy LCD's in the same place
-      setHTML(dp, want === 'lcd' ? alt.list.map(([v, , t]) => `<button data-v="${v}" title="${t.replace(/"/g, '&quot;')}">${alt.icons[v]}</button>`).join('') : DPAT_HTML); }
-    $('#fxRateRow').classList.toggle('lcdrow', !!(alt && alt.icons));
+    const sw = alt && (alt.pat || alt.lcd); $('#fxDpat').hidden = !sw; $('#fxRateRow').classList.toggle('patrow', !!sw);
+    const dp = $('#fxDpat'), want = alt && alt.lcd ? 'lcd' : 'pat'; if (sw && dp.dataset.mode !== want){ dp.dataset.mode = want;   // Dither's pattern icons, or the Game Boy LCD's in the same place
+      setHTML(dp, want === 'lcd' ? alt.lcd.list.map(([v, , t]) => `<button data-v="${v}" title="${t.replace(/"/g, '&quot;')}">${alt.lcd.icons[v]}</button>`).join('') : DPAT_HTML); }
     { const isPal = !!d && d.id === 'colour' && (C.style || d.styles[0][0]) === 'pal', [fi, vi] = palFam(C.pal || 0), F = PAL_FAM[fi], many = isPal && F.m.length > 1;   // the palette's variants (0.99.3)
-      $('#fxPalVar').hidden = !many; $('#fxRateRow').classList.toggle('varrow', many);
+      $('#fxPalVar').hidden = !many; $('#fxRateRow').classList.toggle('varrow', isPal);   // every palette: the same narrow Palette slider (0.99.4: no shift between families)
       if (many){ const h = F.m.map((x, k) => `<button data-v="${k}" title="${esc(FX_PALS[x.i].t)}"><span class="lng">${esc(x.l)}</span><span class="sht">${esc(x.s)}</span></button>`).join(''); if ($('#fxPalVar').dataset.f !== String(fi)){ setHTML($('#fxPalVar'), h); $('#fxPalVar').dataset.f = fi; } segSet('#fxPalVar', String(vi)); } }   // the Game Boy: its name, right-aligned against the switch, in the slider's room (the row keeps its width)
-    if (sw) segSet('#fxDpat', String(alt.icons ? (C[alt.key] ?? alt.def) >= 2 ? 2 : (C[alt.key] ?? alt.def) : C.dpat || 0));
+    if (sw) segSet('#fxDpat', String(alt.lcd ? Math.min(2, C.dots || 0) : C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
       $('#fxRateRow').title = alt.title(ai); $('#fxRateRow').classList.remove('dimmed'); }
     else { $('#fxRate').max = FX_RATES.length - 1; $('#fxRateRow').title = 'Rate: how fast it moves (beats)';
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
-    $('#fxRateRow').classList.toggle('dimmed', !d.rate); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }
+    $('#fxRateRow').classList.toggle('dimmed', !d.rate || (!!d.rateFor && !styleParts(di, C.style || d.styles[0][0]).some(p => d.rateFor.includes(p)))); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }
     const za = sizeAlt(d, C.style || d.styles[0][0], C); $('#fxSizeRow label').textContent = za ? za.label : 'Size';
     $('#fxSizeSeg').hidden = !(za && za.seg); $('#fxSize').hidden = $('#fxSize').nextElementSibling.hidden = !!(za && za.seg);   // a few fixed choices: a switch instead of the slider
     $('#fxSizeSeg').classList.toggle('one', !!(za && za.toggle)); $('#fxSizeRow').classList.toggle('onerow', !!(za && za.toggle));   // one toggle: its label right-aligned against it
@@ -371,7 +370,7 @@ onSeg($('#fxRateSeg'), b => { const X = fxEd(); if (!X) return; const alt = rate
 onSeg($('#fxSizeSeg'), b => { const X = fxEd(); if (!X) return; const za = sizeAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (za){ X[za.key] = +b.dataset.v; syncFxUI(); } });
 onSeg($('#fxPalVar'), b => { const X = fxEd() || fxConf(selFx); if (!X) return; const fi = +$('#fxPalVar').dataset.f, x = PAL_FAM[fi].m[+b.dataset.v]; X.pal = x.i; palLast[fi] = x.i; syncFxUI(); });
 onSeg($('#fxDpat'), b => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X);
-  if (alt && alt.icons) X[alt.key] = +b.dataset.v; else X.dpat = +b.dataset.v; syncFxUI(); });
+  if (alt && alt.lcd) X.dots = +b.dataset.v; else X.dpat = +b.dataset.v; syncFxUI(); });
 $('#fxRate').addEventListener('input', e => { const X = fxEd(); if (!X) return; const alt = rateAlt(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X); if (alt){ const v = alt.list[+e.target.value][0]; if (alt.set) alt.set(X, v); else X[alt.key] = v; } else X.rate = FX_RATES[+e.target.value][0]; syncFxUI(); });
 $('#fxPreList').addEventListener('click', e => { if (selFx < NFX) return; const b = e.target.closest('button');
   if (b){ delete fxPre[selFx - NFX].fx[b.dataset.i]; syncFxUI(); return; }

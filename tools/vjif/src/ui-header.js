@@ -141,6 +141,10 @@ function placeMovable(box, key){ const p = Prefs.json(key); if (p) moveBox(box, 
 movable($('#setPanel .modalBox'), 'vjif-setpos');
 const placeSettings = () => placeMovable($('#setPanel .modalBox'), 'vjif-setpos');
 $('#setClose').addEventListener('click', () => { $('#setPanel').hidden = true; });
+// open Settings at the section holding el, unfolded and scrolled to (0.99.4: right-click MIDI in the top bar → the MIDI section)
+function openSetAt(el){ if ($('#setPanel').hidden) $('#setBtn').click(); let s = el.closest('.row'); while (s && !s.classList.contains('sub')) s = s.previousElementSibling;
+  if (s && s.classList.contains('shut')) s.querySelector('span').click(); requestAnimationFrame(() => (s || el).scrollIntoView({ block: 'start' })); }
+$('#midiClk').addEventListener('contextmenu', e => { e.preventDefault(); openSetAt($('#midiIn')); });
 new MutationObserver(() => $('#setBtn').classList.toggle('on', !$('#setPanel').hidden)).observe($('#setPanel'), { attributes: true, attributeFilter: ['hidden'] });   // the gear stays lit while Settings is open
 $('#setPanel').addEventListener('pointerdown', e => { if (e.target.id === 'setPanel') $('#setPanel').hidden = true; });
 $('#aboutVer').textContent = $('#hdrVer').textContent = 'v' + APP_VERSION;

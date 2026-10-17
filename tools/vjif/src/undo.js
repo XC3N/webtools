@@ -13,7 +13,7 @@ function histState(){
   return JSON.stringify({
     sid: sidNow(),
     layers: layers.map(L => ({ opacity: L.opacity, blend: L.blend, fillOn: !!L.fillOn, fill: L.fill, lock: !!L.lock, mask: L.mask ? L.mask.mid : 0,
-      clips: L.clips.map(c => ({ id: c.id, pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])) })) })),
+      clips: L.clips.map(c => ({ id: c.id, pad: c.pad, ...Object.fromEntries(XF_KEYS.map(k => [k, c[k]])), ...(c.mask ? { mask: c.mask.mid } : {}) })) })),
     gifs: pads.map(p => p.gif ? Object.fromEntries(GIF_KEYS.map(k => [k, p.gif[k]])) : null),
   });
 }
@@ -123,7 +123,7 @@ function applyHist(s){
     const L = layers[li], prevSel = L.sel;
     Object.assign(L, { opacity: sl.opacity, blend: sl.blend, mode: sl.mode, fillOn: !!sl.fillOn, fill: sl.fill || L.fill, lock: !!sl.lock, mask: sl.mask ? maskReg.get(sl.mask) || L.mask : null });
     L.clips = sl.clips.filter(c => pads[c.pad] && pads[c.pad].gif)
-      .map(c => Object.assign(byId.get(c.id) || Object.assign(newClip(c.pad), { startTime: now, startBeat: clock.beat }), c));
+      .map(c => Object.assign(byId.get(c.id) || Object.assign(newClip(c.pad), { startTime: now, startBeat: clock.beat }), c, { mask: c.mask ? maskReg.get(c.mask) || null : null }));
     L.sel = L.clips.includes(prevSel) ? prevSel : null;
   });
   st.gifs.forEach((sg, i) => {

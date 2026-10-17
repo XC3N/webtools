@@ -108,10 +108,11 @@ function moveClip(sli, sid, dli, at){
   setTarget(dli);
 }
 function syncLayerUI(){
+  if (maskEd) syncMaskUI();                          // (on Background the bar follows the selected GIF)
   for (const L of layers){
     const r = L.row, sel = selClip(L.i);
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target); r.querySelector('.llock').classList.toggle('on', !!L.lock);
-    const mb = r.querySelector('.lmask'); mb.classList.toggle('on', !!maskEd && maskEd.li === L.i); mb.classList.toggle('has', !!(L.mask && L.mask.on !== false));
+    const mb = r.querySelector('.lmask'); mb.classList.toggle('on', !!maskEd && maskEd.li === L.i); mb.classList.toggle('has', !!(L.mask && L.mask.on !== false) || L.clips.some(c => c.mask && c.mask.on !== false));
     r.querySelector('.lname').title = LROLE[L.i] + ' · ' + (L.i === target ? 'editing this layer' : `click the card or press Alt+${L.i+1} to edit this layer`);
     r.querySelector('.lop').value = L.opacity; { const s = r.querySelector('.lbl'); if (L.i === BG_LAYER){ s.value = (L.sel && L.sel.blend) || 'source-over'; s.disabled = !L.sel; } else s.value = L.blend; } r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
@@ -192,7 +193,7 @@ function syncXfUI(){
   XF.forEach(([id, key, fmt]) => { $(id).value = c[key]; $(id).nextElementSibling.textContent = fmt(c[key]); });
   const g = pads[c.pad].gif;                         // automated values: readout tinted blue (it shows the base value)
   Object.entries(XF_LFO).forEach(([id, ks]) => { const o = $(id).nextElementSibling, m = !!g && ks.some(k => g.lfo[k] && g.lfo[k].on);
-    o.classList.toggle('mod', m); o.title = m ? 'Automated (GIF › Auto) — this is the base value' : ''; });
+    o.classList.toggle('mod', m); o.title = m ? 'Automated (GIF › Auto): the slider follows it' : ''; });
   segSet('#xFitSeg', c.fit || 'auto'); $('#xFx').checked = c.flipX; $('#xFy').checked = c.flipY; $('#xT').checked = c.tile;
   const pc = v => Math.round(v * 100);
   $('#xCrop').textContent = (c.cl || c.ct || c.cr || c.cb) ? `L${pc(c.cl)} T${pc(c.ct)} R${pc(c.cr)} B${pc(c.cb)}%${c.tile ? ' (tiled)' : ''}` : 'none';

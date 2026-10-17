@@ -20,6 +20,10 @@ function applyMask(b, m){                            // b: a flattened layer; cu
   b.imageSmoothingEnabled = true; b.drawImage(m.cv, 0, 0, b.canvas.width, b.canvas.height); b.restore();
 }
 
+// 0.99.4: on Background, the selected GIF has its own mask (it cuts that GIF only, so the GIFs and colour under it show);
+// with no Background GIF selected, the mask is the whole layer's. maskOwner(): what the bar paints on, a layer or a clip
+const maskOwner = () => { const li = maskEd.li, c = li === BG_LAYER ? selClip(li) : null; return c || layers[li]; };
+const maskWho = () => { const O = maskOwner(); return O.pad != null ? `${LNAMES[maskEd.li]} · ${pads[O.pad].label}` : LNAMES[maskEd.li]; };
 // ---- painting: Mask on a layer card opens the bar between the layer cards and the preview; the preview then paints instead of selecting ----
 const MASK_TOOLS = [['free', 'Free', 'Freehand brush · Alt+drag: colour brush, it masks only the colour under where you start (on this layer), within Soft'], ['rect', 'Rect', 'Rectangle: drag from corner to corner (Shift: square)'], ['ell', 'Ellipse', 'Ellipse: drag across it (Shift: circle)']];
 const maskOpt = Prefs.json('vjif-maskopt', { tool: 'free', size: 80, soft: 0.4 });
@@ -36,8 +40,8 @@ function maskOpen(li){
 function maskClose(){ if (maskStroke) maskUp(); maskEd = null; maskStroke = null; $('#maskBar').hidden = true; layers.forEach(L => L.row.classList.remove('masking'));
   $('#stage').classList.remove('masking'); syncLayerUI(); redraw.all = true; pv.style.cursor = ''; }
 function syncMaskUI(){
-  if (!maskEd) return; const L = layers[maskEd.li], m = L.mask;
-  $('#maskName').textContent = `Mask · ${LNAMES[maskEd.li]}`; $('#maskPaste').classList.toggle('empty', !maskClip); $('#maskCopy').disabled = !L.mask;
+  if (!maskEd) return; const L = maskOwner(), m = L.mask;
+  $('#maskName').textContent = `Mask · ${maskWho()}`; $('#maskPaste').classList.toggle('empty', !maskClip); $('#maskCopy').disabled = !L.mask;
   segSet('#maskTool', maskOpt.tool);
   $('#maskSize').value = maskOpt.size; $('#maskSize').nextElementSibling.textContent = Math.round(maskOpt.size) + ' px';
   $('#maskSizeBtn').title = `Size: ${Math.round(maskOpt.size)} px — drag up / down on it, or click for its slider`; $('#maskSoftBtn').title = `Soft: ${Math.round(maskOpt.soft * 100)}% — drag up / down on it, or click for its slider`;
@@ -64,7 +68,7 @@ function maskShape(x, S, px, py, shift){
 // Soft (here: how far a colour may be, 0–100 %) of it, so blades of grass get masked and what's between them doesn't
 function colourBrushStart(S, px, py){
   const w = S.m.cv.width, h = S.m.cv.height, k = w / W, ref = document.createElement('canvas'); ref.width = w; ref.height = h;
-  const x = ref.getContext('2d', { willReadFrequently: true }), list = frameList(performance.now()).filter(it => it.L.i === maskEd.li).map(it => ({ L: { ...it.L, mask: null }, items: it.items }));
+  const x = ref.getContext('2d', { willReadFrequently: true }), O = maskOwner(), list = frameList(performance.now()).filter(it => it.L.i === maskEd.li).map(it => ({ L: { ...it.L, mask: null }, items: it.items.filter(x => O.pad == null || x.c === O || x.e.id === O.id).map(x => ({ ...x, e: { ...x.e, mask: null } })) }));
   render(list, x, 0, [], 0, [k, 0, 0, k, 0, 0]);
   const d = x.getImageData(0, 0, w, h).data, ix = clamp(Math.floor(px * k), 0, w - 1), iy = clamp(Math.floor(py * k), 0, h - 1), o = (iy * w + ix) * 4;
   S.col = { d, w, h, k, c: [d[o], d[o + 1], d[o + 2]], tol: Math.max(0.02, maskOpt.soft) * 0.6 * 441.7, stamp: document.createElement('canvas') };
@@ -89,7 +93,7 @@ function maskDraw(fn){
 }
 function maskDown(e){
   if (e.button !== 0 && e.button !== 2) return;     // left paints, right erases
-  const [px, py] = evtToOut(e), L = layers[maskEd.li], base = L.mask;
+  const [px, py] = evtToOut(e), L = maskOwner(), base = L.mask;
   pv.setPointerCapture(e.pointerId);
   const m = maskNew(base && base.cv, { inv: base ? base.inv : false, on: base ? base.on : true });   // paint on a copy
   L.mask = m;
@@ -142,18 +146,18 @@ document.addEventListener('pointerdown', e => { if (!e.target.closest('#maskBar 
 onSeg($('#maskTool'), b => { maskOpt.tool = b.dataset.v; maskSave(); syncMaskUI(); });
 $('#maskSize').addEventListener('input', e => { maskOpt.size = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; });
 $('#maskSoft').addEventListener('input', e => { maskOpt.soft = +e.target.value; maskSave(); syncMaskUI(); });
-$('#maskInv').addEventListener('change', e => { const L = layers[maskEd.li]; if (L.mask) L.mask = maskWith(L.mask, { inv: e.target.checked }); else { const m = maskNew(null, { inv: e.target.checked }); m.url = m.cv.toDataURL('image/png'); L.mask = m; } maskRev++; redraw.all = true; syncLayerUI(); });
-$('#maskOn').addEventListener('change', e => { const L = layers[maskEd.li]; if (L.mask){ L.mask = maskWith(L.mask, { on: e.target.checked }); maskRev++; redraw.all = true; syncLayerUI(); } });
+$('#maskInv').addEventListener('change', e => { const L = maskOwner(); if (L.mask) L.mask = maskWith(L.mask, { inv: e.target.checked }); else { const m = maskNew(null, { inv: e.target.checked }); m.url = m.cv.toDataURL('image/png'); L.mask = m; } maskRev++; redraw.all = true; syncLayerUI(); });
+$('#maskOn').addEventListener('change', e => { const L = maskOwner(); if (L.mask){ L.mask = maskWith(L.mask, { on: e.target.checked }); maskRev++; redraw.all = true; syncLayerUI(); } });
 // copy / paste a mask between layers and scenes (0.93): masks are never changed in place, so the copy is the mask itself
 let maskClip = null;
-$('#maskCopy').addEventListener('click', () => { const L = layers[maskEd.li]; if (!L.mask) return toast('This layer has no mask to copy'); maskClip = L.mask; syncMaskUI(); toast2(`${LNAMES[maskEd.li]}'s mask copied`); });
-$('#maskPaste').addEventListener('click', () => { if (!maskClip) return toast('Copy a mask first'); const L = layers[maskEd.li]; L.mask = maskWith(maskClip, {}); maskRev++; redraw.all = true; syncMaskUI(); syncLayerUI(); commit(); toast2(`Mask pasted on ${LNAMES[maskEd.li]} — Ctrl+Z undoes`); });
-$('#maskClear').addEventListener('click', () => { const L = layers[maskEd.li]; if (!L.mask) return; L.mask = null; maskRev++; redraw.all = true; syncMaskUI(); syncLayerUI(); toast2(`${LNAMES[maskEd.li]}: mask cleared — Ctrl+Z brings it back`); });
+$('#maskCopy').addEventListener('click', () => { const L = maskOwner(); if (!L.mask) return toast('No mask to copy here'); maskClip = L.mask; syncMaskUI(); toast2(`${maskWho()}: mask copied`); });
+$('#maskPaste').addEventListener('click', () => { if (!maskClip) return toast('Copy a mask first'); const L = maskOwner(); L.mask = maskWith(maskClip, {}); maskRev++; redraw.all = true; syncMaskUI(); syncLayerUI(); commit(); toast2(`Mask pasted on ${maskWho()} — Ctrl+Z undoes`); });
+$('#maskClear').addEventListener('click', () => { const L = maskOwner(); if (!L.mask) return; L.mask = null; maskRev++; redraw.all = true; syncMaskUI(); syncLayerUI(); toast2(`${maskWho()}: mask cleared — Ctrl+Z brings it back`); });
 // (0.89: no Done button: the layer's mask button again, or Esc, ends painting)
 // the preview while painting: the mask tinted in the layer's colour, and the brush
 const maskTint = document.createElement('canvas'), maskTx = maskTint.getContext('2d');
 function drawMaskOverlay(dpr){
-  const L = layers[maskEd.li], m = L.mask, X = view.x * dpr, Y = view.y * dpr, VW = view.w * dpr, VH = view.h * dpr;
+  const L = maskOwner(), m = L.mask, X = view.x * dpr, Y = view.y * dpr, VW = view.w * dpr, VH = view.h * dpr;
   if (m){
     if (maskTint.width !== m.cv.width || maskTint.height !== m.cv.height){ maskTint.width = m.cv.width; maskTint.height = m.cv.height; }
     maskTx.globalCompositeOperation = 'copy'; maskTx.drawImage(m.cv, 0, 0); maskTx.globalCompositeOperation = 'source-in'; maskTx.fillStyle = LCOL[maskEd.li]; maskTx.fillRect(0, 0, maskTint.width, maskTint.height);

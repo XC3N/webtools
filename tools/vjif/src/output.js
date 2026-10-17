@@ -88,7 +88,7 @@ function updateOutStat(){
 // the drawing canvases follow the format and the render size
 function sizeCanvases(){
   CW = Math.round(W * RS); CH = Math.round(H * RS);
-  [master, ...lbufs.map(b => b.canvas), trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = CW; c.height = CH; });
+  [master, ...lbufs.map(b => b.canvas), cmbuf.canvas, trA.canvas, trB.canvas, trM.canvas, pxCv, freezeCv].forEach(c => { c.width = CW; c.height = CH; });
   if (post) post.resize();
   sizeOutCv();
   if (typeof sizePreview === 'function') sizePreview();   // the preview's eighths follow the render size

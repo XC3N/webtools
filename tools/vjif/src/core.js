@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.3';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.4';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -100,6 +100,32 @@ function okLab(c){
 const OKLAB_GLSL = `vec3 okLab(vec3 c){ c = clamp(c, 0.0, 1.0); c = mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
   vec3 q = pow(max(vec3(dot(c, vec3(0.4122214708, 0.5363325363, 0.0514459929)), dot(c, vec3(0.2119034982, 0.6806995451, 0.1073969566)), dot(c, vec3(0.0883024619, 0.2817188376, 0.6299787005))), vec3(1e-7)), vec3(1.0 / 3.0));
   return vec3(dot(q, vec3(0.2104542553, 0.7936177850, -0.0040720468)), dot(q, vec3(1.9779984951, -2.4285922050, 0.4505937099)), dot(q, vec3(0.0259040371, 0.7827717662, -0.8086757660))); }`;
+// 0.99.4: one palette pick for both shaders (effects and the GIF colour pass; they declare pal / palOk / palN / palLum).
+// The nearest colour in OKLab (the Game Boys: by brightness). With Dither d > 0, a second colour: the one whose mix with the
+// nearest passes closest to c (OKLab), and its share measured in linear light, so a dithered area keeps the picture's
+// brightness on every palette. The three patterns only differ in the threshold: p 0 Noise, 1 Bayer 4×4, 2 Checker.
+const PALSNAP_GLSL = `vec3 palLin(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+  float palB2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+  float palB4(vec2 a){ return palB2(0.5 * a) * 0.25 + palB2(a); }
+  vec3 palPick(vec3 c, float d, float p, vec2 q){
+    vec3 best = pal[0], sec = pal[0], k = okLab(c), bk = palOk[0]; float bd = 1e9, t = 0.0;
+    if (palLum > 0.5){
+      float y = clamp(dot(c, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, n = floor(y), n2 = clamp(y - n < 0.5 ? n - 1.0 : n + 1.0, 0.0, palN - 1.0);
+      for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == n) best = pal[i]; if (float(i) == n2) sec = pal[i]; }
+    } else {
+      for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 e3 = k - palOk[i]; float e = dot(e3, e3); if (e < bd){ bd = e; best = pal[i]; bk = palOk[i]; } }
+      sec = best;
+      if (d > 0.001 && palN > 1.5){ float br = 1e9; vec3 kb = k - bk;
+        for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 ab = palOk[i] - bk; float L = dot(ab, ab); if (L < 1e-8) continue;
+          float u = dot(kb, ab) / L; if (u <= 0.0) continue; u = min(u, 1.0); vec3 r = kb - u * ab; float e = dot(r, r); if (e < br){ br = e; sec = pal[i]; } } }
+    }
+    if (d < 0.001 || palN < 1.5) return best;
+    vec3 bl = palLin(best), ab = palLin(sec) - bl, cl = palLin(c), Y = vec3(0.2126, 0.7152, 0.0722); float ay = dot(ab, Y);
+    t = palLum > 0.5 ? (abs(ay) > 1e-6 ? clamp(dot(cl - bl, Y) / ay, 0.0, 1.0) : 0.0) : clamp(dot(cl - bl, ab) / max(dot(ab, ab), 1e-9), 0.0, 1.0);
+    t = clamp((t - 0.5) / d + 0.5, 0.0, 1.0) * step(0.001, t);   // less Dither: the pattern only where c is near halfway
+    if (p > 1.5) t = t < 0.25 ? 0.0 : t > 0.75 ? 1.0 : 0.51;   // Checker: flat, or exactly half and half
+    float th = p > 1.5 ? mod(q.x + q.y, 2.0) * 0.5 + 0.25 : p > 0.5 ? palB4(q) + 0.03125 : fract(52.9829189 * fract(dot(q, vec2(0.06711056, 0.00583715))));   // Noise: interleaved gradient noise (even grain, no clumps)
+    return th < t ? sec : best; }`;
 const GAP_OPTS = [[0, 'off'], [0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[2,'1/2'],[4,'1 bar'],[8,'2 bars'],[16,'4 bars'],[32,'8 bars']];   // LFO Gap: a pause after each cycle
 const PER_OPTS = [[0.25,'1/16'],[0.5,'1/8'],[1,'1/4'],[1.5,'3/8'],[2,'1/2'],[3,'3/4'],[4,'1 bar'],[6,'1½ bars'],[8,'2 bars'],[12,'3 bars'],[16,'4 bars'],[24,'6 bars'],[32,'8 bars'],[48,'12 bars'],[64,'16 bars']];   // (0.94: dotted / triple steps)
 const optIdx = (opts, v) => opts.reduce((bi, o, i) => Math.abs(o[0] - v) < Math.abs(opts[bi][0] - v) ? i : bi, 0);
@@ -175,6 +201,7 @@ function selClip(li = target){
 const mkCanvas = () => { const c = document.createElement('canvas'); c.width = CW; c.height = CH; return c; };
 const master = mkCanvas(), mctx = master.getContext('2d', { alpha: false });
 const lbufs = layers.map(() => mkCanvas().getContext('2d'));   // per-layer group buffers
+const cmbuf = mkCanvas().getContext('2d');   // a Background GIF with its own mask, cut before it blends (0.99.4)
 const pv = $('#pv'), pctx = pv.getContext('2d');                       // overlay: handles and outlines only
 const pvScene = $('#pvScene'), sctx = pvScene.getContext('2d', { alpha: false });
 const view = { x: 0, y: 0, w: 1, h: 1 };   // output frame inside the preview, CSS px (margin = pasteboard)

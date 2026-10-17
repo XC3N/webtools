@@ -276,7 +276,7 @@ function sceneChanged(list, frozen, black, S = sceneSig){
   if (!frozen) for (const { L, items } of list){
     S.add('|'); S.add(L.i); S.add(L.opacity); S.add(L.blend); S.add(L.fillOn && L.fill); S.add(L.mask && L.mask.on ? L.mask.mid + (L.mask.inv ? 'i' : '') : 0); S.add(maskRev);
     for (const { g, e, fi } of items){ S.add(';'); S.add(e.id); S.add(fi); S.add(g.fxVer); S.add(g.crisp); S.add(!!g.nofx); if (g.gfx) S.add(objSig(g.gfx)); S.add(e.x); S.add(e.y); S.add(e.sx); S.add(e.sy); S.add(e.rot); S.add(e.fit); if (g.shadow && g.shadow.on) S.add(objSig(g.shadow));
-      S.add(e.flipX); S.add(e.flipY); S.add(e.tile); S.add(e.cl); S.add(e.ct); S.add(e.cr); S.add(e.cb); S.add(e.alpha); S.add(e.blend); S.add(e.H); S.add(e.S); S.add(e.V); }
+      S.add(e.flipX); S.add(e.flipY); S.add(e.tile); S.add(e.cl); S.add(e.ct); S.add(e.cr); S.add(e.cb); S.add(e.alpha); S.add(e.blend); S.add(e.mask && e.mask.on ? e.mask.mid + (e.mask.inv ? 'i' : '') : 0); S.add(e.H); S.add(e.S); S.add(e.V); }
   }
   return S.changed();
 }
@@ -288,8 +288,11 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], ove
   let masked = false;
   for (let { L, items } of list){
     if (MASK_BLENDS.has(L.blend)) masked = true;
-    const sub = L.i === BG_LAYER && items.some(it => it.e.blend && it.e.blend !== 'source-over');   // Background's GIFs as sublayers, each with its own blend (0.94)
-    const drawAll = (t, its) => { for (const { g, e, fi } of its){ if (sub) t.globalCompositeOperation = e.blend || 'source-over'; drawClipFx(t, e, g, fxImage(g, fi, e)); } if (sub) t.globalCompositeOperation = 'source-over'; };
+    const sub = L.i === BG_LAYER && items.some(it => (it.e.blend && it.e.blend !== 'source-over') || (it.e.mask && it.e.mask.on));   // Background's GIFs as sublayers, each with its own blend (0.94) and mask (0.99.4)
+    const drawAll = (t, its) => { for (const { g, e, fi } of its){ if (sub) t.globalCompositeOperation = e.blend || 'source-over';
+        if (sub && e.mask && e.mask.on){ const m = cmbuf; m.setTransform(RS, 0, 0, RS, 0, 0); m.globalAlpha = 1; m.globalCompositeOperation = 'source-over'; m.clearRect(0, 0, W, H);   // its own mask: cut alone, so what's under it shows through
+          drawClipFx(m, e, g, fxImage(g, fi, e)); applyMask(m, e.mask); t.save(); t.setTransform(1, 0, 0, 1, 0, 0); t.drawImage(m.canvas, 0, 0); t.restore(); }
+        else drawClipFx(t, e, g, fxImage(g, fi, e)); } if (sub) t.globalCompositeOperation = 'source-over'; };
     const LU = post && LUs[L.i];
     const ek = (1 + zoomE) * (1 + (LU && LU.zoomE || 0));   // Zoom › Each: every GIF scaled around its own centre
     if (Math.abs(ek - 1) > 1e-4) items = items.map(it => ({ ...it, e: { ...it.e, sx: it.e.sx * ek, sy: it.e.sy * ek } }));

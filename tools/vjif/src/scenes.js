@@ -34,7 +34,7 @@ function refreshLiveThumb(){
   // GIF moves on to its next frame. Drawing the tile reads the GIFs' pictures back from the GPU, which stalled a frame or
   // more every second while anything played (it was the largest single cost in profiles)
   const sig = layers.map(L => [L.on, L.opacity, L.blend, L.fillOn && L.fill, L.mask && L.mask.mid, ...L.clips.map(c => { const g = pads[c.pad] && pads[c.pad].gif;
-    return [c.id, c.pad, c.x, c.y, c.sx, c.sy, c.rot, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, c.alpha, c.off, c.blend, g && g.fxVer, g && g.shadow && g.shadow.on].join(); })].join('|')).join('/');
+    return [c.id, c.pad, c.x, c.y, c.sx, c.sy, c.rot, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, c.alpha, c.off, c.blend, c.mask && c.mask.on && c.mask.mid, g && g.fxVer, g && g.shadow && g.shadow.on].join(); })].join('|')).join('/');
   if (sig === thumbSig && liveThumb) return; thumbSig = sig;
   liveThumb = sceneThumb(); renderScenes(); if (++thumbTick % 20 === 1 || !thumbKeep) thumbKeep = liveThumb;
 }
@@ -275,7 +275,7 @@ function sceneCopy(i){
   if (!live && !sc) return emptyScene();             // never opened: a copy of nothing is an empty scene (not a shell without layers)
   const P = live ? scenePadGifs() : (sc && sc.pads) || [], Ls = (live ? layers : (sc && sc.layers) || []).map(L => L.i === GLOBAL_LAYER ? Object.assign(emptyLayer(), { i: L.i }) : L);   // (Overlay and the Global pads aren't the scene's)
   return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, fxOn: live ? (fxLocal ? latchedNow() : liveFxOn) : sc && sc.fxOn || null, pads: P.map(g => g && cloneInst(g)),
-    layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]])), c.blend ? { blend: c.blend } : {}, c.off ? { off: true } : {}));
+    layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]])), c.blend ? { blend: c.blend } : {}, c.off ? { off: true } : {}, c.mask ? { mask: c.mask } : {}));
       return { ...layerProps(L), i: L.i, clips, sel: clips[L.clips.indexOf(L.sel)] || null }; }) };   // (0.95: its mask, lock and transition too: they were dropped)
 }
 // empty a scene (its name stays) — undoable; another scene is emptied where it is, without going there

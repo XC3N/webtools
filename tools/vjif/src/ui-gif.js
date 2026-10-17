@@ -33,7 +33,7 @@ function syncGifUI(){
   if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
   $('#gSmooth').checked = !g.crisp; $('#gNoFx').checked = !!g.nofx;
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
-  if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + PAL_ORDER.map(i => FX_PALS[i]).map((P, k) => `<option value="${PAL_ORDER[k]}" title="${esc(P.t)}">${esc(P.n)}</option>`).join('');   // by year
+  if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + PAL_ORDER.map(i => FX_PALS[i]).map((P, k) => `<option value="${PAL_ORDER[k]}" title="${esc(P.t)}">${esc(P.d)}</option>`).join('');   // by year
   $('#gPal').value = String(g.pal ? g.pal.i : -1); $('#gPalD').value = g.pal ? g.pal.d : 0; $('#gPalD').nextElementSibling.textContent = Math.round((g.pal ? g.pal.d : 0) * 100) + '%';
   $('#gPalD').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
   syncShadowUI(g);
@@ -264,8 +264,25 @@ function scopeCtx(cv){
 const clipOf = p => { for (const L of layers){ const c = L.clips.find(c => c.pad === p); if (c) return c; } return null; };
 function drawScopes(){
   if (fxSt.some((S, i) => fxLevel(i, clock.beat) > 0) || fxEnvDrag) drawFxEnv();
+  liveMods();
   const g = curGif(); if (!g) return;
   if (gTab === 'auto') drawLfoScope(g); else if (gTab === 'play') drawEnvScope(g);
+}
+// 0.99.4: a slider under an LFO shows the value it has right now (effect Amount / Rate / Size; a GIF's Transform, Opacity and
+// Colour Adjust under GIF › Auto). Not while it's being dragged; when the LFO stops, the slider goes back to the value as set.
+let liveWas = new Set();
+function liveMods(){
+  const now = new Set(), b = clock.beat, put = (id, v, txt) => { const el = $(id); if (!el || el.matches(':active')) return; now.add(id); el.value = v; el.nextElementSibling.textContent = txt; };
+  const X = typeof fxEd === 'function' ? fxEd() : null, d = FX_DEFS[selFx < NFX ? selFx : preEd];
+  if (X && X.mod && d && !fxModK) for (const k of ['amt', 'rate', 'size']){ const M = X.mod[k]; if (!M || !M.on || !fxModPlain(k)) continue;
+    if (k === 'amt'){ const pp = amtPart(d, X), v = modAmt(X, b) * (pp ? (X.pamt?.[pp] ?? X.amt) / (X.amt || 1) : 1); put('#fxAmt', v, Math.round(v * 100) + '%'); }
+    else { const L = k === 'rate' ? FX_RATES : FX_SIZES, i = clamp(Math.round(fxModV(M, b)), 0, L.length - 1); put(k === 'rate' ? '#fxRate' : '#fxSize', i, L[i][1]); } }
+  const c = selClip(), g = c && pads[c.pad] && pads[c.pad].gif;
+  if (g && g.lfo){ const on = k => g.lfo[k] && g.lfo[k].on, e = effClip(c, g);
+    XF.forEach(([id, key, fmt]) => { if (XF_LFO[id].some(on)) put(id, e[key], fmt(e[key])); });
+    if (!g.hsv.off) HSV_UI.forEach(([id, k, fmt]) => { if (on(k)){ const v = k === 'h' ? Math.round(mod(g.hsv.h + e.H + 180, 360) - 180) : +(g.hsv[k] * e[k.toUpperCase()]).toFixed(2); put(id, v, fmt(v)); } }); }
+  for (const id of liveWas) if (!now.has(id)){ if (id.startsWith('#fx')) syncFxUI(); else if (id.startsWith('#x')) syncXfUI(); else syncGifUI(); break; }
+  liveWas = now;
 }
 function scopeTrace(x, w, h, d, fn, on){                 // fn: 0..1 across → 0..1 up
   const pad = 5 * d, y = v => h - pad - v * (h - 2 * pad);
@@ -484,7 +501,7 @@ const gfxDef = id => ({ on: false, amt: 0.8, style: GFX_STYLES(id)[0][0] });
 function buildGfx(){
   gfxBuilt = true;
   $('#gfxList').innerHTML = GFX_IDS.map(id => { const d = FX_DEFS[FXI[id]];
-    return `<div class="sub gfxh" data-id="${id}"><span title="${esc(d.title)}">${fxIcon(id)}${esc(d.name)}</span><span class="line"></span><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
+    return `<div class="sub gfxh" data-id="${id}"><span title="${esc(d.title)}">${esc(d.name)}${fxIcon(id)}</span><span class="line"></span><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
       <div class="gfxrow" data-id="${id}"><div class="seg" data-gst="${id}">${GFX_STYLES(id).map(s => `<button data-v="${s[0]}" title="${esc(s[1])}: ${esc(s[2])}">${esc(STYLE_BTN[s[0]] || STYLE_SHORT[s[0]] || s[1])}</button>`).join('')}</div>
       <input type="range" min="0.05" max="1" step="0.01" data-def="0.8" data-gamt="${id}" title="Amount"><output></output></div>`; }).join('');
   const edit = (id, f) => { const g = curGif(); if (!g) return; const x = { ...gfxDef(id), ...((g.gfx && g.gfx[id]) || {}) }; f(x); g.gfx = { ...(g.gfx || {}), [id]: x };   /* a new object each time: the redraw check keys on it */ redraw.all = true; syncGfxUI(g); };

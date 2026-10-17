@@ -13,7 +13,7 @@ const FX_DEFS = [
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope: Amount sets how many slices (3 to 12), Zoom how far in']] },
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
   { id: 'glitch', name: 'Glitch', title: 'The picture torn apart, re-torn every Rate (several at once)', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt'] },
-  { id: 'codec', name: 'Codec', title: 'A broken video file: datamosh, a lost keyframe, a starved bit rate; re-keyed every Rate (several at once)', mode: 'hold', rate: true, styles: [['corrupt', 'Corrupt', 'A damaged video file, datamoshed: runs of blocks keep the stale picture and push it along the motion every frame (the live picture\'s own, plus a slow drift), so it streams and swells like a repeated P-frame; others break into flat, wrong-coloured blocks (Size = block size)'], ['keyfr', 'Keyframe', 'A lost keyframe: the picture freezes when it starts, then moves with the live picture\'s motion, block by block, and smears (datamosh); a few blocks catch up each Rate, more with less Amount (Size = block size)'], ['crunch', 'Crunch', 'Heavy compression, like a starved bit rate: the detail stays but in a few bands per block, the colour comes in blocks twice the size and bleeds across edges (Size = block size)']], size: true, sizeDef: 48, sizeFor: ['corrupt', 'keyfr', 'crunch'] },
+  { id: 'codec', name: 'Codec', title: 'A broken video file: datamosh, a lost keyframe, a starved bit rate; re-keyed every Rate (several at once)', mode: 'hold', rate: true, styles: [['corrupt', 'Corrupt', 'A damaged video file, datamoshed: runs of blocks keep the stale picture and push it along the motion every frame (the live picture\'s own, plus a slow drift), so it streams and swells like a repeated P-frame; others break into flat, wrong-coloured blocks (Size = block size)'], ['keyfr', 'Keyframe', 'A lost keyframe: the picture freezes when it starts, then moves with the live picture\'s motion, block by block, and smears (datamosh); a few blocks catch up each Rate, more with less Amount (Size = block size)'], ['crunch', 'Crunch', 'Heavy compression, like a starved bit rate: the detail stays but in a few bands per block, the colour comes in blocks twice the size and bleeds across edges (Size = block size)']], size: true, sizeDef: 48, sizeFor: ['corrupt', 'keyfr', 'crunch'], rateFor: ['corrupt', 'keyfr'] },   // (Crunch doesn't move: no Rate)
   { id: 'rgb', name: 'CRT', title: 'Tube and tape: colour split, VHS, scanlines, phosphor glow, pay-TV and satellite scrambling (several at once)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking sway, a torn band rolling down, washed colour, scanlines, noise; its Amount is the wear: tracking bands, colour bleed, dropouts, a bending top and switching noise'], ['scan', 'Scanlines', 'Dark scanlines and an RGB aperture grille, like a tube up close (Size = line spacing)'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel (sync suppressed): the picture wraps sideways in a wobbling S with the blanking bar showing, the vertical hold drifts, the colour comes out wrong'], ['crypt', 'Crypt', 'A scrambled satellite channel: lines shuffled within blocks (Nagravision) and each cut and rotated (Videocrypt), re-keyed 4 times a second; Amount = how many lines, Size = line height']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] } ];
 const FXI = Object.fromEntries(FX_DEFS.map((d, i) => [d.id, i]));   // an effect's slot (F key) by its id
 // 0.78 put the pads in groups of four (look · movement · texture and screen); sets, defaults and MIDI maps saved before
@@ -74,11 +74,11 @@ const FX_PALS = [
   ['GB Pocket', 'Game Boy Pocket: four olive greys', '1f1f1f 4d533c 8b956d c4cfa1'],
   ['GB Light', 'Game Boy Light, backlight on: four blue-greens', '004f3b 00694a 009a71 00b581'],
   ['ZX Spectrum', 'Sinclair ZX Spectrum: black, then blue, red, magenta, green, cyan, yellow, white, plain and bright', '000000 0000d7 d70000 d700d7 00d700 00d7d7 d7d700 d7d7d7 0000ff ff0000 ff00ff 00ff00 00ffff ffff00 ffffff'],
-  ['Grey', 'Shades of grey (64 steps)', Array.from({ length: 64 }, (_, i) => Math.round(i * 255 / 63).toString(16).padStart(2, '0').repeat(3)).join(' ')],
-  ['1-bit', 'Black and white only: hard (Dither off) or dotted like an old Mac screen (Dither › Bayer)', '000000 ffffff'],
+  ['Grey', '6-bit grey: 64 shades', Array.from({ length: 64 }, (_, i) => Math.round(i * 255 / 63).toString(16).padStart(2, '0').repeat(3)).join(' ')],
+  ['1-bit', '1-bit: black and white only, hard (Dither off) or dotted like an old Mac screen (Dither › Bayer)', '000000 ffffff'],
   // 0.99: fewer greys, so Dither shows (with 64 steps there's next to nothing between two shades to dither). Added at the end: saved palettes keep their numbers
-  ['Grey 16', 'Sixteen shades of grey: Dither shows as fine grain', Array.from({ length: 16 }, (_, i) => Math.round(i * 255 / 15).toString(16).padStart(2, '0').repeat(3)).join(' ')],
-  ['Grey 4', 'Four shades of grey, like a 2-bit screen: Dither shows as clear patterns', '000000 555555 aaaaaa ffffff'],
+  ['Grey 16', '4-bit grey: 16 shades, Dither shows as fine grain', Array.from({ length: 16 }, (_, i) => Math.round(i * 255 / 15).toString(16).padStart(2, '0').repeat(3)).join(' ')],
+  ['Grey 4', '2-bit grey: 4 shades, like an early handheld screen; Dither shows as clear patterns', '000000 555555 aaaaaa ffffff'],
 ].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)), ok = c.map(okLab);
   return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0), ok: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? ok[i / 3 | 0][i % 3] : 0) }; });
 // Colour › Palette: how the in-between shades are drawn (the Size row stands in for it). Scatter: noise added before
@@ -97,11 +97,12 @@ const FX_DOTS_ICON = { 0: '<svg viewBox="0 0 12 12" width="12" height="12" fill=
 const FX_OVS = [[0, 'Off'], [2, 'On']];   // Shake › Edges (one toggle; 1 = the old Some, read as on)
 // the order palettes are offered in: by year (CGA 1981, ZX Spectrum and C64 1982, NES 1983, EGA 1984, Game Boy 1989, Pocket 1996,
 // Light 1998). Sets keep a palette's index in FX_PALS, which never changes, so this order is only for the menus and the slider.
+{ const D = { 'Grey': 'Grey 6-bit', 'Grey 16': 'Grey 4-bit', 'Grey 4': 'Grey 2-bit', '1-bit': 'Grey 1-bit' }; FX_PALS.forEach(P => P.d = D[P.n] || P.n); }   // shown names: the greys by bits (0.99.4); n stays the key
 const PAL_GREY = FX_PALS.findIndex(P => P.n === 'Grey'), PAL_1BIT = FX_PALS.findIndex(P => P.n === '1-bit');
 const PAL_ORDER = ['Grey', 'Grey 16', 'Grey 4', '1-bit', 'CGA 1', 'CGA 2', 'CGA 3', 'ZX Spectrum', 'C64', 'NES', 'EGA', 'GB', 'GB Pocket', 'GB Light'].map(n => FX_PALS.findIndex(P => P.n === n));
 // 0.99.3: the Palette slider steps through families; a family's variants are a switch beside Dither (saved sets keep the
 // palette's own number, so nothing to convert)
-const PAL_FAM = [['Grey', [['Grey', 'Full'], ['Grey 16', '16'], ['Grey 4', '4'], ['1-bit', '1']]], ['CGA', [['CGA 1', '1'], ['CGA 2', '2'], ['CGA 3', '3']]], ['ZX Spectrum'], ['C64'], ['NES'], ['EGA'],
+const PAL_FAM = [['Grey', [['Grey', '6'], ['Grey 16', '4'], ['Grey 4', '2'], ['1-bit', '1']]], ['CGA', [['CGA 1', '1'], ['CGA 2', '2'], ['CGA 3', '3']]], ['ZX Spectrum'], ['C64'], ['NES'], ['EGA'],
   ['GB', [['GB', 'DMG'], ['GB Pocket', 'Pocket', 'Pkt'], ['GB Light', 'Light', 'Lt']]]].map(([n, m]) => ({ n, m: (m || [[n, n]]).map(([p, l, s]) => ({ i: FX_PALS.findIndex(P => P.n === p), l, s: s || l })) }));   // s: the short name, on narrow screens
 const palFam = i => { const f = PAL_FAM.findIndex(F => F.m.some(x => x.i === i)); return f < 0 ? [0, 0] : [f, PAL_FAM[f].m.findIndex(x => x.i === i)]; };
 const palLast = {};   // the variant picked last in each family (this session)
@@ -146,8 +147,8 @@ const FX_KZ = Array.from({ length: 101 }, (_, i) => { const v = +(1 + i * 0.05).
 const FX_FBK = Array.from({ length: 20 }, (_, i) => [(i + 1) / 20, (i + 1) * 5 + '%']);   // no 0%: it isn't "off", only the shortest trails
 function rateAlt(d, style, C){
   if (!d) return null;
-  if (d.id === 'colour' && style === 'pal' && C && palGB(C.pal || 0)) return { label: 'Dot Matrix', key: 'dots', def: 0, list: FX_DOTS, icons: FX_DOTS_ICON,   // the Game Boy: no dithering, its screen instead (same place as Dither's pattern switch, so nothing moves)
-    title: () => 'Dot Matrix: the Game Boy screen — Off, Pixels (144 rows of square pixels, the 160 × 144 look) or Dots (the same with the dot-matrix gaps)' };
+  if (d.id === 'colour' && style === 'pal' && C && palGB(C.pal || 0)) return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, lcd: { key: 'dots', def: 0, list: FX_DOTS, icons: FX_DOTS_ICON },   // the Game Boy: Dither (Bayer) and, in the pattern switch's place, its screen (0.99.4)
+    title: () => 'Dither: how much of the in-between shades are drawn with the four greens (Bayer pattern). The switch beside it is the LCD: Off, Pixels (144 rows of square pixels) or Dots (with the dot-matrix gaps)' };
   if (d.id === 'feedback') return { label: 'Length', key: 'fbk', def: 0.7, list: FX_FBK, title: () => 'Length: how long the trails / echoes last before they fade' };
   if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, pat: true,   // the pattern: the Noise / Bayer / Check switch beside it
     title: () => 'Dither: how much of the in-between shades are drawn with the palette colours (off = flat areas). The switch beside it picks how' };
@@ -277,13 +278,13 @@ var gfxReady = true;   // (ui-gif runs before this file: it waits for this)
 const gfxOn = g => !!(g && g.gfx && GFX_IDS.some(id => g.gfx[id] && g.gfx[id].on && g.gfx[id].amt > 0));
 function gfxU(g, b){
   const n = FX_DEFS.length, z = v => FX_DEFS.map(() => v), F = fxFactory();
-  const M = { lv: z(0), env: z(0), amt: z(1), rate: F.map(c => c.rate), style: FX_DEFS.map(d => d.styles[0][0]), size: FX_DEFS.map(d => d.sizeDef || 64), pal: z(0), kz: z(1), fbk: z(0.7), vdrop: z(1), dith: z(0), dpat: z(0), dots: z(0), ovs: z(0), pamt: [] };
+  const M = { lv: z(0), env: z(0), amt: z(1), rate: F.map(c => c.rate), style: FX_DEFS.map(d => d.styles[0][0]), size: FX_DEFS.map(d => d.sizeDef || 64), pal: z(0), kz: z(1), fbk: z(0.7), vdrop: z(1), dith: z(0), dpat: z(0), dots: z(0), ovs: z(0), pamt: [], abase: z(1) };
   for (const id of GFX_IDS){ const e = g.gfx[id], i = FXI[id]; if (!e || !e.on || !(e.amt > 0)) continue;
     M.lv[i] = e.amt; M.env[i] = 1; M.amt[i] = e.amt; if (e.style) M.style[i] = e.style; if (e.size) M.size[i] = e.size; if (e.rate) M.rate[i] = e.rate; }
   return fxU(b, M);
 }
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => modAmt(c, b)), rate: X.cfg.map(c => modRate(c, b)), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => modSize(c, b, FX_DEFS[i].sizeDef || 64)), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0), pamt: X.cfg.map(c => c.pamt || null) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => modAmt(c, b)), rate: X.cfg.map(c => modRate(c, b)), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => modSize(c, b, FX_DEFS[i].sizeDef || 64)), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0), pamt: X.cfg.map(c => c.pamt || null), abase: X.cfg.map(c => c.amt) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * modAmt(C, b); if (v > 0){ for (const k of tgtList(C.target)){ const m = M.get(k); m.lv[i] = v; m.env[i] = l; } } });
   X.pre.forEach((P, k) => {
@@ -291,14 +292,14 @@ function fxMix(b, X = fxLive()){
     for (const [i, e] of Object.entries(P.fx)){
       const v = l * modAmt(e, b);
       for (const k of tgtList(e.target)){ const m = M.get(k);
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = modAmt(e, b); m.rate[i] = modRate(e, b); if (e.style) m.style[i] = e.style; if (e.size || fxMod(e, 'size', b) !== null) m.size[i] = modSize(e, b, m.size[i]); if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.ovs != null) m.ovs[i] = e.ovs; if (e.pamt) m.pamt[i] = e.pamt; if (e.dots != null) m.dots[i] = e.dots; } }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = modAmt(e, b); m.abase[i] = e.amt; m.rate[i] = modRate(e, b); if (e.style) m.style[i] = e.style; if (e.size || fxMod(e, 'size', b) !== null) m.size[i] = modSize(e, b, m.size[i]); if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.ovs != null) m.ovs[i] = e.ovs; if (e.pamt) m.pamt[i] = e.pamt; if (e.dots != null) m.dots[i] = e.dots; } }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
 const FX_U_IDX = ['colour', 'strobe', 'poster', 'zoom', 'shake', 'wobble', 'mirror', 'glitch', 'rgb', 'pixel', 'feedback', 'codec'].map(k => FXI[k]);
-function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat, dots, ovs, pamt }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dpat, dots, ovs, pamt, abase }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
   const [CO, ST, PO, ZO, SH, WO, MI, GL, CR, PX, FB, CD] = FX_U_IDX, dg = nm(ST) === 'degauss';
@@ -308,11 +309,12 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], codec: lv[CD], cdS: styleMask(CD, style[CD]), cseed: st(CD) * 7.13 % 100, cdSz: size[CD],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith ? dith[CO] : 0, palP: palGB(pal ? pal[CO] : 0) ? 1 : dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s; U.wobZ = (ovs && ovs[WO] === 0 ? 0 : (S(WO) === 0 ? 0.04 : 0.026)) * lv[WO];
-  const parts = (i, id) => { const f = new Float32Array(12).fill(1), P = pamt && pamt[i], a = amt[i] || 1; if (P) for (const k in P){ const ix = FXS[id][k]; if (ix != null) f[ix] = P[k] / a; } return f; };
+  const parts = (i, id) => { const f = new Float32Array(12).fill(1), P = pamt && pamt[i], a = (abase && abase[i]) || amt[i] || 1; if (P) for (const k in P){ const ix = FXS[id][k]; if (ix != null) f[ix] = P[k] / a; } return f; };
+  // (0.99.4: a stacked style's share is of the Amount as set, so an Amount LFO moves the stacked styles too; it used to divide itself out)
   U.glA = parts(GL, 'glitch'); U.rgA = parts(CR, 'rgb'); U.cdA = parts(CD, 'codec');   // a stacked style's own Amount (0.92), as a share of the effect's   // Wobble › Edges: its largest push (0.018 of the width for Wave, 0.012 for Ripple) kept inside the frame   // Overscan: off · some · full (enough for the biggest jolt and tilt)
   return U;
 }
@@ -411,24 +413,8 @@ ${FX_GLSL}
       }
       float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
       float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-      vec3 palSnap(vec3 c){                          // nearest palette colour, weighted like the eye (green counts most)
-        vec2 q = floor(gl_FragCoord.xy / max(1.0, floor(res.y / 360.0)));   // dither cells: chunky dots at any output size
-        if (palD > 0.001 && palP < 0.5) c += (bayer4(q) - 0.47) * palD * 0.9 / pow(palN, 0.333);   // Scatter: noise, then the nearest colour
-        vec3 W = vec3(0.55, 0.75, 0.35), best = pal[0], sec = pal[0], k = okLab(c), bk = palOk[0]; float bd = 1e9, t = 0.0;
-        for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 d = k - palOk[i]; float e = dot(d, d); if (e < bd){ bd = e; best = pal[i]; bk = palOk[i]; } }   // the nearest, in OKLab
-        if (palLum < 0.5 && palD > 0.001 && palP > 0.5 && palN > 1.5){   // Dither: the colour that, mixed with the nearest, comes closest to c (0.99.3: it was the second nearest, often a grey)
-          float br = 1e9; vec3 kb = k - bk;
-          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 ab = palOk[i] - bk; float L = dot(ab, ab); if (L < 1e-8) continue;
-            float u = dot(kb, ab) / L; if (u <= 0.0) continue; u = min(u, 1.0); vec3 r = kb - u * ab; float e = dot(r, r); if (e < br){ br = e; sec = pal[i]; t = u; } } }
-        if (palLum > 0.5){                         // the Game Boys: four shades by brightness, evenly (0.99: the nearest colour lost most of the picture on GB Light, whose greens are all dark)
-          float y = clamp(dot(c, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, k = floor(y), k2 = clamp(y - k < 0.5 ? k - 1.0 : k + 1.0, 0.0, palN - 1.0);
-          for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == k) best = pal[i]; if (float(i) == k2) sec = pal[i]; }
-          vec3 ab = (sec - best) * W; t = clamp(dot((c - best) * W, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0); }   // how far c sits from the nearest towards the second
-        if (palD < 0.001 || palP < 0.5 || palN < 1.5) return best;
-        t = clamp((t - 0.5) / palD + 0.5, 0.0, 1.0) * step(0.001, t);   // less Dither: the pattern only where c is near halfway
-        if (palP > 1.5) t = t < 0.25 ? 0.0 : t > 0.75 ? 1.0 : 0.5 + 0.01;   // Checker: flat, or exactly half and half
-        float th = palP > 1.5 ? mod(q.x + q.y, 2.0) * 0.5 + 0.25 : bayer4(q) + 0.03125;
-        return th < t ? sec : best; }
+      ${PALSNAP_GLSL}
+      vec3 palSnap(vec3 c){ return palPick(c, palD, palP, floor(gl_FragCoord.xy / (abs(palDot) > 0.5 ? abs(palDot) : max(1.0, floor(res.y / 360.0))))); }   // dither cells: chunky dots at any output size (the Game Boy's LCD: one cell per screen pixel)
       vec3 hueRot(vec3 c, float an){                 // rotate the hue in YIQ space
         vec3 y = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312) * c;
         float cs = cos(an), sn = sin(an); y.yz = vec2(y.y * cs - y.z * sn, y.y * sn + y.z * cs);
@@ -909,7 +895,7 @@ function drawFrame(now){
   for (const c of L.clips){ const G = clipGeom(c); O.add('|'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }
   O.add('hov'); O.add(pvHover ? pvHover[1].id : -1); if (pvHover && !drag){ const G = clipGeom(liveClip(pvHover[1])); if (G){ O.add(G.cx); O.add(G.cy); } }
   { const c = selClip(), e = c && liveClip(c), G = e && e !== c && clipGeom(e); O.add('live'); if (G){ O.add(G.cx); O.add(G.cy); O.add(G.hw); O.add(G.hh); O.add(G.a); } }   // Auto moving the selected GIF: its live outline follows
-  if (maskEd){ O.add('m'); O.add(maskEd.li); O.add(maskRev); O.add(layers[maskEd.li].mask && layers[maskEd.li].mask.mid); O.add(maskPtr ? maskPtr[0] : -1); O.add(maskPtr ? maskPtr[1] : -1); O.add(maskOpt.size); O.add(maskOpt.tool); }
+  if (maskEd){ O.add('m'); O.add(maskEd.li); O.add(maskRev); O.add(maskOwner().mask && maskOwner().mask.mid); O.add(maskPtr ? maskPtr[0] : -1); O.add(maskPtr ? maskPtr[1] : -1); O.add(maskOpt.size); O.add(maskOpt.tool); }
   for (const [c, g] of gh){ const G = clipGeom(c); O.add(';'); [c.id, G.cx, G.cy, G.hw, G.hh, G.a, c.flipX, c.flipY, c.tile, c.cl, c.ct, c.cr, c.cb, g.fxVer, g.startF, g.crisp].forEach(O.add); }
   if (O.changed() || force) drawOverlay(gh);
   redraw.all = false;
