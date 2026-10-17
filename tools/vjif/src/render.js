@@ -173,7 +173,8 @@ function drawClip(ctx, c, g, img){
   const S = g.shadow, shOn = S && S.on && !c.tile && S.op > 0;
   let ox = S ? S.x : 0, oy = S ? S.y : 0; if (shOn && S.turn && c.rot){ const r = c.rot * Math.PI / 180, cs = Math.cos(r), sn = Math.sin(r); [ox, oy] = [ox * cs - oy * sn, ox * sn + oy * cs]; }   // Turn: the offset turns with the GIF   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
   const sk = shOn ? S.skew || 0 : 0;   // Skew (0.96): the shadow slanted from the GIF's bottom edge
-  if (shOn && (S.cut > 0 || sk)){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
+  const fl = shOn && !!S.floor;   // Floor (0.99.5): flipped down from the bottom edge, onto the ground in front
+  if (shOn && (S.cut > 0 || sk || fl)){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
     const M = ctx.getTransform(), I = M.inverse(), vx = ox * dk, vy = oy * dk, OFF = 1e5;
     // where the cut runs: Turn on, across the GIF's own up / down; Turn off, level on screen across the GIF's outline as it stands
     // (so a turned GIF's shadow still only shows at its bottom: it sits on the layer)
@@ -182,9 +183,9 @@ function drawClip(ctx, c, g, img){
       y0 = top + S.cut * hh + vy; sb = (S.soft ?? 0) * hh; }
     else { const ly = I.b * vx + I.d * vy; y0 = -bh/2 + S.cut * bh + ly; sb = (S.soft ?? 0) * bh; }
     const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF; x.shadowOffsetY = vy - M.b * OFF;
-      if (sk){ x.translate(0, bh / 2); x.transform(1, 0, -sk, 1, 0, 0); x.translate(0, -bh / 2); }   // (a shear keeps the first column: the far-off trick's offset still lands)
+      if (sk || fl){ x.translate(0, bh / 2); if (sk) x.transform(1, 0, -sk, 1, 0, 0); if (fl) x.scale(1, -1); x.translate(0, -bh / 2); }   // (a shear keeps the first column: the far-off trick's offset still lands)
       x.translate(OFF, 0); drawPlain(x, c, img, bw, bh); };
-    if (!(S.cut > 0)){ ctx.save(); shadowOnly(ctx); ctx.restore(); }   // skewed, not cropped
+    if (!(S.cut > 0)){ ctx.save(); shadowOnly(ctx); ctx.restore(); }   // skewed or on the floor, not cropped
     else if (sb > 0){                                     // soft: drawn apart, faded in across the cut line, then put down like the shadow would be
       const { c: shCv, x: shX } = shadowScratch(ctx), cw = shCv.width, ch = shCv.height;
       shX.save(); shX.setTransform(1, 0, 0, 1, 0, 0); shX.globalCompositeOperation = 'source-over'; shX.globalAlpha = 1; shX.clearRect(0, 0, cw, ch);
@@ -257,6 +258,20 @@ function sigTracker(){
       const t = prev; prev = cur; cur = t; return !same;
     },
   };
+}
+// Bypass FX GIFs, drawn after the effects: each layer's are cut where the layers above it cover them (0.99.5: a Foreground GIF
+// with Bypass FX was drawn over Overlay). The cover is the upper layers' GIFs as plain shapes (no effects, blends as Normal;
+// mask layers don't cover), so it's close, not exact, where an upper layer blends or has effects that move it
+function drawBypass(noFx, main, ctx){
+  const XF = [RS, 0, 0, RS, 0, 0];
+  for (const B of noFx){
+    const up = main.filter(it => it.L.i > B.L.i && it.items.length && !MASK_BLENDS.has(it.L.blend)).map(it => ({ L: { ...it.L, blend: 'source-over', fillOn: false }, items: it.items }));
+    if (!up.length){ render([B], ctx, SLOT.LAYERS, [], 0, XF, true); continue; }
+    const b = byBuf, o = occBuf; for (const x of [b, o]){ x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, x.canvas.width, x.canvas.height); }
+    render([B], b, SLOT.LAYERS, [], 0, XF, true); render(up, o, SLOT.LAYERS, [], 0, XF, true);
+    b.setTransform(1, 0, 0, 1, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'destination-out'; b.drawImage(o.canvas, 0, 0); b.globalCompositeOperation = 'source-over';
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.drawImage(b.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height); ctx.restore();
+  }
 }
 // Bypass FX: those GIFs leave the list (and its effects); they're drawn afterwards on top, layer by layer (no fill)
 function splitNoFx(list){

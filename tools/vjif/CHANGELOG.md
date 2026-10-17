@@ -4,6 +4,47 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.5 — 2026-10-17
+
+### Effects
+- Glitch and Codec split by motion. Glitch has the moving styles: Slices, Blocks, Melt, plus Corrupt and Keyframe (from Codec). Codec has the still ones: Crunch and four new styles. Old sets, presets, defaults and GIF effects are converted. Where Codec was on with Corrupt or Keyframe, Glitch comes on instead.
+  - Macroblock: each block keeps only its average and a slope, so the block grid shows.
+  - Banding: gradients stepped into flat bands, the colour coarser than the brightness.
+  - Chroma: colour at a fraction of the resolution, bleeding past edges.
+  - Ringing: JPEG halos and mosquito noise along edges.
+- Codec has no Rate: none of its styles move.
+- Palettes without Dither keep more of the picture. The nearest colour is now judged by the eye-weighted RGB distance and the OKLab one together. OKLab alone flattened a picture of mostly one hue into one palette colour (a ginger cat all red on the ZX Spectrum).
+- Dither:
+  - Bayer no longer mixes far-apart colours. Orange on EGA was a red and green pattern, the right average but the wrong look.
+  - Noise only dithers near the halfway point between two colours, so it's less grainy.
+  - Checker no longer darkens midtones until detail vanishes (1-bit, Grey, CGA).
+- The Game Boy palettes have no Dither again. DMG | Pocket | Light use its room, with full names.
+- The Palette slider is wider, so ZX Spectrum fits. On narrow screens it reads Spectrum.
+
+### GIFs
+- Sections no longer fold. A changed section shows a mark where its arrow was.
+- Colour Adjust starts off. Touching a slider switches it on.
+- Trigger's switch is gone: Hit already chooses Loop, Hold or One shot.
+- Shadow › Light: Turn, plus a new Floor option, a shadow flipped down from the GIF's bottom edge onto the ground in front.
+- Auto: right-click Flip H or V in Transform opens its LFO. The graph shades where the GIF is flipped and dashes the 50% line.
+- Sliders and the flip switches move with Auto's LFOs (the flips were missing).
+- Cycle (GIF › Auto and the effect LFO) has an Even | Dotted | Triplet switch beside it. Triplets are new; every older value is in Even or Dotted.
+
+### Layers
+- Drag Midground's name onto Foreground (or back) to swap the two layers' contents. Undoable.
+- The layer opacity slider reads Opacity and its value inside, like the other sliders.
+- A Bypass FX GIF is no longer drawn over the layers above its own. It's cut where they cover it.
+- Clicking a pad moves the edit layer to where its GIF plays, so Transform edits the GIF the GIF panel shows. Keys don't move it, and Scene pads still go to the Midground or Foreground you last edited.
+- Mask › Alt colour brush: the colours come from what's under the masked thing (the layers below; on Background, the GIFs under the selected one).
+- A dark chip's outline is judged by the GIF's edge too, so a black GIF with a bright middle gets it.
+
+### Interface
+- Reset and Clear buttons are the circular-arrow icon everywhere. "Reset all" has a dot in the middle.
+- Sets is a folder icon and Save a disk icon.
+- Headings: two styles only. Envelope and LFO in the effect editor are section headings, and pad group names and heading tags use the sans font.
+- Tooltips rewritten short: one line, what it does, shortcuts after a ·.
+- Settings › Theme: Background has a colour swatch like the other roles, with the same spacing above it.
+
 ## 0.99.4 — 2026-10-17
 
 ### Effects

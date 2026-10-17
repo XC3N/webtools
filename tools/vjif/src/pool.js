@@ -99,7 +99,7 @@ function makeInst(m, saved = null){
   const g = { uid: ++gifSeq, fxWaits: [], media: m, hash: m.hash, name: m.name, blob: m.blob, type: m.type, src: m.src, frames: m.src, durs: m.durs,
            w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes,
            sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, nofx: false, inF: 0, outF: n - 1, startF: 0,
-           key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1 }, pal: { i: -1, d: 0 }, shadow: { ...SHADOW_DEF }, swap: [], swapMerge: 0, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
+           key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1, off: true }, pal: { i: -1, d: 0 }, shadow: { ...SHADOW_DEF }, swap: [], swapMerge: 0, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free', every: 0 }, lfo: {} };
   insts.set(g.uid, g); rebuildSeq(g);
@@ -107,7 +107,7 @@ function makeInst(m, saved = null){
   return g;
 }
 // drop shadow under a GIF: offset (output px), blur, opacity, colour — off by default
-const SHADOW_DEF = { on: false, x: 8, y: 8, blur: 12, op: 0.6, col: '#000000', cut: 0, soft: 0.2, turn: false, skew: 0 };   // cut: the top part of the shadow taken away (0–0.95 of the GIF's height); soft: how gradually it fades in there (share of the height)
+const SHADOW_DEF = { on: false, x: 8, y: 8, blur: 12, op: 0.6, col: '#000000', cut: 0, soft: 0.2, turn: false, skew: 0, floor: false };   // cut: the top part of the shadow taken away (0–0.95 of the GIF's height); soft: how gradually it fades in there (share of the height)
 const gifSettings = g => JSON.parse(JSON.stringify(Object.fromEntries(GIF_KEYS.map(k => [k, g[k]]))));
 // an independent copy (same frames, own settings), with its colour work started
 function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); c.seed = g.seed ?? g.uid; if (g.masks) c.masks = g.masks; if (fxActive(c)) applyFx(c); return c; }
@@ -310,7 +310,7 @@ function renderPool(){
       e.dataTransfer.setDragImage(NO_IMG, 0, 0);
       const gh = document.createElement('span'); gh.className = 'chip'; gh.style.backgroundImage = `url(${t.querySelector('canvas').toDataURL()})`; ghost.show(gh, e.clientX, e.clientY); });
     t.innerHTML = `<canvas width="120" height="80"></canvas><span class="pn"></span><span class="pm">${m.w}×${m.h} · ${m.src.length} fr · ${(m.srcBytes / 1048576).toFixed(m.srcBytes < 10485760 ? 1 : 0)} MB</span>`
-      + `<span class="pm use${u.here.length ? ' here' : ''}"></span><button class="px iconbtn" title="${u.sc.length ? 'Hold to remove it from the pool and from every pad it is on' : 'Remove from the pool'}">×</button><span class="hold"></span>`;
+      + `<span class="pm use${u.here.length ? ' here' : ''}"></span><button class="px iconbtn" title="${u.sc.length ? 'Hold: remove it from the pool and its pads' : 'Remove from the pool'}">×</button><span class="hold"></span>`;
     t.querySelector('.pn').textContent = m.name;
     t.querySelector('.use').textContent = (u.here.length ? `pad ${u.here.join(' ')} here` + (u.sc.length > 1 ? ` · scenes ${u.sc.join(' ')}` : '') : u.sc.length ? `scene${u.sc.length > 1 ? 's' : ''} ${u.sc.join(' ')}` : 'unused');
     const c = t.querySelector('canvas'), x = c.getContext('2d'), f = m.src[0], k = Math.min(c.width / f.width, c.height / f.height);

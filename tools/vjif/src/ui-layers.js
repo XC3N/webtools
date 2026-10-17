@@ -5,30 +5,37 @@ function buildLayers(){
     const L = layers[li], row = document.createElement('div');
     row.className = 'layer'; row.style.setProperty('--lc', LCOL[li]);
     // a narrow card: on / name / clear — mode / blend — opacity — GIF chips
-    row.innerHTML = `<div class="lhead"><button class="lon" title="On / off: Shift+${li+1} (End: the edit layer). Right-click: solo (again: back as before)">${li+1}</button>
+    row.innerHTML = `<div class="lhead"><button class="lon" title="On / off · Shift+${li+1} · right-click: solo">${li+1}</button>
       <span class="lname" title="Click the card, PgUp / PgDn or Alt+${li+1} to edit this layer">${LNAMES[li]}</span>
       ${li === 0 ? '<span class="lfillw" title="Background colour, under this layer\'s GIFs"><input type="checkbox" class="lfillon"><input type="color" class="lfill"></span>' : ''}
-      <button class="llock iconbtn" title="Lock: the mouse can't select, move or resize this layer's GIFs in the preview (clicks go through to the layers below). The Transform panel and the arrow keys still work"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor" stroke="none"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg></button>
-      <button class="lmask iconbtn" title="Mask: paint where this layer is hidden (freehand, rectangles, ellipses; right button erases), or Invert to show only what's painted. One per layer in each scene · click again (or Esc) when you're done"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="1.5"/><circle cx="8" cy="8" r="3.4" fill="currentColor" stroke="none"/></svg></button>
+      <button class="llock iconbtn" title="Lock: the mouse can't move this layer's GIFs"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor" stroke="none"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg></button>
+      <button class="lmask iconbtn" title="Mask: paint where this layer is hidden (Background: the selected GIF) · Esc: done"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="12" height="12" rx="1.5"/><circle cx="8" cy="8" r="3.4" fill="currentColor" stroke="none"/></svg></button>
       <button class="lclr" title="Clear: remove all GIFs from this layer">×</button></div>
-      <div class="lrow">      <select class="lbl" title="Layer blend mode. Mask: cut out — this layer's GIFs cut holes in the layers below it (they show black); Mask: keep inside — only what's under this layer's GIFs stays of the layers below">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
-      <span class="lopw"><input class="lop" type="range" min="0" max="1" step="0.01" data-def="1" title="Layer opacity"></span>
-      <div class="seg ltr" title="Turning this layer on / off (its number, Shift+${li+1}, End, MIDI): ✕ straight away, ★ with the armed transition, 1–9 always with that preset"><button data-v="cut" title="On / off: straight away (cut)">✕</button><button data-v="armed" title="On / off: with the armed transition">★</button>${[1,2,3,4,5,6,7,8,9].map(k => `<button data-v="${k - 1}" title="On / off: always with transition preset ${k}">${k}</button>`).join('')}</div>
+      <div class="lrow">      <select class="lbl" title="Blend mode (Mask modes cut the layers below)">${BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('')}</select></div>
+      <span class="lopw" title="Layer opacity"><input class="lop" type="range" min="0" max="1" step="0.01" data-def="1"><span class="lopl">Opacity</span><output class="lopo"></output></span>
+      <div class="seg ltr" title="Layer on / off: ✕ cut, ★ armed transition, 1–9 that preset"><button data-v="cut" title="On / off: straight away (cut)">✕</button><button data-v="armed" title="On / off: with the armed transition">★</button>${[1,2,3,4,5,6,7,8,9].map(k => `<button data-v="${k - 1}" title="On / off: always with transition preset ${k}">${k}</button>`).join('')}</div>
       <div class="clips"></div>`;
     row.querySelector('.lon').addEventListener('click', () => toggleLayer(li));
     row.querySelector('.lon').addEventListener('contextmenu', e => { e.preventDefault(); soloLayer(li); });
     row.addEventListener('pointerdown', e => { if (!e.target.closest('button, select, input, .chip') && target !== li) setTarget(li); });
     row.querySelector('.lmask').addEventListener('click', () => maskOpen(li));
+    if (li === 1 || li === 2){                     // 0.99.5: drag Midground's name onto Foreground (or back) to swap the two layers' contents
+      const nm = row.querySelector('.lname'); nm.classList.add('lswapdrag'); nm.title += ' · drag onto the other of Midground / Foreground to swap them';
+      nm.addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); nm.setPointerCapture(e.pointerId); const other = layers[3 - li].row, y0 = e.clientY; let over = false;
+        const mv = ev => { over = Math.abs(ev.clientY - y0) > 6 && other.contains(document.elementFromPoint(ev.clientX, ev.clientY)); other.classList.toggle('lswap', over); };
+        const up = () => { nm.removeEventListener('pointermove', mv); other.classList.remove('lswap'); if (over) swapLayers(1, 2); };
+        nm.addEventListener('pointermove', mv); nm.addEventListener('pointerup', up, { once: true }); nm.addEventListener('pointercancel', () => { nm.removeEventListener('pointermove', mv); other.classList.remove('lswap'); }, { once: true }); });
+    }
     row.querySelector('.llock').addEventListener('click', () => { L.lock = !L.lock; if (L.lock && drag && drag.c && L.clips.includes(drag.c)) drag = null; syncLayerUI(); redraw.all = true; toast2(`${LNAMES[li]} ${L.lock ? 'locked: the mouse goes through it' : 'unlocked'}`); });
     row.querySelector('.lclr').addEventListener('click', () => { if (li === BG_LAYER){ for (let k = BG0; k < BG0 + N_BG; k++) if (pads[k].gif) clearPad(k); return; } L.clips = []; L.sel = null; syncLayerUI(); syncXfUI(); });   // (Background: its slots empty, each undoable)
-    row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; });
+    row.querySelector('.lop').addEventListener('input', e => { L.opacity = +e.target.value; row.querySelector('.lopo').textContent = Math.round(L.opacity * 100) + '%'; });
     if (li === 0){
       row.querySelector('.lfillon').addEventListener('change', e => { L.fillOn = e.target.checked; });
       row.querySelector('.lfill').addEventListener('input', e => { L.fill = e.target.value; L.fillOn = true; row.querySelector('.lfillon').checked = true; });
     }
     row.querySelector('.lop').addEventListener('pointerdown', () => { if (target !== li) setTarget(li); });
     row.querySelector('.lbl').addEventListener('change', e => { if (li !== BG_LAYER) L.blend = e.target.value; else if (L.sel){ L.sel.blend = e.target.value; redraw.all = true; } });   // Background: the selected GIF's own blend (0.94)
-    if (li === BG_LAYER) row.querySelector('.lbl').title = "Blend of the selected Background GIF with the Background GIFs under it: each one is its own sublayer (Background itself has only black under it). Mask: cut out — it cuts holes in the ones below it; Mask: keep inside — only what's under it stays";
+    if (li === BG_LAYER) row.querySelector('.lbl').title = "Blend of the selected GIF with the Background GIFs under it";
     onSeg(row.querySelector('.ltr'), (b, e) => { L.tr = b.dataset.v; syncLayerUI(); });
     row.querySelector('.clips').addEventListener('click', e => {
       const sl = e.target.closest('.bgslot'); if (sl){ const p = +sl.dataset.pad; selectPad(p); setTarget(BG_LAYER); if (pool.length) openPool(p); else { fileTarget = p; $('#fileIn').click(); } return; }   // an empty Background slot: fill it
@@ -114,13 +121,13 @@ function syncLayerUI(){
     r.classList.toggle('on', L.on); r.classList.toggle('tgt', L.i === target); r.querySelector('.llock').classList.toggle('on', !!L.lock);
     const mb = r.querySelector('.lmask'); mb.classList.toggle('on', !!maskEd && maskEd.li === L.i); mb.classList.toggle('has', !!(L.mask && L.mask.on !== false) || L.clips.some(c => c.mask && c.mask.on !== false));
     r.querySelector('.lname').title = LROLE[L.i] + ' · ' + (L.i === target ? 'editing this layer' : `click the card or press Alt+${L.i+1} to edit this layer`);
-    r.querySelector('.lop').value = L.opacity; { const s = r.querySelector('.lbl'); if (L.i === BG_LAYER){ s.value = (L.sel && L.sel.blend) || 'source-over'; s.disabled = !L.sel; } else s.value = L.blend; } r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
+    r.querySelector('.lop').value = L.opacity; r.querySelector('.lopo').textContent = Math.round(L.opacity * 100) + '%'; { const s = r.querySelector('.lbl'); if (L.i === BG_LAYER){ s.value = (L.sel && L.sel.blend) || 'source-over'; s.disabled = !L.sel; } else s.value = L.blend; } r.querySelectorAll('.ltr button').forEach(b => b.classList.toggle('on', b.dataset.v === String(L.tr || 'cut')));
     if (L.i === 0){ r.querySelector('.lfillon').checked = !!L.fillOn; r.querySelector('.lfill').value = L.fill || '#1e2a3a'; }
     if (L.i === BG_LAYER && L.blend !== 'source-over') L.blend = 'source-over';   // 0.94: nothing under Background to blend with: its select sets the selected GIF's blend instead
     if (L.i === BG_LAYER) for (let p = BG0; p < BG0 + N_BG; p++) if (pads[p].gif && !L.clips.some(c => c.pad === p)) L.clips.push(newClip(p));   // a filled slot always has its chip (0.93.1: one could go missing and the card showed 5)
-    const slots = L.i === BG_LAYER ? Array.from({ length: N_BG }, (_, k) => BG0 + k).filter(p => !pads[p].gif).map(p => `<span class="bgslot" data-pad="${p}" title="Empty Background slot: click to fill it from the pool (or a file), or drop a GIF from the pool or a pad on this card">+</span>`).join('') : '';
+    const slots = L.i === BG_LAYER ? Array.from({ length: N_BG }, (_, k) => BG0 + k).filter(p => !pads[p].gif).map(p => `<span class="bgslot" data-pad="${p}" title="Empty slot · click: fill it · or drop a GIF here">+</span>`).join('') : '';
     const chipHTML = c => { const p = pads[c.pad];   // leftmost chip = drawn on top
-      return `<span class="chip${c === sel ? ' sel' : ''}${c.off ? ' off' : ''}${p.gif && p.gif.thumb && p.gif.thumbDark ? ' dk' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} — click to select, drag to move · right-click: hide / show (find a heavy one) · Ctrl+click to ${isBgPad(c.pad) ? 'empty the slot' : 'remove'}"><span>${p.label}</span><b title="${isBgPad(c.pad) ? 'Empty this slot' : 'Remove from layer'}">×</b></span>`; };
+      return `<span class="chip${c === sel ? ' sel' : ''}${c.off ? ' off' : ''}${p.gif && p.gif.thumb && p.gif.thumbDark ? ' dk' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} · drag: move · right-click: hide / show · Ctrl+click: ${isBgPad(c.pad) ? 'empty the slot' : 'remove'}"><span>${p.label}</span><b title="${isBgPad(c.pad) ? 'Empty this slot' : 'Remove from layer'}">×</b></span>`; };
     setHTML(r.querySelector('.clips'), L.clips.slice().reverse().map(chipHTML).join('') + slots);
   }
 
@@ -142,6 +149,7 @@ Object.entries(AUTO_OF).forEach(([id, k]) => {
   const f = $(id).closest('.field'), lb = f; lb.title = 'Right-click: automate this (GIF › Auto)';
   f.addEventListener('contextmenu', e => { e.preventDefault(); showAuto(k); });
 });
+for (const [id, k] of [['#xFx', 'fx'], ['#xFy', 'fy']]) $(id).closest('label').addEventListener('contextmenu', e => { e.preventDefault(); showAuto(k); });   // the flips too (0.99.5)
 function showAuto(k){
   const c = selClip(); if (c && c.pad !== selPad) selectPad(c.pad);
   const g = curGif(); if (!g) return;
@@ -378,7 +386,7 @@ $('#loupe').addEventListener('pointerdown', e => { if (e.button) return; const L
   L.addEventListener('pointermove', mv); L.addEventListener('pointerup', up); });
 $('#loupe').addEventListener('dblclick', () => { pvOpt.lpos = null; loupePlace(); pvSave(); });   // back to the corner
 $('#loupe').addEventListener('contextmenu', e => { e.preventDefault(); loupePin = !loupePin; $('#loupe').classList.toggle('pin', loupePin); if (!loupePin){ loupeAt = null; drawLoupe(); } });
-$('#loupe').title = 'Loupe: drag to move it (double-click: back to the corner) · right-click: pin it on the spot it shows, so it stays while you work elsewhere (right-click again to let go)';
+$('#loupe').title = 'Loupe · drag: move · double-click: corner · right-click: pin';
 loupePlace();
 $('#pickLayerBtn').addEventListener('click', () => { pvOpt.pickLayer = !pvOpt.pickLayer; pvUI(); pvSave(); toast2(pvOpt.pickLayer ? 'Current layer only: picking on the selected layer' : 'Picking on any layer'); });
 const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const o = k === 'gx' ? 'gy' : 'gx'; if (v === 1 && pvOpt[o] === 1) pvOpt[o] = 2;   // 1×1 draws nothing
@@ -427,3 +435,11 @@ function sizePreview(){
 }
 new ResizeObserver(sizePreview).observe($('#pvWrap'));
 (function watchDpr(){ matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', () => { sizePreview(); watchDpr(); }, { once: true }); })();   // browser zoom / moved to another screen
+
+// Midground ⇄ Foreground (0.99.5, TW-020): the layers keep their places and names, their contents trade places (GIFs, opacity,
+// blend, mask, lock, on / off, transition), so what was behind is now in front. Undoable
+function swapLayers(a, b){
+  const K = ['clips', 'sel', 'opacity', 'blend', 'mask', 'lock', 'on', 'tr'], A = layers[a], B = layers[b], t = {};
+  K.forEach(k => { t[k] = A[k]; A[k] = B[k]; B[k] = t[k]; });
+  if (maskEd) maskClose(); redraw.all = true; syncLayerUI(); syncXfUI(); commit(); toast2(`${LNAMES[a]} and ${LNAMES[b]} swapped — Ctrl+Z swaps them back`);
+}

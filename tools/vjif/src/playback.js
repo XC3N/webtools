@@ -65,11 +65,12 @@ function firePending(){
     pending.delete(p); pads[p].el.classList.remove('wait'); fire(p, q.beat, q.released, q.swap);
   }
 }
+let clickFocus = -1, sceneLayer = 1;   // clickFocus: the pad last clicked (0.99.5); sceneLayer: where Scene pads go when the edit layer is Background / Overlay
 function fire(p, beat, released = false, swap = false){
   const g = pads[p].gif; if (!g) return;
   // a GIF lives on one layer at most: if it's on any layer, restart it there; otherwise add it to its layer (0.88: Global pads
   // Overlay, Background slots Background, Scene pads the edited layer when it's Midground / Foreground, else Midground)
-  let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[padLayer(p, target)];
+  let L = layers.find(L => L.clips.some(c => c.pad === p)) || layers[padLayer(p, target === 1 || target === 2 ? target : sceneLayer)];
   let c = L.clips.find(c => c.pad === p); const n0 = L.clips.length;
   if (swap && L.i !== BG_LAYER){                     // alone on the layer, where the selected GIF was (Background keeps its slots: 0.93.1)
     if (!c){ c = selClip(L.i) || L.clips[0] || newClip(p); c.pad = p; c.env = null; }
@@ -86,6 +87,7 @@ function fire(p, beat, released = false, swap = false){
   // short Fade in was already over before the GIF showed, and at Bar snap even long ones lost up to half a beat)
   if (g.trig === 'fade') c.env = { t0: Math.max(beat, clock.beat), from: envLevel(c, g, clock.beat), rel: null, noGate: released };
   L.sel = c; L.on = true;
+  if (clickFocus === p){ clickFocus = -1; if (L.i !== target){ target = L.i; if (L.i === 1 || L.i === 2) sceneLayer = L.i; if (maskEd && maskEd.li !== L.i) maskClose(); } }
   selectPad(p, true); uiLater(UI.LAYERS | UI.XF);   // the panels follow after the frame is drawn
 }
 // pad / key released: ends a gated fade (a release before a snapped hit fires turns that hit into a plain one-shot)

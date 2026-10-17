@@ -157,24 +157,24 @@ function syncFxUI0(){
         else { const dt = ks.map(i => fxDetail(i, P.fx[i]) || FX_DEFS[i].name), ds = ks.map(i => fxDetail(i, P.fx[i], true) || FX_SHORT[FX_DEFS[i].id]);
           fitText(s2, dt.join(' · '), ds.join('·')); } }
       el.classList.toggle('empty', e);
-      el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} — Caps+Shift+${FXP_LABELS[k]} stores the effects that are on now · right-click: edit · Alt+click: name it`; }
+      el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} · Caps+Shift+${FXP_LABELS[k]}: store · right-click: edit · Alt+click: name`; }
   });
   $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && (!!d.size || d.id === 'wobble')); $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);   // (Wobble: no size, but its Edges toggle sits in that row, 0.93; 0.94: the comment had swallowed 'rated', hiding Rate)
   $('#fxName').innerHTML = (pre && !E ? '' : fxIcon(d.id)) + (E ? d.name : pre ? FXP_LABELS[selFx - NFX] : d.name);   // the effect's icon in the LCD (names are ours: no escaping needed)
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
   if (E){                                              // one effect of the preset: its own style, layer, amount, rate / size
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (click: in / out of the stack · right-click: solo it, again: the stack back)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' · click: in / out · right-click: solo' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
     styleSet(FX_DEFS.indexOf(d), E.style || d.styles[0][0]); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
     tgtSet(E.target);
   }
   else if (pre){
     const ks = Object.keys(C.fx);
-    setHTML($('#fxPreList'), ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${styleLabel(i, C.fx[i].style)} · ${Math.round(C.fx[i].amt * 100)}% — click to adjust it in this preset">${FX_DEFS[i].name}${tgtLabel(C.fx[i].target) ? ` <small>${tgtLabel(C.fx[i].target)}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
+    setHTML($('#fxPreList'), ks.length ? ks.map(i => `<span class="pchip" data-e="${i}" title="${FX_DEFS[i].name} · ${styleLabel(i, C.fx[i].style)} · ${Math.round(C.fx[i].amt * 100)}% · click: adjust">${FX_DEFS[i].name}${tgtLabel(C.fx[i].target) ? ` <small>${tgtLabel(C.fx[i].target)}</small>` : ''}<button data-i="${i}" title="Take it out of this preset">×</button></span>`).join('')
       : '<span class="pempty">empty — drag effects here, or hold Caps + this numpad key and click them</span>');
   }
   else {
-    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' (click: in / out of the stack · right-click: solo it, again: the stack back)' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
+    setHTML($('#fxStyle'), d.styles.map(s => `<button data-v="${s[0]}" title="${s[1]}: ${s[2]}${FX_MULTI[d.id] ? ' · click: in / out · right-click: solo' : ''}">${s[1]}</button>`).join('')); fitStyleBtns();
     styleSet(FX_DEFS.indexOf(d), C.style); $('#fxStyle').classList.toggle('dimmed', d.styles.length < 2);
       // styles always in two even rows (CRT 4 + 3, Strobe 1 + 1): the editor keeps the same height for every effect
     tgtSet(C.target);
@@ -186,7 +186,7 @@ function syncFxUI0(){
   const wear = !!dd && dd.id === 'rgb' && styleParts(FXI.rgb, A.style).includes('vhs') && (styleParts(FXI.rgb, A.style).length === 1 || fxFocus.rgb === 'vhs');   // CRT › VHS (alone, or in focus in a stack): Amount is how worn the tape is
   am.closest('.field').querySelector('label').textContent = palAmt ? 'Palette' : kal ? 'Slices' : wear ? 'Wear' : 'Amount'; am.dataset.palAmt = palAmt ? '1' : ''; am.dataset.kal = kal ? '1' : '';
   if (palAmt){ const pi = A.pal || 0, [fi] = palFam(pi); Object.assign(am, { min: 0, max: PAL_FAM.length - 1, step: 1 }); am.value = fi; am.dataset.def = 0; delete am.dataset.pct;   // the slider runs in PAL_ORDER (by year)
-    am.nextElementSibling.textContent = PAL_FAM[fi].n; am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
+    { const o = am.nextElementSibling; o.textContent = PAL_FAM[fi].n; if (o.scrollWidth > o.clientWidth + 1 && PAL_FAM[fi].n === 'ZX Spectrum') o.textContent = 'Spectrum'; } am.closest('.field').title = 'Palette: ' + FX_PALS[pi].t; }
   else if (kal){ const n = kalSlices(A.amt); Object.assign(am, { min: 3, max: 12, step: 1 }); am.value = n; am.dataset.def = 12; delete am.dataset.pct;
     am.nextElementSibling.textContent = n; am.closest('.field').title = 'Slices: how many wedges the kaleidoscope has'; }
   else { const pp = amtPart(dd, A), v = pp ? A.pamt?.[pp] ?? A.amt : A.amt; Object.assign(am, { min: 0.05, max: 1, step: 0.01 }); am.value = v; am.dataset.def = 1; am.dataset.pct = ''; am.nextElementSibling.textContent = Math.round(v * 100) + '%';
@@ -201,7 +201,7 @@ function syncFxUI0(){
     const dp = $('#fxDpat'), want = alt && alt.lcd ? 'lcd' : 'pat'; if (sw && dp.dataset.mode !== want){ dp.dataset.mode = want;   // Dither's pattern icons, or the Game Boy LCD's in the same place
       setHTML(dp, want === 'lcd' ? alt.lcd.list.map(([v, , t]) => `<button data-v="${v}" title="${t.replace(/"/g, '&quot;')}">${alt.lcd.icons[v]}</button>`).join('') : DPAT_HTML); }
     { const isPal = !!d && d.id === 'colour' && (C.style || d.styles[0][0]) === 'pal', [fi, vi] = palFam(C.pal || 0), F = PAL_FAM[fi], many = isPal && F.m.length > 1;   // the palette's variants (0.99.3)
-      $('#fxPalVar').hidden = !many; $('#fxRateRow').classList.toggle('varrow', isPal);   // every palette: the same narrow Palette slider (0.99.4: no shift between families)
+      $('#fxPalVar').hidden = !many; $('#fxRateRow').classList.toggle('varrow', isPal); $('#fxRateRow').classList.toggle('lcdrow', !!(alt && alt.nodith));   // every palette: the same narrow Palette slider (0.99.4: no shift between families)
       if (many){ const h = F.m.map((x, k) => `<button data-v="${k}" title="${esc(FX_PALS[x.i].t)}"><span class="lng">${esc(x.l)}</span><span class="sht">${esc(x.s)}</span></button>`).join(''); if ($('#fxPalVar').dataset.f !== String(fi)){ setHTML($('#fxPalVar'), h); $('#fxPalVar').dataset.f = fi; } segSet('#fxPalVar', String(vi)); } }   // the Game Boy: its name, right-aligned against the switch, in the slider's room (the row keeps its width)
     if (sw) segSet('#fxDpat', String(alt.lcd ? Math.min(2, C.dots || 0) : C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
@@ -388,7 +388,7 @@ const fxModPlain = k => { const X = fxEd(), d = FX_DEFS[selFx < NFX ? selFx : pr
   if (k === 'rate') return !!d.rate && !rateAlt(d, X.style, X);
   return !!d.size && !sizeAlt(d, X.style, X); };
 $('#fxLfoShape').innerHTML = SHAPES.filter(s => ['sine', 'tri', 'up', 'square', 'sh', 'drift'].includes(s[0])).map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');
-$('#fxLfoPer').max = PER_OPTS.length - 1; $('#fxLfoGap').max = GAP_OPTS.length - 1; $('#fxLfoBack').innerHTML = ENV_IC_GRAPH;
+$('#fxLfoPer').max = PER_FAM.e.length - 1; $('#fxLfoGap').max = GAP_OPTS.length - 1; $('#fxLfoBack').innerHTML = ENV_IC_GRAPH;
 function fxModOpen(k){
   if (!fxModPlain(k)) return toast(`${FXM[k].name} has no LFO here (it's set by its own list for this style)`);
   const X = fxEd(); X.mod = X.mod || {};
@@ -404,7 +404,7 @@ function syncFxMod(){
   if (!M) return; const F = FXM[fxModK];
   $('#fxLfoT').textContent = 'LFO · ' + F.name; $('#fxLfoOn').checked = !!M.on;
   $('#fxLfoShape').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === M.shape));
-  const pi = optIdx(PER_OPTS, M.per); $('#fxLfoPer').value = pi; $('#fxLfoPer').nextElementSibling.textContent = PER_OPTS[pi][1];
+  { const f = perFam(M.per), L = PER_FAM[f], pi = optIdx(L, M.per); $('#fxLfoPer').max = L.length - 1; $('#fxLfoPer').value = pi; $('#fxLfoPer').nextElementSibling.textContent = L[pi][1]; segSet('#fxLfoFam', f); }
   for (const [id, key] of [['#fxLfoLo', 'lo'], ['#fxLfoHi', 'hi']]){ const el = $(id); el.min = F.min; el.max = F.max;
     const i = fxModK === 'amt' ? F.toI(M[key]) : M[key]; el.value = i; el.nextElementSibling.textContent = F.fmt(i); }
   $('#fxLfoPh').value = M.ph || 0; $('#fxLfoPh').nextElementSibling.textContent = Math.round((M.ph || 0) * 360) + '°';
@@ -423,7 +423,8 @@ $('#fxLfoGap').addEventListener('input', e => fxModSet(M => M.gap = GAP_OPTS[+e.
 $('#fxLfoInv').addEventListener('click', () => fxModSet(M => M.inv = !M.inv));
 $('#fxLfoOn').addEventListener('change', e => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].on = e.target.checked; syncFxMod(); } });
 onSeg($('#fxLfoShape'), b => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].shape = b.dataset.v; X.mod[fxModK].on = true; syncFxMod(); } });
-$('#fxLfoPer').addEventListener('input', e => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].per = PER_OPTS[+e.target.value][0]; syncFxMod(); } });
+$('#fxLfoPer').addEventListener('input', e => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].per = PER_FAM[perFam(X.mod[fxModK].per)][+e.target.value][0]; syncFxMod(); } });
+onSeg($('#fxLfoFam'), b => { const X = fxEd(); if (X && X.mod && X.mod[fxModK]){ X.mod[fxModK].per = perNear(b.dataset.v, X.mod[fxModK].per); syncFxMod(); } });
 for (const [id, key] of [['#fxLfoLo', 'lo'], ['#fxLfoHi', 'hi']]) $(id).addEventListener('input', e => { const X = fxEd(); if (!(X && X.mod && X.mod[fxModK])) return;
   X.mod[fxModK][key] = fxModK === 'amt' ? FXM.amt.toV(+e.target.value) : +e.target.value; X.mod[fxModK].on = true; syncFxMod(); });
 var fxModReady = true;

@@ -25,7 +25,7 @@ function applyMask(b, m){                            // b: a flattened layer; cu
 const maskOwner = () => { const li = maskEd.li, c = li === BG_LAYER ? selClip(li) : null; return c || layers[li]; };
 const maskWho = () => { const O = maskOwner(); return O.pad != null ? `${LNAMES[maskEd.li]} · ${pads[O.pad].label}` : LNAMES[maskEd.li]; };
 // ---- painting: Mask on a layer card opens the bar between the layer cards and the preview; the preview then paints instead of selecting ----
-const MASK_TOOLS = [['free', 'Free', 'Freehand brush · Alt+drag: colour brush, it masks only the colour under where you start (on this layer), within Soft'], ['rect', 'Rect', 'Rectangle: drag from corner to corner (Shift: square)'], ['ell', 'Ellipse', 'Ellipse: drag across it (Shift: circle)']];
+const MASK_TOOLS = [['free', 'Free', 'Brush · Alt: colour brush (sticks to the colour under it, in the layers below)'], ['rect', 'Rect', 'Rectangle: drag from corner to corner (Shift: square)'], ['ell', 'Ellipse', 'Ellipse: drag across it (Shift: circle)']];
 const maskOpt = Prefs.json('vjif-maskopt', { tool: 'free', size: 80, soft: 0.4 });
 let maskStroke = null, maskPtr = null;
 function maskOpen(li){
@@ -44,7 +44,7 @@ function syncMaskUI(){
   $('#maskName').textContent = `Mask · ${maskWho()}`; $('#maskPaste').classList.toggle('empty', !maskClip); $('#maskCopy').disabled = !L.mask;
   segSet('#maskTool', maskOpt.tool);
   $('#maskSize').value = maskOpt.size; $('#maskSize').nextElementSibling.textContent = Math.round(maskOpt.size) + ' px';
-  $('#maskSizeBtn').title = `Size: ${Math.round(maskOpt.size)} px — drag up / down on it, or click for its slider`; $('#maskSoftBtn').title = `Soft: ${Math.round(maskOpt.soft * 100)}% — drag up / down on it, or click for its slider`;
+  $('#maskSizeBtn').title = `Size: ${Math.round(maskOpt.size)} px · drag up / down or click`; $('#maskSoftBtn').title = `Soft: ${Math.round(maskOpt.soft * 100)}% · drag up / down or click`;
   $('#maskSoft').value = maskOpt.soft; $('#maskSoft').nextElementSibling.textContent = Math.round(maskOpt.soft * 100) + '%';
   $('#maskInv').checked = !!(m && m.inv); $('#maskOn').checked = !m || m.on !== false;
 }
@@ -68,7 +68,12 @@ function maskShape(x, S, px, py, shift){
 // Soft (here: how far a colour may be, 0–100 %) of it, so blades of grass get masked and what's between them doesn't
 function colourBrushStart(S, px, py){
   const w = S.m.cv.width, h = S.m.cv.height, k = w / W, ref = document.createElement('canvas'); ref.width = w; ref.height = h;
-  const x = ref.getContext('2d', { willReadFrequently: true }), O = maskOwner(), list = frameList(performance.now()).filter(it => it.L.i === maskEd.li).map(it => ({ L: { ...it.L, mask: null }, items: it.items.filter(x => O.pad == null || x.c === O || x.e.id === O.id).map(x => ({ ...x, e: { ...x.e, mask: null } })) }));
+  const x = ref.getContext('2d', { willReadFrequently: true }), O = maskOwner(), li = maskEd.li, all = frameList(performance.now()), bare = it => ({ L: { ...it.L, mask: null }, items: it.items.map(q => ({ ...q, e: { ...q.e, mask: null } })) });
+  // 0.99.5: the colours come from what's under the masked thing (the layers below it; on Background, the GIFs under the selected one), so
+  // Alt+brush on the Foreground masks it where the Background tree is; with nothing under it, from the masked thing itself as before
+  const ids = O.pad != null ? layers[li].clips.slice(0, layers[li].clips.indexOf(O)).map(c => c.id) : null;
+  let list = ids ? all.filter(it => it.L.i === li).map(it => ({ ...bare(it), items: bare(it).items.filter(q => ids.includes(q.e.id)) })) : all.filter(it => it.L.i < li).map(bare);
+  if (!list.some(it => it.items.length || (it.L.i === 0 && it.L.fillOn))) list = all.filter(it => it.L.i === li).map(it => ({ ...bare(it), items: bare(it).items.filter(q => O.pad == null || q.e.id === O.id) }));
   render(list, x, 0, [], 0, [k, 0, 0, k, 0, 0]);
   const d = x.getImageData(0, 0, w, h).data, ix = clamp(Math.floor(px * k), 0, w - 1), iy = clamp(Math.floor(py * k), 0, h - 1), o = (iy * w + ix) * 4;
   S.col = { d, w, h, k, c: [d[o], d[o + 1], d[o + 2]], tol: Math.max(0.02, maskOpt.soft) * 0.6 * 441.7, stamp: document.createElement('canvas') };

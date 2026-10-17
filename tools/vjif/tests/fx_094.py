@@ -15,12 +15,12 @@ async def main():
         fxPre: [{ fx: { 0: { style: 'dither' }, 9: { style: 'melt+crunch+degauss', pamt: { melt: 0.5, crunch: 0.3 } } } }], fxOn: on.slice() });
       const P = o.fxPre[0].fx; return [o.fx[FXI.glitch].style, o.fx[FXI.codec].style, o.fx[FXI.colour].tag, P[FXI.colour].style, FX_PALS[P[FXI.colour].pal].n, P[FXI.colour].dpat,
         P[FXI.glitch].style, JSON.stringify(P[FXI.glitch].pamt), P[FXI.codec].style, P[FXI.strobe].style, o.fxOn[FXI.colour], o.fxOn[FXI.glitch], o.fxOn[FXI.codec]]; })()""")
-    print('migrate', m); assert m == ['blocks', 'corrupt', 'colour', 'pal', '1-bit', 1, 'melt', '{"melt":0.5}', 'crunch', 'degauss', 1, 1, 1], m
+    print('migrate', m); assert m == ['blocks+corrupt', 'crunch', 'colour', 'pal', '1-bit', 1, 'melt', '{"melt":0.5}', 'crunch', 'degauss', 1, 1, 0], m   # (0.99.5: Corrupt moved on to Glitch, Codec left with nothing: Crunch, off)
     # the effects draw (shader compiles with Codec / Degauss) and Degauss doesn't flash with the beat
     await pg.evaluate("fileTarget = 0"); await pg.set_input_files('#fileIn', [str(FIX/'busy.gif')]); await pg.wait_for_function("pads[0].gif")
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(300)
     u = await pg.evaluate("""(() => { const blank = () => { const M = fxMix(0); return M.get('out'); }; const M = blank(); M.lv[FXI.strobe] = 0.8; M.env[FXI.strobe] = 1; M.style[FXI.strobe] = 'degauss';
-      const U = fxU(3.3, M); const M2 = blank(); M2.lv[FXI.codec] = 0.7; M2.style[FXI.codec] = 'corrupt+crunch'; const U2 = fxU(3.3, M2);
+      const U = fxU(3.3, M); const M2 = blank(); M2.lv[FXI.codec] = 0.7; M2.style[FXI.codec] = 'crunch+band'; const U2 = fxU(3.3, M2);
       return [U.strobe, U.dgs, U2.codec, U2.cdS, U2.glitch, !!post]; })()""")
     print('uniforms', u); assert u[0] == 0 and abs(u[1] - 0.8) < 1e-6 and abs(u[2] - 0.7) < 1e-6 and u[3] == 5 and u[4] == 0 and u[5], u
     # effect LFO: right-click Amount opens it in the envelope's box, the amount then swings with the beat
@@ -42,7 +42,7 @@ async def main():
     print('rate / back', rr, bk); assert rr == ['amt', 'LFO · Amount'] and bk is False, (rr, bk)
     await pg.click('#envLfo'); ev = await pg.evaluate("[fxModK, $('#fxEdit .envrow').classList.contains('lfo')]"); await pg.click('#fxLfoBack')   # the envelope's LFO view button
     print('lfo view', ev); assert ev == ['amt', True], ev
-    rt = await pg.evaluate("[FXI.glitch, FXI.codec, FXI.shake].map(i => { selectFx(i); return getComputedStyle($('#fxRateRow')).display; })")   # (0.93 hid Rate wherever Size showed)
+    rt = await pg.evaluate("[FXI.glitch, FXI.shake].map(i => { selectFx(i); return getComputedStyle($('#fxRateRow')).display; })")   # (0.93 hid Rate wherever Size showed)
     print('rate rows', rt); assert 'none' not in rt, rt
     # LFO Cycle steps, Rec › Source
     misc = await pg.evaluate("[PER_OPTS.map(o => o[1]).join(' '), document.querySelectorAll('#recSrcSeg button').length, $('#recSrcSeg .on').dataset.s, !!document.querySelector('#recPopRows .seg[data-src=\"#recSrcSeg\"]')]")

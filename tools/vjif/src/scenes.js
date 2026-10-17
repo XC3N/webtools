@@ -120,7 +120,7 @@ function renderScenes(){
     b.classList.toggle('padsOnly', !!pg);
     b.querySelector('.n').textContent = n ? `${n} GIF${n > 1 ? 's' : ''}` : np ? `${np} pad${np > 1 ? 's' : ''}` : 'empty';
     const nm = sceneName(i), ne = b.querySelector('.nm'); if (ne.textContent !== nm) ne.textContent = nm;
-    b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (bank ${Math.floor(i / SC_BANK) + 1}, numpad ${i % SC_BANK + 1}) · right-click to name it · drag onto another scene to swap them · Ctrl-drag: copy · ×: empty it`;
+    b.title = `Scene ${i + 1}${nm ? ' — ' + nm : ''} (bank ${Math.floor(i / SC_BANK) + 1}, numpad ${i % SC_BANK + 1}) · right-click: name · drag: swap · Ctrl+drag: copy`;
   });
 }
 $('#scenes').addEventListener('click', e => { if (e.target.closest('.nmEdit') || performance.now() - scDragEnd < 300) return; const b = e.target.closest('.scene'); if (!b) return;
@@ -315,7 +315,7 @@ function soloLayer(li){
   else { soloPrev = { li, on: layers.map(L => L.on) }; layers.forEach((L, k) => L.on = k === li); }
   syncLayerUI(); redraw.all = true;
 }
-function setTarget(li){ target = li; if (maskEd && maskEd.li !== li) maskClose(); syncLayerUI(); syncXfUI(); }   // another layer: mask painting ends
+function setTarget(li){ target = li; if (li === 1 || li === 2) sceneLayer = li; if (maskEd && maskEd.li !== li) maskClose(); syncLayerUI(); syncXfUI(); }   // another layer: mask painting ends
 document.addEventListener('visibilitychange', () => { redraw.all = true; });
 
 // ---- one scene to a file and back (0.95, ID-213): a .vjscene is a ZIP like a .vjif: scene.json + the GIF files it uses ----

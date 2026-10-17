@@ -140,8 +140,8 @@ function fxColor(c, p){
   if (p.sw) for (const x of p.sw){ const t = x[6] || 1.5; if (Math.abs(r - x[0]) < t && Math.abs(gr - x[1]) < t && Math.abs(b - x[2]) < t){ sr = x[3]; sg = x[4]; sb = x[5]; rgb = sr | (sg << 8) | (sb << 16); if (x[7]) f = 0; break; } }
   if (p.doHsv){ const o = hsvShift(sr, sg, sb, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
   if (p.palN){ const R = (rgb & 255) / 255, G = ((rgb >> 8) & 255) / 255, B = ((rgb >> 16) & 255) / 255; let bd = 1e9, bi = 0;   // palette: the nearest colour (no dither on this path)
-    const K = okLab([R, G, B]);   // nearest in OKLab, as the shaders (0.99.3)
-    for (let i = 0; i < p.palN; i++){ const dl = K[0] - p.palOk[i * 3], da = K[1] - p.palOk[i * 3 + 1], db = K[2] - p.palOk[i * 3 + 2], e = dl * dl + da * da + db * db; if (e < bd){ bd = e; bi = i; } }
+    const K = okLab([R, G, B]);   // nearest as the shaders: OKLab distance + eye-weighted RGB distance (0.99.5)
+    for (let i = 0; i < p.palN; i++){ const dl = K[0] - p.palOk[i * 3], da = K[1] - p.palOk[i * 3 + 1], db = K[2] - p.palOk[i * 3 + 2], wr = (R - p.palF[i * 3]) * 0.55, wg = (G - p.palF[i * 3 + 1]) * 0.75, wb = (B - p.palF[i * 3 + 2]) * 0.35, e = Math.sqrt(dl * dl + da * da + db * db) / 0.35 + Math.sqrt(wr * wr + wg * wg + wb * wb) / 0.6; if (e < bd){ bd = e; bi = i; } }
     if (p.palLum) bi = Math.min(p.palN - 1, Math.floor((0.299 * R + 0.587 * G + 0.114 * B) * p.palN));   // the Game Boys: by brightness (as the shader)
     rgb = Math.round(p.palF[bi * 3] * 255) | (Math.round(p.palF[bi * 3 + 1] * 255) << 8) | (Math.round(p.palF[bi * 3 + 2] * 255) << 16); }
   return f * 16777216 + rgb;

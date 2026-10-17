@@ -11,7 +11,7 @@ function buildPads(){
       if (isDel(e)){ padDrag = { i, x: e.clientX, y: e.clientY, moved: false, copy: true, had: true, on: layers.map(L => L.on) }; el._shift = true; return; }   // Ctrl+click: clear · Ctrl+drag: copy (decided on let go)
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
       if (e.altKey){ padDrag = null; e.preventDefault(); setTimeout(() => renamePad(i)); return; }   // Alt+click: rename its GIF (after the press, which would take the focus back)
-      trigger(i); });
+      clickFocus = i; trigger(i); });   // (a click: the edit layer follows the pad, so Transform edits what the GIF panel shows; keys don't move it)
     el.addEventListener('contextmenu', e => { if (el.querySelector('.nmEdit')) return e.preventDefault(); e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
     el.addEventListener('click', e => { if (!e.target.closest('.xdel') || !el._x) return; el._x = false; e.stopPropagation(); el._shift = true; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); }, true);
@@ -161,8 +161,9 @@ function gifThumb(g, f = fxImage(g, g.startF)){
   if (g.thumb) return g.thumb;
   const [t, tx] = cpuCanvas(52, 48), k = Math.max(t.width / f.width, t.height / f.height);
   tx.imageSmoothingEnabled = !g.crisp; tx.drawImage(f, (t.width - f.width*k)/2, (t.height - f.height*k)/2, f.width*k, f.height*k);
-  { const d = tx.getImageData(0, 0, t.width, t.height).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) * d[i + 3] / 255;
-    g.thumbDark = s / (d.length / 4) < 28; }   // mostly black (or see-through): its chip gets an outline (0.99.3; a CPU canvas, so reading it back is cheap)
+  { const d = tx.getImageData(0, 0, t.width, t.height).data, W = t.width, H = t.height; let s = 0, e = 0, ne = 0;   // dark: its edge (what meets the dark card) or the whole of it (0.99.5: the edge counts, a black GIF with a bright middle had no outline)
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const i = (y * W + x) * 4, v = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) * d[i + 3] / 255; s += v; if (x < 3 || y < 3 || x >= W - 3 || y >= H - 3){ e += v; ne++; } }
+    g.thumbDark = s / (W * H) < 32 || e / ne < 40; }
   return g.thumb = t.toDataURL();
 }
 function renderPad(i){

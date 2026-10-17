@@ -112,7 +112,7 @@ const Theme = (() => {
     const row = (box, key, label, title, min, max, cls = '') => {
       const r = document.createElement('div'); r.className = 'thm-row' + cls; r.title = title || '';
       const def = DEFAULT[key] ?? OPT_DEF[key];
-      r.innerHTML = `<label>${label}</label><input type="range" min="${min}" max="${max}" step="1" data-def="${def}"><output></output><i class="${key[0] === 'h' && key !== 'bh' ? 'thm-sw' : ''}"></i>`;
+      r.innerHTML = `<label>${label}</label><input type="range" min="${min}" max="${max}" step="1" data-def="${def}"><output></output><i class="${key[0] === 'h' ? 'thm-sw' : ''}"></i>`;
       const inp = r.querySelector('input');
       inp.addEventListener('input', () => set(key, +inp.value));
       inp.addEventListener('change', () => { flush(); changed(); });
@@ -144,7 +144,7 @@ const Theme = (() => {
         else if (owner[k]){ const h = cur[owner[k]], isS = k[0] === 's', other = isS ? cur['v' + k.slice(1)] ?? OPT_DEF['v' + k.slice(1)] : cur['s' + k.slice(1)] ?? OPT_DEF['s' + k.slice(1)];
           grad = isS ? `linear-gradient(to right,${hsv2hex(h, 0, other)},${hsv2hex(h, 100, other)})` : `linear-gradient(to right,${hsv2hex(h, other, 10)},${hsv2hex(h, other, 100)})`; }
         inp.style.background = grad;
-        if (sw) sw.style.background = roleColor(k);
+        if (sw) sw.style.background = k === 'bh' ? hsv2hex(cur.bh, cur.bs, cur.bv) : roleColor(k);   // (Background's swatch: the colour itself)
       }
       { const sel = host.querySelector('.thm-preset'), m = match(); sel.value = [...sel.options].some(o => o.value === m) ? m : 'Custom'; }   // another tool's own preset shows as Custom here
     }

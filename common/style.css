@@ -34,7 +34,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .panel{background:var(--panel);padding:10px 12px;overflow:auto;min-height:0;scrollbar-gutter:stable}
 h2{display:flex;align-items:center;gap:8px;margin:0 0 8px;font:600 13px/1.2 var(--sans);color:var(--ink);white-space:nowrap}
 h2 .line{flex:1;min-width:10px}
-h2 .tag{font:400 11px var(--mono);color:var(--faint);overflow:hidden;text-overflow:ellipsis}
+h2 .tag{font:400 11px var(--sans);color:var(--faint);overflow:hidden;text-overflow:ellipsis}
 h2:not(:first-child){margin-top:16px}
 .sub{display:flex;align-items:center;gap:8px;margin:12px 0 7px;font:600 12px/1 var(--sans);color:var(--muted)}
 .sub .line{flex:1;height:1px;background:var(--edge)}

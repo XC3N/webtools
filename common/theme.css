@@ -3,12 +3,12 @@
 .thm-prow{display:flex;gap:6px;align-items:center}
 .thm-prow select{flex:1;min-width:0}
 .thm-sub{margin:8px 0 0;font:600 12px/1 var(--sans, system-ui);color:var(--muted)}
-.thm-roles,.thm-bg,.thm-group{display:flex;flex-direction:column;gap:6px}.thm-bg{margin-top:12px}
+.thm-roles,.thm-bg,.thm-group{display:flex;flex-direction:column;gap:6px}.thm-bg{margin-top:4px}
 .thm-roles{gap:12px}
 .thm-sv label{padding-left:12px;color:var(--faint)}
 .thm-row{display:grid;grid-template-columns:84px minmax(0,1fr) 44px 16px;gap:8px;align-items:center}
 .thm-row input[type=range]{height:14px;border:0}
 .thm-row output{text-align:center}
-.thm-sw{width:14px;height:14px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.5) inset}
+.thm-sw{width:14px;height:14px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.5) inset,0 0 0 1px var(--edge-2, rgba(128,128,128,.5))}
 .thm-fold>.thm-row:first-child>label{cursor:pointer;user-select:none}.thm-fold>.thm-row:first-child>label::before{content:'▾';display:inline-block;width:11px;color:var(--faint)}.thm-fold.shut>.thm-row:first-child>label::before{content:'▸'}.thm-fold.shut>.thm-sv{display:none}   /* a role's saturation / brightness fold away */
 .thm-row:not(.thm-sv)>label::before{content:'';display:inline-block;width:11px}   /* every name lines up, whether it folds or not (the ▾ takes the same room) */

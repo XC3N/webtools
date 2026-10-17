@@ -82,6 +82,13 @@ const SNAP_STEPS = {
     o.fxOn = fxMig3On(o.fxOn); o.sceneFx = fxMig3On(o.sceneFx);
     (o.scenes || []).forEach(sc => { if (sc && sc.fxOn) sc.fxOn = fxMig3On(sc.fxOn); });
   },
+  9: o => {                                          // 0.99.5: Codec's Corrupt / Keyframe moved to Glitch (the moving styles), Codec keeps the still ones
+    const cfg = o.fx; o.fxOn = fxMig4On(o.fxOn, cfg); o.sceneFx = fxMig4On(o.sceneFx, cfg);
+    (o.scenes || []).forEach(sc => { if (sc && sc.fxOn) sc.fxOn = fxMig4On(sc.fxOn, cfg); });
+    o.fx = fxMig4Cfg(o.fx); (o.fxPre || []).forEach(P => { if (P) P.fx = fxMig4Keys(P.fx); });
+    const gifs = ps => (ps || []).forEach(g => { if (g && g.gfx) g.gfx = fxMig4Gfx(g.gfx); });
+    gifs(o.pads); (o.scenes || []).forEach(sc => { if (sc) gifs(sc.pads); });
+  },
 };
 const SNAP_V = Math.max(...Object.keys(SNAP_STEPS).map(Number));
 function upgradeSnap(o){

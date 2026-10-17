@@ -165,7 +165,7 @@ onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.data
 let aSel = 'x';
 $('#aTgt').innerHTML = LFO_T.map(t => `<button data-v="${t[0]}" title="${t[2]}">${t[1]}</button>`).join('');
 $('#aShape').innerHTML = SHAPES.map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');   // (0.89: drawn, named in the tooltip)
-$('#aPer').max = PER_OPTS.length - 1;
+$('#aPer').max = PER_FAM.e.length - 1;
 const skFmt = v => { const p = Math.round((v - 0.5) * 200); return (p > 0 ? '+' : '') + p + '%'; };   // Skew shown around the middle (0.95): 0 % even, − a quick rise, + a quick fall
 const lfoFmt = (t, v) => t[6] === '%' ? Math.round(v * 100) + '%' : t[6] === '×' ? (+v).toFixed(2) + '×' : (v > 0 ? '+' : '') + Math.round(v) + (t[6] === '°' ? '°' : '');
 const A_ENV = [['#aEA', 'ea', 0], ['#aED', 'ed', 4], ['#aER', 'er', 1]];   // Envelope times (ENV_OPTS), with their defaults
@@ -178,7 +178,7 @@ function syncAutoUI(g){
   [['#aMin', 'min'], ['#aMax', 'max']].forEach(([id, k]) => { const el = $(id); el.min = aSel === 'x' ? -W : aSel === 'y' ? -H : t[3]; el.max = aSel === 'x' ? W : aSel === 'y' ? H : t[4]; el.step = t[5];   // positions follow the canvas format
     el.value = A[k]; el.dataset.def = D[k];
     el.nextElementSibling.textContent = lfoFmt(t, A[k]); if (t[6] === '%') el.dataset.pct = ''; else delete el.dataset.pct; });
-  const pi = optIdx(PER_OPTS, A.per); $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(PER_OPTS, D.per); $('#aPer').nextElementSibling.textContent = PER_OPTS[pi][1];
+  { const f = perFam(A.per), L = PER_FAM[f], pi = optIdx(L, A.per); $('#aPer').max = L.length - 1; $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(L, D.per); $('#aPer').nextElementSibling.textContent = L[pi][1]; segSet('#aPerFam', f); }
   const gi = optIdx(GAP_OPTS, A.gap || 0); $('#aGap').value = gi; $('#aGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
   $('#aSk').value = A.sk ?? 0.5; $('#aSk').nextElementSibling.textContent = skFmt(A.sk ?? 0.5); $('#aHoldBtn').classList.toggle('on', !!A.hold); $('#aInv').classList.toggle('on', !!A.inv);
@@ -209,7 +209,8 @@ $('#aMin').addEventListener('input', e => { editLfo(A => A.min = +e.target.value
 $('#aMax').addEventListener('input', e => { editLfo(A => A.max = +e.target.value); peek('max'); });
 ['#aMin', '#aMax'].forEach(id => $(id).addEventListener('pointerdown', () => { peek(id === '#aMin' ? 'min' : 'max'); const hold = setInterval(() => lfoPeek && (lfoPeek.t = performance.now()), 200);   // held: keep showing it
   addEventListener('pointerup', () => clearInterval(hold), { once: true }); }));
-$('#aPer').addEventListener('input', e => editLfo(A => A.per = PER_OPTS[+e.target.value][0], true, true));
+$('#aPer').addEventListener('input', e => { const g = curGif(); if (!g) return; const v = PER_FAM[perFam((g.lfo[aSel] || lfoDef(aSel)).per)][+e.target.value][0]; editLfo(A => A.per = v, true, true); });
+onSeg($('#aPerFam'), b => editLfo(A => A.per = perNear(b.dataset.v, A.per), true, false));   // Even / Dotted / Triplet: the nearest Cycle in that family
 $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value, true, true));
 $('#aSk').addEventListener('input', e => { editLfo(A => A.sk = +e.target.value, true, true); e.target.nextElementSibling.textContent = skFmt(+e.target.value); });
 [['#aHoldBtn', 'hold'], ['#aInv', 'inv']].forEach(([q, k]) => $(q).addEventListener('click', e => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (!A) return; const v = !A[k]; editLfo(B => B[k] = v, true, true, e.shiftKey); }));   // toggles; Shift+click: every running LFO of this GIF (the click's own Shift: the pointerup before it already cleared aShift, 0.89.0's bug)
@@ -280,6 +281,7 @@ function liveMods(){
   const c = selClip(), g = c && pads[c.pad] && pads[c.pad].gif;
   if (g && g.lfo){ const on = k => g.lfo[k] && g.lfo[k].on, e = effClip(c, g);
     XF.forEach(([id, key, fmt]) => { if (XF_LFO[id].some(on)) put(id, e[key], fmt(e[key])); });
+    for (const [id, k, key] of [['#xFx', 'fx', 'flipX'], ['#xFy', 'fy', 'flipY']]) if (on(k) && !$(id).matches(':active')){ now.add(id); $(id).checked = !!e[key]; }   // (0.99.5: the flips too)
     if (!g.hsv.off) HSV_UI.forEach(([id, k, fmt]) => { if (on(k)){ const v = k === 'h' ? Math.round(mod(g.hsv.h + e.H + 180, 360) - 180) : +(g.hsv[k] * e[k.toUpperCase()]).toFixed(2); put(id, v, fmt(v)); } }); }
   for (const id of liveWas) if (!now.has(id)){ if (id.startsWith('#fx')) syncFxUI(); else if (id.startsWith('#x')) syncXfUI(); else syncGifUI(); break; }
   liveWas = now;
@@ -310,6 +312,12 @@ function drawLfoScope(g){
   }
   const y = scopeTrace(x, w, h, d, u => lfoShape(A, lfoPosT(A, t + (u - 0.75) * 2 * L), seed), A.on);   // two cycles (with their gaps), now at 3/4
   scopeDot(x, w * 0.75, y(lfoShape(A, lfoPosT(A, t), seed)), d);
+  if (aSel === 'fx' || aSel === 'fy'){                // the flips (0.99.5): flipped where Min → Max puts the LFO past 50%; shaded, with that line dashed
+    const sp = A.max - A.min, vt = Math.abs(sp) < 1e-6 ? (A.min > 0.5 ? -1 : 2) : (0.5 - A.min) / sp, up = sp >= 0, fn = u => lfoShape(A, lfoPosT(A, t + (u - 0.75) * 2 * L), seed);
+    x.save(); x.fillStyle = `rgba(${TC.envRgb},.18)`;
+    for (let px = 0; px < w; px += d){ const v = fn(px / w); if (up ? v > vt : v < vt) x.fillRect(px, 0, d, h); }
+    if (vt > 0 && vt < 1){ x.strokeStyle = `rgba(${TC.envRgb},.6)`; x.lineWidth = d; x.setLineDash([3 * d, 3 * d]); x.beginPath(); x.moveTo(0, y(vt)); x.lineTo(w, y(vt)); x.stroke(); }
+    x.restore(); }
 }
 // GIF › Play › Trigger's graph: Fade in, Hold (when it's a time) and Fade out drag like an effect's envelope points (0.89)
 let tEnvGeo = null, tEnvDrag = null;
@@ -440,23 +448,19 @@ function afterPadChange(i){ bgSync(i); renderScenes(); renderPad(i); selectPad(i
 const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', v => (v > 0 ? '+' : '') + v + ' px'], ['#shB', 'blur', v => v + ' px'], ['#shO', 'op', v => Math.round(v * 100) + '%'], ['#shC', 'cut', v => v > 0 ? Math.round(v * 100) + '%' : 'off'], ['#shS', 'soft', v => v > 0 ? Math.round(v * 100) + '%' : 'hard'], ['#shK', 'skew', v => v ? (v > 0 ? '+' : '') + Math.round(v * 45) + '°' : '0°']];   // (Skew 0.96: the slant, as the angle at ±1)
 function syncShadowUI(g){
   const S = g.shadow || (g.shadow = { ...SHADOW_DEF });
-  $('#shOn').checked = !!S.on; $('#shCol').value = S.col; $('#shTurn').checked = !!S.turn; $('#shTurn').closest('.field').classList.toggle('dimmed', !S.on);
+  $('#shOn').checked = !!S.on; $('#shCol').value = S.col; $('#shTurn').checked = !!S.turn; $('#shFloor').checked = !!S.floor; $('#shTurn').closest('.field').classList.toggle('dimmed', !S.on);
   SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); $(id).value = S[k] ?? 0; $(id).nextElementSibling.textContent = f(S[k] ?? 0); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && !(S.cut > 0))); });
 }
 SH_F.forEach(([id, k, f]) => $(id).addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, [k]: +e.target.value, on: true }; syncShadowUI(g); redraw.all = true; }));
 $('#shTurn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, turn: e.target.checked, on: true }; syncShadowUI(g); redraw.all = true; });
+$('#shFloor').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, floor: e.target.checked, on: true }; syncShadowUI(g); redraw.all = true; });   // 0.99.5: a floor shadow
 $('#shReset').addEventListener('click', () => { const g = curGif(); if (!g) return; g.shadow = { ...SHADOW_DEF }; syncShadowUI(g); redraw.all = true; });
 $('#shOn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, on: e.target.checked }; syncShadowUI(g); redraw.all = true; });
 $('#shCol').addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, col: e.target.value, on: true }; syncShadowUI(g); redraw.all = true; });
 
-// GIF › Play / Colour sections fold: click a section's name (remembered in this browser)
-const gFold = new Set(Prefs.json('vjif-gfold', []));
-document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=colour] > .sub, #gPanes [data-pane=auto] > .sub[data-fold]').forEach(s => {
-  const t = s.querySelector('span'), name = t.textContent.trim(); s.classList.add('foldable');
-  const apply = () => { const shut = gFold.has(name); s.classList.toggle('shut', shut); for (let n = s.nextElementSibling; n && !n.classList.contains('sub') && !n.classList.contains('scope') && !n.classList.contains('gbot') && !n.classList.contains('nofold'); n = n.nextElementSibling) n.classList.toggle('foldhid', shut); };   // (a scope stays: it ends the section)
-  t.addEventListener('click', () => { gFold.has(name) ? gFold.delete(name) : gFold.add(name); Prefs.setJson('vjif-gfold', [...gFold]); apply(); });
-  apply();
-});
+// GIF › Play / Colour / Auto sections: headings only (0.99.5: they no longer fold; a changed one is marked by markFolds)
+const gFold = new Set();
+document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=colour] > .sub, #gPanes [data-pane=auto] > .sub[data-fold]').forEach(s => s.classList.add('gsec'));
 // Settings' sections fold the same way (remembered on their own)
 { const sFold = new Set(Prefs.json('vjif-setfold', []));
   document.querySelectorAll('#setPanel .setBody > .sub').forEach(s => {
@@ -467,7 +471,7 @@ document.querySelectorAll('#gPanes [data-pane=play] > .sub, #gPanes [data-pane=c
 // a section that differs from its defaults: its fold arrow in the signal colour (readable at a glance, folded or not)
 ['input', 'change', 'click'].forEach(t => $('#gPanes').addEventListener(t, () => queueMicrotask(markFolds)));
 // each section's own switch (off: skipped, its settings kept); Key and Shadow have theirs elsewhere
-function syncSwitches(g){ if (!g) return; $('#fOn').checked = !g.trimOff; $('#tOn').checked = g.trig === 'fade'; $('#hOn').checked = !g.hsv.off; $('#pOn').checked = palOn(g); $('#swOn').checked = !g.swapOff; }
+function syncSwitches(g){ if (!g) return; $('#fOn').checked = !g.trimOff; $('#tOn').checked = g.trig === 'fade'; $('#hOn').checked = !g.hsv.off && !(g.hsv.off === undefined && !hsvOn(g)); $('#pOn').checked = palOn(g); $('#swOn').checked = !g.swapOff; }
 const swFx = fn => e => { const g = curGif(); if (!g) return; fn(g, e.target.checked); scheduleFx(g, 0); renderPad(selPad); syncGifUI(); redraw.all = true; };
 $('#fOn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.trimOff = !e.target.checked; rebuildSeq(g); syncGifUI(); redraw.all = true; });
 $('#tOn').addEventListener('change', e => { const b = $(`#tMode [data-v=${e.target.checked ? 'fade' : 'stay'}]`); if (b) b.click(); });
@@ -475,7 +479,7 @@ $('#hOn').addEventListener('change', swFx((g, on) => { g.hsv.off = !on; }));
 $('#pOn').addEventListener('change', swFx((g, on) => { if (on && !(g.pal.i >= 0)) g.pal.i = 0; g.pal.off = !on; }));
 $('#swOn').addEventListener('change', swFx((g, on) => { g.swapOff = !on; }));
 function markFolds(){                                // (not the switches: on a click this runs before the switch's own change event, and would undo it)
-  document.querySelectorAll('#gPanes .sub.foldable').forEach(s => {
+  document.querySelectorAll('#gPanes .sub.gsec').forEach(s => {
     let mod = [...s.querySelectorAll('input[type=checkbox]')].some(c => c.checked !== (c.dataset.def === '1'));   // its own switch away from its default (Key, Shadow on; Adjust off…)
     for (let n = s.nextElementSibling; n && !n.classList.contains('sub'); n = n.nextElementSibling){
       n.querySelectorAll('input[type=range][data-def]').forEach(r => { const d = r.dataset.def, v = d === 'min' ? +r.min : d === 'max' ? +r.max : +d; if (Math.abs(+r.value - v) > 1e-6) mod = true; });
