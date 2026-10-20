@@ -253,7 +253,9 @@ $('#defImport').addEventListener('click', () => $('#defFile').click());
 $('#defFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { const d = JSON.parse(await f.text()); if (d.app !== 'VJif' || d.kind !== 'defaults') throw new Error('not a VJif defaults file'); fxRemapDefs(d);
     const ks = defParts().filter(k => d[k] !== undefined); if (!ks.length) throw new Error('it has none of the ticked parts');
-    const o = { ...userDef, v: 1, fxOrd: 4, saved: Date.now() }; ks.forEach(k => o[k] = d[k]); setUserDef(o); toast2(`Defaults loaded (${partsTxt(ks)}): new sets and resets use them`);
+    const o = { ...userDef, v: 1, fxOrd: 4, saved: Date.now() }; ks.forEach(k => o[k] = d[k]); setUserDef(o);
+    if (ks.includes('fx')) fxCfg = fxDefaults(); if (ks.includes('fxPre')){ fxPre = fxPreDefaults(); heldPre = -1; } if (ks.includes('tr')){ trPresets = trDefaults(); armTrans(trSel); }   // 0.99.7: the open set takes them too
+    syncFxUI(); toast2(`Defaults loaded (${partsTxt(ks)}): in this set, new sets and resets`);
   } catch (err) { toast("Couldn't load those defaults: " + err.message); } });
 defNote();
 

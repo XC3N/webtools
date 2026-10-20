@@ -4,6 +4,14 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.7 — 2026/10/20
+
+- The loupe stays up where it last pointed when the pointer leaves the preview (so you can change sliders while it shows), and starts bottom right. Right-click pin is gone.
+- Codec: Banding removed (Posterize does it).
+- Settings › Defaults › Import also applies the imported effects, effect presets and transitions to the open set.
+- Pool: Fit sets each GIF to the least resolution that covers its biggest placement in any scene (full, ½ or ¼); GIFs placed nowhere are left alone.
+- The LFO shape buttons in the effect editor are taller.
+
 ## 0.99.6 — 2026-10-20
 
 ### Effects

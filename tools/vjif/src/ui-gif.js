@@ -72,6 +72,15 @@ onSeg($('#poolRes'), async b => { const sc = +b.dataset.v, was = pool.reduce((t,
   for (const m of pool.slice()) await setMediaScale(m, sc);
   const now = pool.reduce((t, m) => t + (m.srcBytes || 0), 0); syncGifUI();
   toast2(`Pool: ${(was / 1048576).toFixed(0)} → ${(now / 1048576).toFixed(0)} MB`); });
+// 0.99.7: Fit = each GIF kept at the least resolution that still covers its biggest placement (live layers and every scene); GIFs placed nowhere stay as they are
+$('#poolOpt').addEventListener('click', async () => {
+  const need = new Map(), see = (g, c) => { if (!g || g.media.text) return; const [bw] = baseSize(g, c.fit), n = bw * Math.max(Math.abs(c.sx), Math.abs(c.sy)) / (g.media.w || 1); need.set(g.media, Math.max(need.get(g.media) || 0, n)); };
+  layers.forEach(L => L.clips.forEach(c => see(pads[c.pad] && pads[c.pad].gif, c)));
+  scenes.forEach(sc => sc && sc.layers && sc.layers.forEach(L => L.clips.forEach(c => see(sc.pads && sc.pads[c.pad], c))));
+  const was = pool.reduce((t, m) => t + (m.srcBytes || 0), 0);
+  for (const [m, n] of need) await setMediaScale(m, n <= 0.26 ? 0.25 : n <= 0.52 ? 0.5 : 1);
+  const now = pool.reduce((t, m) => t + (m.srcBytes || 0), 0); syncGifUI();
+  toast2(`Pool fitted: ${(was / 1048576).toFixed(0)} → ${(now / 1048576).toFixed(0)} MB`); });
 // ---- colour swaps: the GIF's palette (most used colours first), each swap = one palette colour → another ----
 function gifPalette(g){
   const m = g.media, CL = g.swapMerge ?? 0; m.palettes = m.palettes || {}; if (m.palettes[CL]) return m.palettes[CL];

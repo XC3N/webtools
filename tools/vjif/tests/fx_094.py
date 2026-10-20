@@ -20,9 +20,9 @@ async def main():
     await pg.evaluate("fileTarget = 0"); await pg.set_input_files('#fileIn', [str(FIX/'busy.gif')]); await pg.wait_for_function("pads[0].gif")
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(300)
     u = await pg.evaluate("""(() => { const blank = () => { const M = fxMix(0); return M.get('out'); }; const M = blank(); M.lv[FXI.strobe] = 0.8; M.env[FXI.strobe] = 1; M.style[FXI.strobe] = 'degauss';
-      const U = fxU(3.3, M); const M2 = blank(); M2.lv[FXI.codec] = 0.7; M2.style[FXI.codec] = 'crunch+band'; const U2 = fxU(3.3, M2);
+      const U = fxU(3.3, M); const M2 = blank(); M2.lv[FXI.codec] = 0.7; M2.style[FXI.codec] = 'crunch+ring'; const U2 = fxU(3.3, M2);
       return [U.strobe, U.dgs, U2.codec, U2.cdS, U2.glitch, !!post]; })()""")
-    print('uniforms', u); assert u[0] == 0 and abs(u[1] - 0.8) < 1e-6 and abs(u[2] - 0.7) < 1e-6 and u[3] == 5 and u[4] == 0 and u[5], u
+    print('uniforms', u); assert u[0] == 0 and abs(u[1] - 0.8) < 1e-6 and abs(u[2] - 0.7) < 1e-6 and u[3] == 9 and u[4] == 0 and u[5], u
     # effect LFO: right-click Amount opens it in the envelope's box, the amount then swings with the beat
     await pg.evaluate("selectFx(FXI.pixel)")
     await pg.click('#fxAmt', button='right'); await pg.wait_for_timeout(100)

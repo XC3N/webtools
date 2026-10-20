@@ -356,7 +356,7 @@ $('#guideEye').addEventListener('click', () => { pvOpt.gHide = !pvOpt.gHide; pvU
 $('#guideGrp').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; const k = b.dataset.g; if (pvOpt.gHide){ pvOpt.gHide = false; if (pvOpt.guides[k]){ pvUI(); pvSave(); return; } } pvOpt.guides[k] = !pvOpt.guides[k]; if (!pvOpt.guides[k]) delete pvOpt.guides[k]; pvUI(); pvSave(); });
 $('#stickBtn').addEventListener('click', () => { pvOpt.stick = !pvOpt.stick; pvUI(); pvSave(); });
 $('#ghostBtn').addEventListener('click', () => { pvOpt.ghosts = !pvOpt.ghosts; pvUI(); pvSave(); });
-$('#loupeBtn').addEventListener('click', () => { pvOpt.loupe = !pvOpt.loupe; pvUI(); pvSave(); if (!pvOpt.loupe){ $('#loupe').hidden = true; loupePin = false; $('#loupe').classList.remove('pin'); } });
+$('#loupeBtn').addEventListener('click', () => { pvOpt.loupe = !pvOpt.loupe; pvUI(); pvSave(); if (!pvOpt.loupe){ $('#loupe').hidden = true; loupeAt = null; } });
 // the loupe (0.93): 4× the preview around the pointer, the picture and what's drawn over it (handles, mask tint), crisp pixels
 let loupeAt = null;
 function drawLoupe(){
@@ -370,11 +370,8 @@ function drawLoupe(){
   x.drawImage(pv, ox, oy, L.width / Z, L.height / Z, 0, 0, L.width, L.height);
   x.strokeStyle = '#fff8'; x.lineWidth = 1; x.beginPath(); x.moveTo(L.width / 2, L.height / 2 - 8 * dpr); x.lineTo(L.width / 2, L.height / 2 + 8 * dpr); x.moveTo(L.width / 2 - 8 * dpr, L.height / 2); x.lineTo(L.width / 2 + 8 * dpr, L.height / 2); x.stroke();
 }
-// 0.99: drag the loupe where it doesn't cover what you're looking at (remembered); right-click pins it: it stays on screen,
-// fixed on the spot it shows (border in amber), the picture still live; right-click again: it follows the pointer again
-let loupePin = false;
-pv.addEventListener('pointermove', e => { if (!pvOpt.loupe || loupePin) return; loupeAt = evtToOut(e); drawLoupe(); });
-pv.addEventListener('pointerleave', e => { if (loupePin || e.relatedTarget === $('#loupe')) return; loupeAt = null; drawLoupe(); });
+// 0.99.7: the loupe stays up (on the last spot it showed, live) when the pointer leaves the preview; moving over the preview points it again
+pv.addEventListener('pointermove', e => { if (!pvOpt.loupe) return; loupeAt = evtToOut(e); drawLoupe(); });
 const loupePlace = () => { const L = $('#loupe'), P = L.offsetParent; if (!P || !pvOpt.lpos){ L.style.left = L.style.top = ''; return; }
   const w = L.offsetWidth || 240, h = L.offsetHeight || 240, x = clamp(pvOpt.lpos[0] * P.clientWidth, 0, Math.max(0, P.clientWidth - w)), y = clamp(pvOpt.lpos[1] * P.clientHeight, 0, Math.max(0, P.clientHeight - h));
   Object.assign(L.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); };
@@ -385,8 +382,7 @@ $('#loupe').addEventListener('pointerdown', e => { if (e.button) return; const L
   const up = () => { L.removeEventListener('pointermove', mv); L.removeEventListener('pointerup', up); L.classList.remove('drag'); pvSave(); };
   L.addEventListener('pointermove', mv); L.addEventListener('pointerup', up); });
 $('#loupe').addEventListener('dblclick', () => { pvOpt.lpos = null; loupePlace(); pvSave(); });   // back to the corner
-$('#loupe').addEventListener('contextmenu', e => { e.preventDefault(); loupePin = !loupePin; $('#loupe').classList.toggle('pin', loupePin); if (!loupePin){ loupeAt = null; drawLoupe(); } });
-$('#loupe').title = 'Loupe · drag: move · double-click: corner · right-click: pin';
+$('#loupe').title = 'Loupe · drag: move · double-click: corner (bottom right)';
 loupePlace();
 $('#pickLayerBtn').addEventListener('click', () => { pvOpt.pickLayer = !pvOpt.pickLayer; pvUI(); pvSave(); toast2(pvOpt.pickLayer ? 'Current layer only: picking on the selected layer' : 'Picking on any layer'); });
 const setGrid = (k, v) => { v = clamp(Math.round(v), 1, 24); pvOpt[k] = v; const o = k === 'gx' ? 'gy' : 'gx'; if (v === 1 && pvOpt[o] === 1) pvOpt[o] = 2;   // 1×1 draws nothing
