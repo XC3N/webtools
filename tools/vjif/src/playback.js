@@ -85,7 +85,7 @@ function fire(p, beat, released = false, swap = false){
   // fade one-shot: start from wherever the last fade is now, so a fast retrigger doesn't flicker
   // (a hit just after a snapped beat counts as on it, so the GIF stays in step, but its fade starts now: from the beat, a
   // short Fade in was already over before the GIF showed, and at Bar snap even long ones lost up to half a beat)
-  if (g.trig === 'fade') c.env = { t0: Math.max(beat, clock.beat), from: envLevel(c, g, clock.beat), rel: null, noGate: released };
+  if (g.trig === 'fade') c.env = { t0: Math.max(beat, clock.beat), from: g.env.restart ? 0 : envLevel(c, g, clock.beat), rel: null, noGate: released };
   L.sel = c; L.on = true;
   if (clickFocus === p){ clickFocus = -1; if (L.i !== target){ target = L.i; if (L.i === 1 || L.i === 2) sceneLayer = L.i; if (maskEd && maskEd.li !== L.i) maskClose(); } }
   selectPad(p, true); uiLater(UI.LAYERS | UI.XF);   // the panels follow after the frame is drawn

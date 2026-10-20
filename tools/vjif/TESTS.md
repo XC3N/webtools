@@ -242,6 +242,13 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts212} **Floor shadow** (0.99.5) — Shadow on, Light › Floor: the shadow falls below the GIF; Skew slants it, Y moves it.
 - [ ] {ts213} **Pad click edits its layer** (0.99.5) — Click a Global pad: Overlay becomes the edit layer and Transform moves that GIF. Play keys: the edit layer doesn't change.
 - [ ] {ts214} **Bypass under Overlay** (0.99.5) — A Foreground GIF with Bypass FX, an Overlay GIF over it: Overlay stays on top.
+- [ ] {ts215} **Freeze holds everything** (0.99.6) — A GIF with Bypass FX playing, Freeze: it stops with the rest.
+- [ ] {ts216} **Bypass under transitions** (0.99.6) — A Bypass FX GIF in the next scene, TV › Channel transition: the snow and the number cover it.
+- [ ] {ts217} **Retrigger Restart** (0.99.6) — One shot, Retrigger › Restart: each hit fades in from 0. Continue: as before.
+- [ ] {ts218} **Swap on the top bar** (0.99.6) — Drag Midground's name sideways onto Foreground's top bar: they swap.
+- [ ] {ts219} **Pool Save GIF menu** (0.99.6) — Right-click a Pool GIF: a menu with Save GIF…; Esc closes it.
+- [ ] {ts220} **Small UI bits** (0.99.6) — Tempo: no tooltip. Play tab: tooltip. Flip heading short. Changed GIF sections: a dot. LFO button greyed where unusable. Layer opacity readout in white. Scenes heading: export / import in the middle.
+- [ ] {ts221} **Colour brush range** (0.99.6) — Mask, Alt+brush at Soft 100% on a branch: only colours near the branch's get masked.
 - [ ] {uymvggouyk3stn2djrj3} **LFO box** (0.99) — Right-click Amount on any effect: the LFO box has Shape + Invert, Cycle, Min value, Max value, Phase, Skew, Gap (names inside the sliders); Invert, Phase and Gap change how it moves; the sine button on the envelope opens the LFO, the envelope button on the LFO goes back.
 - [x] {tg65cxh2bowgu4lp8m0s} **Sustain line** (0.99) — An effect on Hit with a Gate: drag the line between Decay and Gate up / down: Sustain follows (its % shows), Decay and Gate stay; double-click it: back to full. Same in GIF › Auto › Envelope (graph view).
 - [x] {zvs2n4zjsistx3cobru4} **GIF FX clicks** (0.99) — GIF › FX (now before Auto): each effect has its icon; with CRT off, click VHS: CRT switches on with VHS; click Scanlines: both; right-click Scanlines: alone; right-click again: both back.

@@ -76,7 +76,7 @@ function colourBrushStart(S, px, py){
   if (!list.some(it => it.items.length || (it.L.i === 0 && it.L.fillOn))) list = all.filter(it => it.L.i === li).map(it => ({ ...bare(it), items: bare(it).items.filter(q => O.pad == null || q.e.id === O.id) }));
   render(list, x, 0, [], 0, [k, 0, 0, k, 0, 0]);
   const d = x.getImageData(0, 0, w, h).data, ix = clamp(Math.floor(px * k), 0, w - 1), iy = clamp(Math.floor(py * k), 0, h - 1), o = (iy * w + ix) * 4;
-  S.col = { d, w, h, k, c: [d[o], d[o + 1], d[o + 2]], tol: Math.max(0.02, maskOpt.soft) * 0.6 * 441.7, stamp: document.createElement('canvas') };
+  S.col = { d, w, h, k, c: [d[o], d[o + 1], d[o + 2]], tol: (0.06 + 0.2 * maskOpt.soft) * 441.7,   /* 0.99.6: at most a quarter of the colour range (Soft at 100% let almost every colour through) */ stamp: document.createElement('canvas') };
 }
 function colourDab(x, px, py){
   const C = maskStroke.col, r = maskOpt.size / 2 * C.k, cx = px * C.k, cy = py * C.k, x0 = Math.max(0, Math.floor(cx - r)), y0 = Math.max(0, Math.floor(cy - r)), x1 = Math.min(C.w, Math.ceil(cx + r)), y1 = Math.min(C.h, Math.ceil(cy + r));

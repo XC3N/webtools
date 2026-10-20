@@ -4,6 +4,29 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.6 — 2026-10-20
+
+### Effects
+- Freeze holds the whole picture, Bypass FX GIFs included (they kept playing over a frozen picture).
+- During a transition, the arriving scene's Bypass FX GIFs are part of it, under its snow, tears and channel number, not on top of them.
+- The effect editor's LFO button is greyed where no setting can have an LFO.
+
+### GIFs
+- Play › Trigger › Retrigger: Continue (carry on from where the fade is, as before) or Restart (fade in again from 0 on every hit).
+- Auto › Flip H / Flip V: the heading is just the name; how it flips is in the tooltip.
+- A changed section's mark is a dot.
+- The Play tab has a tooltip.
+
+### Layers
+- Swapping Midground and Foreground also works when dropped on the other card's top bar (a sideways drag didn't count).
+- The layer opacity readout is in the normal text colour, like other sliders.
+- Mask › Alt colour brush: Soft widens the colour range much less, so a high Soft no longer lets almost every colour through.
+
+### Interface
+- Pool: right-click a GIF opens a small menu with Save GIF…, instead of saving straight away.
+- Scenes heading: export and import sit in the middle, between the name and the bank switch.
+- The tempo box has no tooltip (it covered the tempo).
+
 ## 0.99.5 — 2026-10-17
 
 ### Effects

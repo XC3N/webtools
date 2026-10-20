@@ -400,6 +400,7 @@ function syncFxMod(){
   const X = fxEd(), M = fxModK && X && X.mod && X.mod[fxModK];
   if (fxModK && !M) fxModK = null;
   $('#fxEdit .envrow').classList.toggle('lfo', !!fxModK);
+  $('#envLfo').classList.toggle('dimmed', !(X && ['amt', 'rate', 'size'].some(k => FXM[k] && fxModPlain(k))));   // (0.99.6: greyed where no setting can have an LFO)
   for (const k in FXM){ const r = $(FXM[k].row); const f = r && (r.classList.contains('field') ? r : r.closest('.field')); if (f) f.classList.toggle('mod', !!(X && X.mod && X.mod[k] && X.mod[k].on && fxModPlain(k))); }
   if (!M) return; const F = FXM[fxModK];
   $('#fxLfoT').textContent = 'LFO · ' + F.name; $('#fxLfoOn').checked = !!M.on;

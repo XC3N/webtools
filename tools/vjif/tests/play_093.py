@@ -56,7 +56,7 @@ async def main():
     await pg.click('#poolRes [data-v="0.5"]'); await pg.wait_for_function("pool.every(m => m.scale === 0.5)", timeout=8000)
     print('pool', await pg.evaluate("pool.map(m => m.scale)"))
     sv = await pg.evaluate("""(async () => { let got = null; window.showSaveFilePicker = async o => ({ name: o.suggestedName, createWritable: async () => ({ write: async b => { got = [o.suggestedName, b.size]; }, close: async () => {} }) });
-      $('#poolGrid .ptile').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })); await new Promise(r => setTimeout(r, 300)); return [got, pool.length, pool[0].blob.size]; })()""")
+      $('#poolGrid .ptile').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })); document.querySelector('.ctxmenu button').click(); await new Promise(r => setTimeout(r, 300));   /* 0.99.6: through its menu */ return [got, pool.length, pool[0].blob.size]; })()""")
     print('save as', sv); assert sv[0] and sv[0][0] == 'red.gif' and sv[0][1] == sv[2] and sv[1] == 1, sv
     await b.close()
 asyncio.run(main())

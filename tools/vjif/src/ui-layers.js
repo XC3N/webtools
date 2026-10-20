@@ -21,8 +21,8 @@ function buildLayers(){
     row.querySelector('.lmask').addEventListener('click', () => maskOpen(li));
     if (li === 1 || li === 2){                     // 0.99.5: drag Midground's name onto Foreground (or back) to swap the two layers' contents
       const nm = row.querySelector('.lname'); nm.classList.add('lswapdrag'); nm.title += ' · drag onto the other of Midground / Foreground to swap them';
-      nm.addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); nm.setPointerCapture(e.pointerId); const other = layers[3 - li].row, y0 = e.clientY; let over = false;
-        const mv = ev => { over = Math.abs(ev.clientY - y0) > 6 && other.contains(document.elementFromPoint(ev.clientX, ev.clientY)); other.classList.toggle('lswap', over); };
+      nm.addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); nm.setPointerCapture(e.pointerId); const other = layers[3 - li].row, x0 = e.clientX, y0 = e.clientY; let over = false;
+        const mv = ev => { over = Math.hypot(ev.clientX - x0, ev.clientY - y0) > 6 && other.contains(document.elementFromPoint(ev.clientX, ev.clientY)); other.classList.toggle('lswap', over); };
         const up = () => { nm.removeEventListener('pointermove', mv); other.classList.remove('lswap'); if (over) swapLayers(1, 2); };
         nm.addEventListener('pointermove', mv); nm.addEventListener('pointerup', up, { once: true }); nm.addEventListener('pointercancel', () => { nm.removeEventListener('pointermove', mv); other.classList.remove('lswap'); }, { once: true }); });
     }

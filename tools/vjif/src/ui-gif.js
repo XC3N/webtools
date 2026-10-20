@@ -53,6 +53,7 @@ function syncGifUI(){
   segSet('#tLen', g.env.len || 'free');
   $('#tEnv').classList.toggle('dimmed', g.trig !== 'fade'); $('#tHoldRow').classList.toggle('dimmed', g.env.gate || g.env.len === 'gif');
   $('#tLenRow').classList.toggle('dimmed', g.env.gate); $('#tEveryRow').classList.toggle('dimmed', g.env.gate);
+  segSet('#tRetrig', g.env.restart ? 'restart' : 'cont');   // (0.99.6)
   { const i = optIdx(EVERY_OPTS, g.env.every || 0); $('#tEvery').value = i; $('#tEvery').nextElementSibling.textContent = EVERY_OPTS[i][1]; }
   syncAutoUI(g);
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
@@ -157,13 +158,14 @@ onSeg($('#tMode'), (b, e) => { const g = curGif(); if (!g) return;
   syncGifUI(); redraw.all = true;
 });
 $('#tEvery').max = EVERY_OPTS.length - 1;
+onSeg($('#tRetrig'), b => { const g = curGif(); if (!g) return; g.env = { ...g.env, restart: b.dataset.v === 'restart' }; syncGifUI(); });   // Retrigger: Continue (from the level it was at) or Restart (from 0), 0.99.6
 $('#tEvery').addEventListener('input', e => { const g = curGif(); if (!g) return; const o = EVERY_OPTS[+e.target.value]; g.env.every = o[0]; e.target.nextElementSibling.textContent = o[1]; redraw.all = true; });
 onSeg($('#tLen'), (b, e) => { const g = curGif(); if (g){ g.env.len = b.dataset.v; syncGifUI(); } });
 onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.dataset.v; syncGifUI(); } });
 
 // ---- auto tab: one LFO per target ----
 let aSel = 'x';
-$('#aTgt').innerHTML = LFO_T.map(t => `<button data-v="${t[0]}" title="${t[2]}">${t[1]}</button>`).join('');
+$('#aTgt').innerHTML = LFO_T.map(t => `<button data-v="${t[0]}" title="${t[2]}${['fx', 'fy'].includes(t[0]) ? ': flipped while the LFO is above halfway' : ''}">${t[1]}</button>`).join('');   // (0.99.6: the flips' heading is just its name, the how is in the tooltip)
 $('#aShape').innerHTML = SHAPES.map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');   // (0.89: drawn, named in the tooltip)
 $('#aPer').max = PER_FAM.e.length - 1;
 const skFmt = v => { const p = Math.round((v - 0.5) * 200); return (p > 0 ? '+' : '') + p + '%'; };   // Skew shown around the middle (0.95): 0 % even, − a quick rise, + a quick fall

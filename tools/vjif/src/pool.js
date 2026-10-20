@@ -319,7 +319,7 @@ function renderPool(){
     t.addEventListener('pointerdown', e => { if (e.button === 0 && (e.target.closest('.px') || isRm(e)) && poolUse(m).sc.length) poolHold(t, m, e); });
     t.addEventListener('click', e => { if (t._held){ t._held = false; return; }   // the end of a held press, not a click
       if (e.target.closest('.px') || isRm(e)){ if (!poolUse(m).sc.length) removeMedia(m); return; } pickPool(m); });
-    t.addEventListener('contextmenu', e => { e.preventDefault(); if (e.ctrlKey){ if (!poolUse(m).sc.length) removeMedia(m); return; } poolSaveAs(m); });   // (a Mac's Ctrl+click) · right-click: save the file (0.93.1)   // (a Mac's Ctrl+click)
+    t.addEventListener('contextmenu', e => { e.preventDefault(); if (e.ctrlKey){ if (!poolUse(m).sc.length) removeMedia(m); return; } ctxMenu(e, [['Save GIF…', () => poolSaveAs(m)]]); });   // (a Mac's Ctrl+click) · right-click: a little menu with Save GIF (0.99.6; it saved straight away since 0.93.1)   // (a Mac's Ctrl+click)
     grid.appendChild(t);
   });
 }
@@ -384,3 +384,14 @@ const dtLink = dt => (dt.getData('text/uri-list') || dt.getData('text/plain') ||
 });
 movable($('#poolPanel .modalBox'), 'vjif-poolpos');
 $('#poolPrune').addEventListener('click', () => { pool.filter(m => { const u = poolUse(m); return !u.sc.length && !u.air; }).forEach(removeMedia); toast2('Unused GIFs removed'); });
+
+// a small right-click menu at the pointer (0.99.6): items [label, fn]; closes on a choice, a click elsewhere or Esc
+function ctxMenu(e, items){
+  document.querySelectorAll('.ctxmenu').forEach(m => m.remove());
+  const m = document.createElement('div'); m.className = 'ctxmenu';
+  items.forEach(([l, fn]) => { const b = document.createElement('button'); b.textContent = l; b.addEventListener('click', () => { m.remove(); fn(); }); m.appendChild(b); });
+  document.body.appendChild(m); const r = m.getBoundingClientRect();
+  m.style.left = Math.min(e.clientX, innerWidth - r.width - 4) + 'px'; m.style.top = Math.min(e.clientY, innerHeight - r.height - 4) + 'px';
+  const off = ev => { if (ev.type === 'keydown' && ev.key !== 'Escape') return; if (ev.type === 'pointerdown' && m.contains(ev.target)) return; m.remove(); removeEventListener('pointerdown', off, true); removeEventListener('keydown', off, true); };
+  setTimeout(() => { addEventListener('pointerdown', off, true); addEventListener('keydown', off, true); });
+}
