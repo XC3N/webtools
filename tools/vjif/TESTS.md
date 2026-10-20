@@ -45,7 +45,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {fxkeys} **Effect layers by key** (0.60) — hold F1, press 1 and 3: Mono works on layers 1 + 3; 5: All; 5 again: 1 + 3 back. Let go of F1: 1–9 arm transitions again.
 - [x] {allback} **All remembers** (0.60) — effect on layers 2 + 4, click All, click All again: 2 + 4 again.
 - [x] {recsnd} **Rec sound, long track** (0.61) — MP4, Sound: Music player, a long MP3, a timed take (e.g. 8 bars) while the interface is busy: is the sound clean?
-- [ ] {mussync} **Music With Sync** (0.61) — track playing: Rec doesn't restart it, and it keeps playing after a timed take. Sync: the track starts from the top. Rec then Sync: the take and the song start together.
+- [x] {mussync} **Music With Sync** (0.61) — track playing: Rec doesn't restart it, and it keeps playing after a timed take. Sync: the track starts from the top. Rec then Sync: the take and the song start together.
 - [x] {ch20} **20 px controls** (0.62) — look around every panel (Settings, Sets, pool, Text, MIDI map): anything clipped or cramped?
 - [x] {scdrop} **Drop on a scene** (0.62) — drag GIF files or a pool GIF onto another scene's tile: they land on its first empty pads, you stay where you are.
 - [x] {decsc} **Decoding mark** (0.62) — load a big GIF, switch scene at once: the pad on the new scene isn't marked as decoding.
@@ -173,28 +173,28 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {p56ylllzg8u7c55yl8pg} **Stacked amounts** (0.92) — Glitch with Corrupt + Crunch: focus Corrupt, lower Amount: only the moshing gets weaker; focus Crunch: its own Amount shows.
 - [x] {9ukepbvmsy7uidtpnqcu} **Preset preview** (0.92) — select an effect preset, drag a slider in the editor: the preset plays while you drag, stops when you let go.
 - [x] {2gtntzprn9zmpzp1ly3i} **Theme roles** (0.92) — Settings › Theme: Primary, Secondary (with saturation / brightness), Info, Graphs; clicking a name folds its rows.
-- [ ] {wque66ok3m28vnn4ipdf} **Loupe** (0.93) — Preview toolbar › magnifier: a 4× close-up follows the cursor in the preview's corner, the guides and mask outline included; off again with the same button.
-- [ ] {uesiwk4vvbnozw47b6p7} **Colour brush** (0.93) — Mask mode, Free tool: Alt+drag from a pixel paints only where the edited layer has a colour close to it (Soft widens the range); a plain drag paints everywhere.
-- [ ] {v32zcomlz5ubyhsa6tuo} **Mask copy / paste** (0.93) — Mask bar: Copy on a layer with a mask, Paste on another layer: same mask there; Ctrl+Z takes it back. Paste is dimmed until something is copied.
+- [x] {wque66ok3m28vnn4ipdf} **Loupe** (0.93) — Preview toolbar › magnifier: a 4× close-up follows the cursor in the preview's corner, the guides and mask outline included; off again with the same button.
+- [x] {uesiwk4vvbnozw47b6p7} **Colour brush** (0.93) — Mask mode, Free tool: Alt+drag from a pixel paints only where the edited layer has a colour close to it (Soft widens the range); a plain drag paints everywhere.
+- [x] {v32zcomlz5ubyhsa6tuo} **Mask copy / paste** (0.93) — Mask bar: Copy on a layer with a mask, Paste on another layer: same mask there; Ctrl+Z takes it back. Paste is dimmed until something is copied.
 - [x] {ec3gicl9a6gmznw5m14s} **Brush size on the wheel** (0.93) — Mask mode: Ctrl+wheel over the preview grows / shrinks the brush (the Size slider follows), the page doesn't zoom.
 - [x] {czujwxv0gzk1bz544cqu} **Bank 2 on RTY FGH VBN** (0.93) — R T Y F G H V B N play scene pads bank 2 (pads show those letters); Shift+QWE… still does too; holding a key and letting go works like the other pads.
 - [x] {6xw15nw4mpnit9a4dhvy} **Background drop selects** (0.93) — Drop a GIF file on the Background card: it lands in a slot and becomes the selected GIF (Background the edit layer), its panel shows it.
 - [x] {cp2l8g1owxxsyg7f5044} **Bypass FX** (0.93) — GIF › Display › Bypass FX on, a screen effect latched: that GIF stays clean, on top of the effected picture, the other GIFs get the effect.
-- [ ] {vxehm695slyu1uihonz7} **One shot repeat** (0.93) — One shot, Play › Trigger › Repeat 1 bar: without a hit the GIF plays on every bar by itself; a hit still plays it at once.
+- [x] {vxehm695slyu1uihonz7} **One shot repeat** (0.93) — One shot, Play › Trigger › Repeat 1 bar: without a hit the GIF plays on every bar by itself; a hit still plays it at once.
 - [x] {1yxuwdv7lakpn7awg4be} **Loop length slider** (0.93) — Timing Fit: Loop length is a slider, 1/16 to 16 bars (with 3 and 6 beats, 3 and 6 bars); the cycle line below follows.
-- [ ] {j0qdczvjiqfcsxsf98cq} **Pool resolution** (0.93) — Pool: All full / ½ / ¼ sets every GIF of the set at once; the memory figure drops and a note says by how much.
+- [x] {j0qdczvjiqfcsxsf98cq} **Pool resolution** (0.93) — Pool: All full / ½ / ¼ sets every GIF of the set at once; the memory figure drops and a note says by how much.
 - [x] {1y92otzl68vpswy0f1l2} **Background keeps 6 slots** (0.93.1) — Background with 3 GIFs in slots: Alt+hit one of them: the other two stay (chips and slots: 6 in all on the card).
-- [ ] {fm222xin70qprcv6n57p} **Pool save as** (0.93.1) — Pool: right-click a GIF: a Save dialog with its name; the saved file is the original (opens as the same GIF). Ctrl+right-click an unused one still removes it.
+- [x] {fm222xin70qprcv6n57p} **Pool save as** (0.93.1) — Pool: right-click a GIF: a Save dialog with its name; the saved file is the original (opens as the same GIF). Ctrl+right-click an unused one still removes it.
 - [x] {wrahtddg5hd6de7zydod} **Effects regrouped** (0.94) — F1–F12 now: Colour, Posterize, Strobe, Feedback · Zoom, Shake, Wobble, Mirror · Pixel, Glitch, Codec, CRT. Colour › Palette has Grey and 1-bit first (1-bit + Dither › Bayer = the old Mono Dither). Strobe › Degauss swells without flashing.
 - [x] {qj99kcqsgqsorz602pcp} **Old set after the regroup** (0.94) — Open a set saved before 0.94 with Mono, Glitch › Corrupt and Glitch › Degauss used: Corrupt is on Codec, Slices / Blocks / Melt stay on Glitch, a preset with Mono plays Colour › Grey or 1-bit, Degauss is on Strobe; MIDI-mapped effect pads still play the same effect.
 - [x] {q733fowb9qqip3x9vml0} **Effect LFO** (0.94) — Right-click Amount (or Rate / Size where they have their plain meaning): the envelope box shows that setting's LFO (shape, Cycle, Min, Max, on / off, × back). Play the effect: the setting swings in time; its label shows ~. Saved with the set, copied into presets.
-- [ ] {af0nwretgf042ep24q6w} **Background sublayers: blend and mask per GIF** (0.94) — Two GIFs in Background slots, overlapping: select the top one, set its blend (Multiply, Screen, Mask: cut out…) in the Background card: it blends with the Background GIFs under it (and the colour fill), not with black.
-- [ ] {c4sdx051o55odmhnm7x6} **Rec › Source: Window** (0.94) — Settings › Recording › Source › Window (or Rec ▾), Rec: Chrome asks which tab to share (pick VJif): the clip is the whole window as you see it; stopping the share from Chrome's bar ends the take and saves it.
-- [ ] {h0ghlsujkv2pkt5i5c68} **Mic processing warning** (0.94) — Record with a microphone as the sound: if Chrome kept auto gain / noise suppression / echo cancelling on for it, a message says so when the take is set up.
+- [x] {af0nwretgf042ep24q6w} **Background sublayers: blend and mask per GIF** (0.94) — Two GIFs in Background slots, overlapping: select the top one, set its blend (Multiply, Screen, Mask: cut out…) in the Background card: it blends with the Background GIFs under it (and the colour fill), not with black.
+- [x] {c4sdx051o55odmhnm7x6} **Rec › Source: Window** (0.94) — Settings › Recording › Source › Window (or Rec ▾), Rec: Chrome asks which tab to share (pick VJif): the clip is the whole window as you see it; stopping the share from Chrome's bar ends the take and saves it.
+- [x] {h0ghlsujkv2pkt5i5c68} **Mic processing warning** (0.94) — Record with a microphone as the sound: if Chrome kept auto gain / noise suppression / echo cancelling on for it, a message says so when the take is set up.
 - [x] {wggn693o7h6md3kkcu3o} **LFO cycle steps** (0.94) — GIF › Auto › Cycle: 3/8, 3/4, 1½, 3, 6 and 12 bars between the old steps; an existing LFO keeps its value.
 - [x] {thxz69l2wppdbiybojgx} **Rate row back** (0.94) — Glitch, Codec, Shake, Pixel…: effects with both Rate and Size show both rows again (0.93 hid Rate).
 - [x] {nm0n2dwbl1sns35ccbiv} **Hide a GIF from its chip** (0.95) — Right-click a GIF chip on a layer card: it greys out and its GIF is neither drawn nor picked (LOAD drops if it was the heavy one); right-click again: back. Saved with the set.
-- [ ] {ycqverpl5fk144epkaew} **Scene export / import** (0.95) — Scenes heading › ↓: a .vjscene file of the scene you are on (GIFs inside). ↑ (or drop the file on the scenes): it lands in the first empty scene of the bank on show (or the empty tile it was dropped on), pads, layers, masks and name intact; Ctrl+Z takes it out.
+- [x] {ycqverpl5fk144epkaew} **Scene export / import** (0.95) — Scenes heading › ↓: a .vjscene file of the scene you are on (GIFs inside). ↑ (or drop the file on the scenes): it lands in the first empty scene of the bank on show (or the empty tile it was dropped on), pads, layers, masks and name intact; Ctrl+Z takes it out.
 - [x] {vc52kikti0ygo0pkl6g0} **Launchpad arrows** (0.95) — Settings › MIDI › Launchpad layout again, then on the Launchpad: ▲ / ▼ step the scene banks (wrapping), ◀ / ▶ show scene pads bank 1 / 2 (the one on show is lit).
 - [x] {jhjtz84jxa9smlech8kn} **Effect preview off the output** (0.95) — Output window open (or recording): drag an effect slider with Preview on: the effect plays in the preview only; the output window stays clean.
 - [x] {wwuuyr4dc3r7392qm6qm} **Scene copy keeps masks** (0.95) — Paint a mask on a layer, Ctrl-drag the scene onto another tile: the copy has the mask (and the layer lock / transition).
@@ -206,7 +206,7 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {qmq0osb1abxyl7i9bxey} **Retrigger graph** (0.95) — One shot with a long fade, hit it again mid-fade: the Trigger graph redraws from the level it was at, and the dot stays on the line.
 - [x] {4idgk2trdr8eggbwqbt7} **Mask bar icons** (0.95) — Mask mode: the three tool icons sit centred like the others, and the layer card keeps its height (the buttons were 2 px too tall for the row).
 - [x] {y9lcs7yt449tweqkoqny} **Shadow skew** (0.96) — GIF › Display › Shadow › Skew: the shadow leans sideways from the GIF's bottom edge (the bottom stays, the top slants); works with Crop too.
-- [ ] {4njnjmp45ta9bhknq4u7} **Count-in Play** (0.96) — Music loaded, Rec › Count-in › Play, Rec: the button reads Play… and waits; press the music player's Play: the take starts right then (with Sync on play, on that beat 1).
+- [x] {4njnjmp45ta9bhknq4u7} **Count-in Play** (0.96) — Music loaded, Rec › Count-in › Play, Rec: the button reads Play… and waits; press the music player's Play: the take starts right then (with Sync on play, on that beat 1).
 - [x] {ynqwp5rkp5zkgf92lruz} **Background folds** (0.96) — Settings › Theme: click Background: its saturation and brightness fold away like the roles' (remembered). Every window's × sits right in its corner.
 - [x] {7dh08qiwyity4911xclo} **GIF effects** (0.96) — Two GIFs side by side, select one, GIF › FX › Colour › Invert: only that GIF inverts, the other doesn't; the FX tab shows a dot; save / reload keeps it; Reset all clears it. Try Pixel, Codec, CRT too (watch LOAD).
 - [x] {vo4oe8jhc8ztpncypc9o} **Performance pass** (0.97) — Your heaviest scene with coloured GIFs: LOAD should be lower than in 0.96 once each GIF has played one loop; the live scene tile still updates when you move a GIF or change a layer. Scenes / transitions / recording behave as before.
@@ -214,34 +214,34 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [x] {t4ioxki64jgj2liahkh8} **Palette families** (0.99.3) — Colour › Palette: the slider reads Grey, CGA, ZX Spectrum, C64, NES, EGA, GB; beside Dither a switch picks Full | 16 | 4 | 1 (Grey), 1 | 2 | 3 (CGA), DMG | Pocket | Light (GB, across the row next to the dot-matrix switch). A set saved before still opens on the same palette.
 - [x] {d5c9iagdj2fngo016dqn} **Colourful EGA** (0.99.3) — Colour › Palette › EGA (and CGA) on a colourful GIF: the colours stay colours instead of turning grey, with Dither off, Noise or Bayer. Also GIF › Display › Palette. Other palettes look a little different (closer to the GIF).
 - [x] {7flsh6sditif91df9tas} **Retrigger keeps the graph** (0.99.3) — One shot with a long fade in, Smooth and Linear: hit it again mid-fade: the Trigger graph keeps its shape and the dot jumps along the fade in to the level it was at, then follows the line.
-- [ ] {ugzj7sp1tn8xu90y3bvm} **Dark chip outline** (0.99.3) — A mostly black GIF on a layer: its chip has a dark grey outline; a normal GIF has none.
-- [ ] {ts188} **Palette row** (0.99.4) — Colour › Palette: step through every family: the Palette slider keeps its width; Grey reads 6 | 4 | 2 | 1; the Game Boys show Dither, then DMG | Pocket | Light, then the LCD switch.
-- [ ] {ts189} **Even dither** (0.99.4) — The same colourful GIF, Dither 100% Bayer on CGA, EGA, ZX Spectrum, 1-bit and a Game Boy: from a step back, each dithered picture keeps about the GIF's brightness. Noise is a fine, even grain on all of them.
-- [ ] {ts190} **Wear follows the LFO** (0.99.4) — CRT with VHS + Scanlines, VHS in focus with its own Amount (Wear), an Amount LFO on: the wear visibly rises and falls.
+- [x] {ugzj7sp1tn8xu90y3bvm} **Dark chip outline** (0.99.3) — A mostly black GIF on a layer: its chip has a dark grey outline; a normal GIF has none.
+- [x] {ts188} **Palette row** (0.99.4) — Colour › Palette: step through every family: the Palette slider keeps its width; Grey reads 6 | 4 | 2 | 1; the Game Boys show Dither, then DMG | Pocket | Light, then the LCD switch.
+- [x] {ts189} **Even dither** (0.99.4) — The same colourful GIF, Dither 100% Bayer on CGA, EGA, ZX Spectrum, 1-bit and a Game Boy: from a step back, each dithered picture keeps about the GIF's brightness. Noise is a fine, even grain on all of them.
+- [x] {ts190} **Wear follows the LFO** (0.99.4) — CRT with VHS + Scanlines, VHS in focus with its own Amount (Wear), an Amount LFO on: the wear visibly rises and falls.
 - [x] {ts191} **Sliders follow LFOs** (0.99.4) — An Amount LFO on an effect: its Amount slider moves. A GIF with Auto on X and Hue: the X and Hue sliders move. Drag one: it holds while dragged. Switch the LFO off: back to the set value.
-- [ ] {ts192} **LFO shapes centred** (0.99.4) — At 1280–1440 px wide, right-click an effect's Amount: the six shape icons sit centred in their boxes.
-- [ ] {ts193} **Background GIF masks** (0.99.4) — Two overlapping Background GIFs: select the top one, Mask, paint: the painted part shows the GIF below (and the colour), not black. Select the other GIF: the bar names it and its mask is empty. Ctrl+Z, a reload and a scene copy keep the masks.
-- [ ] {ts194} **Crunch without Rate** (0.99.4) — Codec › Crunch alone: Rate is dimmed. Add Corrupt: Rate lights up.
-- [ ] {ts195} **GIF FX icons** (0.99.4) — GIF › FX: each effect's icon comes after its name.
+- [x] {ts192} **LFO shapes centred** (0.99.4) — At 1280–1440 px wide, right-click an effect's Amount: the six shape icons sit centred in their boxes.
+- [x] {ts193} **Background GIF masks** (0.99.4) — Two overlapping Background GIFs: select the top one, Mask, paint: the painted part shows the GIF below (and the colour), not black. Select the other GIF: the bar names it and its mask is empty. Ctrl+Z, a reload and a scene copy keep the masks.
+- [x] {ts194} **Crunch without Rate** (0.99.4) — Codec › Crunch alone: Rate is dimmed. Add Corrupt: Rate lights up.
+- [x] {ts195} **GIF FX icons** (0.99.4) — GIF › FX: each effect's icon comes after its name.
 - [x] {ts196} **Right-click MIDI** (0.99.4) — Right-click MIDI in the top bar: Settings opens at the MIDI section, unfolded, even if it was folded.
-- [ ] {ts197} **Palettes without Dither** (0.99.5) — Colour › Palette, Dither off, on a GIF of mostly one hue (a face, an animal): EGA, CGA, ZX Spectrum keep the detail instead of one flat colour; EGA stays colourful.
-- [ ] {ts198} **Dither patterns** (0.99.5) — EGA + Bayer: orange areas aren't a red / green pattern. Noise: grain only near colour boundaries. Checker on 1-bit, Grey and CGA: faces and detail stay.
-- [ ] {ts199} **Palette row** (0.99.5) — ZX Spectrum reads in full (Spectrum on narrow screens). The Game Boys: no Dither, DMG | Pocket | Light with full names, the LCD switch beside them.
-- [ ] {ts200} **Glitch / Codec split** (0.99.5) — Glitch: Slices, Blocks, Melt, Corrupt, Keyframe. Codec: Crunch, Macro, Banding, Chroma, Ringing, Rate dimmed. A set saved with Codec › Corrupt on opens with Glitch › Corrupt on.
-- [ ] {ts201} **New Codec styles** (0.99.5) — Macroblock, Banding, Chroma, Ringing each alone, Amount 25% and 100%, a few Sizes: do they read as compression, and which should stay?
-- [ ] {ts202} **Headings and folding** (0.99.5) — GIF tabs: section names don't fold; a changed section shows a small square. Effect editor: Envelope / LFO headings look like the others. Pads: Scene / Global and numpad in the sans font.
-- [ ] {ts203} **Icons, opacity, Trigger** (0.99.5) — Reset / Clear are arrow icons (Reset all with a dot). Top bar: Sets = folder, Save = disk. Layer cards: Opacity and its % inside the slider. GIF › Play › Trigger: no switch.
-- [ ] {ts204} **Short tooltips** (0.99.5) — Hover around the main window: each tooltip is one line, shortcuts after a ·. Anything that lost something you need?
-- [ ] {ts205} **Colour Adjust off** (0.99.5) — A new GIF: Colour Adjust is off; moving Hue switches it on.
-- [ ] {ts206} **Dark chip outline** (0.99.5) — A GIF that is black at its edges (even with a bright middle) has a dark grey outline on its chip.
-- [ ] {ts207} **Colour brush from below** (0.99.5) — Mask on Foreground, Alt+brush starting on a Background colour: the mask follows that colour of the layers below.
-- [ ] {ts208} **Theme Background** (0.99.5) — Settings › Theme: Background has a swatch; the gap above it is the same as between the roles.
-- [ ] {ts209} **Flip automation** (0.99.5) — Right-click Flip H in Transform: Auto opens on Flip H. The graph shades the flipped spans; Min / Max change them; the H switch follows the LFO.
-- [ ] {ts210} **Cycle families** (0.99.5) — GIF › Auto and an effect LFO: ♩ | ♩. | ♩³ beside Cycle; each switches to the nearest value in that family; triplets work.
-- [ ] {ts211} **Swap Mid / Fore** (0.99.5) — Drag the Midground name onto the Foreground card: their GIFs and settings swap; Ctrl+Z swaps back.
-- [ ] {ts212} **Floor shadow** (0.99.5) — Shadow on, Light › Floor: the shadow falls below the GIF; Skew slants it, Y moves it.
-- [ ] {ts213} **Pad click edits its layer** (0.99.5) — Click a Global pad: Overlay becomes the edit layer and Transform moves that GIF. Play keys: the edit layer doesn't change.
-- [ ] {ts214} **Bypass under Overlay** (0.99.5) — A Foreground GIF with Bypass FX, an Overlay GIF over it: Overlay stays on top.
+- [x] {ts197} **Palettes without Dither** (0.99.5) — Colour › Palette, Dither off, on a GIF of mostly one hue (a face, an animal): EGA, CGA, ZX Spectrum keep the detail instead of one flat colour; EGA stays colourful.
+- [x] {ts198} **Dither patterns** (0.99.5) — EGA + Bayer: orange areas aren't a red / green pattern. Noise: grain only near colour boundaries. Checker on 1-bit, Grey and CGA: faces and detail stay.
+- [x] {ts199} **Palette row** (0.99.5) — ZX Spectrum reads in full (Spectrum on narrow screens). The Game Boys: no Dither, DMG | Pocket | Light with full names, the LCD switch beside them.
+- [x] {ts200} **Glitch / Codec split** (0.99.5) — Glitch: Slices, Blocks, Melt, Corrupt, Keyframe. Codec: Crunch, Macro, Banding, Chroma, Ringing, Rate dimmed. A set saved with Codec › Corrupt on opens with Glitch › Corrupt on.
+- [x] {ts201} **New Codec styles** (0.99.5) — Macroblock, Banding, Chroma, Ringing each alone, Amount 25% and 100%, a few Sizes: do they read as compression, and which should stay?
+- [x] {ts202} **Headings and folding** (0.99.5) — GIF tabs: section names don't fold; a changed section shows a small square. Effect editor: Envelope / LFO headings look like the others. Pads: Scene / Global and numpad in the sans font.
+- [x] {ts203} **Icons, opacity, Trigger** (0.99.5) — Reset / Clear are arrow icons (Reset all with a dot). Top bar: Sets = folder, Save = disk. Layer cards: Opacity and its % inside the slider. GIF › Play › Trigger: no switch.
+- [x] {ts204} **Short tooltips** (0.99.5) — Hover around the main window: each tooltip is one line, shortcuts after a ·. Anything that lost something you need?
+- [x] {ts205} **Colour Adjust off** (0.99.5) — A new GIF: Colour Adjust is off; moving Hue switches it on.
+- [x] {ts206} **Dark chip outline** (0.99.5) — A GIF that is black at its edges (even with a bright middle) has a dark grey outline on its chip.
+- [x] {ts207} **Colour brush from below** (0.99.5) — Mask on Foreground, Alt+brush starting on a Background colour: the mask follows that colour of the layers below.
+- [x] {ts208} **Theme Background** (0.99.5) — Settings › Theme: Background has a swatch; the gap above it is the same as between the roles.
+- [x] {ts209} **Flip automation** (0.99.5) — Right-click Flip H in Transform: Auto opens on Flip H. The graph shades the flipped spans; Min / Max change them; the H switch follows the LFO.
+- [x] {ts210} **Cycle families** (0.99.5) — GIF › Auto and an effect LFO: ♩ | ♩. | ♩³ beside Cycle; each switches to the nearest value in that family; triplets work.
+- [x] {ts211} **Swap Mid / Fore** (0.99.5) — Drag the Midground name onto the Foreground card: their GIFs and settings swap; Ctrl+Z swaps back.
+- [x] {ts212} **Floor shadow** (0.99.5) — Shadow on, Light › Floor: the shadow falls below the GIF; Skew slants it, Y moves it.
+- [x] {ts213} **Pad click edits its layer** (0.99.5) — Click a Global pad: Overlay becomes the edit layer and Transform moves that GIF. Play keys: the edit layer doesn't change.
+- [x] {ts214} **Bypass under Overlay** (0.99.5) — A Foreground GIF with Bypass FX, an Overlay GIF over it: Overlay stays on top.
 - [ ] {ts215} **Freeze holds everything** (0.99.6) — A GIF with Bypass FX playing, Freeze: it stops with the rest.
 - [ ] {ts216} **Bypass under transitions** (0.99.6) — A Bypass FX GIF in the next scene, TV › Channel transition: the snow and the number cover it.
 - [ ] {ts217} **Retrigger Restart** (0.99.6) — One shot, Retrigger › Restart: each hit fades in from 0. Continue: as before.
@@ -249,14 +249,14 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts219} **Pool Save GIF menu** (0.99.6) — Right-click a Pool GIF: a menu with Save GIF…; Esc closes it.
 - [ ] {ts220} **Small UI bits** (0.99.6) — Tempo: no tooltip. Play tab: tooltip. Flip heading short. Changed GIF sections: a dot. LFO button greyed where unusable. Layer opacity readout in white. Scenes heading: export / import in the middle.
 - [ ] {ts221} **Colour brush range** (0.99.6) — Mask, Alt+brush at Soft 100% on a branch: only colours near the branch's get masked.
-- [ ] {uymvggouyk3stn2djrj3} **LFO box** (0.99) — Right-click Amount on any effect: the LFO box has Shape + Invert, Cycle, Min value, Max value, Phase, Skew, Gap (names inside the sliders); Invert, Phase and Gap change how it moves; the sine button on the envelope opens the LFO, the envelope button on the LFO goes back.
+- [x] {uymvggouyk3stn2djrj3} **LFO box** (0.99) — Right-click Amount on any effect: the LFO box has Shape + Invert, Cycle, Min value, Max value, Phase, Skew, Gap (names inside the sliders); Invert, Phase and Gap change how it moves; the sine button on the envelope opens the LFO, the envelope button on the LFO goes back.
 - [x] {tg65cxh2bowgu4lp8m0s} **Sustain line** (0.99) — An effect on Hit with a Gate: drag the line between Decay and Gate up / down: Sustain follows (its % shows), Decay and Gate stay; double-click it: back to full. Same in GIF › Auto › Envelope (graph view).
 - [x] {zvs2n4zjsistx3cobru4} **GIF FX clicks** (0.99) — GIF › FX (now before Auto): each effect has its icon; with CRT off, click VHS: CRT switches on with VHS; click Scanlines: both; right-click Scanlines: alone; right-click again: both back.
 - [x] {w8xzswbjenbkdwp6522d} **Stack in focus** (0.99) — CRT with VHS + Scanlines + Phosphor on: click VHS: it stays bright with a bar under it, the other two dim; its settings show (Wear, Dropouts).
 - [x] {pphrr1l1lyjxm8drs2zl} **Game Boy and greys** (0.99) — Colour › Palette › GB Light on a detailed GIF: as much detail as GB and GB Pocket (four shades spread over the picture). Grey 16 and Grey 4 (after Grey): Dither › Bayer / Noise now visible.
 - [x] {fj54kxnj4mqj0zb73do7} **Hidden chip looks hidden** (0.99) — Right-click a GIF chip on a layer card: the chip greys out and its label is crossed out; right-click again: back.
-- [ ] {gs9x2khl8kvkci0nutqg} **Import into the empty scene** (0.99) — Go to an empty scene, Scenes ↑ a .vjscene: it lands in the scene you are on. Export a scene with no name: the file is scene-N.vjscene and the imported scene has no name. The Scenes heading reads numpad / CAPS·FX in full, ↓ ↑ before the banks.
-- [ ] {hxx8bwukaj2xpxe77cg7} **Loupe move and pin** (0.99) — Loupe on: drag the loupe somewhere else (stays there after a reload; double-click: back to the corner); right-click it: blue border, it stays on that spot while the pointer goes elsewhere; right-click: follows again.
+- [x] {gs9x2khl8kvkci0nutqg} **Import into the empty scene** (0.99) — Go to an empty scene, Scenes ↑ a .vjscene: it lands in the scene you are on. Export a scene with no name: the file is scene-N.vjscene and the imported scene has no name. The Scenes heading reads numpad / CAPS·FX in full, ↓ ↑ before the banks.
+- [x] {hxx8bwukaj2xpxe77cg7} **Loupe move and pin** (0.99) — Loupe on: drag the loupe somewhere else (stays there after a reload; double-click: back to the corner); right-click it: blue border, it stays on that spot while the pointer goes elsewhere; right-click: follows again.
 - [x] {q6u530o2frizoxtztf3v} **Panel picture as loaded** (0.99) — A GIF with a key or colour: right-click the GIF picture at the top right: it shows the GIF as loaded (dashed outline); right-click: as drawn again (remembered).
 - [x] {scl20ykr7vp110e2bksm} **Launchpad arrows (Pro MK3)** (0.99) — Settings › MIDI › Launchpad layout again: ◀ ▶ at the top left step the scene banks, ▲ ▼ on the left side show scene pads bank 1 / 2; Session and Note do nothing.
 - [x] {d7ab6t7tt11gto46dw8f} **Sync on play remembered** (0.99) — Music: tick Sync on play, reload: it is still ticked.
