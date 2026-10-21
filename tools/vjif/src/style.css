@@ -404,6 +404,7 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 /* Colour › Palette: a shorter Dither slider with the pattern switch beside it */
 #fxRateRow.patrow{grid-template-columns:minmax(0,1fr) auto!important;column-gap:4px;flex:1.4}#fxRateRow.patrow>.seg{grid-column:2;grid-row:1;width:78px;flex:none}
 .fxrow:has(#fxRateRow.patrow)>.field:first-child{flex:1}   /* the Palette slider gives up some room for Dither + its switch */
+#fxRateRow.nodith>input,#fxRateRow.nodith>output,#fxRateRow.nodith>#fxDpat{opacity:.35;pointer-events:none}   /* 0.99.13: Dither greyed on Grey 6-bit / NES, the rest of the row stays */
 #fxRateRow.patrow>.seg button{padding:0}   /* the three patterns as little pictures (the tooltips name them) */
 
 #recWrap{position:relative;display:inline-flex;gap:2px}#recWrap>#recCfg{border:1px solid var(--edge)}#recPop{width:270px}#recPopRows{display:grid;gap:6px}#recPopRows .poprow{display:grid;grid-template-columns:62px minmax(0,1fr);align-items:center;gap:6px}#recPopRows .poprow>span{font-size:11px;color:var(--muted)}   /* Rec ▾: like BRB's */

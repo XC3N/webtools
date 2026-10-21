@@ -399,3 +399,5 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts241} **Gentle Dither on 1–2 bit** (0.99.12) — Grey 1-bit with Dither at 20 %: the picture is still there (soft pattern), not a hard black / white cut.
 - [ ] {ts242} **Fit range** (0.99.12) — GIF › Display › Palette › Grey 2-bit with a dull GIF: Fit range on shows far more detail than off.
 - [ ] {ts243} **Monitor window** (0.99.12) — Shift+right-click LOAD: a small window opens with three graphs and the numbers, updating every second; closing it and reopening works.
+- [ ] {ts244} **Bit switch on Grey 6-bit** (0.99.13) — Colour › Palette › Grey: the 6 / 4 / 2 / 1 switch is there and works with Dither greyed; on the NES only Dither is greyed.
+- [ ] {ts245} **Start timings** (0.99.13) — after a reload, Shift+right-click LOAD: a 'Start:' line gives ready time, restore time and each shader's compile time.

@@ -36,6 +36,7 @@ function dbgDraw(){
     `Late frames in the last minute: ${sum('drops', m1)} · stalls over 50 ms: ${sum('stalls', m1)} (${sum('stallMs', m1).toFixed(0)} ms)`, '',
     last.heap !== null ? `JS heap ${last.heap.toFixed(0)} MB` + (slope === null ? ' (the trend shows after a minute)' : ` · last 10 min: ${slope >= 0 ? '+' : ''}${slope.toFixed(2)} MB/min` + (slope > 1 ? ' — rising' : ' — flat')) : 'JS heap: only Chrome / Edge report it',
     `Decoded frames ${last.pool.toFixed(0)} MB (${last.gifs} GIFs in the pool) + processed copies / key masks ${last.extra.toFixed(0)} MB`,
+    `Start: ready ${(bootT.readyAt / 1000).toFixed(1)} s after the page opened · restoring the set ${(bootT.restoreMs / 1000).toFixed(1)} s · shaders: ${bootT.link.map(([n, ms]) => n + ' ' + ms + ' ms').join(', ') || '—'}`,
     `GIF instances alive: ${last.insts} · with processed frames cached: ${last.cached}`, '',
     'A line that keeps climbing (heap or decoded frames) points at VJif; flat memory with a wandering load or FPS points at the PC.'].join('\n');
 }

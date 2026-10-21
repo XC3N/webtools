@@ -497,11 +497,11 @@ async function restore(){
       }
       st.v = 2;
     }
-    if (st){ $('#saveStat').textContent = 'restoring…'; await applySnapshot(st, { wait: false }); }
+    if (st){ $('#saveStat').textContent = 'restoring…'; const t0 = performance.now(); await applySnapshot(st, { wait: false }); bootT.restoreMs = Math.round(performance.now() - t0); }
     session.savedSig = curSet() ? contentSig(curSet().snap) : '';
   } catch (e) { toast('Saved session could not be loaded: ' + e.message); }
   finally {
-    syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot(); musRestore();
+    bootT.readyAt = Math.round(performance.now()); syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot(); musRestore();
     hist.cur = histState(); hist.ready = true;
     $('#saveStat').textContent = '';
     updSetLabel(); gcGifs();

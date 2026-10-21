@@ -639,7 +639,7 @@ ${FX_GLSL}
         }
         gl_FragColor = vec4(clamp(c, 0.0, 1.0), clamp(al, 0.0, 1.0));
       }`));
-    gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    linkChk(gl, prog, 'effects');
     gl.useProgram(prog);
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -673,7 +673,7 @@ ${FX_GLSL}
         float l = texture2D(c, vec2((l0 * 255.0 + 0.5) / 256.0, 0.5)).a;   // brightness → its rank in this scene (0 = darkest, 1 = brightest)
         l = mix(l, 1.0 - l, inv);                     // Options › Dark: the darkest parts change first
         gl_FragColor = vec4(mix(A.rgb, B.rgb, smoothstep(1.0 - t, 1.0 + sw - t, l)), 1.0); }`));
-    gl.linkProgram(lp); if (!gl.getProgramParameter(lp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(lp));
+    linkChk(gl, lp, 'layers');
     const lu = { a: gl.getUniformLocation(lp, 'a'), b: gl.getUniformLocation(lp, 'b'), c: gl.getUniformLocation(lp, 'c'), e: gl.getUniformLocation(lp, 'e'), inv: gl.getUniformLocation(lp, 'inv'), sw: gl.getUniformLocation(lp, 'sw') }, lpLoc = gl.getAttribLocation(lp, 'p'), texB = mkTex(), texC = mkTex();
     // Luma pacing: the edge sweeps through the old scene's brightness *ranks*, not raw brightness, so a dark or a bright
     // scene takes the same time (equal areas change per moment). The ranks come from a 64×36 copy, every 4th frame.
@@ -741,7 +741,7 @@ ${FX_GLSL}
           }
         }
         gl_FragColor = vec4(c, 1.0); }`));
-    gl.linkProgram(tp); if (!gl.getProgramParameter(tp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(tp));
+    linkChk(gl, tp, 'transitions');
     const tu = {}; ['a', 'b', 'res', 'mode', 'e', 'bs', 'seed', 'stp', 't', 'fr', 'k', 'nz', 'mixB', 'pr', 'useB', 'bands'].forEach(n => tu[n] = gl.getUniformLocation(tp, n));
     const tpLoc = gl.getAttribLocation(tp, 'p');
     return { luma(A, B, e, T = {}){

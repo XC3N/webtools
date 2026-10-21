@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.12';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.13';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -178,6 +178,9 @@ function showToast(msg, ok){
   if (msg === toastCur){ paintToast(msg, ok); return; }                       // the same words again: just keep them up
   if (wait > 0 || toastQ.length){ if (!toastQ.some(q => q[0] === msg) && toastQ.length < 4) toastQ.push([msg, ok]); if (!toastQT) toastQT = setTimeout(nextToast, Math.max(wait, 50)); return; }
   paintToast(msg, ok); }
+// 0.99.13: how long the start took (shown in the monitor window): each shader link, then restoring the saved set
+const bootT = { link: [], restoreMs: 0, readyAt: 0 };
+function linkChk(gl, prog, name){ const t = performance.now(); gl.linkProgram(prog); const ok = gl.getProgramParameter(prog, gl.LINK_STATUS); bootT.link.push([name, Math.round(performance.now() - t)]); if (!ok) throw new Error(gl.getProgramInfoLog(prog)); }
 const toast = msg => showToast(msg, false), toast2 = msg => showToast(msg, true);
 // Ctrl+click (⌘+click on a Mac) deletes / resets
 const isDel = e => e.ctrlKey || e.metaKey;

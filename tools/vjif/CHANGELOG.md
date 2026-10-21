@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.13 — 2026/10/21
+
+- Fixed (0.99.12): on Grey 6-bit and the NES the whole palette row disappeared, the bit switch with it. Only the Dither slider and its pattern switch are greyed now.
+- Monitor window › Start: how long the page took to be ready, how long restoring the set took, and how long each shader took to compile. For slow reloads: open the monitor after one and read these lines.
+
 ## 0.99.12 — 2026/10/21
 
 - A GIF that fades out and is sent off to make room no longer pops a message (the dimmed chips and the red flash say enough). The GIF that takes its place now sits at the same height in the stack as the one it replaced (it went on top before).

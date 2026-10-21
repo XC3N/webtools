@@ -194,7 +194,7 @@ function syncFxUI0(){
   drawFxEnv(); syncEnvSl();
   if (!pre || E){
     const C = E || fxConf(selFx), di = E ? preEd : selFx;
-    const alt = rateAlt(d, C.style || d.styles[0][0], C); $('#fxRateRow').classList.toggle('altrow', !!alt);
+    const alt = rateAlt(d, C.style || d.styles[0][0], C); $('#fxRateRow').classList.toggle('altrow', !!alt); if (!alt) $('#fxRateRow').classList.remove('nodith');
     $('#fxRateSeg').hidden = !(alt && alt.seg); $('#fxRate').hidden = $('#fxRate').nextElementSibling.hidden = !!(alt && alt.seg);   // a few fixed choices: a switch instead of the slider
     if (alt && alt.seg){ setHTML($('#fxRateSeg'), alt.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxRateSeg', String(C[alt.key] ?? alt.def)); }
     const sw = alt && (alt.pat || alt.lcd); $('#fxDpat').hidden = !sw; $('#fxRateRow').classList.toggle('patrow', !!sw);
@@ -206,7 +206,7 @@ function syncFxUI0(){
     if (sw) segSet('#fxDpat', String(alt.lcd ? Math.min(2, C.dots || 0) : C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
-      $('#fxRateRow').title = alt.off ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : alt.title(ai); $('#fxRateRow').classList.toggle('dimmed', !!alt.off); }
+      $('#fxRateRow').title = alt.off ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : alt.title(ai); $('#fxRateRow').classList.remove('dimmed'); $('#fxRateRow').classList.toggle('nodith', !!alt.off); }   // (0.99.13: not 'dimmed': that hides the row's whole content, the bit switch too)
     else { $('#fxRate').max = FX_RATES.length - 1; $('#fxRateRow').title = 'Rate: how fast it moves (beats)';
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
     $('#fxRateRow').classList.toggle('dimmed', !d.rate || (!!d.rateFor && !styleParts(di, C.style || d.styles[0][0]).some(p => d.rateFor.includes(p)))); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }

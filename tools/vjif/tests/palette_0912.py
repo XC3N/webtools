@@ -16,5 +16,9 @@ async def main():
     print(r); assert r['grey'] == 0 and r['nes'] == 0 and r['cga'] == 0.8, r
     assert r['blue'] == [85, 255, 255], r['blue']   # a medium blue is light cyan (it was light red)
     assert r['range'][1] > r['range'][0] and r['fitP'][1] > r['fitP'][0], r
+    # 0.99.13: on Grey 6-bit the bit switch must stay visible and usable while Dither is greyed
+    v = await pg.evaluate("""(() => { selectFx(FX_DEFS.findIndex(d => d.id === 'colour')); const X = fxEd(); X.style = 'pal'; X.pal = FX_PALS.findIndex(P => P.n === 'Grey'); syncFxUI();
+      const bs = $('#fxPalVar'), r = bs.getBoundingClientRect(), row = $('#fxRateRow'); return [!bs.hidden, r.width > 20, getComputedStyle(bs).visibility, getComputedStyle(bs).pointerEvents, row.classList.contains('nodith'), getComputedStyle($('#fxRate')).pointerEvents]; })()""")
+    print('grey row', v); assert v == [True, True, 'visible', 'auto', True, 'none'], v
     assert not errs, errs; await b.close(); print('ok')
 asyncio.run(main())
