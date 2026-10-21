@@ -84,7 +84,7 @@ function onKey(e){
   if (e.code === 'Escape'){ stopPick(); return; }
   if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
   if (e.code === 'Home'){ e.preventDefault(); const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); commit(); } return; }   // reset placement
-  if (e.code === 'End'){ e.preventDefault(); toggleLayer(target); return; }                  // the edit layer on / off
+  if (e.code === 'End'){ e.preventDefault(); maskOpen(target); return; }                  // the edit layer's mask editing on / off (0.99.11; layers on / off stay on Shift+1–4)
   if (e.code === 'PageUp' || e.code === 'PageDown'){ e.preventDefault(); setTarget(clamp(target + (e.code === 'PageUp' ? -1 : 1), 0, 3)); return; }   // PgUp: the layer to the left (cards are 1→4 left to right), PgDn: to the right
 }
 const keyPad = new Map();   // a held pad key → the pad it played (bank 1 or 2)

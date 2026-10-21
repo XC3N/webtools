@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.11 — 2026/10/21
+
+- **End** now turns mask editing on / off for the edit layer (it used to switch the layer on / off; Shift+1–4 still do that).
+- Messages in the top bar wait their turn: each stays up at least ~1.5 s (longer for long text), up to 4 wait, repeats are dropped.
+- Rec: a sound-input scan that comes back empty (the camera being opened) keeps the list instead of leaving only "No sound".
+- CRT › VHS: at its lowest Amount only the blur (softness and colour smear) shows; tracking, tears, dropouts, snow and noise fade in from about 4 % up to 30 %.
+
 ## 0.99.10 — 2026/10/21
 
 - A mostly black GIF's chip outline is brighter (light grey, was dark grey that vanished against the dark layer row), also when the chip is selected. Checked with a black 44×44 sprite on a see-through background: it is detected as dark and gets the outline.

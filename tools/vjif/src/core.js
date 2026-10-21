@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.10';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.11';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -167,8 +167,16 @@ const $ = s => document.querySelector(s);
 // code that could show a message while the page starts.
 // the message strip: toast() for problems (stays 5 s), toast2() for confirmations (green, 2.5 s)
 let toastT = 0;
-function showToast(msg, ok){ const t = $('#toast'); t.classList.toggle('ok', ok); t.textContent = msg; t.style.display = 'block';
-  clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); }, ok ? 2500 : 5000); }
+let toastShownAt = 0, toastCur = '', toastQ = [], toastQT = 0;   // 0.99.11: a new message waits until the one showing has had its time to be read (~1.5 s, more for long text); up to 4 wait, repeats are dropped
+const toastMin = m => Math.min(3500, 1500 + Math.max(0, m.length - 30) * 40);
+function paintToast(msg, ok){ const t = $('#toast'); t.classList.toggle('ok', ok); t.textContent = msg; t.style.display = 'block'; toastCur = msg; toastShownAt = performance.now();
+  clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); toastCur = ''; }, ok ? 2500 : 5000); }
+function nextToast(){ toastQT = 0; const q = toastQ.shift(); if (!q) return; paintToast(q[0], q[1]); if (toastQ.length) toastQT = setTimeout(nextToast, toastMin(q[0])); }
+function showToast(msg, ok){
+  const wait = toastCur ? toastShownAt + toastMin(toastCur) - performance.now() : 0;
+  if (msg === toastCur){ paintToast(msg, ok); return; }                       // the same words again: just keep them up
+  if (wait > 0 || toastQ.length){ if (!toastQ.some(q => q[0] === msg) && toastQ.length < 4) toastQ.push([msg, ok]); if (!toastQT) toastQT = setTimeout(nextToast, Math.max(wait, 50)); return; }
+  paintToast(msg, ok); }
 const toast = msg => showToast(msg, false), toast2 = msg => showToast(msg, true);
 // Ctrl+click (⌘+click on a Mac) deletes / resets
 const isDel = e => e.ctrlKey || e.metaKey;

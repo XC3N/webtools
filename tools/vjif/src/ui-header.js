@@ -174,6 +174,8 @@ async function fillRecAudio(ask = false){
   const sel = $('#recAudioSel'); if (!sel || !navigator.mediaDevices) return;
   if (ask){ try { (await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks().forEach(t => t.stop()); } catch (e) { toast('Sound input access was not allowed'); } }
   let ins = []; try { ins = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput' && d.deviceId !== 'default' && d.deviceId !== 'communications'); } catch (e) {}
+  const old = [...sel.options].filter(o => o.value && !SPECIAL_SND.includes(o.value) && o.value !== '?').map(o => [o.value, o.textContent]);
+  if (!ins.length && old.length && !ask) return;   // 0.99.11: an empty scan (the camera was being opened) keeps the list it had
   const named = ins.some(d => d.label);
   sel.innerHTML = '<option value="">No sound</option><option value="music">Music player</option><option value="tab">Tab audio</option>' + (named ? ins.map(d => `<option value="${esc(d.deviceId)}">${esc(d.label)}</option>`).join('') : '<option value="?">Choose an input… (asks permission)</option>')
     + (recAudio && !SPECIAL_SND.includes(recAudio.id) && !ins.some(d => d.deviceId === recAudio.id) ? `<option value="${esc(recAudio.id)}">${esc(recAudio.label || 'Chosen input')} (not connected)</option>` : '');

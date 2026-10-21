@@ -385,3 +385,6 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 ## Open questions
 - none right now (Alt shortcuts: fine on Windows; controller: Hercules P32 DJ, layout to follow)
 - [ ] {ts229} **Dark chip outline** (0.99.10) — load a mostly black GIF (a black bat on see-through): its chip on the layer row and on the pad has a clearly visible light grey outline, selected or not.
+- [ ] {ts230} **End = mask edit** (0.99.11) — press End: the edit layer's mask bar opens; End again closes it. Shift+1–4 still switch layers.
+- [ ] {ts231} **Message queue** (0.99.11) — trigger two messages quickly (e.g. add a GIF to a full layer, then press a bad key combo): the first stays up about 1.5 s before the second shows.
+- [ ] {ts232} **VHS at minimum** (0.99.11) — CRT › VHS with Amount at its lowest: only a soft picture, no tears, bands or noise; raising it brings them in.

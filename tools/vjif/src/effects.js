@@ -474,9 +474,9 @@ ${FX_GLSL}
         if (dgs > 0.001){ float gq = dgs; // degauss: the picture ripples
           p += vec2(sin(p.y * 18.0 + time * 35.0), cos(p.x * 14.0 + time * 29.0)) * 0.006 * gq; split += 0.008 * gq; }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ float rq = min(1.0, rgb * rgA[int(S_rgb_vhs)]); // VHS tracking: a gentle sway and a torn band rolling down; with Wear: more of the tape's faults
-          float fr = floor(time * 30.0), ln = floor(p.y * res.y / 2.0), w = rq;   // Amount is the wear
-          p.x += sin(p.y * 30.0 + time * 6.0) * 0.0015 * rq;
-          float ty = fract(time * 0.23); if (abs(p.y - ty) < 0.025) p.x += (h1(floor(p.y * 200.0) + fr) - 0.5) * 0.03 * rq;
+          float fr = floor(time * 30.0), ln = floor(p.y * res.y / 2.0), wg = smoothstep(0.04, 0.3, rq), w = rq * wg;   // Amount is the wear (0.99.11: at its lowest only the blur: the faults fade in from 4 %)
+          p.x += sin(p.y * 30.0 + time * 6.0) * 0.0015 * rq * wg;
+          float ty = fract(time * 0.23); if (abs(p.y - ty) < 0.025) p.x += (h1(floor(p.y * 200.0) + fr) - 0.5) * 0.03 * rq * wg;
           float bq = vhsBand(p.y); p.x += ((h1(ln * 0.7 + fr) - 0.5) * 0.22 + 0.035) * bq * w;   // tracking lost: bands torn hard sideways
           if (p.y < 0.09) p.x += pow(1.0 - p.y / 0.09, 2.0) * 0.03 * sin(time * 3.0) * w;          // flagging: the top of the picture bends
           if (p.y > 0.955) p.x += (0.015 + h1(ln * 0.9 + fr) * 0.03) * w;                         // head-switching noise along the bottom
@@ -527,11 +527,11 @@ ${FX_GLSL}
         if (dgs > 0.001){ float gq = dgs; // degauss: rainbow blotches swirling out
           float r = length((uv - 0.5) * a); c = mix(c, clamp(hueRot(c, sin(r * 12.0 - time * 18.0 + sin(uv.x * 7.0) * 2.0) * 3.0), 0.0, 1.0), 0.75 * gq); }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_vhs)){ float rq = min(1.0, rgb * rgA[int(S_rgb_vhs)]); // VHS picture: washed colour, scanlines, noise; with Wear: colour bleeding right, dropouts
-          float w = rq, fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
-          if (w > 0.001){                            // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
-            vec2 q = geo(p), px1 = vec2((1.5 + 2.0 * w) / res.x, 0.0);         // softer as the tape wears
+          float w = rq * smoothstep(0.04, 0.3, rq), fr = floor(time * 30.0), ln = floor(uv.y * res.y / 2.0);
+          if (rq > 0.001){                           // tape keeps colour at a fraction of the picture's sharpness: the colour smears to the right of the shapes
+            vec2 q = geo(p), px1 = vec2((1.5 + 2.0 * rq) / res.x, 0.0);         // softer as the tape wears
             vec3 lu = (look(raw(q - px1)) + c * 2.0 + look(raw(q + px1))) / 4.0;   // (the neighbours with the picture's look too: a palette doesn't show its original colours through)                // tape's soft picture: brightness a little blurred sideways…
-            float kb = min(1.0, w * 20.0);              // the tape's softness is there at any Wear (full from 5 %): Wear adds the faults
+            float kb = min(1.0, rq * 20.0);              // the tape's softness is there at any Wear (full from 5 %): Wear adds the faults
             c = mix(c, lu + (c - lu) * 0.6, 0.7 * kb);                             // …with a faint edge ring (the sharpening VCRs added)
             vec3 sm = (raw(q - vec2(0.004, 0.0)) + raw(q - vec2(0.008, 0.0)) + raw(q - vec2(0.012, 0.0)) + raw(q - vec2(0.016, 0.0))) / 4.0;
             float yl = dot(c, vec3(0.299, 0.587, 0.114)); sm = look(sm); vec3 ch = sm - dot(sm, vec3(0.299, 0.587, 0.114));
@@ -557,8 +557,8 @@ ${FX_GLSL}
             c = mix(c, vec3(0.8, 0.15, 0.85), ed.y * 0.6);                                 // a magenta line at its top edge
           }
           c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))), 0.25 * rq);
-          c *= 1.0 - 0.28 * rq * step(0.5, fract(gl_FragCoord.y / 3.0));
-          c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * rq;
+          c *= 1.0 - 0.28 * w * step(0.5, fract(gl_FragCoord.y / 3.0));
+          c += (h2(gl_FragCoord.xy + floor(time * 60.0)) - 0.5) * 0.14 * w;
         }
         if (glitch > 0.001 && HAS(glS, S_glitch_keyfr)){ float gq = min(1.0, glitch * glA[int(S_glitch_keyfr)]);   // keyframe lost: the picture as it was (the last frame out) is moved along the live picture's motion,
           // one motion vector per block, found by comparing the two around the block's centre (one step of optical flow): the old picture takes the new one's movement and smears
