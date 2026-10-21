@@ -80,6 +80,7 @@ function step(){
     setTip(lo, [`LOAD ${load}%: how much of each second VJif's drawing takes on the main thread.`,
       `Average ${(meter.busy / Math.max(1, fpsN)).toFixed(1)} ms, worst ${meter.peak.toFixed(1)} ms per frame — one screen refresh lasts ${(1000 / hz).toFixed(1)} ms.`,
       `Near 100% the frame rate drops. GPU work (effects, compositing) isn't counted here: it shows up as a lower FPS instead.`, heap].filter(Boolean).join('\n'));
+    dbgSample({ fps, load, peak: meter.peak, drops: meter.drops, stalls: meter.longN, stallMs: meter.longMs, hz });
     Object.assign(meter, { busy: 0, peak: 0, gaps: [], longN: 0, longMs: 0 });
     fpsN = 0; drawn = 0; fpsT = now;
   }

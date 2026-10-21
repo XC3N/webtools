@@ -35,7 +35,8 @@ function syncGifUI(){
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
   if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + PAL_ORDER.map(i => FX_PALS[i]).map((P, k) => `<option value="${PAL_ORDER[k]}" title="${esc(P.t)}">${esc(P.d)}</option>`).join('');   // by year
   $('#gPal').value = String(g.pal ? g.pal.i : -1); $('#gPalD').value = g.pal ? g.pal.d : 0; $('#gPalD').nextElementSibling.textContent = Math.round((g.pal ? g.pal.d : 0) * 100) + '%';
-  $('#gPalD').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
+  { const nd = !!(g.pal && g.pal.i >= 0 && palNoDith(g.pal.i)); $('#gPalD').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0) || nd); $('#gPalD').closest('.field').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas)';
+    $('#gPalFit').checked = !!(g.pal && g.pal.fit); $('#gPalFit').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0)); }
   syncShadowUI(g);
   segSet('#gSync', g.sync); segSet('#gLoop', g.loop); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
@@ -155,6 +156,7 @@ HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
   scheduleFx(g, 150);
 }));
 $('#gPal').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { d: 0 }), i: +e.target.value, off: false }; e.target.blur(); scheduleFx(g, 0); syncGifUI(); renderPad(selPad); });
+$('#gPalFit').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { i: -1, d: 0 }), fit: e.target.checked }; scheduleFx(g, 0); renderPad(selPad); });
 $('#gPalD').addEventListener('input', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { i: -1 }), d: +e.target.value }; e.target.nextElementSibling.textContent = Math.round(g.pal.d * 100) + '%'; scheduleFx(g, 100); });
 $('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.hsv, { h: 0, s: 1, v: 1, off: true }); scheduleFx(g, 0); syncGifUI(); });   // (0.95: Reset also switches it off, like Key's Clear)
 

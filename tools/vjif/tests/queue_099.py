@@ -20,7 +20,7 @@ async def main():
     print('all gone', st, chips); assert all(st) and len(st) == 6 and all(chips), (st, chips)
     await pg.evaluate("clock.bpm = 60"); await pg.evaluate(f"fire({G[6]}, clock.beat)")
     ons = await pg.evaluate("layers[3].clips.map(c => c.pad)")
-    print('queue', ons, G); assert len(ons) == 6 and G[0] not in ons and G[6] in ons and G[1] in ons, ons
+    print('queue', ons, G); assert len(ons) == 6 and G[0] not in ons and G[6] in ons and G[1] in ons and ons[0] == G[6], ons   # 0.99.12: it takes the sent-off GIF's place in the stack
     await pg.evaluate(f"pads[{G[0]}].el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true, cancelable: true, button: 2 }}))")
     back = await pg.evaluate(f"(() => {{ const c = layers[3].clips.find(c => c.pad === {G[0]}); return [!!c, c && c.env, c && unseenClip(c), layers[3].clips.length, layers[3].clips.some(c => c.pad === {G[1]})]; }})()")
     print('back', back); assert back[0] and back[1] is None and back[2] and back[3] == 6 and back[4] is False, back

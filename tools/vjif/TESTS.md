@@ -388,3 +388,14 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts230} **End = mask edit** (0.99.11) — press End: the edit layer's mask bar opens; End again closes it. Shift+1–4 still switch layers.
 - [ ] {ts231} **Message queue** (0.99.11) — trigger two messages quickly (e.g. add a GIF to a full layer, then press a bad key combo): the first stays up about 1.5 s before the second shows.
 - [ ] {ts232} **VHS at minimum** (0.99.11) — CRT › VHS with Amount at its lowest: only a soft picture, no tears, bands or noise; raising it brings them in.
+- [ ] {ts233} **Sent-off GIF keeps its height** (0.99.12) — fill a layer with fading GIFs, let them all finish, fire a 7th: no message, and it takes the place of the sent-off one in the stack (not on top of the others).
+- [ ] {ts234} **Esc, one at a time** (0.99.12) — Pool › right-click a tile: Esc closes the menu only; Esc again closes the pool.
+- [ ] {ts235} **Caps Lock doesn't shift Scenes buttons** (0.99.12) — toggle Caps Lock: the export / import buttons stay put.
+- [ ] {ts236} **Envelope reset undo** (0.99.12) — change an effect's envelope, click reset, Ctrl+Z: it comes back; click reset twice: back again.
+- [ ] {ts237} **Right-click on a slider** (0.99.12) — right-click an effect slider that can't take an LFO: nothing plays.
+- [ ] {ts238} **Drag pool tile to the desktop** (0.99.12) — drag a Pool tile onto the desktop or a folder: a GIF file lands there (Chrome).
+- [ ] {ts239} **Dither greyed on Grey 6-bit / NES** (0.99.12) — Colour › Palette on Grey 6-bit or NES: the Dither row is dimmed and does nothing; GIF › Display › Palette the same.
+- [ ] {ts240} **CGA 3 and blue** (0.99.12) — a picture with medium blues on CGA 3: they come out light cyan, not light red.
+- [ ] {ts241} **Gentle Dither on 1–2 bit** (0.99.12) — Grey 1-bit with Dither at 20 %: the picture is still there (soft pattern), not a hard black / white cut.
+- [ ] {ts242} **Fit range** (0.99.12) — GIF › Display › Palette › Grey 2-bit with a dull GIF: Fit range on shows far more detail than off.
+- [ ] {ts243} **Monitor window** (0.99.12) — Shift+right-click LOAD: a small window opens with three graphs and the numbers, updating every second; closing it and reopening works.

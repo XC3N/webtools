@@ -140,6 +140,7 @@
         <div class="sub"><span title="Palette: snap this GIF to an old machine's colours">Palette</span><span class="line"></span><label class="tog" title="Palette on / off (the chosen palette is kept)"><input type="checkbox" id="pOn" data-def="0"></label></div>
         <div class="field"><label for="gPal">Snap to</label><select id="gPal" class="span" title="The palette this GIF's colours snap to (None: its own colours)"></select></div>
         <div class="field" title="Dither (off: flat areas)"><label for="gPalD">Dither</label><input id="gPalD" type="range" data-def="0" data-pct min="0" max="1" step="0.05"><output></output></div>
+        <div class="field" title="Fit range: stretch this GIF's own darkest and brightest over the whole palette first (a dull picture on a 2-bit grey keeps its detail)"><label for="gPalFit">Fit range</label><label class="tog"><input type="checkbox" id="gPalFit" data-def="0"></label></div>
         <div class="sub"><span title="GIFs have a small palette: click one of its colours, then choose what it becomes">Swap colours</span><span class="line"></span><button id="swClear" class="iconbtn" title="Clear: Remove every swap, and swaps off"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:auto"><path d="M3.5 8a4.5 4.5 0 1 0 1.4-3.3"/><path d="M4.5 1.8v3.2h3.2"/></svg></button><label class="tog" title="Colour swaps on / off (the swaps are kept)"><input type="checkbox" id="swOn" data-def="1"></label></div>
         <div class="field swm" title="Merge near colours into one swatch"><label for="swMerge">Merge</label><input id="swMerge" type="range" min="0" max="48" step="1" data-def="0"><output></output><button id="swPick" class="iconbtn" title="Pick a swatch from the preview"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M11.2 4.8 13.9 2.1" stroke-width="3.2"/><path d="M8.5 5.3l2.2 2.2" stroke-width="2.2"/><path d="M9.5 6.5 3.9 12.1" stroke-width="1.7"/><circle cx="2.6" cy="14" r="1" fill="currentColor" stroke="none"/></svg></button></div>
         <div id="swPal" title="The GIF's colours, most used first — click one to select it (again to deselect)"></div>
@@ -256,7 +257,7 @@
     </div>
     <div id="aboutLog" hidden><!-- @markdown tools/vjif/CHANGELOG.md --></div>
     <p class="note aboutCred">Design and UX by XC3N · code by Claude (Anthropic). Free to use; source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a> under the PolyForm Shield licence (no resale, no competing products).<br>
-      <button id="credBtn" class="linkbtn" title="Fonts, the MP4 writer, palettes, borrowed ideas">Credits</button>: fonts, the MP4 writer, palettes and borrowed ideas.<br>If it's useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
+      <button id="credBtn" class="linkbtn" title="Fonts, the MP4 writer, palettes, borrowed ideas">Credits</button>: fonts, the MP4 writer, palettes and borrowed ideas.<br>If this tool is useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
     <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
   </div>
 </div>
@@ -336,6 +337,7 @@
       <dt>Alt+click · Alt+pad key</dt><dd>Rename</dd>
       <dt>Ctrl+S</dt><dd>Save the set</dd>
       <dt>Esc</dt><dd>Close a panel · cancel a pick</dd>
+      <dt>Shift+right-click LOAD</dt><dd>A monitor window: frame time, FPS, memory over the last hour (to tell a leak from a slow PC)</dd>
     </dl>
     <h3 class="khead">MIDI</h3>
     <dl class="keys">
@@ -413,6 +415,7 @@
 /* @include tools/vjif/src/ui-header.js */
 /* @include tools/vjif/src/cpick.js */
 /* @include tools/vjif/src/main-loop.js */
+/* @include tools/vjif/src/debugmon.js */
 /* @include tools/vjif/src/persist.js */
 /* @include tools/vjif/src/record.js */
 /* @include tools/vjif/src/undo.js */

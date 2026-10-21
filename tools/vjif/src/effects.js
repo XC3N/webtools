@@ -150,6 +150,7 @@ const fxIcon = id => FX_ICON_SVG[id] ? `<svg class="fxic" viewBox="0 0 20 20" ar
 function lcdDot(){ const t = CH / 144, c = [0, -1, 1, -2, 2, -3, 3].map(k => Math.max(2, Math.round(t) + k)), fits = d => CW % d === 0 && CH % d === 0;
   return c.find(d => (d === 2 || d % 4 === 0) && fits(d)) || c.find(fits) || c.find(d => CH % d === 0) || c[0]; }   // a multiple of 4 first: it lands whole in the preview's eighths
 const palGB = i => /^GB/.test((FX_PALS[i] || {}).n || '');
+const palNoDith = i => ['Grey', 'NES'].includes((FX_PALS[i] || {}).n);   // 0.99.12: 64 grey steps are already smooth, and the NES never dithered (its second colour was often another hue: coloured noise): their Dither is greyed out
 function sizeAlt(d, style, C){
   if (d && d.id === 'shake') return { label: 'Edges', key: 'ovs', def: 2, list: FX_OVS, toggle: true, seg: true,   // one icon: zoom in enough that no frame edge ever shows, or not (0.87.3; an older Some reads as on)
     icon: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="5.5" y="5.5" width="9" height="9"/><path d="M2.5 6V2.5H6M14 2.5h3.5V6M17.5 14v3.5H14M6 17.5H2.5V14"/></svg>',
@@ -171,7 +172,7 @@ function rateAlt(d, style, C){
   if (d.id === 'colour' && style === 'pal' && C && palGB(C.pal || 0)) return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, nodith: true, lcd: { key: 'dots', def: 0, list: FX_DOTS, icons: FX_DOTS_ICON },   // the Game Boy: no Dither (0.99.5: it looked better without), its variants across that room and its screen in the pattern switch's place
     title: () => 'LCD: off, Pixels or Dots' };
   if (d.id === 'feedback') return { label: 'Length', key: 'fbk', def: 0.7, list: FX_FBK, title: () => 'Length: how long the trails / echoes last before they fade' };
-  if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, pat: true,   // the pattern: the Noise / Bayer / Check switch beside it
+  if (d.id === 'colour' && style === 'pal') return { label: 'Dither', key: 'dith', def: 0, list: FX_DITH, pat: true, off: !!(C && palNoDith(C.pal || 0)),   // the pattern: the Noise / Bayer / Check switch beside it
     title: () => 'Dither (off: flat areas); the switch picks the pattern' };
   if (d.id === 'mirror' && style === 'kal') return { label: 'Zoom', key: 'kz', def: 1, list: FX_KZ, title: () => 'Zoom: into the middle of the kaleidoscope' };
   return null;
@@ -330,7 +331,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, dith, dp
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], codec: lv[CD], cdS: styleMask(CD, style[CD]), cseed: st(CD) * 7.13 % 100, cdSz: size[CD],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: palGB(pal ? pal[CO] : 0) ? 1 : dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) && !palNoDith(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: palGB(pal ? pal[CO] : 0) ? 1 : dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s; U.wobZ = (ovs && ovs[WO] === 0 ? 0 : (S(WO) === 0 ? 0.04 : 0.026)) * lv[WO];

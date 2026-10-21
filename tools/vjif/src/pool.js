@@ -307,6 +307,7 @@ function renderPool(){
     const u = poolUse(m), t = document.createElement('div');
     t.className = 'ptile' + (u.sc.length ? '' : ' unused'); t.title = m.name + ' — click: next empty pad · drag onto a pad: put it there · right-click: save the file'; t.draggable = true;
     t.addEventListener('dragstart', e => { e.dataTransfer.setData(POOL_MIME, m.hash); e.dataTransfer.effectAllowed = 'copy';
+      try { m.dlUrl = m.dlUrl || URL.createObjectURL(m.blob); const nm = /\.\w+$/.test(m.name) ? m.name : m.name + '.' + ((m.blob.type || 'image/gif').split('/')[1] || 'gif'); e.dataTransfer.setData('DownloadURL', `${m.blob.type || 'image/gif'}:${nm}:${m.dlUrl}`); } catch (er) {}   // 0.99.12 (ID-238): dragged out of the window it drops as a file (Chrome)
       e.dataTransfer.setDragImage(NO_IMG, 0, 0);
       const gh = document.createElement('span'); gh.className = 'chip'; gh.style.backgroundImage = `url(${t.querySelector('canvas').toDataURL()})`; ghost.show(gh, e.clientX, e.clientY); });
     t.innerHTML = `<canvas width="120" height="80"></canvas><span class="pn"></span><span class="pm">${m.w}×${m.h} · ${m.src.length} fr · ${(m.srcBytes / 1048576).toFixed(m.srcBytes < 10485760 ? 1 : 0)} MB</span>`
@@ -392,6 +393,6 @@ function ctxMenu(e, items){
   items.forEach(([l, fn]) => { const b = document.createElement('button'); b.textContent = l; b.addEventListener('click', () => { m.remove(); fn(); }); m.appendChild(b); });
   document.body.appendChild(m); const r = m.getBoundingClientRect();
   m.style.left = Math.min(e.clientX, innerWidth - r.width - 4) + 'px'; m.style.top = Math.min(e.clientY, innerHeight - r.height - 4) + 'px';
-  const off = ev => { if (ev.type === 'keydown' && ev.key !== 'Escape') return; if (ev.type === 'pointerdown' && m.contains(ev.target)) return; m.remove(); removeEventListener('pointerdown', off, true); removeEventListener('keydown', off, true); };
+  const off = ev => { if (ev.type === 'keydown' && ev.key !== 'Escape') return; if (ev.type === 'keydown') ev.stopImmediatePropagation();   /* 0.99.12: Esc closes only the menu; the next one closes the pool */ if (ev.type === 'pointerdown' && m.contains(ev.target)) return; m.remove(); removeEventListener('pointerdown', off, true); removeEventListener('keydown', off, true); };
   setTimeout(() => { addEventListener('pointerdown', off, true); addEventListener('keydown', off, true); });
 }

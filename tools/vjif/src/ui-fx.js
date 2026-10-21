@@ -206,7 +206,7 @@ function syncFxUI0(){
     if (sw) segSet('#fxDpat', String(alt.lcd ? Math.min(2, C.dots || 0) : C.dpat || 0));
     $('#fxRateRow label').textContent = alt ? alt.label : 'Rate';
     if (alt){ const L = alt.list, ai = optIdx(L, alt.get ? alt.get(C) : C[alt.key] ?? alt.def); $('#fxRate').max = L.length - 1; $('#fxRate').value = ai; $('#fxRate').nextElementSibling.textContent = L[ai][1]; $('#fxRate').dataset.def = optIdx(L, alt.def);
-      $('#fxRateRow').title = alt.title(ai); $('#fxRateRow').classList.remove('dimmed'); }
+      $('#fxRateRow').title = alt.off ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : alt.title(ai); $('#fxRateRow').classList.toggle('dimmed', !!alt.off); }
     else { $('#fxRate').max = FX_RATES.length - 1; $('#fxRateRow').title = 'Rate: how fast it moves (beats)';
     const ri = optIdx(FX_RATES, C.rate); $('#fxRate').value = ri; $('#fxRate').nextElementSibling.textContent = FX_RATES[ri][1];
     $('#fxRateRow').classList.toggle('dimmed', !d.rate || (!!d.rateFor && !styleParts(di, C.style || d.styles[0][0]).some(p => d.rateFor.includes(p)))); $('#fxRate').dataset.def = optIdx(FX_RATES, fxDefaults()[di].rate); }
@@ -332,7 +332,8 @@ const ENV_IC_GRAPH = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none
 function envPrevStart(){ if (envPrevOn) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }   // (0.92: a preset previews too)
 // any slider in the effect editor (Amount, Rate, Size, a preset's effect's own): while it's dragged the effect or preset plays
 // its envelope over and over, so the change shows (Preview on, the ▶ beside the envelope) (0.92)
-$('#fxEdit').addEventListener('pointerdown', e => { if (!e.target.matches('input[type=range]') || (fxPrev && fxPrev.loop)) return; envPrevStart();
+$('#fxEdit').addEventListener('pointerdown', e => { if (e.button || !e.target.matches('input[type=range]') || (fxPrev && fxPrev.loop)) return;   // (a right-click isn't a press: it did start the preview)
+  envPrevStart();
   addEventListener('pointerup', envPrevStop, { once: true }); }, true);
 function envPrevChanged(C){ const sg = [C.att, C.dec, C.sus, C.len, C.rel].join(); if (fxPrev && sg !== fxPrevSig) fxPrev.b0 = clock.beat; fxPrevSig = sg; }
 function envPrevStop(){ if (fxPrev) fxPrev.loop = false; }
@@ -345,9 +346,11 @@ function fxPrevLevel(i, C, b){
 }
 const syncEnvTg = () => { $('#envPrev').classList.toggle('on', envPrevOn); $('#fxEnvRow').classList.toggle('sliders', envSliders); $('#envView').innerHTML = envSliders ? ENV_IC_GRAPH : ENV_IC_SL; $('#envView').title = envSliders ? 'Show the envelope as a graph' : 'Show the envelope as sliders'; };
 $('#envReset').addEventListener('click', () => { const C = fxConf(selFx), D = selFx < NFX ? fxDefaults()[selFx] : fxPreDefaults()[selFx - NFX];
+  const top = hist.undo[hist.undo.length - 1]; if (top && top.kind === 'envrst' && top.sel === selFx && ENV_RST_KEYS.every(k => C[k] === D[k])){ undo(); return; }   // 0.99.12: reset again = back to what it was (so does Ctrl+Z)
+  commit(); const was = {}; ENV_RST_KEYS.forEach(k => was[k] = C[k]);
   ['att', 'dec', 'sus', 'len', 'rel'].forEach(k => { if (D[k] === undefined) delete C[k]; else C[k] = D[k]; });
   if (D.mode !== C.mode){ C.len = fxLenDef(C.mode); C.rel = fxRelDef(C.mode); }   // its mode was changed: that mode's defaults
-  syncFxUI(); toast2('Envelope back to its default'); });
+  pushStep({ kind: 'envrst', sel: selFx, vals: was }); syncFxUI(); toast2('Envelope back to its default'); });
 $('#envPrev').addEventListener('click', () => { envPrevOn = !envPrevOn; Prefs.set('vjif-envprev', envPrevOn ? '1' : '0'); syncEnvTg(); });
 $('#envView').addEventListener('click', () => { envSliders = !envSliders; Prefs.set('vjif-envview', envSliders ? 'sl' : 'g'); syncEnvTg(); syncEnvSl(); drawFxEnv(); syncAEnvView(); });   // (GIF › Auto › Envelope follows the same choice)
 const ENV_SL = { a: [() => FX_ATTS, 'att'], d: [() => FX_ATTS, 'dec'], l: [() => FX_LENS, 'len'], r: [() => FX_RELS, 'rel'] };

@@ -82,8 +82,8 @@ function fire(p, beat, released = false, swap = false){
     if (!c){ c = selClip(L.i) || L.clips[0] || newClip(p); c.pad = p; c.env = null; }
     L.clips = [c];
   } else if (!c){
-    if (L.clips.length >= MAX_CLIPS && !makeRoom(L)) return refuse(L);
-    c = newClip(p); L.clips.push(c);
+    roomAt = -1; if (L.clips.length >= MAX_CLIPS && !makeRoom(L)) return refuse(L);
+    c = newClip(p); if (roomAt >= 0 && roomAt <= L.clips.length) L.clips.splice(roomAt, 0, c); else L.clips.push(c); roomAt = -1;
   }
   if (swap || L.clips.length !== n0) touched.edit = true;   // a GIF added to a layer (or taking it over) is an undo step
   c.startBeat = beat; c.startTime = beatTime(beat);
@@ -99,11 +99,12 @@ function fire(p, beat, released = false, swap = false){
 // 0.99.7 (QA-028): a clip is "not seen" when its GIF fades in and out on hits and is at nothing now (finished, or placed but not hit yet).
 // A full layer makes room for a new GIF by sending off the one that has been unseen longest; right-clicking its pad puts it back unplayed.
 const unseenClip = c => { const g = pads[c.pad] && pads[c.pad].gif; return !!g && !c.off && g.trig === 'fade' && !(c.env && clock.beat < c.env.t0) && !(envLevel(c, g, clock.beat) > 0.001); };
+let roomAt = -1;   // 0.99.12 (BG: overlay stacking): the GIF that takes a sent-off GIF's place sits at the same height in the stack
 function makeRoom(L){
   if (L.i === BG_LAYER) return false;
   const v = L.clips.filter(unseenClip).sort((a, b) => (a.lastSeen || 0) - (b.lastSeen || 0))[0]; if (!v) return false;
-  L.clips = L.clips.filter(x => x !== v); if (L.sel === v) L.sel = null; touched.edit = true;
-  toast2(`${pads[v.pad].label} left ${LNAMES[L.i]} (not showing): right-click its pad to bring it back`); return true;
+  const at = L.clips.indexOf(v); L.clips = L.clips.filter(x => x !== v); if (L.sel === v) L.sel = null; touched.edit = true;
+  roomAt = at; return true;   // (0.99.12: no message: the dimmed chips say what is not showing)
 }
 function placeUnseen(p){   // right-click on a pad: its GIF onto its layer, not played
   const g = pads[p].gif; if (!g || isBgPad(p) || layers.some(L => L.clips.some(c => c.pad === p))) return false;

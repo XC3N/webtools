@@ -4,6 +4,18 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.12 — 2026/10/21
+
+- A GIF that fades out and is sent off to make room no longer pops a message (the dimmed chips and the red flash say enough). The GIF that takes its place now sits at the same height in the stack as the one it replaced (it went on top before).
+- Esc closes the pool's right-click menu only; a second Esc closes the pool.
+- Caps Lock no longer shifts the Scenes heading's export / import buttons (the numpad and CAPS·FX tags are the same width).
+- An effect's envelope reset can be undone with Ctrl+Z (and redone), and clicking the reset button a second time puts the envelope back.
+- Right-clicking a slider in the effect editor no longer starts the envelope preview.
+- Pool: drag a tile out of the window to drop it as a file (Chrome).
+- Palettes (BG-046): Dither is greyed out on Grey 6-bit (64 steps are already smooth) and on the NES (it never dithered; its second colour was often another hue). Blue counts more in the nearest-colour match (0.55, was 0.35): on CGA 3 a medium blue went to light red because cyan's green was too far; now it is light cyan. On palettes of 4 colours or fewer the Dither slider's low end is a gentle dither (it was a hard threshold: 1-bit vanished at 20 %). New in GIF › Display › Palette: **Fit range**: the GIF's own darkest and brightest are stretched over the palette first (a dull picture keeps its detail on a 2-bit grey). Not on the Colour effect's palette yet.
+- Monitor window (ID-246): Shift+right-click LOAD opens a small window with graphs of load, FPS and JS heap over the last hour, the worst frame of the last minute, late frames and stalls, the heap's trend in MB/min and what the decoded memory is made of. Keep it open next to your work: a climbing line points at VJif, flat memory with a wandering load at the PC. (Help › Editing lists it.)
+- About: "If this tool is useful to you, consider supporting the music".
+
 ## 0.99.11 — 2026/10/21
 
 - **End** now turns mask editing on / off for the edit layer (it used to switch the layer on / off; Shift+1–4 still do that).

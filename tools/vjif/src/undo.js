@@ -39,6 +39,7 @@ const STEPS = {
              redo: E => { toScene(E.sid); clearPad(E.pad, true); return null; } },          // clearPad records the step again
   swap:    { insts: E => [E.g], what: E => `GIF on pad ${padName(E.pad)}`, undo: E => (applySwap(E), E), redo: E => (applySwap(E), E) },   // the same move both ways
   pswap:   { insts: () => [], what: () => 'pads swapped', undo: E => (applyPswap(E), E), redo: E => (applyPswap(E), E) },
+  envrst:  { insts: () => [], what: () => 'envelope reset', undo: E => (applyEnvRst(E), E), redo: E => (applyEnvRst(E), E) },   // 0.99.12: an effect's envelope reset; the same swap both ways
   scn:     { insts: E => E.data.pads, what: E => `scene ${sceneOf(E.sid) + 1}`, undo: E => (applyScn(E), E), redo: E => (applyScn(E), E) },
 };
 // a new special step: what was redoable goes (unless it comes from a redo)
@@ -51,6 +52,8 @@ function applySwap(E){
   toScene(E.sid);
   const cur = pads[E.pad].gif; pads[E.pad].gif = E.g; E.g = cur; afterPadChange(E.pad);
 }
+const ENV_RST_KEYS = ['att', 'dec', 'sus', 'len', 'rel'];
+function applyEnvRst(E){ const C = fxConf(E.sel); if (!C) return; ENV_RST_KEYS.forEach(k => { const cur = C[k]; if (E.vals[k] === undefined) delete C[k]; else C[k] = E.vals[k]; E.vals[k] = cur; }); if (E.sel === selFx) syncFxUI(); }
 function applyScn(E){
   const i = sceneOf(E.sid);
   if (i !== sceneIdx){                               // another scene: swap its contents back in place, without going there
