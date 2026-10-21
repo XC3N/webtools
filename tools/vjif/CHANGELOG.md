@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.9 — 2026/10/21
+
+- Effect editor: the envelope and the LFO view are the same height again (0.99.7 made the LFO one 8 px taller, so the panel below moved when you switched); the shape icons are drawn smaller to fit.
+- The LFO's title reads "LFO on Size" (which slider it moves), not "LFO · Size".
+
 ## 0.99.8 — 2026/10/21
 
 ### Layers

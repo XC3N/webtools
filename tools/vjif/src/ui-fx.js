@@ -403,7 +403,7 @@ function syncFxMod(){
   $('#envLfo').classList.toggle('dimmed', !(X && ['amt', 'rate', 'size'].some(k => FXM[k] && fxModPlain(k))));   // (0.99.6: greyed where no setting can have an LFO)
   for (const k in FXM){ const r = $(FXM[k].row); const f = r && (r.classList.contains('field') ? r : r.closest('.field')); if (f) f.classList.toggle('mod', !!(X && X.mod && X.mod[k] && X.mod[k].on && fxModPlain(k))); }
   if (!M) return; const F = FXM[fxModK];
-  $('#fxLfoT').textContent = 'LFO · ' + F.name; $('#fxLfoOn').checked = !!M.on;
+  $('#fxLfoT').textContent = 'LFO on ' + F.name; $('#fxLfoOn').checked = !!M.on;
   $('#fxLfoShape').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === M.shape));
   { const f = perFam(M.per), L = PER_FAM[f], pi = optIdx(L, M.per); $('#fxLfoPer').max = L.length - 1; $('#fxLfoPer').value = pi; $('#fxLfoPer').nextElementSibling.textContent = L[pi][1]; segSet('#fxLfoFam', f); }
   for (const [id, key] of [['#fxLfoLo', 'lo'], ['#fxLfoHi', 'hi']]){ const el = $(id); el.min = F.min; el.max = F.max;

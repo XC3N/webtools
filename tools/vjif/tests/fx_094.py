@@ -28,7 +28,7 @@ async def main():
     await pg.click('#fxAmt', button='right'); await pg.wait_for_timeout(100)
     lf = await pg.evaluate("""[$('#fxEdit .envrow').classList.contains('lfo'), $('#fxLfoT').textContent, !!fxCfg[FXI.pixel].mod.amt.on, $('#fxAmt').closest('.field').classList.contains('mod'),
       Math.round(modAmt(fxCfg[FXI.pixel], 0) * 100), Math.round(modAmt(fxCfg[FXI.pixel], 2) * 100)]""")
-    print('fx lfo', lf); assert lf[:4] == [True, 'LFO · Amount', True, True] and lf[4] == 5 and lf[5] == 100, lf
+    print('fx lfo', lf); assert lf[:4] == [True, 'LFO on Amount', True, True] and lf[4] == 5 and lf[5] == 100, lf
     await pg.evaluate("$('#fxLfoPer').value = PER_OPTS.findIndex(o => o[0] === 1); $('#fxLfoPer').dispatchEvent(new Event('input', { bubbles: true }))")
     pr = await pg.evaluate("[fxCfg[FXI.pixel].mod.amt.per, $('#fxLfoPer').nextElementSibling.textContent, JSON.parse(snapshot()).fx[FXI.pixel].mod.amt.per]")
     print('per', pr); assert pr == [1, '1/4', 1], pr
@@ -39,7 +39,7 @@ async def main():
     print('invert / phase / gap', i0, ex); assert i0 == 100 and ex == [5, '180°', '1/4', 1, 'Cycle,Min value,Max value,Phase,Skew,Gap'], (i0, ex)
     await pg.evaluate("$('#fxRateRow').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))"); rr = await pg.evaluate("[fxModK, $('#fxLfoT').textContent]")   # Pixel has no Rate: refused
     await pg.click('#fxLfoBack'); bk = await pg.evaluate("$('#fxEdit .envrow').classList.contains('lfo')")
-    print('rate / back', rr, bk); assert rr == ['amt', 'LFO · Amount'] and bk is False, (rr, bk)
+    print('rate / back', rr, bk); assert rr == ['amt', 'LFO on Amount'] and bk is False, (rr, bk)
     await pg.click('#envLfo'); ev = await pg.evaluate("[fxModK, $('#fxEdit .envrow').classList.contains('lfo')]"); await pg.click('#fxLfoBack')   # the envelope's LFO view button
     print('lfo view', ev); assert ev == ['amt', True], ev
     rt = await pg.evaluate("[FXI.glitch, FXI.shake].map(i => { selectFx(i); return getComputedStyle($('#fxRateRow')).display; })")   # (0.93 hid Rate wherever Size showed)
