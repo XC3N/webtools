@@ -33,4 +33,10 @@ for k in range(8):
     fr.append(im)
 frames = [f.convert('P', palette=Image.ADAPTIVE, colors=8) for f in fr]
 frames[0].save(F / 'key-regions.gif', save_all=True, append_images=frames[1:], duration=120, loop=0)
+# bat: 44×44, 4 frames, black sprite on a see-through background (palette index 0 transparent): the dark-chip case
+bf = []
+for k in range(4):
+    im = Image.new('P', (44, 44), 0); im.putpalette([0, 0, 0, 20, 20, 20] + [0] * 756); d = ImageDraw.Draw(im)
+    d.polygon([(22, 18), (6, 10 + k * 2), (12, 26), (22, 22), (32, 26), (38, 10 + k * 2)], fill=1); bf.append(im)
+bf[0].save(F / 'bat.gif', save_all=True, append_images=bf[1:], duration=120, loop=0, transparency=0, disposal=2)
 print('fixtures in', F)

@@ -384,3 +384,4 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 
 ## Open questions
 - none right now (Alt shortcuts: fine on Windows; controller: Hercules P32 DJ, layout to follow)
+- [ ] {ts229} **Dark chip outline** (0.99.10) — load a mostly black GIF (a black bat on see-through): its chip on the layer row and on the pad has a clearly visible light grey outline, selected or not.

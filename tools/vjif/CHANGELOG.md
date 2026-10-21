@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.10 — 2026/10/21
+
+- A mostly black GIF's chip outline is brighter (light grey, was dark grey that vanished against the dark layer row), also when the chip is selected. Checked with a black 44×44 sprite on a see-through background: it is detected as dark and gets the outline.
+
 ## 0.99.9 — 2026/10/21
 
 - Effect editor: the envelope and the LFO view are the same height again (0.99.7 made the LFO one 8 px taller, so the panel below moved when you switched); the shape icons are drawn smaller to fit.
