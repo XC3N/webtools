@@ -4,6 +4,17 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.8 — 2026/10/21
+
+### Layers
+- Chips of GIFs that fade in and out and are at nothing now (finished, or placed but not hit yet) are dimmed with a closed-eye mark; the GIFs on screen stay bright. A disabled GIF keeps its struck-through label. The pad's layer dots dim the same way.
+- A full layer no longer refuses a new GIF while some of its GIFs are not showing: the one that has been unseen longest leaves to make room (a toast says which). If every GIF on it is showing, it still refuses.
+- Right-click a pad puts its GIF on its layer without playing it (ready to place, or back after it left).
+
+### GIF
+- Repeat shorter than the envelope: each repeat carries on from the level it is at (Retrigger › Continue) instead of dropping to 0 with a hard cut; Retrigger › Restart starts each repeat from 0.
+- The shape buttons in Auto › LFO are taller, with the icons smaller inside them.
+
 ## 0.99.7 — 2026/10/20
 
 - The loupe stays up where it last pointed when the pointer leaves the preview (so you can change sliders while it shows), and starts bottom right. Right-click pin is gone.

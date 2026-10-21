@@ -105,7 +105,7 @@ function moveClip(sli, sid, dli, at){
   const S = layers[sli], D = layers[dli], clip = S.clips.find(c => c.id === sid); if (!clip) return;
   const i = S.clips.indexOf(clip);
   if (S !== D && !layerTakes(dli, clip.pad)) return toast(layerRule(dli, clip.pad));   // 0.88: Overlay = Global pads, Background = its slots, Midground / Foreground = Scene pads
-  if (S !== D && D.clips.length >= MAX_CLIPS) return refuse(D);
+  if (S !== D && D.clips.length >= MAX_CLIPS && !makeRoom(D)) return refuse(D);
   if (S === D && i < at) at--;                           // index shifts after removing from the same list
   S.clips.splice(i, 1); if (S.sel === clip) S.sel = null;
   {
@@ -127,7 +127,7 @@ function syncLayerUI(){
     if (L.i === BG_LAYER) for (let p = BG0; p < BG0 + N_BG; p++) if (pads[p].gif && !L.clips.some(c => c.pad === p)) L.clips.push(newClip(p));   // a filled slot always has its chip (0.93.1: one could go missing and the card showed 5)
     const slots = L.i === BG_LAYER ? Array.from({ length: N_BG }, (_, k) => BG0 + k).filter(p => !pads[p].gif).map(p => `<span class="bgslot" data-pad="${p}" title="Empty slot · click: fill it · or drop a GIF here">+</span>`).join('') : '';
     const chipHTML = c => { const p = pads[c.pad];   // leftmost chip = drawn on top
-      return `<span class="chip${c === sel ? ' sel' : ''}${c.off ? ' off' : ''}${p.gif && p.gif.thumb && p.gif.thumbDark ? ' dk' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} · drag: move · right-click: hide / show · Ctrl+click: ${isBgPad(c.pad) ? 'empty the slot' : 'remove'}"><span>${p.label}</span><b title="${isBgPad(c.pad) ? 'Empty this slot' : 'Remove from layer'}">×</b></span>`; };
+      return `<span class="chip${c === sel ? ' sel' : ''}${c.off ? ' off' : ''}${unseenClip(c) ? ' unseen' : ''}${p.gif && p.gif.thumb && p.gif.thumbDark ? ' dk' : ''}" draggable="true" data-id="${c.id}" data-pad="${c.pad}"${p.gif && p.gif.thumb ? ` style="background-image:url(${p.gif.thumb})"` : ''} title="${p.label} · ${esc(p.gif ? p.gif.name : '?')} · drag: move · right-click: hide / show · Ctrl+click: ${isBgPad(c.pad) ? 'empty the slot' : 'remove'}"><span>${p.label}</span><b title="${isBgPad(c.pad) ? 'Empty this slot' : 'Remove from layer'}">×</b></span>`; };
     setHTML(r.querySelector('.clips'), L.clips.slice().reverse().map(chipHTML).join('') + slots);
   }
 

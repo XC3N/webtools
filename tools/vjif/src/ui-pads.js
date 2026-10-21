@@ -12,7 +12,7 @@ function buildPads(){
       padDrag = { i, x: e.clientX, y: e.clientY, moved: false, had: layers.some(L => L.clips.some(c => c.pad === i)), wasPending: pending.has(i), on: layers.map(L => L.on) };
       if (e.altKey){ padDrag = null; e.preventDefault(); setTimeout(() => renamePad(i)); return; }   // Alt+click: rename its GIF (after the press, which would take the focus back)
       clickFocus = i; trigger(i); });   // (a click: the edit layer follows the pad, so Transform edits what the GIF panel shows; keys don't move it)
-    el.addEventListener('contextmenu', e => { if (el.querySelector('.nmEdit')) return e.preventDefault(); e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
+    el.addEventListener('contextmenu', e => { if (el.querySelector('.nmEdit')) return e.preventDefault(); e.preventDefault(); if (el._shift){ el._shift = false; return; } focusPad(i); if (placeUnseen(i)) toast2(`${pads[i].label} placed on ${LNAMES[padLayer(i, target === 1 || target === 2 ? target : sceneLayer)]} (not played)`); });   // right-click: select without playing (after a Mac's Ctrl+click delete: nothing)
     el.addEventListener('pointermove', e => padDragMove(e, i));
     el.addEventListener('click', e => { if (!e.target.closest('.xdel') || !el._x) return; el._x = false; e.stopPropagation(); el._shift = true; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); }, true);
     el.addEventListener('pointerup', e => { if (el._x) return; const d = padDrag; if (d && d.copy && d.i === i && !d.moved){ padDragEnd(e, i); if (delHush) return; clearPad(i); toast2(`Pad ${p.label} cleared — Ctrl+Z brings it back`); return; } if (!padDragEnd(e, i)) release(i); });
@@ -144,7 +144,7 @@ function padToLayer(p, li){
   const S = layers.findIndex(L => L.clips.some(c => c.pad === p));
   if (S === li){ setTarget(li); return; }
   if (S >= 0){ const c = layers[S].clips.find(c => c.pad === p); moveClip(S, c.id, li, layers[li].clips.length); }
-  else { if (layers[li].clips.length >= MAX_CLIPS) return refuse(layers[li]); setTarget(li); fire(p, clock.beat); }
+  else { if (layers[li].clips.length >= MAX_CLIPS && !makeRoom(layers[li])) return refuse(layers[li]); setTarget(li); fire(p, clock.beat); }
   syncLayerUI(); syncXfUI(); redraw.all = true; commit();
 }
 // a scene-tile-shaped picture of a GIF's first frame, fitted whole like a scene thumbnail (pads loaded, nothing playing)
@@ -218,13 +218,19 @@ function updateMem(){
 }
 let padSig = '';
 function updatePadDots(){
-  const sig = layers.map(L => (L.on ? 1 : 0) + ':' + L.clips.map(c => c.pad).join('.')).join(',');
+  const sig = layers.map(L => (L.on ? 1 : 0) + ':' + L.clips.map(c => c.pad + (unseenClip(c) ? 'u' : '')).join('.')).join(',');
   if (sig === padSig) return; padSig = sig;
   pads.forEach((p, i) => {
     p.el.querySelector('.dots').innerHTML = layers.filter(L => L.on && L.clips.some(c => c.pad === i))
-      .map(L => `<b style="background:${LCOL[L.i]}">${L.i+1}</b>`).join('');
+      .map(L => `<b class="${L.clips.some(c => c.pad === i && unseenClip(c)) ? 'unseen' : ''}" style="background:${LCOL[L.i]}">${L.i+1}</b>`).join('');
   });
 }
+// 4 times a second: remember when each clip was last on screen, and dim the chips and pad dots of the ones that aren't
+setInterval(() => { const now = performance.now();
+  for (const L of layers){ const chips = L.row && L.row.querySelectorAll('.chip');
+    for (const c of L.clips){ const un = unseenClip(c); if (!un) c.lastSeen = now; }
+    if (chips) chips.forEach(ch => { const c = L.clips.find(x => x.id === +ch.dataset.id); if (c) ch.classList.toggle('unseen', unseenClip(c)); }); }
+  updatePadDots(); }, 250);
 
 // Alt+click (or Alt + its key): rename this pad's GIF (its name here; the file in the pool keeps its own)
 function renamePad(i){ const g = pads[i].gif; if (!g) return; focusPad(i);

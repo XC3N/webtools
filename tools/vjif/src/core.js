@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.7';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.8';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -196,7 +196,7 @@ const pads = PAD_LABELS.map((label, i) => ({ i, code: PAD_KEYS[i] || (i >= B2 ? 
 const newXf = () => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, fit: 'auto', flipX: false, flipY: false, tile: false, cl: 0, ct: 0, cr: 0, cb: 0 });
 let clipSeq = 0, gifSeq = 0;
 // alpha = the sprite's own opacity (kept by transform Reset); env = fade one-shot state (not saved)
-const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, alpha: 1, env: null, ...newXf() });
+const newClip = p => ({ id: ++clipSeq, pad: p, startBeat: 0, startTime: 0, alpha: 1, env: null, lastSeen: performance.now(), ...newXf() });
 const layers = [0,1,2,3].map(i => ({ i, on: false, opacity: 1, blend: 'source-over', clips: [], sel: null, row: null, fillOn: false, fill: '#1e2a3a', tr: 'cut' }));
 let target = 0, selPad = 0, snapMode = 'off', picking = false;
 const clock = { bpm: 120, beat: 0, last: performance.now(), src: 'internal', taps: [],

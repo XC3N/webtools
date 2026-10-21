@@ -22,7 +22,13 @@ function frameIndex(c, g, now){ return g.seq[seqIndex(c, g, now)]; }
 function envOf(c, g, beat){
   const E = c.env, N = g.trig === 'fade' && !g.env.gate && g.env.every; if (!N) return E;
   const t = Math.floor(beat / N + 1e-9) * N;
-  return !E || t > E.t0 + 1e-9 ? { t0: t, from: 0, rel: null, noGate: true, auto: true } : E;
+  if (E && t <= E.t0 + 1e-9) return E;
+  // 0.99.7 (BG-054): a repeat that comes before the fade-out is over carries on from the level it's at (Retrigger › Continue), as a hit does,
+  // instead of dropping to 0; Retrigger › Restart starts each repeat from 0. The level comes from the previous repeats, a few back at most.
+  let from = 0;
+  if (!g.env.restart){ const T = envTimes(g), K = Math.min(8, Math.ceil((T.a + T.h + T.r) / N)); let f = 0;
+    for (let j = K; j >= 1; j--) f = envLevelE({ t0: t - j * N, from: f, rel: null, noGate: true }, g, t - (j - 1) * N); from = f; }
+  return { t0: t, from, rel: null, noGate: true, auto: true };
 }
 function seqIndex(c, g, now){
   const AE = g.trig === 'fade' && g.env.every ? envOf(c, g, clock.beat) : null, auto = AE && AE.auto;
@@ -76,7 +82,7 @@ function fire(p, beat, released = false, swap = false){
     if (!c){ c = selClip(L.i) || L.clips[0] || newClip(p); c.pad = p; c.env = null; }
     L.clips = [c];
   } else if (!c){
-    if (L.clips.length >= MAX_CLIPS) return refuse(L);
+    if (L.clips.length >= MAX_CLIPS && !makeRoom(L)) return refuse(L);
     c = newClip(p); L.clips.push(c);
   }
   if (swap || L.clips.length !== n0) touched.edit = true;   // a GIF added to a layer (or taking it over) is an undo step
@@ -89,6 +95,21 @@ function fire(p, beat, released = false, swap = false){
   L.sel = c; L.on = true;
   if (clickFocus === p){ clickFocus = -1; if (L.i !== target){ target = L.i; if (L.i === 1 || L.i === 2) sceneLayer = L.i; if (maskEd && maskEd.li !== L.i) maskClose(); } }
   selectPad(p, true); uiLater(UI.LAYERS | UI.XF);   // the panels follow after the frame is drawn
+}
+// 0.99.7 (QA-028): a clip is "not seen" when its GIF fades in and out on hits and is at nothing now (finished, or placed but not hit yet).
+// A full layer makes room for a new GIF by sending off the one that has been unseen longest; right-clicking its pad puts it back unplayed.
+const unseenClip = c => { const g = pads[c.pad] && pads[c.pad].gif; return !!g && !c.off && g.trig === 'fade' && !(c.env && clock.beat < c.env.t0) && !(envLevel(c, g, clock.beat) > 0.001); };
+function makeRoom(L){
+  if (L.i === BG_LAYER) return false;
+  const v = L.clips.filter(unseenClip).sort((a, b) => (a.lastSeen || 0) - (b.lastSeen || 0))[0]; if (!v) return false;
+  L.clips = L.clips.filter(x => x !== v); if (L.sel === v) L.sel = null; touched.edit = true;
+  toast2(`${pads[v.pad].label} left ${LNAMES[L.i]} (not showing): right-click its pad to bring it back`); return true;
+}
+function placeUnseen(p){   // right-click on a pad: its GIF onto its layer, not played
+  const g = pads[p].gif; if (!g || isBgPad(p) || layers.some(L => L.clips.some(c => c.pad === p))) return false;
+  const L = layers[padLayer(p, target === 1 || target === 2 ? target : sceneLayer)];
+  if (L.clips.length >= MAX_CLIPS && !makeRoom(L)){ refuse(L); return false; }
+  const c = newClip(p); c.lastSeen = performance.now(); L.clips.push(c); L.sel = c; touched.edit = true; uiLater(UI.LAYERS | UI.XF); return true;
 }
 // pad / key released: ends a gated fade (a release before a snapped hit fires turns that hit into a plain one-shot)
 function release(p){
@@ -124,8 +145,9 @@ function envTimes(g){
   }
   return { a, h, r };
 }
-function envLevel(c, g, beat){
-  const E = envOf(c, g, beat); if (!E) return 0;
+function envLevel(c, g, beat){ return envLevelE(envOf(c, g, beat), g, beat); }
+function envLevelE(E, g, beat){
+  if (!E) return 0;
   const S = g.env, T = envTimes(g), gate = S.gate && !E.noGate;
   // a retrigger mid-fade (from > 0) carries on along the same fade-in curve from the point that's at that level (0.99.3: Smooth
   // used to start a new S-curve there): u0 is where on the curve that is, found once per hit
