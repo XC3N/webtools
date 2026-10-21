@@ -401,3 +401,4 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts243} **Monitor window** (0.99.12) — Shift+right-click LOAD: a small window opens with three graphs and the numbers, updating every second; closing it and reopening works.
 - [ ] {ts244} **Bit switch on Grey 6-bit** (0.99.13) — Colour › Palette › Grey: the 6 / 4 / 2 / 1 switch is there and works with Dither greyed; on the NES only Dither is greyed.
 - [ ] {ts245} **Start timings** (0.99.13) — after a reload, Shift+right-click LOAD: a 'Start:' line gives ready time, restore time and each shader's compile time.
+- [ ] {ts246} **CGA Dither top end** (0.99.14) — CGA 1 / 2 / 3 with Dither at 100 %: still clearly dithered, no longer 'one notch too far'.

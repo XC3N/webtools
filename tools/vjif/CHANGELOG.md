@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.14 — 2026/10/21
+
+- Dither on palettes of 4 colours or fewer (CGA, the low greys): 100 % is one notch less extreme (the slider's top used to mix across the whole range, which looked overdone on CGA 1).
+
 ## 0.99.13 — 2026/10/21
 
 - Fixed (0.99.12): on Grey 6-bit and the NES the whole palette row disappeared, the bit switch with it. Only the Dither slider and its pattern switch are greyed now.

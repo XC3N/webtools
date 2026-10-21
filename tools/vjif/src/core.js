@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.13';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.14';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -113,7 +113,7 @@ const PALSNAP_GLSL = `vec3 palLin(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c 
   float palB4(vec2 a){ return palB2(0.5 * a) * 0.25 + palB2(a); }
   vec3 palPick(vec3 c, float d, float p, vec2 q){
     vec3 best = pal[0], sec = pal[0], k = okLab(c), bk = palOk[0], W = vec3(0.55, 0.75, 0.55); float bd = 1e9, t = 0.0, tk = 0.0;   // (0.99.12: blue counts 0.55, was 0.35: on CGA 3 a blue went to light red because cyan's green was too far)
-    if (d > 0.001 && palN < 4.5) d = 0.35 + 0.65 * d;   // 4 colours or fewer: the slider's low end is a gentle dither, not a hard threshold (1-bit vanished at 20 %)
+    if (d > 0.001 && palN < 4.5) d = 0.3 + 0.55 * d;   // 4 colours or fewer: the slider's low end is a gentle dither, not a hard threshold (1-bit vanished at 20 %); its top is one notch short of full mixing (0.99.14: 100 % looked too far)
     if (palLum > 0.5){
       float y = clamp(dot(c, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, n = floor(y), n2 = clamp(y - n < 0.5 ? n - 1.0 : n + 1.0, 0.0, palN - 1.0);
       for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == n) best = pal[i]; if (float(i) == n2) sec = pal[i]; }
