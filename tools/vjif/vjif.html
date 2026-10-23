@@ -114,7 +114,7 @@
           <button data-v="step" title="Every frame lasts the same musical length">Step</button></div></div>
         <div class="stack">
           <div class="field" data-for="stretch" style="align-self:start"><label for="gBeats" title="One cycle of the GIF, in beats (4 beats = 1 bar)">Loop length</label><input id="gBeats" type="range" data-def="5" min="0" step="1"><output></output></div>
-          <div class="field" data-for="step"><label>Each frame</label><div class="seg span grid4" id="gSub"></div></div>
+          <div class="field" data-for="step"><label for="gSub">Each frame</label><input id="gSub" type="range" data-def="5" min="0" step="1" title="How long each frame lasts, in notes"><output></output></div>
           <div class="field" data-for="free" style="align-self:start"><label for="gSpeed">Speed</label><input id="gSpeed" type="range" data-def="1" min="0.1" max="4" step="0.05"><output></output></div>
         </div>
         <div class="field"><label>Direction</label><div class="seg span" id="gLoop">
@@ -257,7 +257,7 @@
     </div>
     <div id="aboutLog" hidden><!-- @markdown tools/vjif/CHANGELOG.md --></div>
     <p class="note aboutCred">Design and UX by XC3N · code by Claude (Anthropic). Free to use; source on <a href="https://github.com/XC3N/webtools" target="_blank" rel="noopener">GitHub</a> under the PolyForm Shield licence (no resale, no competing products).<br>
-      <button id="credBtn" class="linkbtn" title="Fonts, the MP4 writer, palettes, borrowed ideas">Credits</button>: fonts, the MP4 writer, palettes and borrowed ideas.<br>If this tool is useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
+      <button id="credBtn" class="linkbtn" title="Fonts, the MP4 writer, palettes, borrowed ideas">Credits</button>: fonts, the MP4 writer, palettes and borrowed ideas.<br><br>If this tool is useful to you, consider supporting the music at <a href="https://xc3n.bandcamp.com" target="_blank" rel="noopener">xc3n.bandcamp.com</a>.</p>
     <div class="row aboutFoot"><label class="tog"><input type="checkbox" id="aboutAgain"> Show this at start</label><button id="aboutGo" class="accent">Play!</button></div>
   </div>
 </div>

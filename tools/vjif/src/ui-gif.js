@@ -2,13 +2,16 @@
 const segHTML = opts => opts.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('');
 $('#gBeats').max = LOOP_OPTS.length - 1;
 $('#gBeats').addEventListener('input', e => { const g = curGif(); if (!g) return; g.beats = LOOP_OPTS[+e.target.value][0]; e.target.nextElementSibling.textContent = lenLabel(g.beats); syncGifUI(); });
-$('#gSub').innerHTML = segHTML(FRAME_OPTS.map(([b, l]) => [1 / b, l]));   // stored as frames per beat
+$('#gSub').max = FRAME_OPTS.length - 1;   // a slider over the note lengths (0.99.15; it was nine buttons); stored as frames per beat
+$('#gSub').addEventListener('input', e => { const g = curGif(); if (!g) return; g.subdiv = 1 / FRAME_OPTS[+e.target.value][0]; syncGifUI(); });
 $('#gRestart').innerHTML = segHTML(RESTART_OPTS);
 const segSet = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - v) < 1e-6 || b.dataset.v === v));
 // one handler per button group: sets the GIF's field from the clicked button
-[['#gSync', 'sync', false], ['#gLoop', 'loop', false], ['#gSub', 'subdiv', true], ['#gRestart', 'restart', true]].forEach(([id, key, num]) =>
+[['#gSync', 'sync', false], ['#gLoop', 'loop', false], ['#gRestart', 'restart', true]].forEach(([id, key, num]) =>
   onSeg($(id), (b, e) => { const g = curGif(); if (!g) return;
-    g[key] = num ? +b.dataset.v : b.dataset.v; syncGifUI();
+    const was = g.loop; g[key] = num ? +b.dataset.v : b.dataset.v;
+    if (key === 'loop' && g.sync === 'stretch' && (was === 'pingpong') !== (g.loop === 'pingpong')){ const k = optIdx(LOOP_OPTS, g.beats * (g.loop === 'pingpong' ? 2 : 0.5)); g.beats = LOOP_OPTS[k][0]; }   // 0.99.15: Fit: the loop length grows with Ping-pong (the round trip), so each leg plays at the speed it had
+    syncGifUI();
   }));
 // two fixed lines: what one cycle is, and what to watch out for (blank when nothing)
 function cycleText(g){
@@ -22,11 +25,11 @@ function cycleText(g){
 }
 function showCycle(g){ const [a, b] = cycleText(g), el = $('#gCycle'); el.querySelector('.l1').textContent = a; el.querySelector('.l2').textContent = b; el.title = a + ' — ' + b; }
 // the panel's picture of the selected GIF (its first frame; the In / Out / Start sliders show theirs while touched); empty pad: blank
-function drawGifThumb(){ const g = pads[selPad] && pads[selPad].gif; if (g) drawPrev(g, g.startF); else for (const c of [$('#gPrev'), $('#gPrevPlay')]) c.getContext('2d').clearRect(0, 0, c.width, c.height); }
+function drawGifThumb(){ const g = !noSel && pads[selPad] && pads[selPad].gif; if (g) drawPrev(g, g.startF); else for (const c of [$('#gPrev'), $('#gPrevPlay')]) c.getContext('2d').clearRect(0, 0, c.width, c.height); }
 function syncGifUI(){
   drawGifThumb();
   queueMicrotask(markFolds);                         // (once the panel shows this GIF's values)
-  const p = pads[selPad], g = p.gif; syncSwitches(g);
+  const p = pads[selPad], g = noSel ? null : p.gif; syncSwitches(g);
   $('#gifSettings').classList.toggle('disabled', !g);
   $('#gifName').textContent = `${p.label}${g ? (g.keyMsg ? ' · ' + g.keyMsg : '') : ' · empty'}`; $('#gifName').title = '';
   $('#gText').hidden = !(g && g.media && g.media.text);
@@ -40,7 +43,7 @@ function syncGifUI(){
   syncShadowUI(g);
   segSet('#gSync', g.sync); segSet('#gLoop', g.loop); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
-  { const el = $('#gBeats'); el.value = optIdx(LOOP_OPTS, g.beats); el.nextElementSibling.textContent = lenLabel(g.beats); } segSet('#gSub', g.subdiv); segSet('#gRestart', g.restart);
+  { const el = $('#gBeats'); el.value = optIdx(LOOP_OPTS, g.beats); el.nextElementSibling.textContent = lenLabel(g.beats); } { const el = $('#gSub'), k = optIdx(FRAME_OPTS, 1 / g.subdiv); el.value = k; el.nextElementSibling.textContent = FRAME_OPTS[k][1]; } segSet('#gRestart', g.restart);
   showCycle(g);
   document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = !f.dataset.for.split(' ').includes(g.sync));
   $('#kOn').checked = g.key.on; $('#kCol').value = rgb2hex(g.key.color); segSet('#kRegion', g.key.region || 'all');
@@ -60,7 +63,7 @@ function syncGifUI(){
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
   $('#gifName').title = `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h}${g.media && g.media.px ? ` (pixel art ×${g.media.px[0]}${g.media.px[1] !== g.media.px[0] ? '×' + g.media.px[1] : ''}, kept at ${g.w / g.media.px[0]}×${g.h / g.media.px[1]})` : ''} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
 }
-const curGif = () => pads[selPad].gif;
+const curGif = () => noSel ? null : pads[selPad].gif;
 // a GIF's processing message (key, edges…) shows in the GIF heading, after its pad letter
 const gifMsg = g => { if (pads[selPad].gif === g) $('#gifName').textContent = `${pads[selPad].label}${g.keyMsg ? ' · ' + g.keyMsg : ''}`; };
 // readouts too narrow for their text: hovering shows all of it
@@ -354,19 +357,17 @@ function syncTrigSliders(g){ ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_
 function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
   const E = g.env, T = envTimes(g), c = clipOf(selPad), hold = E.gate ? Math.max(E.h, 1) : T.h, span = tEnvDrag ? tEnvDrag.span : Math.max(T.a + hold + T.r, 0.5) * 1.1;   // (held steady while a point is dragged)
-  const ce0 = c && g.trig === 'fade' && !tEnvDrag ? envOf(c, g, clock.beat) : null, live0 = ce0 && envLevel(c, g, clock.beat) > 0;
   const shape = { env: { t0: 0, from: 0, rel: E.gate ? T.a + hold : null, noGate: false } };   // the envelope as set (T: the times as played, One play shrinks the fades)
   // 0.99.3: a retrigger mid-fade starts from where it was, and runs the rest of this same curve (the fade in keeps its speed), so the
   // graph stays put and the dot starts further along it, where the fade in reaches that level (0.95 redrew the curve from that level,
   // which tilted the fade in on every retrigger)
-  const from = live0 ? ce0.from || 0 : 0; let skip = 0;
-  if (from > 0 && T.a > 0){ let lo = 0, hi = 1; for (let k = 0; k < 20; k++){ const m = (lo + hi) / 2; if (ease(g, m) < from) lo = m; else hi = m; } skip = lo * T.a; }
+  const skipOf = from => { if (!(from > 0 && T.a > 0)) return 0; let lo = 0, hi = 1; for (let k = 0; k < 20; k++){ const m = (lo + hi) / 2; if (ease(g, m) < from) lo = m; else hi = m; } return lo * T.a; };
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
   tEnvGeo = { g, span, w, a: T.a, hold, r: T.r, top: y(1), bot: y(0), editH: !E.gate && E.len !== 'gif' };   // for the points (0.89: they drag, like the other envelopes)
   tEnvEd.draw(x, d);
   const ce = c && envOf(c, g, clock.beat);
   if (g.trig === 'fade' && ce){
-    const lv = envLevel(c, g, clock.beat); let t = clock.beat - ce.t0 + (ce === ce0 ? skip : 0);
+    const lv = envLevel(c, g, clock.beat); let t = clock.beat - ce.t0 + (tEnvDrag ? 0 : skipOf(ce.from || 0));   // (0.99.15: a Repeat's carried-on level counts too; its envelope is a new object each time, so the dot sat at the start of the curve)
     if (E.gate && !c.env.noGate){ const rs = T.a + hold;   // Hit › Hold: the graph keeps its shape; while the pad is held the dot waits where the fade out starts,
       t = c.env.rel === null ? Math.min(t, rs) : rs + Math.max(0, clock.beat - c.env.rel); }   // and once let go it runs down the fade out from there
     if (lv > 0) scopeDot(x, Math.min(w - 3 * d, t / span * w), y(lv), d);

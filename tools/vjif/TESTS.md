@@ -402,3 +402,8 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts244} **Bit switch on Grey 6-bit** (0.99.13) — Colour › Palette › Grey: the 6 / 4 / 2 / 1 switch is there and works with Dither greyed; on the NES only Dither is greyed.
 - [ ] {ts245} **Start timings** (0.99.13) — after a reload, Shift+right-click LOAD: a 'Start:' line gives ready time, restore time and each shader's compile time.
 - [ ] {ts246} **CGA Dither top end** (0.99.14) — CGA 1 / 2 / 3 with Dither at 100 %: still clearly dithered, no longer 'one notch too far'.
+- [ ] {ts247} **Esc deselects** (0.99.15) — select a GIF, press Esc: the GIF panel greys out and no chip is selected; click a pad and it comes back.
+- [ ] {ts248} **Step slider** (0.99.15) — GIF › Play › Timing › Step: 'Each frame' is a slider with note values.
+- [ ] {ts249} **Ping-pong length in Fit** (0.99.15) — Fit with Loop length 4 beats: choosing Ping-pong makes it 8 and Forward again 4; the speed looks the same either way.
+- [ ] {ts250} **Repeat dot** (0.99.15) — One shot, Fade in 1/8, Hold 1/4, Fade out 1/2, Repeat 1/2: the dot follows the curve (rising from the carried-on level) at each repeat instead of jumping to the start at 100 %.
+- [ ] {ts251} **Transform heading** (0.99.15) — Transform tab: 'Overlay · A' is a chip next to Placement; no triangle; a dot shows only when something differs from default. About ends with its support line on its own line. A black GIF's chip has a clearly light outline.

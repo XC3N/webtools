@@ -81,7 +81,7 @@ function onKey(e){
     if (pi >= 9 && e.shiftKey) focusPad(pi); else { keyPad.set(e.code, p); trigger(p); } return; }
   if (e.code === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey){ e.preventDefault(); setPadBank(padBank ? 0 : 1); return; }
   if (e.code === 'Space'){ e.shiftKey ? resync() : tap(); return; }
-  if (e.code === 'Escape'){ stopPick(); return; }
+  if (e.code === 'Escape'){ if (picking){ stopPick(); return; } noSel = true; layers.forEach(L => { L.sel = false; }); pads.forEach(p => p.el.classList.remove('sel')); uiLater(UI.GIF | UI.LAYERS | UI.XF); return; }   // 0.99.15: Esc, nothing to cancel: no GIF is selected
   if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
   if (e.code === 'Home'){ e.preventDefault(); const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); commit(); } return; }   // reset placement
   if (e.code === 'End'){ e.preventDefault(); maskOpen(target); return; }                  // the edit layer's mask editing on / off (0.99.11; layers on / off stay on Shift+1–4)

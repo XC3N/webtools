@@ -4,6 +4,16 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.15 — 2026/10/23
+
+- Esc, with nothing to cancel, deselects every GIF (the GIF panel greys out; clicking a pad or chip selects again).
+- GIF › Play › Step: the frame length is a slider over the note values (it was nine buttons).
+- Fit timing: switching Direction to Ping-pong doubles the loop length (and back halves it), so the speed stays the same forward and backward.
+- Envelope graph with Repeat on: the dot starts where the carried-on level is on the fade in, not at the start of the curve.
+- Transform: the layer and pad shows as a chip; the Placement heading has a dot only while changed (no triangle).
+- About: the support line sits on its own line.
+- Dark GIF chips: a lighter, 2 px outline.
+
 ## 0.99.14 — 2026/10/21
 
 - Dither on palettes of 4 colours or fewer (CGA, the low greys): 100 % is one notch less extreme (the slider's top used to mix across the whole range, which looked overdone on CGA 1).

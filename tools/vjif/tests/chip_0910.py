@@ -10,6 +10,6 @@ async def main():
     await pg.evaluate(f"fileTarget = {k}"); await pg.set_input_files('#fileIn', [str(FIX/'bat.gif')]); await pg.wait_for_function(f"pads[{k}].gif")
     await pg.evaluate(f"fire({k}, clock.beat)"); await pg.wait_for_function("layers[3].row.querySelector('.chip')", timeout=20000); await pg.wait_for_timeout(600)
     r = await pg.evaluate("[...layers[3].row.querySelectorAll('.chip')].map(c => [c.classList.contains('dk'), getComputedStyle(c).boxShadow])")
-    print(r); assert r and r[0][0] and '138, 138, 138' in r[0][1], r
+    print(r); assert r and r[0][0] and '184, 184, 184' in r[0][1], r
     assert not errs, errs; await b.close(); print('ok')
 asyncio.run(main())

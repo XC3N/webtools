@@ -191,7 +191,7 @@ function renderPad(i){
   if (i === selPad) drawGifThumb();   // its colour / start frame / key changed
 }
 // later: the GIF panel is brought up to date after the frame is drawn (a pad hit or scene change inside the frame)
-function selectPad(i, later = false){ selPad = i; pads.forEach(p => { if (p.el.classList.contains('sel') !== (p.i === i)) p.el.classList.toggle('sel', p.i === i); }); if (later) uiLater(UI.GIF); else { uiDue &= ~UI.GIF; syncGifUI(); } }
+function selectPad(i, later = false){ selPad = i; noSel = false; pads.forEach(p => { if (p.el.classList.contains('sel') !== (p.i === i)) p.el.classList.toggle('sel', p.i === i); }); if (later) uiLater(UI.GIF); else { uiDue &= ~UI.GIF; syncGifUI(); } }
 // ---- panel updates wanted by something that happened inside a frame: done once, after drawing ----
 const UI = { GIF: 1, LAYERS: 2, XF: 4, SCENES: 8, POOL: 16 };
 let uiDue = 0;
