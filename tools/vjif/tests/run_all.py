@@ -4,7 +4,7 @@
 import subprocess, sys, pathlib, time
 HERE = pathlib.Path(__file__).resolve().parent
 TESTS = ['smoke', 'undo', 'golden', 'render_size', 'copy_pads', 'copy_scenes_presets', 'fx_targets', 'crt_stack',
-         'stick_diagonal', 'key_regions', 'slider_labels', 'midi_learn', 'launchpad', 'review_fixes', 'gif_palette', 'text_drag', 'colour_picker', 'fx_layer_keys', 'rec_sound', 'scene_drop', 'fx_local', 'scene_tools', 'ui_bits', 'feature_bits', 'mask_paint', 'ui_081', 'ui_084', 'pads_088', 'select_drag', 'pads_090', 'play_093', 'fx_094', 'ui_095', 'ui_096', 'gfx_097', 'perf_097', 'perf_098', 'queue_099', 'chip_0910', 'misc_0911', 'misc_0912', 'misc_0915', 'misc_0916', 'misc_0917', 'misc_0918', 'misc_0921', 'palette_0912', 'debugmon_0912', 'lint_comments']
+         'stick_diagonal', 'key_regions', 'slider_labels', 'midi_learn', 'launchpad', 'review_fixes', 'gif_palette', 'text_drag', 'colour_picker', 'fx_layer_keys', 'rec_sound', 'scene_drop', 'fx_local', 'scene_tools', 'ui_bits', 'feature_bits', 'mask_paint', 'ui_081', 'ui_084', 'pads_088', 'select_drag', 'pads_090', 'play_093', 'fx_094', 'ui_095', 'ui_096', 'gfx_097', 'perf_097', 'perf_098', 'queue_099', 'chip_0910', 'misc_0911', 'misc_0912', 'misc_0915', 'misc_0916', 'misc_0917', 'misc_0918', 'misc_0921', 'misc_0922', 'palette_0912', 'debugmon_0912', 'lint_comments']
 only = [a for a in sys.argv[1:] if not a.startswith('-')]   # test names to run (default: all); -v prints every test's output
 bad = []
 for t in TESTS:

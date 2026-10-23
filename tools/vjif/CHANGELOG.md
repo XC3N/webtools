@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.22 — 2026/10/23
+
+- Dropping a picture from a web page where the browser sends only links (Chrome on a Mac, Google Images): the picture's own address inside Google's link is fetched first, then the page's <img> address, then the other links; a reply that isn't a picture is skipped. The message now says what failed. Windows is unchanged (it sends the file itself).
+
 ## 0.99.21 — 2026/10/23
 
 - Start-up: only the set the session came from is read before the page is ready; the other saved sets load in the background (the debug monitor's timeline shows 'all sets'). Saving, importing and tidying sets wait for them.

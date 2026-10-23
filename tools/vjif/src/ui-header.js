@@ -12,7 +12,7 @@ const bank = $('#bank');
 bank.addEventListener('dragover', e => {
   e.preventDefault(); const T = e.dataTransfer.types;
   const bgChip = T.includes(CLIP_MIME) && chipDrag && isBgPad(chipDrag.pad);   // a Background slot's chip: onto a pad, it becomes that pad's GIF (0.89)
-  const ok = !T.includes(SCENE_MIME) && (bgChip || T.includes(POOL_MIME) || T.includes('Files') || T.includes('text/uri-list') || (T.includes('text/plain') && !T.includes(CLIP_MIME)));   // GIFs, files, links: a scene tile is no GIF
+  const ok = !T.includes(SCENE_MIME) && (bgChip || T.includes(POOL_MIME) || T.includes('Files') || T.includes('text/uri-list') || T.includes('text/html') || (T.includes('text/plain') && !T.includes(CLIP_MIME)));   // GIFs, files, links: a scene tile is no GIF
   e.dataTransfer.dropEffect = ok ? 'copy' : 'none';
   const el = ok && e.target.closest('.pad'); pads.forEach(p => p.el.classList.toggle('drop', p.el === el)); $('#poolBtn').classList.toggle('drop', !!ok && !!e.target.closest('#poolBtn') && !T.includes(POOL_MIME));
 });
@@ -26,8 +26,8 @@ bank.addEventListener('drop', e => {
     $('#poolBtn').classList.remove('drop');
     const fs = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
     if (fs.length){ loadFiles(fs, POOL_ONLY).then(() => { renderPool(); toast2(`${fs.length} GIF${fs.length > 1 ? 's' : ''} added to the pool`); }); return; }
-    const u = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '').split(/\r?\n/).map(s => s.trim()).find(s => /^https?:\/\//.test(s));
-    if (u) loadUrlInto(u, POOL_ONLY); return; }
+    const u = dropUrls(e.dataTransfer);
+    if (u.length) loadUrlInto(u, POOL_ONLY); return; }
   const padEl = e.target.closest('.pad'), start = padEl ? +padEl.dataset.i : -1;
   const ph = e.dataTransfer.getData(POOL_MIME);
   if (ph){                                           // a pool GIF dragged onto a pad: put it there (replacing — undoable)
@@ -38,9 +38,8 @@ bank.addEventListener('drop', e => {
   }
   const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
   if (files.length) return loadFiles(files, start);
-  const uri = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '')
-    .split(/\r?\n/).map(s => s.trim()).find(s => /^https?:\/\//.test(s));
-  if (uri) loadUrlInto(uri, start >= 0 ? start : nextEmpty());
+  const uri = dropUrls(e.dataTransfer);
+  if (uri.length) loadUrlInto(uri, start >= 0 ? start : nextEmpty());
 });
 
 // ---------- header UI ----------

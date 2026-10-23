@@ -432,3 +432,4 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts274} **GIF palette rows stay** (0.99.21) — GIF › Display › Palette: pick palettes with and without variants: no row appears or goes; the Dither pattern switch fades without moving the slider.
 - [ ] {ts275} **Loupe rests** (0.99.21) — loupe on: rest the pointer on an area, then go to the panels: the loupe keeps showing that area.
 
+- [ ] {ts276} **Drop from Google Images (Mac)** (0.99.22) — Chrome on a Mac: drag a GIF tile from Google Images onto a pad, the Pool button and a Scene tile's pad: the full GIF loads (a site that blocks other sites still says so, and a thumbnail may load instead); Windows still works.

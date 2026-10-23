@@ -209,18 +209,35 @@ function putMedia(m, p, si = sceneIdx){
   return g;
 }
 
+// links in a drop, best first (0.99.22): a Google Images tile drags as an imgres?imgurl=… link (the picture's own address is inside it), a page image as <img src> in the HTML; a data: thumbnail is the last resort
+function dropUrls(dt){
+  const raw = [dt.getData('text/uri-list'), dt.getData('text/plain')].join('\n').split(/\r?\n/).map(s => s.trim());
+  const html = dt.getData('text/html') || '', imgs = [...html.matchAll(/<img[^>]+src\s*=\s*["']([^"']+)["']/gi)].map(m => m[1].replace(/&amp;/g, '&'));
+  const out = [], add = u => { if (u && !out.includes(u)) out.push(u); };
+  [...raw, ...imgs].forEach(u => {
+    if (!/^https?:\/\//.test(u)) return;
+    try { const U = new URL(u); if (/(^|\.)google\.[a-z.]+$/.test(U.hostname)){ add(U.searchParams.get('imgurl')); if (U.pathname === '/url') add(U.searchParams.get('url')); } } catch (e) {}
+  });
+  [...raw, ...imgs].forEach(u => { if (/^https?:\/\//.test(u) && !/gstatic\.com\/images\?/.test(u) && !/^https?:\/\/[^/]*google\.[a-z.]+\/(imgres|url|search)/.test(u)) add(u); });
+  [...raw, ...imgs].forEach(u => { if (/^https?:\/\//.test(u)) add(u); });                 // (thumbnails and result pages after the real addresses)
+  imgs.forEach(u => { if (/^data:image\//.test(u)) add(u); });
+  return out;
+}
 async function loadUrlInto(url, p){
   if (p < 0 && p !== POOL_ONLY) return toast('All 9 Scene pads are full — clear one first');
-  const raw = url.split(/[?#]/)[0].split('/').pop() || 'url.gif';
-  let name = raw; try { name = decodeURIComponent(raw); } catch (e) {}   // a name like 100%.gif isn't valid escaping: keep it as it is
-  let blob;
-  try {
-    const r = await fetch(url, { mode: 'cors' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    blob = await r.blob();
-  } catch (err) {
-    return toast(`Can't fetch that URL (${err.message}). The site probably blocks cross-origin access — download the file and drag it in instead.`);
+  let blob, name = 'url.gif', err0;
+  for (const u of [].concat(url)){
+    try {
+      if (/^data:/.test(u)) name = 'dropped.' + ((u.match(/^data:image\/(\w+)/) || [])[1] || 'png');
+      else { const raw = u.split(/[?#]/)[0].split('/').pop() || 'url.gif'; try { name = decodeURIComponent(raw); } catch (e) { name = raw; } }   // a name like 100%.gif isn't valid escaping: keep it as it is
+      const r = await fetch(u, { mode: 'cors' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const b = await r.blob();
+      if (b.type && !/^(image\/|application\/octet-stream)/.test(b.type)) throw new Error('not a picture (' + b.type + ')');
+      blob = b; break;
+    } catch (err) { err0 = err0 || err; }
   }
+  if (!blob) return toast(`Can't fetch that picture (${err0 ? err0.message : 'no link in the drop'}). The site blocks cross-origin access, or the browser sent only a page link — save the file and drag it in instead.`);
   if (p === POOL_ONLY){ try { await mediaFor(blob, name); } catch (err) { toast(`Couldn't load ${name}: ${err.message}`); } return; }
   await loadInto(p, blob, name);
 }
@@ -371,7 +388,7 @@ $('#poolUrlBtn').addEventListener('click', () => { const u = $('#poolUrl').value
 $('#poolUrl').addEventListener('keydown', e => { if (e.key === 'Enter') $('#poolUrlBtn').click(); });
 // files / links dropped on the pool window (or the Pool button) only join the pool
 const poolFiles = dt => [...dt.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name));
-const dtLink = dt => (dt.getData('text/uri-list') || dt.getData('text/plain') || '').split(/\r?\n/).map(s => s.trim()).find(s => /^https?:\/\//.test(s));
+const dtLink = dt => { const u = dropUrls(dt); return u.length ? u : null; };
 [$('#poolPanel .modalBox'), $('#poolBtn')].forEach(el => {
   const mark = on => (el.id === 'poolBtn' ? el : $('#poolPanel')).classList.toggle(el.id === 'poolBtn' ? 'drop' : 'dropping', on);   // the button: the dashed frame of a tile taking a drop (0.91: this handler stopped the pads panel's, which set it)
   el.addEventListener('dragover', e => { if (e.dataTransfer.types.includes(POOL_MIME)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; mark(true); });
