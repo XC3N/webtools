@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.24 — 2026/10/23
+
+- Click a message (toast) to copy its text; the pointer resting on it keeps it up.
+
 ## 0.99.23 — 2026/10/23
 
 - Links dropped on the Background card (from a web page, Google Images…) now go into its next free slot, as files already did.

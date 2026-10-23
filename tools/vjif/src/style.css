@@ -410,7 +410,7 @@ input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 #recWrap{position:relative;display:inline-flex;gap:2px}#recWrap>#recCfg{border:1px solid var(--edge)}#recPop{width:270px}#recPopRows{display:grid;gap:6px}#recPopRows .poprow{display:grid;grid-template-columns:62px minmax(0,1fr);align-items:center;gap:6px}#recPopRows .poprow>span{font-size:11px;color:var(--muted)}   /* Rec ▾: like BRB's */
 #musGrp{position:relative}#musSeek{position:absolute;left:0;right:0;bottom:-6px;height:4px;border-radius:2px;background:var(--track);cursor:pointer}#musSeek i{display:block;height:100%;width:0;border-radius:2px;background:var(--sig)}#musSeek.off{opacity:.35;pointer-events:none}#musSeek:hover{height:6px;bottom:-7px}   /* seek bar under the player (absolute: nothing moves) */
 #fxAllOff{flex:none;width:var(--ch)}
-#toast{top:var(--toastY,auto);bottom:auto;left:var(--toastX,50%);max-width:min(70vw,640px);z-index:40}   /* in the gap above the preview, not over the effects */
+#toast{top:var(--toastY,auto);bottom:auto;left:var(--toastX,50%);max-width:min(70vw,640px);z-index:40;pointer-events:auto;cursor:copy}   /* click copies (0.99.23); in the gap above the preview, not over the effects */
 /* section buttons sit on their own row under the name (the headings stay quiet) */
 .hbar{display:flex;align-items:center;gap:4px;margin:-2px 0 8px}.hbar button{flex:none}
 .scbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}

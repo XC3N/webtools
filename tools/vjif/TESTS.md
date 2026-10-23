@@ -434,3 +434,4 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 
 - [ ] {ts276} **Drop from Google Images (Mac)** (0.99.22) — Chrome on a Mac: drag a GIF tile from Google Images onto a pad, the Pool button and a Scene tile's pad: the full GIF loads (a site that blocks other sites still says so, and a thumbnail may load instead); Windows still works.
 - [ ] {ts277} **Link drop on Background** (0.99.23) — drag a picture from a web page onto the Background card: it fills the next free slot and is selected; a blocked site's message names the host and says blocked.
+- [ ] {ts278} **Click a message to copy** (0.99.24) — trigger a message (drop a blocked link); rest the pointer on it: it stays; click: it says Copied to the clipboard and the text pastes elsewhere.

@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.23';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.24';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -184,6 +184,13 @@ const bootMark = n => { if (bootT.marks.length < 12) bootT.marks.push([n, Math.r
 bootMark('script');
 function linkChk(gl, prog, name){ const t = performance.now(); gl.linkProgram(prog); const ok = gl.getProgramParameter(prog, gl.LINK_STATUS); bootT.link.push([name, Math.round(performance.now() - t)]); if (!ok) throw new Error(gl.getProgramInfoLog(prog)); }
 const toast = msg => showToast(msg, false), toast2 = msg => showToast(msg, true);
+// 0.99.23: click a message to copy its text (it vanishes by itself; the page won't let you select it)
+$('#toast').addEventListener('mouseenter', () => clearTimeout(toastT));   // (pointer on it: it stays)
+$('#toast').addEventListener('mouseleave', () => { const t = $('#toast'); clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = 'none'; t.classList.remove('ok'); toastCur = ''; }, 1500); });
+$('#toast').addEventListener('click', () => { const tx = toastCur; if (!tx) return;
+  const done = () => { clearTimeout(toastT); toastQ = []; paintToast('Copied to the clipboard', true); };
+  const old = () => { const a = document.createElement('textarea'); a.value = tx; a.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); done(); } catch (e) {} a.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tx).then(done, old); else old(); });
 // Ctrl+click (⌘+click on a Mac) deletes / resets
 const isDel = e => e.ctrlKey || e.metaKey;
 // the clock time (performance.now) at which `beat` fell / will fall, at the current tempo

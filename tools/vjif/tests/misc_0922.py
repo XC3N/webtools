@@ -20,5 +20,8 @@ async def main():
       $('#layers').children[BG_LAYER].dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true })); })()""")
     await pg.wait_for_function("[...Array(N_BG).keys()].some(k => pads[BG0 + k].gif)", timeout=20000); print('bg slot ok')
     r = await pg.evaluate("fetchPicture(['https://nope.example.test/x.gif']).then(() => 'no', e => e.message)"); print('why', r); assert 'nope.example.test' in r, r
+    r = await pg.evaluate("""(async () => { let got = ''; Object.defineProperty(navigator, 'clipboard', { value: { writeText: t => { got = t; return Promise.resolve(); } }, configurable: true });
+      toastQ = []; toastCur = ''; toast('Can\\'t fetch: pinterest: blocked'); await new Promise(r => setTimeout(r, 100)); const pe = getComputedStyle($('#toast')).pointerEvents; $('#toast').click(); await new Promise(r => setTimeout(r, 100)); return [got, pe, $('#toast').textContent]; })()""")
+    print('copy', r); assert r == ["Can't fetch: pinterest: blocked", 'auto', 'Copied to the clipboard'], r
     assert not errs, errs; await b.close(); print('ok')
 asyncio.run(main())
