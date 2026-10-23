@@ -6,7 +6,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
 const FX_DRAG_WAIT = 120;   // ms a tile press waits (held still) before it plays: time for a drag to show itself
-const fxEntry = i => ({ ...(fxCfg[i].mod ? { mod: JSON.parse(JSON.stringify(fxCfg[i].mod)) } : {}), amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, pneg: fxCfg[i].pneg ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1, ...(fxCfg[i].pamt ? { pamt: { ...fxCfg[i].pamt } } : {}) });   // an effect as a preset holds it
+const fxEntry = i => ({ ...(fxCfg[i].mod ? { mod: JSON.parse(JSON.stringify(fxCfg[i].mod)) } : {}), amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, pneg: fxCfg[i].pneg ?? 1, kmir: fxCfg[i].kmir ?? 1, pfit: fxCfg[i].pfit || 0, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1, ...(fxCfg[i].pamt ? { pamt: { ...fxCfg[i].pamt } } : {}) });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);

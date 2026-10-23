@@ -4,6 +4,15 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.21 — 2026/10/23
+
+- Start-up: only the set the session came from is read before the page is ready; the other saved sets load in the background (the debug monitor's timeline shows 'all sets'). Saving, importing and tidying sets wait for them.
+- Mask painting, Size / Soft: the brush follows the pointer itself, wherever it is, at its true size and softness (the pointer hides meanwhile); the pop-up slider jumps to where you click, then follows the pointer's movement, so the pointer can go anywhere on the screen.
+- Mirror › Kaleido: a Mirror switch (in Size's place): on, every other slice is flipped (as before); off, the same slice repeats all round.
+- Colour › Palette: a Fit range switch (in Size's place), like the GIF's: the picture's own darkest and brightest are stretched over the whole palette first.
+- GIF › Display › Palette: the Variant row stays when a palette has none (greyed), and the pattern switch hides without moving the slider.
+- Loupe: when the pointer leaves the preview, it stays on the spot where the pointer last rested, not where it crossed the edge.
+
 ## 0.99.20 — 2026/10/23
 
 - One shot › Repeat: its label is back in front of the slider and the on / off switch sits after it (it had become part of the slider).

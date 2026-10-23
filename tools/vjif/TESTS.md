@@ -424,4 +424,11 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts266} **Repeat row** (0.99.20) — GIF › Play › One shot: "Repeat" label inside the slider like the others, the on / off switch after it (right).
 - [ ] {ts267} **Repeat dot travels** (0.99.20) — Repeat shorter than the envelope, Retrigger › Restart or Continue: the playhead dot moves along all the repeats the graph shows (not just the first) and wraps at the end, staying on the curve.
 - [ ] {ts268} **Hold + Repeat** (0.99.20) — an LFO (S&H shape, Hold on) on X / Y / Zoom of a GIF with One shot › Repeat on: each repeat picks a new value; with Repeat off it stays until the next key press.
+- [ ] {ts269} **Sets in the background** (0.99.21) — reload with many saved sets: the page is ready sooner; the Sets list fills a moment later; saving a set right after start-up still works and doesn't lose any set.
+- [ ] {ts270} **Brush is the pointer** (0.99.21) — mask painting: hold Size or Soft: the pointer becomes the brush ring (true size, soft edge), anywhere on the page; let go: pointer back.
+- [ ] {ts271} **Pop-up slider** (0.99.21) — Size / Soft pop-up: click jumps to that spot; drag follows your movement, also with the pointer far from the slider.
+- [ ] {ts272} **Kaleido Mirror** (0.99.21) — Mirror › Kaleido: the Mirror switch where Size was; on: slices mirror each other; off: one slice repeated round; saved in presets.
+- [ ] {ts273} **Colour Fit range** (0.99.21) — Colour › Palette: Fit range switch; on: a dull picture uses the whole palette (a 4-grey keeps its detail); nothing else moves.
+- [ ] {ts274} **GIF palette rows stay** (0.99.21) — GIF › Display › Palette: pick palettes with and without variants: no row appears or goes; the Dither pattern switch fades without moving the slider.
+- [ ] {ts275} **Loupe rests** (0.99.21) — loupe on: rest the pointer on an area, then go to the panels: the loupe keeps showing that area.
 

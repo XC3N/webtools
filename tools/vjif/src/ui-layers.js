@@ -373,7 +373,10 @@ function drawLoupe(){
   x.strokeStyle = '#fff8'; x.lineWidth = 1; x.beginPath(); x.moveTo(L.width / 2, L.height / 2 - 8 * dpr); x.lineTo(L.width / 2, L.height / 2 + 8 * dpr); x.moveTo(L.width / 2 - 8 * dpr, L.height / 2); x.lineTo(L.width / 2 + 8 * dpr, L.height / 2); x.stroke();
 }
 // 0.99.7: the loupe stays up (on the last spot it showed, live) when the pointer leaves the preview; moving over the preview points it again
-pv.addEventListener('pointermove', e => { if (!pvOpt.loupe) return; loupeAt = evtToOut(e); drawLoupe(); });
+let loupeRest = null, loupeTm = 0;   // 0.99.21 (ID-230): where the pointer last rested (350 ms) in the preview: when it leaves to work the panels, the loupe stays on that spot, not on where it crossed the edge
+pv.addEventListener('pointermove', e => { if (!pvOpt.loupe) return; loupeAt = evtToOut(e); drawLoupe(); clearTimeout(loupeTm); const at = loupeAt; loupeTm = setTimeout(() => { loupeRest = at; }, 350); });
+pv.addEventListener('pointerenter', () => { loupeRest = null; });
+pv.addEventListener('pointerleave', () => { clearTimeout(loupeTm); if (pvOpt.loupe && loupeRest){ loupeAt = loupeRest; drawLoupe(); } });
 const loupePlace = () => { const L = $('#loupe'), P = L.offsetParent; if (!P || !pvOpt.lpos){ L.style.left = L.style.top = ''; return; }
   const w = L.offsetWidth || 240, h = L.offsetHeight || 240, x = clamp(pvOpt.lpos[0] * P.clientWidth, 0, Math.max(0, P.clientWidth - w)), y = clamp(pvOpt.lpos[1] * P.clientHeight, 0, Math.max(0, P.clientHeight - h));
   Object.assign(L.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); };

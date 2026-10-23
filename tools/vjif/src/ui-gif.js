@@ -38,11 +38,12 @@ function syncGifUI(){
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
   { const P = g.pal && g.pal.i >= 0 ? g.pal : null, on = !!P, F = $('#gPalF'), [fi, vi] = on ? palFam(P.i) : [-1, 0], FM = on ? PAL_FAM[fi] : null;   // Snap to: None, then the families by year; a family's variants and the dither pattern below
     F.max = PAL_FAM.length; F.value = fi + 1; F.nextElementSibling.textContent = on ? FM.n : 'None'; F.closest('.field').title = on ? 'Snap to: ' + FX_PALS[P.i].t : 'Snap to: the palette this GIF\'s colours snap to, by year (None: its own colours)';
-    const many = on && FM.m.length > 1; $('#gPalVarRow').hidden = !many;
+    const many = on && FM.m.length > 1; $('#gPalVarRow').classList.toggle('dimmed', !many);   // (the row stays: nothing moves when a palette has no variants)
+    if (!many && $('#gPalVar').dataset.f){ $('#gPalVar').innerHTML = ''; $('#gPalVar').dataset.f = ''; $('#gPalVar')._html = ''; }
     if (many){ if ($('#gPalVar').dataset.f !== String(fi)){ setHTML($('#gPalVar'), FM.m.map((x, k) => `<button data-v="${k}" title="${esc(FX_PALS[x.i].t)}"><span class="lng">${esc(x.l)}</span><span class="sht">${esc(x.s)}</span></button>`).join('')); $('#gPalVar').dataset.f = fi; } segSet('#gPalVar', String(vi)); }
     if (!$('#gPalPat').children.length) setHTML($('#gPalPat'), DPAT_HTML); segSet('#gPalPat', String(P && P.p != null ? P.p : 1));
     $('#gPalD').value = P ? P.d || 0 : 0; $('#gPalD').nextElementSibling.textContent = Math.round((P ? P.d || 0 : 0) * 100) + '%';
-    const nd = on && palNoDith(P.i), gb = on && palGB(P.i); $('#gPalDRow').classList.toggle('dimmed', !on || nd); $('#gPalPat').hidden = gb || nd; $('#gPalDRow').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas); the switch picks the pattern'; }
+    const nd = on && palNoDith(P.i), gb = on && palGB(P.i); $('#gPalDRow').classList.toggle('dimmed', !on || nd); $('#gPalPat').classList.toggle('ghost', gb || nd); $('#gPalDRow').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas); the switch picks the pattern'; }
     $('#gPalFit').checked = !!(g.pal && g.pal.fit); $('#gPalFit').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
   syncShadowUI(g);
   segSet('#gSync', g.sync); segSet('#gLoop', g.loop); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);

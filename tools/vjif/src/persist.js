@@ -114,6 +114,7 @@ function deserLayers(sls, now, gifs = pads.map(p => p.gif)){
   return out;
 }
 
+let setsDone; const setsReady = new Promise(r => setsDone = r);   // 0.99.20: the saved sets are read after start-up (the working session doesn't wait for them); anything that adds to or cleans up the sets waits for this
 const sets = new Map();                              // id → set record
 const session = { setId: null, savedSig: '' };
 const curSet = () => session.setId && sets.get(session.setId);
@@ -209,6 +210,7 @@ function swapPoint(){
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 function uniqueName(name){ const names = new Set([...sets.values()].map(r => r.name)); let n = name, k = 2; while (names.has(n)) n = `${name} (${k++})`; return n; }
 async function saveSet(asNew, name){
+  await setsReady;
   const snap = snapshot();
   let rec = !asNew && curSet();
   if (!rec) rec = { id: newId(), name: uniqueName((name || '').trim() || 'Untitled set') };
@@ -258,6 +260,7 @@ async function renameSet(id, name){
 }
 // remove stored GIF files that no set and not the working session refers to
 async function gcGifs(){
+  await setsReady;
   const used = new Set();
   const add = snap => { try { upgradeSnap(JSON.parse(snap)).pool.forEach(e => used.add(e.hash)); } catch {} };
   sets.forEach(r => add(r.snap)); add(snapshot());

@@ -116,6 +116,17 @@ const fxFocus = {};   // effect id → style in focus (editor state, not saved)
 const FX_DOTS = [[0, 'Off', 'LCD off: the palette only'], [1, 'Pixels', 'Game Boy pixels: the picture in 144 rows of square pixels, like the 160 × 144 screen'], [2, 'Dots', 'Dot matrix: Game Boy pixels with thin gaps between them, in the palette\'s lightest colour (the LCD\'s own)']];   // Colour › Palette › LCD, for the Game Boy palettes (0.87.2; older 2 / 10 px sets read as Dots)
 const FX_DOTS_ICON = { 0: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>', 1: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="0" y="0" width="4" height="4" opacity="1"/><rect x="4" y="0" width="4" height="4" opacity="0.45"/><rect x="8" y="0" width="4" height="4" opacity="1"/><rect x="0" y="4" width="4" height="4" opacity="0.45"/><rect x="4" y="4" width="4" height="4" opacity="1"/><rect x="8" y="4" width="4" height="4" opacity="0.45"/><rect x="0" y="8" width="4" height="4" opacity="1"/><rect x="4" y="8" width="4" height="4" opacity="0.45"/><rect x="8" y="8" width="4" height="4" opacity="1"/></svg>', 2: '<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" style="display:block;margin:auto"><rect x="0.5" y="0.5" width="3" height="3" opacity="1"/><rect x="4.5" y="0.5" width="3" height="3" opacity="0.45"/><rect x="8.5" y="0.5" width="3" height="3" opacity="1"/><rect x="0.5" y="4.5" width="3" height="3" opacity="0.45"/><rect x="4.5" y="4.5" width="3" height="3" opacity="1"/><rect x="8.5" y="4.5" width="3" height="3" opacity="0.45"/><rect x="0.5" y="8.5" width="3" height="3" opacity="1"/><rect x="4.5" y="8.5" width="3" height="3" opacity="0.45"/><rect x="8.5" y="8.5" width="3" height="3" opacity="1"/></svg>' };
 const FX_OVS = [[0, 'Off'], [2, 'On']];   // Shake › Edges (one toggle; 1 = the old Some, read as on)
+const fitSt = [];   // per slot: the picture's brightness range, re-measured every few frames and eased (0.99.21)
+function fitRangeOf(from, slot){
+  const S = fitSt[slot] || (fitSt[slot] = { n: 0, lo: 0, hi: 1, cv: cpuCanvas(48, 27) });
+  if (S.n++ % 6 === 0){ const [, x] = S.cv; try { x.clearRect(0, 0, 48, 27); x.drawImage(from, 0, 0, 48, 27); const d = x.getImageData(0, 0, 48, 27).data, h = new Uint32Array(256); let tot = 0;
+      for (let i = 0; i < d.length; i += 4){ h[Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114)]++; tot++; }
+      let lo = 0, hi = 255, a = 0; for (let v = 0; v < 256; v++){ a += h[v]; if (a >= tot * 0.02){ lo = v; break; } } a = 0; for (let v = 255; v >= 0; v--){ a += h[v]; if (a >= tot * 0.02){ hi = v; break; } }
+      if (hi - lo < 24){ const mid = (lo + hi) / 2; lo = Math.max(0, mid - 12); hi = Math.min(255, mid + 12); }
+      S.tl = lo / 255; S.th = hi / 255; if (S.n === 1){ S.lo = S.tl; S.hi = S.th; } } catch (err) {} }
+  if (S.tl !== undefined){ S.lo += (S.tl - S.lo) * 0.25; S.hi += (S.th - S.hi) * 0.25; }
+  return { palLo: S.lo, palHi: S.hi };
+}
 const FX_NEG = [[0, 'Off'], [1, 'On']];   // CRT › PAY-TV › Invert
 // the order palettes are offered in: by year (CGA 1981, ZX Spectrum and C64 1982, NES 1983, EGA 1984, Game Boy 1989, Pocket 1996,
 // Light 1998). Sets keep a palette's index in FX_PALS, which never changes, so this order is only for the menus and the slider.
@@ -159,6 +170,12 @@ function sizeAlt(d, style, C){
   if (d && d.id === 'wobble') return { label: 'Edges', key: 'ovs', def: 2, list: FX_OVS, toggle: true, seg: true,   // 0.90: like Shake's
     icon: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="5.5" y="5.5" width="9" height="9"/><path d="M2.5 6V2.5H6M14 2.5h3.5V6M17.5 14v3.5H14M6 17.5H2.5V14"/></svg>',
     title: () => 'Edges: zoom in so the frame edges never show' };
+  if (d && d.id === 'mirror' && style === 'kal') return { label: 'Mirror', key: 'kmir', def: 1, list: FX_NEG, toggle: true, seg: true,   // 0.99.21 (ID-245): on: each slice is the neighbour's mirror image (a real kaleidoscope); off: the same slice turned round and repeated
+    icon: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M10 2.5v15" stroke-dasharray="2 2"/><path d="M8 5 3 10l5 5z"/><path d="M12 5l5 5-5 5z" fill="currentColor"/></svg>',
+    title: () => 'Mirror: every other slice flipped, as in a real kaleidoscope (off: the same slice repeated)' };
+  if (d && d.id === 'colour' && style === 'pal') return { label: 'Fit range', key: 'pfit', def: 0, list: FX_NEG, toggle: true, seg: true,   // 0.99.21 (BG-046): stretch the picture's own darkest and brightest over the whole palette first
+    icon: '<svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M3 10h14M3 6.5v7M17 6.5v7"/><path d="M6.5 10l-2 0M13.5 10h2" /><path d="M7 7.5 10 10 7 12.5M13 7.5 10 10l3 2.5" /></svg>',
+    title: () => 'Fit range: stretch the picture\'s own darkest and brightest over the whole palette first (a dull picture on a 2-bit grey keeps its detail)' };
   if (d && d.id === 'colour') return null;   // (Colour › Palette › Dots moved to the Dither row in 0.87: Game Boy palettes only)
   if (!d || d.id !== 'rgb') return null; const P = String(style || '').split('+'), f = P.includes(fxFocus[d.id]) ? fxFocus[d.id] : null;
   if (f === 'paytv' || (P.length === 1 && P[0] === 'paytv')) return { label: 'Invert', key: 'pneg', def: 1, list: FX_NEG, toggle: true, seg: true,   // 0.99.16 (TW-044): PAY-TV's now-and-then negative field, on or off (on: as before)
@@ -304,13 +321,13 @@ var gfxReady = true;   // (ui-gif runs before this file: it waits for this)
 const gfxOn = g => !!(g && g.gfx && GFX_IDS.some(id => g.gfx[id] && g.gfx[id].on && g.gfx[id].amt > 0));
 function gfxU(g, b){
   const n = FX_DEFS.length, z = v => FX_DEFS.map(() => v), F = fxFactory();
-  const M = { lv: z(0), env: z(0), amt: z(1), rate: F.map(c => c.rate), style: FX_DEFS.map(d => d.styles[0][0]), size: FX_DEFS.map(d => d.sizeDef || 64), pal: z(0), kz: z(1), fbk: z(0.7), vdrop: z(1), pneg: z(1), dith: z(0), dpat: z(0), dots: z(0), ovs: z(0), pamt: [], abase: z(1) };
+  const M = { lv: z(0), env: z(0), amt: z(1), rate: F.map(c => c.rate), style: FX_DEFS.map(d => d.styles[0][0]), size: FX_DEFS.map(d => d.sizeDef || 64), pal: z(0), kz: z(1), fbk: z(0.7), vdrop: z(1), pneg: z(1), kmir: z(1), pfit: z(0), dith: z(0), dpat: z(0), dots: z(0), ovs: z(0), pamt: [], abase: z(1) };
   for (const id of GFX_IDS){ const e = g.gfx[id], i = FXI[id]; if (!e || !e.on || !(e.amt > 0)) continue;
     M.lv[i] = e.amt; M.env[i] = 1; M.amt[i] = e.amt; if (e.style) M.style[i] = e.style; if (e.size) M.size[i] = e.size; if (e.rate) M.rate[i] = e.rate; }
   return fxU(b, M);
 }
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => modAmt(c, b)), rate: X.cfg.map(c => modRate(c, b)), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => modSize(c, b, FX_DEFS[i].sizeDef || 64)), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), pneg: X.cfg.map(c => c.pneg ?? 1), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0), pamt: X.cfg.map(c => c.pamt || null), abase: X.cfg.map(c => c.amt) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => modAmt(c, b)), rate: X.cfg.map(c => modRate(c, b)), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => modSize(c, b, FX_DEFS[i].sizeDef || 64)), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), pneg: X.cfg.map(c => c.pneg ?? 1), kmir: X.cfg.map(c => c.kmir ?? 1), pfit: X.cfg.map(c => c.pfit || 0), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0), pamt: X.cfg.map(c => c.pamt || null), abase: X.cfg.map(c => c.amt) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * modAmt(C, b); if (v > 0){ for (const k of tgtList(C.target)){ const m = M.get(k); m.lv[i] = v; m.env[i] = l; } } });
   X.pre.forEach((P, k) => {
@@ -318,14 +335,14 @@ function fxMix(b, X = fxLive()){
     for (const [i, e] of Object.entries(P.fx)){
       const v = l * modAmt(e, b);
       for (const k of tgtList(e.target)){ const m = M.get(k);
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = modAmt(e, b); m.abase[i] = e.amt; m.rate[i] = modRate(e, b); if (e.style) m.style[i] = e.style; if (e.size || fxMod(e, 'size', b) !== null) m.size[i] = modSize(e, b, m.size[i]); if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.pneg != null) m.pneg[i] = e.pneg; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.ovs != null) m.ovs[i] = e.ovs; if (e.pamt) m.pamt[i] = e.pamt; if (e.dots != null) m.dots[i] = e.dots; } }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = modAmt(e, b); m.abase[i] = e.amt; m.rate[i] = modRate(e, b); if (e.style) m.style[i] = e.style; if (e.size || fxMod(e, 'size', b) !== null) m.size[i] = modSize(e, b, m.size[i]); if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.pneg != null) m.pneg[i] = e.pneg; if (e.kmir != null) m.kmir[i] = e.kmir; if (e.pfit != null) m.pfit[i] = e.pfit; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.ovs != null) m.ovs[i] = e.ovs; if (e.pamt) m.pamt[i] = e.pamt; if (e.dots != null) m.dots[i] = e.dots; } }
     }
   });
   return M;
 }
 // one target's shader settings; null when nothing plays on it
 const FX_U_IDX = ['colour', 'strobe', 'poster', 'zoom', 'shake', 'wobble', 'mirror', 'glitch', 'rgb', 'pixel', 'feedback', 'codec'].map(k => FXI[k]);
-function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, pneg, dith, dpat, dots, ovs, pamt, abase }){
+function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, pneg, kmir, pfit, dith, dpat, dots, ovs, pamt, abase }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
   const [CO, ST, PO, ZO, SH, WO, MI, GL, CR, PX, FB, CD] = FX_U_IDX, dg = nm(ST) === 'degauss';
@@ -335,7 +352,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, pneg, di
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], codec: lv[CD], cdS: styleMask(CD, style[CD]), cseed: st(CD) * 7.13 % 100, cdSz: size[CD],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) && !palNoDith(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: palGB(pal ? pal[CO] : 0) ? 1 : dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, payNeg: pneg ? pneg[CR] : 1, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) && !palNoDith(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: palGB(pal ? pal[CO] : 0) ? 1 : dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, payNeg: pneg ? pneg[CR] : 1, mirK: kmir ? kmir[MI] : 1, palFit: pfit && pfit[CO] ? 1 : 0, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s; U.wobZ = (ovs && ovs[WO] === 0 ? 0 : (S(WO) === 0 ? 0.04 : 0.026)) * lv[WO];
@@ -384,7 +401,7 @@ function makePost(){
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time, beat;
-      uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, palD, palP, palDot, palLum,
+      uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, mirK, palD, palLo, palHi, palP, palDot, palLum,
                     glitch, glS, gseed, glSz, codec, cdS, cseed, cdSz, dgs, rgb, rgbS, crtSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, payNeg, shakeZ, wobZ;
       uniform float glA[12], rgA[12], cdA[12];   // Glitch / CRT: each stacked style's own Amount, as a share of the effect's (0.92)
       uniform vec3 shake; uniform vec3 pal[64], palOk[64]; uniform float palN; varying vec2 uv;
@@ -434,13 +451,13 @@ ${FX_GLSL}
         if (IS(mirS, S_mirror_tb)) return vec2(p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
         if (IS(mirS, S_mirror_quad)) return vec2(p.x < 0.5 ? p.x : 1.0 - p.x, p.y < 0.5 ? p.y : 1.0 - p.y);
         vec2 a = A(), d = (p - 0.5) * a / max(mirZ, 1.0); float r = length(d), seg = 6.2831853 / max(mirN, 2.0), an = mod(atan(d.y, d.x) + time * 0.1, seg);
-        an = abs(an - seg * 0.5);
+        an = mirK > 0.5 ? abs(an - seg * 0.5) : an;   // (0.99.21: Mirror off: the same wedge repeated all round, not flipped)
         return vec2(cos(an), sin(an)) * r / a + 0.5;
       }
       float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
       float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
       ${PALSNAP_GLSL}
-      vec3 palSnap(vec3 c){ return palPick(c, palD, palP, floor(gl_FragCoord.xy / (abs(palDot) > 0.5 ? abs(palDot) : max(1.0, floor(res.y / 360.0))))); }   // dither cells: chunky dots at any output size (the Game Boy's LCD: one cell per screen pixel)
+      vec3 palSnap(vec3 c){ if (palHi > palLo) c = clamp((c - palLo) / (palHi - palLo), 0.0, 1.0); return palPick(c, palD, palP, floor(gl_FragCoord.xy / (abs(palDot) > 0.5 ? abs(palDot) : max(1.0, floor(res.y / 360.0))))); }   // dither cells: chunky dots at any output size (the Game Boy's LCD: one cell per screen pixel)
       vec3 hueRot(vec3 c, float an){                 // rotate the hue in YIQ space
         vec3 y = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312) * c;
         float cs = cos(an), sn = sin(an); y.yz = vec2(y.y * cs - y.z * sn, y.y * sn + y.z * cs);
@@ -660,7 +677,7 @@ ${FX_GLSL}
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const PX_NAMES = new Set(['crtSz', 'pixSize', 'glSz', 'cdSz']);   // (palDot is worked out in real pixels: lcdDot)   // sizes given in canvas pixels
-    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'palD', 'palP', 'palDot', 'palLum',
+    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'mirK', 'palD', 'palLo', 'palHi', 'palP', 'palDot', 'palLum',
                    'glitch', 'glS', 'gseed', 'glSz', 'codec', 'cdS', 'cseed', 'cdSz', 'dgs', 'rgb', 'rgbS', 'crtSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'payNeg', 'shakeZ', 'wobZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'glA', 'rgA', 'cdA', 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palOk', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));
@@ -783,6 +800,7 @@ ${FX_GLSL}
       }
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
       gl.uniform2f(u.res, CW, CH);
+      if (U.palFit){ U = { ...U, ...fitRangeOf(from, slot) }; } else if (last.palHi) U = { ...U, palLo: 0, palHi: 0 };   // Colour › Palette › Fit range (0.99.21)
       for (const k of NAMES){ const v = (U[k] || 0) * (PX_NAMES.has(k) ? RS : 1); if (last[k] !== v){ last[k] = v; gl.uniform1f(u[k], v); } }
       for (const k of ['glA', 'rgA', 'cdA']){ const v = U[k] || ONES12, sg = v.join(); if (last[k] !== sg){ last[k] = sg; gl.uniform1fv(u[k], v); } }   // sizes in canvas pixels → real pixels; only what changed is sent
       if (String(U.shake) !== last.shake){ last.shake = String(U.shake); gl.uniform3fv(u.shake, U.shake); }

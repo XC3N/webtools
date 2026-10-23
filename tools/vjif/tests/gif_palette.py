@@ -10,7 +10,7 @@ async def m():
     await pg.keyboard.press('KeyQ'); await pg.wait_for_timeout(300)
     await pg.evaluate("$('#gTabs [data-v=colour]').click()")
     await pg.evaluate("const k = palFam(2)[0] + 1; $('#gPalF').value = k; $('#gPalF').dispatchEvent(new Event('input'))"); await pg.wait_for_timeout(200)
-    await pg.evaluate("palLast[palFam(2)[0]] = 2; $('#gPalVar button:nth-child(' + (palFam(2)[1] + 1) + ')').click()") if await pg.evaluate("!$('#gPalVarRow').hidden") else None; await pg.wait_for_timeout(200)
+    await pg.evaluate("palLast[palFam(2)[0]] = 2; $('#gPalVar button:nth-child(' + (palFam(2)[1] + 1) + ')').click()") if await pg.evaluate("!$('#gPalVarRow').classList.contains('dimmed')") else None; await pg.wait_for_timeout(200)
     await pg.evaluate("$('#gPalD').value = 1; $('#gPalD').dispatchEvent(new Event('input'))"); await pg.wait_for_timeout(400)
     # count distinct colours in the processed frame
     r = await pg.evaluate("""(() => { const g = pads[0].gif, im = fxImage(g, 0), c = new OffscreenCanvas(im.width, im.height), x = c.getContext('2d'); x.drawImage(im, 0, 0);

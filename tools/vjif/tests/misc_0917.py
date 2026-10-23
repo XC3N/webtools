@@ -10,7 +10,7 @@ async def main():
     await pg.evaluate("selectPad(0)"); await pg.click('#gTabs [data-v=colour]'); await pg.wait_for_timeout(300)
     r = await pg.evaluate("""(() => { const g = curGif(), F = $('#gPalF'), out = [];
       const k = palFam(PAL_ORDER.find(i => PAL_FAM[palFam(i)[0]].m.length > 1))[0] + 1; F.value = k; F.dispatchEvent(new Event('input', {bubbles: true}));
-      out.push(g.pal.i >= 0, !$('#gPalVarRow').hidden, $('#gPalVar').querySelectorAll('button').length > 1);
+      out.push(g.pal.i >= 0, !$('#gPalVarRow').classList.contains('dimmed'), $('#gPalVar').querySelectorAll('button').length > 1);
       $('#gPalVar button:nth-child(2)').click(); out.push(palFam(g.pal.i)[1]);
       $('#gPalPat button:nth-child(3)').click(); out.push(g.pal.p);
       F.value = 0; F.dispatchEvent(new Event('input', {bubbles: true})); out.push(g.pal.i, $('#gPalDRow').classList.contains('dimmed'));

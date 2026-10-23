@@ -539,9 +539,10 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #tEveryRow.everyoff>input[type=range],#tEveryRow.everyoff>output{opacity:.45}   /* 0.99.16: Repeat off: faint, but a move turns it on */
 #gTabs button{padding:0 6px}#gTabs.seg{grid-template-columns:1.45fr 1fr 1.15fr .85fr 1fr}   /* 0.99.16: room each side (the widest label gets more), so the changed-dot never sits on a label (TW-046) */
 
-#gPalVar{display:flex;height:22px}#gPalVar button{flex:1;padding:0 4px;font-size:10px;min-width:0}#gPalVar .sht{display:none}#gPalVarRow[hidden]{display:none}#gPalPat[hidden]{display:none}
+#gPalVar{display:flex;height:22px}#gPalVar button{flex:1;padding:0 4px;font-size:10px;min-width:0}#gPalVar .sht{display:none}#gPalPat.ghost{visibility:hidden}
 #gPalDRow .seg button{padding:0}   /* 0.99.17: GIF › Palette: the same Snap to slider, variants and dither pattern as the Colour effect */
 
 #gQuick{position:absolute;top:44px;left:12px;right:108px;display:grid;gap:3px}#gQuick .field{margin:0;min-height:0;height:20px}#gQuick select{height:22px;font-size:11px}   /* 0.99.17: this GIF's own display options, left of its picture: Opacity, Blend, Smooth, Bypass FX */
 #gQuick.disabled{opacity:.35;pointer-events:none}
 #tEveryRow{grid-template-columns:minmax(0,1fr) auto!important;column-gap:8px}#tEveryRow>.tog{grid-column:2;grid-row:1}   /* 0.99.19: Repeat is a slider with its own label, the switch after it (it had become part of the slider) */
+#brushRing{position:fixed;z-index:200;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;border:1px dashed #fff;box-shadow:0 0 0 1px #0008}#brushRing[hidden]{display:none}body.brushing,body.brushing *{cursor:none!important}   /* 0.99.20: Size / Soft held: the brush is the cursor */

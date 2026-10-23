@@ -389,7 +389,7 @@ async function saveSetFile(blob, filename){
   saveFile(blob, filename);
   toast2(`Exported ${filename} (downloads folder)`);
 }
-async function importVjif(file){
+async function importVjif(file){ await setsReady;
   if (setsBusy) return;
   if (prep) return toast('Go live first (Enter): Prep keeps the output on the current set');
   try {
@@ -484,9 +484,8 @@ $('#newEmpty').addEventListener('click', () => {
 async function restore(){
   try {
     bootMark('restore starts'); await store.open(); bootMark('store open');
-    (await store.all('set:')).forEach(r => sets.set(r.id, r));
     session.setId = ((await store.get('session')) || {}).setId || null;
-    if (!sets.has(session.setId)) session.setId = null;
+    { const cur = session.setId && await store.get('set:' + session.setId); if (cur) sets.set(cur.id, cur); else session.setId = null; }   // (only the set the session started from is read now: the rest load in the background)
     bootMark('sets read'); const st = JSON.parse(await store.get('state') || 'null'); bootMark('state read');
     if (st && (st.v || 1) < 2){                       // pre-sets layout: files under 'pad:<i>'
       for (let i = 0; i < N_KEYPADS; i++){
@@ -502,6 +501,7 @@ async function restore(){
     session.savedSig = curSet() ? contentSig(curSet().snap) : '';
   } catch (e) { toast('Saved session could not be loaded: ' + e.message); }
   finally {
+    store.all('set:').then(rs => { rs.forEach(x => sets.set(x.id, x)); bootMark('all sets'); renderSets(); updSetLabel(); }).catch(() => {}).finally(() => setsDone());
     bootT.readyAt = Math.round(performance.now()); bootMark('ready'); syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot(); musRestore();
     hist.cur = histState(); hist.ready = true;
     $('#saveStat').textContent = '';

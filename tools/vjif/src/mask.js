@@ -150,11 +150,33 @@ document.querySelectorAll('#maskBar .mpopbtn').forEach(b => {
 });
 let maskAdj = false;   // a Size / Soft control is being held (0.99.16)
 document.addEventListener('pointerdown', e => { if (maskEd && e.target.closest('#maskBar .volwrap')){ maskAdj = true; redraw.all = true; } }, true);
-['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => { if (maskAdj){ maskAdj = false; redraw.all = true; } }, true));
+['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => { if (maskAdj){ maskAdj = false; redraw.all = true; brushRing(null); } }, true));
+// 0.99.20 (TW-052): while Size / Soft is being set, the brush follows the pointer wherever it is (the cursor itself becomes the brush), at its true size on the picture and with its softness
+const brushEl = document.createElement('div'); brushEl.id = 'brushRing'; brushEl.hidden = true; document.body.appendChild(brushEl);
+let brushAt = null;
+function brushRing(e){
+  if (e === null){ brushEl.hidden = true; document.body.classList.remove('brushing'); brushAt = null; return; }
+  if (e) brushAt = [e.clientX, e.clientY]; if (!maskAdj || !brushAt || maskOpt.tool !== 'free') return;
+  const dia = Math.max(4, maskOpt.size * view.w / W), h = 1 - maskOpt.soft;
+  Object.assign(brushEl.style, { width: dia + 'px', height: dia + 'px', left: brushAt[0] + 'px', top: brushAt[1] + 'px', background: `radial-gradient(circle, rgba(255,255,255,.4) ${Math.round(h * 100)}%, rgba(255,255,255,0) 100%)` });
+  brushEl.hidden = false; document.body.classList.add('brushing');
+}
+document.addEventListener('pointermove', e => { if (maskAdj) brushRing(e); }, true);
+document.addEventListener('pointerdown', e => { if (maskEd && e.target.closest('#maskBar .volwrap')){ brushRing(e); } }, true);
+// the pop-up slider: a click jumps to that spot, then it follows the pointer's movement (not its position), so the pointer can go anywhere on the screen
+document.querySelectorAll('#maskBar .mpop input').forEach(inp => {
+  let d = null;
+  inp.addEventListener('pointerdown', e => { if (e.button) return; e.preventDefault(); const r = inp.getBoundingClientRect(), lo = +inp.min, hi = +inp.max, st = +inp.step || 1;
+    const v = clamp(Math.round((lo + (1 - (e.clientY - r.top) / r.height) * (hi - lo)) / st) * st, lo, hi); d = { y: e.clientY, v }; inp.setPointerCapture(e.pointerId);
+    if (+inp.value !== v){ inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); } });
+  inp.addEventListener('pointermove', e => { if (!d) return; const lo = +inp.min, hi = +inp.max, st = +inp.step || 1, v = clamp(Math.round((d.v + (d.y - e.clientY) / 110 * (hi - lo)) / st) * st, lo, hi);
+    if (+inp.value !== v){ inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); } });
+  ['pointerup', 'pointercancel'].forEach(t => inp.addEventListener(t, () => { d = null; }));
+});
 document.addEventListener('pointerdown', e => { if (!e.target.closest('#maskBar .volwrap')) document.querySelectorAll('#maskBar .mpop').forEach(q => q.hidden = true); });
 onSeg($('#maskTool'), b => { maskOpt.tool = b.dataset.v; maskSave(); syncMaskUI(); });
-$('#maskSize').addEventListener('input', e => { maskOpt.size = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; });
-$('#maskSoft').addEventListener('input', e => { maskOpt.soft = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; });
+$('#maskSize').addEventListener('input', e => { maskOpt.size = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; brushRing(); });
+$('#maskSoft').addEventListener('input', e => { maskOpt.soft = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; brushRing(); });
 $('#maskShow').addEventListener('input', e => { maskOpt.show = +e.target.value; maskSave(); syncMaskUI(); redraw.all = true; });   // 0.99.16 (ID-237): how strongly the mask tints the preview
 $('#maskInv').addEventListener('change', e => { const L = maskOwner(); if (L.mask) L.mask = maskWith(L.mask, { inv: e.target.checked }); else { const m = maskNew(null, { inv: e.target.checked }); m.url = m.cv.toDataURL('image/png'); L.mask = m; } maskRev++; redraw.all = true; syncLayerUI(); });
 $('#maskOn').addEventListener('change', e => { const L = maskOwner(); if (L.mask){ L.mask = maskWith(L.mask, { on: e.target.checked }); maskRev++; redraw.all = true; syncLayerUI(); } });
@@ -174,9 +196,6 @@ function drawMaskOverlay(dpr){
     pctx.save(); pctx.globalAlpha = (maskOpt.show ?? 0.45) * (m.on === false ? 0.33 : 1); pctx.imageSmoothingEnabled = true; pctx.drawImage(maskTint, X, Y, VW, VH); pctx.restore();
   }
   pctx.save(); pctx.strokeStyle = LCOL[maskEd.li]; pctx.lineWidth = 2 * dpr; pctx.strokeRect(X + dpr, Y + dpr, VW - 2 * dpr, VH - 2 * dpr);   // painting: the frame in the layer's colour
-  if (maskAdj && maskOpt.tool === 'free'){ const k = VW / W, r = maskOpt.size / 2 * k, cx = X + VW / 2, cy = Y + VH / 2, h = 1 - maskOpt.soft;   // 0.99.16 (TW-052): while Size / Soft is being set, the brush at the picture's centre, true size and softness (the cursor is off the preview then)
-    const gr = pctx.createRadialGradient(cx, cy, r * h, cx, cy, r); gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); pctx.fillStyle = gr; pctx.beginPath(); pctx.arc(cx, cy, r, 0, Math.PI * 2); pctx.fill();
-    pctx.lineWidth = dpr; pctx.strokeStyle = '#fff'; pctx.setLineDash([3 * dpr, 3 * dpr]); pctx.beginPath(); pctx.arc(cx, cy, r, 0, Math.PI * 2); pctx.stroke(); pctx.setLineDash([]); if (h > 0.02){ pctx.globalAlpha = .6; pctx.beginPath(); pctx.arc(cx, cy, r * h, 0, Math.PI * 2); pctx.stroke(); pctx.globalAlpha = 1; } }
   if (maskPtr && maskOpt.tool === 'free'){ const k = VW / W, r = maskOpt.size / 2 * k;
     pctx.lineWidth = dpr; pctx.strokeStyle = '#fff'; pctx.setLineDash([3 * dpr, 3 * dpr]); pctx.beginPath(); pctx.arc(X + maskPtr[0] * k, Y + maskPtr[1] * k, r, 0, Math.PI * 2); pctx.stroke(); }
   pctx.restore();
