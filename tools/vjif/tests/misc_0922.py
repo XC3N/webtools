@@ -16,5 +16,9 @@ async def main():
     await pg.evaluate("""(() => { const dt = new DataTransfer(); dt.setData('text/uri-list', 'https://www.google.com/imgres?q=bat&imgurl=https%3A%2F%2Fmedia.example.test%2Fbat.gif');
       $('.pad[data-i="0"]').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true })); })()""")
     await pg.wait_for_function("pads[0].gif", timeout=20000); print('hits', hits); assert hits[0].startswith('https://media.example.test/'), hits
+    await pg.evaluate("""(() => { const dt = new DataTransfer(); dt.setData('text/uri-list', 'https://www.google.com/imgres?q=bat&imgurl=https%3A%2F%2Fmedia.example.test%2Fbat.gif');
+      $('#layers').children[BG_LAYER].dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true })); })()""")
+    await pg.wait_for_function("[...Array(N_BG).keys()].some(k => pads[BG0 + k].gif)", timeout=20000); print('bg slot ok')
+    r = await pg.evaluate("fetchPicture(['https://nope.example.test/x.gif']).then(() => 'no', e => e.message)"); print('why', r); assert 'nope.example.test' in r, r
     assert not errs, errs; await b.close(); print('ok')
 asyncio.run(main())

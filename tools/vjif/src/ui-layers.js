@@ -72,11 +72,14 @@ function buildLayers(){
     // showed as selected in the card, preview and GIF panel, but the edit layer stayed where it was)
     const selectBgSlot = d => { const c = layers[BG_LAYER].clips.find(c => c.pad === d); if (!c) return; layers[BG_LAYER].sel = c; if (target !== BG_LAYER) setTarget(BG_LAYER); else { syncLayerUI(); syncXfUI(); } selectPad(d); redraw.all = true; };
     if (li === BG_LAYER){                              // Background: GIFs from the pool or files dropped on its card go into its free slots (0.88)
-      row.addEventListener('dragover', e => { if (!(e.dataTransfer.types.includes(POOL_MIME) || e.dataTransfer.types.includes('Files'))) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; row.classList.add('dropzone'); });
-      row.addEventListener('drop', e => { if (!(e.dataTransfer.types.includes(POOL_MIME) || e.dataTransfer.types.includes('Files'))) return; e.preventDefault(); e.stopPropagation(); row.classList.remove('dropzone');
+      const bgDrop = T => T.includes(POOL_MIME) || T.includes('Files') || ((T.includes('text/uri-list') || T.includes('text/html') || T.includes('text/plain')) && !T.includes(CLIP_MIME) && !T.includes(SCENE_MIME));   // (links too, 0.99.22)
+      row.addEventListener('dragover', e => { if (!bgDrop(e.dataTransfer.types)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; row.classList.add('dropzone'); });
+      row.addEventListener('drop', e => { if (!bgDrop(e.dataTransfer.types)) return; e.preventDefault(); e.stopPropagation(); row.classList.remove('dropzone');
         const free = () => { for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading) return k; return -1; };
         const ph = e.dataTransfer.getData(POOL_MIME); if (ph){ const m = pool.find(m => m.hash === ph), d = free(); if (!m) return; if (d < 0) return toast('Background\'s 6 slots are full'); putMedia(m, d); renderPool(); selectBgSlot(d); return; }
         const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || /\.(gif|webp|png|apng)$/i.test(f.name)), used = new Set();
+        if (!files.length){ const u = dropUrls(e.dataTransfer), d = free(); if (!u.length) return; if (d < 0) return toast('Background\'s 6 slots are full');
+          fetchPicture(u).then(g => loadInto(d, g.blob, g.name).then(() => selectBgSlot(d)), err => { toast(`Can't fetch that picture (${err.message}). A site that doesn't allow other sites to read its pictures can't be loaded from a drop — save the file and drag it in instead.`); }); return; }
         for (const f of files){ let d = -1; for (let k = BG0; k < BG0 + N_BG; k++) if (!pads[k].gif && !pads[k].loading && !used.has(k)){ d = k; break; } if (d < 0){ toast('Background\'s 6 slots are full'); break; } used.add(d); const dd = d; loadInto(dd, f, f.name).then(() => selectBgSlot(dd)); } });
     }
     row.addEventListener('dragover', e => {

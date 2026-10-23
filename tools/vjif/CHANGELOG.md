@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.23 — 2026/10/23
+
+- Links dropped on the Background card (from a web page, Google Images…) now go into its next free slot, as files already did.
+- A drop that can't be fetched says what each link did (e.g. `media.site.com: blocked`).
+
 ## 0.99.22 — 2026/10/23
 
 - Dropping a picture from a web page where the browser sends only links (Chrome on a Mac, Google Images): the picture's own address inside Google's link is fetched first, then the page's <img> address, then the other links; a reply that isn't a picture is skipped. The message now says what failed. Windows is unchanged (it sends the file itself).

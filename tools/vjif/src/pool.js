@@ -223,10 +223,11 @@ function dropUrls(dt){
   imgs.forEach(u => { if (/^data:image\//.test(u)) add(u); });
   return out;
 }
-async function loadUrlInto(url, p){
-  if (p < 0 && p !== POOL_ONLY) return toast('All 9 Scene pads are full — clear one first');
-  let blob, name = 'url.gif', err0;
-  for (const u of [].concat(url)){
+// the first of the links that comes back as a picture (0.99.22); on failure, an Error saying what each link did
+async function fetchPicture(urls){
+  const why = [];
+  for (const u of [].concat(urls)){
+    let name;
     try {
       if (/^data:/.test(u)) name = 'dropped.' + ((u.match(/^data:image\/(\w+)/) || [])[1] || 'png');
       else { const raw = u.split(/[?#]/)[0].split('/').pop() || 'url.gif'; try { name = decodeURIComponent(raw); } catch (e) { name = raw; } }   // a name like 100%.gif isn't valid escaping: keep it as it is
@@ -234,12 +235,18 @@ async function loadUrlInto(url, p){
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const b = await r.blob();
       if (b.type && !/^(image\/|application\/octet-stream)/.test(b.type)) throw new Error('not a picture (' + b.type + ')');
-      blob = b; break;
-    } catch (err) { err0 = err0 || err; }
+      return { blob: b, name };
+    } catch (err) { let h = u.slice(0, 5); try { h = /^data:/.test(u) ? 'data' : new URL(u).hostname; } catch (e) {} why.push(`${h}: ${err.message === 'Failed to fetch' ? 'blocked' : err.message}`); }
   }
-  if (!blob) return toast(`Can't fetch that picture (${err0 ? err0.message : 'no link in the drop'}). The site blocks cross-origin access, or the browser sent only a page link — save the file and drag it in instead.`);
-  if (p === POOL_ONLY){ try { await mediaFor(blob, name); } catch (err) { toast(`Couldn't load ${name}: ${err.message}`); } return; }
-  await loadInto(p, blob, name);
+  throw new Error(why.length ? why.join('; ') : 'no link in the drop');
+}
+async function loadUrlInto(url, p){
+  if (p < 0 && p !== POOL_ONLY) return toast('All 9 Scene pads are full — clear one first');
+  let got;
+  try { got = await fetchPicture(url); }
+  catch (err) { return toast(`Can't fetch that picture (${err.message}). A site that doesn't allow other sites to read its pictures can't be loaded from a drop — save the file and drag it in instead.`); }
+  if (p === POOL_ONLY){ try { await mediaFor(got.blob, got.name); } catch (err) { toast(`Couldn't load ${got.name}: ${err.message}`); } return; }
+  await loadInto(p, got.blob, got.name);
 }
 
 // (0.88: within one group — the Scene pads, or the Global ones when starting from one of those; Background's slots never)

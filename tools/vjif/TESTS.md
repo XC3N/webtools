@@ -433,3 +433,4 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts275} **Loupe rests** (0.99.21) — loupe on: rest the pointer on an area, then go to the panels: the loupe keeps showing that area.
 
 - [ ] {ts276} **Drop from Google Images (Mac)** (0.99.22) — Chrome on a Mac: drag a GIF tile from Google Images onto a pad, the Pool button and a Scene tile's pad: the full GIF loads (a site that blocks other sites still says so, and a thumbnail may load instead); Windows still works.
+- [ ] {ts277} **Link drop on Background** (0.99.23) — drag a picture from a web page onto the Background card: it fills the next free slot and is selected; a blocked site's message names the host and says blocked.
