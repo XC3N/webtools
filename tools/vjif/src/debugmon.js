@@ -12,8 +12,9 @@ function dbgSample(s){
 }
 function dbgOpen(){
   if (dbg.win && !dbg.win.closed){ dbg.win.focus(); dbgDraw(); return; }
-  const w = window.open('', 'vjifmonitor', 'popup,width=560,height=560'); if (!w){ toast('The monitor window was blocked: allow pop-ups for this page'); return; }
-  w.document.open(); w.document.write('<!doctype html><meta charset="utf-8"><title>VJif monitor</title><style>body{margin:0;background:#16181b;color:#d6d9de;font:12px/1.5 ui-monospace,Consolas,monospace;padding:10px}canvas{display:block;width:100%;height:330px;background:#0f1113;border:1px solid #2a2e33}pre{margin:10px 0 0;white-space:pre-wrap}.w{color:#e0a73a}</style><canvas id="cv" width="1080" height="660"></canvas><pre id="tx"></pre>'); w.document.close();
+  const w = window.open('', 'vjifmonitor', 'popup,width=640,height=820'); if (!w){ toast('The monitor window was blocked: allow pop-ups for this page'); return; }
+  w.document.open(); w.document.write('<!doctype html><meta charset="utf-8"><title>VJif monitor</title><style>body{margin:0;background:#16181b;color:#d6d9de;font:12px/1.5 ui-monospace,Consolas,monospace;padding:10px}button{margin-top:8px;background:#23272c;color:#d6d9de;border:1px solid #2a2e33;padding:3px 10px;font:inherit;cursor:pointer}canvas{display:block;width:100%;height:300px;background:#0f1113;border:1px solid #2a2e33}pre{margin:10px 0 0;white-space:pre-wrap}.w{color:#e0a73a}</style><canvas id="cv" width="1080" height="660"></canvas><pre id="tx"></pre><button id="cp">Copy the text</button> <span id="cpm" class="w"></span>'); w.document.close();
+  w.document.getElementById('cp').onclick = () => { const t = w.document.getElementById('tx').textContent; const done = () => { w.document.getElementById('cpm').textContent = 'copied'; setTimeout(() => { try { w.document.getElementById('cpm').textContent = ''; } catch (e) {} }, 1500); }; try { w.navigator.clipboard.writeText(t).then(done, () => {}); } catch (e) {} };
   dbg.win = w; dbgDraw();
 }
 function dbgDraw(){
@@ -31,13 +32,15 @@ function dbgDraw(){
   const ten = L.filter(s => s.heap !== null && s.t >= last.t - 600000); let slope = null;   // MB / min over the last 10 minutes (least squares)
   if (ten.length > 60){ const n = ten.length, mt = ten.reduce((a, s) => a + s.t, 0) / n, mh = ten.reduce((a, s) => a + s.heap, 0) / n; let nu = 0, de = 0; ten.forEach(s => { nu += (s.t - mt) * (s.heap - mh); de += (s.t - mt) ** 2; }); slope = de ? nu / de * 60000 : 0; }
   const up = ((Date.now() - dbg.t0) / 60000).toFixed(0), span = ((last.t - L[0].t) / 60000).toFixed(0);
-  tx.textContent = [`Running ${up} min · graphs: the last ${span} min, one point a second`, '',
+  const lines = [`Running ${up} min · graphs: the last ${span} min, one point a second`, '',
     `FPS ${last.fps}/${last.hz} · LOAD ${last.load}% · worst frame in the last minute ${mx('peak', m1).toFixed(1)} ms`,
     `Late frames in the last minute: ${sum('drops', m1)} · stalls over 50 ms: ${sum('stalls', m1)} (${sum('stallMs', m1).toFixed(0)} ms)`, '',
     last.heap !== null ? `JS heap ${last.heap.toFixed(0)} MB` + (slope === null ? ' (the trend shows after a minute)' : ` · last 10 min: ${slope >= 0 ? '+' : ''}${slope.toFixed(2)} MB/min` + (slope > 1 ? ' — rising' : ' — flat')) : 'JS heap: only Chrome / Edge report it',
     `Decoded frames ${last.pool.toFixed(0)} MB (${last.gifs} GIFs in the pool) + processed copies / key masks ${last.extra.toFixed(0)} MB`,
     `Start: ready ${(bootT.readyAt / 1000).toFixed(1)} s after the page opened · restoring the set ${(bootT.restoreMs / 1000).toFixed(1)} s · shaders: ${bootT.link.map(([n, ms]) => n + ' ' + ms + ' ms').join(', ') || '—'}`,
+    `Start timeline (s since the page opened): ${bootT.marks.map(([n, ms]) => n + ' ' + (ms / 1000).toFixed(1)).join(' → ')}`,
     `GIF instances alive: ${last.insts} · with processed frames cached: ${last.cached}`, '',
     'A line that keeps climbing (heap or decoded frames) points at VJif; flat memory with a wandering load or FPS points at the PC.'].join('\n');
+  if (!String(w.getSelection()).length && d.activeElement !== d.getElementById('cp')) tx.textContent = lines;   // (0.99.17: while some text is selected the text stays still, so it can be copied)
 }
 $('#load').addEventListener('contextmenu', e => { if (!e.shiftKey) return; e.preventDefault(); dbgOpen(); });

@@ -36,10 +36,14 @@ function syncGifUI(){
   if (!g){ document.querySelector('[data-pane=play]').classList.remove('textpad'); document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = f.dataset.for !== 'stretch'); return; }   // empty pad: one of the stacked fields, not all three on top of each other
   $('#gSmooth').checked = !g.crisp; $('#gNoFx').checked = !!g.nofx;
   document.querySelector('[data-pane=play]').classList.toggle('textpad', !!(g.media && g.media.text));   // lettering: the GIF-only settings are dimmed
-  if (!$('#gPal').options.length) $('#gPal').innerHTML = '<option value="-1">None</option>' + PAL_ORDER.map(i => FX_PALS[i]).map((P, k) => `<option value="${PAL_ORDER[k]}" title="${esc(P.t)}">${esc(P.d)}</option>`).join('');   // by year
-  $('#gPal').value = String(g.pal ? g.pal.i : -1); $('#gPalD').value = g.pal ? g.pal.d : 0; $('#gPalD').nextElementSibling.textContent = Math.round((g.pal ? g.pal.d : 0) * 100) + '%';
-  { const nd = !!(g.pal && g.pal.i >= 0 && palNoDith(g.pal.i)); $('#gPalD').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0) || nd); $('#gPalD').closest('.field').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas)';
-    $('#gPalFit').checked = !!(g.pal && g.pal.fit); $('#gPalFit').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0)); }
+  { const P = g.pal && g.pal.i >= 0 ? g.pal : null, on = !!P, F = $('#gPalF'), [fi, vi] = on ? palFam(P.i) : [-1, 0], FM = on ? PAL_FAM[fi] : null;   // Snap to: None, then the families by year; a family's variants and the dither pattern below
+    F.max = PAL_FAM.length; F.value = fi + 1; F.nextElementSibling.textContent = on ? FM.n : 'None'; F.closest('.field').title = on ? 'Snap to: ' + FX_PALS[P.i].t : 'Snap to: the palette this GIF\'s colours snap to, by year (None: its own colours)';
+    const many = on && FM.m.length > 1; $('#gPalVarRow').hidden = !many;
+    if (many){ if ($('#gPalVar').dataset.f !== String(fi)){ setHTML($('#gPalVar'), FM.m.map((x, k) => `<button data-v="${k}" title="${esc(FX_PALS[x.i].t)}"><span class="lng">${esc(x.l)}</span><span class="sht">${esc(x.s)}</span></button>`).join('')); $('#gPalVar').dataset.f = fi; } segSet('#gPalVar', String(vi)); }
+    if (!$('#gPalPat').children.length) setHTML($('#gPalPat'), DPAT_HTML); segSet('#gPalPat', String(P && P.p != null ? P.p : 1));
+    $('#gPalD').value = P ? P.d || 0 : 0; $('#gPalD').nextElementSibling.textContent = Math.round((P ? P.d || 0 : 0) * 100) + '%';
+    const nd = on && palNoDith(P.i), gb = on && palGB(P.i); $('#gPalDRow').classList.toggle('dimmed', !on || nd); $('#gPalPat').hidden = gb || nd; $('#gPalDRow').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas); the switch picks the pattern'; }
+    $('#gPalFit').checked = !!(g.pal && g.pal.fit); $('#gPalFit').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
   syncShadowUI(g);
   segSet('#gSync', g.sync); segSet('#gLoop', g.loop); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
@@ -159,7 +163,10 @@ HSV_UI.forEach(([id, k, fmt]) => $(id).addEventListener('input', e => {
   g.hsv[k] = +e.target.value; g.hsv.off = false; e.target.nextElementSibling.textContent = fmt(g.hsv[k]); syncSwitches(g);   // (touching it switches Adjust on)
   scheduleFx(g, 150);
 }));
-$('#gPal').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { d: 0 }), i: +e.target.value, off: false }; e.target.blur(); scheduleFx(g, 0); syncGifUI(); renderPad(selPad); });
+const gPalSet = (g, i) => { g.pal = { ...(g.pal || { d: 0 }), i, off: false }; scheduleFx(g, 0); syncGifUI(); renderPad(selPad); };
+$('#gPalF').addEventListener('input', e => { const g = curGif(); if (!g) return; const k = +e.target.value; if (k < 1) gPalSet(g, -1); else gPalSet(g, palLast[k - 1] ?? PAL_FAM[k - 1].m[0].i); });
+onSeg($('#gPalVar'), b => { const g = curGif(); if (!g || !g.pal) return; const fi = +$('#gPalVar').dataset.f, x = PAL_FAM[fi].m[+b.dataset.v]; palLast[fi] = x.i; gPalSet(g, x.i); });
+onSeg($('#gPalPat'), b => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { i: -1, d: 0 }), p: +b.dataset.v }; syncGifUI(); scheduleFx(g, 0); renderPad(selPad); });
 $('#gPalFit').addEventListener('change', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { i: -1, d: 0 }), fit: e.target.checked }; scheduleFx(g, 0); renderPad(selPad); });
 $('#gPalD').addEventListener('input', e => { const g = curGif(); if (!g) return; g.pal = { ...(g.pal || { i: -1 }), d: +e.target.value }; e.target.nextElementSibling.textContent = Math.round(g.pal.d * 100) + '%'; scheduleFx(g, 100); });
 $('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) return; Object.assign(g.hsv, { h: 0, s: 1, v: 1, off: true }); scheduleFx(g, 0); syncGifUI(); });   // (0.95: Reset also switches it off, like Key's Clear)

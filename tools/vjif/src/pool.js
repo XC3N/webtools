@@ -10,7 +10,7 @@ const decodeQ = { n: 0, wait: [] };
 async function decodeAnim(...a){
   while (decodeQ.n >= 3) await new Promise(r => decodeQ.wait.push(r));
   decodeQ.n++;
-  try { return await decodeOne(...a); } finally { decodeQ.n--; const r = decodeQ.wait.shift(); if (r) r(); }
+  try { return await decodeOne(...a); } finally { decodeQ.n--; const r = decodeQ.wait.shift(); if (r) r(); else if (!decodeQ.n && bootT.readyAt && !bootT.decoded){ bootT.decoded = 1; bootMark('GIFs decoded'); } }
 }
 async function decodeOne(blob, name, scale = 1){
   if (isTextBlob(blob, name)){                       // lettering: a small text description, drawn into one frame

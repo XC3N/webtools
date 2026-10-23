@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.17 — 2026/10/23
+
+- GIF › Colour › Palette now matches the Colour effect: a Snap to slider (None, then the palettes by year), the palette's variants as a switch, and Dither with its pattern switch (Noise / Bayer / Check; Bayer as before).
+- Debug monitor: a bigger window, a Copy the text button (the text no longer refreshes while you select it), and a start-up timeline (seconds since the page opened, marked at script start, set read, GIFs decoded, first frame) to find where the start-up time goes.
+- Pool: the Fit button is now Optimize (it shrinks the GIFs' memory).
+- Note-family switches (Even / Dotted / Triplet…) are little pictures instead of letters.
+
 ## 0.99.16 — 2026/10/23
 
 - GIF › FX stacks (Glitch, Codec, CRT) behave like the scene FX: a click on a lit style selects it (underlined, the others dim), the next click takes it out.

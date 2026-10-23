@@ -538,3 +538,6 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 .ctxmenu{position:fixed;z-index:200;background:var(--panel-2);border:1px solid var(--edge);border-radius:6px;padding:3px;box-shadow:0 6px 18px rgba(0,0,0,.45);display:flex;flex-direction:column;min-width:110px}.ctxmenu button{text-align:left;padding:4px 10px;font-size:12px;background:none;border:0;border-radius:4px}.ctxmenu button:hover{background:var(--sig);color:var(--bg)}   /* 0.99.6: a right-click menu (Pool: Save GIF) */
 #tEveryRow.everyoff>input[type=range],#tEveryRow.everyoff>output{opacity:.45}   /* 0.99.16: Repeat off: faint, but a move turns it on */
 #gTabs button{padding:0 6px}#gTabs.seg{grid-template-columns:1.45fr 1fr 1.15fr .85fr 1fr}   /* 0.99.16: room each side (the widest label gets more), so the changed-dot never sits on a label (TW-046) */
+
+#gPalVar{display:flex;height:22px}#gPalVar button{flex:1;padding:0 4px;font-size:10px;min-width:0}#gPalVar .sht{display:none}#gPalVarRow[hidden]{display:none}#gPalPat[hidden]{display:none}
+#gPalDRow .seg button{padding:0}   /* 0.99.17: GIF › Palette: the same Snap to slider, variants and dither pattern as the Colour effect */

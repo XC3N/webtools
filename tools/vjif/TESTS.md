@@ -414,3 +414,8 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts256} **Finalising** (0.99.16) — stopping a long take: the Rec button reads 'Save…' (hover: seconds so far) until the file is saved.
 - [ ] {ts257} **PAY-TV Invert** (0.99.16) — CRT › PAY-TV alone: an Invert switch where Size was; off: no negative flashes, colours stay.
 - [ ] {ts258} **Tab dots** (0.99.16) — GIF tabs with changes (dots): no dot sits on a label; Transform reads in full.
+- [ ] {ts259} **GIF palette like Colour** (0.99.17) — GIF › Colour › Palette: Snap to slider runs None → palettes by year; a palette with variants shows its switch; Dither has Noise / Bayer / Check beside it (greyed on None; hidden on Game Boy / Grey 6-bit / NES); the picture follows.
+- [ ] {ts260} **Debug monitor** (0.99.17) — open it: the window shows all its text; Copy the text copies it all; selecting text stops it refreshing; the Start timeline line lists script / set read / GIFs decoded / first frame.
+- [ ] {ts261} **Optimize label** (0.99.17) — Pool › Optimize (was Fit) still shrinks the GIFs' memory.
+- [ ] {ts262} **Note pictures** (0.99.17) — the Even / Dotted / Triplet switches (LFO, one-shot cycle) are pictures; the tooltips name them.
+

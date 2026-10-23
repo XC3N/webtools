@@ -483,11 +483,11 @@ $('#newEmpty').addEventListener('click', () => {
 // ---- startup: reopen the working session (migrating the pre-sets storage layout) ----
 async function restore(){
   try {
-    await store.open();
+    bootMark('restore starts'); await store.open(); bootMark('store open');
     (await store.all('set:')).forEach(r => sets.set(r.id, r));
     session.setId = ((await store.get('session')) || {}).setId || null;
     if (!sets.has(session.setId)) session.setId = null;
-    const st = JSON.parse(await store.get('state') || 'null');
+    bootMark('sets read'); const st = JSON.parse(await store.get('state') || 'null'); bootMark('state read');
     if (st && (st.v || 1) < 2){                       // pre-sets layout: files under 'pad:<i>'
       for (let i = 0; i < N_KEYPADS; i++){
         const rec = await store.get('pad:' + i);
@@ -502,7 +502,7 @@ async function restore(){
     session.savedSig = curSet() ? contentSig(curSet().snap) : '';
   } catch (e) { toast('Saved session could not be loaded: ' + e.message); }
   finally {
-    bootT.readyAt = Math.round(performance.now()); syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot(); musRestore();
+    bootT.readyAt = Math.round(performance.now()); bootMark('ready'); syncLayerUI(); syncXfUI(); store.ready = true; store.last = snapshot(); musRestore();
     hist.cur = histState(); hist.ready = true;
     $('#saveStat').textContent = '';
     updSetLabel(); gcGifs();

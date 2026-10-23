@@ -40,7 +40,7 @@ function step(){
   if (pending.size || pendingScene || pendingLive !== null) firePending();
   if (rec.wait || rec.stopAt) recTick();
   if (brb.on){ brbTick(); if (now - brbUIt > 100){ brbUIt = now; brbUI(); } }
-  drawFrame(now);
+  drawFrame(now); if (!bootT.first){ bootT.first = 1; bootMark('first frame'); }
   if (uiDue && now >= uiQuiet) flushUI();             // panels a hit or scene change asked for, once the frame is out
   if (rec.wc) wcCapture(now);
   if (!document.hidden && now >= uiQuiet && now - scopeT > 33){ scopeT = now; drawScopes(); }

@@ -11,7 +11,7 @@ const fxGL = (() => {
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x + 1.0, 1.0 - p.y) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }`));
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
-      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 pal[64], palOk[64]; uniform float palN, palD, palLum, palLo, palHi; uniform vec3 swF[8], swT[8]; uniform float swR[8], swK[8]; uniform int swN; varying vec2 uv;
+      uniform sampler2D tex, mtex; uniform vec3 key; uniform float t0, t1sq, span, H, S, V; uniform bool doKey, doHsv, useMask; uniform vec3 pal[64], palOk[64]; uniform float palN, palD, palP, palLum, palLo, palHi; uniform vec3 swF[8], swT[8]; uniform float swR[8], swK[8]; uniform int swN; varying vec2 uv;
       ${OKLAB_GLSL}
       ${PALSNAP_GLSL}
       void main(){
@@ -34,7 +34,7 @@ const fxGL = (() => {
           vec3 r = h < 60.0 ? vec3(C, X, 0.0) : h < 120.0 ? vec3(X, C, 0.0) : h < 180.0 ? vec3(0.0, C, X) : h < 240.0 ? vec3(0.0, X, C) : h < 300.0 ? vec3(X, 0.0, C) : vec3(C, 0.0, X);
           o = floor((r + m) * 255.0 + 0.5) / 255.0;
         }
-        if (palN > 0.5){ if (palHi > palLo) o = clamp((o - palLo) / (palHi - palLo), 0.0, 1.0); o = palPick(o, palD, 1.0, floor(gl_FragCoord.xy)); }   // palette: the nearest of its colours; Dither: Bayer, on the GIF's own pixels (PALSNAP_GLSL)
+        if (palN > 0.5){ if (palHi > palLo) o = clamp((o - palLo) / (palHi - palLo), 0.0, 1.0); o = palPick(o, palD, palP, floor(gl_FragCoord.xy)); }   // palette: the nearest of its colours; Dither: Bayer, on the GIF's own pixels (PALSNAP_GLSL)
         float a = px.a * f;
         gl_FragColor = vec4(o * a, a);
       }`));
@@ -50,7 +50,7 @@ const fxGL = (() => {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);            // mask rows are 1 byte per pixel, any width
-    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swR', 'swK', 'swN', 'pal', 'palOk', 'palN', 'palD', 'palLum', 'palLo', 'palHi'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+    const U = {}; ['key', 't0', 't1sq', 'span', 'H', 'S', 'V', 'doKey', 'doHsv', 'useMask', 'tex', 'mtex', 'swF', 'swT', 'swR', 'swK', 'swN', 'pal', 'palOk', 'palN', 'palD', 'palP', 'palLum', 'palLo', 'palHi'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
     const swF = new Float32Array(24), swT = new Float32Array(24), swR = new Float32Array(8), swK = new Float32Array(8);
     gl.uniform1i(U.tex, 0); gl.uniform1i(U.mtex, 1);
     let lost = false;
@@ -67,7 +67,7 @@ const fxGL = (() => {
         gl.uniform3f(U.key, p.kr, p.kg, p.kb); gl.uniform1f(U.t0, p.t0); gl.uniform1f(U.t1sq, p.t1sq); gl.uniform1f(U.span, p.span);
         gl.uniform1f(U.H, p.H); gl.uniform1f(U.S, p.S); gl.uniform1f(U.V, p.V); gl.uniform1i(U.doKey, p.doKey); gl.uniform1i(U.doHsv, p.doHsv);
         const sw = p.sw || []; swF.fill(0); swT.fill(0); swR.fill(1.5); swK.fill(0); sw.forEach((x, i) => { swF.set(x.slice(0, 3), i * 3); swT.set(x.slice(3, 6), i * 3); swR[i] = x[6] || 1.5; swK[i] = x[7] ? 1 : 0; });
-        if (p.palF){ gl.uniform3fv(U.pal, p.palF); gl.uniform3fv(U.palOk, p.palOk); gl.uniform1f(U.palN, p.palN); gl.uniform1f(U.palD, p.palD); gl.uniform1f(U.palLum, p.palLum || 0); gl.uniform1f(U.palLo, p.palLo || 0); gl.uniform1f(U.palHi, p.palHi || 0); } else gl.uniform1f(U.palN, 0);
+        if (p.palF){ gl.uniform3fv(U.pal, p.palF); gl.uniform3fv(U.palOk, p.palOk); gl.uniform1f(U.palN, p.palN); gl.uniform1f(U.palD, p.palD); gl.uniform1f(U.palP, p.palP ?? 1); gl.uniform1f(U.palLum, p.palLum || 0); gl.uniform1f(U.palLo, p.palLo || 0); gl.uniform1f(U.palHi, p.palHi || 0); } else gl.uniform1f(U.palN, 0);
         gl.uniform3fv(U.swF, swF); gl.uniform3fv(U.swT, swT); gl.uniform1fv(U.swR, swR); gl.uniform1fv(U.swK, swK); gl.uniform1i(U.swN, sw.length);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -189,7 +189,7 @@ function fxParams(g, hsv = hsvOf(g)){
   const t0 = g.key.tol * KEY_MAX, t1 = t0 + g.key.soft * KEY_MAX + 0.5;
   return { doKey: g.key.on, doHsv: hsv.h !== 0 || hsv.s !== 1 || hsv.v !== 1, kr: g.key.color[0], kg: g.key.color[1], kb: g.key.color[2],
            region: g.key.region || 'all', seed: g.key.seed || null,
-           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palOk: Array.from(FX_PALS[g.pal.i].ok), palN: FX_PALS[g.pal.i].c.length, palD: palNoDith(g.pal.i) ? 0 : g.pal.d || 0, palLum: palGB(g.pal.i) ? 1 : 0, ...(g.pal.fit ? (([lo, hi]) => ({ palLo: lo, palHi: hi }))(gifRange(g)) : {}) } : {}), sw: (swapOn(g) ? g.swap.filter(x => !x.off) : []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
+           t0, t1sq: t1 * t1, span: t1 - t0, H: hsv.h, S: hsv.s, V: hsv.v, ...(palOn(g) ? { palF: Array.from(FX_PALS[g.pal.i].f), palOk: Array.from(FX_PALS[g.pal.i].ok), palN: FX_PALS[g.pal.i].c.length, palD: palNoDith(g.pal.i) ? 0 : g.pal.d || 0, palP: palGB(g.pal.i) ? 1 : g.pal.p ?? 1, palLum: palGB(g.pal.i) ? 1 : 0, ...(g.pal.fit ? (([lo, hi]) => ({ palLo: lo, palHi: hi }))(gifRange(g)) : {}) } : {}), sw: (swapOn(g) ? g.swap.filter(x => !x.off) : []).slice(0, SWAP_MAX).map(x => [...x.from, ...x.to, x.tol || 1.5, x.clear ? 1 : 0]) };   // tol: how close a pixel must be (covers near-identical colours)
 }
 // Fit range (0.99.12): the GIF's own darkest and brightest (2nd / 98th percentile of its brightness, sampled from up to 5 frames), cached on its media
 function gifRange(g){
