@@ -420,4 +420,5 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts262} **Note pictures** (0.99.17) — the Even / Dotted / Triplet switches (LFO, one-shot cycle) are pictures; the tooltips name them.
 - [ ] {ts263} **GIF blend, any layer** (0.99.18) — select a GIF on Midground / Foreground: Blend (left of its picture) Difference / Multiply …: it blends with the GIFs under it on its layer; Normal restores it; saved with the set and scenes; the Background's own select still works.
 - [ ] {ts264} **Display options left of the picture** (0.99.18) — Opacity, Blend, Smooth and Bypass FX sit left of the GIF's picture for every tab; greyed with nothing selected; nothing moves when switching tabs.
+- [ ] {ts265} **Repeat graph points** (0.99.19) — One shot with Repeat shorter than Fade in + Hold + Fade out: the graph's dots all sit on the curve (the Fade out dot is gone when the curve never gets there); a Repeat longer than all three: the three dots as before; dragging a dot still sets its time.
 

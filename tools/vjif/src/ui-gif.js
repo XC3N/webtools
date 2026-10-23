@@ -349,9 +349,12 @@ function drawLfoScope(g){
 // GIF › Play › Trigger's graph: Fade in, Hold (when it's a time) and Fade out drag like an effect's envelope points (0.89)
 let tEnvGeo = null, tEnvDrag = null;
 const T_ENV_WORDS = { a: 'Fade in: how long the GIF takes to appear on a hit', h: 'Hold: how long it stays fully on', r: 'Fade out: how long it takes to disappear' };
+// 0.99.19: with Repeat the curve restarts every so often: a point sits on the curve where it is reached, and one the curve never reaches (a Repeat shorter than it) is left out
+const tEnvPts = () => { const G = tEnvGeo, X = b => b / G.span * G.w, ev = G.g.env.every || 0;
+  return [['a', G.a], ...(G.editH ? [['h', G.a + G.hold]] : []), ['r', G.a + G.hold + G.r]].filter(([, t]) => !ev || t < ev - 1e-6).map(([k, t]) => [k, X(t), G.y(G.lv(t))]); };
 const tEnvEd = envEditor($('#tScope'), {
   on: () => { const g = curGif(); return !!(g && g.trig === 'fade' && tEnvGeo && tEnvGeo.g === g); },
-  pts: () => { const G = tEnvGeo, X = b => b / G.span * G.w; return [['a', X(G.a), G.top], ...(G.editH ? [['h', X(G.a + G.hold), G.top]] : []), ['r', X(G.a + G.hold + G.r), G.bot]]; },
+  pts: () => tEnvPts(),
   reach: () => 14 * (devicePixelRatio || 1),
   begin: k => { tEnvDrag = { k, span: tEnvGeo.span }; },
   move: (k, px) => { const g = curGif(), G = tEnvGeo; if (!g || !G) return; const b = px / G.w * G.span;
@@ -374,7 +377,7 @@ function drawEnvScope(g){
   // which tilted the fade in on every retrigger)
   const skipOf = from => { if (!(from > 0 && T.a > 0)) return 0; let lo = 0, hi = 1; for (let k = 0; k < 20; k++){ const m = (lo + hi) / 2; if (ease(g, m) < from) lo = m; else hi = m; } return lo * T.a; };
   const y = scopeTrace(x, w, h, d, u => envLevel(shape, g, u * span), g.trig === 'fade');
-  tEnvGeo = { g, span, w, a: T.a, hold, r: T.r, top: y(1), bot: y(0), editH: !E.gate && E.len !== 'gif' };   // for the points (0.89: they drag, like the other envelopes)
+  tEnvGeo = { g, span, w, a: T.a, hold, r: T.r, top: y(1), bot: y(0), y, lv: t => envLevel(shape, g, t), editH: !E.gate && E.len !== 'gif' };   // for the points (0.89: they drag, like the other envelopes)
   tEnvEd.draw(x, d);
   const ce = c && envOf(c, g, clock.beat);
   if (g.trig === 'fade' && ce){

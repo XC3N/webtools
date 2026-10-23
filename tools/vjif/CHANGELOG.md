@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.19 — 2026/10/23
+
+- Play › Trigger graph with Repeat: its points (Fade in, Hold, Fade out) sit on the curve where it reaches them, and a point the curve never reaches (a Repeat shorter than it) is left out, so no dot floats off the curve at the bottom.
+
 ## 0.99.18 — 2026/10/23
 
 - Every GIF can have its own blend mode on any layer (it was Background only): the GIF is blended with the other GIFs under it on its layer, then the layer's own blend applies. Set it in the new block left of the GIF picture.
