@@ -220,12 +220,12 @@ function recStart(mime, beat = clock.beat){
   mr.ondataavailable = e => { if (!e.data || !e.data.size) return; rec.bytes += e.data.size;
     if (writer){ const b = e.data; pend = pend.then(() => writer.write(b)).catch(err => toast('Writing the recording failed: ' + err.message)); }
     else chunks.push(e.data); };
-  mr.onstop = async () => {
+  mr.onstop = async () => { try {
     stream.getTracks().forEach(t => t.stop()); if (audio) audio.getTracks().forEach(t => t.stop());
     if (writer){ await pend; try { await writer.close(); toast2(`Recording saved: ${name}`); } catch (e) { toast('Saving the recording failed: ' + e.message); } if (rec.writer === writer) rec.writer = null; }
     else { const blob = new Blob(chunks, { type: mime.split(';')[0] });
       saveFile(blob, name); toast2(`Recording saved: ${name} (downloads folder)`); }
-  };
+  } finally { rec.fin = 0; recUI(); } };   // (0.99.16: Finalising ends here)
   mr.start(1000); rec.mr = mr; rec.t0 = performance.now(); redraw.all = true; recUI();
 }
 // ---- MP4 through WebCodecs: frames from the master canvas at a steady frame rate (Settings), sound from the chosen input ----
@@ -336,7 +336,7 @@ function wcCapture(now){
   }
 }
 async function wcStop(C){
-  if (C.stopping) return; C.stopping = true; if (rec.wc === C) rec.wc = null;
+  if (C.stopping) return; C.stopping = true; if (rec.wc === C) rec.wc = null; rec.fin = performance.now(); recUI();   // (0.99.16: 'Finalising' shows on the Rec button until the file is written)
   try {
     if (C.cap) C.cap.stop();
     if (C.audio) C.audio.getTracks().forEach(t => t.stop());
@@ -347,14 +347,15 @@ async function wcStop(C){
     if (C.writer){ await C.writer.close(); toast2(`Recording saved: ${C.name}`); if (rec.writer === C.writer) rec.writer = null; }
     else { const blob = new Blob([C.target.buffer], { type: 'video/mp4' });
       saveFile(blob, C.name); toast2(`Recording saved: ${C.name} (downloads folder)`); }
-  } catch (e) { toast('Saving the recording failed: ' + e.message); }
+  } catch (e) { toast('Saving the recording failed: ' + e.message); } finally { rec.fin = 0; recUI(); }
 }
-function recStop(){ if (!rec.mr) return; const mr = rec.mr; rec.mr = null; rec.stopAt = 0; mr.stop(); recUI(); }
+function recStop(){ if (!rec.mr) return; const mr = rec.mr; rec.mr = null; rec.stopAt = 0; rec.fin = performance.now(); mr.stop(); recUI(); }
 function recUI(){
   const b = $('#recBtn'); $('#recLed').classList.toggle('on', !!rec.mr); $('#recLed').classList.toggle('wait', !!rec.wait);
   if (rec.mr){ const t = (performance.now() - rec.t0) / 1000, mb = rec.bytes / 1048576;
     $('#recTxt').textContent = rec.stopAt ? `${Math.max(1, Math.ceil((rec.stopAt - clock.beat) / 4))} bar${Math.ceil((rec.stopAt - clock.beat) / 4) > 1 ? 's' : ''}` : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
     b.title = `Recording to ${rec.name}${rec.writer ? '' : ' (kept in memory until you stop)'} — ${mb.toFixed(0)} MB so far · click to stop`; }
+  else if (rec.fin){ const t = (performance.now() - rec.fin) / 1000; $('#recTxt').textContent = 'Save…'; b.title = `Finalising the file (${Math.floor(t)} s so far): it is saved once this ends, a long take takes a while`; $('#recLed').classList.add('wait'); }
   else { const left = rec.wait ? Math.ceil((rec.wait.beat - clock.beat) / 4 - 1e-9) : 0;
     $('#recTxt').textContent = rec.wait ? (rec.wait.play ? 'Play…' : recCount > 0 && left > 0 ? 'In ' + left : 'Wait') : 'Rec';
     b.title = rec.wait ? rec.wait.play ? 'Waiting for the music player: the take starts when you press its Play — click to cancel' : (recCount > 0 ? `Count-in: recording starts in ${left} bar${left > 1 ? 's' : ''} — click to cancel` : 'Starts recording on the next bar — click to cancel') : `Record the output to a video file (${WC_NAMES[recCodec]} ${recFmt.toUpperCase()}, ${CW}×${CH}, ${recFps} fps, ${recMbps} Mb/s — Settings › Recording). Recording starts on the next bar`; }
@@ -372,7 +373,7 @@ function recTick(){
   }
   if (!back) rec.lastFwd = b;
 }
-setInterval(() => { if (rec.mr || rec.wait) recUI(); }, 250);   // the time, the bars left, the count-in
+setInterval(() => { if (rec.mr || rec.wait || rec.fin) recUI(); }, 250);   // the time, the bars left, the count-in
 $('#recBtn').addEventListener('click', recToggle);
 $('#fsBtn').addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => toast('Full screen was refused by the browser')));
 document.addEventListener('fullscreenchange', () => $('#fsBtn').classList.toggle('on', !!document.fullscreenElement));

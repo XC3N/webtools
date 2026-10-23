@@ -18,7 +18,7 @@ async def main():
       $('#gLoop [data-v=pingpong]').click(); const a = g.beats; $('#gLoop [data-v=loop]').click(); return [a, g.beats]; })()""")
     print('pp', r); assert r == [8, 4], r
     # Esc
-    await pg.keyboard.press('Escape')
+    await pg.keyboard.press('Escape'); await pg.wait_for_function("$('#gifSettings').classList.contains('disabled')", timeout=15000)
     r = await pg.evaluate("[noSel, curGif(), $('#gifSettings').classList.contains('disabled')]")
     print('esc', r); assert r == [True, None, True], r
     await pg.evaluate(f"selectPad({k})")

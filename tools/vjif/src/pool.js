@@ -107,7 +107,7 @@ function makeInst(m, saved = null){
   return g;
 }
 // drop shadow under a GIF: offset (output px), blur, opacity, colour — off by default
-const SHADOW_DEF = { on: false, x: 8, y: 8, blur: 12, op: 0.6, col: '#000000', cut: 0, soft: 0.2, turn: false, skew: 0, floor: false };   // cut: the top part of the shadow taken away (0–0.95 of the GIF's height); soft: how gradually it fades in there (share of the height)
+const SHADOW_DEF = { on: false, x: 8, y: 8, blur: 12, op: 0.6, col: '#000000', cut: 0, soft: 0.2, turn: false, skew: 0, floor: false, scale: 1 };   // cut: the top part of the shadow taken away (0–0.95 of the GIF's height); soft: how gradually it fades in there (share of the height)
 const gifSettings = g => JSON.parse(JSON.stringify(Object.fromEntries(GIF_KEYS.map(k => [k, g[k]]))));
 // an independent copy (same frames, own settings), with its colour work started
 function cloneInst(g){ const c = makeInst(g.media, gifSettings(g)); c.seed = g.seed ?? g.uid; if (g.masks) c.masks = g.masks; if (fxActive(c)) applyFx(c); return c; }

@@ -4,6 +4,17 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.16 — 2026/10/23
+
+- GIF › FX stacks (Glitch, Codec, CRT) behave like the scene FX: a click on a lit style selects it (underlined, the others dim), the next click takes it out.
+- One shot › Repeat has an on/off switch that keeps its count.
+- Background slots: the Trigger section is greyed (nothing triggers them).
+- Mask painting: a Show slider (the mask tint's strength) beside Size and Soft; while Size / Soft is held, the brush shows at the picture's centre at its true size and softness.
+- Shadow › Scale: grows or shrinks the shadow around the GIF's centre.
+- Rec: the button shows 'Save…' while the file is finalised.
+- CRT › PAY-TV: an Invert switch (the now-and-then negative field; on as before).
+- GIF tabs: room each side so the changed-dot doesn't sit on a label.
+
 ## 0.99.15 — 2026/10/23
 
 - Esc, with nothing to cancel, deselects every GIF (the GIF panel greys out; clicking a pad or chip selects again).

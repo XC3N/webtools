@@ -173,8 +173,8 @@ function drawClip(ctx, c, g, img){
   const S = g.shadow, shOn = S && S.on && !c.tile && S.op > 0;
   let ox = S ? S.x : 0, oy = S ? S.y : 0; if (shOn && S.turn && c.rot){ const r = c.rot * Math.PI / 180, cs = Math.cos(r), sn = Math.sin(r); [ox, oy] = [ox * cs - oy * sn, ox * sn + oy * cs]; }   // Turn: the offset turns with the GIF   // drop shadow: offsets are in output pixels (the light doesn't turn with the GIF)
   const sk = shOn ? S.skew || 0 : 0;   // Skew (0.96): the shadow slanted from the GIF's bottom edge
-  const fl = shOn && !!S.floor;   // Floor (0.99.5): flipped down from the bottom edge, onto the ground in front
-  if (shOn && (S.cut > 0 || sk || fl)){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
+  const fl = shOn && !!S.floor, sc = shOn ? S.scale ?? 1 : 1;   // Scale (0.99.16): the shadow grown / shrunk around the GIF's centre   // Floor (0.99.5): flipped down from the bottom edge, onto the ground in front
+  if (shOn && (S.cut > 0 || sk || fl || sc !== 1)){                            // cropped: the shadow alone first (its GIF drawn far off, the offset bringing the shadow back), clipped, then the GIF without one
     const M = ctx.getTransform(), I = M.inverse(), vx = ox * dk, vy = oy * dk, OFF = 1e5;
     // where the cut runs: Turn on, across the GIF's own up / down; Turn off, level on screen across the GIF's outline as it stands
     // (so a turned GIF's shadow still only shows at its bottom: it sits on the layer)
@@ -182,7 +182,8 @@ function drawClip(ctx, c, g, img){
     if (scr){ const ys = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => M.b * u * bw / 2 + M.d * v * bh / 2 + M.f), top = Math.min(...ys), hh = Math.max(...ys) - top;
       y0 = top + S.cut * hh + vy; sb = (S.soft ?? 0) * hh; }
     else { const ly = I.b * vx + I.d * vy; y0 = -bh/2 + S.cut * bh + ly; sb = (S.soft ?? 0) * bh; }
-    const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF; x.shadowOffsetY = vy - M.b * OFF;
+    const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF * sc; x.shadowOffsetY = vy - M.b * OFF * sc;
+      if (sc !== 1) x.scale(sc, sc);
       if (sk || fl){ x.translate(0, bh / 2); if (sk) x.transform(1, 0, -sk, 1, 0, 0); if (fl) x.scale(1, -1); x.translate(0, -bh / 2); }   // (a shear keeps the first column: the far-off trick's offset still lands)
       x.translate(OFF, 0); drawPlain(x, c, img, bw, bh); };
     if (!(S.cut > 0)){ ctx.save(); shadowOnly(ctx); ctx.restore(); }   // skewed or on the floor, not cropped

@@ -6,7 +6,7 @@ function fxTileHTML(i, key){ return `<div class="fxp" data-i="${i}"><span class=
 // click / press effects — each one toggles in or out of that preset. The preset editor lists them with ×.
 let heldPre = -1, fxDrag = null;
 const FX_DRAG_WAIT = 120;   // ms a tile press waits (held still) before it plays: time for a drag to show itself
-const fxEntry = i => ({ ...(fxCfg[i].mod ? { mod: JSON.parse(JSON.stringify(fxCfg[i].mod)) } : {}), amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1, ...(fxCfg[i].pamt ? { pamt: { ...fxCfg[i].pamt } } : {}) });   // an effect as a preset holds it
+const fxEntry = i => ({ ...(fxCfg[i].mod ? { mod: JSON.parse(JSON.stringify(fxCfg[i].mod)) } : {}), amt: fxCfg[i].amt, rate: fxCfg[i].rate, style: fxCfg[i].style, target: fxCfg[i].target, size: fxCfg[i].size, pal: fxCfg[i].pal || 0, kz: fxCfg[i].kz || 1, fbk: fxCfg[i].fbk ?? 0.7, vdrop: fxCfg[i].vdrop ?? 1, pneg: fxCfg[i].pneg ?? 1, dith: fxCfg[i].dith || 0, dpat: fxCfg[i].dpat ?? 0, dots: fxCfg[i].dots || 0, ovs: fxCfg[i].ovs ?? 1, ...(fxCfg[i].pamt ? { pamt: { ...fxCfg[i].pamt } } : {}) });   // an effect as a preset holds it
 function togglePreFx(k, i){
   const P = fxPre[k];
   if (P.fx[i]) delete P.fx[i]; else P.fx[i] = fxEntry(i);
@@ -213,7 +213,7 @@ function syncFxUI0(){
     const za = sizeAlt(d, C.style || d.styles[0][0], C); $('#fxSizeRow label').textContent = za ? za.label : 'Size';
     $('#fxSizeSeg').hidden = !(za && za.seg); $('#fxSize').hidden = $('#fxSize').nextElementSibling.hidden = !!(za && za.seg);   // a few fixed choices: a switch instead of the slider
     $('#fxSizeSeg').classList.toggle('one', !!(za && za.toggle)); $('#fxSizeRow').classList.toggle('onerow', !!(za && za.toggle));   // one toggle: its label right-aligned against it
-    if (za && za.toggle){ const on = (C[za.key] ?? za.def) !== 0; setHTML($('#fxSizeSeg'), `<button data-v="${on ? 0 : 2}" class="${on ? 'on' : ''}" title="${za.title()}">${za.icon}</button>`); }   // one toggle: the button carries the value a click sets
+    if (za && za.toggle){ const on = (C[za.key] ?? za.def) !== 0; setHTML($('#fxSizeSeg'), `<button data-v="${on ? 0 : za.list[za.list.length - 1][0]}" class="${on ? 'on' : ''}" title="${za.title()}">${za.icon}</button>`); }   // one toggle: the button carries the value a click sets
     else if (za && za.seg){ setHTML($('#fxSizeSeg'), za.list.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('')); segSet('#fxSizeSeg', String(C[za.key] ?? za.def)); }
     if (za){ const L = za.list, ai = optIdx(L, C[za.key] ?? za.def); $('#fxSize').max = L.length - 1; $('#fxSize').value = ai; $('#fxSize').nextElementSibling.textContent = L[ai][1];
       $('#fxSize').dataset.def = optIdx(L, za.def); $('#fxSizeRow').title = za.title(); $('#fxSizeRow').classList.remove('dimmed'); }
