@@ -11,5 +11,10 @@ async def main():
       for (const ev of [0, 8, 4, 1]){ g.env.every = ev; drawEnvScope(g); out.push(tEnvPts().map(p => p[0]).join('')); }
       drawEnvScope(g); g.env.every = 8; drawEnvScope(g); const pr = tEnvPts().find(p => p[0] === 'h'); out.push(Math.abs(pr[2] - tEnvGeo.top) < 0.5); return out; })()""")
     print(r); assert r == ['ahr', 'ah', 'a', '', True], r
+    r = await pg.evaluate("""(() => { const g = curGif(), c = clipOf(selPad) || { pad: 0 }; c.pad = 0; g.trig = 'fade'; g.env.gate = false; g.env.every = 1; c.hitBeat = 0; c.env = { t0: 0, from: 0, rel: null, noGate: false };
+      const A = { ...lfoDef('x'), on: true, shape: 'sh', hold: true, per: 0.25, sync: 'clock' }, v = b => lfoUnit(A, c, 7, b);
+      const rep = [v(0.5), v(1.5), v(2.5)]; g.env.every = 0; const off = [v(0.5), v(1.5), v(2.5)];
+      return [new Set(rep).size === 3, new Set(off).size === 1]; })()""")
+    print('S&H hold + Repeat', r); assert r == [True, True], r
     assert not errs, errs; await b.close(); print('ok')
 asyncio.run(main())

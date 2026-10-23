@@ -4,6 +4,12 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.20 — 2026/10/23
+
+- One shot › Repeat: its label is back in front of the slider and the on / off switch sits after it (it had become part of the slider).
+- Play › Trigger graph with Repeat: the dot travels along all the repeats from the hit (it stayed in the first one) and wraps at the end.
+- LFO Hold (sample and hold at each hit): a One shot Repeat counts as a hit, so each repeat samples a new value (it stayed on the first).
+
 ## 0.99.19 — 2026/10/23
 
 - Play › Trigger graph with Repeat: its points (Fade in, Hold, Fade out) sit on the curve where it reaches them, and a point the curve never reaches (a Repeat shorter than it) is left out, so no dot floats off the curve at the bottom.

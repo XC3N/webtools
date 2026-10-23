@@ -207,7 +207,8 @@ function lfoEnv(A, c, beat){
 function lfoUnit(A, c, seed, beat){
   const m = A.em || 'off';
   if (m === 'only') return lfoEnv(A, c, beat);
-  const w = lfoShape(A, A.hold ? lfoPosT(A, c.hitBeat ?? c.startBeat ?? 0) : lfoPos(A, c), seed);   // Hold: the value the LFO had at the last pad hit, kept until the next one (on the bar's clock, so each hit lands somewhere new)
+  const g = A.hold && pads[c.pad] && pads[c.pad].gif, RE = g && g.trig === 'fade' && g.env.every && !g.env.gate ? envOf(c, g, beat) : null;   // 0.99.20: a One shot Repeat is a hit of its own: Hold samples again at each repeat
+  const w = lfoShape(A, A.hold ? lfoPosT(A, RE && RE.auto ? RE.t0 : c.hitBeat ?? c.startBeat ?? 0) : lfoPos(A, c), seed);   // Hold: the value the LFO had at the last pad hit, kept until the next one (on the bar's clock, so each hit lands somewhere new)
   return m === 'depth' ? w * lfoEnv(A, c, beat) : w;
 }
 let lfoPeek = null;   // { g, k, end: 'min' | 'max', t }: set while Min / Max are dragged in GIF › Auto

@@ -381,7 +381,9 @@ function drawEnvScope(g){
   tEnvEd.draw(x, d);
   const ce = c && envOf(c, g, clock.beat);
   if (g.trig === 'fade' && ce){
-    const lv = envLevel(c, g, clock.beat); let t = clock.beat - ce.t0 + (tEnvDrag ? 0 : skipOf(ce.from || 0));   // (0.99.15: a Repeat's carried-on level counts too; its envelope is a new object each time, so the dot sat at the start of the curve)
+    const rep = !E.gate && E.every;   // 0.99.20: with Repeat the graph shows the repeats one after another: the dot travels through all of them (from the hit), and wraps at the end
+    let lv = envLevel(c, g, clock.beat), t = clock.beat - ce.t0 + (tEnvDrag ? 0 : skipOf(ce.from || 0));
+    if (rep){ t = (clock.beat - (c.env ? c.env.t0 : ce.t0)) % span; lv = envLevel(shape, g, t); }   // (0.99.15: a Repeat's carried-on level counts too; its envelope is a new object each time, so the dot sat at the start of the curve)
     if (E.gate && !c.env.noGate){ const rs = T.a + hold;   // Hit › Hold: the graph keeps its shape; while the pad is held the dot waits where the fade out starts,
       t = c.env.rel === null ? Math.min(t, rs) : rs + Math.max(0, clock.beat - c.env.rel); }   // and once let go it runs down the fade out from there
     if (lv > 0) scopeDot(x, Math.min(w - 3 * d, t / span * w), y(lv), d);
