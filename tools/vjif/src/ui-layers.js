@@ -191,7 +191,9 @@ const XF_MARK = ['fit', 'flipX', 'flipY', 'tile'];   // only what the preview ca
 function markXf(c = selClip()){ const d = newXf(), m = !!c && (XF_MARK.some(k => (c[k] ?? d[k]) !== d[k]) || (c.alpha ?? 1) !== 1); $('#xfHead').classList.toggle('mod', m); $('#gTabs [data-v=xf]').classList.toggle('act', m); }   // (0.88: on the Transform tab, like Auto's)
 function syncXfUI(){
   const c = selClip();
-  $('#xfPanel').classList.toggle('disabled', !c);
+  $('#xfPanel').classList.toggle('disabled', !c); $('#gQuick').classList.toggle('disabled', !c);
+  if (!$('#gBlend').options.length) $('#gBlend').innerHTML = BLENDS.map(b => `<option value="${b[0]}">${b[1]}</option>`).join('');
+  $('#gBlend').value = (c && c.blend) || 'source-over';
   $('#xfTag').textContent = c ? `${LNAMES[target]} · ${pads[c.pad].label}` : `${LNAMES[target]} · nothing selected`; $('#xfTag').title = c && pads[c.pad].gif ? pads[c.pad].gif.name : '';
   if (!c){ markXf(null);                           // nothing selected: show neutral values, not the last GIF's
     XF.forEach(([id]) => { const el = $(id); el.value = el.dataset.def ?? 0; el.nextElementSibling.textContent = '—'; el.nextElementSibling.classList.remove('mod'); });
@@ -439,3 +441,5 @@ function swapLayers(a, b){
   K.forEach(k => { t[k] = A[k]; A[k] = B[k]; B[k] = t[k]; });
   if (maskEd) maskClose(); redraw.all = true; syncLayerUI(); syncXfUI(); commit(); toast2(`${LNAMES[a]} and ${LNAMES[b]} swapped — Ctrl+Z swaps them back`);
 }
+
+$('#gBlend').addEventListener('change', e => { const c = selClip(); if (!c) return; c.blend = e.target.value; redraw.all = true; if (c.blend === 'source-over') delete c.blend; syncLayerUI(); e.target.blur(); });   // 0.99.17: any layer's GIF has its own blend (was Background only)

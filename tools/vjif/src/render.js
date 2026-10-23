@@ -304,7 +304,7 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], ove
   let masked = false;
   for (let { L, items } of list){
     if (MASK_BLENDS.has(L.blend)) masked = true;
-    const sub = L.i === BG_LAYER && items.some(it => (it.e.blend && it.e.blend !== 'source-over') || (it.e.mask && it.e.mask.on));   // Background's GIFs as sublayers, each with its own blend (0.94) and mask (0.99.4)
+    const sub = items.some(it => (it.e.blend && it.e.blend !== 'source-over') || (L.i === BG_LAYER && it.e.mask && it.e.mask.on));   // Background's GIFs as sublayers, each with its own blend (0.94) and mask (0.99.4)
     const drawAll = (t, its) => { for (const { g, e, fi } of its){ if (sub) t.globalCompositeOperation = e.blend || 'source-over';
         if (sub && e.mask && e.mask.on){ const m = cmbuf; m.setTransform(RS, 0, 0, RS, 0, 0); m.globalAlpha = 1; m.globalCompositeOperation = 'source-over'; m.clearRect(0, 0, W, H);   // its own mask: cut alone, so what's under it shows through
           drawClipFx(m, e, g, fxImage(g, fi, e)); applyMask(m, e.mask); t.save(); t.setTransform(1, 0, 0, 1, 0, 0); t.drawImage(m.canvas, 0, 0); t.restore(); }
@@ -326,7 +326,7 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], ove
       continue;
     }
     const vis = items.filter(it => onScreen(it.e, it.g));
-    if (!vis.length && sub && L.fillOn && L.fill && !over && !MK){ ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; continue; }
+    if (!vis.length && sub && L.i === BG_LAYER && L.fillOn && L.fill && !over && !MK){ ctx.globalAlpha = L.opacity; ctx.fillStyle = L.fill; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; continue; }
     if (!vis.length && !(MK && L.i === 0 && L.fillOn && L.fill && !over)) continue;
     ctx.save(); ctx.globalAlpha = L.opacity; ctx.globalCompositeOperation = L.blend;
     if (MK){                                       // masked: flatten (the Background's colour too), cut, then blend once
@@ -339,7 +339,7 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], ove
       for (const { g, e, fi } of vis) drawClipFx(ctx, e, g, fxImage(g, fi, e));
     } else {                                       // several: flatten into the layer buffer, then blend once
       const b = lbufs[L.i]; b.setTransform(RS, 0, 0, RS, 0, 0); b.clearRect(0, 0, W, H);
-      if (sub && L.fillOn && L.fill && !over){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }   // the GIFs blend with the colour too
+      if (sub && L.i === BG_LAYER && L.fillOn && L.fill && !over){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }   // the GIFs blend with the colour too
       drawAll(b, vis);
       ctx.drawImage(b.canvas, 0, 0, W, H);
     }

@@ -482,7 +482,7 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #helpPanel .keys{column-gap:0}#helpPanel .keys dt{display:flex;align-items:baseline;gap:8px;padding-right:10px}#helpPanel .keys dt::after{content:'';flex:1;min-width:10px;border-bottom:1px dotted var(--edge);transform:translateY(-3px)}   /* a leader from each key to its description */
 #helpPanel .khead{display:flex;align-items:baseline;gap:10px}#helpPanel .khead::after{content:'';flex:1;border-bottom:1px solid var(--edge);transform:translateY(-3px)}   /* a section title rules out to the box's edge */
 #fxSizeRow.onerow{grid-template-columns:minmax(0,1fr) auto!important}#fxSizeRow.onerow>label{text-align:right;justify-self:end}#fxSizeRow.onerow>#fxSizeSeg{grid-column:2;grid-row:1}   /* Shake › Edges: the word against its button (0.89) */
-#gOpRow{margin-top:10px;padding-top:8px;border-top:1px solid var(--edge)}#gSmoothRow{display:flex;justify-content:space-between;gap:12px;margin-top:6px}#gSmoothRow .twotog{display:flex;align-items:center;gap:8px}   /* 0.95: Opacity (from Transform), then Smooth scaling and Bypass FX on one line */   /* Smooth scaling: no section, after the last one (folding Shadow doesn't hide it) */
+#gSmoothRow{display:flex;justify-content:space-between;gap:8px}#gSmoothRow .twotog{display:flex;align-items:center;gap:6px}   /* 0.95: Opacity (from Transform), then Smooth scaling and Bypass FX on one line */   /* Smooth scaling: no section, after the last one (folding Shadow doesn't hide it) */
 #poolBtn.drop{outline:2px dashed var(--sig);outline-offset:-2px}   /* files over the Pool button: they go to the pool (0.90: the same dashed frame as a pad or scene taking a drop) */
 .layer.masking>#maskBar{align-content:start}#maskBar .mpop{width:54px}#maskBar .mpop output{font-size:10px;white-space:nowrap}   /* 0.89: one row; the pop-up wide enough for "400 px" */
 #layers .clips>.chip,#layers .clips>.bgslot{flex:0 0 calc((100% - 15px) / 6);min-width:0;width:auto}   /* six to a row, filled or empty, always the same size (0.89) */
@@ -541,3 +541,6 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 
 #gPalVar{display:flex;height:22px}#gPalVar button{flex:1;padding:0 4px;font-size:10px;min-width:0}#gPalVar .sht{display:none}#gPalVarRow[hidden]{display:none}#gPalPat[hidden]{display:none}
 #gPalDRow .seg button{padding:0}   /* 0.99.17: GIF › Palette: the same Snap to slider, variants and dither pattern as the Colour effect */
+
+#gQuick{position:absolute;top:44px;left:12px;right:108px;display:grid;gap:3px}#gQuick .field{margin:0;min-height:0;height:20px}#gQuick select{height:22px;font-size:11px}   /* 0.99.17: this GIF's own display options, left of its picture: Opacity, Blend, Smooth, Bypass FX */
+#gQuick.disabled{opacity:.35;pointer-events:none}

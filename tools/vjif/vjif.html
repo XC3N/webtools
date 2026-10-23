@@ -77,6 +77,11 @@
 <aside id="side" class="panel">
   <canvas id="gPrev" width="112" height="112" title="The selected GIF: its first frame"></canvas>
   <h2>GIF<span id="gifName" class="tag"></span><span class="line"></span><button id="gText" hidden title="Change this text (its settings are kept)">Edit text</button></h2>
+  <div id="gQuick" class="disabled">
+    <div class="field" id="gOpRow" title="Opacity of this placement of the GIF (on its layer)"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
+    <div class="field" id="gBlRow" title="Blend of this GIF with what is under it on its layer (the layer's own blend applies after)"><label for="gBlend">Blend</label><select id="gBlend" class="span"></select></div>
+    <div id="gSmoothRow"><span class="twotog"><label for="gSmooth" title="Smooth when scaled (off: crisp pixels)">Smooth</label><label class="tog" title="Smooth when scaled (off: crisp pixels)"><input type="checkbox" id="gSmooth" data-def="1"></label></span><span class="twotog"><label for="gNoFx" title="Bypass layer effects (effects on All still apply)">Bypass FX</label><label class="tog" title="On: its layer's effects leave it alone (effects on All still apply)"><input type="checkbox" id="gNoFx" data-def="0"></label></span></div>
+  </div>
   <div id="gifSettings" class="disabled">
     <div class="seg tabs" id="gTabs"><button data-v="xf" title="Placement on its layer: position, size, turn, opacity, flips, crop">Transform</button><button data-v="play" class="on" title="How it plays: loop, speed, frames, trigger">Play</button><button data-v="colour" title="How the GIF shows: smoothing, key, colour, palette, shadow, swaps">Display</button><button data-v="gfx" title="This GIF's own effects: they run on it alone, before its layer's effects">FX</button><button data-v="auto" title="Automate placement, opacity and colour with LFOs">Auto</button></div>
     <div id="gPanes">
@@ -163,8 +168,6 @@
         <div class="field"><label for="shO">Opacity</label><input id="shO" type="range" data-def="0.6" data-pct min="0" max="1" step="0.01"><output></output></div>
         <div class="field"><label for="shC" title="Cut: take away the top of the shadow">Crop</label><input id="shC" type="range" data-def="0" min="0" max="0.95" step="0.01" title="Cut: take away the top of the shadow"><output></output></div>
         <div class="field"><label for="shS" title="Soft: how gradually the cut fades in">Soft</label><input id="shS" type="range" data-def="0.2" min="0" max="0.6" step="0.01" title="Soft: how gradually the cut fades in"><output></output></div>
-        <div class="field tkeep nofold" id="gOpRow" title="Opacity of this placement of the GIF (on its layer)"><label for="xO">Opacity</label><input id="xO" type="range" data-def="1" data-pct min="0" max="1" step="0.01"><output></output></div>
-        <div class="tkeep nofold" id="gSmoothRow"><span class="twotog"><label for="gSmooth" title="Smooth when scaled (off: crisp pixels)">Smooth scaling</label><label class="tog" title="Smooth when scaled (off: crisp pixels)"><input type="checkbox" id="gSmooth" data-def="1"></label></span><span class="twotog"><label for="gNoFx" title="Bypass layer effects (effects on All still apply)">Bypass FX</label><label class="tog" title="On: its layer's effects leave it alone (effects on All still apply)"><input type="checkbox" id="gNoFx" data-def="0"></label></span></div>
       </div>
       <div data-pane="auto" class="off">
         <div class="seg grid6" id="aTgt" title="What the LFO moves (touching a setting switches its LFO on)"></div>

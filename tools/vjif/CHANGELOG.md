@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.18 — 2026/10/23
+
+- Every GIF can have its own blend mode on any layer (it was Background only): the GIF is blended with the other GIFs under it on its layer, then the layer's own blend applies. Set it in the new block left of the GIF picture.
+- That block holds the GIF's display options: Opacity, Blend, Smooth scaling and Bypass FX (moved from GIF › Display; no layout shift).
+
 ## 0.99.17 — 2026/10/23
 
 - GIF › Colour › Palette now matches the Colour effect: a Snap to slider (None, then the palettes by year), the palette's variants as a switch, and Dither with its pattern switch (Noise / Bayer / Check; Bayer as before).

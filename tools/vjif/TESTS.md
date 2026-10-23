@@ -418,4 +418,6 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts260} **Debug monitor** (0.99.17) — open it: the window shows all its text; Copy the text copies it all; selecting text stops it refreshing; the Start timeline line lists script / set read / GIFs decoded / first frame.
 - [ ] {ts261} **Optimize label** (0.99.17) — Pool › Optimize (was Fit) still shrinks the GIFs' memory.
 - [ ] {ts262} **Note pictures** (0.99.17) — the Even / Dotted / Triplet switches (LFO, one-shot cycle) are pictures; the tooltips name them.
+- [ ] {ts263} **GIF blend, any layer** (0.99.18) — select a GIF on Midground / Foreground: Blend (left of its picture) Difference / Multiply …: it blends with the GIFs under it on its layer; Normal restores it; saved with the set and scenes; the Background's own select still works.
+- [ ] {ts264} **Display options left of the picture** (0.99.18) — Opacity, Blend, Smooth and Bypass FX sit left of the GIF's picture for every tab; greyed with nothing selected; nothing moves when switching tabs.
 
