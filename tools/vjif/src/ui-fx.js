@@ -385,17 +385,28 @@ $('#fxClear').addEventListener('click', () => { if (selFx >= NFX){ fxPre[selFx -
 let fxModK = null, fxModLast = null;   // 'amt' | 'rate' | 'size' while the box shows an LFO
 const FXM = { amt: { name: 'Amount', el: '#fxAmt', row: '#fxAmt', min: 5, max: 100, fmt: v => Math.round(v) + '%', toV: i => i / 100, toI: v => Math.round(v * 100) },
   rate: { name: 'Rate', el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_RATES.length - 1; }, fmt: i => FX_RATES[i][1], toV: i => i, toI: v => Math.round(v) },
-  size: { name: 'Size', el: '#fxSize', row: '#fxSizeRow', min: 0, get max(){ return FX_SIZES.length - 1; }, fmt: i => FX_SIZES[i][1], toV: i => i, toI: v => Math.round(v) } };
+  size: { name: 'Size', el: '#fxSize', row: '#fxSizeRow', min: 0, get max(){ return FX_SIZES.length - 1; }, fmt: i => FX_SIZES[i][1], toV: i => i, toI: v => Math.round(v) },
+  // 0.99.25 (ID-185): the settings that take over the Rate / Size slider in some styles have their own LFOs (the slider's list is what swings)
+  dith: { name: 'Dither', slot: 'rate', alt: true, el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_DITH.length - 1; }, fmt: i => FX_DITH[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_DITH; } },
+  fbk: { name: 'Length', slot: 'rate', alt: true, el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_FBK.length - 1; }, fmt: i => FX_FBK[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_FBK; } },
+  kz: { name: 'Zoom', slot: 'rate', alt: true, el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_KZ.length - 1; }, fmt: i => FX_KZ[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_KZ; } },
+  vdrop: { name: 'Dropouts', slot: 'size', alt: true, el: '#fxSize', row: '#fxSizeRow', min: 0, get max(){ return FX_DROP.length - 1; }, fmt: i => FX_DROP[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_DROP; } } };
+FXM.amt.slot = 'amt'; FXM.rate.slot = 'rate'; FXM.size.slot = 'size';
+const fxModSlotKey = (slot, d, X) => { if (slot === 'amt') return 'amt';   // the key whose LFO the slot's slider carries now (null: none)
+  const a = slot === 'rate' ? rateAlt(d, X.style, X) : sizeAlt(d, X.style, X);
+  if (!a) return (slot === 'rate' ? d.rate : d.size) ? slot : null;
+  return a.list && !a.toggle && !a.off && FXM[a.key] ? a.key : null; };
 const fxModPlain = k => { const X = fxEd(), d = FX_DEFS[selFx < NFX ? selFx : preEd]; if (!X || !d) return false;   // only a slider in its plain meaning (not a palette, Dither, Dropouts…)
   if (k === 'amt') return !$('#fxAmt').dataset.palAmt && !$('#fxAmt').dataset.kal;
-  if (k === 'rate') return !!d.rate && !rateAlt(d, X.style, X);
-  return !!d.size && !sizeAlt(d, X.style, X); };
+  return fxModSlotKey(FXM[k].slot, d, X) === k; };
+const fxModKeys = () => Object.keys(FXM).filter(k => FXM[k]);
 $('#fxLfoShape').innerHTML = SHAPES.filter(s => ['sine', 'tri', 'up', 'square', 'sh', 'drift'].includes(s[0])).map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');
 $('#fxLfoPer').max = PER_FAM.e.length - 1; $('#fxLfoGap').max = GAP_OPTS.length - 1; $('#fxLfoBack').innerHTML = ENV_IC_GRAPH;
 function fxModOpen(k){
   if (!fxModPlain(k)) return toast(`${FXM[k].name} has no LFO here (it's set by its own list for this style)`);
   const X = fxEd(); X.mod = X.mod || {};
-  if (!X.mod[k]){ const cur = k === 'amt' ? X.amt : k === 'rate' ? optIdx(FX_RATES, X.rate) : optIdx(FX_SIZES, X.size || FX_DEFS[selFx < NFX ? selFx : preEd].sizeDef || 64);
+  if (!X.mod[k]){ const al = FXM[k].alt, a = al && (FXM[k].slot === 'rate' ? rateAlt : sizeAlt)(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X);
+    const cur = k === 'amt' ? X.amt : al ? optIdx(FXM[k].list, X[k] ?? a.def) : k === 'rate' ? optIdx(FX_RATES, X.rate) : optIdx(FX_SIZES, X.size || FX_DEFS[selFx < NFX ? selFx : preEd].sizeDef || 64);
     X.mod[k] = { on: true, shape: 'sine', per: 4, lo: k === 'amt' ? 0.05 : FXM[k].min, hi: cur }; }
   fxModK = fxModLast = k; syncFxMod();
 }
@@ -403,8 +414,9 @@ function syncFxMod(){
   const X = fxEd(), M = fxModK && X && X.mod && X.mod[fxModK];
   if (fxModK && !M) fxModK = null;
   $('#fxEdit .envrow').classList.toggle('lfo', !!fxModK);
-  $('#envLfo').classList.toggle('dimmed', !(X && ['amt', 'rate', 'size'].some(k => FXM[k] && fxModPlain(k))));   // (0.99.6: greyed where no setting can have an LFO)
-  for (const k in FXM){ const r = $(FXM[k].row); const f = r && (r.classList.contains('field') ? r : r.closest('.field')); if (f) f.classList.toggle('mod', !!(X && X.mod && X.mod[k] && X.mod[k].on && fxModPlain(k))); }
+  $('#envLfo').classList.toggle('dimmed', !(X && fxModKeys().some(k => fxModPlain(k))));   // (0.99.6: greyed where no setting can have an LFO)
+  { const lit = new Set(), all = new Set(); for (const k of fxModKeys()){ const r = $(FXM[k].row), f = r && (r.classList.contains('field') ? r : r.closest('.field')); if (!f) continue; all.add(f); if (X && X.mod && X.mod[k] && X.mod[k].on && fxModPlain(k)) lit.add(f); }
+    all.forEach(f => f.classList.toggle('mod', lit.has(f))); }
   if (!M) return; const F = FXM[fxModK];
   $('#fxLfoT').textContent = 'LFO on ' + F.name; $('#fxLfoOn').checked = !!M.on;
   $('#fxLfoShape').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === M.shape));
@@ -416,10 +428,13 @@ function syncFxMod(){
   const gi = optIdx(GAP_OPTS, M.gap || 0); $('#fxLfoGap').value = gi; $('#fxLfoGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
   $('#fxLfoInv').classList.toggle('on', !!M.inv);
 }
-for (const k in FXM) $(FXM[k].row).closest('.field').addEventListener('contextmenu', e => { e.preventDefault(); if (fxModK === k) { fxModK = null; syncFxMod(); } else fxModOpen(k); });
+for (const slot of ['amt', 'rate', 'size']) $(FXM[slot].row).closest('.field').addEventListener('contextmenu', e => { e.preventDefault();
+  const X = fxEd(), d = FX_DEFS[selFx < NFX ? selFx : preEd], k = X && d ? fxModSlotKey(slot, d, X) : slot;   // (the key the slider carries now: Zoom, Dither, Length, Dropouts…)
+  if (!k) return toast(`${FXM[slot].name} has no LFO here`);
+  if (fxModK === k) { fxModK = null; syncFxMod(); } else fxModOpen(k); });
 $('#fxLfoBack').addEventListener('click', () => { fxModK = null; syncFxMod(); });
 // the envelope's LFO view button (0.99): the LFO last open here, else Amount's, else the first setting that can have one
-$('#envLfo').addEventListener('click', () => { const k = [fxModLast, 'amt', 'rate', 'size'].find(k => k && FXM[k] && fxModPlain(k)); if (k) fxModOpen(k); else toast('No setting of this effect can have an LFO here'); });
+$('#envLfo').addEventListener('click', () => { const k = [fxModLast, 'amt', 'rate', 'size', ...fxModKeys()].find(k => k && FXM[k] && fxModPlain(k)); if (k) fxModOpen(k); else toast('No setting of this effect can have an LFO here'); });
 const fxModSet = f => { const X = fxEd(), M = X && X.mod && X.mod[fxModK]; if (M){ f(M); M.on = true; syncFxMod(); } };
 $('#fxLfoPh').addEventListener('input', e => fxModSet(M => M.ph = +e.target.value));
 $('#fxLfoSk').addEventListener('input', e => fxModSet(M => M.sk = +e.target.value));

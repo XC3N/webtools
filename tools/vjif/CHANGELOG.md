@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.25 — 2026/10/23
+
+- LFO on more settings (ID-185): right-click the slider when it holds Length (Feedback), Zoom (Mirror › Kaleido), Dither (Colour › Palette) or Dropouts (CRT › VHS): each has its own LFO, saved with the effect and in presets. (Switches, the Palette slider and Kaleido's slice count have none yet.)
+
 ## 0.99.24 — 2026/10/23
 
 - Click a message (toast) to copy its text; the pointer resting on it keeps it up.

@@ -313,6 +313,7 @@ const fxModV = (M, b) => M.lo + (M.hi - M.lo) * lfoShape({ shape: M.shape || 'si
 const fxMod = (C, k, b) => C && C.mod && C.mod[k] && C.mod[k].on ? fxModV(C.mod[k], b) : null;
 const modAmt = (C, b) => { const v = fxMod(C, 'amt', b); return v === null ? C.amt : clamp(v, 0.05, 1); };
 const modRate = (C, b) => { const v = fxMod(C, 'rate', b); return v === null ? C.rate : FX_RATES[clamp(Math.round(v), 0, FX_RATES.length - 1)][0]; };
+const modAlt = (C, k, b, list, def) => { const v = fxMod(C, k, b); return v === null ? def : list[clamp(Math.round(v), 0, list.length - 1)][0]; };   // 0.99.25: Zoom / Dither / Length / Dropouts under their own LFO
 const modSize = (C, b, def) => { const v = fxMod(C, 'size', b); return v === null ? (C.size || def) : FX_SIZES[clamp(Math.round(v), 0, FX_SIZES.length - 1)][0]; };
 // ---- a GIF's own effects (0.97, ID-223): GIF › FX. g.gfx = { [effect id]: { on, amt, style } }, run on that GIF alone ----
 const GFX_IDS = ['colour', 'poster', 'pixel', 'wobble', 'glitch', 'codec', 'rgb'];
@@ -327,7 +328,7 @@ function gfxU(g, b){
   return fxU(b, M);
 }
 function fxMix(b, X = fxLive()){
-  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => modAmt(c, b)), rate: X.cfg.map(c => modRate(c, b)), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => modSize(c, b, FX_DEFS[i].sizeDef || 64)), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => c.kz || 1), fbk: X.cfg.map(c => c.fbk ?? 0.7), vdrop: X.cfg.map(c => c.vdrop ?? 1), pneg: X.cfg.map(c => c.pneg ?? 1), kmir: X.cfg.map(c => c.kmir ?? 1), pfit: X.cfg.map(c => c.pfit || 0), dith: X.cfg.map(c => c.dith || 0), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0), pamt: X.cfg.map(c => c.pamt || null), abase: X.cfg.map(c => c.amt) });
+  const mk = () => ({ lv: FX_DEFS.map(() => 0), env: FX_DEFS.map(() => 0), amt: X.cfg.map(c => modAmt(c, b)), rate: X.cfg.map(c => modRate(c, b)), style: X.cfg.map(c => c.style), size: X.cfg.map((c, i) => modSize(c, b, FX_DEFS[i].sizeDef || 64)), pal: X.cfg.map(c => c.pal || 0), kz: X.cfg.map(c => modAlt(c, 'kz', b, FX_KZ, c.kz || 1)), fbk: X.cfg.map(c => modAlt(c, 'fbk', b, FX_FBK, c.fbk ?? 0.7)), vdrop: X.cfg.map(c => modAlt(c, 'vdrop', b, FX_DROP, c.vdrop ?? 1)), pneg: X.cfg.map(c => c.pneg ?? 1), kmir: X.cfg.map(c => c.kmir ?? 1), pfit: X.cfg.map(c => c.pfit || 0), dith: X.cfg.map(c => modAlt(c, 'dith', b, FX_DITH, c.dith || 0)), dpat: X.cfg.map(c => c.dpat ?? 0), ovs: X.cfg.map(c => c.ovs ?? 1), dots: X.cfg.map(c => c.dots || 0), pamt: X.cfg.map(c => c.pamt || null), abase: X.cfg.map(c => c.amt) });
   const M = new Map(FX_TARGETS.map(t => [t, mk()]));
   FX_DEFS.forEach((d, i) => { const C = X.cfg[i], l = fxLevel(i, b, X), v = l * modAmt(C, b); if (v > 0){ for (const k of tgtList(C.target)){ const m = M.get(k); m.lv[i] = v; m.env[i] = l; } } });
   X.pre.forEach((P, k) => {
@@ -335,7 +336,7 @@ function fxMix(b, X = fxLive()){
     for (const [i, e] of Object.entries(P.fx)){
       const v = l * modAmt(e, b);
       for (const k of tgtList(e.target)){ const m = M.get(k);
-      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = modAmt(e, b); m.abase[i] = e.amt; m.rate[i] = modRate(e, b); if (e.style) m.style[i] = e.style; if (e.size || fxMod(e, 'size', b) !== null) m.size[i] = modSize(e, b, m.size[i]); if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = e.kz; if (e.fbk != null) m.fbk[i] = e.fbk; if (e.vdrop != null) m.vdrop[i] = e.vdrop; if (e.pneg != null) m.pneg[i] = e.pneg; if (e.kmir != null) m.kmir[i] = e.kmir; if (e.pfit != null) m.pfit[i] = e.pfit; if (e.dith != null) m.dith[i] = e.dith; if (e.dpat != null) m.dpat[i] = e.dpat; if (e.ovs != null) m.ovs[i] = e.ovs; if (e.pamt) m.pamt[i] = e.pamt; if (e.dots != null) m.dots[i] = e.dots; } }
+      if (v > m.lv[i]){ m.lv[i] = v; m.env[i] = l; m.amt[i] = modAmt(e, b); m.abase[i] = e.amt; m.rate[i] = modRate(e, b); if (e.style) m.style[i] = e.style; if (e.size || fxMod(e, 'size', b) !== null) m.size[i] = modSize(e, b, m.size[i]); if (e.pal != null) m.pal[i] = e.pal; if (e.kz) m.kz[i] = modAlt(e, 'kz', b, FX_KZ, e.kz); if (e.fbk != null) m.fbk[i] = modAlt(e, 'fbk', b, FX_FBK, e.fbk); if (e.vdrop != null) m.vdrop[i] = modAlt(e, 'vdrop', b, FX_DROP, e.vdrop); if (e.pneg != null) m.pneg[i] = e.pneg; if (e.kmir != null) m.kmir[i] = e.kmir; if (e.pfit != null) m.pfit[i] = e.pfit; if (e.dith != null) m.dith[i] = modAlt(e, 'dith', b, FX_DITH, e.dith); if (e.dpat != null) m.dpat[i] = e.dpat; if (e.ovs != null) m.ovs[i] = e.ovs; if (e.pamt) m.pamt[i] = e.pamt; if (e.dots != null) m.dots[i] = e.dots; } }
     }
   });
   return M;

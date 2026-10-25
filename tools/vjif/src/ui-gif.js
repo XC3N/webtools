@@ -303,9 +303,9 @@ let liveWas = new Set();
 function liveMods(){
   const now = new Set(), b = clock.beat, put = (id, v, txt) => { const el = $(id); if (!el || el.matches(':active')) return; now.add(id); el.value = v; el.nextElementSibling.textContent = txt; };
   const X = typeof fxEd === 'function' ? fxEd() : null, d = FX_DEFS[selFx < NFX ? selFx : preEd];
-  if (X && X.mod && d && !fxModK) for (const k of ['amt', 'rate', 'size']){ const M = X.mod[k]; if (!M || !M.on || !fxModPlain(k)) continue;
+  if (X && X.mod && d && !fxModK) for (const k of fxModKeys()){ const M = X.mod[k]; if (!M || !M.on || !fxModPlain(k)) continue;
     if (k === 'amt'){ const pp = amtPart(d, X), v = modAmt(X, b) * (pp ? (X.pamt?.[pp] ?? X.amt) / (X.amt || 1) : 1); put('#fxAmt', v, Math.round(v * 100) + '%'); }
-    else { const L = k === 'rate' ? FX_RATES : FX_SIZES, i = clamp(Math.round(fxModV(M, b)), 0, L.length - 1); put(k === 'rate' ? '#fxRate' : '#fxSize', i, L[i][1]); } }
+    else { const L = FXM[k].list || (k === 'rate' ? FX_RATES : FX_SIZES), i = clamp(Math.round(fxModV(M, b)), 0, L.length - 1); put(FXM[k].el, i, L[i][1]); } }
   const c = selClip(), g = c && pads[c.pad] && pads[c.pad].gif;
   if (g && g.lfo){ const on = k => g.lfo[k] && g.lfo[k].on, e = effClip(c, g);
     XF.forEach(([id, key, fmt]) => { if (XF_LFO[id].some(on)) put(id, e[key], fmt(e[key])); });
