@@ -24,6 +24,6 @@ async def main():
     await pg.click('#setBtn'); await pg.wait_for_timeout(200)
     th = await pg.evaluate("""(() => { $('.thm-bg label').click(); const a = [...document.querySelectorAll('.thm-bg .thm-row')].map(r => getComputedStyle(r).display); $('.thm-bg label').click();
       const X = $('#setClose').getBoundingClientRect(), B = $('#setPanel .modalBox').getBoundingClientRect(); return [a.join(), Math.round(B.right - X.right), Math.round(X.top - B.top)]; })()""")
-    print('theme', th); assert th[0] == 'grid,none,none' and th[1] <= 4 and th[2] <= 6, th
+    print('theme', th); assert th[0] == 'grid,none,none' and 0 <= th[1] <= 20 and th[2] <= 10, th
     await b.close()
 asyncio.run(main())

@@ -334,6 +334,9 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], ove
       if (L.i === 0 && L.fillOn && L.fill && !over){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
       drawAll(b, vis);
       applyMask(b, MK); ctx.drawImage(b.canvas, 0, 0, W, H);
+    } else if (sub && vis.length === 1 && L.blend === 'source-over' && !(vis[0].e.mask && vis[0].e.mask.on) && !(L.i === BG_LAYER && L.fillOn && L.fill && !over)){
+      // a lone GIF with its own blend: nothing in its layer to blend with, so it blends with what's below the layer
+      const { g, e, fi } = vis[0]; ctx.globalCompositeOperation = e.blend || 'source-over'; drawClipFx(ctx, e, g, fxImage(g, fi, e));
     } else if (!sub && ((vis.length === 1 && !MASK_BLENDS.has(L.blend)) || (L.blend === 'source-over' && L.opacity >= 1))){   // (a mask is always flattened first: each draw of a GIF, its shadow, its tiles, would cut on its own)
       // one GIF, or Normal at full opacity: identical result drawn straight onto the target (no buffer clear + composite)
       for (const { g, e, fi } of vis) drawClipFx(ctx, e, g, fxImage(g, fi, e));

@@ -9,11 +9,8 @@ async def main():
     k = await pg.evaluate("pads.map((_, i) => i).find(isGlobalPad)")
     await pg.evaluate(f"fileTarget = {k}"); await pg.set_input_files('#fileIn', [str(FIX/'bat.gif')]); await pg.wait_for_function(f"pads[{k}].gif")
     await pg.evaluate(f"selectPad({k})")
-    r = await pg.evaluate("""(() => { const g = curGif(); g.env.every = 8; syncGifUI(); const on0 = $('#tEveryOn').checked;
-      $('#tEveryOn').click(); const a = g.env.every, on1 = $('#tEveryOn').checked; $('#tEveryOn').click(); return [on0, a, on1, g.env.every]; })()""")
-    print('rep', r); assert r == [True, 0, False, 8], r
-    r = await pg.evaluate("[$('#tEveryRow').classList.contains('everyoff'), (() => { const g = curGif(); g.env.every = 0; syncGifUI(); return $('#tEveryRow').classList.contains('everyoff'); })()]")
-    assert r == [False, True], r
+    r = await pg.evaluate("""(() => { const g = curGif(); g.env.every = 8; syncGifUI(); const v1 = +$('#tEvery').value; $('#tEvery').value = 0; $('#tEvery').dispatchEvent(new Event('input')); return [v1 > 0, g.env.every, !document.querySelector('#tEveryOn')]; })()""")
+    print('rep', r); assert r == [True, 0, True], r   # 0.99.26: no switch: the slider's first stop is off
     bg = await pg.evaluate("pads.findIndex(p => p.bg)")
     await pg.evaluate(f"fileTarget = {bg}"); await pg.set_input_files('#fileIn', [str(FIX/'bat.gif')]); await pg.wait_for_function(f"pads[{bg}].gif")
     await pg.evaluate(f"selectPad({bg})")

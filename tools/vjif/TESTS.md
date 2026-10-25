@@ -436,3 +436,9 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts277} **Link drop on Background** (0.99.23) — drag a picture from a web page onto the Background card: it fills the next free slot and is selected; a blocked site's message names the host and says blocked.
 - [ ] {ts278} **Click a message to copy** (0.99.24) — trigger a message (drop a blocked link); rest the pointer on it: it stays; click: it says Copied to the clipboard and the text pastes elsewhere.
 - [ ] {ts279} **LFO on Length, Zoom, Dither, Dropouts** (0.99.25) — right-click Feedback's Length, Kaleido's Zoom, Colour › Palette's Dither, CRT › VHS's Dropouts: an LFO opens for each, the slider swings with it, and it's kept in a preset.
+- [ ] {ts280} **Pixel › ANSI** (0.99.26) — Pixel effect, style ANSI (and GIF › FX › Pixel): the picture turns into text-mode cells in the 16 ANSI colours with shaded blocks; Size changes the cell width; Amount fades it in; looks right on a colourful GIF and on a grey one.
+- [ ] {ts281} **GIF blend, alone on a layer** (0.99.26) — put one GIF on a layer above a coloured Background, set its Blend to Difference / Multiply: the picture changes; Normal brings it back.
+- [ ] {ts282} **Trigger and GIF Loop layout** (0.99.26) — GIF › Play: Hit sits in the Trigger header; Loop / Hold hide the fade sliders, One shot shows them; Restart and Repeat are sliders that read off at the left.
+- [ ] {ts283} **Pool panel** (0.99.26) — open the Pool: Add GIF group (Add…, URL box with Load joined), Loaded GIFs group (Full / ½ / ¼, Optimize, Remove unused); × fully visible on a Mac; same on Settings.
+- [ ] {ts284} **Loupe lock** (0.99.26) — loupe on, right-click the preview: view freezes and the border changes colour; right-click again releases.
+- [ ] {ts285} **LFO pane and live sliders** (0.99.26) — LFO on Length or Zoom with the pane open: the slider moves by itself; the note icons beside Cycle are fully visible.

@@ -159,7 +159,7 @@ function syncFxUI0(){
       el.classList.toggle('empty', e);
       el.title = `${FXP_LABELS[k]} with Caps Lock: ${fxPreLong(P)} · Caps+Shift+${FXP_LABELS[k]}: store · right-click: edit · Alt+click: name`; }
   });
-  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); $('#fxEdit').classList.toggle('sized', !!d && (!!d.size || d.id === 'wobble')); $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);   // (Wobble: no size, but its Edges toggle sits in that row, 0.93; 0.94: the comment had swallowed 'rated', hiding Rate)
+  $('#fxEdit').classList.toggle('pre', pre); $('#fxEdit').classList.toggle('ent', !!E); { const Xe = d && typeof fxEd === 'function' ? fxEd() : null; $('#fxEdit').classList.toggle('sized', !!d && (!!d.size || d.id === 'wobble' || !!(Xe && sizeAlt(d, Xe.style || d.styles[0][0], Xe)))); } $('#fxEdit').classList.toggle('rated', !!d && !!d.rate);   // (0.99.26: a toggle that takes the Size slot — Mirror, Fit range — needs the row shown even where there's no Size; Wobble: no size, but its Edges toggle sits in that row, 0.93; 0.94: the comment had swallowed 'rated', hiding Rate)
   $('#fxName').innerHTML = (pre && !E ? '' : fxIcon(d.id)) + (E ? d.name : pre ? FXP_LABELS[selFx - NFX] : d.name);   // the effect's icon in the LCD (names are ours: no escaping needed)
   $('#fxName').title = E ? `${d.name} as ${FXP_LABELS[selFx - NFX]} plays it — click to go back to the preset` : pre ? 'Effect preset' : `${d.title} — drag onto a preset to add it there`;
   $('#fxName').classList.toggle('grab', !pre); $('#fxName').classList.toggle('back', !!E);
@@ -399,11 +399,12 @@ const fxModSlotKey = (slot, d, X) => { if (slot === 'amt') return 'amt';   // th
 const fxModPlain = k => { const X = fxEd(), d = FX_DEFS[selFx < NFX ? selFx : preEd]; if (!X || !d) return false;   // only a slider in its plain meaning (not a palette, Dither, Dropouts…)
   if (k === 'amt') return !$('#fxAmt').dataset.palAmt && !$('#fxAmt').dataset.kal;
   return fxModSlotKey(FXM[k].slot, d, X) === k; };
+const fxSlotName = k => { const f = $(FXM[k].row), l = f && (f.matches('label') ? f : f.closest('.field') && f.closest('.field').querySelector('label')); return (l && l.textContent.trim()) || FXM[k].name; };   // the slider's own word (Palette, not Amount)
 const fxModKeys = () => Object.keys(FXM).filter(k => FXM[k]);
 $('#fxLfoShape').innerHTML = SHAPES.filter(s => ['sine', 'tri', 'up', 'square', 'sh', 'drift'].includes(s[0])).map(([v, l, ic]) => `<button data-v="${v}" title="${l}">${ic}</button>`).join('');
 $('#fxLfoPer').max = PER_FAM.e.length - 1; $('#fxLfoGap').max = GAP_OPTS.length - 1; $('#fxLfoBack').innerHTML = ENV_IC_GRAPH;
 function fxModOpen(k){
-  if (!fxModPlain(k)) return toast(`${FXM[k].name} has no LFO here (it's set by its own list for this style)`);
+  if (!fxModPlain(k)) return toast(`${fxSlotName(k)} has no LFO in this style`);
   const X = fxEd(); X.mod = X.mod || {};
   if (!X.mod[k]){ const al = FXM[k].alt, a = al && (FXM[k].slot === 'rate' ? rateAlt : sizeAlt)(FX_DEFS[selFx < NFX ? selFx : preEd], X.style, X);
     const cur = k === 'amt' ? X.amt : al ? optIdx(FXM[k].list, X[k] ?? a.def) : k === 'rate' ? optIdx(FX_RATES, X.rate) : optIdx(FX_SIZES, X.size || FX_DEFS[selFx < NFX ? selFx : preEd].sizeDef || 64);
@@ -430,7 +431,7 @@ function syncFxMod(){
 }
 for (const slot of ['amt', 'rate', 'size']) $(FXM[slot].row).closest('.field').addEventListener('contextmenu', e => { e.preventDefault();
   const X = fxEd(), d = FX_DEFS[selFx < NFX ? selFx : preEd], k = X && d ? fxModSlotKey(slot, d, X) : slot;   // (the key the slider carries now: Zoom, Dither, Length, Dropouts…)
-  if (!k) return toast(`${FXM[slot].name} has no LFO here`);
+  if (!k) return toast(`${fxSlotName(slot)} has no LFO in this style`);
   if (fxModK === k) { fxModK = null; syncFxMod(); } else fxModOpen(k); });
 $('#fxLfoBack').addEventListener('click', () => { fxModK = null; syncFxMod(); });
 // the envelope's LFO view button (0.99): the LFO last open here, else Amount's, else the first setting that can have one

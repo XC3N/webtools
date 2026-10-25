@@ -106,7 +106,7 @@ body.paddragging,body.paddragging *{cursor:grabbing!important}
 .scene.padsOnly .n{color:var(--muted);background:#000a}
 .scene.cur{box-shadow:0 0 0 2px var(--sig)}
 .scene.wait{animation:wait .25s steps(1) infinite}
-.sub .info{display:inline-grid;place-items:center;width:13px;height:13px;border:1px solid var(--edge);border-radius:50%;font:600 9px var(--mono);color:var(--muted);cursor:help}.sub[title]{cursor:help}
+.sub .info{display:inline-grid;place-items:center;width:13px;height:13px;border:1px solid var(--edge);border-radius:50%;font:600 9px var(--mono);color:var(--muted);cursor:help}.sub[title]{cursor:default}
 #guideEye .slash{display:none}#guideGrp.ghidden #guideEye .slash{display:inline}#guideGrp.ghidden [data-g].on{opacity:.45}   /* hidden: the eye is struck through, the guides that will come back stay marked, dimmed */
 #musGrp .iconbtn.on,#setBtn.on,#guideEye.on{color:var(--sig);border-color:var(--sig)}#learnBtn.on{color:var(--learn);border-color:var(--learn)}.volwrap{position:relative;display:inline-flex}
 #musVolPop{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--edge);border-radius:var(--r);width:34px;height:130px;box-shadow:0 6px 18px #0009}
@@ -498,7 +498,7 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #fxSizeRow.onerow{flex:0 0 auto!important;grid-template-columns:auto!important;min-width:0}#fxSizeRow.onerow>label{display:none}#fxSizeRow.onerow>#fxSizeSeg{grid-column:1}   /* Shake / Wobble › Edges: the toggle alone; Rate's slider runs up to it (0.91) */
 #poolStats{font:400 11px var(--mono);color:var(--muted);background:var(--panel-2);border:1px solid var(--edge);border-radius:var(--r);padding:1px 6px;margin-right:6px}#poolStats b{font-weight:600}#poolStats .psn{color:var(--sig)}#poolStats .psf{color:rgb(var(--meter-rgb))}#poolStats .psm{color:var(--ink)}#poolStats .psm.hot{color:var(--danger)}   /* pool stats (0.91) */
 #scenes .scene{display:none}#scenes[data-bank="0"] .scene[data-b="0"],#scenes[data-bank="1"] .scene[data-b="1"],#scenes[data-bank="2"] .scene[data-b="2"],#scenes[data-bank="3"] .scene[data-b="3"]{display:block}#scBankSeg{flex:none;width:84px;height:18px}#scBankSeg button{height:16px;font-size:10px;padding:0}   /* scene banks (0.91) */
-.modalBox{position:relative}.modalBox>h2>.iconbtn[id$=Close]{position:absolute;top:4px;right:-8px;margin:0}.modalBox>h2{padding-right:22px}#helpPanel .modalBox>h2>#helpClose{right:-13px}   /* a window's × in its top right corner (0.92; Keys & mouse: its title bar sticks, so the × is placed from it) */
+.modalBox{position:relative}.modalBox>h2>.iconbtn[id$=Close]{position:absolute;top:4px;right:6px;margin:0}.modalBox>h2{padding-right:22px}#helpPanel .modalBox>h2>#helpClose{right:-13px}   /* a window's × in its top right corner (0.92; Keys & mouse: its title bar sticks, so the × is placed from it) */
 .ghost.trchip{transform:translate(10px,10px) rotate(-4deg) scale(.85);opacity:.85}   /* a dragged transition preset: down-right of the pointer, so the preset under it stays in view (0.93) */
 #maskBar .mrow>.seg,#maskBar .volwrap{flex:none}#maskBar .mrow{justify-content:space-between!important;gap:2px!important}#maskBar .mrow>*{flex-shrink:0}#maskBar .mrow{gap:0!important}#maskBar .mrow>.seg button,#maskBar .mpopbtn,#maskBar .iconbtn,#maskBar .icontog{width:20px!important;height:22px!important;min-width:0;padding:0!important}#maskBar .mrow>.seg{grid-auto-columns:20px}#maskPaste.empty{opacity:.4}#maskBar .mrow>button{flex:0 0 20px!important}   /* every mask button the same box (0.93) */
 #loupe{position:absolute;right:8px;bottom:8px;z-index:6;border:1px solid var(--sig);border-radius:var(--r);box-shadow:0 6px 18px #000a;cursor:grab;image-rendering:pixelated;background:#000}#loupe.drag{cursor:grabbing}#loupe.pin{border-color:rgb(var(--meter-rgb));box-shadow:0 0 0 1px rgb(var(--meter-rgb)),0 6px 18px #000a}   /* the loupe (0.93) */
@@ -536,7 +536,6 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 .layer .lopl,.layer .lopo{position:absolute;top:50%;transform:translateY(-50%);pointer-events:none;font-size:11px;color:var(--muted);text-shadow:0 0 2px var(--bg),0 0 2px var(--bg)}.layer .lopl{left:8px}.layer .lopo{right:8px;font-family:var(--mono);color:var(--text)}   /* 0.99.5: the layer's opacity named and read out inside its slider, like every other */
 #envLfo.dimmed{opacity:.35}   /* 0.99.6: the LFO button greyed where no setting can have one (it still explains on click) */
 .ctxmenu{position:fixed;z-index:200;background:var(--panel-2);border:1px solid var(--edge);border-radius:6px;padding:3px;box-shadow:0 6px 18px rgba(0,0,0,.45);display:flex;flex-direction:column;min-width:110px}.ctxmenu button{text-align:left;padding:4px 10px;font-size:12px;background:none;border:0;border-radius:4px}.ctxmenu button:hover{background:var(--sig);color:var(--bg)}   /* 0.99.6: a right-click menu (Pool: Save GIF) */
-#tEveryRow.everyoff>input[type=range],#tEveryRow.everyoff>output{opacity:.45}   /* 0.99.16: Repeat off: faint, but a move turns it on */
 #gTabs button{padding:0 6px}#gTabs.seg{grid-template-columns:1.45fr 1fr 1.15fr .85fr 1fr}   /* 0.99.16: room each side (the widest label gets more), so the changed-dot never sits on a label (TW-046) */
 
 #gPalVar{display:flex;height:22px}#gPalVar button{flex:1;padding:0 4px;font-size:10px;min-width:0}#gPalVar .sht{display:none}#gPalPat.ghost{visibility:hidden}
@@ -544,5 +543,11 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 
 #gQuick{position:absolute;top:44px;left:12px;right:108px;display:grid;gap:3px}#gQuick .field{margin:0;min-height:0;height:20px}#gQuick select{height:22px;font-size:11px}   /* 0.99.17: this GIF's own display options, left of its picture: Opacity, Blend, Smooth, Bypass FX */
 #gQuick.disabled{opacity:.35;pointer-events:none}
-#tEveryRow{grid-template-columns:minmax(0,1fr) auto!important;column-gap:8px}#tEveryRow>.tog{grid-column:2;grid-row:1}   /* 0.99.19: Repeat is a slider with its own label, the switch after it (it had become part of the slider) */
 #brushRing{position:fixed;z-index:200;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;border:1px dashed #fff;box-shadow:0 0 0 1px #0008}#brushRing[hidden]{display:none}body.brushing,body.brushing *{cursor:none!important}   /* 0.99.20: Size / Soft held: the brush is the cursor */
+
+/* 0.99.26: GIF pool, two groups: what adds GIFs (Add…, the link box with its Load joined to it) and what manages the loaded ones */
+#poolPanel .pgrps{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}#poolPanel .pgrp{display:flex;align-items:center;gap:6px;border:1px solid var(--edge);border-radius:var(--r);padding:16px 8px 8px;position:relative;background:var(--panel)}
+#poolPanel .pgrp>.cap{position:absolute;top:3px;left:8px;font:600 9px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#poolPanel .pgrp.add{flex:1 1 280px}#poolPanel .joined{display:flex;flex:1;min-width:0}#poolPanel .joined input{flex:1;min-width:0;border-top-right-radius:0;border-bottom-right-radius:0}#poolPanel .joined button{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:-1px}
+#tEnv.folded{display:none}.sub.trig>#tMode{flex:none;margin-left:6px}.sub.trig.dimmed>#tMode{opacity:.4;pointer-events:none}   /* 0.99.26: Trigger: Hit in the header line, the rest folds under Loop and Hold */
+#fxLfoSl .field.withseg>.seg{height:20px;width:66px}#fxLfoSl .field.withseg>.seg button svg{width:12px;height:12px;overflow:visible}   /* 0.99.26: the note icons were clipped by the 16px row */

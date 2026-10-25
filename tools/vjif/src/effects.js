@@ -11,7 +11,7 @@ const FX_DEFS = [
   { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']], size: true },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope (Amount: slices)']] },
-  { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels']] },
+  { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels'], ['ansi', 'ANSI', 'Text mode: character cells in the 16 ANSI colours, shaded with ░ ▒ ▓ blocks']] },
   { id: 'glitch', name: 'Glitch', title: 'Torn and datamoshed, re-torn every Rate (styles stack)', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'Datamosh: blocks drag the old picture along the motion'], ['keyfr', 'Keyframe', 'Lost keyframe: the picture freezes, then smears with the motion']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt', 'keyfr'] },   // (0.99.5: Corrupt and Keyframe moved here from Codec: the moving ones)
   { id: 'codec', name: 'Codec', title: 'Compression artefacts (styles stack)', mode: 'hold', styles: [['crunch', 'Crunch', 'Heavy compression: banded detail, blocky colour'], ['mblock', 'Macroblock', 'Low bit rate: the block grid shows'], ['chroma', 'Chroma', 'Colour at low resolution (4:2:0), bleeding past edges'], ['ring', 'Ringing', 'JPEG halos and mosquito noise on edges']], size: true, sizeDef: 48, sizeFor: ['crunch', 'mblock', 'chroma'] },   // (0.99.5: the still ones; Corrupt / Keyframe went to Glitch)
   { id: 'rgb', name: 'CRT', title: 'Tube and tape (styles stack)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking, washed colour, noise (Amount: wear)'], ['scan', 'Scanlines', 'Scanlines and an aperture grille'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel'], ['crypt', 'Crypt', 'A scrambled satellite channel']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] } ];
@@ -422,7 +422,7 @@ ${FX_GLSL}
           else { vec2 q = (p - 0.5) * a; float r = length(q); p += q / max(r, 1e-4) / a * sin(r * 40.0 - wobPh) * 0.012 * wob; }
         }
         if (abs(palDot) > 0.5){ vec2 cell = res / abs(palDot); p = (floor(p * cell) + 0.5) / cell; }   // Palette › LCD: Game Boy pixels (144 rows), one colour each (negative: no gaps)
-        if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (IS(pixS, S_pixel_wide)) cell.x *= 0.25; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
+        if (pixel > 0.001){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x); if (IS(pixS, S_pixel_wide)) cell.x *= 0.25; if (IS(pixS, S_pixel_ansi)) cell.y *= 0.5; p = (floor(p * cell) + 0.5) / cell; }   // blocks of pixSize output pixels at full amount
         return p;
       }
       // VHS tracking bands roll on the beat, at random: the wide one sweeps down over 2 beats (in 7 of 10 pairs, at its own
@@ -477,6 +477,17 @@ ${FX_GLSL}
               c *= 1.0 + (gr - 0.5) * 0.08 * dot(c, vec3(0.299, 0.587, 0.114)) * colr; } }
           else c = mix(c, clamp(IS(colrS, S_colour_invert) ? 1.0 - c : hueRot(c, IS(colrS, S_colour_flip) ? 3.14159 : hue), 0.0, 1.0), colr); }   // flip · cycle · invert
         return c;
+      }
+      // Pixel › ANSI (0.99.26, ID-248): text mode. Each character cell (pixSize wide, twice as tall) takes the two nearest of the 16 ANSI / VGA
+      // colours (background = nearest, foreground = second) and a shade block between them: ░ a quarter, ▒ half, ▓ three quarters, █ all (a 4×4 pattern in the cell)
+      vec3 ansiCol(float i){ float b0 = mod(i, 2.0), b1 = mod(floor(i / 2.0), 2.0), b2 = mod(floor(i / 4.0), 2.0), b3 = floor(i / 8.0);
+        vec3 q = vec3(b2, b1, b0) * 0.6667 + b3 * 0.3333; if (abs(i - 6.0) < 0.5) q.g = 0.3333; return q; }   // (dark yellow is brown)
+      vec3 ansi(vec3 c, vec2 sub){
+        float d1 = 9.0, d2 = 9.0; vec3 A = vec3(0.0), B = vec3(0.0);
+        for (int i = 0; i < 16; i++){ vec3 q = ansiCol(float(i)), dd = c - q; float d = dot(dd * dd, vec3(0.3, 0.59, 0.11));
+          if (d < d1){ d2 = d1; B = A; d1 = d; A = q; } else if (d < d2){ d2 = d; B = q; } }
+        vec3 ab = B - A; float t = clamp(dot(c - A, ab) / max(dot(ab, ab), 1e-4), 0.0, 0.75), lv = floor(t * 4.0 + 0.5) / 4.0;
+        return bayer4(floor(sub * 4.0)) < lv - 0.001 ? B : A;
       }
       void main(){
         if (blit > 0.5){ gl_FragColor = texture2D(tex, vec2(uv.x, 1.0 - uv.y)); return; }
@@ -659,6 +670,7 @@ ${FX_GLSL}
         if (abs(palDot) > 0.5 && colr > 0.001 && IS(colrS, S_colour_pal)){   // Dot Matrix / Pixels: the LCD's slow dots, a change shows over a few frames (ghosting)
           vec4 pv = texture2D(prev, vec2(uv.x, 1.0 - uv.y)); if (pv.a > 0.01) c = mix(c, pv.rgb, 0.42 * colr);
         }
+        if (pixel > 0.001 && IS(pixS, S_pixel_ansi)){ float n = res.x / mix(1.0, pixSize, pixel); vec2 cell = vec2(n, n * res.y / res.x * 0.5); c = mix(c, ansi(c, fract(uv * cell)), clamp(pixel * 4.0, 0.0, 1.0)); }
         gl_FragColor = vec4(clamp(c, 0.0, 1.0), clamp(al, 0.0, 1.0));
       }`));
     linkChk(gl, prog, 'effects');

@@ -4,6 +4,16 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.26 — 2026/10/25
+
+- Pixel › ANSI (ID-248): text mode. The picture becomes character cells (Size = a cell's width; a cell is twice as tall), each in the two nearest of the 16 ANSI / VGA colours with a ░ ▒ ▓ shade between them. Also under GIF › FX › Pixel.
+- GIF blend (BG-059): a GIF alone on its layer now blends with what's below the layer (its own blend did nothing without a second GIF on that layer).
+- Fit range and Mirror's toggles were hidden with the Size row; they show again (BG-046, ID-245).
+- LFO: sliders follow the LFO live even with the LFO pane open (ID-185); the Cycle note icons are no longer clipped; "Palette" is named properly in messages.
+- Loupe: right-click locks the view; the border changes colour while locked (ID-230).
+- GIF › Play: Restart is a slider (off at the left); Repeat has no on/off switch, its first stop is off; Hit moves into the Trigger header and the rest of Trigger folds under Loop and Hold; the loop section is named "GIF Loop" (ID-219, BG-054, TW-057, TW-054).
+- Pool panel: "Add GIF" and "Loaded GIFs" groups, Load joined to the URL box; "Full" replaces "all". New undo / redo icons; the × on settings and the pool is no longer cut off; section titles no longer show a help cursor.
+
 ## 0.99.25 — 2026/10/23
 
 - LFO on more settings (ID-185): right-click the slider when it holds Length (Feedback), Zoom (Mirror › Kaleido), Dither (Colour › Palette) or Dropouts (CRT › VHS): each has its own LFO, saved with the effect and in presets. (Switches, the Palette slider and Kaleido's slice count have none yet.)

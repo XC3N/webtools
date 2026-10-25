@@ -24,13 +24,17 @@ async def main():
     r = await pg.evaluate("""(async () => { selectFx(FXI.colour); const C = fxConf(FXI.colour); C.style = 'pal'; C.pal = 2; syncFxUI(); const lab = $('#fxSizeRow label').textContent, seg = !$('#fxSizeSeg').hidden;
       $('#fxSizeSeg button').click(); const on = fxConf(FXI.colour).pfit; await new Promise(r => setTimeout(r, 1500)); const e = fxEntry(FXI.colour).pfit; $('#fxSizeSeg button').click(); return [lab, seg, on, e, fxConf(FXI.colour).pfit]; })()""")
     print('fit', r); assert r == ['Fit range', True, 1, 1, 0], r
+    vis = await pg.evaluate("(() => { selectFx(FXI.colour); const C = fxEd(); C.style = 'pal'; syncFxUI(); const b = $('#fxSizeSeg').getBoundingClientRect(); return [b.width > 20, b.height > 8, getComputedStyle($('#fxSizeRow')).display]; })()"); print('fit visible', vis); assert vis[0] and vis[1] and vis[2] != 'none', vis
     r = await pg.evaluate("""(() => { selectFx(FXI.mirror); const C = fxConf(FXI.mirror); C.style = 'kal'; syncFxUI(); const lab = $('#fxSizeRow label').textContent; $('#fxSizeSeg button').click(); const a = fxConf(FXI.mirror).kmir; $('#fxSizeSeg button').click(); return [lab, a, fxConf(FXI.mirror).kmir]; })()""")
     print('mirror', r); assert r == ['Mirror', 0, 1], r
+    vis = await pg.evaluate("(() => { selectFx(FXI.mirror); const C = fxEd(); C.style = 'kal'; syncFxUI(); const b = $('#fxSizeSeg').getBoundingClientRect(); return [b.width > 14, b.height > 8, getComputedStyle($('#fxSizeRow')).display]; })()"); print('mirror visible', vis); assert vis[0] and vis[1] and vis[2] != 'none', vis
     r = await pg.evaluate("pvOpt.loupe = true; pvUI(); 1"); pv = await pg.locator('#pv').bounding_box()
     ax, ay = pv['x'] + pv['width']*0.4, pv['y'] + pv['height']*0.4
-    await pg.mouse.move(ax, ay); await pg.wait_for_timeout(600); a = await pg.evaluate("loupeAt.slice()")
-    await pg.mouse.move(pv['x'] + pv['width']*0.9, pv['y'] + pv['height']*0.9, steps=3); await pg.mouse.move(pv['x'] + pv['width'] + 40, pv['y'] + pv['height'] + 60, steps=2); await pg.wait_for_timeout(100)
-    b2 = await pg.evaluate("loupeAt.slice()"); print('loupe', a, b2); assert abs(a[0] - b2[0]) < 3 and abs(a[1] - b2[1]) < 3, (a, b2)
+    await pg.mouse.move(ax, ay); await pg.wait_for_timeout(300); await pg.mouse.click(ax, ay, button='right'); await pg.wait_for_timeout(200); a = await pg.evaluate("[loupeAt.slice(), $('#loupe').classList.contains('pin')]")
+    await pg.mouse.move(pv['x'] + pv['width']*0.9, pv['y'] + pv['height']*0.9, steps=3); await pg.wait_for_timeout(200)
+    b2 = await pg.evaluate("loupeAt.slice()"); print('loupe lock', a, b2); assert a[1] and abs(a[0][0] - b2[0]) < 3 and abs(a[0][1] - b2[1]) < 3, (a, b2)
+    await pg.mouse.click(pv['x'] + pv['width']*0.9, pv['y'] + pv['height']*0.9, button='right'); await pg.wait_for_timeout(200); c = await pg.evaluate("[$('#loupe').classList.contains('pin'), loupeAt.slice()]")
+    await pg.mouse.move(pv['x'] + pv['width']*0.2, pv['y'] + pv['height']*0.2, steps=3); await pg.wait_for_timeout(200); d = await pg.evaluate("loupeAt.slice()"); print('unlocked', c, d); assert not c[0] and abs(d[0] - c[1][0]) > 10, (c, d)
     await pg.evaluate("pvOpt.loupe = false; pvUI()")
     assert not errs, errs; await b.close(); print('ok')
 asyncio.run(main())

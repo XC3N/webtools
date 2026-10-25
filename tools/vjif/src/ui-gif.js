@@ -4,10 +4,11 @@ $('#gBeats').max = LOOP_OPTS.length - 1;
 $('#gBeats').addEventListener('input', e => { const g = curGif(); if (!g) return; g.beats = LOOP_OPTS[+e.target.value][0]; e.target.nextElementSibling.textContent = lenLabel(g.beats); syncGifUI(); });
 $('#gSub').max = FRAME_OPTS.length - 1;   // a slider over the note lengths (0.99.15; it was nine buttons); stored as frames per beat
 $('#gSub').addEventListener('input', e => { const g = curGif(); if (!g) return; g.subdiv = 1 / FRAME_OPTS[+e.target.value][0]; syncGifUI(); });
-$('#gRestart').innerHTML = segHTML(RESTART_OPTS);
+$('#gRestart').max = RESTART_OPTS.length - 1;   // a slider (0.99.26), off at the left
+$('#gRestart').addEventListener('input', e => { const g = curGif(); if (!g) return; g.restart = RESTART_OPTS[+e.target.value][0]; syncGifUI(); });
 const segSet = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - v) < 1e-6 || b.dataset.v === v));
 // one handler per button group: sets the GIF's field from the clicked button
-[['#gSync', 'sync', false], ['#gLoop', 'loop', false], ['#gRestart', 'restart', true]].forEach(([id, key, num]) =>
+[['#gSync', 'sync', false], ['#gLoop', 'loop', false]].forEach(([id, key, num]) =>
   onSeg($(id), (b, e) => { const g = curGif(); if (!g) return;
     const was = g.loop; g[key] = num ? +b.dataset.v : b.dataset.v;
     if (key === 'loop' && g.sync === 'stretch' && (was === 'pingpong') !== (g.loop === 'pingpong')){ const k = optIdx(LOOP_OPTS, g.beats * (g.loop === 'pingpong' ? 2 : 0.5)); g.beats = LOOP_OPTS[k][0]; }   // 0.99.15: Fit: the loop length grows with Ping-pong (the round trip), so each leg plays at the speed it had
@@ -46,7 +47,7 @@ function syncGifUI(){
     const nd = on && palNoDith(P.i), gb = on && palGB(P.i); $('#gPalDRow').classList.toggle('dimmed', !on || nd); $('#gPalPat').classList.toggle('ghost', gb || nd); $('#gPalDRow').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas); the switch picks the pattern'; }
     $('#gPalFit').checked = !!(g.pal && g.pal.fit); $('#gPalFit').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
   syncShadowUI(g);
-  segSet('#gSync', g.sync); segSet('#gLoop', g.loop); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
+  segSet('#gSync', g.sync); segSet('#gLoop', g.loop); { const i = optIdx(RESTART_OPTS, g.restart || 0), el = $('#gRestart'); el.value = i; el.nextElementSibling.textContent = RESTART_OPTS[i][1]; } segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
   { const el = $('#gBeats'); el.value = optIdx(LOOP_OPTS, g.beats); el.nextElementSibling.textContent = lenLabel(g.beats); } { const el = $('#gSub'), k = optIdx(FRAME_OPTS, 1 / g.subdiv); el.value = k; el.nextElementSibling.textContent = FRAME_OPTS[k][1]; } segSet('#gRestart', g.restart);
   showCycle(g);
@@ -61,10 +62,10 @@ function syncGifUI(){
   ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
   segSet('#tLen', g.env.len || 'free');
   const bgp = isBgPad(selPad); document.querySelectorAll('[data-pane=play] .trig').forEach(el => { el.classList.toggle('dimmed', bgp); el.title = bgp ? 'A Background GIF just plays: nothing triggers it' : el.title === 'A Background GIF just plays: nothing triggers it' ? '' : el.title; });   // 0.99.16: Background slots have no Trigger (greyed, same place)
-  $('#tEnv').classList.toggle('dimmed', g.trig !== 'fade' || bgp); $('#tHoldRow').classList.toggle('dimmed', g.env.gate || g.env.len === 'gif');
+  $('#tEnv').classList.toggle('dimmed', bgp); $('#tEnv').classList.toggle('folded', g.trig !== 'fade'); $('#tHoldRow').classList.toggle('dimmed', g.env.gate || g.env.len === 'gif');   // (0.99.26: the Trigger section folds shut under Loop / Hold; its Hit switch sits in the header)
   $('#tLenRow').classList.toggle('dimmed', g.env.gate); $('#tEveryRow').classList.toggle('dimmed', g.env.gate);
   segSet('#tRetrig', g.env.restart ? 'restart' : 'cont');   // (0.99.6)
-  { const i = optIdx(EVERY_OPTS, g.env.every || 0); $('#tEvery').value = i; $('#tEvery').nextElementSibling.textContent = EVERY_OPTS[i][1]; $('#tEveryOn').checked = !!g.env.every; $('#tEveryRow').classList.toggle('everyoff', !g.env.every); }
+  { const i = optIdx(EVERY_OPTS, g.env.every || 0); $('#tEvery').value = i; $('#tEvery').nextElementSibling.textContent = EVERY_OPTS[i][1]; }
   syncAutoUI(g);
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
   $('#gifName').title = `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h}${g.media && g.media.px ? ` (pixel art ×${g.media.px[0]}${g.media.px[1] !== g.media.px[0] ? '×' + g.media.px[1] : ''}, kept at ${g.w / g.media.px[0]}×${g.h / g.media.px[1]})` : ''} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
@@ -182,10 +183,7 @@ onSeg($('#tMode'), (b, e) => { const g = curGif(); if (!g) return;
 });
 $('#tEvery').max = EVERY_OPTS.length - 1;
 onSeg($('#tRetrig'), b => { const g = curGif(); if (!g) return; g.env = { ...g.env, restart: b.dataset.v === 'restart' }; syncGifUI(); });   // Retrigger: Continue (from the level it was at) or Restart (from 0), 0.99.6
-$('#tEvery').addEventListener('input', e => { const g = curGif(); if (!g) return; const o = EVERY_OPTS[+e.target.value]; g.env.every = o[0]; if (o[0]) g.env.everyN = o[0]; e.target.nextElementSibling.textContent = o[1]; $('#tEveryOn').checked = !!o[0]; redraw.all = true; });
-$('#tEveryOn').addEventListener('change', e => { const g = curGif(); if (!g) return;   // 0.99.16: a switch that keeps the count
-  if (e.target.checked) g.env.every = g.env.everyN || 4; else { if (g.env.every) g.env.everyN = g.env.every; g.env.every = 0; }
-  syncGifUI(); redraw.all = true; });
+$('#tEvery').addEventListener('input', e => { const g = curGif(); if (!g) return; const o = EVERY_OPTS[+e.target.value]; g.env.every = o[0]; e.target.nextElementSibling.textContent = o[1]; redraw.all = true; });
 onSeg($('#tLen'), (b, e) => { const g = curGif(); if (g){ g.env.len = b.dataset.v; syncGifUI(); } });
 onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.dataset.v; syncGifUI(); } });
 
@@ -303,7 +301,7 @@ let liveWas = new Set();
 function liveMods(){
   const now = new Set(), b = clock.beat, put = (id, v, txt) => { const el = $(id); if (!el || el.matches(':active')) return; now.add(id); el.value = v; el.nextElementSibling.textContent = txt; };
   const X = typeof fxEd === 'function' ? fxEd() : null, d = FX_DEFS[selFx < NFX ? selFx : preEd];
-  if (X && X.mod && d && !fxModK) for (const k of fxModKeys()){ const M = X.mod[k]; if (!M || !M.on || !fxModPlain(k)) continue;
+  if (X && X.mod && d) for (const k of fxModKeys()){ const M = X.mod[k]; if (!M || !M.on || !fxModPlain(k)) continue;
     if (k === 'amt'){ const pp = amtPart(d, X), v = modAmt(X, b) * (pp ? (X.pamt?.[pp] ?? X.amt) / (X.amt || 1) : 1); put('#fxAmt', v, Math.round(v * 100) + '%'); }
     else { const L = FXM[k].list || (k === 'rate' ? FX_RATES : FX_SIZES), i = clamp(Math.round(fxModV(M, b)), 0, L.length - 1); put(FXM[k].el, i, L[i][1]); } }
   const c = selClip(), g = c && pads[c.pad] && pads[c.pad].gif;
