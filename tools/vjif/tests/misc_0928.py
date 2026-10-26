@@ -14,5 +14,9 @@ async def main():
     print('ui', r); assert r == [True, True, False], r
     r = await pg.evaluate("(() => { selectFx(FXI.colour); const n = $('#fxName'); return [n.scrollWidth <= n.clientWidth + 1, document.querySelectorAll('#fxLvl button svg').length]; })()")
     print('name', r); assert r == [True, 3], r
+    # typing into a note-switch slider's readout: the family follows what's typed
+    r = await pg.evaluate("""(() => { selectPad(0); $('#gTabs [data-v=play]').click(); const g = curGif(); g.sync = 'stretch'; syncGifUI(); const el = $('#gBeats');
+      const i = el.ctlParse('1/4T'), f = el._fam, j = el.ctlParse('3 bars'), f2 = el._fam, k = el.ctlParse('2'), f3 = el._fam; return [famList(el._base, f)[i][1], f, famList(el._base, f2)[j][1], f2, famList(el._base, f3)[k][0], f3]; })()""")
+    print('typed', r); assert r == ['1/4T', 't', '3 bars', 'd', 2, 'e'], r
     assert not errs, errs; await b.close(); print('ok')
 asyncio.run(main())

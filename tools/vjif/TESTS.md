@@ -455,3 +455,5 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts296} **Amount follows the envelope** (0.99.27) — an effect with a long Attack: hold its key: the Amount slider rises with it, settles at the set value, falls on release.
 - [ ] {ts297} **Gap at the turn too** (0.99.28) — GIF › Auto, Sine on X, Gap 1 bar, the switch on: the GIF pauses at the far end and at the start; off: only at the start.
 - [ ] {ts298} **Level icons** (0.99.28) — effects editor: GIF / Scene / Out as three icons (tooltips name them); the effect's name shows whole.
+- [ ] {ts299} **Duotone, Halftone, Swirl** (0.99.29) — Colour › Duotone: dark → the pair's shadow colour, light → its highlight; Colours slider changes the pair. Pixel › Halftone: round dots, bigger in bright areas; Size = spacing. Wobble › Swirl: the centre twists and untwists on the beat. Also on a GIF (GIF level).
+- [ ] {ts300} **Typing lengths** (0.99.29) — double-click a time readout (Loop length, Fade in, Cycle…), type 1/4T or 1/8. or 3 bars: the value and the note switch both follow.

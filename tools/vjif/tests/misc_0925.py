@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 async def main():
   async with async_playwright() as p:
     b = await p.chromium.launch(args=ARGS); pg = await b.new_page(viewport={'width':1600,'height':960}); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
-    await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()")
+    await pg.goto(DIST); await pg.wait_for_function("store.ready"); await pg.evaluate("$('#aboutPanel').hidden || closeAbout()"); await pg.evaluate("document.fonts.ready"); await pg.wait_for_timeout(400)   # (under load the first editor sync could land mid-test)
     r = await pg.evaluate("""(() => { const out = {}, T = FX_TARGETS[0];
       const go = (id, style, key, cfg) => { selectFx(FXI[id]); const C = fxEd(); C.style = style; Object.assign(C, cfg || {}); syncFxUI();
         const slot = key === 'vdrop' ? 'size' : 'rate', rowEl = $(slot === 'rate' ? '#fxRateRow' : '#fxSizeRow').closest('.field');

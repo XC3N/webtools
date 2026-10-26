@@ -401,6 +401,7 @@ const FXM = { amt: { name: 'Amount', el: '#fxAmt', row: '#fxAmt', min: 5, max: 1
   fbk: { name: 'Length', slot: 'rate', alt: true, el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_FBK.length - 1; }, fmt: i => FX_FBK[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_FBK; } },
   kz: { name: 'Zoom', slot: 'rate', alt: true, el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_KZ.length - 1; }, fmt: i => FX_KZ[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_KZ; } },
   vdrop: { name: 'Dropouts', slot: 'size', alt: true, el: '#fxSize', row: '#fxSizeRow', min: 0, get max(){ return FX_DROP.length - 1; }, fmt: i => FX_DROP[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_DROP; } },
+  duo: { name: 'Colours', slot: 'rate', alt: true, el: '#fxRate', row: '#fxRateRow', min: 0, get max(){ return FX_DUO.length - 1; }, fmt: i => FX_DUO[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_DUO; } },   // 0.99.29: Duotone's pair
   kang: { name: 'Angle', slot: 'size', alt: true, el: '#fxSize', row: '#fxSizeRow', min: 0, get max(){ return FX_KANG.length - 1; }, fmt: i => FX_KANG[i][1], toV: i => i, toI: v => Math.round(v), get list(){ return FX_KANG; } } };   // 0.99.27: Kaleido's Angle (Ramp: a spin in time)
 FXM.amt.slot = 'amt'; FXM.rate.slot = 'rate'; FXM.size.slot = 'size';
 const fxModSlotKey = (slot, d, X) => { if (slot === 'amt') return 'amt';   // the key whose LFO the slot's slider carries now (null: none)

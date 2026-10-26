@@ -163,9 +163,14 @@ buildLayers(); renderScenes(); syncTransUI(); syncLayerUI(); syncXfUI(); selectP
 // typing into readouts: musical lengths accept a label ("1/8", "2 bars") or a number of beats; phase is in degrees
 const lenParse = opts => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), i = opts.findIndex(o => o[1].toLowerCase() === l || o[1].toLowerCase() === l + 's');
   if (i >= 0) return i; const n = parseFloat(t); return isFinite(n) ? optIdx(opts, n) : null; };
-['#tA', '#tH', '#tR'].forEach(id => $(id).ctlParse = lenParse(ENV_OPTS));
+// 0.99.28: a slider with the Even / Dotted / Triplet switch: what's typed ("1/8.", "1/4T", "3 bars", or beats) picks its family too
+const famParse = (L3, setFam) => t => { const l = t.toLowerCase().replace(/\s+/g, ' '), n = parseFloat(t);
+  for (const f of ['e', 'd', 't']){ const L = L3(f), i = L.findIndex(o => o[1].toLowerCase() === l || o[1].toLowerCase() === l + 's'); if (i >= 0){ setFam(f); return i; } }
+  if (!isFinite(n)) return null; let best = null; for (const f of ['e', 'd', 't']){ const L = L3(f), i = optIdx(L, n), d = Math.abs(L[i][0] - n); if (!best || d < best[2] - 1e-9) best = [f, i, d]; }
+  setFam(best[0]); return best[1]; };
+['#tA', '#tH', '#tR', '#gBeats', '#gSub', '#gRestart', '#tEvery', '#aGap'].forEach(id => { const el = $(id); if (el._base) el.ctlParse = famParse(f => famList(el._base, f), f => { el._fam = f; el.max = famList(el._base, f).length - 1; }); });
 ['#aEA', '#aED', '#aER'].forEach(id => $(id).ctlParse = lenParse(ENV_OPTS));
-$('#aPer').ctlParse = lenParse(PER_OPTS); $('#aGap').ctlParse = lenParse(GAP_OPTS);
+$('#aPer').ctlParse = famParse(f => PER_FAM[f], f => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (A && perFam(A.per) !== f) editLfo(B => B.per = PER_FAM[f][0][0], true, false); });   // (the slider runs over the family of the Cycle set: switch family first)
 $('#aPh').ctlParse = t => { const n = parseFloat(t); return isFinite(n) ? mod(n, 360) / 360 : null; };
 $('#themeBox').addEventListener('input', () => quietUI());
 // MIDI learn's colour: the signal colour turned to the opposite hue (it can't be mistaken for it, and it suits every theme)

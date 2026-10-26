@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.29 — 2026/10/26
+
+- New styles, from shaders.com's list of techniques (our own GLSL, nothing copied): Colour › Duotone (shadows to highlights in a pair of colours; the Colours slider picks one of six pairs, an LFO can step through them), Pixel › Halftone (a round dot per cell, its area as bright as the cell), Wobble › Swirl (twists round the centre and back, each Rate) (ID-254).
+- Typing into a time slider's readout ("1/4T", "1/8.", "3 bars", or beats) also sets its note switch; the LFO Cycle did the same wrong before (BG-066).
+
 ## 0.99.28 — 2026/10/26
 
 - GIF › Auto › LFO: Gap at the turn too: half the Gap at the turn of the cycle (the top of a Sine or Triangle, where Skew puts it), half at the end, so the peak holds (ID-253).
