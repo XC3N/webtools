@@ -330,7 +330,9 @@ const modSize = (C, b, def) => { const v = fxMod(C, 'size', b); return v === nul
 const GFX_IDS = FX_DEFS.map(d => d.id);   // 0.99.27 (ID-223): every effect (0.97–0.99.26: seven of them)
 const GFX_STYLES = id => FX_DEFS[FXI[id]].styles;
 var gfxReady = true;   // (ui-gif runs before this file: it waits for this)
-const gfxOn = g => !!(g && g.gfx && GFX_IDS.some(id => g.gfx[id] && g.gfx[id].on && g.gfx[id].amt > 0));
+var gfxPrevId = null;   // a GIF effect being previewed (its slider held, GIF level): shown on the selected GIF even while it's off
+const gfxLit = (g, id) => !!(g.gfx[id] && (g.gfx[id].on || (gfxPrevId === id && g === curGif())) && g.gfx[id].amt > 0);
+const gfxOn = g => !!(g && g.gfx && GFX_IDS.some(id => gfxLit(g, id)));
 // a GIF's effect as the editor changes it (GIF level): a full set of settings, filled from the defaults the first time
 const gfxBase = i => { const D = fxFactory()[i]; return { on: false, amt: 0.8, style: D.style, rate: D.rate, size: D.size, ...Object.fromEntries(FX_XK.map(([k, def]) => [k, k === 'ovs' ? 0 : def])) }; };   // (Edges off: a GIF's buffer is the whole frame)
 function gfxEntry(i, g = curGif()){ if (!g || i >= NFX) return null; const id = FX_DEFS[i].id; g.gfx = g.gfx || {};
@@ -342,7 +344,7 @@ function gfxKey(i){ const g = curGif(); if (!g) return toast2('GIF level: select
 function gfxU(g, b){
   const z = v => FX_DEFS.map(() => v), F = fxFactory();
   const M = { lv: z(0), env: z(0), amt: z(1), rate: F.map(c => c.rate), style: FX_DEFS.map(d => d.styles[0][0]), size: FX_DEFS.map(d => d.sizeDef || 64), pamt: [], abase: z(1), ...Object.fromEntries(FX_XK.map(([k, def]) => [k, z(k === 'ovs' ? 0 : def)])) };   // (Edges: off on a GIF, as before)
-  for (const id of GFX_IDS){ const e = g.gfx[id], i = FXI[id]; if (!e || !e.on || !(e.amt > 0)) continue;
+  for (const id of GFX_IDS){ const e = g.gfx[id], i = FXI[id]; if (!gfxLit(g, id)) continue;
     M.lv[i] = e.amt; M.env[i] = 1; M.amt[i] = e.amt; M.abase[i] = e.amt; if (e.style) M.style[i] = e.style; if (e.size) M.size[i] = e.size; if (e.rate) M.rate[i] = e.rate; if (e.pamt) M.pamt[i] = e.pamt;
     for (const [k, def] of FX_XK) M[k][i] = fxXv(e, k, k === 'ovs' ? 0 : def, null, null); }   // a GIF's effects have no automation (ID-223): each setting as set
   const U = fxU(b, M); if (U) U.keepA = 1; return U;   // keepA: its Strobe flashes the GIF, not the frame around it

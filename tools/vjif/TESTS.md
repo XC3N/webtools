@@ -457,3 +457,4 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts298} **Level icons** (0.99.28) — effects editor: GIF / Scene / Out as three icons (tooltips name them); the effect's name shows whole.
 - [ ] {ts299} **Duotone, Halftone, Swirl** (0.99.29) — Colour › Duotone: dark → the pair's shadow colour, light → its highlight; Colours slider changes the pair. Pixel › Halftone: round dots, bigger in bright areas; Size = spacing. Wobble › Swirl: the centre twists and untwists on the beat. Also on a GIF (GIF level).
 - [ ] {ts300} **Typing lengths** (0.99.29) — double-click a time readout (Loop length, Fade in, Cycle…), type 1/4T or 1/8. or 3 bars: the value and the note switch both follow.
+- [ ] {ts301} **GIF-level preview** (0.99.30) — effects editor on GIF, a GIF selected, an effect off: hold its Amount slider: only that GIF shows the effect, the rest of the output doesn't change; let go: it's off again.

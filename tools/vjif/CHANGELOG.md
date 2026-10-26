@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.30 — 2026/10/26
+
+- GIF level: holding an effect slider previewed the effect on the whole output, with the output's settings (a Palette could flash over everything while you set a GIF's Duotone). Now the preview is the selected GIF's own effect, shown while the slider is held even if it's off (BG-067, BG-068).
+
 ## 0.99.29 — 2026/10/26
 
 - New styles, from shaders.com's list of techniques (our own GLSL, nothing copied): Colour › Duotone (shadows to highlights in a pair of colours; the Colours slider picks one of six pairs, an LFO can step through them), Pixel › Halftone (a round dot per cell, its area as bright as the cell), Wobble › Swirl (twists round the centre and back, each Rate) (ID-254).

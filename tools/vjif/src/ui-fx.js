@@ -339,14 +339,15 @@ let fxPrev = null, fxPrevSig = '';
 // drawn on the pixel grid at 1:1 (14 px, half-pixel lines) so they stay sharp
 const ENV_IC_SL = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1" shape-rendering="crispEdges" style="display:block;margin:auto"><path d="M1 3.5h12M1 7.5h12M1 11.5h12"/><rect x="3" y="2" width="3" height="3" fill="currentColor" stroke="none"/><rect x="8" y="6" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="10" width="3" height="3" fill="currentColor" stroke="none"/></svg>';
 const ENV_IC_GRAPH = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.2" style="display:block;margin:auto"><path d="M1.5 12.5L3.5 2.5l3 5h3.5l2.5 5"/></svg>';
-function envPrevStart(){ if (envPrevOn) fxPrev = { i: selFx, b0: clock.beat, loop: true }; }   // (0.92: a preset previews too)
+function envPrevStart(){ if (!envPrevOn) return; if (fxLvl === 'gif' && selFx < NFX){ gfxPrevId = FX_DEFS[selFx].id; redraw.all = true; return; } fxPrev = { i: selFx, b0: clock.beat, loop: true }; }   // (0.92: a preset previews too)
+// 0.99.30 (BG-067, BG-068): on the GIF level the preview is the selected GIF's own effect shown while the slider is held (on or not), not the output's effect
 // any slider in the effect editor (Amount, Rate, Size, a preset's effect's own): while it's dragged the effect or preset plays
 // its envelope over and over, so the change shows (Preview on, the ▶ beside the envelope) (0.92)
 $('#fxEdit').addEventListener('pointerdown', e => { if (e.button || !e.target.matches('input[type=range]') || (fxPrev && fxPrev.loop)) return;   // (a right-click isn't a press: it did start the preview)
   envPrevStart();
   addEventListener('pointerup', envPrevStop, { once: true }); }, true);
 function envPrevChanged(C){ const sg = [C.att, C.dec, C.sus, C.len, C.rel].join(); if (fxPrev && sg !== fxPrevSig) fxPrev.b0 = clock.beat; fxPrevSig = sg; }
-function envPrevStop(){ if (fxPrev) fxPrev.loop = false; }
+function envPrevStop(){ if (fxPrev) fxPrev.loop = false; if (gfxPrevId){ gfxPrevId = null; redraw.all = true; } }
 // the preview's level: a hit (Hold / Latch get a 1-beat length so Sustain shows), looping with a short gap
 function fxPrevLevel(i, C, b){
   if (!fxPrev || fxPrev.i !== i) return 0;
