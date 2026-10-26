@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.28 — 2026/10/26
+
+- GIF › Auto › LFO: Gap at the turn too: half the Gap at the turn of the cycle (the top of a Sine or Triangle, where Skew puts it), half at the end, so the peak holds (ID-253).
+- Effects editor: the GIF / Scene / Out switch is three icons (a picture, a scene, a screen), so the effect's name fits again (ID-249).
+
 ## 0.99.27 — 2026/10/26
 
 - Effects on three levels at once (ID-235): a GIF | Scene | Out switch in the effects editor (where FX Local was) picks which level the F-keys, the tiles and the editor work on. Out carries on from scene to scene; Scene is each scene's own (its latched effects go with it); GIF is the selected GIF's own. All three play together. All effects off clears the level the switch is on. A set saved with FX Local brings its latched effects back on the Scene level.

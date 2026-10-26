@@ -563,3 +563,5 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #gEndRow.off>input,#gEndRow.off>output{opacity:.4}#gEndRow>.tog{grid-column:2;grid-row:1;align-self:center}   /* 0.99.29: Outro to (End) with its switch */
 #gEndRow input[type=checkbox]{width:30px!important;height:16px!important;min-width:30px;padding:0;grid-column:auto;grid-row:auto}
 #side #gEndRow.field.withseg{grid-template-columns:minmax(0,1fr) 32px!important}#gEndRow>.tog{justify-self:end;overflow:visible}
+.field.twoend{display:flex!important;justify-content:space-between;align-items:center}.field.twoend>label:first-child{position:static}.field.twoend input[type=checkbox]{width:30px!important;height:16px!important}   /* 0.99.28: Gap at the turn too */
+#fxLvl button{padding:0 5px}   /* 0.99.28: the level switch as icons, so the effect's name fits (ID-249) */

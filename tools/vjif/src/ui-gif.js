@@ -204,7 +204,7 @@ function syncAutoUI(g){
     el.value = A[k]; el.dataset.def = D[k];
     el.nextElementSibling.textContent = lfoFmt(t, A[k]); if (t[6] === '%') el.dataset.pct = ''; else delete el.dataset.pct; });
   { const f = perFam(A.per), L = PER_FAM[f], pi = optIdx(L, A.per); $('#aPer').max = L.length - 1; $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(L, D.per); $('#aPer').nextElementSibling.textContent = L[pi][1]; segSet('#aPerFam', f); }
-  famShow($('#aGap'), A.gap || 0);
+  famShow($('#aGap'), A.gap || 0); $('#aGap2').checked = !!A.gap2; $('#aGap2Row').classList.toggle('dimmed', !(A.gap > 0));
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
   $('#aSk').value = A.sk ?? 0.5; $('#aSk').nextElementSibling.textContent = skFmt(A.sk ?? 0.5); $('#aHoldBtn').classList.toggle('on', !!A.hold); $('#aInv').classList.toggle('on', !!A.inv);
   const em = A.em || 'off'; segSet('#aEnv', em);
@@ -212,7 +212,7 @@ function syncAutoUI(g){
   $('#aEnvLoop').classList.toggle('on', !!A.eloop);
   $('#aES').value = A.es ?? 0; $('#aES').nextElementSibling.textContent = Math.round((A.es ?? 0) * 100) + '%';
   document.querySelectorAll('#gPanes .aEnvF').forEach(f => f.classList.toggle('dimmed', em === 'off'));
-  ['#aShape', '#aPer', '#aGap', '#aPh', '#aSk', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
+  ['#aShape', '#aPer', '#aGap', '#aGap2', '#aPh', '#aSk', '#aSync'].forEach(id => $(id).closest('.field').classList.toggle('dimmed', em === 'only'));   // Only: the envelope alone
   $('#gTabs [data-v=auto]').classList.toggle('act', lfoAny(g)); syncGfxUI(g);
 }
 // change the edited LFO; touching any setting switches it on
@@ -240,6 +240,7 @@ $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value, tr
 $('#aSk').addEventListener('input', e => { editLfo(A => A.sk = +e.target.value, true, true); e.target.nextElementSibling.textContent = skFmt(+e.target.value); });
 [['#aHoldBtn', 'hold'], ['#aInv', 'inv']].forEach(([q, k]) => $(q).addEventListener('click', e => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (!A) return; const v = !A[k]; editLfo(B => B[k] = v, true, true, e.shiftKey); }));   // toggles; Shift+click: every running LFO of this GIF (the click's own Shift: the pointerup before it already cleared aShift, 0.89.0's bug)
 famInit($('#aGap'), GAP_OPTS, v => editLfo(A => A.gap = v, true, true));
+$('#aGap2').addEventListener('change', e => editLfo(A => A.gap2 = e.target.checked, true, true));   // 0.99.28 (ID-253)
 A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0], true, true)); });
 $('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value, true, true));
 onSeg($('#aEnv'), b => editLfo(A => A.em = b.dataset.v));

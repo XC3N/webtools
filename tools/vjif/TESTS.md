@@ -453,3 +453,5 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts294} **Note switch on time sliders** (0.99.27) — GIF › Play: Loop length, Each frame, Restart, Repeat, Fade in / Hold / Fade out: the ♪ / ♪. / ♪3 switch moves the value to the nearest dotted / triplet step; the slider then runs over that family. Same on GIF › Auto › Gap.
 - [ ] {ts295} **Intro and outro frames** (0.99.27) — Frames: Start before In: the first frames play once, then In–Out loops. Outro to past Out with its switch on, Hit › Hold: let go: the frames after Out play once and the last stays while it fades.
 - [ ] {ts296} **Amount follows the envelope** (0.99.27) — an effect with a long Attack: hold its key: the Amount slider rises with it, settles at the set value, falls on release.
+- [ ] {ts297} **Gap at the turn too** (0.99.28) — GIF › Auto, Sine on X, Gap 1 bar, the switch on: the GIF pauses at the far end and at the start; off: only at the start.
+- [ ] {ts298} **Level icons** (0.99.28) — effects editor: GIF / Scene / Out as three icons (tooltips name them); the effect's name shows whole.

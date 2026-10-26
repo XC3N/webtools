@@ -187,6 +187,8 @@ function lfoPos(A, c){ return lfoPosT(A, A.sync === 'trig' ? clock.beat - c.star
 function lfoPosT(A, t){
   const g = A.gap || 0; if (!g) return t / A.per + A.ph;
   const L = A.per + g, u = t + A.ph * A.per, n = Math.floor(u / L), r = u - n * L;
+  if (A.gap2){ const k = A.sk ?? 0.5, a = A.per * k, h = g / 2;   // 0.99.28 (ID-253): Gap at both ends: half the pause at the turn (Skew: the top of a Sine / Tri), half at the end
+    return n + (r < a ? r / A.per : r < a + h ? k : r < A.per + h ? (r - h) / A.per : 0.999999); }
   return n + (r < A.per ? r / A.per : 0.999999);
 }
 function lfoShape(A, pos, seed){ const v = lfoShape0(A, pos, seed); return A.inv ? 1 - v : v; }   // Invert (0.89): upside down
