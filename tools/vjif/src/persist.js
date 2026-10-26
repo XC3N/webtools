@@ -1,5 +1,5 @@
 // ---------- persistence: GIF files + settings in IndexedDB (cookies cap at ~4 KB) ----------
-const GIF_KEYS = ['name', 'sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'key', 'hsv', 'pal', 'swap', 'swapMerge', 'swapOff', 'trimOff', 'trig', 'env', 'lfo', 'shadow', 'nofx', 'gfx'];
+const GIF_KEYS = ['name', 'sync', 'loop', 'speed', 'crisp', 'beats', 'subdiv', 'restart', 'inF', 'outF', 'startF', 'endF', 'outro', 'key', 'hsv', 'pal', 'swap', 'swapMerge', 'swapOff', 'trimOff', 'trig', 'env', 'lfo', 'shadow', 'nofx', 'gfx'];
 const XF_KEYS = [...Object.keys(newXf()), 'alpha'];
 // IndexedDB 'kv' store:
 //   'gif:<hash>' → { name, blob }               original files, stored once (content hash), shared by sets
@@ -24,7 +24,7 @@ const serLayers = ls => ls.map(L => ({ on: L.on, opacity: L.opacity, blend: L.bl
 const serPads = gs => gs.map(g => g ? { hash: g.hash, name: g.name, ...Object.fromEntries(GIF_KEYS.map(k => [k, g[k]])) } : null);
 function snapshot(){
   return JSON.stringify({
-    v: SNAP_V, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0), fxLocal, sceneFx: fxLocal ? latchedNow() : liveFxOn,
+    v: SNAP_V, format, bpm: clock.bpm, snap: snapMode, target, scene: sceneIdx, trans: { ...transCfg }, transP: trPresets.map(P => ({ ...P })), transSel: trSel, fx: fxCfg.map(c => ({ ...c })), fxPre: JSON.parse(JSON.stringify(fxPre)), fxOn: latchedOf(fxSt), fxLv: 2, sceneFx: latchedNow(),   // fxLv 2 (0.99.27): fxOn = Output's latched effects, sceneFx = the live scene's own
     pool: pool.map(m => ({ hash: m.hash, name: m.name, ...(m.scale && m.scale !== 1 ? { scale: m.scale } : {}) })),
     pads: serPads(pads.map(p => p.gif)),
     layers: serLayers(layers),
@@ -184,8 +184,11 @@ async function applySnapshot(st, { wait = true } = {}){
   armTrans(trSel);
   fxCfg = fxDefaults().map((d, i) => Object.assign(d, st.fx && st.fx[i] || {})); fxCfg.forEach((c, i) => { c.style = FX_MULTI[FX_DEFS[i].id] ? styleNorm(i, c.style) : FX_DEFS[i].styles[styleIdx(i, c.style)][0]; }); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
   fxPre = fxPreDefaults().map((d, k) => Object.assign(d, st.fxPre && st.fxPre[k] || {}));   // older sets had six: they fill 1–6
-  if (Array.isArray(st.fxOn)) st.fxOn.forEach((on, i) => { if (on && fxSt[i] && fxConf(i).mode === 'latch'){ const C = fxConf(i); Object.assign(fxSt[i], { on: true, t0: clock.beat - (C.att || 0) - (C.dec || 0) - 1e-6 }); } });   // latched effects come back on (at Sustain)
-  fxLocal = !!st.fxLocal; liveFxOn = st.sceneFx || null; fxScopeUI();
+  scSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 }));
+  const lv2 = st.fxLv >= 2, outOn = lv2 || !st.fxLocal ? st.fxOn : null, scOn = lv2 ? st.sceneFx : st.fxLocal ? st.fxOn : null;   // before 0.99.27: FX Local's latched effects were the scene's own; Global's were Output's
+  if (!lv2 && !st.fxLocal) scenes.forEach(sc => { if (sc) sc.fxOn = null; });   // (Global kept the other scenes' as memories only: they don't come on now)
+  const back = (A, L) => { if (Array.isArray(L)) L.forEach((on, i) => { if (on && A[i] && fxConf(i).mode === 'latch'){ const C = fxConf(i); Object.assign(A[i], { on: true, t0: clock.beat - (C.att || 0) - (C.dec || 0) - 1e-6 }); } }); };   // latched effects come back on (at Sustain)
+  back(fxSt, outOn); back(scSt, scOn);
   syncFxUI();
   target = st.target || 0;
   pads.forEach((_, i) => renderPad(i));
@@ -241,7 +244,7 @@ async function newEmptySet(){
   layers.forEach(L => Object.assign(L, emptyLayer()));
   scenes.fill(null); sceneIdx = 0; pendingScene = null; liveThumb = null; liveName = ''; endTrans(); dropPrep(); setScBank(0); renderScenes();
   trPresets = trDefaults(); armTrans(1);
-  fxCfg = fxDefaults(); fxPre = fxPreDefaults(); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); heldPre = -1; syncFxUI();
+  fxCfg = fxDefaults(); fxPre = fxPreDefaults(); fxSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); scSt.forEach(S => Object.assign(S, { held: false, on: false, b0: -1e9 })); heldPre = -1; syncFxUI();
   pending.clear(); pads.forEach(p => p.el.classList.remove('wait'));
   session.setId = null; session.savedSig = '';
   resetHist();

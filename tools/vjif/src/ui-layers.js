@@ -382,13 +382,13 @@ const loupeLockSet = on => { loupeLock = on; $('#loupe').classList.toggle('pin',
 pv.addEventListener('pointermove', e => { if (!pvOpt.loupe || loupeLock) return; loupeAt = evtToOut(e); drawLoupe(); });
 const loupeCtx = e => { if (!pvOpt.loupe || !loupeAt) return; e.preventDefault(); if (!loupeLock && e.currentTarget === pv) loupeAt = evtToOut(e); loupeLockSet(!loupeLock); drawLoupe(); };   // (also on the loupe itself: it can sit over the spot you click)
 pv.addEventListener('contextmenu', loupeCtx); $('#loupe').addEventListener('contextmenu', loupeCtx);
-const loupePlace = () => { const L = $('#loupe'), P = L.offsetParent; if (!P || !pvOpt.lpos){ L.style.left = L.style.top = ''; return; }
-  const w = L.offsetWidth || 240, h = L.offsetHeight || 240, x = clamp(pvOpt.lpos[0] * P.clientWidth, 0, Math.max(0, P.clientWidth - w)), y = clamp(pvOpt.lpos[1] * P.clientHeight, 0, Math.max(0, P.clientHeight - h));
-  Object.assign(L.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); };
+const loupePlace = () => { const L = $('#loupe'); if (!pvOpt.lpos){ Object.assign(L.style, { position: '', zIndex: '', left: '', top: '', right: '', bottom: '' }); return; }   // 0.99.27: once dragged, it can sit anywhere in the window (fixed), not only over the preview
+  const w = L.offsetWidth || 240, h = L.offsetHeight || 240, x = clamp(pvOpt.lpos[0] * innerWidth, 0, Math.max(0, innerWidth - w)), y = clamp(pvOpt.lpos[1] * innerHeight, 0, Math.max(0, innerHeight - h));
+  Object.assign(L.style, { position: 'fixed', zIndex: 40, left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); };
 addEventListener('resize', loupePlace);
-$('#loupe').addEventListener('pointerdown', e => { if (e.button) return; const L = $('#loupe'), P = L.offsetParent; if (!P) return; e.preventDefault(); L.setPointerCapture(e.pointerId);
-  const r = L.getBoundingClientRect(), pr = P.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top; L.classList.add('drag');
-  const mv = ev => { pvOpt.lpos = [(ev.clientX - dx - pr.left) / P.clientWidth, (ev.clientY - dy - pr.top) / P.clientHeight]; loupePlace(); };
+$('#loupe').addEventListener('pointerdown', e => { if (e.button) return; const L = $('#loupe'); e.preventDefault(); L.setPointerCapture(e.pointerId);
+  const r = L.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top; L.classList.add('drag');
+  const mv = ev => { pvOpt.lpos = [(ev.clientX - dx) / innerWidth, (ev.clientY - dy) / innerHeight]; loupePlace(); };
   const up = () => { L.removeEventListener('pointermove', mv); L.removeEventListener('pointerup', up); L.classList.remove('drag'); pvSave(); };
   L.addEventListener('pointermove', mv); L.addEventListener('pointerup', up); });
 $('#loupe').addEventListener('dblclick', () => { pvOpt.lpos = null; loupePlace(); pvSave(); });   // back to the corner

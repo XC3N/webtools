@@ -83,7 +83,7 @@ function onKey(e){
   if (e.code === 'Space'){ e.shiftKey ? resync() : tap(); return; }
   if (e.code === 'Escape'){ if (picking){ stopPick(); return; } noSel = true; layers.forEach(L => { L.sel = false; }); pads.forEach(p => p.el.classList.remove('sel')); uiLater(UI.GIF | UI.LAYERS | UI.XF); return; }   // 0.99.15: Esc, nothing to cancel: no GIF is selected
   if (e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); removeClip(target, selClip()); return; }
-  if (e.code === 'Home'){ e.preventDefault(); const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); commit(); } return; }   // reset placement
+  if (e.code === 'Home' && e.shiftKey){ e.preventDefault(); const c = selClip(); if (c){ Object.assign(c, newXf()); syncXfUI(); commit(); toast2('Placement reset (Ctrl+Z undoes it)'); } return; }   // reset placement (0.99.27: Shift+Home; Home alone was too easy to hit)
   if (e.code === 'End'){ e.preventDefault(); maskOpen(target); return; }                  // the edit layer's mask editing on / off (0.99.11; layers on / off stay on Shift+1–4)
   if (e.code === 'PageUp' || e.code === 'PageDown'){ e.preventDefault(); setTarget(clamp(target + (e.code === 'PageUp' ? -1 : 1), 0, 3)); return; }   // PgUp: the layer to the left (cards are 1→4 left to right), PgDn: to the right
 }

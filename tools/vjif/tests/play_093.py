@@ -29,8 +29,8 @@ async def main():
     await pg.evaluate(f"fxCfg[{hit}].target = 'out'"); await pg.wait_for_timeout(400); allfx = await pg.evaluate(PX)   # 0.95: an effect on All applies to a bypassed GIF too
     print('bypass under All', allfx); assert sum(abs(a-b) for a,b in zip(allfx, base)) > 60, allfx
     await pg.keyboard.press(f'F{hit+1}'); await pg.evaluate("$('#gNoFx').checked = false; $('#gNoFx').dispatchEvent(new Event('change', { bubbles: true }))")
-    # Loop length slider
-    ll = await pg.evaluate("(() => { const el = $('#gBeats'); el.value = 7; el.dispatchEvent(new Event('input', { bubbles: true })); return [pads[0].gif.beats, el.nextElementSibling.textContent]; })()")
+    # Loop length slider (0.99.27: its steps are one note family, Even: 1/16 … 16 bars)
+    ll = await pg.evaluate("(() => { const el = $('#gBeats'); el.value = 5; el.dispatchEvent(new Event('input', { bubbles: true })); return [pads[0].gif.beats, el.nextElementSibling.textContent]; })()")
     print('loop length', ll); assert ll == [8, '2 bars'], ll
     # One shot › Repeat: hidden, then shows by itself on the grid without a hit
     await pg.evaluate("$('#tMode [data-v=fade]').click()"); await pg.wait_for_timeout(100)

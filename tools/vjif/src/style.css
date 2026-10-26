@@ -551,3 +551,15 @@ body.noxdel .chip b{display:none}   /* Ctrl+click to delete only: no × on the l
 #poolPanel .pgrp.add{flex:1 1 280px}#poolPanel .joined{display:flex;flex:1;min-width:0}#poolPanel .joined input{flex:1;min-width:0;border-top-right-radius:0;border-bottom-right-radius:0}#poolPanel .joined button{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:-1px}
 #tEnv.folded{display:none}.sub.trig>#tMode{flex:none;margin-left:6px}.sub.trig.dimmed>#tMode{opacity:.4;pointer-events:none}   /* 0.99.26: Trigger: Hit in the header line, the rest folds under Loop and Hold */
 #fxLfoSl .field.withseg>.seg{height:20px;width:66px}#fxLfoSl .field.withseg>.seg button svg{width:12px;height:12px;overflow:visible}   /* 0.99.26: the note icons were clipped by the 16px row */
+#side>h2>#gRes{flex:none;height:18px;margin:0 0 0 6px;font-weight:400}#side>h2>#gRes button{font-size:10px;padding:0 6px;min-width:0}   /* 0.99.27: Resolution in the GIF header (it was in Play), clear of the picture on the right */
+.lfoOff.dimmed{opacity:.35}
+.sub>.seg.hseg{flex:none;margin-left:6px;height:20px}.sub>.seg.hseg button{padding:0 8px}   /* 0.99.27: GIF Loop's Timing in its header line, as icons (like Trigger's switch) */
+#fxSizeRow.siderow{grid-template-columns:minmax(0,1fr) 30px!important;column-gap:4px}#fxSizeRow.siderow>#fxSizeSeg{grid-column:2;grid-row:1;width:30px}#fxSizeRow.siderow>#fxSizeSeg button{width:30px}   /* 0.99.27: Kaleido's Angle slider with the Mirror switch beside it */
+#fxLvl{flex:none;height:22px;margin:0 2px}#fxLvl button{padding:0 6px;font-size:10px;min-width:0}   /* 0.99.27: GIF | Scene | Out, where FX Local was */
+#fxEdit.gifl .envrow>*,#fxEdit.gifl #fxTgt{visibility:hidden}#fxEdit.gifl .envrow{position:relative}#fxEdit.gifl .envrow::after{content:'GIF level: no envelope, no LFO';position:absolute;inset:6px 8px;display:flex;align-items:center;justify-content:center;text-align:center;font:400 11px var(--mono);color:var(--muted);border:1px dashed var(--line, #333);border-radius:var(--r)}
+#fxEdit.nogif .fxrow:not(.fxtop),#fxEdit.nogif #fxStyle{opacity:.35;pointer-events:none}
+.gfxh .gfxn{cursor:pointer}.gfxh .gfxn::before{content:'▾';display:inline-block;width:10px;margin-right:2px;color:var(--muted);font-size:9px}.gfxh.folded .gfxn::before{content:'▸'}.gfxh .gfxmore{flex:none;margin-right:4px}   /* 0.99.27: GIF › FX sections fold (off: folded) */
+.fxrow.fxtop{grid-template-columns:auto minmax(0,1fr) auto;column-gap:4px}#fxLvl{height:20px;margin:0}#fxLvl button{padding:0 4px;font-size:9.5px;letter-spacing:0}   /* 0.99.27: room for the level switch: the name takes what's left */
+#gEndRow.off>input,#gEndRow.off>output{opacity:.4}#gEndRow>.tog{grid-column:2;grid-row:1;align-self:center}   /* 0.99.29: Outro to (End) with its switch */
+#gEndRow input[type=checkbox]{width:30px!important;height:16px!important;min-width:30px;padding:0;grid-column:auto;grid-row:auto}
+#side #gEndRow.field.withseg{grid-template-columns:minmax(0,1fr) 32px!important}#gEndRow>.tog{justify-self:end;overflow:visible}

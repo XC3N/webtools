@@ -98,7 +98,7 @@ function makeInst(m, saved = null){
   const n = m.src.length;
   const g = { uid: ++gifSeq, fxWaits: [], media: m, hash: m.hash, name: m.name, blob: m.blob, type: m.type, src: m.src, frames: m.src, durs: m.durs,
            w: m.w, h: m.h, srcBytes: m.srcBytes, bytes: m.srcBytes,
-           sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, nofx: false, inF: 0, outF: n - 1, startF: 0,
+           sync: 'free', loop: 'loop', speed: 1, beats: 4, subdiv: 1, restart: 0, crisp: true, nofx: false, inF: 0, outF: n - 1, startF: 0, endF: n - 1, outro: false,
            key: { on: false, color: [0, 255, 0], tol: 0, soft: 0, region: 'all', seed: null }, hsv: { h: 0, s: 1, v: 1, off: true }, pal: { i: -1, d: 0 }, shadow: { ...SHADOW_DEF }, swap: [], swapMerge: 0, fxVer: 0, keyGen: 0, keyT: 0, keyMsg: '',
            masks: null, maskGen: 0, maskT: 0,
            trig: 'stay', env: { a: 0.5, h: 1, r: 2, curve: 'lin', gate: false, len: 'free', every: 0 }, lfo: {} };
@@ -125,14 +125,18 @@ async function mediaFor(blob, name, gen = setGen){
   pool.push(m); store.put('gif:' + hash, { name: m.name, blob }); renderPool();
   return m;
 }
-// playback order: frames in..out, rotated so the loop begins at startF
+// playback order: frames in..out, rotated so the loop begins at startF. 0.99.29 (ID-241): a Start before In plays Start..In once
+// (an intro), then the loop; frames after Out up to End play once when the pad is let go, with Outro on release on (an outro)
 function rebuildSeq(g){
   const F = g.src.length;
-  g.inF = clamp(g.inF | 0, 0, F - 1); g.outF = clamp(g.outF | 0, g.inF, F - 1); g.startF = clamp(g.startF | 0, g.inF, g.outF);
-  const [i0, i1, s0] = g.trimOff ? [0, F - 1, 0] : [g.inF, g.outF, g.startF];   // Frames switched off: every frame, from the first (In / Out / Start kept)
+  g.inF = clamp(g.inF | 0, 0, F - 1); g.outF = clamp(g.outF | 0, g.inF, F - 1); g.startF = clamp(g.startF | 0, 0, g.outF); g.endF = clamp((g.endF ?? g.outF) | 0, g.outF, F - 1);
+  const intro = !g.trimOff && g.startF < g.inF;
+  const [i0, i1, s0] = g.trimOff ? [0, F - 1, 0] : [g.inF, g.outF, intro ? g.inF : g.startF];   // Frames switched off: every frame, from the first (In / Out / Start kept)
   const n = i1 - i0 + 1; g.seq = []; g.cum = []; let t = 0;
   for (let k = 0; k < n; k++){ const f = i0 + mod(s0 - i0 + k, n); g.seq.push(f); g.cum.push(t); t += g.durs[f]; }
   g.total = t;
+  const part = (a, z) => { const P = { seq: [], cum: [], total: 0 }; for (let f = a; f <= z; f++){ P.seq.push(f); P.cum.push(P.total); P.total += g.durs[f]; } return P; };
+  g.intro = intro ? part(g.startF, g.inF - 1) : null; g.outroP = !g.trimOff && g.endF > g.outF ? part(g.outF + 1, g.endF) : null;
 }
 
 // an instance goes away: its processed frames are freed; the decoded GIF stays in the pool

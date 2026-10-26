@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.26';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.27';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -140,6 +140,22 @@ const PER_FAM = { e: [[0.25, '1/16'], [0.5, '1/8'], [1, '1/4'], [2, '1/2'], [4, 
   t: [[1 / 6, '1/16T'], [1 / 3, '1/8T'], [2 / 3, '1/4T'], [4 / 3, '1/2T'], [8 / 3, '1 bar T'], [16 / 3, '2 bars T'], [32 / 3, '4 bars T']] };
 const perFam = v => ['e', 'd', 't'].find(f => PER_FAM[f].some(o => Math.abs(o[0] - v) < 1e-6)) || 'e';
 const perNear = (f, v) => PER_FAM[f].reduce((b, o) => Math.abs(Math.log(o[0] / v)) < Math.abs(Math.log(b[0] / v)) ? o : b)[0];   // the closest in another family (by ratio)
+// 0.99.28 (TW-056 / TW-074): time sliders with the Even / Dotted / Triplet switch beside them (as the LFO Cycle has): the slider runs over one
+// family's steps; the switch moves the value to the nearest step of the other family. base: the Even steps [beats, label]; 0 (off) stays 0
+const famBars = n => (n % 1 === 0.5 ? `${Math.floor(n) || ''}½` : String(+n.toFixed(2))) + (n === 1 ? ' bar' : ' bars');
+function famList(base, f){ if (f === 'e') return base; const k = f === 'd' ? 1.5 : 2 / 3;
+  return base.map(([v, l]) => !v ? [v, l] : f === 'd' && v * k >= 4 ? [v * k, famBars(v * k / 4)] : [v * k, f === 'd' ? l + '.' : /bar/.test(l) ? l + ' T' : l + 'T']); }
+const famOf = (base, v) => ['e', 'd', 't'].find(f => famList(base, f).some(o => o[0] && Math.abs(o[0] - v) < 1e-6)) || null;
+function famInit(el, base, onSet){                   // el: the range input; onSet(beats) stores the value (then the panel's sync calls famShow)
+  el._base = base; el._fam = 'e'; const F = el.closest('.field'); F.classList.add('withseg', 'famrow');
+  const sg = document.createElement('div'); sg.className = 'seg pfam'; sg.innerHTML = document.getElementById('fxLfoFam').innerHTML; F.appendChild(sg);
+  el.addEventListener('input', () => onSet(famList(base, el._fam)[+el.value][0]));
+  sg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const L = famList(base, b.dataset.v), cur = famList(base, el._fam)[+el.value][0];
+    el._fam = b.dataset.v; onSet(!cur ? 0 : L.filter(o => o[0]).reduce((p, o) => Math.abs(Math.log(o[0] / cur)) < Math.abs(Math.log(p[0] / cur)) ? o : p)[0]); });
+}
+function famShow(el, v){ const base = el._base; if (!base) return; if (v) el._fam = famOf(base, v) || el._fam;   // (off keeps the family picked)
+  const L = famList(base, el._fam), i = optIdx(L, v); el.max = L.length - 1; el.value = i; el.nextElementSibling.textContent = L[i][1];
+  el.closest('.field').querySelectorAll('.seg.pfam button').forEach(b => b.classList.toggle('on', b.dataset.v === el._fam)); }
 const perLabel = v => (PER_FAM[perFam(v)].find(o => Math.abs(o[0] - v) < 1e-6) || [v, v + ' beats'])[1];
 const optIdx = (opts, v) => opts.reduce((bi, o, i) => Math.abs(o[0] - v) < Math.abs(opts[bi][0] - v) ? i : bi, 0);
 // LFO targets: [key, button, title, slider min, max, step, unit, default min, max, shape, cycle (beats)]

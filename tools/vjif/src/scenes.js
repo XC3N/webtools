@@ -43,25 +43,19 @@ const layerProps = L => ({ on: L.on, opacity: L.opacity, blend: L.blend, clips: 
 const layerState = L => ({ i: L.i, ...layerProps(L) });
 // the tile keeps the live picture made in the last second (drawing a new one here would stall the scene change);
 // with the control window hidden that picture isn't refreshed, so then it's drawn
-// FX Local / Global (scenes toolbar). Global: latched effects stay as they are from scene to scene. Local: each scene
-// remembers which latched effects were on, and going to it switches those on and the rest off (with their own attack /
-// release, so they ease in and out with the transition). Switching back to Local brings the scene's own effects back.
-let fxLocal = false, liveFxOn = null;               // liveFxOn: the current scene's remembered effects (scenes[] hold the others')
-const latchedNow = () => fxSt.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0);
-function applyLatched(list, b = clock.beat){
-  fxSt.forEach((S, i) => { if (fxConf(i).mode !== 'latch') return; const want = !!list[i];
+// Scene level (0.99.27, ID-235; it replaces FX Local / Global): scSt is the scene's own effects. Its latched ones are kept with
+// the scene; going to a scene switches its own on and the others off (with their attack / release, so they ease with the
+// transition). The Output level (fxSt) carries on from scene to scene.
+const latchedOf = A => A.map((S, i) => S.on && fxConf(i).mode === 'latch' ? 1 : 0);
+const latchedNow = () => latchedOf(scSt);
+function applyLatched(list, b = clock.beat, A = scSt){
+  A.forEach((S, i) => { if (fxConf(i).mode !== 'latch') return; const want = !!list[i];
     if (want && !S.on){ S.on = true; S.t0 = b; } else if (!want && S.on){ S.on = false; S.rel = b; } });
   syncFxUI();
 }
-function setFxLocal(on){
-  if (on === fxLocal) return; fxLocal = on;
-  if (on){ if (liveFxOn) applyLatched(liveFxOn); else liveFxOn = latchedNow(); } else liveFxOn = latchedNow();   // (the scene you're on keeps what's on)
-  fxScopeUI(); toast2(on ? 'FX Local: each scene keeps its own latched effects' : 'FX Global: latched effects stay on from scene to scene');
-}
-function fxScopeUI(){ const b = $('#scFx'); b.classList.toggle('on', fxLocal); b.setAttribute('aria-pressed', fxLocal); }   // (0.90: an icon toggle in the Effects editor's top row; it was a labelled button on the Scenes bar)
 // (0.88: Overlay and the Global pads aren't kept per scene: they stay live, the same everywhere — a stored scene has them empty)
 const sceneLayers = () => layers.map(L => L.i === GLOBAL_LAYER ? Object.assign(emptyLayer(), { i: L.i }) : layerState(L)), scenePadGifs = () => pads.map((p, k) => isGlobalPad(k) ? null : p.gif);
-const captureScene = () => ({ fxOn: fxLocal ? latchedNow() : liveFxOn, layers: sceneLayers(), pads: scenePadGifs(), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
+const captureScene = () => ({ fxOn: latchedNow(), layers: sceneLayers(), pads: scenePadGifs(), thumb: layers.some(L => L.clips.length) ? (!document.hidden && liveThumb) || sceneThumb() : null, name: liveName, pick: { pad: selPad, target } });
 function gotoScene(i, beat = clock.beat, instant = false){
   if (i === sceneIdx) return;
   if (hist.ready) commit();                          // an edit still waiting for its undo step gets it now, in its own scene
@@ -81,8 +75,8 @@ function gotoScene(i, beat = clock.beat, instant = false){
   pads.forEach((p, k) => { if (isGlobalPad(k)) return; p.gif = sc ? sc.pads[k] || null : null; renderPad(k); });   // each scene has its own pads (a new one starts empty), the Global ones stay
   if (!trans) dropFxCache(left);                     // (with a transition: when it ends)
   scenes[i] = null; liveThumb = sc && sc.thumb; thumbKeep = liveThumb; liveName = sc && sc.name || '';
-  if (fxLocal && trans && !trans.fx) trans.fx = { cfg: fxCfg, pre: fxPre, st: fxSt.map(S => ({ ...S })) };   // Local: the scene being left keeps its own effects through the transition (they used to switch at its start)
-  liveFxOn = sc && sc.fxOn || null; if (fxLocal) applyLatched(liveFxOn || [], beat);   // Local: a scene with no effects of its own yet starts with none on
+  if (trans && !trans.fx && scSt.some(S => S.on || S.held)) trans.fx = { cfg: fxCfg, pre: fxPre, st: fxSt, st2: scSt.map(S => ({ ...S })) };   // the scene being left keeps its own effects through the transition (Output's carry on in both)
+  applyLatched(sc && sc.fxOn || [], beat);   // a scene with no effects of its own yet starts with none on
   for (const k of [...pending.keys()]) if (!isGlobalPad(k)){ pending.delete(k); pads[k].el.classList.remove('wait'); }   // (a Global pad waiting for the beat still plays)
   // what's selected: as you left this scene; else the edit layer stays and the GIF panel shows that layer's selected GIF
   if (sc && sc.pick){ target = sc.pick.target; selPad = sc.pick.pad; }
@@ -274,7 +268,7 @@ function sceneCopy(i){
   const live = i === sceneIdx, sc = live ? null : scenes[i];
   if (!live && !sc) return emptyScene();             // never opened: a copy of nothing is an empty scene (not a shell without layers)
   const P = live ? scenePadGifs() : (sc && sc.pads) || [], Ls = (live ? layers : (sc && sc.layers) || []).map(L => L.i === GLOBAL_LAYER ? Object.assign(emptyLayer(), { i: L.i }) : L);   // (Overlay and the Global pads aren't the scene's)
-  return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, fxOn: live ? (fxLocal ? latchedNow() : liveFxOn) : sc && sc.fxOn || null, pads: P.map(g => g && cloneInst(g)),
+  return { thumb: live ? sceneThumb() : sc && sc.thumb, name: live ? liveName : sc && sc.name, fxOn: live ? latchedNow() : sc && sc.fxOn || null, pads: P.map(g => g && cloneInst(g)),
     layers: Ls.map(L => { const clips = L.clips.map(c => Object.assign(newClip(c.pad), Object.fromEntries(XF_KEYS.map(k => [k, c[k]])), c.blend ? { blend: c.blend } : {}, c.off ? { off: true } : {}, c.mask ? { mask: c.mask } : {}));
       return { ...layerProps(L), i: L.i, clips, sel: clips[L.clips.indexOf(L.sel)] || null }; }) };   // (0.95: its mask, lock and transition too: they were dropped)
 }
@@ -290,8 +284,9 @@ function emptySceneAt(i){
   pushStep(E); hist.cur = histState(); updHistUI();
   toast2(`Scene ${i + 1} emptied — Ctrl+Z brings it back`);
 }
-$('#scFx').addEventListener('click', () => setFxLocal(!fxLocal));
-$('#fxAllOff').addEventListener('click', () => { const n = latchedNow().filter(Boolean).length; applyLatched([]); toast2(n ? `All effects off (${n})` : 'No effects on'); });
+$('#fxAllOff').addEventListener('click', () => {   // the level the switch is on: Output's, the scene's, or the selected GIF's
+  if (fxLvl === 'gif'){ const g = curGif(), on = g && g.gfx ? Object.values(g.gfx).filter(x => x && x.on) : []; on.forEach(x => x.on = false); if (on.length) gfxTouch(g); syncFxUI(); return toast2(on.length ? `GIF effects off (${on.length})` : 'No effect on this GIF'); }
+  const A = lvlSt(), n = latchedOf(A).filter(Boolean).length; applyLatched([], clock.beat, A); toast2(n ? `${fxLvl === 'scene' ? 'Scene' : 'Output'} effects off (${n})` : 'No effects on'); });
 let thumbKeep = null, thumbTick = 0;                 // the live tile's picture as saved: refreshed every 20 s (not every second), so autosave doesn't rewrite the set constantly
 setInterval(() => { if (!document.hidden && performance.now() >= uiQuiet) refreshLiveThumb(); }, 1000);
 // a layer on / off can play a transition: the picture before the change is the leaving side, like a scene change
@@ -333,7 +328,7 @@ async function exportScene(i = sceneIdx){
     const path = `gifs/${m.hash.slice(0, 8)}-${base}.${EXT[rec.blob.type] || (rec.name.match(/\.(\w+)$/) || [, 'gif'])[1]}`;
     files.push({ name: path, data: new Uint8Array(await rec.blob.arrayBuffer()) }); pl.push({ hash: m.hash, name: rec.name, file: path, scale: m.scale || 1 });
   }
-  const ss = { pads: serPads(P), layers: serLayers(Ls), name, fxOn: live ? (fxLocal ? latchedNow() : null) : sc.fxOn || null };
+  const ss = { pads: serPads(P), layers: serLayers(Ls), name, fxOn: live ? latchedNow() : sc.fxOn || null };
   files.unshift({ name: 'scene.json', data: enc.encode(JSON.stringify({ app: 'VJif', kind: 'scene', format: 1, v: SNAP_V, exported: new Date().toISOString(), pool: pl, scene: ss }, null, 1)) });
   const blob = buildZip(files), fn = (name.replace(/[^\w .-]+/g, '_').trim() || `scene-${i + 1}`) + '.vjscene';
   if (window.showSaveFilePicker){
@@ -369,7 +364,7 @@ async function importScene(file, at = -1){
     commit();
     if (i === sceneIdx){                             // into the live scene: the same swap as an undo step (Overlay and the Global pads stay)
       const E = { kind: 'scn', sid: sceneIds[i], data: { layers: Ls, pads: gs, thumb: null, name: ss.name || liveName || '' } };
-      applyScn(E); liveThumb = null; liveFxOn = ss.fxOn || null; if (fxLocal) applyLatched(liveFxOn || []);
+      applyScn(E); liveThumb = null; applyLatched(ss.fxOn || []);
       layers.forEach(L => L.clips.forEach(c => { c.startBeat = clock.beat; c.startTime = now; }));
       pushStep(E);
     } else {

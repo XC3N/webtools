@@ -442,3 +442,14 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts283} **Pool panel** (0.99.26) — open the Pool: Add GIF group (Add…, URL box with Load joined), Loaded GIFs group (Full / ½ / ¼, Optimize, Remove unused); × fully visible on a Mac; same on Settings.
 - [ ] {ts284} **Loupe lock** (0.99.26) — loupe on, right-click the preview: view freezes and the border changes colour; right-click again releases.
 - [ ] {ts285} **LFO pane and live sliders** (0.99.26) — LFO on Length or Zoom with the pane open: the slider moves by itself; the note icons beside Cycle are fully visible.
+- [ ] {ts286} **FX levels** (0.99.27) — Out: latch an effect, change scene: it stays. Scene: latch another, change scene: it goes, comes back with its scene; both play together. GIF: select a GIF, F-key: only that GIF gets it; the editor changes it; All off clears only the level shown.
+- [ ] {ts287} **GIF effects in full** (0.99.27) — GIF › FX: twelve effects, folded while off; the list icon opens it in the editor (GIF level, no envelope); Strobe flashes only the GIF; Zoom around the GIF; Feedback trails behind a moving GIF.
+- [ ] {ts288} **Kaleido Angle** (0.99.27) — Mirror › Kaleido: Angle slider with the Mirror switch beside it; Drift is the old slow turn; an LFO (Ramp) on Angle spins it on the beat.
+- [ ] {ts289} **ANSI glyphs** (0.99.27) — Pixel › ANSI at 16–32 px: shading shows the ░ ▒ ▓ dot patterns, not big blocks.
+- [ ] {ts290} **Blend, several GIFs** (0.99.27) — two GIFs on a Normal layer over a coloured Background, the top one in Difference: it blends with the background and the other GIF.
+- [ ] {ts291} **GIF Loop header, Resolution** (0.99.27) — GIF › Play: Timing icons in the GIF Loop header, Direction icons; Resolution (Full ½ ¼) in the GIF header.
+- [ ] {ts292} **Small fixes** (0.99.27) — NES: Dither shows –; Floor on: Cut greys; Shadow Y to ±160; Home does nothing, Shift+Home resets; loupe dragged over the panels stays there; the LFO-off icon clears every LFO of an effect.
+- [ ] {ts293} **Rec on Play** (0.99.27, real Chrome) — Count-in › Play, internal player: Rec, then Play: the track starts clean, no hiccup.
+- [ ] {ts294} **Note switch on time sliders** (0.99.27) — GIF › Play: Loop length, Each frame, Restart, Repeat, Fade in / Hold / Fade out: the ♪ / ♪. / ♪3 switch moves the value to the nearest dotted / triplet step; the slider then runs over that family. Same on GIF › Auto › Gap.
+- [ ] {ts295} **Intro and outro frames** (0.99.27) — Frames: Start before In: the first frames play once, then In–Out loops. Outro to past Out with its switch on, Hit › Hold: let go: the frames after Out play once and the last stays while it fades.
+- [ ] {ts296} **Amount follows the envelope** (0.99.27) — an effect with a long Attack: hold its key: the Amount slider rises with it, settles at the set value, falls on release.

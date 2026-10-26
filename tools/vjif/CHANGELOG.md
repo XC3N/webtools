@@ -4,6 +4,21 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.27 — 2026/10/26
+
+- Effects on three levels at once (ID-235): a GIF | Scene | Out switch in the effects editor (where FX Local was) picks which level the F-keys, the tiles and the editor work on. Out carries on from scene to scene; Scene is each scene's own (its latched effects go with it); GIF is the selected GIF's own. All three play together. All effects off clears the level the switch is on. A set saved with FX Local brings its latched effects back on the Scene level.
+- GIF effects in full (ID-223): every effect on a GIF, with all its settings in the effects editor on the GIF level (no envelope or LFO there). GIF › FX lists all twelve, each section folded while it's off; its list icon opens the effect in the editor. A GIF's Zoom works around the GIF's centre, its Strobe flashes the GIF only.
+- Kaleido: Angle (where the slices start; Drift is the old slow turn; an LFO with Ramp spins it in time), the Mirror switch beside it (ID-245).
+- Pixel › ANSI: the shading is the real ░ ▒ ▓ glyphs on an 8 × 16 cell (ID-248).
+- Blend: a GIF's blend now works against everything under it on screen, also with several GIFs on a plain layer (BG-059).
+- GIF › Play: Timing (Free / Fit / Step) sits in the GIF Loop header as icons; Direction is icons too (BG-054). Resolution moved to the GIF header (TW-070).
+- All automation off: a button in the effect editor switches every LFO of the effect off (settings kept) (ID-250).
+- Loupe: once dragged it can sit anywhere in the window (ID-251). Shift+Home resets placement; Home alone no longer does (TW-071).
+- Time sliders: Loop length, Each frame, Restart, Repeat, Fade in / Hold / Fade out and GIF › Auto's Gap have the Even / Dotted / Triplet switch beside them, as the LFO Cycle has (TW-056, TW-074).
+- Frames: a Start before In plays the frames up to In once (an intro), then the loop; Outro to: the frames after Out play once when a Hold pad is let go or a One shot fades out, then the last one stays (ID-241).
+- The effect's Amount slider follows its envelope while it moves (attack, release); it already followed an LFO (ID-247).
+- Small fixes: NES / Grey 6-bit show no Dither value (BG-064); Shadow › Cut greyed while Floor is on (TW-072); Shadow Y reaches ±160 px (TW-073); Optimize leaves GIFs of 320 px or less alone and keeps a margin (QA-036); the recorder starts once the track plays with Count-in › Play, and the sound path is ready when you arm (BG-065).
+
 ## 0.99.26 — 2026/10/25
 
 - Pixel › ANSI (ID-248): text mode. The picture becomes character cells (Size = a cell's width; a cell is twice as tall), each in the two nearest of the 16 ANSI / VGA colours with a ░ ▒ ▓ shade between them. Also under GIF › FX › Pixel.

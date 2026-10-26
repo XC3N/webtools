@@ -15,7 +15,15 @@ function stepToIdx(g, s){
   if (g.loop === 'pingpong'){ const P = Math.max(1, 2*F - 2), c = mod(s, P); return c < F ? c : P - c; }
   return clamp(s, 0, F - 1);
 }
-function frameIndex(c, g, now){ return g.seq[seqIndex(c, g, now)]; }
+function frameIndex(c, g, now){
+  const O = g.outro && g.outroP && g.trig === 'fade' && c.env, rb = O ? (g.env.gate ? c.env.rel : (envOf(c, g, clock.beat) || c.env).t0 + (T => T.a + T.h)(envTimes(g))) : null;
+  if (O && rb != null && clock.beat >= rb){   // Outro (0.99.29): from the let-go (Hold) or the fade out (One shot), the frames after Out once, then the last one stays
+    const tb = clock.beat - rb, P = g.outroP;
+    if (g.sync === 'step'){ const s = Math.floor(tb * g.subdiv + 1e-6); return P.seq[Math.min(s, P.seq.length - 1)]; }
+    const t = g.sync === 'stretch' ? tb / g.beats * g.total : tb * 60000 / clock.bpm * g.speed;
+    return P.seq[idxAt(P, Math.min(t, P.total - 1e-6))]; }
+  const k = seqIndex(c, g, now); return k < 0 ? g.intro.seq[-1 - k] : g.seq[k];   // (negative: a frame of the intro)
+}
 // Timing maps time since trigger to a position; Loop (inside timeToIdx/stepToIdx) handles the end;
 // Restart (any timing) jumps back to the start every N beats.
 // One shot › Repeat: it plays again by itself on every N-beat grid line; the hit or the latest grid line, whichever is later, counts
@@ -34,13 +42,17 @@ function seqIndex(c, g, now){
   const AE = g.trig === 'fade' && g.env.every ? envOf(c, g, clock.beat) : null, auto = AE && AE.auto;
   let b = clock.beat - (auto ? AE.t0 : c.startBeat);
   if (g.restart) b = mod(b, g.restart);
+  const I = g.intro;                                 // an intro (Start before In, 0.99.29): played once from the hit (and each restart), at the loop's pace, then the loop
   switch (g.sync){
-    case 'stretch':                                  // Fit: one cycle = loop length (ping-pong: the round trip)
-      return timeToIdx(g, b / g.beats * g.total * (g.loop === 'pingpong' ? 2 : 1));
-    case 'step':                                     // Step: every frame lasts `subdiv` frames per beat
-      return stepToIdx(g, Math.floor(b * g.subdiv + 1e-6));
-    default:                                         // Free: own timing × speed (beat-based while restarting)
-      return timeToIdx(g, (g.restart || auto ? b * 60000 / clock.bpm : now - c.startTime) * g.speed);
+    case 'stretch': {                                // Fit: one cycle = loop length (ping-pong: the round trip)
+      let t = b / g.beats * g.total; if (I){ if (t < I.total) return -1 - idxAt(I, t); t -= I.total; }
+      return timeToIdx(g, t * (g.loop === 'pingpong' ? 2 : 1)); }
+    case 'step': {                                   // Step: every frame lasts `subdiv` frames per beat
+      let s = Math.floor(b * g.subdiv + 1e-6); if (I){ if (s < I.seq.length) return -1 - Math.max(0, s); s -= I.seq.length; }
+      return stepToIdx(g, s); }
+    default: {                                       // Free: own timing × speed (beat-based while restarting)
+      let t = (g.restart || auto ? b * 60000 / clock.bpm : now - c.startTime) * g.speed; if (I){ if (t < I.total) return -1 - idxAt(I, Math.max(0, t)); t -= I.total; }
+      return timeToIdx(g, t); }
   }
 }
 // one cycle in beats (null = free-running, tempo-independent)

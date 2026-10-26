@@ -10,7 +10,7 @@ async def main():
     await pg.evaluate(f"fileTarget = {k}"); await pg.set_input_files('#fileIn', [str(FIX/'bat.gif')]); await pg.wait_for_function(f"pads[{k}].gif")
     await pg.evaluate(f"selectPad({k})")
     # slider for step mode
-    r = await pg.evaluate("""(() => { const g = curGif(); g.sync = 'step'; syncGifUI(); const el = $('#gSub'); el.value = 2; el.dispatchEvent(new Event('input', {bubbles: true}));
+    r = await pg.evaluate("""(() => { const g = curGif(); g.sync = 'step'; syncGifUI(); const el = $('#gSub'); el.value = 1;   /* 0.99.27: Even steps 1/32, 1/16, 1/8 … (triplets have their own switch) */  el.dispatchEvent(new Event('input', {bubbles: true}));
       return [el.tagName, el.type, g.subdiv, el.nextElementSibling.textContent]; })()""")
     print('step', r); assert r[1] == 'range' and abs(r[2] - 4) < 1e-6 and r[3] == '1/16', r
     # ping-pong length

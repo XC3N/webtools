@@ -26,7 +26,7 @@ async def main():
     print('fit', r); assert r == ['Fit range', True, 1, 1, 0], r
     vis = await pg.evaluate("(() => { selectFx(FXI.colour); const C = fxEd(); C.style = 'pal'; syncFxUI(); const b = $('#fxSizeSeg').getBoundingClientRect(); return [b.width > 20, b.height > 8, getComputedStyle($('#fxSizeRow')).display]; })()"); print('fit visible', vis); assert vis[0] and vis[1] and vis[2] != 'none', vis
     r = await pg.evaluate("""(() => { selectFx(FXI.mirror); const C = fxConf(FXI.mirror); C.style = 'kal'; syncFxUI(); const lab = $('#fxSizeRow label').textContent; $('#fxSizeSeg button').click(); const a = fxConf(FXI.mirror).kmir; $('#fxSizeSeg button').click(); return [lab, a, fxConf(FXI.mirror).kmir]; })()""")
-    print('mirror', r); assert r == ['Mirror', 0, 1], r
+    print('mirror', r); assert r == ['Angle', 0, 1], r   # 0.99.27: the row is Angle, the Mirror switch beside it
     vis = await pg.evaluate("(() => { selectFx(FXI.mirror); const C = fxEd(); C.style = 'kal'; syncFxUI(); const b = $('#fxSizeSeg').getBoundingClientRect(); return [b.width > 14, b.height > 8, getComputedStyle($('#fxSizeRow')).display]; })()"); print('mirror visible', vis); assert vis[0] and vis[1] and vis[2] != 'none', vis
     r = await pg.evaluate("pvOpt.loupe = true; pvUI(); 1"); pv = await pg.locator('#pv').bounding_box()
     ax, ay = pv['x'] + pv['width']*0.4, pv['y'] + pv['height']*0.4

@@ -24,7 +24,7 @@ function tap(){
 // (and fades, transitions, the envelope preview carry on where they were)
 function shiftBeats(d){
   const mv = (o, ...ks) => { if (o) ks.forEach(k => { if (Number.isFinite(o[k]) && o[k] > -1e8) o[k] += d; }); };
-  fxSt.forEach(S => mv(S, 'b0', 't0', 'rel')); if (prep) prep.fx.st.forEach(S => mv(S, 'b0', 't0', 'rel'));
+  fxSt.forEach(S => mv(S, 'b0', 't0', 'rel')); scSt.forEach(S => mv(S, 'b0', 't0', 'rel')); if (prep){ prep.fx.st.forEach(S => mv(S, 'b0', 't0', 'rel')); if (prep.fx.st2) prep.fx.st2.forEach(S => mv(S, 'b0', 't0', 'rel')); }
   const envs = L => L.clips.forEach(c => mv(c.env, 't0', 'rel'));
   layers.forEach(envs); if (prep) prep.layers.forEach(envs);
   mv(trans, 'b0'); mv(fxPrev, 'b0');

@@ -1,11 +1,10 @@
 // ---------- UI: gif settings ----------
 const segHTML = opts => opts.map(([v, l]) => `<button data-v="${v}">${l}</button>`).join('');
-$('#gBeats').max = LOOP_OPTS.length - 1;
-$('#gBeats').addEventListener('input', e => { const g = curGif(); if (!g) return; g.beats = LOOP_OPTS[+e.target.value][0]; e.target.nextElementSibling.textContent = lenLabel(g.beats); syncGifUI(); });
-$('#gSub').max = FRAME_OPTS.length - 1;   // a slider over the note lengths (0.99.15; it was nine buttons); stored as frames per beat
-$('#gSub').addEventListener('input', e => { const g = curGif(); if (!g) return; g.subdiv = 1 / FRAME_OPTS[+e.target.value][0]; syncGifUI(); });
-$('#gRestart').max = RESTART_OPTS.length - 1;   // a slider (0.99.26), off at the left
-$('#gRestart').addEventListener('input', e => { const g = curGif(); if (!g) return; g.restart = RESTART_OPTS[+e.target.value][0]; syncGifUI(); });
+// 0.99.28 (TW-056 / TW-074): the time sliders have the Even / Dotted / Triplet switch beside them (famInit)
+const FRAME_E = [[1 / 8, '1/32'], [1 / 4, '1/16'], [1 / 2, '1/8'], [1, '1/4'], [2, '1/2'], [4, '1 bar']];   // Each frame, Even (stored as frames per beat)
+famInit($('#gBeats'), PER_FAM.e, v => { const g = curGif(); if (!g) return; g.beats = v; syncGifUI(); });
+famInit($('#gSub'), FRAME_E, v => { const g = curGif(); if (!g) return; g.subdiv = 1 / v; syncGifUI(); });
+famInit($('#gRestart'), RESTART_OPTS, v => { const g = curGif(); if (!g) return; g.restart = v; syncGifUI(); });   // (0.99.26: a slider, off at the left)
 const segSet = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - v) < 1e-6 || b.dataset.v === v));
 // one handler per button group: sets the GIF's field from the clicked button
 [['#gSync', 'sync', false], ['#gLoop', 'loop', false]].forEach(([id, key, num]) =>
@@ -43,13 +42,13 @@ function syncGifUI(){
     if (!many && $('#gPalVar').dataset.f){ $('#gPalVar').innerHTML = ''; $('#gPalVar').dataset.f = ''; $('#gPalVar')._html = ''; }
     if (many){ if ($('#gPalVar').dataset.f !== String(fi)){ setHTML($('#gPalVar'), FM.m.map((x, k) => `<button data-v="${k}" title="${esc(FX_PALS[x.i].t)}"><span class="lng">${esc(x.l)}</span><span class="sht">${esc(x.s)}</span></button>`).join('')); $('#gPalVar').dataset.f = fi; } segSet('#gPalVar', String(vi)); }
     if (!$('#gPalPat').children.length) setHTML($('#gPalPat'), DPAT_HTML); segSet('#gPalPat', String(P && P.p != null ? P.p : 1));
-    $('#gPalD').value = P ? P.d || 0 : 0; $('#gPalD').nextElementSibling.textContent = Math.round((P ? P.d || 0 : 0) * 100) + '%';
-    const nd = on && palNoDith(P.i), gb = on && palGB(P.i); $('#gPalDRow').classList.toggle('dimmed', !on || nd); $('#gPalPat').classList.toggle('ghost', gb || nd); $('#gPalDRow').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas); the switch picks the pattern'; }
+    const nd = on && palNoDith(P.i); $('#gPalD').value = P && !nd ? P.d || 0 : 0; $('#gPalD').nextElementSibling.textContent = nd ? '–' : Math.round((P ? P.d || 0 : 0) * 100) + '%';   // (0.99.27: none shown where the palette has no Dither)
+    const gb = on && palGB(P.i); $('#gPalDRow').classList.toggle('dimmed', !on || nd); $('#gPalPat').classList.toggle('ghost', gb || nd); $('#gPalDRow').title = nd ? 'Dither: not on this palette (64 grey steps are already smooth; the NES never dithered)' : 'Dither (off: flat areas); the switch picks the pattern'; }
     $('#gPalFit').checked = !!(g.pal && g.pal.fit); $('#gPalFit').closest('.field').classList.toggle('dimmed', !(g.pal && g.pal.i >= 0));
   syncShadowUI(g);
-  segSet('#gSync', g.sync); segSet('#gLoop', g.loop); { const i = optIdx(RESTART_OPTS, g.restart || 0), el = $('#gRestart'); el.value = i; el.nextElementSibling.textContent = RESTART_OPTS[i][1]; } segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
+  segSet('#gSync', g.sync); segSet('#gLoop', g.loop); famShow($('#gRestart'), g.restart || 0); segSet('#gRes', String(g.media.scale || 1)); $('#gRes').classList.toggle('dimmed', !!g.media.text);
   $('#gSpeed').value = g.speed; $('#gSpeed').nextElementSibling.textContent = g.speed.toFixed(2) + '×';
-  { const el = $('#gBeats'); el.value = optIdx(LOOP_OPTS, g.beats); el.nextElementSibling.textContent = lenLabel(g.beats); } { const el = $('#gSub'), k = optIdx(FRAME_OPTS, 1 / g.subdiv); el.value = k; el.nextElementSibling.textContent = FRAME_OPTS[k][1]; } segSet('#gRestart', g.restart);
+  famShow($('#gBeats'), g.beats); famShow($('#gSub'), 1 / g.subdiv);
   showCycle(g);
   document.querySelectorAll('#gifSettings [data-for]').forEach(f => f.hidden = !f.dataset.for.split(' ').includes(g.sync));
   $('#kOn').checked = g.key.on; $('#kCol').value = rgb2hex(g.key.color); segSet('#kRegion', g.key.region || 'all');
@@ -59,13 +58,13 @@ function syncGifUI(){
   HSV_UI.forEach(([id, k, fmt]) => { $(id).value = g.hsv[k]; $(id).nextElementSibling.textContent = fmt(g.hsv[k]); });
   if (!$('#gPanes [data-pane="colour"]').classList.contains('off')) syncSwapUI(g);
   segSet('#tMode', g.trig === 'fade' && g.env.gate ? 'hold' : g.trig); segSet('#tCurve', g.env.curve);
-  ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; });
+  ENV_UI.forEach(([id, k]) => famShow($(id), g.env[k]));
   segSet('#tLen', g.env.len || 'free');
   const bgp = isBgPad(selPad); document.querySelectorAll('[data-pane=play] .trig').forEach(el => { el.classList.toggle('dimmed', bgp); el.title = bgp ? 'A Background GIF just plays: nothing triggers it' : el.title === 'A Background GIF just plays: nothing triggers it' ? '' : el.title; });   // 0.99.16: Background slots have no Trigger (greyed, same place)
   $('#tEnv').classList.toggle('dimmed', bgp); $('#tEnv').classList.toggle('folded', g.trig !== 'fade'); $('#tHoldRow').classList.toggle('dimmed', g.env.gate || g.env.len === 'gif');   // (0.99.26: the Trigger section folds shut under Loop / Hold; its Hit switch sits in the header)
   $('#tLenRow').classList.toggle('dimmed', g.env.gate); $('#tEveryRow').classList.toggle('dimmed', g.env.gate);
   segSet('#tRetrig', g.env.restart ? 'restart' : 'cont');   // (0.99.6)
-  { const i = optIdx(EVERY_OPTS, g.env.every || 0); $('#tEvery').value = i; $('#tEvery').nextElementSibling.textContent = EVERY_OPTS[i][1]; }
+  famShow($('#tEvery'), g.env.every || 0);
   syncAutoUI(g);
   const trimmed = g.seq.length < g.src.length ? ` (playing ${g.seq.length})` : '';
   $('#gifName').title = `${g.name} — ${g.src.length} frames${trimmed} · ${g.w}×${g.h}${g.media && g.media.px ? ` (pixel art ×${g.media.px[0]}${g.media.px[1] !== g.media.px[0] ? '×' + g.media.px[1] : ''}, kept at ${g.w / g.media.px[0]}×${g.h / g.media.px[1]})` : ''} · ${(g.total/1000).toFixed(2)} s · ~${(g.bytes/1048576).toFixed(0)} MB`;
@@ -89,7 +88,9 @@ $('#poolOpt').addEventListener('click', async () => {
   layers.forEach(L => L.clips.forEach(c => see(pads[c.pad] && pads[c.pad].gif, c)));
   scenes.forEach(sc => sc && sc.layers && sc.layers.forEach(L => L.clips.forEach(c => see(sc.pads && sc.pads[c.pad], c))));
   const was = pool.reduce((t, m) => t + (m.srcBytes || 0), 0);
-  for (const [m, n] of need) await setMediaScale(m, n <= 0.26 ? 0.25 : n <= 0.52 ? 0.5 : 1);
+  const MIN_SIDE = 320;   // 0.99.27: a GIF this small (longest side, in pixels) is left alone, and a smaller copy never goes under it
+  for (const [m, n0] of need){ const n = n0 * (typeof RS === 'number' ? RS : 1) * 1.25, side = Math.max(m.w || 0, m.h || 0);   // the output's real pixels, with a margin (a GIF shrunk to just its size looked soft)
+    const sc = side <= MIN_SIDE ? 1 : [0.25, 0.5, 1].find(s => s >= n && side * s >= MIN_SIDE) || 1; await setMediaScale(m, sc); }
   const now = pool.reduce((t, m) => t + (m.srcBytes || 0), 0); syncGifUI();
   toast2(`Pool fitted: ${(was / 1048576).toFixed(0)} → ${(now / 1048576).toFixed(0)} MB`); });
 // ---- colour swaps: the GIF's palette (most used colours first), each swap = one palette colour → another ----
@@ -175,15 +176,13 @@ $('#hReset').addEventListener('click', () => { const g = curGif(); if (!g) retur
 
 // ---- trigger tab: Stay / Fade one-shot ----
 const ENV_UI = [['#tA', 'a'], ['#tH', 'h'], ['#tR', 'r']];
-ENV_UI.forEach(([id, k]) => { const el = $(id); el.max = ENV_OPTS.length - 1;
-  el.addEventListener('input', e => { const g = curGif(); if (!g) return; const o = ENV_OPTS[+e.target.value]; g.env[k] = o[0]; e.target.nextElementSibling.textContent = o[1]; }); });
+ENV_UI.forEach(([id, k]) => famInit($(id), ENV_OPTS, v => { const g = curGif(); if (!g) return; g.env[k] = v; famShow($(id), v); }));
 onSeg($('#tMode'), (b, e) => { const g = curGif(); if (!g) return;
   const v = b.dataset.v; g.trig = v === 'stay' ? 'stay' : 'fade'; if (v !== 'stay') g.env.gate = v === 'hold'; layers.forEach(L => L.clips.forEach(c => { if (c.pad === selPad) c.env = null; }));   // switching hides / shows it at once
   syncGifUI(); redraw.all = true;
 });
-$('#tEvery').max = EVERY_OPTS.length - 1;
 onSeg($('#tRetrig'), b => { const g = curGif(); if (!g) return; g.env = { ...g.env, restart: b.dataset.v === 'restart' }; syncGifUI(); });   // Retrigger: Continue (from the level it was at) or Restart (from 0), 0.99.6
-$('#tEvery').addEventListener('input', e => { const g = curGif(); if (!g) return; const o = EVERY_OPTS[+e.target.value]; g.env.every = o[0]; e.target.nextElementSibling.textContent = o[1]; redraw.all = true; });
+famInit($('#tEvery'), EVERY_OPTS, v => { const g = curGif(); if (!g) return; g.env.every = v; famShow($('#tEvery'), v); redraw.all = true; });
 onSeg($('#tLen'), (b, e) => { const g = curGif(); if (g){ g.env.len = b.dataset.v; syncGifUI(); } });
 onSeg($('#tCurve'), (b, e) => { const g = curGif(); if (g){ g.env.curve = b.dataset.v; syncGifUI(); } });
 
@@ -205,7 +204,7 @@ function syncAutoUI(g){
     el.value = A[k]; el.dataset.def = D[k];
     el.nextElementSibling.textContent = lfoFmt(t, A[k]); if (t[6] === '%') el.dataset.pct = ''; else delete el.dataset.pct; });
   { const f = perFam(A.per), L = PER_FAM[f], pi = optIdx(L, A.per); $('#aPer').max = L.length - 1; $('#aPer').value = pi; $('#aPer').dataset.def = optIdx(L, D.per); $('#aPer').nextElementSibling.textContent = L[pi][1]; segSet('#aPerFam', f); }
-  const gi = optIdx(GAP_OPTS, A.gap || 0); $('#aGap').value = gi; $('#aGap').nextElementSibling.textContent = GAP_OPTS[gi][1];
+  famShow($('#aGap'), A.gap || 0);
   $('#aPh').value = A.ph; $('#aPh').nextElementSibling.textContent = Math.round(A.ph * 360) + '°';
   $('#aSk').value = A.sk ?? 0.5; $('#aSk').nextElementSibling.textContent = skFmt(A.sk ?? 0.5); $('#aHoldBtn').classList.toggle('on', !!A.hold); $('#aInv').classList.toggle('on', !!A.inv);
   const em = A.em || 'off'; segSet('#aEnv', em);
@@ -240,7 +239,7 @@ onSeg($('#aPerFam'), b => editLfo(A => A.per = perNear(b.dataset.v, A.per), true
 $('#aPh').addEventListener('input', e => editLfo(A => A.ph = +e.target.value, true, true));
 $('#aSk').addEventListener('input', e => { editLfo(A => A.sk = +e.target.value, true, true); e.target.nextElementSibling.textContent = skFmt(+e.target.value); });
 [['#aHoldBtn', 'hold'], ['#aInv', 'inv']].forEach(([q, k]) => $(q).addEventListener('click', e => { const g = curGif(), A = g && (g.lfo[aSel] || lfoDef(aSel)); if (!A) return; const v = !A[k]; editLfo(B => B[k] = v, true, true, e.shiftKey); }));   // toggles; Shift+click: every running LFO of this GIF (the click's own Shift: the pointerup before it already cleared aShift, 0.89.0's bug)
-$('#aGap').addEventListener('input', e => editLfo(A => A.gap = GAP_OPTS[+e.target.value][0], true, true));
+famInit($('#aGap'), GAP_OPTS, v => editLfo(A => A.gap = v, true, true));
 A_ENV.forEach(([id, k]) => { $(id).max = ENV_OPTS.length - 1; $(id).addEventListener('input', e => editLfo(A => A[k] = ENV_OPTS[+e.target.value][0], true, true)); });
 $('#aES').addEventListener('input', e => editLfo(A => A.es = +e.target.value, true, true));
 onSeg($('#aEnv'), b => editLfo(A => A.em = b.dataset.v));
@@ -304,6 +303,8 @@ function liveMods(){
   if (X && X.mod && d) for (const k of fxModKeys()){ const M = X.mod[k]; if (!M || !M.on || !fxModPlain(k)) continue;
     if (k === 'amt'){ const pp = amtPart(d, X), v = modAmt(X, b) * (pp ? (X.pamt?.[pp] ?? X.amt) / (X.amt || 1) : 1); put('#fxAmt', v, Math.round(v * 100) + '%'); }
     else { const L = FXM[k].list || (k === 'rate' ? FX_RATES : FX_SIZES), i = clamp(Math.round(fxModV(M, b)), 0, L.length - 1); put(FXM[k].el, i, L[i][1]); } }
+  if (X && d && selFx < NFX && fxLvl !== 'gif' && !now.has('#fxAmt') && !$('#fxAmt').dataset.palAmt && !$('#fxAmt').dataset.kal){   // 0.99.28 (ID-247): Amount follows the envelope while it moves (attack, decay, release)
+    const l = fxLevel(selFx, b); if (l > 0.001 && l < 0.999){ const pp = amtPart(d, X), v = (pp ? X.pamt?.[pp] ?? X.amt : X.amt) * l; put('#fxAmt', v, Math.round(v * 100) + '%'); } }
   const c = selClip(), g = c && pads[c.pad] && pads[c.pad].gif;
   if (g && g.lfo){ const on = k => g.lfo[k] && g.lfo[k].on, e = effClip(c, g);
     XF.forEach(([id, key, fmt]) => { if (XF_LFO[id].some(on)) put(id, e[key], fmt(e[key])); });
@@ -366,7 +367,7 @@ const tEnvEd = envEditor($('#tScope'), {
   idle: () => 'Envelope: fade in, hold, fade out — the dot follows the last hit',
   redraw: () => { const g = curGif(); if (g) drawEnvScope(g); },
 });
-function syncTrigSliders(g){ ENV_UI.forEach(([id, k]) => { const i = optIdx(ENV_OPTS, g.env[k]); $(id).value = i; $(id).nextElementSibling.textContent = ENV_OPTS[i][1]; }); }
+function syncTrigSliders(g){ ENV_UI.forEach(([id, k]) => famShow($(id), g.env[k])); }
 function drawEnvScope(g){
   const S = scopeCtx($('#tScope')); if (!S) return; const [x, w, h, d] = S;
   const E = g.env, T = envTimes(g), c = clipOf(selPad), hold = E.gate ? Math.max(E.h, 1) : T.h, span = tEnvDrag ? tEnvDrag.span : Math.max(T.a + hold + T.r, 0.5) * 1.1;   // (held steady while a point is dragged)
@@ -390,23 +391,27 @@ function drawEnvScope(g){
 }
 function syncRangeUI(g){
   const F = g.src.length;
-  [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => { const el = $(id); el.max = F - 1; el.value = g[k]; el.nextElementSibling.textContent = g[k]; });
+  [['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF'], ['#gEnd', 'endF']].forEach(([id, k]) => { const el = $(id); el.max = F - 1; el.value = g[k]; el.nextElementSibling.textContent = g[k]; });
+  { const el = $('#gEnd'), v = g.endF ?? g.outF; el.max = F - 1; el.value = v; el.nextElementSibling.textContent = v > g.outF ? v : 'none'; $('#gOutro').checked = !!g.outro; $('#gEndRow').classList.toggle('off', !g.outro || g.trig !== 'fade'); }   // 0.99.29 (ID-241)
 }
 // the panel's picture: as it's drawn (its key, colour, palette, swaps) or, right-click (0.99), as loaded; remembered
 let gPrevRaw = Prefs.get('vjif-gprevraw') === '1';
 const gPrevUI = () => { const c = $('#gPrev'); c.classList.toggle('raw', gPrevRaw); c.title = (gPrevRaw ? 'The selected GIF as loaded (its first frame, no key, colour or palette)' : 'The selected GIF as drawn: its first frame with its key, colour, palette and swaps (not its GIF effects)') + ' · right-click: ' + (gPrevRaw ? 'as drawn' : 'as loaded'); };
+$('#gOutro').addEventListener('change', e => { const g = curGif(); if (!g) return; g.outro = e.target.checked; g.trimOff = false; rebuildSeq(g); syncRangeUI(g); syncGifUI(); });
 $('#gPrev').addEventListener('contextmenu', e => { e.preventDefault(); gPrevRaw = !gPrevRaw; Prefs.set('vjif-gprevraw', gPrevRaw ? '1' : '0'); gPrevUI(); drawGifThumb(); });
 gPrevUI();
 function drawPrev(g, f, top = true){   // Play › Frames' picture: frame f; the panel's picture at the top right: always the first frame (0.95: the sliders don't move it)
   for (const c of top ? [$('#gPrev'), $('#gPrevPlay')] : [$('#gPrevPlay')]){ const img = c.id === 'gPrev' && gPrevRaw ? g.src[0] : fxImage(g, c.id === 'gPrev' ? 0 : f), x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height);
     const s = Math.min(c.width / img.width, c.height / img.height); x.drawImage(img, (c.width - img.width*s)/2, (c.height - img.height*s)/2, img.width*s, img.height*s); }
 }
-[['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF']].forEach(([id, k]) => {
+[['#gIn', 'inF'], ['#gOut', 'outF'], ['#gStart', 'startF'], ['#gEnd', 'endF']].forEach(([id, k]) => {
   $(id).addEventListener('input', e => {
     const g = curGif(); if (!g) return;
     const v = +e.target.value; g[k] = v; g.trimOff = false; syncSwitches(g);   // (touching it switches Frames on)
     if (k === 'inF' && g.outF < v) g.outF = v;          // dragging in past out pushes out along (and vice versa)
     if (k === 'outF' && g.inF > v) g.inF = v;
+    if (k === 'endF'){ if (v < g.outF) g.endF = g.outF; if (v > g.outF) g.outro = true; }   // pulled past Out: the outro switches on
+    if (k === 'outF' && (g.endF ?? 0) < v) g.endF = v; if (k === 'startF' && v > g.outF) g.startF = g.outF;
     rebuildSeq(g); syncRangeUI(g); drawPrev(g, g[k], false); showCycle(g);
   });
   $(id).addEventListener('change', () => { const g = curGif(); if (g){ syncGifUI(); renderPad(selPad); } });
@@ -478,7 +483,7 @@ const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', 
 function syncShadowUI(g){
   const S = g.shadow || (g.shadow = { ...SHADOW_DEF });
   $('#shOn').checked = !!S.on; $('#shCol').value = S.col; $('#shTurn').checked = !!S.turn; $('#shFloor').checked = !!S.floor; $('#shTurn').closest('.field').classList.toggle('dimmed', !S.on);
-  SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); const v0 = S[k] ?? (k === 'scale' ? 1 : 0); $(id).value = v0; $(id).nextElementSibling.textContent = f(v0); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && !(S.cut > 0))); });
+  SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); const v0 = S[k] ?? (k === 'scale' ? 1 : 0); $(id).value = v0; $(id).nextElementSibling.textContent = f(v0); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && (!(S.cut > 0) || !!S.floor)) || (k === 'cut' && !!S.floor)); });
 }
 SH_F.forEach(([id, k, f]) => $(id).addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, [k]: +e.target.value, on: true }; syncShadowUI(g); redraw.all = true; }));
 $('#shTurn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, turn: e.target.checked, on: true }; syncShadowUI(g); redraw.all = true; });
@@ -529,12 +534,13 @@ document.querySelectorAll('#side > h2').forEach(h => { if (h.firstChild.textCont
 });
 
 // ---- GIF › FX (0.97, ID-223): this GIF's own effects, each on / off with a style and an Amount ----
-let gfxBuilt = false; const gfxFocus = {};   // GIF effect id → style in focus (0.99.16; not saved)
+let gfxBuilt = false; const gfxFocus = {}, gfxOpen = {};   // gfxOpen: effect id → its section shown / hidden by hand (else: shown while on)
+const gfxShown = id => { const g = curGif(), x = g && g.gfx && g.gfx[id]; return gfxOpen[id] ?? !!(x && x.on); };   // GIF effect id → style in focus (0.99.16; not saved)
 const gfxDef = id => ({ on: false, amt: 0.8, style: GFX_STYLES(id)[0][0] });
 function buildGfx(){
   gfxBuilt = true;
   $('#gfxList').innerHTML = GFX_IDS.map(id => { const d = FX_DEFS[FXI[id]];
-    return `<div class="sub gfxh" data-id="${id}"><span title="${esc(d.title)}">${esc(d.name)}${fxIcon(id)}</span><span class="line"></span><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
+    return `<div class="sub gfxh" data-id="${id}"><span class="gfxn" title="${esc(d.title)} · click: show / hide its settings">${esc(d.name)}${fxIcon(id)}</span><span class="line"></span><button class="iconbtn gfxmore" data-gmore="${id}" title="All of ${esc(d.name)}'s settings in the effects editor (GIF level)"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="display:block;margin:auto"><path d="M3 4h10M3 8h10M3 12h6"/><circle cx="12" cy="12" r="1.5"/></svg></button><label class="tog" title="${esc(d.name)} on / off"><input type="checkbox" data-gon="${id}"></label></div>
       <div class="gfxrow" data-id="${id}"><div class="seg" data-gst="${id}">${GFX_STYLES(id).map(s => `<button data-v="${s[0]}" title="${esc(s[1])}: ${esc(s[2])}">${esc(STYLE_BTN[s[0]] || STYLE_SHORT[s[0]] || s[1])}</button>`).join('')}</div>
       <input type="range" min="0.05" max="1" step="0.01" data-def="0.8" data-gamt="${id}" title="Amount"><output></output></div>`; }).join('');
   const edit = (id, f) => { const g = curGif(); if (!g) return; const x = { ...gfxDef(id), ...((g.gfx && g.gfx[id]) || {}) }; f(x); g.gfx = { ...(g.gfx || {}), [id]: x };   /* a new object each time: the redraw check keys on it */ redraw.all = true; syncGfxUI(g); };
@@ -553,6 +559,9 @@ function buildGfx(){
     edit(id, x => { x.on = true; if (!FX_MULTI[id]){ x.style = v; return; } const cur = styleNorm(i, x.style);
       if (cur === v && soloWas[id]){ x.style = soloWas[id]; delete soloWas[id]; } else { if (cur !== v) soloWas[id] = cur; x.style = v; } }); });
   $('#gfxReset').addEventListener('click', () => { const g = curGif(); if (!g) return; delete g.gfx; redraw.all = true; syncGfxUI(g); });
+  // 0.99.27 (ID-223): each effect's section folds; one that's off starts folded. The name shows / hides it; the list icon opens all its settings below
+  $('#gfxList').addEventListener('click', e => { const n = e.target.closest('.gfxn'); if (n){ const id = n.closest('.gfxh').dataset.id; gfxOpen[id] = !gfxShown(id); syncGfxUI(curGif()); return; }
+    const m = e.target.closest('[data-gmore]'); if (m){ const i = FXI[m.dataset.gmore]; if (fxLvl !== 'gif'){ fxLvl = 'gif'; Prefs.set('vjif-fxlvl', fxLvl); fxPadLv.length = 0; } selectFx(i); toast2(`${FX_DEFS[i].name} on this GIF: every setting in the effects editor below (GIF level)`); } });
 }
 function syncGfxUI(g){
   if (!gfxReady || !g) return; if (!gfxBuilt) buildGfx();
@@ -560,6 +569,6 @@ function syncGfxUI(g){
     $(`[data-gon="${id}"]`).checked = !!x.on;
     const P = styleParts(FXI[id], x.style); $(`[data-gst="${id}"]`).querySelectorAll('button').forEach(b => { b.classList.toggle('on', P.includes(b.dataset.v)); b.classList.toggle('focus', FX_MULTI[id] && P.length > 1 && gfxFocus[id] === b.dataset.v && P.includes(b.dataset.v)); }); $(`[data-gst="${id}"]`).classList.toggle('hasfocus', !!(FX_MULTI[id] && P.length > 1 && gfxFocus[id] && P.includes(gfxFocus[id])));
     const r = $(`[data-gamt="${id}"]`); r.value = x.amt; r.nextElementSibling.textContent = Math.round(x.amt * 100) + '%';
-    document.querySelector(`.gfxrow[data-id="${id}"]`).classList.toggle('off', !x.on); }   // (shown faint, but still takes clicks)
+    document.querySelector(`.gfxrow[data-id="${id}"]`).classList.toggle('off', !x.on); document.querySelector(`.gfxrow[data-id="${id}"]`).hidden = !gfxShown(id); document.querySelector(`.gfxh[data-id="${id}"]`).classList.toggle('folded', !gfxShown(id)); }   // (shown faint, but still takes clicks)
   $('#gTabs [data-v=gfx]').classList.toggle('act', gfxOn(g));
 }

@@ -16,8 +16,8 @@ async def main():
       selectPad(0); const ui = [document.querySelector('#shK') !== null]; await shot(0); const z = await shot(0), a = await shot(1); return [...ui, ...z.slice(0, 2), ...a.slice(0, 2)]; }})()""")
     print('skew', sk); assert sk == [True, False, True, True, True], sk
     # count-in Play
-    cp = await pg.evaluate("""(() => { $('#recCountSeg [data-b="-1"]').click(); const a = recCount; rec.wait = { beat: Infinity, play: true, mime: 'x' }; recUI(); const t = $('#recTxt').textContent;
-      let started = null; const o = recStart; recStart = (m, bt) => { started = [m, bt]; rec.wait = null; }; recTick(); const before = started; musPlay(); recStart = o; rec.wait = null; recUI();
+    cp = await pg.evaluate("""(async () => { $('#recCountSeg [data-b="-1"]').click(); const a = recCount; rec.wait = { beat: Infinity, play: true, mime: 'x' }; recUI(); const t = $('#recTxt').textContent;
+      let started = null; const o = recStart; recStart = (m, bt) => { started = [m, bt]; rec.wait = null; }; recTick(); const before = started; mus.el.play = () => Promise.resolve(); await musPlay(); recStart = o;   // (0.99.27: the take starts once the track plays) rec.wait = null; recUI();
       $('#recCountSeg [data-b="0"]').click(); return [a, t, before, !!started, document.querySelectorAll('#recCountSeg button').length]; })()""")
     print('count-in play', cp); assert cp == [-1, 'Play…', None, True, 5], cp
     # Theme: Background folds; the × sits in the corner

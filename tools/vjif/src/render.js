@@ -159,7 +159,8 @@ const hexA = (h, a) => `rgba(${hex2rgb(h).join(',')},${a})`;
 let gfxSlot = 0; const gfxBufs = [];
 function drawClipFx(ctx, c, g, img){
   if (!post || !gfxOn(g)){ drawClip(ctx, c, g, img); return; }
-  const U = gfxU(g, clock.beat); if (!U){ drawClip(ctx, c, g, img); return; }
+  let U = gfxU(g, clock.beat); if (!U){ drawClip(ctx, c, g, img); return; }
+  if (U.zoom || U.zoomE){ const k = Math.max(0.05, 1 + U.zoom + U.zoomE); c = { ...c, sx: c.sx * k, sy: c.sy * k }; U = { ...U, zoom: 0, zoomE: 0 }; }   // Zoom on a GIF: around its own centre (0.99.27)
   const k = gfxSlot++, b = gfxBufs[k] || (gfxBufs[k] = mkCanvas().getContext('2d'));
   if (b.canvas.width !== CW || b.canvas.height !== CH){ b.canvas.width = CW; b.canvas.height = CH; }
   b.setTransform(RS, 0, 0, RS, 0, 0); b.globalAlpha = 1; b.globalCompositeOperation = 'source-over'; b.clearRect(0, 0, W, H);
@@ -334,9 +335,10 @@ function render(list, ctx, slot0, LUs, zoomE = 0, xf = [RS, 0, 0, RS, 0, 0], ove
       if (L.i === 0 && L.fillOn && L.fill && !over){ b.fillStyle = L.fill; b.fillRect(0, 0, W, H); }
       drawAll(b, vis);
       applyMask(b, MK); ctx.drawImage(b.canvas, 0, 0, W, H);
-    } else if (sub && vis.length === 1 && L.blend === 'source-over' && !(vis[0].e.mask && vis[0].e.mask.on) && !(L.i === BG_LAYER && L.fillOn && L.fill && !over)){
-      // a lone GIF with its own blend: nothing in its layer to blend with, so it blends with what's below the layer
-      const { g, e, fi } = vis[0]; ctx.globalCompositeOperation = e.blend || 'source-over'; drawClipFx(ctx, e, g, fxImage(g, fi, e));
+    } else if (sub && L.blend === 'source-over' && (L.opacity >= 1 || vis.length === 1) && !vis.some(it => it.e.mask && it.e.mask.on) && !(L.i === BG_LAYER && L.fillOn && L.fill && !over)){
+      // GIFs with their own blend on a plain layer (Normal, full opacity): each blends with everything under it on screen,
+      // the GIFs below it on its layer and the layers below (0.99.26 did it for a lone GIF; 0.99.27 for all, BG-059)
+      for (const { g, e, fi } of vis){ ctx.globalCompositeOperation = e.blend || 'source-over'; drawClipFx(ctx, e, g, fxImage(g, fi, e)); }
     } else if (!sub && ((vis.length === 1 && !MASK_BLENDS.has(L.blend)) || (L.blend === 'source-over' && L.opacity >= 1))){   // (a mask is always flattened first: each draw of a GIF, its shadow, its tiles, would cut on its own)
       // one GIF, or Normal at full opacity: identical result drawn straight onto the target (no buffer clear + composite)
       for (const { g, e, fi } of vis) drawClipFx(ctx, e, g, fxImage(g, fi, e));

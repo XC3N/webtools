@@ -19,8 +19,10 @@ function musSet(src, name, save = true){
   else { mus.el.src = src; if (save) store.put('music', { name, url: src }); }
   mus.name = name; musUI();
 }
-async function musPlay(){ if (rec.wait && rec.wait.play) recStart(rec.wait.mime, clock.beat);   // Count-in › Play (0.96): the take starts with the music
-  musGraph(); try { await mus.ctx.resume(); await mus.el.play(); } catch (e) { toast("Can't play that track: " + (e.message || e.name)); } musUI(); }
+async function musPlay(){ const go = rec.wait && rec.wait.play;   // Count-in › Play (0.96): the take starts with the music
+  musGraph(); try { await mus.ctx.resume(); await mus.el.play(); } catch (e) { toast("Can't play that track: " + (e.message || e.name)); }
+  if (go && rec.wait && rec.wait.play) recStart(rec.wait.mime, clock.beat);   // 0.99.27: the recorder starts once the track plays (starting it first, in the same moment, made the track stutter at its start)
+  musUI(); }
 // Sync on play (0.91; it was the other way round, Sync starting the track): Play from the top of the track is also Sync
 // (beat 1), so the song and the beat grid start together. Recording never touches the track. To record a song from its
 // start: Rec, then Play (the waiting take starts on that downbeat, with the song).
@@ -204,6 +206,7 @@ async function recPrepare(){
   }
   // every take starts on the next downbeat (Snap or not), so you know when it begins; with a stopped MIDI clock it waits for the clock
   if (recCount < 0 && !mus.el.src) toast('Count-in › Play waits for the music player, and no track is loaded (Settings › Recording › Music)');
+  if (recCount < 0 && mus.el.src){ musGraph(); mus.ctx.resume().catch(() => {}); }   // 0.99.27: the sound path is ready before Play (building it at Play was part of the stutter)
   rec.wait = { beat: recCount < 0 ? Infinity : (Math.floor(clock.beat / 4 + 1e-9) + 1) * 4 + recCount * 4, play: recCount < 0, mime }; rec.last = clock.beat; recUI();   // + the count-in (Play: until the music starts)
 }
 function recStart(mime, beat = clock.beat){

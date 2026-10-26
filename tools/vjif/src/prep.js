@@ -11,12 +11,12 @@ function startPrep(){
   const used = new Set(layers.flatMap(L => L.clips.map(c => c.pad)));
   pads.forEach((p, k) => { if (p.gif && used.has(k)){ gifs[k] = cloneInst(p.gif); free.push(gifs[k]); } });
   const now = clock.beat, cp = o => JSON.parse(JSON.stringify(o));
-  const st = fxSt.map(S => ({ ...S }));
-  st.forEach(S => { if (S.held){ S.held = false; S.rel = now; } });   // a key held right now would never be let go on the output
+  const st = fxSt.map(S => ({ ...S })), st2 = scSt.map(S => ({ ...S }));
+  [...st, ...st2].forEach(S => { if (S.held){ S.held = false; S.rel = now; } });   // a key held right now would never be let go on the output
   // a gated fade held open right now (pad still down) is let go on the copy: the editor's release never reaches it
   const gated = c => { const g = pads[c.pad].gif; return c.env && c.env.rel === null && g && g.trig === 'fade' && g.env.gate && !c.env.noGate; };
   prep = { layers: layers.map(L => ({ ...layerState(L), clips: L.clips.map(c => ({ ...c, relBeat: c.relBeat === null ? now : c.relBeat, env: c.env && { ...c.env, rel: gated(c) ? Math.max(now, c.env.t0) : c.env.rel } })) })), gifs, free,
-           fx: { cfg: cp(fxCfg), pre: cp(fxPre), st }, scene: sceneIdx };
+           fx: { cfg: cp(fxCfg), pre: cp(fxPre), st, st2 }, scene: sceneIdx };
   if (brb.link && !brb.on) brbStart();                // linked: BRB keeps the output changing while you prep
   syncPrepUI(); renderScenes(); redraw.all = true;
 }

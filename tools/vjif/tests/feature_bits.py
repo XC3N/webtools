@@ -134,9 +134,9 @@ async def main():
       return [a, a2, FX_PALS.at(-1).n, FX_PALS.at(-1).c.length, 'dots' in fxEntry(FXI.colour), PAL_ORDER.map(i => FX_PALS[i].n).join(',')]; })()""")
     print('0.82', d82); assert d82[0] == 'Dither/LCD off,Game Boy pixels,Dot matrix/none', d82   # 0.99.5: the Game Boy has no Dither again: its variants fill the row, the LCD switch beside them
     assert d82[1:] == ['Dither/true', 'Grey 4', 4, True, 'Grey,Grey 16,Grey 4,1-bit,CGA 1,CGA 2,CGA 3,ZX Spectrum,C64,NES,EGA,GB,GB Pocket,GB Light'], d82   # (0.94: Grey and 1-bit first; 0.99: Grey 16 and Grey 4 added at the end of the list)   # 0.87.2: LCD icons in Dither's pattern slot for the Game Boy palettes; palettes by year
-    d83 = await pg.evaluate("""(() => { const g = pads[0].gif; selectPad(0); $('#gTabs [data-v=colour]').click(); g.swap = [{ from: [1, 2, 3], to: [9, 9, 9] }]; g.swapOff = false; syncGifUI(); return [...document.querySelectorAll('#gLoop button')].map(b => b.textContent).join('/'); })()""")
-    await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); off = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
-    await pg.click('#swOn', force=True); await pg.wait_for_timeout(100); on = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
+    d83 = await pg.evaluate("""(() => { const g = pads[0].gif; selectPad(0); $('#gTabs [data-v=colour]').click(); g.swap = [{ from: [1, 2, 3], to: [9, 9, 9] }]; g.swapOff = false; syncGifUI(); return [...document.querySelectorAll('#gLoop button')].map(b => b.title.split(':')[0]).join('/'); })()""")
+    await pg.evaluate("$('#swOn').click()"); await pg.wait_for_timeout(100); off = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
+    await pg.evaluate("$('#swOn').click()"); await pg.wait_for_timeout(100); on = await pg.evaluate("[pads[0].gif.swapOff, $('#swOn').checked]")
     m83 = await pg.evaluate("""(() => { const g = pads[0].gif, keep = gifSettings(g); applyGifSettings(g, { ...keep, loop: 'once', trig: 'stay' }); const r = [g.loop, g.trig, g.env.len];
       applyGifSettings(g, keep); return [r, $('#tMode button').textContent, !document.querySelector('#gClear'), [...document.querySelectorAll('#aEnv button')].map(b => b.textContent).join('/'), !!$('#gSmooth').closest('#gQuick')]; })()""")
     print('0.83', d83, off, on, m83); assert d83 == 'Forward/Reverse/Ping-pong' and off == [True, False] and on == [False, True], (d83, off, on)

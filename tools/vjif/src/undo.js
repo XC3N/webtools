@@ -72,7 +72,7 @@ function applyScn(E){
 }
 // what a step changes, in words, for the undo / redo toast
 const XF_WORDS = { x: 'position', y: 'position', sx: 'scale', sy: 'scale', rot: 'rotation', fit: 'fit', flipX: 'flip', flipY: 'flip', tile: 'tile', cl: 'crop', ct: 'crop', cr: 'crop', cb: 'crop', alpha: 'opacity' };
-const GIF_WORDS = { name: 'name', sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', nofx: 'bypass FX', gfx: 'GIF effects', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', key: 'key colour', hsv: 'colour', swap: 'colour swap', swapMerge: 'colour merge', trig: 'trigger', env: 'envelope', lfo: 'auto' };
+const GIF_WORDS = { name: 'name', sync: 'timing', loop: 'loop', speed: 'speed', crisp: 'smoothing', nofx: 'bypass FX', gfx: 'GIF effects', beats: 'loop length', subdiv: 'loop length', restart: 'restart', inF: 'frames', outF: 'frames', startF: 'frames', endF: 'frames', outro: 'outro', key: 'key colour', hsv: 'colour', swap: 'colour swap', swapMerge: 'colour merge', trig: 'trigger', env: 'envelope', lfo: 'auto' };
 function histWhat(e, cur){
   if (!e) return '';
   if (typeof e !== 'string') return STEPS[e.kind].what(e);
