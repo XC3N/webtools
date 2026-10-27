@@ -5,16 +5,16 @@ const FX_KEYS = Array.from({ length: 12 }, (_, i) => 'F' + (i + 1)), FX_LABELS =
 const FX_DEFS = [
   { id: 'colour', name: 'Colour', title: 'Colour shifts', mode: 'hold', rate: true, styles: [['flip', 'Flip', 'Hue turned halfway round'], ['cycle', 'Cycle', 'Hue rotates (one turn every 16 × Rate)'], ['invert', 'Invert', 'Negative colours'], ['pal', 'Palette', 'Colours snapped to an old machine\'s palette'], ['duo', 'Duotone', 'Two colours, shadows to highlights (Colours picks the pair)']] },
   { id: 'poster', name: 'Posterize', title: 'Flat colours / outlines', mode: 'hold', styles: [['bands', 'Bands', 'Fewer colours, flat bands'], ['edges', 'Edges', 'Neon outlines on black']] },
-  { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black'], ['degauss', 'Degauss', 'Rainbow blotches, a tube being degaussed']] },
+  { id: 'strobe', name: 'Strobe', title: 'Flashes on the beat grid (Rate)', mode: 'hold', rate: true, styles: [['white', 'White', 'Flashes white'], ['black', 'Black', 'Flashes black'], ['degauss', 'Degauss', 'Rainbow blotches, a tube being degaussed'], ['rays', 'Rays', 'Light rays burst from the bright parts on the beat']] },
   { id: 'feedback', name: 'Feedback', title: 'The picture echoes into itself', mode: 'latch', styles: [['trails', 'Trails', 'Moving things leave trails'], ['tunnel', 'Tunnel', 'Copies shrink into the centre'], ['spiral', 'Spiral', 'Copies shrink and turn']] },
-  { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in, around the middle of the frame'], ['out', 'Out', 'Punches out, around the middle of the frame'], ['eachin', 'Each in', 'Every GIF punches in around its own centre'], ['eachout', 'Each out', 'Every GIF punches out around its own centre']] },
+  { id: 'zoom', name: 'Zoom', title: 'Zoom punch', mode: 'hit', styles: [['in', 'In', 'Punches in, around the middle of the frame'], ['out', 'Out', 'Punches out, around the middle of the frame'], ['eachin', 'Each in', 'Every GIF punches in around its own centre'], ['eachout', 'Each out', 'Every GIF punches out around its own centre'], ['bulge', 'Bulge', 'The middle swells out, like a lens'], ['pinch', 'Pinch', 'The middle sinks in']] },
   { id: 'shake', name: 'Shake', title: 'Camera shake, a new jolt every Rate', mode: 'hit', rate: true, styles: [['shake', 'Shake', 'Big jolts'], ['jitter', 'Jitter', 'Small, twice as fast']], size: true },
   { id: 'wobble', name: 'Wobble', title: 'Wavy distortion, one cycle per Rate', mode: 'hold', rate: true, styles: [['wave', 'Wave', 'Sideways waves'], ['ripple', 'Ripple', 'Rings from the centre'], ['swirl', 'Swirl', 'Twists round the centre, one way then back, each Rate']] },
   { id: 'mirror', name: 'Mirror', title: 'Folds the picture', mode: 'latch', styles: [['lr', 'L→R', 'Left half mirrored onto the right'], ['rl', 'R→L', 'Right half mirrored onto the left'], ['tb', 'T→B', 'Top half mirrored onto the bottom'], ['bt', 'B→T', 'Bottom half mirrored onto the top'], ['quad', 'Quad', 'Top-left quarter, four ways'], ['kal', 'Kaleido', 'Kaleidoscope (Amount: slices)']] },
   { id: 'pixel', name: 'Pixel', title: 'Pixelate', mode: 'hold', size: true, styles: [['square', 'Square', 'Square pixels'], ['wide', 'Wide', 'Wide pixels'], ['ansi', 'ANSI', 'Text mode: character cells in the 16 ANSI colours, shaded with ░ ▒ ▓ blocks'], ['tone', 'Halftone', 'Printed dots: each dot as big as its cell is bright (Size = dot spacing)']] },
-  { id: 'glitch', name: 'Glitch', title: 'Torn and datamoshed, re-torn every Rate (styles stack)', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'Datamosh: blocks drag the old picture along the motion'], ['keyfr', 'Keyframe', 'Lost keyframe: the picture freezes, then smears with the motion']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt', 'keyfr'] },   // (0.99.5: Corrupt and Keyframe moved here from Codec: the moving ones)
+  { id: 'glitch', name: 'Glitch', title: 'Torn and datamoshed, re-torn every Rate (styles stack)', mode: 'hold', rate: true, styles: [['slices', 'Slices', 'Torn horizontal slices (Size = slice height)'], ['blocks', 'Blocks', 'Shuffled blocks (Size = block size)'], ['melt', 'Melt', 'Columns drip down (Size = column width)'], ['corrupt', 'Corrupt', 'Datamosh: blocks drag the old picture along the motion'], ['keyfr', 'Keyframe', 'Lost keyframe: the picture freezes, then smears with the motion'], ['sort', 'Sort', 'Pixel sort: bright runs stream down (Size = longest streak)']], size: true, sizeDef: 48, sizeFor: ['slices', 'blocks', 'melt', 'corrupt', 'keyfr'] },   // (0.99.5: Corrupt and Keyframe moved here from Codec: the moving ones)
   { id: 'codec', name: 'Codec', title: 'Compression artefacts (styles stack)', mode: 'hold', styles: [['crunch', 'Crunch', 'Heavy compression: banded detail, blocky colour'], ['mblock', 'Macroblock', 'Low bit rate: the block grid shows'], ['chroma', 'Chroma', 'Colour at low resolution (4:2:0), bleeding past edges'], ['ring', 'Ringing', 'JPEG halos and mosquito noise on edges']], size: true, sizeDef: 48, sizeFor: ['crunch', 'mblock', 'chroma'] },   // (0.99.5: the still ones; Corrupt / Keyframe went to Glitch)
-  { id: 'rgb', name: 'CRT', title: 'Tube and tape (styles stack)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking, washed colour, noise (Amount: wear)'], ['scan', 'Scanlines', 'Scanlines and an aperture grille'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel'], ['crypt', 'Crypt', 'A scrambled satellite channel']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] } ];
+  { id: 'rgb', name: 'CRT', title: 'Tube and tape (styles stack)', mode: 'hit', styles: [['split', 'Split', 'Colour channels pulled apart'], ['vhs', 'VHS', 'Tape: tracking, washed colour, noise (Amount: wear)'], ['scan', 'Scanlines', 'Scanlines and an aperture grille'], ['phos', 'Phosphor', 'Bright parts glow and linger, like phosphor'], ['paytv', 'Pay-TV', 'A scrambled cable channel'], ['crypt', 'Crypt', 'A scrambled satellite channel'], ['film', 'Film', 'Film grain, gate flicker and a drifting light leak']], size: true, sizeDef: 3, sizeFor: ['scan', 'crypt'] } ];
 const FXI = Object.fromEntries(FX_DEFS.map((d, i) => [d.id, i]));   // an effect's slot (F key) by its id
 // 0.78 put the pads in groups of four (look · movement · texture and screen); sets, defaults and MIDI maps saved before
 // keep effects by their old slots, so they're moved: fxRemapIdx(old slot) → new slot (presets, past the twelve, stay)
@@ -208,7 +208,7 @@ const FX_SIZES = [[2, '2 px'], [3, '3 px'], [4, '4 px'], [6, '6 px'], [8, '8 px'
 const kalSlices = amt => Math.round(3 + 9 * clamp((amt - 0.05) / 0.95, 0, 1)), kalAmt = n => 0.05 + (n - 3) / 9 * 0.95;
 // a style's name on an effect tile, when the whole word doesn't fit
 const STYLE_BTN = { scan: 'Scan', phos: 'Phos', mblock: 'Macro' };   // style buttons: short enough for one row (the tooltip has the full name)
-const STYLE_SHORT = { mblock: 'Macro', ring: 'Ring', keyfr: 'Keyfr.', thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', kal: 'Kaleid.', square: 'Square', tone: 'Halft.', duo: 'Duo' };
+const STYLE_SHORT = { mblock: 'Macro', ring: 'Ring', keyfr: 'Keyfr.', thresh: 'Thresh', scan: 'Scan', phos: 'Phos', degauss: 'Degauss', eachin: 'Each in', eachout: 'Each out', kal: 'Kaleid.', square: 'Square', tone: 'Halft.', duo: 'Duo', bulge: 'Bulge', pinch: 'Pinch', sort: 'Sort', film: 'Film', rays: 'Rays' };
 const STYLE_WAS = { scramble: 'corrupt' };   // (0.94: Glitch's Corrupt / Keyframe / Crunch went to Codec, Degauss to Strobe: fxMig3)   // renamed / replaced styles: what an older set gets instead
 const styleIdx = (i, v) => { const k = String(v).split('+')[0]; return Math.max(0, FX_DEFS[i].styles.findIndex(s => s[0] === (STYLE_WAS[k] || k))); };
 // CRT can stack styles ('vhs+scan'): they run as separate stages in a fixed order. Degauss stays on its own (a one-off hit)
@@ -374,10 +374,10 @@ const FX_U_IDX = ['colour', 'strobe', 'poster', 'zoom', 'shake', 'wobble', 'mirr
 function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, pneg, kmir, kang, pfit, dith, dpat, dots, ovs, duo, pamt, abase }){
   if (!lv.some(v => v > 0.001)) return null;
   const S = i => styleIdx(i, style[i]), nm = i => FX_DEFS[i].styles[S(i)][0], st = i => Math.floor(b / rate[i]);
-  const [CO, ST, PO, ZO, SH, WO, MI, GL, CR, PX, FB, CD] = FX_U_IDX, dg = nm(ST) === 'degauss';
+  const [CO, ST, PO, ZO, SH, WO, MI, GL, CR, PX, FB, CD] = FX_U_IDX, dg = nm(ST) === 'degauss', ry = nm(ST) === 'rays';
   const U = { colr: lv[CO], colrS: S(CO), hue: b / (rate[CO] * 16) * Math.PI * 2,
-    strobe: dg ? 0 : lv[ST] * ((b / rate[ST]) % 1 < 0.5 ? 1 : 0), strobeS: S(ST), dgs: dg ? Math.min(1, lv[ST]) : 0, poster: lv[PO], posterS: S(PO),   // (Strobe › Degauss: no beat gate, a swell)
-    zoom: nm(ZO) === 'in' ? lv[ZO] * 0.5 : nm(ZO) === 'out' ? lv[ZO] * -0.3 : 0, zoomE: nm(ZO) === 'eachin' ? lv[ZO] * 0.5 : nm(ZO) === 'eachout' ? lv[ZO] * -0.3 : 0,   // Each: done per GIF in render()
+    strobe: dg || ry ? 0 : lv[ST] * ((b / rate[ST]) % 1 < 0.5 ? 1 : 0), rays: ry ? lv[ST] * (0.25 + 0.75 * Math.pow(1 - (b / rate[ST]) % 1, 2)) : 0, strobeS: S(ST), dgs: dg ? Math.min(1, lv[ST]) : 0, poster: lv[PO], posterS: S(PO),   // (Strobe › Degauss: no beat gate, a swell)
+    zoom: nm(ZO) === 'in' ? lv[ZO] * 0.5 : nm(ZO) === 'out' ? lv[ZO] * -0.3 : 0, zoomE: nm(ZO) === 'eachin' ? lv[ZO] * 0.5 : nm(ZO) === 'eachout' ? lv[ZO] * -0.3 : 0, bulge: nm(ZO) === 'bulge' ? lv[ZO] : nm(ZO) === 'pinch' ? -lv[ZO] : 0,   // Each: done per GIF in render()
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], codec: lv[CD], cdS: styleMask(CD, style[CD]), cseed: st(CD) * 7.13 % 100, cdSz: size[CD],
@@ -430,7 +430,7 @@ function makePost(){
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time, beat;
-      uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, mirK, mirA, keepA, duoI, palD, palLo, palHi, palYlo, palYhi, palP, palDot, palLum,
+      uniform float colr, colrS, hue, strobe, strobeS, rays, poster, posterS, zoom, bulge, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, mirK, mirA, keepA, duoI, palD, palLo, palHi, palYlo, palYhi, palP, palDot, palLum,
                     glitch, glS, gseed, glSz, codec, cdS, cseed, cdSz, dgs, rgb, rgbS, crtSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, payNeg, shakeZ, wobZ;
       uniform float glA[12], rgA[12], cdA[12];   // Glitch / CRT: each stacked style's own Amount, as a share of the effect's (0.92)
       uniform vec3 shake; uniform vec3 pal[64], palOk[64]; uniform float palN; varying vec2 uv;
@@ -442,6 +442,7 @@ ${FX_GLSL}
       vec2 A(){ return vec2(res.x / res.y, 1.0); }
       vec2 geo(vec2 p){                              // zoom, shake, wobble, pixelate: where to read the frame from
         vec2 a = A(), d = (p - 0.5) * a;
+        if (abs(bulge) > 0.001){ vec2 e2 = abs(p - 0.5) * 2.0; float rn = bulge > 0.0 ? length(d) / (0.5 * length(a)) : pow(pow(e2.x, 4.0) + pow(e2.y, 4.0), 0.25); if (rn < 1.0) d *= 1.0 - (bulge > 0.0 ? 0.55 : 0.5) * bulge * (1.0 - rn * rn) * (1.0 - rn * rn); }   // Zoom › Bulge / Pinch (0.99.32): a lens, strongest in the middle, none at the corners (Pinch: none at the frame's edges, so nothing is pulled in from outside)
         d /= (1.0 + zoom) * (1.0 + shakeZ) * (1.0 + wobZ);
         float c = cos(shake.z), s = sin(shake.z); d = mat2(c, s, -s, c) * d + shake.xy;
         p = d / a + 0.5;
@@ -566,6 +567,14 @@ ${FX_GLSL}
           if (HAS(glS, S_glitch_melt)){ float gq = min(1.0, glitch * glA[int(S_glitch_melt)]); float col = floor(p.x * res.x / max(glSz * 0.5, 2.0)); p.y = max(0.0, p.y - h1(col * 3.7) * 0.35 * gq * smoothstep(0.0, 1.0, p.y + 0.3)); }
         }
         vec4 c4 = samp(geo(p), split);
+        if (glitch > 0.001 && HAS(glS, S_glitch_sort)){ float gq = min(1.0, glitch * glA[int(S_glitch_sort)]);   // Sort (0.99.32): pixel sorting: each column cut in runs (Size: the longest), a run's pixels put in order of brightness, dark at the top
+          vec3 L3 = vec3(0.299, 0.587, 0.114); float col = floor(p.x * res.x / max(1.0, floor(res.y / 360.0))), sl = max(glSz, 8.0) * (0.35 + 0.65 * h1(col * 1.37 + gseed)) / res.y, off = h1(col * 2.9 + gseed) * sl;
+          float sy = (p.y + off) / sl, seg = floor(sy);
+          if (h1(seg * 1.7 + col * 0.13 + gseed) < gq * 1.25){ vec4 S[16]; float Y[16];   // (1 in 4 runs left as they are at full Amount)
+            for (int i = 0; i < 16; i++){ S[i] = samp(geo(vec2(p.x, clamp((seg + (float(i) + 0.5) / 16.0) * sl - off, 0.0, 0.999))), split); Y[i] = dot(S[i].rgb, L3); }
+            float want = floor(fract(sy) * 16.0); vec4 o = c4;
+            for (int i = 0; i < 16; i++){ float n = 0.0; for (int j = 0; j < 16; j++) n += Y[j] < Y[i] || (Y[j] == Y[i] && j < i) ? 1.0 : 0.0; if (n == want) o = S[i]; }   // the sample whose rank is this pixel's place in the run
+            c4 = o; } }
         if (mirror > 0.001) c4 = mix(c4, samp(geo(fold(p)), split), mirror);
         vec3 c = c4.rgb; float al = c4.a;
         if (poster > 0.001){
@@ -590,6 +599,14 @@ ${FX_GLSL}
           for (int i = 0; i < 8; i++){ float an = float(i) * 0.785398; bl += raw(q + vec2(cos(an), sin(an)) * t * 1.6) + raw(q + vec2(cos(an), sin(an)) * t * 3.4); }
           bl = look(bl / 16.0); c += max(bl - 0.35, 0.0) * 1.6 * rq;
           vec4 pv = texture2D(prev, vec2(uv.x, 1.0 - uv.y)); c = max(c, pv.rgb * 0.82 * rq); }
+        if (rgb > 0.001 && HAS(rgbS, S_rgb_film)){ float rq = min(1.0, rgb * rgA[int(S_rgb_film)]);   // Film (0.99.32): grain in the mid-tones, the gate's flicker, a warm light leak drifting across, a vignette, now and then a scratch
+          float fr = floor(time * 24.0), y = dot(c, vec3(0.299, 0.587, 0.114)); vec2 gp = floor(gl_FragCoord.xy / max(1.0, floor(res.y / 540.0)));
+          c += (h2(gp + fr * 1.37) + h2(gp * 1.13 + fr * 2.71 + 0.5) - 1.0) * 0.2 * rq * (0.4 + 2.4 * y * (1.0 - y));
+          c *= 1.0 + (h1(fr * 0.71) - 0.5) * 0.1 * rq;
+          vec2 lc = vec2(fract(time * 0.019) * 1.8 - 0.4, 0.5 + 0.35 * sin(time * 0.11)), ld = (uv - lc) * a; float lk = exp(-dot(ld, ld) * 3.0) * (0.75 + 0.25 * sin(time * 0.7));
+          c += vec3(1.0, 0.42, 0.12) * lk * 0.6 * rq;
+          vec2 vg = uv - 0.5; c *= 1.0 - dot(vg, vg) * 1.1 * rq;
+          if (h1(fr * 3.3) < 0.35 * rq){ float sx = h1(fr * 5.1); c = mix(c, c * 0.55 + 0.04, (1.0 - smoothstep(0.0, 1.5 / res.x, abs(uv.x - sx))) * 0.8); } }
         if (rgb > 0.001 && HAS(rgbS, S_rgb_crypt)) c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))) * 0.85 + 0.06, 0.45 * (rgb * rgA[int(S_rgb_crypt)]));   // crypt: colour lost, the black level lifted
         if (rgb > 0.001 && HAS(rgbS, S_rgb_paytv)){ float rq = min(1.0, rgb * rgA[int(S_rgb_paytv)]); // pay-TV picture: a smeared echo, the colour decoded wrong (hue turned round, oversaturated), now and then a negative field
           vec3 gh = look(raw(geo(vec2(fract(p.x - 0.022), p.y))));
@@ -699,6 +716,9 @@ ${FX_GLSL}
           vec2 blk = floor(gl_FragCoord.xy / 8.0); c += (h2(floor(gl_FragCoord.xy / max(1.0, floor(res.y / 540.0))) + blk * 3.1) - 0.5) * 0.35 * gq * edge;
         }
         c = mix(c, vec3(IS(strobeS, S_strobe_white) ? 1.0 : 0.0), strobe); if (IS(strobeS, S_strobe_white) && keepA < 0.5) al = mix(al, 1.0, strobe);
+        if (rays > 0.001){ vec2 q = geo(p); vec3 acc = vec3(0.0); float w = 1.0, ws = 0.0, j0 = h2(gl_FragCoord.xy + fract(time) * 61.0);   // Strobe › Rays (0.99.32): light from the bright parts streams out from the middle (samples marched toward the centre)
+          for (int i = 0; i < 24; i++){ vec2 sq = mix(q, vec2(0.5), (float(i) + j0) / 24.0 * 0.6); acc += max(raw(sq) - 0.6, 0.0) * w; ws += w; w *= 0.94; }   // (a random start per pixel: no steps in the rays)
+          vec3 ry = acc / ws * 3.0 * rays; c += ry; if (keepA < 0.5) al = max(al, min(1.0, dot(ry, vec3(0.333)))); }
         if (fb > 0.001){                              // feedback: blend with the previous output (stored upside down)
           vec2 q = uv;
           if (!IS(fbS, S_feedback_trails)){ vec2 d = (q - 0.5) * a * 1.06; if (IS(fbS, S_feedback_spiral)){ float cs = cos(0.06), sn = sin(0.06); d = mat2(cs, sn, -sn, cs) * d; } q = d / a + 0.5; }
@@ -734,7 +754,7 @@ ${FX_GLSL}
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const PX_NAMES = new Set(['crtSz', 'pixSize', 'glSz', 'cdSz']);   // (palDot is worked out in real pixels: lcdDot)   // sizes given in canvas pixels
-    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'mirK', 'mirA', 'keepA', 'duoI', 'palD', 'palLo', 'palHi', 'palYlo', 'palYhi', 'palP', 'palDot', 'palLum',
+    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'rays', 'poster', 'posterS', 'zoom', 'bulge', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'mirK', 'mirA', 'keepA', 'duoI', 'palD', 'palLo', 'palHi', 'palYlo', 'palYhi', 'palP', 'palDot', 'palLum',
                    'glitch', 'glS', 'gseed', 'glSz', 'codec', 'cdS', 'cseed', 'cdSz', 'dgs', 'rgb', 'rgbS', 'crtSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'payNeg', 'shakeZ', 'wobZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'glA', 'rgA', 'cdA', 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palOk', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));

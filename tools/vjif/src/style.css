@@ -12,6 +12,7 @@ body{background:var(--bg);color:var(--ink);font:400 var(--fs)/1.35 var(--sans);-
 #bank,#side{background:linear-gradient(var(--panel) 30%,transparent) top/100% 24px no-repeat local,linear-gradient(transparent,var(--panel) 70%) bottom/100% 24px no-repeat local,
   radial-gradient(farthest-side at 50% 0,#0009,transparent) top/100% 10px no-repeat scroll,radial-gradient(farthest-side at 50% 100%,#0009,transparent) bottom/100% 10px no-repeat scroll,var(--panel)}
 .seg.wrap3{grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg.wrap4{grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr}   /* Transition › Style (0.99.32): always two rows of four, so the rows below don't move */
 #bank{grid-area:bank}#stage{grid-area:stage}#side{grid-area:side}#perf{grid-area:perf}
 .keyrow{display:flex;align-items:center;gap:6px}
 #gifSettings.disabled,#xfPanel.disabled{opacity:.35;pointer-events:none}

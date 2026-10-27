@@ -17,7 +17,7 @@ async def main():
       for k in range(40):
         await pg.mouse.move(box[0] + box[2] * (0.15 + 0.7 * ((k * 7) % 40) / 40), box[1] + box[3] * (0.35 + 0.3 * (k % 5) / 5)); await pg.wait_for_timeout(60)
       return await pg.evaluate("__r")
-    n = [await sweep() for _ in range(7)]   # (0.99.5: 7 sweeps; with the heavier shader each GIF's frames take a few more sweeps to have all been seen); print('readbacks after each sweep', n)
+    n = [await sweep() for _ in range(8)]   # (0.99.32: 8 under load; 0.99.5: 7 sweeps; with the heavier shader each GIF's frames take a few more sweeps to have all been seen); print('readbacks after each sweep', n)
     assert n[-1] == n[-2], ('hover still reads back', n)
     st = await pg.evaluate("[framePxBytes <= FRAMEPX_BYTES, typeof pickClip(0, 0)]"); print(st); assert st[0], st
     await b.close()

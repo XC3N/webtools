@@ -5,9 +5,11 @@ const TR_STYLES = {
   stutter: [['ramp', 'Ramp', 'Cuts back and forth between the scenes, faster and faster (on the 1/32 grid when there is room), landing on the new one (Intensity: how dense the flashes are; a longer transition gets more of them)'], ['even', 'Even', 'Cuts back and forth every 1/16 note, landing on the new one']],
   fade: [['cross', 'Cross', 'One scene fades into the other'], ['dip', 'Dip', 'Through black'], ['flash', 'Flash', 'Through white'], ['luma', 'Luma', 'The new scene shows through the brightest parts first']],
   wipe: [['push', 'Push', 'The new scene pushes the old one out (Direction)'], ['bands', 'Bands', "The frame splits into horizontal bands: the new scene's slide in one after another, from the left and the right in turn (Options: how many)"],
-         ['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre']],   // (Slide's Push and Bands joined Wipe in 0.84)
+         ['line', 'Line', 'A straight edge sweeps across (Direction)'], ['iris', 'Iris', 'A circle opens from the centre'],
+         ['blinds', 'Blinds', 'Venetian blinds: slats open onto the new scene (Direction; Options: how many)'], ['checker', 'Checker', 'A checkerboard: half the cells open, then the rest, sweeping across (Direction; Options: squares or diamonds; Cells)'],
+         ['peel', 'Peel', 'The old scene peels off like a page, its back showing as it lifts (Direction)']],   // (Slide's Push and Bands joined Wipe in 0.84)
   dissolve: [['blocks', 'Blocks', 'Blocks of the new scene appear in random order (Pixel = block size)'], ['pixelate', 'Pixelate', 'The old scene breaks into blocks, the new one resolves out of them (Pixel = biggest block)'],
-             ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)']],
+             ['melt', 'Melt', 'The old scene drips down in columns, as in Doom (Pixel = column width)'], ['shatter', 'Shatter', 'The old scene breaks into shards that fall away (Pieces)']],
   glitch: [['slices', 'Slices', 'Torn horizontal slices from both scenes, settling on the new one (Pixel = slice height)'], ['blocks', 'Blocks', 'Shuffled, displaced blocks of both scenes, settling on the new one (Pixel = block size)'],
            ['corrupt', 'Corrupt', 'Datamosh, like Glitch › Corrupt: the old picture keeps getting pushed along by repeated motion, runs of blocks streaming and swelling, a few breaking into flat wrong colours; the new scene arrives in runs, then a clean keyframe (Pixel = block size)']],
   tv: [['vhs', 'VHS', 'A tape switching channels: the picture tears up and dissolves into snow, the new scene comes out of it'],
@@ -122,6 +124,7 @@ const TR_DRAW = {
   },
   wipe(m, A, B, e, T, dx, dy){ // an edge sweeps across (or a circle opens), revealing the new scene; Push and Bands move the pictures
     const wst = trStyleOf(T); if (wst === 'push' || wst === 'bands') return TR_DRAW.slide(m, A, B, e, T, dx, dy);
+    if (wst === 'blinds' || wst === 'checker' || wst === 'peel') return TR_DRAW[wst](m, A, B, e, T, dx, dy);
     m.drawImage(A, 0, 0);
     const iris = trStyleOf(T) === 'iris', [cx, cy] = iris && T.from === 'gif' && trans && trans.ctr ? [trans.ctr[0] * W, trans.ctr[1] * H] : [W / 2, H / 2];
     if (T.soft){                                     // Options › Soft: a feathered edge (the new scene through a gradient mask)
@@ -137,6 +140,41 @@ const TR_DRAW = {
     if (iris) m.arc(cx, cy, e * Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)), 0, Math.PI * 2);
     else if (dx) m.rect(dx < 0 ? W * (1 - e) : 0, 0, W * e, H); else m.rect(0, dy < 0 ? H * (1 - e) : 0, W, H * e);
     m.clip(); m.drawImage(B, 0, 0); m.restore();
+  },
+  blinds(m, A, B, e, T, dx, dy){ // 0.99.32: slats across the direction, each opening towards it, a little after the one before
+    const n = +(T.slats || 10), L = dx ? W : H, sw = L / n, sm = n > 1 ? 0.3 / (n - 1) : 0, back = dx < 0 || dy < 0;
+    m.drawImage(A, 0, 0); m.save(); m.beginPath();
+    for (let i = 0; i < n; i++){ const j = back ? n - 1 - i : i, q = clamp((e - i * sm) / 0.7, 0, 1); if (q <= 0) continue;
+      const a = Math.floor(j * sw), b = Math.ceil((j + 1) * sw), w = (b - a) * q, o = back ? b - w : a;   // (each slat opens from its edge that leads)
+      if (dx) m.rect(o, 0, w, H); else m.rect(0, o, W, w); }
+    m.clip(); m.drawImage(B, 0, 0); m.restore();
+  },
+  checker(m, A, B, e, T, dx, dy){ // 0.99.32: cells on a grid; the sweep crosses the frame (Direction), one half of the checkerboard first. Diamonds: each cell a diamond growing from its centre
+    const rows = +(T.cells || 6), cols = Math.max(1, Math.round(rows * W / H)), cw = W / cols, ch = H / rows, dia = T.shape === 'dia';
+    m.drawImage(A, 0, 0); m.save(); m.beginPath();
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){
+      const u = dx ? (dx > 0 ? c / Math.max(1, cols - 1) : 1 - c / Math.max(1, cols - 1)) : (dy > 0 ? r / Math.max(1, rows - 1) : 1 - r / Math.max(1, rows - 1));
+      const d = dia ? 0.5 * u : 0.25 * u + 0.25 * ((r + c) % 2), q = clamp((e - d) / 0.5, 0, 1); if (q <= 0) continue;
+      const x = c * cw, y = r * ch;
+      if (dia){ const cx = x + cw / 2, cy = y + ch / 2, k = q * 1.001; m.moveTo(cx, cy - ch * k); m.lineTo(cx + cw * k, cy); m.lineTo(cx, cy + ch * k); m.lineTo(cx - cw * k, cy); m.closePath(); }   // (fully grown: its points reach the next cells' centres, so the frame is covered)
+      else if (dx) m.rect(dx > 0 ? x : x + cw * (1 - q), y, Math.ceil(cw * q), Math.ceil(ch)); else m.rect(x, dy > 0 ? y : y + ch * (1 - q), Math.ceil(cw), Math.ceil(ch * q)); }
+    m.clip(); m.drawImage(B, 0, 0); m.restore();
+  },
+  peel(m, A, B, e, T, dx, dy){ // 0.99.32: the old scene peels off like a page, from the edge Direction points away from, slightly across a corner; the lifted part folds over, its back (the picture mirrored, pale) on top
+    const ux = dx - 0.3 * dy, uy = dy + 0.3 * dx, l = Math.hypot(ux, uy), nx = -ux / l, ny = -uy / l;   // n: towards the edge that lifts first
+    const pr = [[0, 0], [W, 0], [0, H], [W, H]].map(([x, y]) => x * nx + y * ny), s0 = Math.min(...pr), s1 = Math.max(...pr), s = s1 - (s1 - s0) * e;   // the fold, from the far edge across the frame
+    const half = (sgn, ext) => { const R = Math.hypot(W, H) * 2, px = nx * s, py = ny * s, tx = -ny, ty = nx;   // the half-plane x·n < s (sgn -1) or > s (sgn 1), as a big quad
+      m.moveTo(px + tx * R, py + ty * R); m.lineTo(px - tx * R, py - ty * R); m.lineTo(px - tx * R + nx * R * sgn, py - ty * R + ny * R * sgn); m.lineTo(px + tx * R + nx * R * sgn, py + ty * R + ny * R * sgn); m.closePath(); };
+    m.drawImage(B, 0, 0);
+    const sh = Math.max(W, H) * 0.05;                // the page's shadow on the new scene, along the fold
+    m.save(); m.beginPath(); half(1); m.clip(); let g = m.createLinearGradient(nx * s, ny * s, nx * (s + sh), ny * (s + sh)); g.addColorStop(0, 'rgba(0,0,0,0.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); m.fillStyle = g; m.fillRect(0, 0, W, H); m.restore();
+    m.save(); m.beginPath(); half(-1); m.clip(); m.drawImage(A, 0, 0); m.restore();   // what's still down
+    m.save(); m.beginPath(); half(-1); m.clip();     // the flap: the lifted part mirrored over the fold
+    m.setTransform(1 - 2 * nx * nx, -2 * nx * ny, -2 * nx * ny, 1 - 2 * ny * ny, 2 * s * nx, 2 * s * ny); m.beginPath(); m.rect(0, 0, W, H); m.clip();
+    m.drawImage(A, 0, 0); m.setTransform(1, 0, 0, 1, 0, 0);
+    const fw = Math.max(1, (s1 - s0) * Math.min(e, 1 - e) * 1.2); g = m.createLinearGradient(nx * s, ny * s, nx * (s - fw), ny * (s - fw));   // the back: pale, brightest where it curls at the fold
+    g.addColorStop(0, 'rgba(255,255,255,0.78)'); g.addColorStop(0.35, 'rgba(240,240,240,0.62)'); g.addColorStop(1, 'rgba(200,200,200,0.7)'); m.fillStyle = g; m.fillRect(0, 0, W, H);
+    m.restore();
   },
   stutter(m, A, B, e, T, dx, dy){ // hard cuts between the two scenes on the beat grid, ending on the new one
     const L = trans ? trans.len : 4, t = e * L, ramp = trStyleOf(T) !== 'even';
@@ -163,6 +201,7 @@ const TR_DRAW = {
   },
   dissolve(m, A, B, e, T, dx, dy){ // blocks of the new scene appear in random order
     if (trStyleOf(T) === 'melt') return TR_DRAW.glitch(m, A, B, e, T, dx, dy);   // (Melt is drawn with the glitch family's code)
+    if (trStyleOf(T) === 'shatter') return TR_DRAW.shatter(m, A, B, e, T, dx, dy);
     if (trStyleOf(T) === 'pixelate'){              // the old scene breaks into ever bigger blocks, the new one resolves out of them
       const big = Math.max(2, T.px || 48), k = e < 0.5 ? e * 2 : (1 - e) * 2, bs = Math.max(1, Math.round(1 + (big - 1) * k * k));
       const w = Math.ceil(W / bs), h = Math.ceil(H / bs);
@@ -315,6 +354,31 @@ const TR_DRAW = {
     trSplit(m, T, tear);
   },
   tv(m, A, B, e, T, dx, dy){ return TR_DRAW.glitch(m, A, B, e, T, dx, dy); },   // VHS, Channel (drawn with the glitch family's code)
+  shatter(m, A, B, e, T, dx, dy){ // 0.99.32: the old scene cracks into triangles from a point of impact; they burst out, turn and fall, the nearest first
+    const cols = +(T.shards || 10), rows = Math.max(1, Math.round(cols * H / W)), key = cols + 'x' + rows + '@' + W;
+    const sd = trans ? (trans.seed ?? (trans.seed = Math.random() * 1000)) : 0, rn = k => fxRand(sd + k * 1.37);
+    let S = trans && trans.shards && trans.shards.key === key ? trans.shards : null;
+    if (!S){ const ix = W * (0.35 + 0.3 * rn(1)), iy = H * (0.35 + 0.3 * rn(2)), P = [];   // the crack pattern, once per transition: a jittered grid, each cell cut on a random diagonal
+      for (let r = 0; r <= rows; r++) for (let c = 0; c <= cols; c++){ const ed = r === 0 || r === rows || c === 0 || c === cols, k = r * 97 + c;
+        P.push([c * W / cols + (ed && (c === 0 || c === cols) ? 0 : (rn(k + 3) - 0.5) * 0.7 * W / cols), r * H / rows + (ed && (r === 0 || r === rows) ? 0 : (rn(k + 5) - 0.5) * 0.7 * H / rows)]); }
+      const at = (r, c) => P[r * (cols + 1) + c], tri = [], D = Math.hypot(W, H);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){ const a = at(r, c), b = at(r, c + 1), d = at(r + 1, c), f = at(r + 1, c + 1);
+        for (const t of rn(r * 31 + c + 7) < 0.5 ? [[a, b, f], [a, f, d]] : [[a, b, d], [b, f, d]]){ const cx = (t[0][0] + t[1][0] + t[2][0]) / 3, cy = (t[0][1] + t[1][1] + t[2][1]) / 3, k = tri.length;
+          const vx = cx - ix, vy = cy - iy, dl = Math.hypot(vx, vy) || 1;
+          tri.push({ t, cx, cy, d0: 0.45 * dl / D + 0.08 * rn(k + 11), vx: vx / dl * (0.15 + 0.25 * rn(k + 13)) * W, vy: (vy / dl * 0.15 - 0.2 * rn(k + 17)) * H, rot: (rn(k + 19) - 0.5) * 5,
+            x0: Math.floor(Math.min(t[0][0], t[1][0], t[2][0])), y0: Math.floor(Math.min(t[0][1], t[1][1], t[2][1])), x1: Math.ceil(Math.max(t[0][0], t[1][0], t[2][0])), y1: Math.ceil(Math.max(t[0][1], t[1][1], t[2][1])) }); } }
+      S = { key, tri }; if (trans) trans.shards = S; }
+    m.drawImage(B, 0, 0);
+    for (const s of S.tri){ const q = clamp((e - s.d0) / (1 - s.d0), 0, 1);
+      if (q >= 1) continue;
+      m.save(); m.translate(s.cx + s.vx * q, s.cy + s.vy * q + 1.6 * H * q * q); m.rotate(s.rot * q); m.scale(1 - 0.3 * q, 1 - 0.3 * q); m.translate(-s.cx, -s.cy);
+      m.beginPath(); m.moveTo(...s.t[0]); m.lineTo(...s.t[1]); m.lineTo(...s.t[2]); m.closePath(); m.clip();
+      m.globalAlpha = q > 0.75 ? (1 - q) / 0.25 : 1; const w = Math.max(1, Math.min(W, s.x1) - Math.max(0, s.x0)), h = Math.max(1, Math.min(H, s.y1) - Math.max(0, s.y0)), x = Math.max(0, s.x0), y = Math.max(0, s.y0);
+      m.drawImage(A, x, y, w, h, x, y, w, h);
+      if (q > 0){ m.globalAlpha *= Math.min(1, q * 6) * 0.25; m.fillStyle = '#fff'; m.fillRect(x, y, w, h); }   // (a loose shard catches the light)
+      m.restore(); }
+    m.globalAlpha = 1;
+  },
   cut(m, A, B, e, T, dx, dy){ m.drawImage(B, 0, 0);
   },
 };

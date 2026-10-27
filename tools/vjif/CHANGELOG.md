@@ -4,6 +4,13 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.32 — 2026/10/27
+
+- New effect styles, from shaders.com's list, in our own GLSL (ID-254): Glitch › Sort (pixel sorting: each column cut in runs, put in order of brightness; Size = the longest run), CRT › Film (grain, gate flicker, a drifting light leak, vignette, the odd scratch; stacks with the other CRT styles), Zoom › Bulge and Pinch (a lens in the middle), Strobe › Rays (light streams out from the bright parts, a burst each Rate).
+- New transitions (ID-254): Wipe › Blinds (Direction, Slats), Wipe › Checker (half the board, then the rest; or diamonds; Direction, Cells), Wipe › Peel (the old scene lifts off like a page, Direction), Dissolve › Shatter (the old scene breaks into shards that fall away; Pieces).
+- Transition › Style is two rows of four, so it keeps its height whatever the type.
+- Layer chips: a dark GIF on a see-through background gets a grey line around its subject's own shape (the bat's outline), not only around the chip (TW-034).
+
 ## 0.99.31 — 2026/10/27
 
 - Fit range (Colour › Palette and GIF › Display › Palette): stretches the picture's brightness to the palette's own darkest..lightest colour (the Game Boys' greens, not black..white), on brightness only, so colours don't get over-saturated on the way. The effect's version now follows the widest range of the last few seconds and moves slowly: a moving GIF no longer makes the colours wander (BG-046).

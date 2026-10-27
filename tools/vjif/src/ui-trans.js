@@ -5,7 +5,7 @@ function syncTransUI(){
   $('#trPre').innerHTML = trPresets.map((P, k) => `<button data-v="${k}" class="${k === trSel ? 'on' : ''}" title="Key ${k + 1}: ${trLabel(P)}${P.type === 'cut' ? '' : ' · ' + TR_LENS[optIdx(TR_LENS, P.len)][1]}">${k + 1}</button>`).join('');
   segSet('#trType', T.type); segSet('#trCurve', T.smooth ? 1 : 0);
   const sts = TR_STYLES[T.type] || [], stl = trStyleOf(T);
-  $('#trStyle').innerHTML = sts.length ? sts.map(x => `<button data-v="${x[0]}" class="${x[0] === stl ? 'on' : ''}" title="${x[2]}">${x[1]}</button>`).join('') : '<button disabled>—</button>';
+  $('#trStyle').innerHTML = (sts.length ? sts.map(x => `<button data-v="${x[0]}" class="${x[0] === stl ? 'on' : ''}" title="${x[2]}">${x[1]}</button>`).join('') : '<button disabled>—</button>') + '<span></span>'.repeat(Math.max(0, 8 - Math.max(1, sts.length)));   // (empty cells: always two rows)
   $('#trStyleRow').classList.toggle('dimmed', !sts.length);
   const A = trAmtOf(T), AL = A ? A.list : TR_PX, pi = optIdx(AL, A ? T[A.k] ?? A.def : 12), sl = $('#trPx');   // the slider row: block size, Hold or Repeats
   sl.max = AL.length - 1; sl.value = pi; sl.dataset.def = optIdx(AL, A ? A.def : 12); sl.nextElementSibling.textContent = AL[pi][1];
@@ -64,7 +64,7 @@ const TR_DIR = ['dir', [['left', '←', 'Towards the left'], ['right', '→', 'T
 const TR_SOFT = ['soft', [0, 'Soft', 'A soft, feathered edge'], true];
 function trOptsOf(T){ const st = trStyleOf(T);
   switch (T.type){
-    case 'wipe': return st === 'bands' ? [['bands', [['4', '4', '4 bands'], ['6', '6', '6 bands'], ['8', '8', '8 bands'], ['12', '12', '12 bands']]]] : st === 'push' ? [TR_DIR] : st === 'iris' ? [['from', [['mid', 'Middle', 'Opens from the middle of the frame'], ['gif', 'GIF', "Opens from the selected GIF's centre (in the new scene)"]]], TR_SOFT] : [TR_DIR, TR_SOFT];
+    case 'wipe': return st === 'bands' ? [['bands', [['4', '4', '4 bands'], ['6', '6', '6 bands'], ['8', '8', '8 bands'], ['12', '12', '12 bands']]]] : st === 'push' || st === 'peel' || st === 'blinds' ? [TR_DIR] : st === 'checker' ? [TR_DIR, ['shape', [['sq', '■', 'Squares: half the board first, then the rest'], ['dia', '◆', 'Diamonds growing from each cell\'s centre']]]] : st === 'iris' ? [['from', [['mid', 'Middle', 'Opens from the middle of the frame'], ['gif', 'GIF', "Opens from the selected GIF's centre (in the new scene)"]]], TR_SOFT] : [TR_DIR, TR_SOFT];
     case 'fade': return st === 'luma' ? [['inv', [['bright', 'Bright', 'The brightest parts change first'], ['dark', 'Dark', 'The darkest parts change first']]], TR_SOFT] : [];
     case 'zoom': return [['zoom', [['in', 'In', 'The old scene grows and fades, the new one grows in'], ['out', 'Out', 'The old scene backs away, the new one comes down from close up'], ['thru', 'Through', 'The old scene flies past the camera']]]];
     case 'dissolve': return st === 'blocks' ? [['shape', [['sq', 'Squares', 'Square blocks'], ['lines', 'Lines', 'Whole lines (Pixel = their height)'], ['dia', 'Diamonds', 'Diamond-shaped blocks']]]] : [];
@@ -85,8 +85,12 @@ const TR_HOLD = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7].map(v => [v, Math.round(v
 const TR_REPS = [2, 3, 4, 5, 6, 8, 10, 12, 16].map(v => [v, String(v)]);
 const TR_INTEN = Array.from({ length: 10 }, (_, i) => [(i + 1) / 10, (i + 1) * 10 + '%']);   // Stutter › Ramp › Intensity
 const TR_STAG = [0, 0.25, 0.5, 0.75, 1].map(v => [v, Math.round(v * 100) + '%']);   // Wipe › Bands: how unevenly the bands come in
+const TR_SHARDS = [4, 6, 8, 10, 14, 20, 28].map(v => [v, String(v)]), TR_CELLS = [2, 3, 4, 6, 8, 12, 16].map(v => [v, String(v)]), TR_SLATS = [4, 6, 8, 10, 14, 20, 28].map(v => [v, String(v)]);   // Dissolve › Shatter, Wipe › Checker (0.99.32)
 const TR_OSD = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.6, 2, 3].map(v => [v, v ? v + ' s' : 'off']);   // TV › Channel: how long the number stays after the picture is back
 function trAmtOf(T){ const st = trStyleOf(T);
+  if (T.type === 'dissolve' && st === 'shatter') return { k: 'shards', list: TR_SHARDS, def: 10, lab: 'Pieces', tip: 'Pieces: how many shards across the frame' };
+  if (T.type === 'wipe' && st === 'blinds') return { k: 'slats', list: TR_SLATS, def: 10, lab: 'Slats', tip: 'Slats: how many blinds across the frame' };
+  if (T.type === 'wipe' && st === 'checker') return { k: 'cells', list: TR_CELLS, def: 6, lab: 'Cells', tip: 'Cells: how many rows of cells' };
   if (T.type === 'dissolve' || T.type === 'glitch') return { k: 'px', list: TR_PX, def: 12, lab: 'Pixel', tip: 'Block size (Dissolve, Glitch), column width (Dissolve › Melt), biggest block (Pixelate)' };
   if (T.type === 'fade' && (st === 'dip' || st === 'flash')) return { k: 'hold', list: TR_HOLD, def: 0, lab: 'Hold', tip: 'How much of the length stays all black (Dip) or white (Flash)' };
   if (T.type === 'wipe' && st === 'bands') return { k: 'stag', list: TR_STAG, def: 0, lab: 'Stagger', tip: 'Stagger: 0 = the bands come in one after another, evenly; higher: each its own start, speed and ease (still all in by the end)' };

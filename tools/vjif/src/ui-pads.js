@@ -163,7 +163,13 @@ function gifThumb(g, f = fxImage(g, g.startF)){
   tx.imageSmoothingEnabled = !g.crisp; tx.drawImage(f, (t.width - f.width*k)/2, (t.height - f.height*k)/2, f.width*k, f.height*k);
   { const d = tx.getImageData(0, 0, t.width, t.height).data, W = t.width, H = t.height; let s = 0, e = 0, ne = 0;   // dark: its edge (what meets the dark card) or the whole of it (0.99.5: the edge counts, a black GIF with a bright middle had no outline)
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const i = (y * W + x) * 4, v = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) * d[i + 3] / 255; s += v; if (x < 3 || y < 3 || x >= W - 3 || y >= H - 3){ e += v; ne++; } }
-    g.thumbDark = s / (W * H) < 32 || e / ne < 40; }
+    g.thumbDark = s / (W * H) < 32 || e / ne < 40;
+    let see = 0; for (let i = 3; i < d.length; i += 4) if (d[i] < 128) see++;
+    if (g.thumbDark && see > W * H * 0.05){   // a dark subject on a see-through background (0.99.32, TW-034): a grey line around the subject's own shape, so it shows on the dark chip
+      const [o, ox] = cpuCanvas(W, H), [r, rx] = cpuCanvas(W, H);
+      ox.drawImage(t, 0, 0); ox.globalCompositeOperation = 'source-in'; ox.fillStyle = '#8a8a8a'; ox.fillRect(0, 0, W, H);   // its silhouette in grey
+      for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) rx.drawImage(o, dx, dy);   // grown by 1 px all round
+      rx.drawImage(t, 0, 0); tx.clearRect(0, 0, W, H); tx.drawImage(r, 0, 0); g.thumbLine = true; } }
   return g.thumb = t.toDataURL();
 }
 function renderPad(i){

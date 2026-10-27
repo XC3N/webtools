@@ -460,3 +460,6 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts301} **GIF-level preview** (0.99.30) — effects editor on GIF, a GIF selected, an effect off: hold its Amount slider: only that GIF shows the effect, the rest of the output doesn't change; let go: it's off again.
 - [ ] {ts302} **Fit range, palette's own range** (0.99.31) — Colour › Palette › GB with Fit range: all four greens in use, no harsh jump to the ends; CGA keeps its cyan / magenta better; a scene with a moving GIF: the colours hold steady (no cycling).
 - [ ] {ts303} **Floor shadow Cut** (0.99.31) — Shadow › Floor on, raise Cut: the far end of the shadow goes; Soft fades the edge; with Turn on too.
+- [ ] {ts304} **New effect styles** (0.99.32) — Glitch › Sort, CRT › Film, Zoom › Bulge / Pinch, Strobe › Rays on a real set: each reads well and keeps the frame rate (Sort and Rays are the heavy ones); also at GIF level.
+- [ ] {ts305} **New transitions** (0.99.32) — Wipe › Blinds, Checker (■ and ◆), Peel in each direction, Dissolve › Shatter at a few Pieces: each starts on the old scene and lands on the new one, no flicker at the ends.
+- [ ] {ts306} **Subject outline on dark chips** (0.99.32) — load the bat (or any dark GIF on a see-through background): its layer chip shows the bat's shape with a grey line around it; a colourful GIF doesn't get one.
