@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.33';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.34';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -115,9 +115,29 @@ function fitY(R, G, B, lo, hi, ylo, yhi){ const y = 0.299 * R + 0.587 * G + 0.11
   let k = y2 / y, r = R * k, g = G * k, b = B * k; const m = Math.max(r, g, b);   // (0.99.33: scaled, so hue and saturation stay; it used to blend towards white when brightening, and EGA lost its colours)
   if (m > 1){ const s = (1 - y2) / Math.max(1e-6, m - y2); r = y2 + (r - y2) * s; g = y2 + (g - y2) * s; b = y2 + (b - y2) * s; }   // past white: only as much saturation given up as needed to fit, the brightness kept
   return [r, g, b]; }
+// Fit range on a colour palette (0.99.34, BG-069, picked from comparison sheets on FYR's scenes): each channel stretched over the same
+// lo..hi (the picture's own range onto the palette's), the colour's own hue kept, then vibrance: muted colours gain colour (up to × 2.5 for greys), strong ones
+// barely move, so dull tones go to a palette colour instead of a grey without pushing a magenta sky to red. The Game Boys and greys
+// (lum) keep the brightness-only stretch (fitY). With Fit range on, a colour palette also matches by hue first (palPick).
+function fitCol(R, G, B, lo, hi, ylo, yhi, lum){
+  if (lum) return fitY(R, G, B, lo, hi, ylo, yhi);
+  const st = v => ylo + (yhi - ylo) * Math.min(1, Math.max(0, (v - lo) / (hi - lo))), Y = c => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+  const s = [st(R), st(G), st(B)], y = Y(s), y0 = Y([R, G, B]); let d = s.map(v => v - y); const d0 = [R - y0, G - y0, B - y0], C = Math.hypot(...d), C0 = Math.hypot(...d0);
+  if (C0 > 1e-4) d = d0.map(v => v / C0 * C);   // the colour's own hue (the stretch alone turned a pink sky towards red)
+  const k = 1 + 1.5 * Math.pow(Math.min(1, Math.max(0, 1 - C / 0.6)), 1.5); d = d.map(v => v * k);   // vibrance: muted colours gain the most
+  let q = 1; for (let i = 0; i < 3; i++){ if (d[i] > 1e-6) q = Math.min(q, (1 - y) / d[i]); else if (d[i] < -1e-6) q = Math.min(q, -y / d[i]); }   // past the screen's colours: towards the grey of the same brightness, just enough to fit
+  q = Math.max(0, q); return d.map(v => Math.min(1, Math.max(0, y + v * q))); }
 const PALSNAP_GLSL = `vec3 fitY(vec3 c, float lo, float hi, float ylo, float yhi){ float y = dot(c, vec3(0.299, 0.587, 0.114)), y2 = mix(ylo, yhi, clamp((y - lo) / (hi - lo), 0.0, 1.0));
   if (y < 0.001) return vec3(y2); c *= y2 / y; float m = max(c.r, max(c.g, c.b));
   if (m > 1.0) c = y2 + (c - y2) * ((1.0 - y2) / max(1e-6, m - y2)); return c; }
+vec2 fitHue; float fitOn;   // the colour's own hue (OKLab) before Fit range: palPick matches with it (RGB alone turned a pink sky red)
+vec3 fitCol(vec3 c, float lo, float hi, float ylo, float yhi, float lum){   // (plain RGB maths: an OKLab version made every effect frame half as slow again in software rendering, even unused)
+  fitOn = 0.0; if (lum > 0.5) return fitY(c, lo, hi, ylo, yhi);
+  vec2 h0 = okLab(c).yz; float hl = length(h0); if (hl > 1e-4){ fitHue = h0 / hl; fitOn = 1.0; }
+  vec3 Y3 = vec3(0.299, 0.587, 0.114), s = mix(vec3(ylo), vec3(yhi), clamp((c - lo) / (hi - lo), 0.0, 1.0)); float y = dot(s, Y3); vec3 d = s - y, d0 = c - dot(c, Y3); float C = length(d), C0 = length(d0);
+  if (C0 > 1e-4) d = d0 / C0 * C; d *= 1.0 + 1.5 * pow(clamp(1.0 - C / 0.6, 0.0, 1.0), 1.5);
+  vec3 up = mix(vec3(1e3), (1.0 - y) / max(d, 1e-6), step(1e-6, d)), dn = mix(vec3(1e3), -y / min(d, -1e-6), step(d, vec3(-1e-6)));
+  return clamp(y + d * clamp(min(min(min(up.r, up.g), up.b), min(min(dn.r, dn.g), dn.b)), 0.0, 1.0), 0.0, 1.0); }
 vec3 palLin(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
   float palB2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
   float palB4(vec2 a){ return palB2(0.5 * a) * 0.25 + palB2(a); }
@@ -128,7 +148,9 @@ vec3 palLin(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c / 12.92, pow((c + 0.05
       float y = clamp(dot(c, vec3(0.299, 0.587, 0.114)), 0.0, 0.9999) * palN, n = floor(y), n2 = clamp(y - n < 0.5 ? n - 1.0 : n + 1.0, 0.0, palN - 1.0);
       for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; if (float(i) == n) best = pal[i]; if (float(i) == n2) sec = pal[i]; }
     } else {
-      for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 e3 = k - palOk[i], w3 = (c - pal[i]) * W; float e = sqrt(dot(e3, e3)) / 0.35 + sqrt(dot(w3, w3)) / 0.6; if (e < bd){ bd = e; best = pal[i]; bk = palOk[i]; } }
+      float hf = palHi > palLo ? 2.0 : 1.0;   // Fit range on: hue first (the colour difference counts double)
+      if (hf > 1.5 && fitOn > 0.5) k.yz = fitHue * length(k.yz);   // …with the colour's hue from before the stretch
+      for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 e3 = k - palOk[i]; e3.yz *= hf; vec3 w3 = (c - pal[i]) * W; float e = sqrt(dot(e3, e3)) / 0.35 + sqrt(dot(w3, w3)) / 0.6; if (e < bd){ bd = e; best = pal[i]; bk = palOk[i]; } }
       sec = best;
       if (d > 0.001 && palN > 1.5){ float br = 1e9; vec3 kb = k - bk;
         for (int i = 0; i < 64; i++){ if (float(i) >= palN) break; vec3 ab = palOk[i] - bk; float L = dot(ab, ab); if (L < 1e-8) continue;

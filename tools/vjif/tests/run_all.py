@@ -21,7 +21,7 @@ bad = []
 for t in TESTS:
     if only and t not in only: continue
     t0 = time.time()
-    r = subprocess.run([sys.executable, str(HERE / (t + '.py'))], cwd=HERE, capture_output=True, text=True, timeout=1800, env={**os.environ, **({'VJIF_COV': cf} if measure else {})})   # (golden takes ~15 min on a software GPU)
+    r = subprocess.run([sys.executable, str(HERE / (t + '.py'))], cwd=HERE, capture_output=True, text=True, timeout=3600, env={**os.environ, **({'VJIF_COV': cf} if measure else {})})   # (golden takes 15–40 min on a software GPU, depending on the machine)
     out = '\n'.join(l for l in (r.stdout + r.stderr).splitlines() if 'agent-proxy' not in l and 'googleapis' not in l)
     ok = r.returncode == 0 and 'Traceback' not in out
     print(f"{'ok  ' if ok else 'FAIL'} {t} ({time.time() - t0:.0f} s)")

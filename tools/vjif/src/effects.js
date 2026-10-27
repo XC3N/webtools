@@ -488,7 +488,7 @@ ${FX_GLSL}
       float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
       float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
       ${PALSNAP_GLSL}
-      vec3 palSnap(vec3 c){ if (palHi > palLo) c = fitY(c, palLo, palHi, palYlo, palYhi); return palPick(c, palD, palP, floor(gl_FragCoord.xy / (abs(palDot) > 0.5 ? abs(palDot) : max(1.0, floor(res.y / 360.0))))); }   // dither cells: chunky dots at any output size (the Game Boy's LCD: one cell per screen pixel)
+      vec3 palSnap(vec3 c){ if (palHi > palLo) c = fitCol(c, palLo, palHi, palYlo, palYhi, palLum); return palPick(c, palD, palP, floor(gl_FragCoord.xy / (abs(palDot) > 0.5 ? abs(palDot) : max(1.0, floor(res.y / 360.0))))); }   // dither cells: chunky dots at any output size (the Game Boy's LCD: one cell per screen pixel)
       vec3 hueRot(vec3 c, float an){                 // rotate the hue in YIQ space
         vec3 y = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312) * c;
         float cs = cos(an), sn = sin(an); y.yz = vec2(y.y * cs - y.z * sn, y.y * sn + y.z * cs);

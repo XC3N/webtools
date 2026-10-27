@@ -34,7 +34,7 @@ const fxGL = (() => {
           vec3 r = h < 60.0 ? vec3(C, X, 0.0) : h < 120.0 ? vec3(X, C, 0.0) : h < 180.0 ? vec3(0.0, C, X) : h < 240.0 ? vec3(0.0, X, C) : h < 300.0 ? vec3(X, 0.0, C) : vec3(C, 0.0, X);
           o = floor((r + m) * 255.0 + 0.5) / 255.0;
         }
-        if (palN > 0.5){ if (palHi > palLo) o = fitY(o, palLo, palHi, palYlo, palYhi); o = palPick(o, palD, palP, floor(gl_FragCoord.xy)); }   // palette: the nearest of its colours; Dither: Bayer, on the GIF's own pixels (PALSNAP_GLSL)
+        if (palN > 0.5){ if (palHi > palLo) o = fitCol(o, palLo, palHi, palYlo, palYhi, palLum); o = palPick(o, palD, palP, floor(gl_FragCoord.xy)); }   // palette: the nearest of its colours; Dither: Bayer, on the GIF's own pixels (PALSNAP_GLSL)
         float a = px.a * f;
         gl_FragColor = vec4(o * a, a);
       }`));
@@ -140,9 +140,10 @@ function fxColor(c, p){
   if (p.sw) for (const x of p.sw){ const t = x[6] || 1.5; if (Math.abs(r - x[0]) < t && Math.abs(gr - x[1]) < t && Math.abs(b - x[2]) < t){ sr = x[3]; sg = x[4]; sb = x[5]; rgb = sr | (sg << 8) | (sb << 16); if (x[7]) f = 0; break; } }
   if (p.doHsv){ const o = hsvShift(sr, sg, sb, p.H, p.S, p.V); rgb = ((o & 255) << 16) | (o & 0xff00) | (o >> 16); }   // RRGGBB → BBGGRR
   if (p.palN){ let R = (rgb & 255) / 255, G = ((rgb >> 8) & 255) / 255, B = ((rgb >> 16) & 255) / 255, bd = 1e9, bi = 0;
-    if (p.palHi > p.palLo) [R, G, B] = fitY(R, G, B, p.palLo, p.palHi, p.palYlo || 0, p.palYhi ?? 1);   // Fit range: the GIF's own darkest..brightest stretched over the palette's   // palette: the nearest colour (no dither on this path)
-    const K = okLab([R, G, B]);   // nearest as the shaders: OKLab distance + eye-weighted RGB distance (0.99.5)
-    for (let i = 0; i < p.palN; i++){ const dl = K[0] - p.palOk[i * 3], da = K[1] - p.palOk[i * 3 + 1], db = K[2] - p.palOk[i * 3 + 2], wr = (R - p.palF[i * 3]) * 0.55, wg = (G - p.palF[i * 3 + 1]) * 0.75, wb = (B - p.palF[i * 3 + 2]) * 0.55, e = Math.sqrt(dl * dl + da * da + db * db) / 0.35 + Math.sqrt(wr * wr + wg * wg + wb * wb) / 0.6; if (e < bd){ bd = e; bi = i; } }
+    const O = [R, G, B]; if (p.palHi > p.palLo) [R, G, B] = fitCol(R, G, B, p.palLo, p.palHi, p.palYlo || 0, p.palYhi ?? 1, p.palLum);   // Fit range: the GIF's own darkest..brightest stretched over the palette's   // palette: the nearest colour (no dither on this path)
+    const K = okLab([R, G, B]);   // nearest as the shaders
+    if (p.palHi > p.palLo && !p.palLum){ const h = okLab(O), hl = Math.hypot(h[1], h[2]), kl = Math.hypot(K[1], K[2]); if (hl > 1e-4){ K[1] = h[1] / hl * kl; K[2] = h[2] / hl * kl; } }   // the hue from before Fit range (as the shaders): OKLab distance + eye-weighted RGB distance (0.99.5)
+    for (let i = 0; i < p.palN; i++){ const dl = K[0] - p.palOk[i * 3], da = K[1] - p.palOk[i * 3 + 1], db = K[2] - p.palOk[i * 3 + 2], hf = p.palHi > p.palLo ? 2 : 1, wr = (R - p.palF[i * 3]) * 0.55, wg = (G - p.palF[i * 3 + 1]) * 0.75, wb = (B - p.palF[i * 3 + 2]) * 0.55, e = Math.sqrt(dl * dl + (da * da + db * db) * hf * hf) / 0.35 + Math.sqrt(wr * wr + wg * wg + wb * wb) / 0.6; if (e < bd){ bd = e; bi = i; } }
     if (p.palLum) bi = Math.min(p.palN - 1, Math.floor((0.299 * R + 0.587 * G + 0.114 * B) * p.palN));   // the Game Boys: by brightness (as the shader)
     rgb = Math.round(p.palF[bi * 3] * 255) | (Math.round(p.palF[bi * 3 + 1] * 255) << 8) | (Math.round(p.palF[bi * 3 + 2] * 255) << 16); }
   return f * 16777216 + rgb;
@@ -202,7 +203,7 @@ function gifRange(g){
   return m.fitRange = [lo / 255, hi / 255];
 }
 // The worker gets the same functions as source text, so both paths run identical code.
-const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels, okLab, fitY].map(f => f.toString()).join('\n') + `
+const FX_WORKER_SRC = 'const mod = ' + mod.toString() + '\n' + [hsvShift, fxColor, keyMask, fxPixels, okLab, fitY, fitCol].map(f => f.toString()).join('\n') + `
 const latest = new Map(), pause = () => new Promise(r => setTimeout(r, 0));
 // The worker decodes its own copy from the original file, so the main thread never copies frames across.
 onmessage = async e => {
