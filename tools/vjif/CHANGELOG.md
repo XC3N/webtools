@@ -4,6 +4,10 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.33 — 2026/10/27
+
+- Fit range keeps the colours again: brightening a dark picture scales its colour (hue and saturation kept) instead of mixing in white, which washed it out and left EGA (and the other colour palettes) with mostly greys and pale colours. Only a colour that would go past white gives up some saturation (BG-069).
+
 ## 0.99.32 — 2026/10/27
 
 - New effect styles, from shaders.com's list, in our own GLSL (ID-254): Glitch › Sort (pixel sorting: each column cut in runs, put in order of brightness; Size = the longest run), CRT › Film (grain, gate flicker, a drifting light leak, vignette, the odd scratch; stacks with the other CRT styles), Zoom › Bulge and Pinch (a lens in the middle), Strobe › Rays (light streams out from the bright parts, a burst each Rate).

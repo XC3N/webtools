@@ -463,3 +463,4 @@ release. Want to help test? Pick an unticked line and open an issue with what yo
 - [ ] {ts304} **New effect styles** (0.99.32) — Glitch › Sort, CRT › Film, Zoom › Bulge / Pinch, Strobe › Rays on a real set: each reads well and keeps the frame rate (Sort and Rays are the heavy ones); also at GIF level.
 - [ ] {ts305} **New transitions** (0.99.32) — Wipe › Blinds, Checker (■ and ◆), Peel in each direction, Dissolve › Shatter at a few Pieces: each starts on the old scene and lands on the new one, no flicker at the ends.
 - [ ] {ts306} **Subject outline on dark chips** (0.99.32) — load the bat (or any dark GIF on a see-through background): its layer chip shows the bat's shape with a grey line around it; a colourful GIF doesn't get one.
+- [ ] {ts307} **Fit range keeps colours** (0.99.33) — Colour › Palette › EGA with Fit range on a dim, colourful GIF: the colours stay (reds, blues, greens), not mostly greys; GB / Grey still stretch as before.
