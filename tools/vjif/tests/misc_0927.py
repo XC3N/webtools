@@ -14,7 +14,7 @@ async def main():
     print('nes', r); assert r == ['–', 0, '60%'], r
     r = await pg.evaluate("""(() => { selectPad(0); const g = curGif(); g.shadow = { ...g.shadow, on: true, floor: true, cut: 0.3 }; syncShadowUI(g); const a = $('#shC').closest('.field').classList.contains('dimmed');
       g.shadow = { ...g.shadow, floor: false }; syncShadowUI(g); return [a, $('#shC').closest('.field').classList.contains('dimmed'), +$('#shY').max]; })()""")
-    print('shadow', r); assert r == [True, False, 160], r
+    print('shadow', r); assert r == [False, False, 160], r   # (0.99.31: Cut works on the Floor too, TW-072)
     await pg.evaluate("selectPad(0); target = 3; const L = layers[3]; if (!L.clips.length) L.clips.push(newClip(0)); L.sel = L.clips[0]; syncLayerUI(); syncXfUI()"); await pg.wait_for_timeout(300)
     r = await pg.evaluate("""(() => { const c = selClip(); c.x = 50; document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Home', key: 'Home', bubbles: true })); const a = c.x;
       document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Home', key: 'Home', shiftKey: true, bubbles: true })); return [a, selClip().x]; })()""")

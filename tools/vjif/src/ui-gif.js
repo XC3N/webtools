@@ -484,7 +484,7 @@ const SH_F = [['#shX', 'x', v => (v > 0 ? '+' : '') + v + ' px'], ['#shY', 'y', 
 function syncShadowUI(g){
   const S = g.shadow || (g.shadow = { ...SHADOW_DEF });
   $('#shOn').checked = !!S.on; $('#shCol').value = S.col; $('#shTurn').checked = !!S.turn; $('#shFloor').checked = !!S.floor; $('#shTurn').closest('.field').classList.toggle('dimmed', !S.on);
-  SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); const v0 = S[k] ?? (k === 'scale' ? 1 : 0); $(id).value = v0; $(id).nextElementSibling.textContent = f(v0); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && (!(S.cut > 0) || !!S.floor)) || (k === 'cut' && !!S.floor)); });
+  SH_F.forEach(([id, k, f]) => { $(id).value = S[k]; $(id).nextElementSibling.textContent = f(S[k]); const v0 = S[k] ?? (k === 'scale' ? 1 : 0); $(id).value = v0; $(id).nextElementSibling.textContent = f(v0); $(id).closest('.field').classList.toggle('dimmed', !S.on || (k === 'soft' && !(S.cut > 0))); });
 }
 SH_F.forEach(([id, k, f]) => $(id).addEventListener('input', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, [k]: +e.target.value, on: true }; syncShadowUI(g); redraw.all = true; }));
 $('#shTurn').addEventListener('change', e => { const g = curGif(); if (!g) return; g.shadow = { ...g.shadow, turn: e.target.checked, on: true }; syncShadowUI(g); redraw.all = true; });

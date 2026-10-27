@@ -4,6 +4,11 @@ Versions follow `major.minor.patch`. 1.0 comes once VJif has been played live on
 recording uploaded to the platforms). Until then, minor versions add features and patch versions fix things.
 The version shows in the About panel (click the logo). What still needs testing by hand is in `TESTS.md`.
 
+## 0.99.31 — 2026/10/27
+
+- Fit range (Colour › Palette and GIF › Display › Palette): stretches the picture's brightness to the palette's own darkest..lightest colour (the Game Boys' greens, not black..white), on brightness only, so colours don't get over-saturated on the way. The effect's version now follows the widest range of the last few seconds and moves slowly: a moving GIF no longer makes the colours wander (BG-046).
+- Shadow › Cut works on the Floor: it takes away the shadow's far end (the GIF's top, upside down), Soft fades it (TW-072).
+
 ## 0.99.30 — 2026/10/26
 
 - GIF level: holding an effect slider previewed the effect on the whole output, with the output's settings (a Palette could flash over everything while you set a GIF's Duotone). Now the preview is the selected GIF's own effect, shown while the slider is held even if it's off (BG-067, BG-068).

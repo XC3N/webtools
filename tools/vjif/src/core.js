@@ -24,7 +24,7 @@
 
 // ---------- constants ----------
 // canvas size: set by the format (landscape for screens and projectors, vertical / square / 4:5 for social video)
-const APP_VERSION = '0.99.30';   // bump with each release and add it to CHANGELOG.md
+const APP_VERSION = '0.99.31';   // bump with each release and add it to CHANGELOG.md
 let W = 1920, H = 1080;
 // Render size (Settings › Interface): everything is laid out in W×H "canvas pixels" (placement, sizes, guides), but drawn
 // into canvases of CW×CH real pixels, RS of that (1, 2/3 or 1/2). Smaller = fewer pixels to draw, copy and run effects on,
@@ -108,7 +108,13 @@ const OKLAB_GLSL = `vec3 okLab(vec3 c){ c = clamp(c, 0.0, 1.0); c = mix(c / 12.9
 // right average but looks wrong). Its share t: in linear light for Bayer (keeps the picture's brightness); halfway between
 // that and OKLab for Noise and Checker (in linear light they darkened midtones until detail vanished, on 1-bit worst).
 // Noise only dithers near halfway between the two colours (it was grain everywhere). p: 0 Noise, 1 Bayer, 2 Checker.
-const PALSNAP_GLSL = `vec3 palLin(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+// Fit range (0.99.31, BG-046): the picture's brightness stretched from its own darkest..brightest (lo..hi) to the palette's own
+// darkest..lightest colour (ylo..yhi), on brightness only (hue and saturation kept: a per-channel stretch over-saturated it)
+function fitY(R, G, B, lo, hi, ylo, yhi){ const y = 0.299 * R + 0.587 * G + 0.114 * B, y2 = ylo + (yhi - ylo) * Math.min(1, Math.max(0, (y - lo) / (hi - lo)));
+  if (y2 <= y){ const k = y > 1e-3 ? y2 / y : 0; return y > 1e-3 ? [R * k, G * k, B * k] : [y2, y2, y2]; } const k = (y2 - y) / Math.max(1e-3, 1 - y); return [R + (1 - R) * k, G + (1 - G) * k, B + (1 - B) * k]; }
+const PALSNAP_GLSL = `vec3 fitY(vec3 c, float lo, float hi, float ylo, float yhi){ float y = dot(c, vec3(0.299, 0.587, 0.114)), y2 = mix(ylo, yhi, clamp((y - lo) / (hi - lo), 0.0, 1.0));
+  if (y2 <= y) return y > 0.001 ? c * (y2 / y) : vec3(y2); return c + (1.0 - c) * ((y2 - y) / max(0.001, 1.0 - y)); }
+vec3 palLin(vec3 c){ c = clamp(c, 0.0, 1.0); return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
   float palB2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
   float palB4(vec2 a){ return palB2(0.5 * a) * 0.25 + palB2(a); }
   vec3 palPick(vec3 c, float d, float p, vec2 q){

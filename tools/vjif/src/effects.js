@@ -101,7 +101,8 @@ const FX_PALS = [
   ['Grey 16', '4-bit grey: 16 shades, Dither shows as fine grain', Array.from({ length: 16 }, (_, i) => Math.round(i * 255 / 15).toString(16).padStart(2, '0').repeat(3)).join(' ')],
   ['Grey 4', '2-bit grey: 4 shades, like an early handheld screen; Dither shows as clear patterns', '000000 555555 aaaaaa ffffff'],
 ].map(([n, t, h]) => { const c = h.split(' ').map(x => [0, 2, 4].map(o => parseInt(x.substr(o, 2), 16) / 255)), ok = c.map(okLab);
-  return { n, t, c, f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0), ok: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? ok[i / 3 | 0][i % 3] : 0) }; });
+  const Y = c.map(([r, g, b]) => 0.299 * r + 0.587 * g + 0.114 * b);
+  return { n, t, c, ylo: Math.min(...Y), yhi: Math.max(...Y), f: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? c[i / 3 | 0][i % 3] : 0), ok: new Float32Array(64 * 3).fill(0).map((v, i) => i < c.length * 3 ? ok[i / 3 | 0][i % 3] : 0) }; });
 // Colour › Palette: how the in-between shades are drawn (the Size row stands in for it). Scatter: noise added before
 // snapping (soft, many colours touch). Ordered: each pixel picks one of the two nearest palette colours by a 4×4 Bayer
 // threshold, like DOS-era / 8-bit art. Checker: the two colours only ever as a 50% checkerboard (hand-pixelled look)
@@ -123,8 +124,9 @@ function fitRangeOf(from, slot){
       for (let i = 0; i < d.length; i += 4){ h[Math.round(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114)]++; tot++; }
       let lo = 0, hi = 255, a = 0; for (let v = 0; v < 256; v++){ a += h[v]; if (a >= tot * 0.02){ lo = v; break; } } a = 0; for (let v = 255; v >= 0; v--){ a += h[v]; if (a >= tot * 0.02){ hi = v; break; } }
       if (hi - lo < 24){ const mid = (lo + hi) / 2; lo = Math.max(0, mid - 12); hi = Math.min(255, mid + 12); }
-      S.tl = lo / 255; S.th = hi / 255; if (S.n === 1){ S.lo = S.tl; S.hi = S.th; } } catch (err) {} }
-  if (S.tl !== undefined){ S.lo += (S.tl - S.lo) * 0.25; S.hi += (S.th - S.hi) * 0.25; }
+      (S.hist = S.hist || []).push([lo / 255, hi / 255]); if (S.hist.length > 30) S.hist.shift();   // 0.99.31 (BG-046): the widest range of the last ~3 s, eased slowly:
+      S.tl = Math.min(...S.hist.map(h => h[0])); S.th = Math.max(...S.hist.map(h => h[1])); if (S.n === 1){ S.lo = S.tl; S.hi = S.th; } } catch (err) {} }   // a moving GIF no longer makes the colours wander
+  if (S.tl !== undefined){ S.lo += (S.tl - S.lo) * 0.04; S.hi += (S.th - S.hi) * 0.04; }
   return { palLo: S.lo, palHi: S.hi };
 }
 const FX_NEG = [[0, 'Off'], [1, 'On']];   // CRT › PAY-TV › Invert
@@ -379,7 +381,7 @@ function fxU(b, { lv, env, amt, rate, style, size, pal, kz, fbk, vdrop, pneg, km
     wob: lv[WO], wobS: S(WO), wobPh: b / rate[WO] * Math.PI * 2,
     mirror: nm(MI) === 'kal' ? env[MI] : lv[MI], mirS: S(MI), mirN: kalSlices(amt[MI]),   // kaleido: Amount = how many slices
     glitch: lv[GL], glS: styleMask(GL, style[GL]), gseed: st(GL) * 7.13 % 100, glSz: size[GL], rgb: lv[CR], rgbS: styleMask(CR, style[CR]), crtSz: size[CR], codec: lv[CD], cdS: styleMask(CD, style[CD]), cseed: st(CD) * 7.13 % 100, cdSz: size[CD],
-    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) && !palNoDith(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: palGB(pal ? pal[CO] : 0) ? 1 : dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, payNeg: pneg ? pneg[CR] : 1, mirK: kmir ? kmir[MI] : 1, mirA: kang ? kang[MI] : -1, duoI: duo ? duo[CO] : 0, palFit: pfit && pfit[CO] ? 1 : 0, beat: b % 100000 };
+    pixel: lv[PX], pixS: S(PX), pixSize: size[PX], fb: lv[FB], fbS: S(FB), time: performance.now() / 1000 % 1000, palI: pal ? pal[CO] : 0, palD: dith && !palGB(pal ? pal[CO] : 0) && !palNoDith(pal ? pal[CO] : 0) ? dith[CO] : 0, palP: palGB(pal ? pal[CO] : 0) ? 1 : dpat ? dpat[CO] : 0, palLum: palGB(pal ? pal[CO] : 0) ? 1 : 0, palDot: dots && dots[CO] && lv[CO] > 0.001 && nm(CO) === 'pal' && palGB(pal ? pal[CO] : 0) ? lcdDot() * (dots[CO] >= 2 ? 1 : -1) : 0, mirZ: kz ? kz[MI] : 1, fbK: fbk ? fbk[FB] : 0.7, vDrop: vdrop ? vdrop[CR] : 1, payNeg: pneg ? pneg[CR] : 1, mirK: kmir ? kmir[MI] : 1, mirA: kang ? kang[MI] : -1, duoI: duo ? duo[CO] : 0, palFit: pfit && pfit[CO] ? 1 : 0, palYlo: (FX_PALS[pal ? pal[CO] : 0] || FX_PALS[0]).ylo, palYhi: (FX_PALS[pal ? pal[CO] : 0] || FX_PALS[0]).yhi, beat: b % 100000 };
   if (U.colrS === FXS.colour.pal) U.colr = env[CO];   // a palette follows the envelope, not Amount (Amount picks the palette): Attack / Release dissolve it in and out pixel by pixel
   const jit = nm(SH) === 'jitter', sk = Math.floor(b / (rate[SH] * (jit ? 0.5 : 1))), s = lv[SH] * (jit ? 0.35 : 1);
   U.shake = [(fxRand(sk) - 0.5) * 0.08 * s, (fxRand(sk + 0.37) - 0.5) * 0.08 * s, (fxRand(sk + 0.71) - 0.5) * 0.1 * s]; U.shakeZ = (ovs && ovs[SH] === 0 ? 0 : 0.22) * s; U.wobZ = (ovs && ovs[WO] === 0 ? 0 : (S(WO) === 0 ? 0.04 : 0.026)) * lv[WO];
@@ -428,7 +430,7 @@ function makePost(){
     gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
 ${FX_GLSL}
       uniform sampler2D tex, prev; uniform vec2 res; uniform float blit, fbInit, time, beat;
-      uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, mirK, mirA, keepA, duoI, palD, palLo, palHi, palP, palDot, palLum,
+      uniform float colr, colrS, hue, strobe, strobeS, poster, posterS, zoom, wob, wobS, wobPh, mirror, mirS, mirN, mirZ, mirK, mirA, keepA, duoI, palD, palLo, palHi, palYlo, palYhi, palP, palDot, palLum,
                     glitch, glS, gseed, glSz, codec, cdS, cseed, cdSz, dgs, rgb, rgbS, crtSz, pixel, pixS, pixSize, fb, fbS, fbK, vDrop, payNeg, shakeZ, wobZ;
       uniform float glA[12], rgA[12], cdA[12];   // Glitch / CRT: each stacked style's own Amount, as a share of the effect's (0.92)
       uniform vec3 shake; uniform vec3 pal[64], palOk[64]; uniform float palN; varying vec2 uv;
@@ -485,7 +487,7 @@ ${FX_GLSL}
       float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
       float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
       ${PALSNAP_GLSL}
-      vec3 palSnap(vec3 c){ if (palHi > palLo) c = clamp((c - palLo) / (palHi - palLo), 0.0, 1.0); return palPick(c, palD, palP, floor(gl_FragCoord.xy / (abs(palDot) > 0.5 ? abs(palDot) : max(1.0, floor(res.y / 360.0))))); }   // dither cells: chunky dots at any output size (the Game Boy's LCD: one cell per screen pixel)
+      vec3 palSnap(vec3 c){ if (palHi > palLo) c = fitY(c, palLo, palHi, palYlo, palYhi); return palPick(c, palD, palP, floor(gl_FragCoord.xy / (abs(palDot) > 0.5 ? abs(palDot) : max(1.0, floor(res.y / 360.0))))); }   // dither cells: chunky dots at any output size (the Game Boy's LCD: one cell per screen pixel)
       vec3 hueRot(vec3 c, float an){                 // rotate the hue in YIQ space
         vec3 y = mat3(0.299, 0.596, 0.211, 0.587, -0.274, -0.523, 0.114, -0.322, 0.312) * c;
         float cs = cos(an), sn = sin(an); y.yz = vec2(y.y * cs - y.z * sn, y.y * sn + y.z * cs);
@@ -732,7 +734,7 @@ ${FX_GLSL}
     const slots = [];
     const slotOf = n => slots[n] || (slots[n] = { rt: [mkRT(), mkRT()], cur: 0, fbWas: false });
     const PX_NAMES = new Set(['crtSz', 'pixSize', 'glSz', 'cdSz']);   // (palDot is worked out in real pixels: lcdDot)   // sizes given in canvas pixels
-    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'mirK', 'mirA', 'keepA', 'duoI', 'palD', 'palLo', 'palHi', 'palP', 'palDot', 'palLum',
+    const NAMES = ['colr', 'colrS', 'hue', 'strobe', 'strobeS', 'poster', 'posterS', 'zoom', 'wob', 'wobS', 'wobPh', 'mirror', 'mirS', 'mirN', 'mirZ', 'mirK', 'mirA', 'keepA', 'duoI', 'palD', 'palLo', 'palHi', 'palYlo', 'palYhi', 'palP', 'palDot', 'palLum',
                    'glitch', 'glS', 'gseed', 'glSz', 'codec', 'cdS', 'cseed', 'cdSz', 'dgs', 'rgb', 'rgbS', 'crtSz', 'pixel', 'pixS', 'pixSize', 'fb', 'fbS', 'fbK', 'vDrop', 'payNeg', 'shakeZ', 'wobZ', 'time', 'beat'];
     const last = {};                                  // the uniforms' current values (a uniform keeps its value until it's set again)
     const u = {}; [...NAMES, 'glA', 'rgA', 'cdA', 'res', 'shake', 'tex', 'prev', 'blit', 'fbInit', 'pal', 'palOk', 'palN'].forEach(k => u[k] = gl.getUniformLocation(prog, k));

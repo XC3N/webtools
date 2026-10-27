@@ -181,8 +181,9 @@ function drawClip(ctx, c, g, img){
     // (so a turned GIF's shadow still only shows at its bottom: it sits on the layer)
     let y0, sb, scr = !S.turn;
     if (scr){ const ys = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => M.b * u * bw / 2 + M.d * v * bh / 2 + M.f), top = Math.min(...ys), hh = Math.max(...ys) - top;
-      y0 = top + S.cut * hh + vy; sb = (S.soft ?? 0) * hh; }
-    else { const ly = I.b * vx + I.d * vy; y0 = -bh/2 + S.cut * bh + ly; sb = (S.soft ?? 0) * bh; }
+      y0 = fl ? top + hh * (1 + sc) / 2 + vy + (1 - S.cut) * hh * sc : top + S.cut * hh + vy; sb = (S.soft ?? 0) * hh; }
+    else { const ly = I.b * vx + I.d * vy; y0 = fl ? sc * bh / 2 + ly + (1 - S.cut) * bh * sc : -bh/2 + S.cut * bh + ly; sb = (S.soft ?? 0) * bh; }
+    // (0.99.31, TW-072: on the Floor the shadow lies below the GIF, upside down; Cut takes away its far end, the GIF's top, and keeps the part by the feet)
     const shadowOnly = x => { x.shadowColor = hexA(S.col, S.op); x.shadowBlur = S.blur * dk; x.shadowOffsetX = vx - M.a * OFF * sc; x.shadowOffsetY = vy - M.b * OFF * sc;
       if (sc !== 1) x.scale(sc, sc);
       if (sk || fl){ x.translate(0, bh / 2); if (sk) x.transform(1, 0, -sk, 1, 0, 0); if (fl) x.scale(1, -1); x.translate(0, -bh / 2); }   // (a shear keeps the first column: the far-off trick's offset still lands)
@@ -193,10 +194,10 @@ function drawClip(ctx, c, g, img){
       shX.save(); shX.setTransform(1, 0, 0, 1, 0, 0); shX.globalCompositeOperation = 'source-over'; shX.globalAlpha = 1; shX.clearRect(0, 0, cw, ch);
       shX.setTransform(M); shX.imageSmoothingEnabled = !g.crisp; shX.save(); shadowOnly(shX); shX.restore();
       if (scr) shX.setTransform(1, 0, 0, 1, 0, 0);
-      const gr = shX.createLinearGradient(0, y0 - sb / 2, 0, y0 + sb / 2); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, '#000');
+      const gr = shX.createLinearGradient(0, y0 - sb / 2, 0, y0 + sb / 2); gr.addColorStop(0, fl ? '#000' : 'rgba(0,0,0,0)'); gr.addColorStop(1, fl ? 'rgba(0,0,0,0)' : '#000');
       shX.globalCompositeOperation = 'destination-in'; shX.fillStyle = gr; shX.fillRect(-OFF, -OFF, 2 * OFF, 2 * OFF); shX.restore();
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(shCv, 0, 0); ctx.restore();
-    } else { ctx.save(); if (scr) ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.beginPath(); ctx.rect(-OFF, y0, 2 * OFF, 2 * OFF); ctx.clip(); ctx.setTransform(M); shadowOnly(ctx); ctx.restore(); }
+    } else { ctx.save(); if (scr) ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.beginPath(); if (fl) ctx.rect(-OFF, y0 - 2 * OFF, 2 * OFF, 2 * OFF); else ctx.rect(-OFF, y0, 2 * OFF, 2 * OFF); ctx.clip(); ctx.setTransform(M); shadowOnly(ctx); ctx.restore(); }
   } else if (shOn){ ctx.shadowColor = hexA(S.col, S.op); ctx.shadowBlur = S.blur * dk; ctx.shadowOffsetX = ox * dk; ctx.shadowOffsetY = oy * dk; }
   if (c.tile){
     // fill exactly the frame, with the clip's whole transform folded into the pattern; a crop tiles the cropped part
