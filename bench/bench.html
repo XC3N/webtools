@@ -119,7 +119,7 @@ li.shut.more>.t>b::after{content:" \2026";color:var(--faint);font-weight:400}
     <textarea id="addText" rows="1" autocomplete="off" aria-label="New item" title="Enter adds, Shift+Enter: new line"></textarea>
     <button class="go" type="submit">Add</button>
   </form>
-  <div class="tools"><div class="frow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter items" autocomplete="off"><button id="yours" type="button" title="Only the items waiting for you: open, sorted, with Claude's note last (or a test nobody has written on yet)">Yours</button><button id="titles" type="button" title="Show only the titles. Click a title or its chips to open or close one item">Titles</button></div><div class="brow"><span id="status"></span><button id="foldAll" type="button" title="Fold every group, and close Done">Fold all</button><button id="openAll" type="button" title="Open every section and group (except Done)">Unfold all</button><label class="gb" title="How each section is grouped">Group <select id="groupBy" aria-label="Group by"><option value="area">by area</option><option value="ver">by version</option><option value="cat">by category</option></select></label></div></div>
+  <div class="tools"><div class="frow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter items" autocomplete="off"><button id="yours" type="button" title="Only the items waiting for you: open, sorted, with Claude's note last (or a test nobody has written on yet)">Yours</button><button id="titles" type="button" title="Show only the titles. Click a title or its chips to open or close one item">Titles</button></div><div class="brow"><span id="status"></span><button id="foldAll" type="button" title="Fold every group, and close Done">Fold all</button><button id="openAll" type="button" title="Open every section and group (except Done)">Unfold all</button><label class="gb" title="How each section is grouped">Group <select id="groupBy" aria-label="Group by"><option value="area">by area</option><option value="ver">by version</option><option value="cat">by category</option><option value="author">by author</option></select></label></div></div>
   </div>
 
   <div id="list"><div class="state">Loading the checklist…</div></div>
@@ -150,9 +150,12 @@ const PEOPLE = BENCH.people;   // who can be signed on the notes; with two or mo
 const SOLO = PEOPLE.length < 2;
 let me = PEOPLE[0]; try { const v = localStorage.getItem('benchWho'); if (PEOPLE.includes(v)) me = v; } catch (e) {}
 const whoOf = n => n.who || PEOPLE[0];   // notes written before the switch existed are the first person's
+// who added an item: its author, else whoever wrote its first note, else Claude (items Claude opened)
+const authorOf = i => { if (i.author) return i.author; const n = threadOf(i).find(x => x.by !== 'claude'); return n ? whoOf(n) : 'Claude'; };
 const ownerOf = i => { const T = threadOf(i); for (let k = T.length - 1; k >= 0; k--) if (T[k].by !== 'claude') return whoOf(T[k]); return i.author || null; };   // the last person who wrote on it, else who added it
 function syncWho(){ $('#who').hidden = SOLO; if (SOLO) return; $('#who').innerHTML = PEOPLE.map(p => `<button type="button" data-v="${esc(p)}" class="${p === me ? 'on' : ''}" aria-pressed="${p === me}">${esc(p)}</button>`).join(''); }
-let groupBy = 'area'; try { groupBy = localStorage.getItem('benchGroup') || (localStorage.getItem('benchByVer') === '1' ? 'ver' : 'area'); } catch (e) {}   // area / ver / cat
+let groupBy = 'area'; try { groupBy = localStorage.getItem('benchGroup') || (localStorage.getItem('benchByVer') === '1' ? 'ver' : 'area'); } catch (e) {}   // area / ver / cat / author
+if (SOLO){ document.querySelector('#groupBy option[value="author"]').remove(); if (groupBy === 'author') groupBy = 'area'; }   // one person: grouping by author says nothing
 let titlesOnly = false, flip = new Set();   // Titles: every item shows only its title; flip: items clicked open / shut against that
 try { const v = JSON.parse(localStorage.getItem('benchView') || '{}'); titlesOnly = !!v.t; flip = new Set(v.f || []); } catch (e) {}
 const saveView = () => { try { localStorage.setItem('benchView', JSON.stringify({ t: titlesOnly, f: [...flip] })); } catch (e) {} };
@@ -198,6 +201,7 @@ function groupKey(i){
   let t = i; for (let n = 0; n < 20; n++){ const P = t.parent && items.find(x => x.id === t.parent); if (!(P && secOf(P) === secOf(t) && matches(P))) break; t = P; }
   const sec = secOf(i), areaK = j => { const A = AREAS.find(a => a[0] === areaOf(j)); return A ? A[0] : 'Other'; };
   if (groupBy === 'cat') return sec + ':c:' + (catOf(i) || 'new');
+  if (groupBy === 'author') return sec + ':a:' + authorOf(t);
   if (t.kind === 'bug') return sec + ':*bugs';
   return sec + ':' + (groupBy === 'ver' ? 'v:' + verOf(t) : areaK(t));
 }
@@ -273,7 +277,8 @@ function renderList(){
       const group = (list, key, name, sub) => { const k = sec + ':' + key, shut = !!closedSub[k];
         return `<h3 class="sub${shut ? ' shut' : ''}" data-k="${esc(k)}"><span class="chev">▾</span>${esc(name)}${sub ? `<span>${esc(sub)}</span>` : ''}<span class="n">${list.length}</span></h3>${shut ? '' : `<ul>${list.map(i => li(i, list.alone && list.alone.has(i))).join('')}</ul>`}`; };
       const bugs = its.filter(i => i.kind === 'bug'), rest = its.filter(i => i.kind !== 'bug');
-      body = groupBy === 'cat' ? CATS.map(([c, n]) => { const L = its.filter(i => catOf(i) === c);   // a sub-item of another category shows in its own too (with its parent chip)
+      body = groupBy === 'author' ? [...new Set([...PEOPLE, 'Claude', ...its.map(authorOf)])].map(a => { const L = its.filter(i => authorOf(i) === a); return L.length ? group(L, 'a:' + a, a) : ''; }).join('')   // one group per person, then Claude
+        : groupBy === 'cat' ? CATS.map(([c, n]) => { const L = its.filter(i => catOf(i) === c);   // a sub-item of another category shows in its own too (with its parent chip)
         const A = items.filter(i => secOf(i) === sec && matches(i) && nests(i) && catOf(i) === c && catOf(nests(i)) !== c); L.push(...A); L.alone = new Set(A); return L.length ? group(L, 'c:' + (c || 'new'), n) : ''; }).join('')
         : (bugs.length ? group(bugs, '*bugs', 'Bugs') : '')
         + (groupBy === 'ver' ? [...new Set(rest.map(verOf))].sort(verCmp).map(v => group(rest.filter(i => verOf(i) === v), 'v:' + v, /^\d/.test(v) ? 'v' + v : v)).join('')
