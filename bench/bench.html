@@ -1,0 +1,390 @@
+<!-- The shared test bench page. One source for every bench: bench/benches.json holds what differs per project, and
+     node bench/build.js writes bench/out/<id>.html for each. See bench/README.md. -->
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column of sections, each a checklist with a running count; an add bar at the top. */
+:root{
+  --bg:#f3f4f2; --panel:#ffffff; --edge:#d9dcd8; --ink:#1b1e1d; --muted:#6a706d; --faint:#9aa09d;
+  --sig:#1f8a76; --sig-soft:#d8efe9; --warn:#b4562a;
+  --display:"Archivo",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141716; --panel:#1b1f1e; --edge:#2b312f; --ink:#e6e8e4; --muted:#949b98; --faint:#626966;
+  --sig:#5fc7b0; --sig-soft:#1d3a34; --warn:#e08a5c; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#141716; --panel:#1b1f1e; --edge:#2b312f; --ink:#e6e8e4; --muted:#949b98; --faint:#626966;
+  --sig:#5fc7b0; --sig-soft:#1d3a34; --warn:#e08a5c; color-scheme:dark }
+*{box-sizing:border-box}
+html{overflow-y:scroll;scrollbar-gutter:stable;scrollbar-color:var(--faint) var(--bg);scrollbar-width:thin}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--display)}
+.wrap{max-width:760px;margin:0 auto;padding-block:28px 60px;padding-inline:16px;display:grid;gap:22px}
+header{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap}header>h1,header>.meta,header>.total{white-space:nowrap}
+/* the add bar and the filter stay in view while scrolling */
+.pin{position:sticky;top:0;z-index:5;background:var(--bg);display:grid;gap:10px;padding:10px 0;margin:-10px 0;border-bottom:1px solid var(--edge)}
+h1{margin:0;font:800 22px/1.1 var(--display);letter-spacing:-.01em}
+h1 span{color:var(--sig)}
+.meta{font:400 12px var(--mono);color:var(--muted)}
+a.meta{color:var(--muted);text-decoration:none}a.meta:hover{color:var(--sig);text-decoration:underline}
+.total{margin-left:auto;font:600 13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.total b{color:var(--sig)}.total{cursor:pointer;border-radius:3px;padding:0 3px}.total:hover{color:var(--ink)}.total.on{background:var(--sig-soft);color:var(--sig)}.stats{flex-basis:100%;text-align:right;margin-top:-4px;font:500 11px var(--mono);color:var(--faint)}.stats b{color:var(--muted);font-weight:600}.stats .bg{color:#ff6b6b}
+.bar{height:4px;background:var(--edge);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--sig);width:0;transition:width .3s}
+form.add{display:flex;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:8px}
+form.add select,form.add input{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--edge);border-radius:4px;padding:7px 9px}
+form.add textarea{flex:1 1 220px;min-width:0;font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--edge);border-radius:4px;padding:7px 9px;resize:none;height:38px;max-height:40vh;overflow-y:auto;line-height:1.45}
+form.add button{align-self:flex-start}form.add .go{height:38px;padding-top:0;padding-bottom:0}.kind{display:flex;align-self:flex-start}.kind button{padding:7px 10px;border-radius:0}.kind button:first-child{border-radius:4px 0 0 4px}.kind button:last-child{border-radius:0 4px 4px 0;margin-left:-1px}.kind button.on{background:var(--sig-soft);color:var(--sig);border-color:var(--sig)}.kind button.on[data-v=bug]{background:#3a1d1d;color:#ff6b6b;border-color:#ff6b6b}
+form.add select{flex:0 1 auto;max-width:100%}
+button{font:600 13px var(--display);border-radius:4px;border:1px solid var(--edge);background:var(--panel);color:var(--ink);padding:7px 12px;cursor:pointer}
+button.go{background:var(--sig);border-color:var(--sig);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sig);outline-offset:1px}
+.tools{display:flex;gap:12px;align-items:center;font-size:13px;color:var(--muted)}
+.tools{flex-wrap:wrap;row-gap:8px}
+.tools label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.tools{display:grid;gap:8px}.frow{display:flex;gap:8px;align-items:center}.brow{display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:wrap}#status{margin-right:auto}
+#filter{flex:1 1 auto;min-width:0;font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--edge);border-radius:4px;padding:6px 9px}
+.tools button{padding:4px 10px;font-size:12px}
+.tools button.armed{border-color:var(--warn);color:var(--warn)}
+#list{display:grid;gap:30px}section{display:grid;gap:6px}
+section h2{margin:0;display:flex;align-items:baseline;gap:10px;font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section h2 .n{font-variant-numeric:tabular-nums;color:var(--faint);letter-spacing:0}
+section h3{margin:8px 0 0;display:flex;align-items:baseline;gap:8px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+section h3 span{font-family:inherit;font-size:12px;font-weight:400;letter-spacing:0;text-transform:none}
+section h3.sub{cursor:pointer;user-select:none}section h3.sub:hover{color:var(--muted)}section h3 .chev{display:inline-block;width:10px;transition:transform .15s}section h3.shut .chev{transform:rotate(-90deg)}section h3 .n{margin-left:auto;font:600 10px var(--mono);color:var(--faint)}
+.tag.bug{color:#ff6b6b;background:#3a1d1d}li .ned.inplace{margin-top:0}
+.tag.area{opacity:.75}.tag.kid{border-style:dashed}.tag.kid.kdone{opacity:.55;text-decoration:line-through}.tag.tweak{color:var(--sig);background:var(--sig-soft)}.tag.goto{cursor:pointer}.tag.goto:hover{color:var(--ink);border-color:var(--muted)}li.flash{animation:flash 1.2s ease-out}@keyframes flash{0%{background:var(--sig-soft)}100%{background:transparent}}.tag.plan{color:var(--muted);background:none;border:1px dashed var(--edge);padding:0 4px}mark{background:var(--sig-soft);color:var(--sig);border-radius:2px;padding:0 1px}.tag.idea{color:var(--warn);background:#3a2a20}.tag.new{color:var(--ink);background:var(--edge)}.tag.ref{color:var(--muted);background:none;border:1px solid var(--edge);padding:0 4px}
+section h2::after{content:"";flex:1;border-bottom:1px solid var(--edge);transform:translateY(-3px)}
+section p.why{margin:0 0 2px;font-size:13px;color:var(--muted)}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+li{position:relative;display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;background:var(--panel);border:1px solid var(--edge);border-radius:5px;padding:9px 10px}
+li input[type=checkbox]{appearance:none;width:18px;height:18px;margin:2px 0 0;border:1.5px solid var(--faint);border-radius:3px;cursor:pointer;display:grid;place-items:center}
+li input[type=checkbox]:checked{background:var(--sig);border-color:var(--sig)}
+li input[type=checkbox]:checked::after{content:"";width:9px;height:5px;border:2px solid var(--bg);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+li .t{min-width:0;overflow-wrap:anywhere}
+li .t b{font-weight:600}
+li .tl{display:flex;flex-wrap:wrap;gap:4px 0;margin-bottom:2px}li .tl:empty{display:none}li .t>b{display:block}li .d{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+li.done .t{color:var(--faint)}
+li.done .t b{text-decoration:line-through;text-decoration-color:var(--faint)}
+li .x{border:0;background:none;color:var(--faint);padding:0 4px;font-size:16px;line-height:1}
+li .x:hover{color:var(--warn)}
+.tag{font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--sig);background:var(--sig-soft);border-radius:3px;padding:1px 5px;margin-right:6px;vertical-align:1px}
+.state{font:400 13px var(--mono);color:var(--muted);padding:20px;border:1px dashed var(--edge);border-radius:6px;text-align:center}
+.hide-done li.done{display:none}
+section h2 button.fold{all:unset;cursor:pointer;display:flex;align-items:baseline;gap:10px}
+section h2 button.fold:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+section h2 .chev{display:inline-block;width:10px;color:var(--faint);transition:transform .15s}
+section.closed h2 .chev{transform:rotate(-90deg)}
+section.closed > :not(h2){display:none}
+li .acts{display:flex;gap:2px;align-items:center;position:absolute;top:9px;right:10px}li .tl{padding-right:62px}li .tl:empty{padding:0}li .tl:empty+b{padding-right:62px}   /* v51 (TW-059): NOTE / × sit in the card's corner next to the tags, so the title below uses the full width */
+li .nb{border:0;background:none;color:var(--faint);padding:0 4px;font:600 11px var(--mono);letter-spacing:.03em}
+li .nb:hover,li .nb.has{color:var(--sig)}
+li .thread{grid-column:2 / -1;display:grid;gap:4px}
+li .hist{justify-self:start;border:0;background:none;padding:2px 0;font:600 11px var(--mono);letter-spacing:.04em;color:var(--faint);cursor:pointer}li .hist::before{content:'▸ '}li .hist.open::before{content:'▾ '}li .hist:hover{color:var(--muted)}
+li .kids{grid-column:2 / -1;display:grid;gap:6px;padding-left:12px;border-left:2px solid var(--edge);margin-top:2px}li .kids li{background:var(--bg)}li.ts{background:var(--bg)}   /* v53: test tickets are always the darker card, nested or not */
+li .t .d,li .t>b:not(.et){cursor:pointer}
+li .note{font-size:13px;color:var(--ink);background:var(--sig-soft);border-radius:4px;padding:6px 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+li .note.claude{background:transparent;border:1px solid var(--edge);color:var(--muted)}
+li .note i{font-style:normal;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--sig);margin-right:6px}
+li .note.claude i{color:var(--faint)}
+li .note.reply,li .note.mine,li b.et{cursor:pointer}li b.et:hover{text-decoration:underline dotted var(--sig)}li .t .ned.inplace{display:grid;gap:6px;margin-top:2px}li .t .ned.inplace span{display:flex;gap:6px;justify-content:flex-end}li .note.reply:hover{border-color:var(--sig)}li .note.mine:hover{outline:1px solid var(--sig)}
+li .ned{grid-column:2 / -1;display:grid;gap:6px}
+li .ned textarea{font:inherit;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--edge);border-radius:4px;padding:7px 9px;min-height:64px;resize:vertical;width:100%}
+li .ned div{display:flex;gap:6px;justify-content:flex-end}
+li .ned button{padding:5px 10px;font-size:12px}
+li .tl,li .t>b:not(.et){cursor:pointer}li.shut>.t>.d,li.shut>.thread,li.shut>.ned,li.shut>.kids{display:none}
+li.shut.more>.t>b::after{content:" \2026";color:var(--faint);font-weight:400}
+.gb select{font:inherit;font-size:12px;color:var(--ink);background:var(--panel);border:1px solid var(--edge);border-radius:4px;padding:4px 6px;cursor:pointer}
+#list.gv li.shut>.kids,#list.tm li.shut>.kids{display:block}
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--bg);border-top:1px solid var(--edge);padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px))}
+.tally{max-width:760px;margin:0 auto;font:400 11px/1.5 var(--mono);color:var(--faint);text-align:center}.tally b{color:var(--sig);font-weight:600}.tally .tp{white-space:nowrap}
+.wrap{padding-bottom:90px}
+.stats .sf{cursor:pointer;border-radius:3px;padding:0 2px}.stats .sf:hover{color:var(--ink)}.stats .sf.on{background:var(--sig-soft);color:var(--sig)}.stats .sf.on b{color:var(--sig)}
+.tools button.on{background:var(--sig-soft);color:var(--sig);border-color:var(--sig);position:relative}
+.who{align-self:center}.who button{padding:3px 10px;font-size:12px;color:var(--faint);background:var(--bg)}.who button:hover{color:var(--ink)}.who button.on,.who button.on:hover{background:var(--sig);border-color:var(--sig);color:var(--bg);position:relative;z-index:1}
+@media (prefers-reduced-motion: reduce){ section h2 .chev{transition:none} }
+@media (prefers-reduced-motion: reduce){ .bar i{transition:none} }
+</style>
+
+<div class="wrap">
+  <div class="pin">
+  <header>
+    <h1>{{NAME_A}}<span>{{NAME_B}}</span> test bench</h1>
+    <a class="meta" id="ver" href="{{LINK}}" target="_blank" rel="noopener" title="The version {{NAME}} is at · click: {{LINK_LABEL}}">v—</a>
+    <span class="kind who" id="who" role="group" aria-label="Who is using the bench" title="Who is using the bench on this device. Notes and new items are signed with this name; Yours shows what waits on them."></span>
+    <span class="total" id="total"><b>0</b> open</span>
+    <span class="stats" id="stats"></span>
+  </header>
+  <div class="bar"><i id="barFill"></i></div>
+  <form class="add" id="addForm">
+    <textarea id="addText" rows="1" autocomplete="off" aria-label="New item" title="Enter adds, Shift+Enter: new line"></textarea>
+    <button class="go" type="submit">Add</button>
+  </form>
+  <div class="tools"><div class="frow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter items" autocomplete="off"><button id="yours" type="button" title="Only the items waiting for you: open, sorted, with Claude's note last (or a test nobody has written on yet)">Yours</button><button id="titles" type="button" title="Show only the titles. Click a title or its chips to open or close one item">Titles</button></div><div class="brow"><span id="status"></span><button id="foldAll" type="button" title="Fold every group, and close Done">Fold all</button><button id="openAll" type="button" title="Open every section and group (except Done)">Unfold all</button><label class="gb" title="How each section is grouped">Group <select id="groupBy" aria-label="Group by"><option value="area">by area</option><option value="ver">by version</option><option value="cat">by category</option></select></label></div></div>
+  </div>
+
+  <div id="list"><div class="state">Loading the checklist…</div></div>
+</div>
+<footer class="foot"><div class="tally" id="tally"></div></footer>
+
+<script>
+// Items move left to right: Backlog → In progress → Review → Done (ticked). Claude keeps them moving.
+const SECTIONS = [
+  ['backlog', 'Backlog', 'Your ideas and what comes next. Add your own from the bar above.'],
+  ['planned', 'Queued', 'Claude has given these a release: they get built in it.'],
+  ['review', 'Review', 'Test it or read it, then tick it. A note sends it back to Claude.'],
+  ['done', 'Done', 'Ticked. Untick to send something back; Clear checked removes them for good (the list in git keeps the history).'],
+];
+// What differs per bench (title, areas, people): filled in from bench/benches.json at build time
+const BENCH = {{CONFIG}};
+// Each section is grouped by area (what part of the project it's about)
+const AREAS = BENCH.areas;
+const secOf = i => i.done ? 'done' : i.sec === 'doing' ? 'planned' : i.sec;   // v55: Backlog / Queued / Review / Done (Building folded into Queued)
+const isQ = i => i.area === 'Q&A';
+const AREA_OLD = BENCH.areaOld || {};   // older area names
+const areaOf = i => AREA_OLD[i.area] ?? i.area ?? '';
+const secName = id => (SECTIONS.find(s => s[0] === id) || [id, 'Other'])[1];
+const $ = s => document.querySelector(s);
+let items = [], db = null, canWrite = true, editing = null;   // editing: { id, draft } while a note box is open
+let filterQ = '';
+const PEOPLE = BENCH.people;   // who can be signed on the notes; with two or more, a switch picks one (remembered per browser)
+const SOLO = PEOPLE.length < 2;
+let me = PEOPLE[0]; try { const v = localStorage.getItem('benchWho'); if (PEOPLE.includes(v)) me = v; } catch (e) {}
+const whoOf = n => n.who || PEOPLE[0];   // notes written before the switch existed are the first person's
+const ownerOf = i => { const T = threadOf(i); for (let k = T.length - 1; k >= 0; k--) if (T[k].by !== 'claude') return whoOf(T[k]); return i.author || null; };   // the last person who wrote on it, else who added it
+function syncWho(){ $('#who').hidden = SOLO; if (SOLO) return; $('#who').innerHTML = PEOPLE.map(p => `<button type="button" data-v="${esc(p)}" class="${p === me ? 'on' : ''}" aria-pressed="${p === me}">${esc(p)}</button>`).join(''); }
+let groupBy = 'area'; try { groupBy = localStorage.getItem('benchGroup') || (localStorage.getItem('benchByVer') === '1' ? 'ver' : 'area'); } catch (e) {}   // area / ver / cat
+let titlesOnly = false, flip = new Set();   // Titles: every item shows only its title; flip: items clicked open / shut against that
+try { const v = JSON.parse(localStorage.getItem('benchView') || '{}'); titlesOnly = !!v.t; flip = new Set(v.f || []); } catch (e) {}
+const saveView = () => { try { localStorage.setItem('benchView', JSON.stringify({ t: titlesOnly, f: [...flip] })); } catch (e) {} };
+const isShut = i => titlesOnly !== flip.has(i.id);
+const setShut = (id, v) => { if ((titlesOnly !== flip.has(id)) !== v){ flip.has(id) ? flip.delete(id) : flip.add(id); } };
+const syncTools = () => { $('#groupBy').value = groupBy; $('#list').classList.toggle('gv', groupBy !== 'area'); $('#list').classList.toggle('tm', titlesOnly); $('#titles').classList.toggle('on', titlesOnly); $('#titles').setAttribute('aria-pressed', titlesOnly); $('#yours').classList.toggle('on', yoursOnly); $('#yours').setAttribute('aria-pressed', yoursOnly); };
+let closedSub = {}; try { closedSub = JSON.parse(localStorage.getItem('closedSubs') || '{}'); } catch (e) {}
+let closed = { done: true }; try { closed = JSON.parse(localStorage.getItem('closedSecs2') || '{"done":true}'); } catch (e) {}
+const noteLabel = i => isQ(i) ? 'Answer' : 'Feedback';
+// an item's conversation: your notes and Claude's replies, oldest first (an older single `note` counts as the first)
+const threadOf = i => Array.isArray(i.thread) ? i.thread : i.note ? [{ by: 'you', text: i.note, at: i.noted || '' }] : [];
+
+$('#filter').addEventListener('input', e => { filterQ = e.target.value.trim().toLowerCase(); render(); });
+
+function esc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+// filter: every word must appear in the item's title, details or thread (case doesn't matter)
+const REF_KIND = { BG: 'BG = bug', ID: 'ID = idea', TW: 'TW = tweak (a change to something that already works)', TS: 'TS = test', QA: 'QA = question & answer', CR: 'CR = code review' }, refKind = r => REF_KIND[String(r).slice(0, 2)] || 'Reference';
+let openHist = new Set();                          // items whose older notes are unfolded
+const histCut = i => { const n = threadOf(i).length; return n > 3 ? n - 2 : 0; };   // past 3 notes: the history folds, the last two stay
+// category: the ref's two letters (an item marked bug counts as BG); no ref yet: New
+const CATS = [['BG', 'Bugs'], ['TS', 'Tests'], ['QA', 'Questions'], ['ID', 'Ideas'], ['TW', 'Tweaks'], ['CR', 'Code review'], ['', 'New']];
+const catOf = i => i.kind === 'bug' ? 'BG' : i.kind === 'tweak' ? 'TW' : CATS.some(c => c[0] && String(i.ref || '').startsWith(c[0])) ? String(i.ref).slice(0, 2) : '';
+// waiting for you: open, sorted, and Claude has the last word (or nobody has written yet on a test)
+const waitsForYou = i => { if (i.done || !i.ref || i.sec === 'planned' || i.sec === 'doing') return false;   // v54 (grdc): planned items wait for Claude's release, not for you
+  const T = threadOf(i); return T.length ? T[T.length - 1].by === 'claude' && (ownerOf(i) || me) === me : /^TS-/.test(i.ref); };
+let yoursOnly = false; try { yoursOnly = localStorage.getItem('benchYours') === '1'; } catch (e) {}
+// a click on a count in the stats line shows only those items (again: all)
+let statF = ''; try { statF = localStorage.getItem('benchStat') || ''; } catch (e) {}
+const verNum = v => { const m = /^(\d+)\.(\d+)/.exec(v || ''); return m ? +m[1] * 1000 + +m[2] : null; };
+const curVer = () => verNum(($('#ver').textContent || '').replace(/^v/, ''));
+const STAT_F = { open: i => !i.done, new: i => !i.done && !i.ref, bugs: i => !i.done && i.kind === 'bug', yours: i => !i.done && waitsForYou(i),
+  queued: i => { if (i.done) return false; const T = threadOf(i); return T.length && T[T.length - 1].by !== 'claude'; },
+  old: i => { const n = curVer(), v = verNum(i.tag); return !i.done && n != null && v != null && n - v >= 10; } };
+// filter terms: words match anywhere in the text; "quoted text" matches exactly that, as whole words (case never matters)
+const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function terms(){ const out = []; filterQ.replace(/"([^"]*)("|$)|(\S+)/g, (m, q, c, w) => { const t = (q ?? w).trim(); if (t) out.push(new RegExp(q !== undefined ? '(?<![\\p{L}\\p{N}])' + reEsc(t) + '(?![\\p{L}\\p{N}])' : reEsc(t), 'iu')); return m; }); return out; }
+const matches = i => (!statF || !STAT_F[statF] || STAT_F[statF](i)) && (!yoursOnly || waitsForYou(i)) && (!filterQ || terms().every(t => t.test([i.ref, i.text, i.detail, i.tag, i.area, ...threadOf(i).map(n => n.text)].join(' '))));
+const verOf = i => i.tag || 'untagged';
+const verCmp = (a, b) => { const na = /^\d/.test(a), nb = /^\d/.test(b); if (na && nb){ const A = a.split('.').map(Number), B = b.split('.').map(Number); return (B[0] - A[0]) || (B[1] - A[1]) || 0; } return na ? -1 : nb ? 1 : a.localeCompare(b); };   // newest version first, then the other tags
+// the group an item is listed in (the one its top-most shown parent is in): the same keys render() gives the headings
+function groupKey(i){
+  let t = i; for (let n = 0; n < 20; n++){ const P = t.parent && items.find(x => x.id === t.parent); if (!(P && secOf(P) === secOf(t) && matches(P))) break; t = P; }
+  const sec = secOf(i), areaK = j => { const A = AREAS.find(a => a[0] === areaOf(j)); return A ? A[0] : 'Other'; };
+  if (groupBy === 'cat') return sec + ':c:' + (catOf(i) || 'new');
+  if (t.kind === 'bug') return sec + ':*bugs';
+  return sec + ':' + (groupBy === 'ver' ? 'v:' + verOf(t) : areaK(t));
+}
+// make an item visible: open its section, then clear the filter, then Yours only, then unfold its group (the least first)
+function revealItem(id){
+  const find = () => document.querySelector('#list li[data-id="' + CSS.escape(id) + '"]'), it = items.find(x => x.id === id); if (!it) return null;
+  const steps = [
+    () => { const sec = secOf(it); if (!closed[sec]) return false; delete closed[sec]; try { localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (e) {} return true; },
+    () => { if (!filterQ) return false; filterQ = ''; $('#filter').value = ''; return true; },
+    () => { if (!yoursOnly) return false; yoursOnly = false; try { localStorage.setItem('benchYours', '0'); } catch (e) {} return true; },
+    () => { const k = groupKey(it); if (!closedSub[k]) return false; delete closedSub[k];   // only its own group opens
+      try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); } catch (e) {} return true; } ];
+  for (const f of steps){ if (f()){ render(); const t = find(); if (t) return t; } }
+  return find();
+}
+// render keeps what you were looking at where it was: the first item in view stays at the same height (or the scroll position, if it's gone)
+function render(){
+  const top = document.querySelector('.pin') ? document.querySelector('.pin').getBoundingClientRect().bottom : 0, y0 = scrollY;
+  let a = null, off = 0; for (const el of document.querySelectorAll('#list li[data-id]')){ const r = el.getBoundingClientRect(); if (r.bottom > top + 4){ a = el.dataset.id; off = r.top; break; } }
+  renderList();
+  const el = a && document.querySelector('#list li[data-id="' + CSS.escape(a) + '"]');
+  if (el) scrollBy(0, el.getBoundingClientRect().top - off); else scrollTo(0, y0);
+  mark();
+}
+// the filter's text, marked in the titles, details and notes
+function mark(){ if (!filterQ) return; const T = terms(); if (!T.length) return;
+  const rx = new RegExp(T.map(t => '(?:' + t.source + ')').join('|'), 'giu');
+  document.querySelectorAll('#list .t > b, #list .t .d, #list .note').forEach(el => { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+    nodes.forEach(n => { if (n.parentNode.closest('textarea')) return; const txt = n.nodeValue; rx.lastIndex = 0; if (!rx.test(txt)) return; rx.lastIndex = 0;
+      const f = document.createDocumentFragment(); let k = 0, m; while ((m = rx.exec(txt))){ if (!m[0]) { rx.lastIndex++; continue; } f.append(txt.slice(k, m.index)); const mk = document.createElement('mark'); mk.textContent = m[0]; f.append(mk); k = m.index + m[0].length; }
+      f.append(txt.slice(k)); n.replaceWith(f); }); }); }
+function renderList(){
+  syncTools();
+  const list = $('#list'), ae = document.activeElement, hadFocus = !!(ae && ae.matches && ae.matches('.ned textarea')), caret = hadFocus ? ae.selectionStart : -1;
+  const done = items.filter(i => i.done).length;
+  { const open = items.length - done; $('#total').innerHTML = `<b>${open}</b> open`; $('#total').title = `${done} / ${items.length} processed (ticked) · click: only the open ones (again: all)`; $('#total').classList.toggle('on', statF === 'open'); }
+  { const open = items.filter(i => !i.done), cur = (/(\d+)\.(\d+)/.exec($('#ver').textContent) || []).slice(1).map(Number), mv = v => { const m = /^(\d+)\.(\d+)/.exec(v || ''); return m ? +m[1] * 1000 + +m[2] : null; };
+    const now = cur.length ? cur[0] * 1000 + cur[1] : null, old = now == null ? 0 : open.filter(i => { const v = mv(i.tag); return v != null && now - v >= 10; }).length;
+    const n = open.filter(i => !i.ref).length, bugs = open.filter(i => i.kind === 'bug').length, wait = open.filter(i => { const T = threadOf(i); return T.length && T[T.length - 1].by !== 'claude'; }).length;
+    const yours = open.filter(waitsForYou).length;
+    const sf = (k, html, t) => `<span class="sf${statF === k ? ' on' : ''}" data-sf="${k}" title="${t} · click: only these (again: all)">${html}</span>`;
+    $('#stats').innerHTML = sf('new', `<b>${n}</b> new`, 'Not sorted by Claude yet (no ref)') + ' · ' + sf('bugs', `<span class="${bugs ? 'bg' : ''}"><b>${bugs}</b> bug${bugs === 1 ? '' : 's'}</span>`, 'Open bugs')
+      + ' · ' + sf('yours', `<b>${yours}</b> yours`, 'Claude answered last: waiting for your test or reply') + ' · ' + sf('queued', `<b>${wait}</b> for Claude`, "Your note is the last: Claude answers on the next pass") + ' · ' + sf('old', `<b>${old}</b> old`, 'Tagged 10 or more versions ago'); }
+  { // what's been worked through so far: everything done per kind, plus your own notes (how much human testing and steering went in)
+    const D = items.filter(i => i.done), n = c => D.filter(i => catOf(i) === c).length, notes = items.reduce((a, i) => a + threadOf(i).filter(x => x.by === 'you').length, 0);
+    const part = (v, w, t) => `<span class="tp" title="${t}"><b>${v}</b> ${w}</span>`;
+    const last = items.reduce((m, i) => [i.created, ...threadOf(i).map(x => x.edited || x.at)].reduce((a, t) => t && t > a ? t : a, m), ''), dt = last ? new Date(last) : null;   // the latest change on the bench: an item added or a note written
+    $('#tally').innerHTML = (dt && !isNaN(dt) ? `<span class="tp" title="Last change on the bench">${dt.getFullYear()}/${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')}</span>: ` : '') + [part(n('BG'), 'bugs fixed', 'Bugs ticked done'), part(n('ID'), 'features', 'Ideas / feature requests built and ticked'), part(n('TW'), 'tweaks', 'Tweaks ticked'),
+      part(n('TS'), 'tested', 'Tests you ran and ticked'), part(n('QA'), 'questions', 'Questions answered and ticked'), part(n('CR'), 'code reviews', 'Code review items ticked'), part(notes, 'inputs', 'Every note you wrote on the bench (feedback, answers, replies)')].join(' · '); }
+  $('#barFill').style.width = items.length ? (done / items.length * 100) + '%' : '0';
+  if (!items.length){ list.innerHTML = '<div class="state">Nothing on the list yet. Add the first item above.</div>'; return; }
+  if ((filterQ || yoursOnly || statF) && !items.some(matches)){ list.innerHTML = '<div class="state">Nothing matches that filter.</div>'; return; }
+  const secs = [...SECTIONS.map(s => s[0]), ...new Set(items.map(secOf).filter(s => !SECTIONS.some(x => x[0] === s)))];
+  const byOrder = (a, b) => (a.order ?? 1e9) - (b.order ?? 1e9) || String(a.created || '').localeCompare(String(b.created || ''));
+  const areaIx = i => { const k = AREAS.findIndex(a => a[0] === areaOf(i)); return k < 0 ? AREAS.length : k; };
+  const nests = i => { const P = i.parent && items.find(x => x.id === i.parent); return P && secOf(P) === secOf(i) && matches(P) ? P : null; };   // a child shows inside its parent (same section)
+  const kids = p => items.filter(i => i.parent === p.id && nests(i) && (matches(i) || filterQ && !yoursOnly && !statF && matches(p))).sort(byOrder);   // a text match shows its sub-items too; Yours and the counts show only items that are that themselves
+  const childrenOf = p => items.filter(x => x.parent === p.id).sort((a, b) => String(a.ref || '').localeCompare(String(b.ref || ''), undefined, { numeric: true }));   // every sub-item, wherever it is (a chip each)
+  const ownNew = i => i.idea && !threadOf(i).length && !i.tag && i.sec === 'backlog' && (i.author || PEOPLE[0]) === me;   // yours, and nobody has answered yet
+  const nedBox = i => `<div class="ned${editing.edit ? ' inplace' : ''}"><textarea aria-label="Note">${esc(editing.draft)}</textarea><div><button class="nc" title="Esc">Cancel</button><button class="go ns" title="Enter (Shift+Enter: new line)">${editing.edit ? 'Save' : 'Add'}</button></div></div>`;
+  const li = (i, alone) => `<li class="${/^TS-/.test(i.ref || '') ? 'ts ' : ''}${i.done ? 'done' : ''}${isShut(i) && !(editing && editing.id === i.id) ? ' shut' : ''}${i.detail || threadOf(i).length || kids(i).length ? ' more' : ''}" data-id="${esc(i.id)}"><input type="checkbox" id="c-${esc(i.id)}"${i.done ? ' checked' : ''}${canWrite ? '' : ' disabled'} aria-label="Done">
+        <span class="t"><span class="tl">${i.ref ? `<span class="tag ref" title="${esc(refKind(i.ref))}">${esc(i.ref)}</span>` : ''}${i.kind === 'bug' ? '<span class="tag bug">bug</span>' : i.kind === 'tweak' ? '<span class="tag tweak" title="A change to something that already works">tweak</span>' : !i.area && secOf(i) !== 'done' ? '<span class="tag new" title="New: Claude hasn\'t sorted it yet">new</span>' : i.idea ? '<span class="tag idea" title="Your idea">idea</span>' : ''}${i.author && i.author !== PEOPLE[0] ? `<span class="tag ref" title="Added by ${esc(i.author)}">${esc(i.author)}</span>` : ''}${i.tag ? `<span class="tag">${esc(i.tag)}</span>` : ''}${i.plan && !i.done ? `<span class="tag plan" title="Queued for this release">→ v${esc(i.plan)}</span>` : ''}${i.parent && (alone === true || !nests(i)) && items.find(x => x.id === i.parent) ? `<span class="tag ref goto" data-goto="${esc(i.parent)}" title="Part of: click to go there">↳ ${esc(items.find(x => x.id === i.parent).ref || '')}</span>` : ''}${childrenOf(i).map(k => `<span class="tag ref goto kid${k.done ? ' kdone' : ''}" data-goto="${esc(k.id)}" title="${esc((k.text || '') + (k.done ? ' (done)' : ''))} · click to go there">↓ ${esc(k.ref || 'new')}</span>`).join('')}</span>${editing && editing.title && editing.id === i.id ? `<span class="ned inplace"><textarea aria-label="Title">${esc(editing.draft)}</textarea><span><button class="nc" title="Esc">Cancel</button><button class="go ns" title="Enter (Shift+Enter: new line)">Save</button></span></span>` : `<b class="${canWrite && ownNew(i) ? 'et' : ''}"${canWrite && ownNew(i) ? ' title="Click to edit"' : ''}>${esc(i.text)}</b>`}${i.detail ? `<span class="d">${esc(i.detail)}</span>` : ''}</span>
+        <span class="acts">${canWrite ? `${/^TS-/.test(i.ref || '') ? '' : `<button class="nb${threadOf(i).length ? ' has' : ''}" title="Add a note for Claude">${isQ(i) && !threadOf(i).length ? 'ANSWER' : 'NOTE'}</button>`}<button class="x" title="Remove" aria-label="Remove">×</button>` : ''}</span>
+        ${threadOf(i).length ? `<div class="thread">${histCut(i) ? `<button class="hist${openHist.has(i.id) ? ' open' : ''}" data-h="${esc(i.id)}">${openHist.has(i.id) ? 'Hide' : 'Show'} ${histCut(i)} earlier note${histCut(i) > 1 ? 's' : ''}</button>` : ''}${threadOf(i).map((n, k, T) => k < histCut(i) && !openHist.has(i.id) ? '' : editing && editing.edit && editing.id === i.id && k === T.length - 1 ? nedBox(i) : `<div class="note ${n.by === 'claude' ? 'claude' : ''}${canWrite && n.by === 'claude' ? ' reply" title="Click to reply' : canWrite && k === T.length - 1 && whoOf(n) === me ? ' mine" title="Click to edit' : ''}"><i>${n.by === 'claude' ? 'Claude' : SOLO ? (k === 0 ? noteLabel(i) : 'You') : (k === 0 ? noteLabel(i) + ' · ' : '') + esc(whoOf(n))}</i>${esc(n.text)}</div>`).join('')}</div>` : ''}
+        ${editing && editing.id === i.id && !editing.edit && !editing.title ? nedBox(i) : ''}${kids(i).length ? `<ul class="kids">${kids(i).map(k => li(k)).join('')}</ul>` : ''}</li>`;
+  list.innerHTML = secs.map(sec => {
+    const grouped = true, its = items.filter(i => secOf(i) === sec && matches(i) && !nests(i)).sort(grouped ? (a, b) => areaIx(a) - areaIx(b) || byOrder(a, b) : byOrder);
+    if (!its.length && sec !== 'planned') return '';
+    if (!its.length) return `<section data-sec="planned" class="${closed[sec] ? 'closed' : ''}"><h2><button class="fold" aria-expanded="${!closed[sec]}"><span class="chev">▾</span>${esc(secName(sec))}<span class="n">0</span></button></h2><div class="state">Nothing queued.</div></section>`;   // v55: Queued always shows, even empty
+    const why = '';                                   // (no description lines: FYR doesn't need them)
+    let body;
+    if (grouped){
+      const group = (list, key, name, sub) => { const k = sec + ':' + key, shut = !!closedSub[k];
+        return `<h3 class="sub${shut ? ' shut' : ''}" data-k="${esc(k)}"><span class="chev">▾</span>${esc(name)}${sub ? `<span>${esc(sub)}</span>` : ''}<span class="n">${list.length}</span></h3>${shut ? '' : `<ul>${list.map(i => li(i, list.alone && list.alone.has(i))).join('')}</ul>`}`; };
+      const bugs = its.filter(i => i.kind === 'bug'), rest = its.filter(i => i.kind !== 'bug');
+      body = groupBy === 'cat' ? CATS.map(([c, n]) => { const L = its.filter(i => catOf(i) === c);   // a sub-item of another category shows in its own too (with its parent chip)
+        const A = items.filter(i => secOf(i) === sec && matches(i) && nests(i) && catOf(i) === c && catOf(nests(i)) !== c); L.push(...A); L.alone = new Set(A); return L.length ? group(L, 'c:' + (c || 'new'), n) : ''; }).join('')
+        : (bugs.length ? group(bugs, '*bugs', 'Bugs') : '')
+        + (groupBy === 'ver' ? [...new Set(rest.map(verOf))].sort(verCmp).map(v => group(rest.filter(i => verOf(i) === v), 'v:' + v, /^\d/.test(v) ? 'v' + v : v)).join('')
+          : [...new Set(rest.map(areaIx))].map(g => { const A = AREAS[g]; return group(rest.filter(i => areaIx(i) === g), A ? A[0] : 'Other', A ? A[0] : 'Other'); }).join(''));
+    } else body = `<ul>${its.map(i => li(i)).join('')}</ul>`;
+    return `<section data-sec="${esc(sec)}" class="${closed[sec] ? 'closed' : ''}"><h2><button class="fold" aria-expanded="${!closed[sec]}"><span class="chev">▾</span>${esc(secName(sec))}<span class="n">${its.length}</span></button></h2>${why ? `<p class="why">${esc(why)}</p>` : ''}${body}</section>`;
+  }).join('');
+  keepDraft();
+  const ta = list.querySelector('.ned textarea'); if (ta && editing && (editing.focus || hadFocus)){ ta.focus(); const at = caret >= 0 ? caret : ta.value.length; ta.setSelectionRange(at, at); editing.focus = false; }
+}
+
+const status = t => { $('#status').textContent = t; };
+// Ctrl+Z / Ctrl+Shift+Z (Ctrl+Y): undo / redo this page's own changes (not while typing). Each step keeps the whole item before and after
+const undoS = [], redoS = [], data = id => { const it = items.find(x => x.id === id); if (!it) return null; const o = { ...it }; delete o.id; return o; };
+const step = (st, what) => { undoS.push({ ...st, what }); if (undoS.length > 50) undoS.shift(); redoS.length = 0; };
+function upd(id, fields, what){ const before = data(id); if (before) step({ id, before, after: { ...before, ...fields } }, what); return write(() => db.doc('items/' + id).update(fields)); }
+function del(id, what){ const before = data(id); if (before) step({ id, before, after: null }, what); return write(() => db.doc('items/' + id).delete()); }
+const putState = (id, d) => d ? db.doc('items/' + id).set(d) : db.doc('items/' + id).delete();
+function undoRedo(redo){ const S = redo ? redoS : undoS, O = redo ? undoS : redoS, st = S.pop(); if (!st || !db){ status(redo ? 'Nothing to redo.' : 'Nothing to undo.'); return; }
+  O.push(st); write(() => putState(st.id, redo ? st.after : st.before)).then(() => status((redo ? 'Redone: ' : 'Undone: ') + st.what)); }
+addEventListener('keydown', e => { if (!(e.ctrlKey || e.metaKey) || e.altKey) return; const k = e.key.toLowerCase(); if (k !== 'z' && k !== 'y') return;
+  if (e.target.closest && e.target.closest('textarea, input:not([type=checkbox]), select, [contenteditable]')) return;   // typing: the text field's own undo
+  e.preventDefault(); undoRedo(k === 'y' || e.shiftKey); });
+async function write(fn){ try { await fn(); status(''); } catch (e) { if (e && e.code === 'invalid_argument'){ canWrite = false; render(); status('Read-only for you.'); } else status('Could not save — try again.'); } }
+
+$('#list').addEventListener('input', e => { if (e.target.matches('.ned textarea') && editing){ editing.draft = e.target.value; keepDraft(); } });
+$('#list').addEventListener('keydown', e => { if (!e.target.matches('.ned textarea')) return;
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); e.target.closest('li').querySelector('.ns').click(); }
+  else if (e.key === 'Escape'){ e.preventDefault(); editing = null; render(); } });
+$('#list').addEventListener('change', e => {
+  if (!e.target.matches('input[type=checkbox]')) return;
+  const li = e.target.closest('li'); if (!li || !db) return;
+  // a note being typed in this item's box goes in with the tick (or the untick), instead of staying behind as a draft
+  const id = li.dataset.id, it = items.find(x => x.id === id), d = editing && editing.id === id && !editing.title ? editing.draft.trim() : '';
+  if (it && d){ const T = threadOf(it), at = new Date().toISOString(), last = T[T.length - 1]; editing = null;   // (editing the last note in place: the edit is saved)
+    upd(id, { done: e.target.checked, thread: (li.querySelector('.ned.inplace') && last ? [...T.slice(0, -1), { ...last, text: d, edited: at }] : [...T, { by: 'you', who: me, text: d, at }]), note: '' }, (e.target.checked ? 'ticked' : 'unticked') + ' with a note'); render(); return; }
+  upd(id, { done: e.target.checked }, e.target.checked ? 'ticked' : 'unticked');
+});
+$('#list').addEventListener('click', e => {
+  const go = e.target.closest('.goto'); if (go){ let t = document.querySelector('#list li[data-id="' + CSS.escape(go.dataset.goto) + '"]');   // a sub-item's parent chip: go to the parent
+    if (!t){ t = revealItem(go.dataset.goto); if (!t){ status('Its parent is not on this page.'); return; } }   // hidden: undo whatever hides it, one thing at a time
+    t.scrollIntoView({ block: 'center' }); t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash'); return; }
+  const h3 = e.target.closest('h3.sub');
+  if (h3){ const k = h3.dataset.k; closedSub[k] = !closedSub[k]; if (!closedSub[k]) delete closedSub[k]; try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); } catch (err) {} render(); return; }
+  const hb = e.target.closest('.hist'); if (hb){ const k = hb.dataset.h; openHist.has(k) ? openHist.delete(k) : openHist.add(k); render(); return; }
+  const fold = e.target.closest('.fold');
+  if (fold){ const sec = fold.closest('section').dataset.sec; closed[sec] = !closed[sec]; if (!closed[sec]) delete closed[sec];
+    try { localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (err) {} render(); return; }
+  const li0 = e.target.closest('li'); if (!li0) return;
+  const it = items.find(x => x.id === li0.dataset.id);
+  if (e.target.closest('.note.reply') && !(getSelection() + '') && !(editing && editing.id === it.id)){ editing = { id: it.id, draft: '', focus: true }; render(); return; }
+  if (e.target.closest('b.et') && !(getSelection() + '')){ editing = { id: it.id, draft: it.text, focus: true, title: true }; render(); return; }
+  if (e.target.closest('.note.mine') && !(getSelection() + '') && !(editing && editing.id === it.id)){ const T = threadOf(it); editing = { id: it.id, draft: T[T.length - 1].text, focus: true, edit: true }; render(); return; }
+  if ((e.target.closest('.t .tl') || e.target.closest('.t > b:not(.et)')) && e.target.closest('li') === li0 && !(getSelection() + '')){ const shut = !isShut(it); setShut(it.id, shut); const desc = p => items.filter(x => x.parent === p).forEach(k => { setShut(k.id, shut); desc(k.id); }); desc(it.id); saveView(); render(); return; }   // chips or title: open / shut this item and its sub-items with it
+  if (e.target.closest('.t .d') && canWrite && !/^TS-/.test(it.ref || '') && !(getSelection() + '') && !editing && e.target.closest('li') === li0){ editing = { id: it.id, draft: '', focus: true }; render(); return; }   // the item's own text: a new note
+  if (e.target.closest('.nb')){ editing = editing && editing.id === it.id ? null : { id: it.id, draft: '', focus: true }; render(); return; }
+  if (e.target.closest('.nc')){ editing = null; render(); return; }
+  if (e.target.closest('.ns') && db && editing.title){ const v = editing.draft.trim(); editing = null; render(); if (v) upd(it.id, { text: v }, 'title edit'); return; }
+  if (e.target.closest('.ns') && db){ const v = editing.draft.trim(), ed = editing.edit; editing = null; render();
+    const T = threadOf(it), at = new Date().toISOString();
+    if (ed){ const last = T[T.length - 1]; upd(it.id, { thread: v ? [...T.slice(0, -1), { ...last, text: v, edited: at }] : T.slice(0, -1), note: '' }, v ? 'note edit' : 'note removed'); return; }   // emptied: the note goes
+    if (v) upd(it.id, { thread: [...T, { by: 'you', who: me, text: v, at }], note: '' }, 'note'); return; }
+  if (!e.target.closest('.x') || !db) return;
+  const li = e.target.closest('li');
+  if (li.dataset.armed){ del(li.dataset.id, 'removed item'); return; }
+  li.dataset.armed = '1'; e.target.textContent = 'Remove?'; e.target.style.fontSize = '12px';
+  setTimeout(() => { if (li.isConnected){ delete li.dataset.armed; e.target.textContent = '×'; e.target.style.fontSize = ''; } }, 3000);
+});
+const growAdd = () => { const t = $('#addText'); t.style.height = '38px'; t.style.height = Math.min(t.scrollHeight + 2, innerHeight * 0.4) + 'px'; };
+$('#addText').addEventListener('input', () => { growAdd(); keepDraft(); });
+// a note being typed survives the page reloading (a new version of the page, a refresh): kept in this browser, put back on load
+function keepDraft(){ try { localStorage.setItem('benchDraft', JSON.stringify({ editing: editing && { ...editing, focus: false }, add: $('#addText').value })); } catch (e) {} }
+try { const d = JSON.parse(localStorage.getItem('benchDraft') || 'null'); if (d){ if (d.editing && d.editing.id) editing = { ...d.editing, focus: true }; if (d.add){ $('#addText').value = d.add; growAdd(); } } } catch (e) {}
+
+$('#addText').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#addForm').requestSubmit(); } else if (e.key === 'Escape'){ e.target.value = ''; growAdd(); keepDraft(); e.target.blur(); } });
+$('#addForm').addEventListener('submit', e => {
+  e.preventDefault(); const text = $('#addText').value.trim(); if (!text || !db) return;
+  $('#addText').value = ''; growAdd(); keepDraft();
+  const nd = { sec: 'backlog', text, done: false, created: new Date().toISOString(), idea: true, author: me };
+  write(async () => { const r = await db.collection('items').add(nd); step({ id: r.id, before: null, after: nd }, 'new item'); });   // Claude sorts bugs from ideas
+});
+
+(async () => {
+  db = await (window.claude?.use ? claude.use('db') : null);
+  if (!db){ $('#list').innerHTML = '<div class="state">The checklist couldn\'t load here. Open it signed in to claude.ai.</div>'; $('#addForm').hidden = true; return; }
+  const user = await claude.use('user');
+  const w = user ? await user.can('data.write') : null; if (w === false){ canWrite = false; $('#addForm').hidden = true; }
+  db.doc('meta/info').onSnapshot(d => { const v = d.exists && d.data().version; $('#ver').textContent = v ? 'v' + v : 'v—'; render(); }, () => {});
+  db.collection('items').onSnapshot(snap => { items = snap.docs.map(d => ({ id: d.id, ...d.data() })); render(); },
+    () => { $('#list').innerHTML = '<div class="state">The checklist stopped updating. Reload the page.</div>'; });
+})();
+
+$('#total').addEventListener('click', () => { statF = statF === 'open' ? '' : 'open'; try { localStorage.setItem('benchStat', statF); } catch (err) {} render(); });
+$('#stats').addEventListener('click', e => { const t = e.target.closest('.sf'); if (!t) return; statF = statF === t.dataset.sf ? '' : t.dataset.sf; try { localStorage.setItem('benchStat', statF); } catch (err) {} render(); });
+let foldsBy = {}; try { foldsBy = JSON.parse(localStorage.getItem('foldsBy') || '{}'); } catch (e) {}
+$('#groupBy').addEventListener('change', e => {   // v52 (TW-060): the first time a grouping is used everything starts folded; coming back to one resumes how it was left
+  foldsBy[groupBy] = { ...closedSub }; const old = groupBy;
+  groupBy = e.target.value; try { localStorage.setItem('benchGroup', groupBy); } catch (err) {}
+  if (foldsBy[groupBy]) closedSub = { ...foldsBy[groupBy] };
+  else { render(); closedSub = {}; document.querySelectorAll('h3.sub').forEach(h => { closedSub[h.dataset.k] = true; }); }
+  try { localStorage.setItem('foldsBy', JSON.stringify(foldsBy)); } catch (err) {} saveFolds(); render(); });
+syncWho();
+$('#who').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; me = b.dataset.v; try { localStorage.setItem('benchWho', me); } catch (err) {} syncWho(); render(); });
+$('#yours').addEventListener('click', () => { yoursOnly = !yoursOnly; try { localStorage.setItem('benchYours', yoursOnly ? '1' : '0'); } catch (e) {} render(); });
+$('#titles').addEventListener('click', () => { titlesOnly = !titlesOnly; flip.clear(); saveView(); render(); });
+// fold / unfold everything: every group heading in the open sections, or every section and group
+const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (e) {} };
+document.getElementById('foldAll').addEventListener('click', () => { document.querySelectorAll('h3.sub').forEach(h => closedSub[h.dataset.k] = true); closed.done = true; if (!items.some(i => secOf(i) === 'planned')) closed.planned = true;   /* v57: an empty Queued has no groups to fold: the section folds */ saveFolds(); render(); });   // Done folds shut as well
+document.getElementById('openAll').addEventListener('click', () => {
+  const openExceptDone = !Object.keys(closed).some(k => k !== 'done') && !Object.keys(closedSub).some(k => !k.startsWith('done:'));   // everything else is open already: this click opens Done too, subsections included
+  if (openExceptDone && closed.done){ closed = {}; closedSub = {}; }
+  else { const keep = {}; document.querySelectorAll('section[data-sec="done"] h3.sub').forEach(h => { if (closedSub[h.dataset.k]) keep[h.dataset.k] = true; }); closedSub = keep; closed = closed.done ? { done: true } : {}; }
+  saveFolds(); render(); });   // first click: Done keeps its folds; second: Done opens fully
+</script>

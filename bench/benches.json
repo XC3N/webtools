@@ -1,0 +1,35 @@
+[
+  {
+    "id": "vjif",
+    "url": "https://claude.ai/artifact/94jxcgUt8KAeuNfnYkJqWx",
+    "title": "VJif Test Bench",
+    "name": ["VJ", "if"],
+    "link": "https://github.com/XC3N/webtools/blob/main/tools/vjif/TESTS.md",
+    "linkLabel": "the test list in git",
+    "people": ["FYR"],
+    "areas": [
+      ["Effects", ""], ["Transitions", ""], ["Preview", "Canvas, guides, placement"], ["Pads & scenes", ""],
+      ["GIFs", "Per-GIF settings, colour"], ["Lettering", ""], ["Interface", "Layout, settings, help"],
+      ["Music & rec", "Music player, recording (in real Chrome)"], ["Gear", "Needs your controller, DAW or GPU"],
+      ["Code", "Code review: under the hood, nothing to test"], ["Test bench", "This page"], ["Q&A", "Questions and answers"]
+    ],
+    "areaOld": { "Canvas": "Preview", "Rec": "Music & rec", "New": "" }
+  },
+  {
+    "id": "sprawler",
+    "url": "https://claude.ai/artifact/HwZo8mspfuM2FzhHhzCLYJ",
+    "title": "Sprawler Test Bench",
+    "name": ["Spraw", "ler"],
+    "link": "https://github.com/Xc3n/sprawler/blob/main/TRACKER.md",
+    "linkLabel": "the tracker snapshot in git",
+    "people": ["FYR", "Brian"],
+    "areas": [
+      ["Sprawl", "Exploration, FOV, combat, enemies"], ["Mapgen", "Downtown, sprawl, building interiors"],
+      ["Rules & stats", "The core math everything follows"], ["HQ", "Coffin hotel to Corp HQ, mission terminals"],
+      ["NPCs", "Personalities, alliances, goals"], ["Renderer", "Glyph grid, shader, window"],
+      ["Interface", "Menus, input, help"], ["Platforms", "Exports and builds"],
+      ["Code", "Code review: under the hood, nothing to test"], ["Test bench", "This page"], ["Q&A", "Questions and answers"]
+    ],
+    "areaOld": { "New": "" }
+  }
+]
