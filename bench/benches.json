@@ -6,6 +6,7 @@
     "name": ["VJ", "if"],
     "link": "https://github.com/XC3N/webtools/blob/main/tools/vjif/TESTS.md",
     "linkLabel": "the test list in git",
+    "prLink": "https://github.com/XC3N/webtools/pull/",
     "people": ["FYR"],
     "areas": [
       ["Effects", ""], ["Transitions", ""], ["Preview", "Canvas, guides, placement"], ["Pads & scenes", ""],
@@ -22,6 +23,7 @@
     "name": ["Spraw", "ler"],
     "link": "https://github.com/Xc3n/sprawler/blob/main/TRACKER.md",
     "linkLabel": "the tracker snapshot in git",
+    "prLink": "https://github.com/XC3N/Sprawler/pull/",
     "people": ["FYR", "Brian"],
     "areas": [
       ["Sprawl", "Exploration, FOV, combat, enemies"], ["Mapgen", "Downtown, sprawl, building interiors"],
