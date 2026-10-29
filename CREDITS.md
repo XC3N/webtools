@@ -10,6 +10,7 @@ The code is written for these tools rather than copied from other projects, apar
 
 ## Typefaces
 
+- Glyph Viewer: draws the glyphs of DejaVu Sans Mono (Bitstream Vera / DejaVu fonts licence, free to use and redistribute) as a sprite sheet baked from the Sprawler game's own font.
 - Interface: Instrument Sans and JetBrains Mono (JetBrains), from Google Fonts (SIL Open Font License).
 - VJif Lettering: Russo One, Anton, Bebas Neue, Bungee, Monoton, Orbitron, Press Start 2P, Rubik Mono One, Righteous (SIL Open Font License) and Permanent Marker (Apache License 2.0), from Google Fonts.
 - VJif's TV › Channel number: [VCR OSD Mono](https://www.dafont.com/vcr-osd-mono.font) 1.001 by Riciery Leal (MrManet), free for any use, commercial included; embedded as a subset of the TTF (the characters the number uses).

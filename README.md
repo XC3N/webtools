@@ -6,6 +6,7 @@ VibeCoded Browser tools for music and visuals. While AI was used for the totalit
 |---|---|
 | **[VJif](tools/vjif/)** | GIF VJ tool: 18 keyboard pads, 9 scenes with transitions, 4 blended layers, screen effects, BPM / tap / MIDI-clock sync, live colour key and HSV, automation, mouse transform handles, sets saved in the browser and exported as `.vjif` files. *Actually, it's pronounced vjif.* [Changelog](tools/vjif/CHANGELOG.md) |
 | **[Bad MOPHO](tools/bad-mopho/)** | Web MIDI editor and librarian for the Dave Smith Instruments Mopho. |
+| **[Glyph Viewer](tools/glyph-viewer/)** | Browse and filter every character the Sprawler game's font can draw, see which are already in the game's glyph atlas, and copy their code points. |
 
 **Use them online:** https://xc3n.github.io/webtools/
 **Use them offline:** download the file from the site (or build it, below) and open it in Chrome.
