@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Builds one page per bench from the shared source: bench/bench.html + bench/benches.json -> bench/out/<id>.html.
 // Placeholders in bench.html: {{TITLE}} {{NAME}} {{NAME_A}} {{NAME_B}} {{LINK}} {{LINK_LABEL}} (HTML-escaped)
-// and {{CONFIG}} (the bench's entry as a JS object). Every built page's script must parse, or the build stops.
+// and {{CONFIG}} (the bench's entry as a JS object; prLink is the PR URL prefix, "" for none). Every built page's script must parse, or the build stops.
 // No dependencies: `node bench/build.js`. bench/out/ is not committed.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -19,7 +19,7 @@ for (const b of benches){
   if (ids.has(b.id)) throw new Error(`benches.json: id "${b.id}" is used twice`);
   ids.add(b.id);
   if (!b.people.length) throw new Error(`benches.json: "${b.id}" needs at least one person`);
-  const config = { areas: b.areas, areaOld: b.areaOld || {}, people: b.people };
+  const config = { areas: b.areas, areaOld: b.areaOld || {}, people: b.people, prLink: b.prLink || '' };
   const vals = { TITLE: b.title, NAME: b.name.join(''), NAME_A: b.name[0], NAME_B: b.name[1] || '', LINK: b.link, LINK_LABEL: b.linkLabel };
   const html = src
     .replace('{{CONFIG}}', () => JSON.stringify(config).replace(/</g, '\\u003c'))
