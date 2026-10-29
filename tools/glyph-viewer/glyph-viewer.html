@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Glyph Viewer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+/* Glyph Viewer: every character the Sprawler font can draw, drawn from the same sprite sheet the game's atlas
+   is baked from (tools/glyph-viewer/make_glyphs.py). Filter by search, Unicode block and atlas status; click one
+   for its code points. Nothing is stored. */
+:root{
+  color-scheme:dark;
+  --bg:#0c0c0e;--panel:#16161a;--panel-2:#1c1c21;--edge:#2a2a31;--edge-2:#34343c;
+  --ink:#e9e7e0;--muted:#888892;--faint:#5a5a63;
+  --amber:#ffb000;--acc-rgb:255,176,0;--ok:#b6ff3b;--cyan:#29f0ff;
+  --sans:system-ui,sans-serif;--mono:ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scrollbar-gutter:stable}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-block:28px 64px;padding-inline:max(16px,4vw)}
+main{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:900 clamp(28px,4vw,40px)/1.05 var(--sans);margin:0;letter-spacing:-.01em}
+h1 span{color:var(--amber)}
+.lede{margin:8px 0 0;color:var(--muted);max-width:72ch}
+.panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--edge);border-radius:12px;padding:16px}
+.bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+input[type=search],select{background:#0f0f12;color:var(--ink);border:1px solid var(--edge-2);border-radius:8px;padding:8px 10px;font:inherit}
+input[type=search]{flex:1 1 260px;min-width:0}
+select{flex:0 1 240px}
+.seg{display:flex;border:1px solid var(--edge-2);border-radius:8px;overflow:hidden}
+.seg button{background:#0f0f12;color:var(--muted);border:0;padding:8px 12px;font:inherit;cursor:pointer;border-right:1px solid var(--edge-2)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:rgba(var(--acc-rgb),.16);color:var(--amber)}
+.count{color:var(--muted);font:13px var(--mono);min-width:19ch;text-align:right}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+@media (max-width:900px){.work{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;max-height:70vh;overflow:auto;padding:2px}
+.cell{height:56px;display:flex;align-items:center;justify-content:center;background:#0f0f12;border:1px solid var(--edge);border-radius:6px;cursor:pointer;position:relative}
+.cell:hover{border-color:var(--edge-2)}
+.cell[aria-selected=true]{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.cell.in::after{content:"";position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--ok)}
+.g{display:block;background:var(--ink)}
+.side{position:sticky;top:16px;display:flex;flex-direction:column;gap:12px}
+@media (max-width:900px){.side{position:static}}
+.big{display:flex;gap:10px;align-items:center;justify-content:center;background:#07070d;border:1px solid var(--edge);border-radius:10px;height:150px}
+.big .g{background:var(--cyan)}
+.big .small .g{background:var(--ink)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:14px}
+dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere}
+.name{font-weight:700}
+.copy{display:flex;gap:8px;flex-wrap:wrap}
+.copy button{background:#0f0f12;color:var(--ink);border:1px solid var(--edge-2);border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer}
+.copy button:hover{border-color:var(--amber)}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font:12px var(--mono)}
+.tag.yes{background:rgba(182,255,59,.14);color:var(--ok)}
+.tag.no{background:rgba(255,176,0,.12);color:var(--amber)}
+.hint{color:var(--muted);font-size:13px}
+.empty{color:var(--muted);padding:24px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Glyph <span>Viewer</span></h1>
+    <p class="lede">Every character the Sprawler font (DejaVu Sans Mono) can draw. A green dot marks the ones already in the game's glyph atlas (256 slots, CP437 order plus a few extras): those can be used right away. Any other character needs the atlas rebuilt with <code>tools/make_atlas.py</code>.</p>
+  </div>
+  <div class="panel bar">
+    <input type="search" id="q" placeholder="Search by name, character or code (e.g. door, 25A3, ▣)" aria-label="Search">
+    <select id="block" aria-label="Unicode block"><option value="-1">All blocks</option></select>
+    <div class="seg" id="atlas" role="group" aria-label="Atlas filter">
+      <button data-v="all" aria-pressed="true">All</button>
+      <button data-v="in" aria-pressed="false">In atlas</button>
+      <button data-v="out" aria-pressed="false">Not in atlas</button>
+    </div>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="work">
+    <div class="panel"><div class="grid" id="grid" role="listbox" aria-label="Characters"></div></div>
+    <div class="panel side" id="side">
+      <div class="big" id="big"></div>
+      <div class="name" id="nm">Click a character</div>
+      <dl id="info"></dl>
+      <div class="copy" id="copy" hidden>
+        <button data-c="char">Copy character</button>
+        <button data-c="hex">Copy 0x… (GDScript)</button>
+        <button data-c="u">Copy U+…</button>
+      </div>
+      <div class="hint" id="note"></div>
+    </div>
+  </div>
+</main>
+<script>
+/* @include tools/glyph-viewer/glyph-data.js */
+(() => {
+  'use strict';
+  const D = GLYPH_DATA, [CW, CH] = D.cell, SC = 2;
+  const $ = id => document.getElementById(id);
+  const items = D.items.map((it, i) => ({ i, cp: it[0], name: it[1], block: it[2], slot: it[3], ch: String.fromCodePoint(it[0]) }));
+  const state = { q: '', block: -1, atlas: 'all', sel: -1 };
+  const hex = cp => cp.toString(16).toUpperCase().padStart(4, '0');
+  const style = document.createElement('style');
+  style.textContent = `.g{width:${CW * SC}px;height:${CH * SC}px;-webkit-mask-image:url(${D.sheet});mask-image:url(${D.sheet});
+    -webkit-mask-size:${CW * D.cols * SC}px auto;mask-size:${CW * D.cols * SC}px auto;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}`;
+  document.head.appendChild(style);
+  const glyph = (it, scale = 1) => {
+    const e = document.createElement('i'); e.className = 'g';
+    const x = (it.i % D.cols) * CW * SC, y = Math.floor(it.i / D.cols) * CH * SC;
+    e.style.cssText = `-webkit-mask-position:-${x}px -${y}px;mask-position:-${x}px -${y}px` + (scale !== 1 ? `;zoom:${scale}` : '');
+    return e;
+  };
+  D.blocks.forEach((b, i) => { const o = document.createElement('option'); o.value = i; o.textContent = b; $('block').appendChild(o); });
+
+  function match(it){
+    if (state.block >= 0 && it.block !== state.block) return false;
+    if (state.atlas === 'in' && it.slot < 0) return false;
+    if (state.atlas === 'out' && it.slot >= 0) return false;
+    const q = state.q.trim().toLowerCase();
+    if (!q) return true;
+    if ([...q].length === 1 && it.ch === state.q.trim()) return true;
+    const h = q.replace(/^(u\+|0x)/, '');
+    if (/^[0-9a-f]{2,6}$/.test(h) && hex(it.cp).toLowerCase().includes(h)) return true;
+    return q.split(/\s+/).every(w => it.name.toLowerCase().includes(w));
+  }
+  function render(){
+    const list = items.filter(match), g = $('grid');
+    g.replaceChildren();
+    const frag = document.createDocumentFragment();
+    for (const it of list){
+      const c = document.createElement('div');
+      c.className = 'cell' + (it.slot >= 0 ? ' in' : '');
+      c.dataset.i = it.i; c.title = `U+${hex(it.cp)} ${it.name}`;
+      c.setAttribute('role', 'option'); c.setAttribute('aria-selected', it.i === state.sel);
+      c.appendChild(glyph(it, .75)); frag.appendChild(c);
+    }
+    g.appendChild(frag);
+    if (!list.length) g.innerHTML = '<div class="empty">Nothing matches.</div>';
+    $('count').textContent = `${list.length} of ${items.length}`;
+  }
+  function show(i){
+    state.sel = i; const it = items[i];
+    document.querySelectorAll('.cell[aria-selected=true]').forEach(c => c.setAttribute('aria-selected', 'false'));
+    const cell = document.querySelector(`.cell[data-i="${i}"]`); if (cell) cell.setAttribute('aria-selected', 'true');
+    const big = $('big'); big.replaceChildren(glyph(it, 2.2));
+    const sm = document.createElement('span'); sm.className = 'small'; sm.appendChild(glyph(it, .75)); big.appendChild(sm);
+    $('nm').textContent = it.name;
+    $('info').innerHTML = `<dt>Code</dt><dd>U+${hex(it.cp)}</dd><dt>Decimal</dt><dd>${it.cp}</dd><dt>GDScript</dt><dd>0x${hex(it.cp)}</dd>`
+      + `<dt>Block</dt><dd>${D.blocks[it.block]}</dd><dt>Atlas</dt><dd>${it.slot >= 0 ? `<span class="tag yes">slot ${it.slot}</span>` : '<span class="tag no">not in atlas</span>'}</dd>`;
+    $('note').textContent = it.slot >= 0 ? 'Already in the atlas: use it as is.' : 'Not in the atlas yet. To use it, add it to EXTRA in tools/make_atlas.py (replacing a slot the game doesn\'t use) and regenerate.';
+    $('copy').hidden = false;
+  }
+  $('grid').addEventListener('click', e => { const c = e.target.closest('.cell'); if (c) show(+c.dataset.i); });
+  $('copy').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || state.sel < 0) return;
+    const it = items[state.sel], t = { char: it.ch, hex: '0x' + hex(it.cp), u: 'U+' + hex(it.cp) }[b.dataset.c];
+    try { navigator.clipboard.writeText(t); const o = b.textContent; b.textContent = 'Copied ' + t; setTimeout(() => b.textContent = o, 1200); } catch (_) {}
+  });
+  $('q').addEventListener('input', e => { state.q = e.target.value; render(); });
+  $('block').addEventListener('change', e => { state.block = +e.target.value; render(); });
+  $('atlas').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.atlas = b.dataset.v;
+    $('atlas').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+{ "name": "Glyph Viewer", "entry": "glyph-viewer.html", "output": "glyph-viewer.html",
+  "description": "Browse and filter every character the Sprawler game's font can draw, see which ones are already in the game's glyph atlas, and copy their code points." }
