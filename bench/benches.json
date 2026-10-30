@@ -29,7 +29,7 @@
       ["Sprawl", "Exploration, FOV, combat, enemies"], ["Mapgen", "Downtown, sprawl, building interiors"],
       ["Rules & stats", "The core math everything follows"], ["HQ", "Coffin hotel to Corp HQ, mission terminals"],
       ["NPCs", "Personalities, alliances, goals"], ["Renderer", "Glyph grid, shader, window"],
-      ["Interface", "Menus, input, help"], ["Platforms", "Exports and builds"],
+      ["Interface", "Menus, input, help"], ["Platforms", "Exports and builds"], ["Webtools", "Glyph Viewer, Compendium, level editor"],
       ["Code", "Code review: under the hood, nothing to test"], ["Test bench", "This page"], ["Q&A", "Questions and answers"]
     ],
     "areaOld": { "New": "" }

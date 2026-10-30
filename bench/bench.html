@@ -387,7 +387,15 @@ $('#groupBy').addEventListener('change', e => {   // v52 (TW-060): the first tim
   try { localStorage.setItem('foldsBy', JSON.stringify(foldsBy)); } catch (err) {} saveFolds(); render(); });
 syncWho();
 $('#who').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; me = b.dataset.v; try { localStorage.setItem('benchWho', me); } catch (err) {} syncWho(); render(); });
-$('#yours').addEventListener('click', () => { yoursOnly = !yoursOnly; try { localStorage.setItem('benchYours', yoursOnly ? '1' : '0'); } catch (e) {} render(); });
+// the item you last clicked, noted or ticked, and where it sat on screen: toggling Yours brings it back to
+// that height (an item you just answered leaves Yours; switching Yours off shows it where it was)
+let touched = null;
+const touch = el => { if (el && el.dataset.id) touched = { id: el.dataset.id, top: el.getBoundingClientRect().top, at: Date.now() }; };
+$('#list').addEventListener('click', e => touch(e.target.closest('li[data-id]')), true);
+$('#list').addEventListener('change', e => touch(e.target.closest('li[data-id]')), true);
+$('#yours').addEventListener('click', () => { yoursOnly = !yoursOnly; try { localStorage.setItem('benchYours', yoursOnly ? '1' : '0'); } catch (e) {} render();
+  const el = touched && Date.now() - touched.at < 15 * 60e3 && document.querySelector('#list li[data-id="' + CSS.escape(touched.id) + '"]');
+  if (el){ scrollBy(0, el.getBoundingClientRect().top - touched.top); touch(el); } });
 $('#titles').addEventListener('click', () => { titlesOnly = !titlesOnly; flip.clear(); saveView(); render(); });
 // fold / unfold everything: every group heading in the open sections, or every section and group
 const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (e) {} };
