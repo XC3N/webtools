@@ -4,9 +4,9 @@
     "url": "https://claude.ai/artifact/94jxcgUt8KAeuNfnYkJqWx",
     "title": "VJif Test Bench",
     "name": ["VJ", "if"],
-    "link": "https://github.com/XC3N/webtools/blob/main/tools/vjif/TESTS.md",
+    "link": "https://github.com/XC3N/VJif/blob/main/TESTS.md",
     "linkLabel": "the test list in git",
-    "prLink": "https://github.com/XC3N/webtools/pull/",
+    "prLink": "https://github.com/XC3N/VJif/pull/",
     "people": ["FYR"],
     "areas": [
       ["Effects", ""], ["Transitions", ""], ["Preview", "Canvas, guides, placement"], ["Pads & scenes", ""],

@@ -5,7 +5,7 @@
 // Source files can pull in shared code from common/ with include markers, inlined recursively:
 //   <!-- @include common/ui-kit.css -->     in HTML
 //   /* @include common/midi.js */           inside <style> or <script>
-//   <!-- @markdown tools/vjif/CHANGELOG.md -->   a Markdown file turned into HTML (headings, lists, paragraphs, `code`, **bold**, links)
+//   <!-- @markdown tools/x/NOTES.md -->     a Markdown file turned into HTML (headings, lists, paragraphs, `code`, **bold**, links)
 // Paths are relative to the repo root. No dependencies: `node build.js`.
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -49,8 +49,6 @@ fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out);
 // every built file carries the licence's Required Notice lines (LICENSE.md) and its URL, so a copy passed on keeps them
 const NOTICES = fs.readFileSync(path.join(root, 'LICENSE.md'), 'utf8').split('\n').filter(l => /^(Required Notice|Licensor Line of Business):/.test(l));
-const MIT_NOTE = 'Copyright (c) 2026 XC3N (https://github.com/XC3N/webtools)\nLicence: MIT, https://github.com/XC3N/webtools/blob/main/tools/bad-mopho/LICENSE.md';
-const withMit = html => html.replace(/^(<!doctype html>\s*)/i, `$1<!--\n${MIT_NOTE}\n-->\n`);   // a tool.json with "licence": "MIT" (Bad MOPHO)
 const withNotices = html => html.replace(/^(<!doctype html>\s*)/i, `$1<!--\n${NOTICES.join('\n')}\nLicence: PolyForm Shield 1.0.0, https://polyformproject.org/licenses/shield/1.0.0\n-->\n`);
 const tools = [];
 for (const dirName of fs.readdirSync(path.join(root, 'tools')).sort()){
@@ -59,10 +57,24 @@ for (const dirName of fs.readdirSync(path.join(root, 'tools')).sort()){
   const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
   const html = inline(path.join(dir, meta.entry));
   checkScripts(html, meta.output);
-  fs.writeFileSync(path.join(out, meta.output), meta.licence === 'MIT' ? withMit(html) : withNotices(html));
+  fs.writeFileSync(path.join(out, meta.output), withNotices(html));
   tools.push(meta);
   console.log(`built dist/${meta.output}  (${(Buffer.byteLength(html) / 1024).toFixed(0)} KB)`);
 }
+
+// tools that moved to their own repositories (moved.json): the index links to them, and their old file names
+// here redirect, so old links and bookmarks keep working
+const moved = JSON.parse(fs.readFileSync(path.join(root, 'moved.json'), 'utf8'));
+for (const m of moved){
+  fs.writeFileSync(path.join(out, m.output), `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>${esc(m.name)} has moved</title>
+<meta http-equiv="refresh" content="0; url=${esc(m.url)}"><link rel="canonical" href="${esc(m.url)}">
+<script>location.replace(${JSON.stringify(m.url)} + location.search + location.hash)</script></head>
+<body style="background:#0c0c0e;color:#e9e7e0;font:15px system-ui,sans-serif;padding:48px 16px">${esc(m.name)} has moved to <a style="color:#ffb000" href="${esc(m.url)}">${esc(m.url)}</a>.</body></html>
+`);
+  console.log(`built dist/${m.output}  (redirect → ${m.url})`);
+}
+const listed = [...tools.map(t => ({ ...t, href: t.output })), ...moved.map(m => ({ ...m, href: m.url }))].sort((a, b) => a.name.localeCompare(b.name));
 
 // landing page for GitHub Pages
 fs.writeFileSync(path.join(out, 'index.html'), `<!doctype html>
@@ -79,7 +91,7 @@ footer{margin-top:36px;color:var(--muted);font:500 12px "JetBrains Mono",monospa
 </style></head><body><main>
 <h1>XC3N web tools</h1>
 <p class="sub">Single-file browser tools. Open one here, or download the .html and run it offline — everything is in the one file.</p>
-${tools.map(t => `<a class="tool" href="${esc(t.output)}"><b>${esc(t.name)}</b>${esc(t.description)}</a>`).join('\n')}
+${listed.map(t => `<a class="tool" href="${esc(t.href)}"><b>${esc(t.name)}</b>${esc(t.description)}</a>`).join('\n')}
 <footer>Source: <a href="https://github.com/XC3N/webtools">github.com/XC3N/webtools</a></footer>
 </main></body></html>
 `);

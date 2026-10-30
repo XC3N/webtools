@@ -1,0 +1,6 @@
+[
+  { "name": "Bad MOPHO", "output": "bad-mopho.html", "url": "https://xc3n.github.io/BadMOPHO/", "repo": "https://github.com/XC3N/BadMOPHO",
+    "description": "Web MIDI editor and librarian for the Dave Smith Instruments Mopho synthesizer." },
+  { "name": "VJif", "output": "vjif.html", "url": "https://xc3n.github.io/VJif/", "repo": "https://github.com/XC3N/VJif",
+    "description": "Browser GIF VJ tool: 18 keyboard pads, 9 scenes with transitions, 4 blended layers, screen effects, BPM / tap / MIDI-clock sync, sets saved in the browser." }
+]
