@@ -391,7 +391,7 @@ $('#yours').addEventListener('click', () => { yoursOnly = !yoursOnly; try { loca
 $('#titles').addEventListener('click', () => { titlesOnly = !titlesOnly; flip.clear(); saveView(); render(); });
 // fold / unfold everything: every group heading in the open sections, or every section and group
 const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (e) {} };
-document.getElementById('foldAll').addEventListener('click', () => { document.querySelectorAll('h3.sub').forEach(h => closedSub[h.dataset.k] = true); closed.done = true; if (!items.some(i => secOf(i) === 'planned')) closed.planned = true;   /* Queued folds its groups like Backlog and Review; an empty Queued has none, so the section folds (Sprawler BG-007, ID-060) */ saveFolds(); render(); });   // Done folds shut as well
+document.getElementById('foldAll').addEventListener('click', () => { document.querySelectorAll('h3.sub').forEach(h => closedSub[h.dataset.k] = true); closed.done = true; if (!document.querySelector('section[data-sec="planned"] h3.sub')) closed.planned = true;   /* Queued folds its groups like Backlog and Review; when it shows none (empty, or everything filtered out by Yours or the filter), the section folds (Sprawler TW-053) */ saveFolds(); render(); });   // Done folds shut as well
 document.getElementById('openAll').addEventListener('click', () => {
   const openExceptDone = !Object.keys(closed).some(k => k !== 'done') && !Object.keys(closedSub).some(k => !k.startsWith('done:'));   // everything else is open already: this click opens Done too, subsections included
   if (openExceptDone && closed.done){ closed = {}; closedSub = {}; }
