@@ -141,7 +141,7 @@ const AREAS = BENCH.areas;
 const secOf = i => i.done ? 'done' : i.sec === 'doing' ? 'planned' : i.sec;   // v55: Backlog / Queued / Review / Done (Building folded into Queued)
 const isQ = i => i.area === 'Q&A';
 const AREA_OLD = BENCH.areaOld || {};   // older area names
-const areaOf = i => AREA_OLD[i.area] ?? i.area ?? '';
+const areaOf = i => { if (/^TS-/.test(i.ref || '') && i.parent){ const P = items.find(x => x.id === i.parent); if (P && P !== i) return areaOf(P); } return AREA_OLD[i.area] ?? i.area ?? ''; };   // a test sits in its parent's area (Sprawler TW-059)
 const secName = id => (SECTIONS.find(s => s[0] === id) || [id, 'Other'])[1];
 const $ = s => document.querySelector(s);
 let items = [], db = null, canWrite = true, editing = null;   // editing: { id, draft } while a note box is open

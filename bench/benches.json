@@ -27,6 +27,7 @@
     "people": ["FYR", "Brian"],
     "areas": [
       ["Sprawl", "Exploration, FOV, combat, enemies"], ["Mapgen", "Downtown, sprawl, building interiors"],
+      ["World", "Dusk City, the hotel outside, the Sprawl's place in it"], ["Combat & AI", "Hostility, fights, drones and gangers, pathfinding"], ["Jobs", "Job board, missions, rewards"],
       ["Rules & stats", "The core math everything follows"], ["HQ", "Coffin hotel to Corp HQ, mission terminals"],
       ["NPCs", "Personalities, alliances, goals"], ["Renderer", "Glyph grid, shader, window"],
       ["Interface", "Menus, input, help"], ["Platforms", "Exports and builds"], ["Webtools", "Glyph Viewer, Compendium, level editor"],
