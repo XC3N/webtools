@@ -330,10 +330,8 @@ $('#list').addEventListener('click', e => {
   if (h3){ const k = h3.dataset.k; closedSub[k] = !closedSub[k]; if (!closedSub[k]) delete closedSub[k]; try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); } catch (err) {} render(); return; }
   const hb = e.target.closest('.hist'); if (hb){ const k = hb.dataset.h; openHist.has(k) ? openHist.delete(k) : openHist.add(k); render(); return; }
   const fold = e.target.closest('.fold');
-  if (fold){ const sec = fold.closest('section').dataset.sec; closed[sec] = !closed[sec]; if (!closed[sec]){ delete closed[sec];
-      const subs = Object.keys(closedSub).filter(k => k.startsWith(sec + ':')), all = [...fold.closest('section').querySelectorAll('h3.sub')].every(h => closedSub[h.dataset.k]);
-      if (all) subs.forEach(k => delete closedSub[k]); }   // opening a section whose groups are all folded opens them too: one click shows its items (TW-057)
-    try { localStorage.setItem('closedSecs2', JSON.stringify(closed)); localStorage.setItem('closedSubs', JSON.stringify(closedSub)); } catch (err) {} render(); return; }
+  if (fold){ const sec = fold.closest('section').dataset.sec; closed[sec] = !closed[sec]; if (!closed[sec]) delete closed[sec];
+    try { localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (err) {} render(); return; }
   const li0 = e.target.closest('li'); if (!li0) return;
   const it = items.find(x => x.id === li0.dataset.id);
   if (e.target.closest('.note.reply') && !(getSelection() + '') && !(editing && editing.id === it.id)){ editing = { id: it.id, draft: '', focus: true }; render(); return; }
@@ -402,5 +400,11 @@ $('#titles').addEventListener('click', () => { titlesOnly = !titlesOnly; flip.cl
 // fold / unfold everything: every group heading in the open sections, or every section and group
 const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (e) {} };
 document.getElementById('foldAll').addEventListener('click', () => { document.querySelectorAll('h3.sub').forEach(h => closedSub[h.dataset.k] = true); closed.done = true; if (!document.querySelector('section[data-sec="planned"] h3.sub')) closed.planned = true;   /* Queued folds its groups like Backlog and Review; when it shows none (empty, or everything filtered out by Yours or the filter), the section folds (Sprawler TW-053) */ saveFolds(); render(); });   // Done folds shut as well
-document.getElementById('openAll').addEventListener('click', () => { closed = {}; closedSub = {}; saveFolds(); render(); });   // every section and group, Done included, in one click (Sprawler TW-057)
+document.getElementById('openAll').addEventListener('click', () => {   // three steps, as on VJif's bench (Sprawler TW-057)
+  const doneKeys = [...document.querySelectorAll('section[data-sec="done"] h3.sub')].map(h => h.dataset.k);
+  const othersOpen = !Object.keys(closed).some(k => k !== 'done') && !Object.keys(closedSub).some(k => !k.startsWith('done:'));
+  if (!othersOpen){ const keep = {}; doneKeys.forEach(k => { if (closedSub[k]) keep[k] = true; }); closedSub = keep; closed = closed.done ? { done: true } : {}; }   // 1: everything but Done
+  else if (closed.done){ closed = {}; doneKeys.forEach(k => closedSub[k] = true); }   // 2: Done opens, its groups folded
+  else { closed = {}; closedSub = {}; }   // 3: Done's groups too
+  saveFolds(); render(); });
 </script>
