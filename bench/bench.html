@@ -119,7 +119,7 @@ li.shut.more>.t>b::after{content:" \2026";color:var(--faint);font-weight:400}
     <textarea id="addText" rows="1" autocomplete="off" aria-label="New item" title="Enter adds, Shift+Enter: new line"></textarea>
     <button class="go" type="submit">Add</button>
   </form>
-  <div class="tools"><div class="frow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter items" autocomplete="off"><button id="yours" type="button" title="Only the items waiting for you: open, sorted, with Claude's note last (or a test nobody has written on yet)">Yours</button><button id="titles" type="button" title="Show only the titles. Click a title or its chips to open or close one item">Titles</button></div><div class="brow"><span id="status"></span><button id="foldAll" type="button" title="Fold every group, and close Done">Fold all</button><button id="openAll" type="button" title="Open every section and group (except Done)">Unfold all</button><label class="gb" title="How each section is grouped">Group <select id="groupBy" aria-label="Group by"><option value="area">by area</option><option value="ver">by version</option><option value="cat">by category</option><option value="author">by author</option><option value="pr" hidden disabled>by PR</option></select></label></div></div>
+  <div class="tools"><div class="frow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter items" autocomplete="off"><button id="yours" type="button" title="Only the items waiting for you: open, sorted, with Claude's note last (or a test nobody has written on yet)">Yours</button><button id="titles" type="button" title="Show only the titles. Click a title or its chips to open or close one item">Titles</button></div><div class="brow"><span id="status"></span><button id="foldAll" type="button" title="Fold every group, and close Done">Fold all</button><button id="openAll" type="button" title="Unfold one level: sections, then their groups; Done follows one click behind">Unfold all</button><label class="gb" title="How each section is grouped">Group <select id="groupBy" aria-label="Group by"><option value="area">by area</option><option value="ver">by version</option><option value="cat">by category</option><option value="author">by author</option><option value="pr" hidden disabled>by PR</option></select></label></div></div>
   </div>
 
   <div id="list"><div class="state">Loading the checklist…</div></div>
@@ -402,11 +402,14 @@ $('#titles').addEventListener('click', () => { titlesOnly = !titlesOnly; flip.cl
 // fold / unfold everything: every group heading in the open sections, or every section and group
 const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (e) {} };
 document.getElementById('foldAll').addEventListener('click', () => { document.querySelectorAll('h3.sub').forEach(h => closedSub[h.dataset.k] = true); closed.done = true; if (!document.querySelector('section[data-sec="planned"] h3.sub')) closed.planned = true;   /* Queued folds its groups like Backlog and Review; when it shows none (empty, or everything filtered out by Yours or the filter), the section folds (Sprawler TW-053) */ saveFolds(); render(); });   // Done folds shut as well
-document.getElementById('openAll').addEventListener('click', () => {   // three steps, as on VJif's bench (Sprawler TW-057)
-  const doneKeys = [...document.querySelectorAll('section[data-sec="done"] h3.sub')].map(h => h.dataset.k);
-  const othersOpen = !Object.keys(closed).some(k => k !== 'done') && !Object.keys(closedSub).some(k => !k.startsWith('done:'));
-  if (!othersOpen){ const keep = {}; doneKeys.forEach(k => { if (closedSub[k]) keep[k] = true; }); closedSub = keep; closed = closed.done ? { done: true } : {}; }   // 1: everything but Done
-  else if (closed.done){ closed = {}; doneKeys.forEach(k => closedSub[k] = true); }   // 2: Done opens, its groups folded
-  else { closed = {}; closedSub = {}; }   // 3: Done's groups too
+document.getElementById('openAll').addEventListener('click', () => {   // Sprawler TW-057: unfold in levels, every section alike, Done one level behind
+  // level 0: section shut · 1: section open, its groups folded · 2: everything open
+  const secs = [...document.querySelectorAll('#list section[data-sec]')], keysOf = sec => [...sec.querySelectorAll('h3.sub')].map(h => h.dataset.k);
+  const level = sec => closed[sec.dataset.sec] ? 0 : keysOf(sec).some(k => closedSub[k]) ? 1 : 2;
+  const set = (sec, L) => { const id = sec.dataset.sec; if (L === 0){ closed[id] = true; return; } delete closed[id]; keysOf(sec).forEach(k => { if (L === 1) closedSub[k] = true; else delete closedSub[k]; }); };
+  const others = secs.filter(x => x.dataset.sec !== 'done'), done = secs.find(x => x.dataset.sec === 'done');
+  const full = others.filter(x => keysOf(x).length), L = full.length ? Math.min(...full.map(level)) : 2;   // an empty section (e.g. Queued under Yours) doesn't hold the others back
+  if (L < 2){ others.forEach(x => set(x, keysOf(x).length ? L + 1 : 2)); if (done) set(done, L); }   // the others go up a level; Done follows one behind
+  else if (done) set(done, Math.min(2, level(done) + 1));
   saveFolds(); render(); });
 </script>
