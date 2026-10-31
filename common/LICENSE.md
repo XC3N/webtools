@@ -1,6 +1,6 @@
-# Bad MOPHO licence
+# common/ licence
 
-Bad MOPHO (this folder) and the shared code it is built with (`common/`) are under the MIT License below. The rest of the repository (VJif, Logo Lab) is under PolyForm Shield 1.0.0, see the root LICENSE.md. The name "Bad MOPHO" and its logo aren't covered: see TRADEMARKS.md.
+The shared code in this folder is under the MIT License below. VJif (https://github.com/XC3N/VJif) and Bad MOPHO (https://github.com/XC3N/BadMOPHO) build with pinned copies of it. Third-party code in vendor/ keeps its own licence (see each file's header and CREDITS.md).
 
 MIT License
 

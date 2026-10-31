@@ -3,6 +3,10 @@
 Code shared between tools, inlined into each tool's single HTML file by `build.js`
 (`<!-- @include common/… -->` or `/* @include common/… */`).
 
+VJif (https://github.com/XC3N/VJif) and Bad MOPHO (https://github.com/XC3N/BadMOPHO) live in their own repositories and build with a
+pinned copy of the files they include (their `common/PINNED.json` names the webtools commit). Change shared code here first; each
+tool repo takes it with `node sync-common.js <path to this repo>`, then builds and tests.
+
 Rule of thumb: move something here when a **second** tool needs it, not before — or when it's a
 standard every tool should follow (UI rules, control behaviour, theming).
 
