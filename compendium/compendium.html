@@ -1,0 +1,247 @@
+<title>Sprawler Compendium</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lexicon. An index of name pools on the left (stacked on top on a phone), the open
+   pool's entries on the right as a wrapping list you add to, edit and roll from. */
+:root{
+  --bg:#eceef2; --panel:#ffffff; --ink:#15171c; --muted:#5b6270; --line:#d5d9e1;
+  --accent:#b8136a; --accent-soft:#f6dcea; --count:#0d7584; --warn:#a4431c;
+  --display:"Chakra Petch",ui-monospace,system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d0f14; --panel:#151821; --ink:#e5e7ee; --muted:#8a92a3; --line:#262b37;
+  --accent:#ff4fa3; --accent-soft:#3a1530; --count:#45cfe0; --warn:#f08a5d; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0d0f14; --panel:#151821; --ink:#e5e7ee; --muted:#8a92a3; --line:#262b37;
+  --accent:#ff4fa3; --accent-soft:#3a1530; --count:#45cfe0; --warn:#f08a5d; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
+.wrap{max-width:1080px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+h1{margin:0;font:600 26px/1.1 var(--display);letter-spacing:.02em;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;flex-basis:100%;max-width:70ch}
+.sync{margin-left:auto;font:500 12px var(--mono);color:var(--muted)}.sync b{color:var(--count);font-weight:500}.sync.dirty b{color:var(--warn)}
+.bar{display:flex;gap:8px;flex-wrap:wrap}
+input[type=search],input[type=text]{font:inherit;font-size:14px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:7px 10px;min-width:0}
+#q{flex:1 1 220px}
+button{font:500 13px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}button.go{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.main{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:720px){ .main{grid-template-columns:minmax(0,1fr)} }
+nav{display:grid;gap:14px;position:sticky;top:max(12px,env(safe-area-inset-top,0px))}
+#pick{display:none;font:inherit;font-size:15px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
+@media (max-width:720px){ nav{display:none} #pick{display:block} }
+nav h2{margin:0 0 4px;font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+nav ul{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+nav li button{all:unset;box-sizing:border-box;display:flex;gap:8px;width:100%;padding:5px 8px;border-radius:4px;cursor:pointer;font-size:14px}
+nav li button:hover{background:var(--panel)}nav li button:focus-visible{outline:2px solid var(--accent)}
+nav li button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav li .n{margin-left:auto;font:400 12px var(--mono);color:var(--count);font-variant-numeric:tabular-nums}
+nav li .n.zero{color:var(--muted)}
+nav .add{font-size:12px;color:var(--muted);padding:3px 8px;border:1px dashed var(--line);background:none}
+section.pool{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;display:grid;gap:14px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.ph h3{margin:0;font:600 20px/1.2 var(--display);letter-spacing:.02em}
+.ph .n{font:500 13px var(--mono);color:var(--count)}
+.ph .acts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.note{margin:0;color:var(--muted);font-size:13px;max-width:70ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px;color:var(--muted)}
+.meta label{display:flex;gap:6px;align-items:center}
+.meta input[type=text]{width:180px;padding:4px 8px;font-size:13px}
+.entries{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.entries li{display:flex;align-items:center;border:1px solid var(--line);border-radius:3px;background:var(--bg);font:400 14px var(--mono);min-width:0;max-width:100%}
+.entries li .e{all:unset;cursor:text;padding:4px 4px 4px 9px;overflow-wrap:anywhere}
+.entries li .e:focus-visible{outline:2px solid var(--accent)}
+.entries li .x{all:unset;cursor:pointer;color:var(--muted);padding:4px 8px 4px 4px;font-size:15px;line-height:1}
+.entries li .x:hover,.entries li .x:focus-visible{color:var(--warn)}
+.entries li.hit{border-color:var(--accent);background:var(--accent-soft)}
+.entries li.edit{padding:2px}.entries li.edit input{width:22ch;max-width:100%;padding:3px 6px;font:400 14px var(--mono)}
+.entries li.dup .e::after{content:" ×2";color:var(--warn)}
+.empty{color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:4px;padding:14px;text-align:center}
+form.addrow{display:flex;gap:8px;flex-wrap:wrap}form.addrow input{flex:1 1 240px}
+.msg{min-height:1.2em;font-size:13px;color:var(--warn)}.msg.ok{color:var(--count)}
+.roll{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:12px}
+.roll h4{margin:0;font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.roll ol{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px;font:400 14px var(--mono)}
+.found{display:grid;gap:10px}
+.found h3{margin:0;font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.found p{margin:0;font-size:14px}.found p button{all:unset;cursor:pointer;color:var(--accent);font-weight:600}.found p button:hover{text-decoration:underline}
+.state{color:var(--muted);font:400 14px var(--mono);border:1px dashed var(--line);border-radius:6px;padding:24px;text-align:center}
+.armed{border-color:var(--warn)!important;color:var(--warn)!important}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Sprawler <span>Compendium</span></h1>
+    <span class="sync" id="sync">connecting…</span>
+    <p class="sub">Every name the game draws from: streets, hotels, buildings by kind, MegaBuildings, people. Edit here; Claude copies the Compendium into the game's <code>data/compendium.json</code> in the next pull request, so changes land when it's merged.</p>
+  </header>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Find a name in every pool" aria-label="Find a name" autocomplete="off">
+    <button id="copy" type="button" title="Copy the whole Compendium as the game's JSON">Copy JSON</button>
+  </div>
+  <div class="main">
+    <nav id="nav" aria-label="Name pools"></nav>
+    <select id="pick" aria-label="Name pool"></select>
+    <div id="pane"><div class="state">Loading the Compendium…</div></div>
+  </div>
+</div>
+
+<script>
+// What the game reads (data/compendium.json) and how it maps to one stored pool per list.
+// Groups: fixed pools have a known key; open groups (kind, mega, adj) take new categories.
+const GROUPS = [
+  { id: 'places', title: 'Places', fixed: [
+    ['streets', 'Street names', 'One word each: the game makes "Lotus Street" (east-west) and "Lotus Avenue" (north-south). When a map runs out, they come round as "Old Lotus".'],
+    ['hotels', 'Capsule hotels', 'Where you wake up. The first is where every first run starts; later runs pick any.']] },
+  { id: 'kind', title: 'Buildings', open: 'Building kind', note: k => `Names for a ${k}. Every name is used once per map; a job that names this kind ("${k}") puts its data in one of these.` },
+  { id: 'looks', title: 'Plain buildings', fixed: [
+    ['looks', 'Plain building looks', 'How a building you can\'t read the sign of is described: "You spot a decrepit building."']] },
+  { id: 'mega', title: 'MegaBuildings', open: 'MegaBuilding theme', note: k => `Sealed MegaBuildings themed "${k}".`, fixedAfter: [
+    ['hq', 'Corpsec HQ', 'One per map: the megacorps\' military police, where the security drones come from.']] },
+  { id: 'npc', title: 'People', fixed: [
+    ['npc-first', 'First names', 'Not used by the game yet: people will be named from these (ID-056).'],
+    ['npc-middle', 'Middle names', 'Not used yet.'], ['npc-last', 'Last names', 'Not used yet.'], ['npc-titles', 'Titles', 'Not used yet: "Doc", "Old", "Sister"…']] },
+  { id: 'adj', title: 'People: adjectives', open: 'Adjective category', note: k => `Words for someone who reads as "${k}". Not used by the game yet.` },
+];
+let pools = {}, meta = {}, db = null, canWrite = true, sel = null, q = '', editing = null, rolled = null, note = null;   // note: the last message, {id, text, ok}, kept across redraws
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
+const docId = (group, key) => group === 'kind' || group === 'mega' || group === 'adj' ? group + '-' + slug(key) : key;
+const list = id => (pools[id] && Array.isArray(pools[id].entries)) ? pools[id].entries : [];
+// every pool on screen, in index order
+function order(){ const out = [];
+  for (const g of GROUPS){
+    for (const [id, title, note] of g.fixed || []) out.push({ id, title, note, group: g.id });
+    if (g.open) Object.entries(pools).filter(([, p]) => p.group === g.id).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0) || a[1].key.localeCompare(b[1].key))
+      .forEach(([id, p]) => out.push({ id, title: p.key, note: g.note(p.key), group: g.id, open: true }));
+    for (const [id, title, note] of g.fixedAfter || []) out.push({ id, title, note, group: g.id });
+  } return out; }
+const buildingIds = () => order().filter(p => p.group === 'kind' || p.group === 'mega').map(p => p.id);
+
+function render(){
+  const all = order(); if (!sel || !all.some(p => p.id === sel)) sel = all[0] && all[0].id;
+  $('#nav').innerHTML = GROUPS.map(g => { const ps = all.filter(p => p.group === g.id);
+    return `<div><h2>${esc(g.title)}</h2><ul>${ps.map(p => `<li><button type="button" data-sel="${esc(p.id)}" class="${p.id === sel && !q ? 'on' : ''}">${esc(p.title)}<span class="n${list(p.id).length ? '' : ' zero'}">${list(p.id).length}</span></button></li>`).join('')}${g.open && canWrite && db ? `<li><button type="button" class="add" data-newcat="${g.id}">+ ${esc(g.open)}</button></li>` : ''}</ul></div>`; }).join('');
+  // on a phone the index is a picker (the same lists, and the "+ new list" entries)
+  $('#pick').innerHTML = GROUPS.map(g => `<optgroup label="${esc(g.title)}">${all.filter(p => p.group === g.id).map(p => `<option value="${esc(p.id)}"${p.id === sel ? ' selected' : ''}>${esc(p.title)} (${list(p.id).length})</option>`).join('')}${g.open && canWrite && db ? `<option value="+${g.id}">+ ${esc(g.open)}…</option>` : ''}</optgroup>`).join('');
+  if (!db) return;
+  if (!Object.keys(pools).length){ $('#pane').innerHTML = '<div class="state">No pools yet. Claude fills the Compendium from the game\'s data/compendium.json.</div>'; return; }
+  if (q) return renderFind(all);
+  const p = all.find(x => x.id === sel); if (!p) return;
+  const E = list(p.id), P = pools[p.id] || {}, low = E.map(e => e.toLowerCase());
+  $('#pane').innerHTML = `<section class="pool" aria-label="${esc(p.title)}">
+    <div class="ph"><h3>${esc(p.title)}</h3><span class="n">${E.length} name${E.length === 1 ? '' : 's'}</span><span class="acts">
+      <button type="button" id="roll" title="Pick some at random, the way the game does">Roll</button>
+      ${canWrite ? `<button type="button" id="sort" title="Sort A to Z">Sort A–Z</button>` : ''}
+      ${canWrite && p.open ? `<button type="button" id="delcat" title="Delete this whole list">Delete list</button>` : ''}</span></div>
+    <p class="note">${esc(p.note)}</p>
+    ${p.group === 'kind' ? `<div class="meta"><label>Shown as <input type="text" id="label" value="${esc(P.label || p.title)}" ${canWrite ? '' : 'disabled'} aria-label="Label shown in game"></label>
+      <label><input type="checkbox" id="plain" ${P.plain ? 'checked' : ''} ${canWrite ? '' : 'disabled'}> plain: the sign has to be read (a Notice check) or the building entered</label></div>` : ''}
+    ${E.length ? `<ul class="entries">${E.map((e, k) => editing && editing.id === p.id && editing.k === k
+      ? `<li class="edit"><input id="edit" type="text" value="${esc(e)}" aria-label="Edit name"></li>`
+      : `<li class="${low.indexOf(e.toLowerCase()) !== k ? 'dup' : ''}"><button type="button" class="e" data-k="${k}" title="${canWrite ? 'Click to edit' : ''}">${esc(e)}</button>${canWrite ? `<button type="button" class="x" data-x="${k}" aria-label="Remove ${esc(e)}">×</button>` : ''}</li>`).join('')}</ul>`
+      : `<div class="empty">Nothing here yet.${canWrite ? ' Add the first name below.' : ''}</div>`}
+    ${canWrite ? `<form class="addrow" id="addf"><input id="add" type="text" placeholder="Add a name (several: separate with commas or new lines)" aria-label="Add a name" autocomplete="off"><button class="go" type="submit">Add</button></form>` : ''}
+    <div class="msg${note && note.id === p.id && note.ok ? ' ok' : ''}" id="msg" role="status">${note && note.id === p.id ? esc(note.text) : ''}</div>
+    ${rolled && rolled.id === p.id ? `<div class="roll"><h4>Rolled</h4><ol>${rolled.items.map(r => `<li>${esc(r)}</li>`).join('')}</ol></div>` : ''}
+  </section>`;
+  const ed = $('#edit'); if (ed){ ed.focus(); ed.select(); }
+}
+function renderFind(all){
+  const T = q.toLowerCase(), hits = all.map(p => ({ p, E: list(p.id).filter(e => e.toLowerCase().includes(T)) })).filter(h => h.E.length);
+  $('#pane').innerHTML = `<section class="pool found"><h3>${hits.reduce((a, h) => a + h.E.length, 0)} match${hits.length ? 'es' : ''} for “${esc(q)}”</h3>
+    ${hits.map(h => `<p><button type="button" data-sel="${esc(h.p.id)}">${esc(h.p.title)}</button>: ${h.E.map(esc).join(', ')}</p>`).join('') || '<p>Nothing matches.</p>'}</section>`;
+}
+const say = (t, ok) => { note = { id: sel, text: t, ok: !!ok }; const m = $('#msg'); if (m){ m.textContent = t; m.classList.toggle('ok', !!ok); } };
+
+// writes: one pool at a time, the whole list replaced
+async function save(id, fields){
+  if (!db || !canWrite) return;
+  try { await db.doc('pools/' + id).update({ ...fields, edited: new Date().toISOString() }); }
+  catch (e){ if (e && /not_granted|permission|invalid_argument/.test(String(e.code || e.message))){ canWrite = false; render(); } say('Could not save. Reload and try again.'); }
+}
+function addNames(text){
+  const p = order().find(x => x.id === sel); if (!p) return;
+  const E = [...list(p.id)], have = new Set(E.map(e => e.toLowerCase())), added = [], skipped = [], elsewhere = [];
+  for (const raw of text.split(/[\n,]+/)){ const v = raw.trim().replace(/\s+/g, ' '); if (!v) continue;
+    if (have.has(v.toLowerCase())){ skipped.push(v); continue; }
+    if (p.group === 'kind' || p.group === 'mega' || p.id === 'hq'){ const o = [...buildingIds(), 'hq'].find(b => b !== p.id && list(b).some(e => e.toLowerCase() === v.toLowerCase())); if (o) elsewhere.push(`${v} (also in ${order().find(x => x.id === o).title})`); }
+    have.add(v.toLowerCase()); E.push(v); added.push(v); }
+  if (added.length) save(p.id, { entries: E });
+  say([added.length ? `Added ${added.length}.` : '', skipped.length ? `Already here: ${skipped.join(', ')}.` : '', elsewhere.length ? `Building names should be unique: ${elsewhere.join(', ')}.` : ''].filter(Boolean).join(' '), added.length && !skipped.length && !elsewhere.length);
+}
+function roll(){
+  const p = order().find(x => x.id === sel); if (!p) return; const E = list(p.id); if (!E.length){ say('Nothing to roll yet.'); return; }
+  const pick = A => A[Math.floor(Math.random() * A.length)], items = [];
+  if (p.group === 'npc'){ const F = list('npc-first'), M = list('npc-middle'), L = list('npc-last'), T = list('npc-titles');   // a whole person, from whatever lists have names
+    for (let i = 0; i < 8; i++) items.push([T.length && Math.random() < 0.3 ? pick(T) : '', F.length ? pick(F) : '', M.length && Math.random() < 0.3 ? pick(M) : '', L.length ? pick(L) : ''].filter(Boolean).join(' ') || pick(E)); }
+  else { const B = [...E].sort(() => Math.random() - 0.5).slice(0, 8); B.forEach((n, i) => items.push(p.id === 'streets' ? `${n} ${i % 2 ? 'Avenue' : 'Street'}` : p.id === 'looks' ? `a ${n} building` : n)); }
+  rolled = { id: p.id, items }; render();
+}
+// the game's file, rebuilt from the pools (what Claude copies into the repo)
+function asGameJson(){
+  const by = g => order().filter(p => p.group === g), out = { streets: list('streets'), hotels: list('hotels'), looks: list('looks'), kinds: {}, megas: {}, corpsec_hq: list('hq'),
+    npc: { first: list('npc-first'), middle: list('npc-middle'), last: list('npc-last'), titles: list('npc-titles'), adjectives: {} } };
+  by('kind').forEach(p => out.kinds[pools[p.id].key] = { label: pools[p.id].label || pools[p.id].key, plain: !!pools[p.id].plain, names: list(p.id) });
+  by('mega').forEach(p => out.megas[pools[p.id].key] = list(p.id));
+  by('adj').forEach(p => out.npc.adjectives[pools[p.id].key] = list(p.id));
+  return JSON.stringify(out, null, 1);
+}
+
+document.addEventListener('click', async e => {
+  const s = e.target.closest('[data-sel]'); if (s){ sel = s.dataset.sel; q = ''; $('#q').value = ''; editing = null; render(); return; }
+  const nc = e.target.closest('[data-newcat]'); if (nc){ const g = GROUPS.find(x => x.id === nc.dataset.newcat); const li = nc.closest('li');
+    li.innerHTML = `<form class="addrow" data-catform="${g.id}"><input id="newcat" type="text" placeholder="${esc(g.open)}" aria-label="${esc(g.open)}" autocomplete="off"><button type="submit">Add</button></form>`; $('#newcat').focus(); return; }
+  if (e.target.closest('#roll')){ roll(); return; }
+  if (e.target.closest('#sort')){ const E = [...list(sel)].sort((a, b) => a.localeCompare(b)); save(sel, { entries: E }); return; }
+  const dc = e.target.closest('#delcat'); if (dc){ if (!dc.classList.contains('armed')){ dc.classList.add('armed'); dc.textContent = 'Delete it?'; setTimeout(() => { if (dc.isConnected){ dc.classList.remove('armed'); dc.textContent = 'Delete list'; } }, 3000); return; }
+    try { await db.doc('pools/' + sel).delete(); sel = null; } catch (err){ say('Could not delete. Reload and try again.'); } return; }
+  const x = e.target.closest('[data-x]'); if (x){ const E = [...list(sel)], k = +x.dataset.x, gone = E.splice(k, 1)[0]; save(sel, { entries: E }); say(`Removed ${gone}.`, true); return; }
+  const en = e.target.closest('.e'); if (en && canWrite){ editing = { id: sel, k: +en.dataset.k }; render(); return; }
+  if (e.target.closest('#copy')){ const t = asGameJson(); try { await navigator.clipboard.writeText(t); $('#copy').textContent = 'Copied'; setTimeout(() => $('#copy').textContent = 'Copy JSON', 1500); } catch (err){ $('#pane').insertAdjacentHTML('afterbegin', `<textarea readonly style="width:100%;height:12em;font:12px var(--mono)" aria-label="Compendium JSON">${esc(t)}</textarea>`); } return; }
+});
+document.addEventListener('submit', e => { e.preventDefault();
+  if (e.target.id === 'addf'){ const v = $('#add').value; $('#add').value = ''; addNames(v); return; }
+  const cf = e.target.dataset.catform; if (cf){ const key = $('#newcat').value.trim().toLowerCase(); if (!key) { render(); return; }
+    const id = docId(cf, key); if (pools[id]){ sel = id; render(); return; }
+    const d = { group: cf, key, entries: [], order: Date.now(), edited: new Date().toISOString() }; if (cf === 'kind'){ d.label = key; d.plain = false; }
+    db.doc('pools/' + id).set(d).then(() => { sel = id; }).catch(() => render()); }
+});
+document.addEventListener('keydown', e => { if (e.target.id !== 'edit') return;
+  if (e.key === 'Escape'){ editing = null; render(); return; }
+  if (e.key !== 'Enter') return; e.preventDefault(); commitEdit(); });
+document.addEventListener('focusout', e => { if (e.target.id === 'edit') commitEdit(); });
+function commitEdit(){ if (!editing) return; const v = $('#edit').value.trim().replace(/\s+/g, ' '), E = [...list(editing.id)], k = editing.k; editing = null;
+  if (v && v !== E[k]){ if (E.some((x, i) => i !== k && x.toLowerCase() === v.toLowerCase())){ render(); say(`${v} is already in this list.`); return; } E[k] = v; save(sel, { entries: E }); }
+  else if (!v){ E.splice(k, 1); save(sel, { entries: E }); }
+  render(); }
+document.addEventListener('change', e => {
+  if (e.target.id === 'plain') save(sel, { plain: e.target.checked });
+  if (e.target.id === 'label'){ const v = e.target.value.trim(); if (v) save(sel, { label: v }); }
+});
+$('#pick').addEventListener('change', e => { const v = e.target.value;
+  if (v.startsWith('+')){ const g = GROUPS.find(x => x.id === v.slice(1)); render();
+    $('#pane').insertAdjacentHTML('afterbegin', `<form class="addrow" data-catform="${g.id}" style="margin-bottom:12px"><input id="newcat" type="text" placeholder="New ${esc(g.open.toLowerCase())}" aria-label="${esc(g.open)}" autocomplete="off"><button type="submit">Add</button></form>`); $('#newcat').focus(); return; }
+  sel = v; q = ''; $('#q').value = ''; editing = null; render(); });
+$('#q').addEventListener('input', e => { q = e.target.value.trim(); editing = null; render(); });
+
+function syncLine(){ const n = Object.values(pools).filter(p => !meta.syncedAt || (p.edited || '') > meta.syncedAt).length;
+  $('#sync').classList.toggle('dirty', n > 0);
+  $('#sync').innerHTML = meta.syncedAt ? (n ? `<b>${n}</b> list${n === 1 ? '' : 's'} changed since the game's copy (v${esc(meta.syncedVersion || '?')})` : `In the game as of <b>v${esc(meta.syncedVersion || '?')}</b>`) : 'Not copied into the game yet'; }
+
+render();
+(async () => {
+  db = await (window.claude?.use ? claude.use('db') : null);
+  if (!db){ $('#pane').innerHTML = '<div class="state">The Compendium couldn\'t load here. Open it signed in to claude.ai.</div>'; $('#sync').textContent = ''; return; }
+  const user = await claude.use('user'); const w = user ? await user.can('data.write') : null; if (w === false) canWrite = false;
+  db.doc('meta/info').onSnapshot(d => { meta = d.exists ? d.data() : {}; syncLine(); }, () => {});
+  db.collection('pools').onSnapshot(snap => { const next = {}; snap.docs.forEach(d => next[d.id] = d.data()); pools = next; syncLine(); if (!editing) render(); },
+    () => { $('#pane').innerHTML = '<div class="state">The Compendium stopped updating. Reload the page.</div>'; });
+})();
+</script>
