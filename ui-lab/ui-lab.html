@@ -126,13 +126,14 @@ const TITLES = [
   ['wedge','◀WEDGE▶','wedge','',''], ['under','UNDER (inside)','under','',''], ['none','no title','none','',''],
 ];
 const CORNERS = [['square','┌ square'],['round','╭ rounded'],['heavy','┏ heavy'],['double','╔ double'],['mixed','╓ dbl sides'],['dashed','┄ dashed'],['blocky','▛ blocks'],['ascii','+ ascii'],['open','  corners only'],['nob','  no box']];
-const BOX_DEF = { corners:'round', title:'tab', pos:'left', tcase:'upper', frame:'diag', pal:'auto', c1:'#ff2fa8', c2:'#9d5cff', stops:null, dim:35, titleCol:'grad', bg:'none', pad:1 };
+const BOX_DEF = { corners:'round', title:'tab', pos:'left', tcase:'upper', frame:'diag', pal:'auto', tpick:'#e8eaf6', c1:'#ff2fa8', c2:'#9d5cff', stops:null, dim:35, titleCol:'grad', bg:'none', pad:1 };
 const BAR_DEF = { shape:'block', fill:'across', empty:'shade', c1:'', c2:'', width:16, label:'left' };
 const KEY_DEF = { anim:'off', split:'off', seed:7, style:'chevron', k1:'#2a1745', k2:'#10283d', key:'#29f0ff', ver:'segment' };
 const GLOBAL_DEF = { stops:['#ff2fa8','#9d5cff','#29f0ff'], font:'Share Tech Mono', palette:'sprawl', arrows:'prox', graph:'off', comms:'solid', glow:0, scan:0, mapbg:'#07070d', zoom:100 };
 const fresh = () => ({ g:{ ...GLOBAL_DEF }, box:{ ...BOX_DEF }, bar:{ ...BAR_DEF }, key:{ ...KEY_DEF }, boxes:{}, bars:{} });
 let S = fresh();
 try { const v = JSON.parse(localStorage.getItem('uiLab2') || 'null'); if (v && v.g) S = { ...fresh(), ...v, g:{ ...GLOBAL_DEF, ...v.g }, box:{ ...BOX_DEF, ...v.box }, bar:{ ...BAR_DEF, ...v.bar }, key:{ ...KEY_DEF, ...v.key } }; } catch (e) {}
+for (const o of [S.box, ...Object.values(S.boxes)]) if (['white','accent','c1'].includes(o.titleCol)){ o.tpick = o.titleCol === 'accent' ? '#29f0ff' : '#e8eaf6'; o.titleCol = 'pick'; }   // older settings
 let SEL = 'Global';
 const boxOf = id => ({ ...S.box, ...(S.boxes[id] || {}) });
 const barOf = id => ({ ...S.bar, ...(S.bars[id] || {}) });
@@ -206,7 +207,8 @@ function buildKnobs(){
     K.append(seg('Title style', TITLES.map(t => [t[0], t[1]]), () => get('title'), set('title'), ov('title'), clr('title')));
     K.append(seg('Title position', [['left','left'],['center','centre'],['right','right']], () => get('pos'), set('pos'), ov('pos'), clr('pos')));
     K.append(seg('Title case', [['upper','UPPER'],['lower','lower'],['cap','Title'],['spaced','S P A C E D']], () => get('tcase'), set('tcase'), ov('tcase'), clr('tcase')));
-    K.append(seg('Title colour', [['grad','gradient'],['frame','like the frame'],['white','white'],['accent','cyan'],['c1','first colour'],['inverse','inverse']], () => get('titleCol'), set('titleCol'), ov('titleCol'), clr('titleCol')));
+    K.append(seg('Title colour', [['grad','gradient'],['frame','like the frame'],['pick','my colour'],['inverse','inverse']], () => get('titleCol'), set('titleCol'), ov('titleCol'), clr('titleCol')));
+    if (get('titleCol') === 'pick') K.append(colors('Title colour', [['', () => get('tpick'), set('tpick')]], ov('tpick'), clr('tpick')));
     K.append(seg('Corners and lines', CORNERS, () => get('corners'), set('corners'), ov('corners'), clr('corners')));
     K.append(seg('Frame colour', [['flat','flat grey'],['solid','one colour'],['diag','gradient ↘'],['horiz','gradient →'],['vert','gradient ↓'],['ring','around the box'],['glowtop','bright top only']], () => get('frame'), set('frame'), ov('frame'), clr('frame')));
     K.append(range('Frame dim', 0, 85, () => get('dim'), v => set('dim')(v), '%', ov('dim'), clr('dim')));
@@ -308,8 +310,7 @@ function box(i, id, x0, y0, w, h, title, extra){
   const ty = T[2] === 'under' ? y0+1 : y0;
   parts.forEach((p, n) => {
     const t0 = (x-x0)/(x1-x0), t1 = (x+p.length-x0)/(x1-x0);
-    const tcol = t => b.titleCol === 'white' ? hex('#e8eaf6') : b.titleCol === 'accent' ? hex(P.neon) : b.titleCol === 'frame' ? edge(x0 + Math.round(t*(x1-x0)), y0) :
-      b.titleCol === 'c1' ? C(st[0]) : b.titleCol === 'inverse' ? hex('#000000') : light(b.frame === 'flat' ? hex(P.neon) : along(st, t), .15);
+    const tcol = t => b.titleCol === 'pick' ? C(b.tpick) : b.titleCol === 'frame' ? edge(x0 + Math.round(t*(x1-x0)), y0) : b.titleCol === 'inverse' ? hex('#000000') : light(b.frame === 'flat' ? hex(P.neon) : along(st, t), .15);
     const sub = n > 0;
     const c1 = sub ? dark(tcol(t0), .25) : tcol(t0), c2 = sub ? dark(tcol(t1), .25) : tcol(t1);
     const ibg = b.titleCol === 'inverse' || ['fill','pill','wedge'].includes(T[2]) ? dark(along(st, t0), b.titleCol === 'inverse' ? .05 : .5) : null;
