@@ -22,6 +22,7 @@ header p{margin:0;color:var(--muted);font-size:12px;flex:1 1 300px;min-width:0}
 .screen{background:#000;border:1px solid var(--edge);border-radius:6px;padding:6px;min-width:0}
 canvas{display:block;width:100%;height:auto;cursor:pointer}
 .hint{font-size:12px;color:var(--faint)}
+.legend{display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline;font-size:15px}.legend span{display:inline-flex;flex-direction:column;align-items:center;line-height:1.1}.legend i{font-style:normal;font-size:9px;color:var(--faint)}.legend .lt{font-size:11px;color:var(--muted);flex-direction:row;margin-right:4px}
 .panel{display:grid;gap:10px;max-height:calc(100vh - 90px);overflow-y:auto;padding-right:4px;min-width:0;scrollbar-width:thin;scrollbar-color:var(--edge) transparent}
 .els{display:flex;flex-wrap:wrap;gap:4px;position:sticky;top:0;background:var(--bg);padding-bottom:6px;z-index:2}
 .els button{font:12px var(--mono);color:var(--muted);background:#0a0b16;border:1px solid var(--edge);border-radius:12px;padding:3px 9px;cursor:pointer}
@@ -76,6 +77,7 @@ textarea{font:11px/1.35 var(--mono);color:var(--lime);background:#05060c;border:
   <div class="main">
     <div class="stage">
       <div class="screen"><canvas id="cv" width="1248" height="720" aria-label="Preview of the game screen with the chosen UI settings"></canvas></div>
+      <div class="legend" id="legend" aria-label="Arrow colour by distance"></div>
       <div class="hint" id="hint">Click a box, a bar or the key bar to select it.</div>
     </div>
     <div class="panel">
@@ -133,7 +135,7 @@ const CORNERS = [['square','┌ square'],['round','╭ rounded'],['heavy','┏ h
 const BOX_DEF = { corners:'round', title:'slash', pos:'right', tcase:'upper', frame:'vert', pal:'auto', tpick:'#e8eaf6', bgpick:'#000000', bgstops:['#1c0b2e','#061a24'], bgamt:2, bgdir:'diag', c1:'#ff2fa8', c2:'#9d5cff', stops:null, dim:18, titleCol:'grad', bg:'none', pad:1 };
 const BAR_DEF = { stress:'#ff0000', shape:'para', fill:'fill', empty:'ghost', c1:'', c2:'', width:20, label:'left' };
 const KEY_DEF = { anim:'off', split:'off', seed:1, style:'dissolve', k1:'#191843', k2:'#10283d', key:'#29f0ff', ver:'plain' };
-const GLOBAL_DEF = { stops:['#0055aa','#0079ab'], font:'Share Tech Mono', palette:'custom', arrows:'prox', graph:'braille', comms:'fade', glow:2, scan:5, mapbg:'#000000', zoom:100 };
+const GLOBAL_DEF = { prox:['#ff2fa8','#9d5cff','#2f7bff'], proxNear:2, proxFar:18, stops:['#0055aa','#0079ab'], font:'Share Tech Mono', palette:'custom', arrows:'prox', graph:'braille', comms:'fade', glow:2, scan:5, mapbg:'#000000', zoom:100 };
 const fresh = () => ({ g:{ ...GLOBAL_DEF }, box:{ ...BOX_DEF }, bar:{ ...BAR_DEF }, key:{ ...KEY_DEF }, boxes:{}, bars:{} });
 let S = fresh();
 try { const v = JSON.parse(localStorage.getItem('uiLab2') || 'null'); if (v && v.g) S = { ...fresh(), ...v, g:{ ...GLOBAL_DEF, ...v.g }, box:{ ...BOX_DEF, ...v.box }, bar:{ ...BAR_DEF, ...v.bar }, key:{ ...KEY_DEF, ...v.key } }; } catch (e) {}
@@ -268,6 +270,9 @@ function buildKnobs(){
     K.append(seg('Font', [['Share Tech Mono','Share Tech'],['Nova Mono','Nova'],['Intel One Mono','Intel One'],['JetBrains Mono','JetBrains'],['VT323','VT323']], () => g.font, set('font')));
     K.append(seg('Newest message', [['solid','solid'],['grad','gradient'],['fade','older lines fade'],['glow','glowing']], () => g.comms, set('comms')));
     K.append(seg('Arrows in SURROUNDINGS', [['plain','plain'],['prox','by distance']], () => g.arrows, set('arrows')));
+    K.append(stopsEditor('Distance gradient (near → far)', () => g.prox, v => g.prox = v));
+    K.append(range('Nearest colour up to', 0, 10, () => g.proxNear, v => g.proxNear = v, ' cells'));
+    K.append(range('Farthest colour from', 4, 40, () => g.proxFar, v => g.proxFar = v, ' cells'));
     K.append(seg('Trace graph (JOB)', [['off','off'],['blocks','▁▃▅ blocks'],['braille','⣀⣤ braille'],['dots','· dots'],['line','╱╲ line']], () => g.graph, set('graph')));
     K.append(range('Neon glow', 0, 12, () => g.glow, v => g.glow = v, ''));
     K.append(range('Scanlines', 0, 60, () => g.scan, v => g.scan = v, '%'));
@@ -394,7 +399,12 @@ function bar(x,y,id,v,m,lock){
 const rgbToHex = a => '#' + a.map(v => Math.round(v).toString(16).padStart(2,'0')).join('');
 
 // ---- the scene ----
-const prox = d => { const t = Math.max(0,Math.min(1,(d-2)/16)); return t < .5 ? mix(hex(P.hot),hex(P.violet),t*2) : mix(hex(P.violet),hex(P.blue),(t-.5)*2); };
+// arrow colour by distance (TW-046/073): the distance gradient's stops from 'near' (and closer) to 'far' (and further)
+const prox = d => along(S.g.prox, (d - S.g.proxNear) / Math.max(1, S.g.proxFar - S.g.proxNear));
+function legend(){ // the arrow colours, 1 to 24 cells away
+  const el = $('legend'); if (!el) return; let h = '<span class="lt">distance</span>';
+  for (let d = 1; d <= 24; d++) h += `<span title="${d} cells away" style="color:${rgb(prox(d))}">↗<i>${d}</i></span>`;
+  el.innerHTML = h; }
 const TRACE = [2,3,3,5,8,12,15,19,22,24,23,21,18,16,13,11,9,8,6,5,4,4,3,2,2,1,1,0,0,0];
 function scene(){
   clear(); for (const k in RECTS) delete RECTS[k];
@@ -573,7 +583,7 @@ function paint(){
 // antialiased once at the real size instead of being drawn small and stretched.
 function fit(){ const w = Math.max(300, Math.round(cv.clientWidth * (window.devicePixelRatio || 1)));
   if (cv.width !== w){ cv.width = w; cv.height = Math.round(w * ROWS*CH / (COLS*CW)); } }
-function draw(){ fit(); scene(); paint(); }
+function draw(){ fit(); scene(); paint(); legend(); }
 new ResizeObserver(() => draw()).observe(cv);
 
 cv.addEventListener('click', e => {
