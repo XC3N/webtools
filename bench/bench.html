@@ -195,6 +195,7 @@ const catOf = i => i.kind === 'bug' ? 'BG' : i.kind === 'tweak' ? 'TW' : CATS.so
 const waitsForYou = i => { if (i.done || !i.ref || i.sec === 'planned' || i.sec === 'doing') return false;   // v54 (grdc): planned items wait for Claude's release, not for you
   if (i.sec === 'backlog' && !i.needs) return false;   // a backlog item is yours only while Claude has marked it 'needs input' (Sprawler ID-055)
   if (i.needs){ const T = threadOf(i); return !T.length || T[T.length - 1].by === 'claude'; }   // marked: yours until you answer, whoever opened it
+  if (!/^TS-/.test(i.ref) && items.some(k => k.parent === i.id && /^TS-/.test(k.ref || '') && waitsForYou(k))) return true;   // an open test under it waits for you, so the item does too (Sprawler TW-077)
   const T = threadOf(i); return T.length ? T[T.length - 1].by === 'claude' && (ownerOf(i) || me) === me : /^TS-/.test(i.ref); };
 let yoursOnly = false; try { yoursOnly = localStorage.getItem('benchYours') === '1'; } catch (e) {}
 // a click on a count in the stats line shows only those items (again: all)
@@ -288,7 +289,7 @@ function renderList(){
         ${editing && editing.id === i.id && !editing.edit && !editing.title ? nedBox(i) : ''}${kids(i).length ? `<ul class="kids">${kids(i).map(k => li(k)).join('')}</ul>` : ''}</li>`;
   list.innerHTML = secs.map(sec => {
     const grouped = true, its = items.filter(i => secOf(i) === sec && matches(i) && !nests(i)).sort(grouped ? (a, b) => areaIx(a) - areaIx(b) || byOrder(a, b) : byOrder);
-    if (!its.length && sec !== 'planned') return '';
+    if (!its.length && (sec !== 'planned' || filterQ || yoursOnly || statF)) return '';   // Queued shows empty only when nothing is filtered (Sprawler TW-076)
     if (!its.length) return `<section data-sec="planned" class="${closed[sec] ? 'closed' : ''}"><h2><button class="fold" aria-expanded="${!closed[sec]}"><span class="chev">▾</span>${esc(secName(sec))}<span class="n">0</span></button></h2><div class="state">Nothing queued.</div></section>`;   // v55: Queued always shows, even empty
     const why = '';                                   // (no description lines: FYR doesn't need them)
     let body;
