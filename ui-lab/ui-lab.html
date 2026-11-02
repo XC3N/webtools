@@ -135,7 +135,7 @@ const CORNERS = [['square','┌ square'],['round','╭ rounded'],['heavy','┏ h
 const BOX_DEF = { corners:'round', title:'slash', pos:'right', tcase:'upper', frame:'vert', pal:'auto', tpick:'#e8eaf6', bgpick:'#000000', bgstops:['#1c0b2e','#061a24'], bgamt:2, bgdir:'diag', c1:'#ff2fa8', c2:'#9d5cff', stops:null, dim:18, titleCol:'grad', bg:'none', pad:1 };
 const BAR_DEF = { stress:'#ff0000', shape:'para', fill:'fill', empty:'ghost', c1:'', c2:'', width:20, label:'left' };
 const KEY_DEF = { anim:'off', split:'off', seed:1, style:'dissolve', k1:'#191843', k2:'#10283d', key:'#29f0ff', ver:'plain' };
-const GLOBAL_DEF = { prox:['#ff2fa8','#9d5cff','#2f7bff'], proxNear:2, proxFar:18, stops:['#0055aa','#0079ab'], font:'Share Tech Mono', palette:'custom', arrows:'prox', graph:'braille', comms:'fade', glow:2, scan:5, mapbg:'#000000', zoom:100 };
+const GLOBAL_DEF = { prox:['#ff00ff','#00ffff'], proxNear:2, proxFar:18, stops:['#0055aa','#0079ab'], font:'Share Tech Mono', palette:'custom', arrows:'prox', graph:'braille', comms:'fade', glow:2, scan:5, mapbg:'#000000', zoom:100 };
 const fresh = () => ({ g:{ ...GLOBAL_DEF }, box:{ ...BOX_DEF }, bar:{ ...BAR_DEF }, key:{ ...KEY_DEF }, boxes:{}, bars:{} });
 let S = fresh();
 try { const v = JSON.parse(localStorage.getItem('uiLab2') || 'null'); if (v && v.g) S = { ...fresh(), ...v, g:{ ...GLOBAL_DEF, ...v.g }, box:{ ...BOX_DEF, ...v.box }, bar:{ ...BAR_DEF, ...v.bar }, key:{ ...KEY_DEF, ...v.key } }; } catch (e) {}
@@ -597,7 +597,7 @@ $('foldAll').onclick = () => { document.querySelectorAll('#knobs fieldset').forE
 $('openAll').onclick = () => { shut = {}; saveShut(); buildKnobs(); };
 $('copy').onclick = () => { const t = $('code'), m = $('msg');
   navigator.clipboard.writeText(t.value).then(() => m.textContent = 'Copied. Paste it to Claude.', () => { t.select(); m.textContent = 'Selected: press Ctrl+C.'; }); };
-$('reset').onclick = () => { S = fresh(); SEL = 'Global'; save(); buildKnobs(); draw(); $('msg').textContent = 'Back to the game (0.16.29).'; };
+$('reset').onclick = () => { S = fresh(); SEL = 'Global'; save(); buildKnobs(); draw(); $('msg').textContent = 'Back to the game (0.16.35).'; };
 
 // helpers the picker uses (as in VJif)
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
