@@ -465,7 +465,12 @@ function paint(){
   const r = RECTS[SEL] || RECTS[SEL.replace(' bar','') + ' bar'];
   if (r){ g.save(); g.strokeStyle = 'rgba(255,255,255,.75)'; g.setLineDash([6*s,4*s]); g.lineWidth = 1.5*s; g.strokeRect(r[0]*cw-2*s, r[1]*ch-2*s, r[2]*cw+4*s, r[3]*ch+4*s); g.restore(); }
 }
-function draw(){ scene(); paint(); }
+// The canvas is drawn at the size it's shown (times the screen's pixel ratio), so curves and lines are
+// antialiased once at the real size instead of being drawn small and stretched.
+function fit(){ const w = Math.max(300, Math.round(cv.clientWidth * (window.devicePixelRatio || 1)));
+  if (cv.width !== w){ cv.width = w; cv.height = Math.round(w * ROWS*CH / (COLS*CW)); } }
+function draw(){ fit(); scene(); paint(); }
+new ResizeObserver(() => draw()).observe(cv);
 
 cv.addEventListener('click', e => {
   const b = cv.getBoundingClientRect(), x = Math.floor((e.clientX-b.left)/b.width*COLS), y = Math.floor((e.clientY-b.top)/b.height*ROWS);
