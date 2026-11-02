@@ -1,0 +1,297 @@
+<title>Sprawler UI Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nova+Mono&family=Intel+One+Mono:wght@400;600&family=Chakra+Petch:wght@500;700&display=swap">
+<style>
+/* Layout: the game screen on top (as big as the page allows), the knobs in a grid of small groups below it. */
+:root{
+  --bg:#07070d; --panel:#0e1020; --edge:#22264a; --ink:#c8cbe0; --muted:#7a80a8; --faint:#4a5070;
+  --neon:#29f0ff; --hot:#ff2fa8; --lime:#b6ff3b;
+  --display:"Chakra Petch",ui-sans-serif,system-ui,sans-serif; --mono:"Share Tech Mono",ui-monospace,"DejaVu Sans Mono",monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{font:14px/1.45 var(--mono)}
+.wrap{max-width:1320px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+h1{margin:0;font:700 22px/1.1 var(--display);letter-spacing:.04em;text-transform:uppercase;text-wrap:balance}
+h1 b{background:linear-gradient(90deg,var(--hot),#9d5cff 50%,var(--neon));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:0;color:var(--muted);font-size:13px;flex:1 1 320px;min-width:0}
+.screen{background:#000;border:1px solid var(--edge);border-radius:6px;padding:6px;min-width:0}
+canvas{display:block;width:100%;height:auto;image-rendering:auto}
+.knobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+fieldset{margin:0;border:1px solid var(--edge);border-radius:6px;padding:8px 10px 10px;background:var(--panel);min-width:0;display:grid;gap:6px}
+legend{padding:0 6px;font:500 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start}
+.seg button{font:13px var(--mono);color:var(--ink);background:#0a0b16;border:1px solid var(--edge);border-radius:4px;padding:4px 8px;cursor:pointer}
+.seg button:hover{border-color:var(--muted)}
+.seg button[aria-pressed="true"]{border-color:var(--neon);color:var(--neon);background:#0b2230}
+.seg button:focus-visible,select:focus-visible,input:focus-visible,.act:focus-visible{outline:2px solid var(--neon);outline-offset:1px}
+label.row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+input[type=range]{flex:1;min-width:0;accent-color:var(--hot)}
+output{font-variant-numeric:tabular-nums;color:var(--ink);min-width:3ch;text-align:right}
+select{font:13px var(--mono);color:var(--ink);background:#0a0b16;border:1px solid var(--edge);border-radius:4px;padding:4px 6px;max-width:100%}
+.swatch{height:8px;border-radius:2px;margin-top:2px}
+.out{display:grid;gap:8px;grid-template-columns:minmax(0,1fr) auto;align-items:start}
+textarea{font:12px/1.4 var(--mono);color:var(--lime);background:#05060c;border:1px solid var(--edge);border-radius:6px;padding:8px;min-height:64px;resize:vertical;width:100%;box-sizing:border-box}
+.acts{display:flex;flex-direction:column;gap:6px}
+.act{font:500 13px var(--display);letter-spacing:.06em;text-transform:uppercase;color:#000;background:var(--neon);border:0;border-radius:4px;padding:8px 14px;cursor:pointer}
+.act.alt{background:transparent;color:var(--ink);border:1px solid var(--edge)}
+#msg{font-size:12px;color:var(--lime);min-height:1.2em}
+@media (max-width:600px){.out{grid-template-columns:minmax(0,1fr)}.acts{flex-direction:row;flex-wrap:wrap}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><b>Sprawler</b> UI Lab</h1>
+    <p>The game's 104 × 30 screen with every UI knob loose. Mix frames, titles, bars and the key bar, then copy the settings line into the bench or the chat.</p>
+  </header>
+  <div class="screen"><canvas id="cv" width="1248" height="720" aria-label="Preview of the game screen with the chosen UI settings"></canvas></div>
+  <div class="knobs" id="knobs"></div>
+  <div class="out">
+    <textarea id="code" readonly aria-label="Settings line to send to Claude"></textarea>
+    <div class="acts"><button class="act" id="copy" type="button">Copy settings</button><button class="act alt" id="reset" type="button">Back to the game's look</button><span id="msg"></span></div>
+  </div>
+</div>
+
+<script>
+// ---- palette: the game's own colours (render/level_view.gd) ----
+const P = { hot:'#ff2fa8', neon:'#29f0ff', lime:'#b6ff3b', amber:'#ffb627', violet:'#9d5cff', blue:'#2f7bff', red:'#ff5d5d',
+  ui:'#5b6390', text:'#c8cbe0', dim:'#4a5070', wall:'#2b2f45', wallbg:'#14162a', street:'#3a3f58', streetbg:'#07070d', floor:'#4d5a66', floorbg:'#0d0f14' };
+// frame palettes: per box [RUNNER, JOB, SURROUNDINGS, ROLL, COMMS], each a pair (top-left, bottom-right)
+const PALETTES = {
+  sprawl:  { name:'Sprawl (current)', pairs:[[P.hot,P.violet],[P.amber,P.hot],[P.neon,P.violet],[P.lime,P.neon],[P.violet,P.neon]] },
+  neon:    { name:'One neon chain', chain:[P.hot,P.violet,P.blue,P.neon,P.lime,P.amber] },
+  vice:    { name:'vice', all:['#5ee7df','#b490ca'] },
+  passion: { name:'passion', all:['#f43b47','#453a94'] },
+  retro:   { name:'retro', all:['#3f51b1','#5a55ae','#7b5fac','#8f6aae','#a86aa4','#cc6b8e','#f18271','#f3a469','#f7c978'] },
+  summer:  { name:'summer', all:['#fdbb2d','#22c1c3'] },
+  atlas:   { name:'atlas', all:['#feac5e','#c779d0','#4bc0c8'] },
+  mind:    { name:'mind', all:['#473b7b','#3584a7','#30d2be'] },
+  mono:    { name:'Mono cyan', all:[P.neon,P.neon] },
+};
+const BOXES = ['RUNNER','JOB','SURROUNDINGS','ROLL','COMMS'];
+
+const DEFAULTS = { corners:'round', title:'tab', frame:'diag', dim:35, titleCol:'grad', palette:'sprawl', bars:'grad', empty:'shade',
+  keybar:'chevron', comms:'solid', boxbg:'none', graph:'off', font:'Share Tech Mono', arrows:'prox' };
+let S = { ...DEFAULTS };
+try { const v = JSON.parse(localStorage.getItem('uiLab') || 'null'); if (v) S = { ...DEFAULTS, ...v }; } catch (e) {}
+
+const KNOBS = [
+  ['corners','Corners',[['square','┌ square'],['round','╭ rounded'],['heavy','┏ heavy'],['double','╔ double']]],
+  ['title','Box titles',[['tab','┐TAB┌'],['plain','─ PLAIN ─'],['bracket','┤BRACKET├'],['block','█ BLOCK'],['under','UNDER']]],
+  ['frame','Frame colour',[['flat','flat grey'],['solid','one colour'],['diag','gradient ↘'],['horiz','gradient →'],['vert','gradient ↓']]],
+  ['titleCol','Title colour',[['grad','gradient'],['frame','like the frame'],['white','white'],['accent','cyan']]],
+  ['bars','Bars',[['solid','█ solid'],['grad','█ gradient'],['fill','█ fill gradient'],['meter','■ meter'],['thin','▬ thin'],['dots','⣿ dots']]],
+  ['empty','Empty part',[['shade','░'],['dot','·'],['square','■ dim'],['none','none']]],
+  ['keybar','Key bar',[['brackets','[C]har'],['chevron','▶ segments'],['tabs','┐C┌ tabs']]],
+  ['comms','Newest message',[['solid','solid'],['grad','gradient']]],
+  ['boxbg','Box background',[['none','black'],['tint','tinted'],['panel','panel navy']]],
+  ['graph','Trace graph (JOB)',[['off','off'],['blocks','▁▃▅ blocks'],['braille','⣀⣤ braille']]],
+  ['arrows','Arrows in SURROUNDINGS',[['plain','plain'],['prox','by distance']]],
+  ['font','Font',[['Share Tech Mono','Share Tech'],['Nova Mono','Nova'],['Intel One Mono','Intel One']]],
+];
+
+// ---- knobs UI ----
+const knobs = document.getElementById('knobs');
+function buildKnobs(){
+  knobs.innerHTML = '';
+  for (const [key, label, opts] of KNOBS){
+    const fs = document.createElement('fieldset'); fs.innerHTML = `<legend>${label}</legend>`;
+    const seg = document.createElement('div'); seg.className = 'seg';
+    for (const [v, t] of opts){ const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.id = `k-${key}-${v.replace(/\W/g,'')}`;
+      b.setAttribute('aria-pressed', S[key] === v); b.onclick = () => { S[key] = v; save(); buildKnobs(); draw(); }; seg.append(b); }
+    fs.append(seg);
+    if (key === 'frame'){ const r = document.createElement('label'); r.className = 'row'; r.innerHTML = `dim <input id="k-dim" type="range" min="0" max="80" value="${S.dim}"><output>${S.dim}%</output>`;
+      r.querySelector('input').oninput = e => { S.dim = +e.target.value; r.querySelector('output').textContent = S.dim + '%'; save(); draw(); }; fs.append(r); }
+    knobs.append(fs);
+  }
+  const fs = document.createElement('fieldset'); fs.innerHTML = '<legend>Palette</legend>';
+  const sel = document.createElement('select'); sel.id = 'k-palette'; sel.setAttribute('aria-label','Frame palette');
+  for (const [k, p] of Object.entries(PALETTES)){ const o = document.createElement('option'); o.value = k; o.textContent = p.name; o.selected = S.palette === k; sel.append(o); }
+  sel.onchange = e => { S.palette = e.target.value; save(); buildKnobs(); draw(); };
+  const sw = document.createElement('div'); sw.className = 'swatch'; sw.style.background = `linear-gradient(90deg,${paletteStops().join(',')})`;
+  fs.append(sel, sw); knobs.prepend(fs);
+}
+function paletteStops(){ const p = PALETTES[S.palette]; return p.all || p.chain || p.pairs.flat(); }
+function save(){ try { localStorage.setItem('uiLab', JSON.stringify(S)); } catch (e) {} document.getElementById('code').value = 'UI-LAB ' + JSON.stringify(S); }
+
+// ---- colour helpers ----
+const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+const rgb = a => `rgb(${a.map(v => Math.round(Math.max(0,Math.min(255,v)))).join(',')})`;
+const mix = (a,b,t) => a.map((v,i) => v + (b[i]-v)*t);
+const dark = (a,k) => a.map(v => v*(1-k));
+const light = (a,k) => a.map(v => v + (255-v)*k);
+function along(stops, t){ // a colour along a list of stops, t in 0..1
+  const c = stops.map(hex); if (c.length === 1) return c[0];
+  const f = Math.max(0,Math.min(1,t)) * (c.length-1), i = Math.min(c.length-2, Math.floor(f)); return mix(c[i], c[i+1], f-i);
+}
+function boxStops(i){ const p = PALETTES[S.palette];
+  if (p.pairs) return p.pairs[i];
+  if (p.chain){ const n = p.chain.length; return [p.chain[i % n], p.chain[(i+1) % n]]; }
+  return p.all; }
+
+// ---- the cell grid ----
+const COLS = 104, ROWS = 30, CW = 12, CH = 24, K = 1;
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const cells = []; // {ch, fg, bg, kind}
+function clear(){ cells.length = 0; for (let i = 0; i < COLS*ROWS; i++) cells.push({ ch:' ', fg:[255,255,255], bg:[0,0,0] }); }
+function put(x,y,ch,fg,bg){ if (x<0||y<0||x>=COLS||y>=ROWS) return; const c = cells[y*COLS+x]; c.ch = ch; c.fg = typeof fg === 'string' ? hex(fg) : fg; if (bg) c.bg = typeof bg === 'string' ? hex(bg) : bg; }
+function text(x,y,s,fg,bg){ [...s].forEach((ch,k) => put(x+k,y,ch,fg,bg)); }
+function grad(x,y,s,c1,c2,bg){ const a = [...s]; a.forEach((ch,k) => put(x+k,y,ch,mix(typeof c1==='string'?hex(c1):c1, typeof c2==='string'?hex(c2):c2, k/Math.max(1,a.length-1)),bg)); }
+function fillBg(x0,y0,w,h,bg){ for (let y=y0;y<y0+h;y++) for (let x=x0;x<x0+w;x++) put(x,y,' ',[255,255,255],bg); }
+
+// box drawing: the corner / line set per style
+const SETS = { square:{h:'─',v:'│',tl:'┌',tr:'┐',bl:'└',br:'┘',ot:'┐',ct:'┌',lt:'┤',rt:'├'},
+  round:{h:'─',v:'│',tl:'╭',tr:'╮',bl:'╰',br:'╯',ot:'┐',ct:'┌',lt:'┤',rt:'├'},
+  heavy:{h:'━',v:'┃',tl:'┏',tr:'┓',bl:'┗',br:'┛',ot:'┓',ct:'┏',lt:'┫',rt:'┣'},
+  double:{h:'═',v:'║',tl:'╔',tr:'╗',bl:'╚',br:'╝',ot:'╗',ct:'╔',lt:'╡',rt:'╞'} };
+
+function box(i, x0, y0, w, h, title){
+  const st = boxStops(i), x1 = x0+w-1, y1 = y0+h-1, span = (x1-x0)+(y1-y0), Z = SETS[S.corners], dim = S.dim/100;
+  const raw = (x,y) => S.frame === 'flat' ? hex(P.ui) : S.frame === 'solid' ? hex(st[0]) :
+    along(st, S.frame === 'horiz' ? (x-x0)/(x1-x0) : S.frame === 'vert' ? (y-y0)/(y1-y0) : ((x-x0)+(y-y0))/span);
+  const edge = (x,y) => S.frame === 'flat' ? raw(x,y) : dark(raw(x,y), dim);
+  if (S.boxbg !== 'none') fillBg(x0+1, y0+1, w-2, h-2, S.boxbg === 'panel' ? '#0a0b14' : dark(along(st,.5), .93));
+  for (let x=x0+1;x<x1;x++){ put(x,y0,Z.h,edge(x,y0)); put(x,y1,Z.h,edge(x,y1)); }
+  for (let y=y0+1;y<y1;y++){ put(x0,y,Z.v,edge(x0,y)); put(x1,y,Z.v,edge(x1,y)); }
+  put(x0,y0,Z.tl,edge(x0,y0)); put(x1,y0,Z.tr,edge(x1,y0)); put(x0,y1,Z.bl,edge(x0,y1)); put(x1,y1,Z.br,edge(x1,y1));
+  let x = x0 + 2;
+  for (const part of title.split('   ').filter(Boolean)){
+    const t0 = (x-x0)/(x1-x0), t1 = (x+part.length-x0)/(x1-x0);
+    const tc1 = S.titleCol === 'white' ? hex('#e8eaf6') : S.titleCol === 'accent' ? hex(P.neon) : S.titleCol === 'frame' ? edge(x,y0) : light(S.frame==='flat'?hex(P.neon):along(st,t0), .15);
+    const tc2 = S.titleCol === 'white' ? hex('#e8eaf6') : S.titleCol === 'accent' ? hex(P.neon) : S.titleCol === 'frame' ? edge(x+part.length,y0) : light(S.frame==='flat'?hex(P.neon):along(st,t1), .15);
+    if (S.title === 'tab'){ put(x,y0,Z.ot,edge(x,y0)); grad(x+1,y0,part,tc1,tc2); put(x+1+part.length,y0,Z.ct,edge(x+1+part.length,y0)); x += part.length+3; }
+    else if (S.title === 'bracket'){ put(x,y0,Z.lt,edge(x,y0)); grad(x+1,y0,part,tc1,tc2); put(x+1+part.length,y0,Z.rt,edge(x+1+part.length,y0)); x += part.length+3; }
+    else if (S.title === 'block'){ const bg = dark(along(st,t0), .45); grad(x,y0,' '+part+' ',tc1,tc2,bg); x += part.length+3; }
+    else if (S.title === 'under'){ grad(x,y0+1,part,tc1,tc2); x += part.length+3; }
+    else { grad(x,y0,' '+part+' ',tc1,tc2); x += part.length+3; }
+  }
+  return S.title === 'under' ? 1 : 0; // rows the title takes inside
+}
+
+function bar(x,y,label,v,m,c1,c2,lock){
+  text(x,y,label,P.text); const W = 16, f = Math.round(W*v/m), lk = Math.round(W*(lock||0)/m);
+  for (let i=0;i<W;i++){
+    const X = x+4+i;
+    if (i >= W-lk){ put(X,y,'▓',P.amber); continue; }
+    if (i < f){
+      const c = S.bars === 'solid' ? hex(c2) : S.bars === 'fill' ? mix(hex(c1),hex(c2),i/Math.max(1,f-1)) : mix(hex(c1),hex(c2),i/(W-1));
+      put(X,y, S.bars === 'meter' ? '■' : S.bars === 'thin' ? '▬' : S.bars === 'dots' ? '⣿' : '█', c);
+    } else {
+      const e = dark(hex(P.ui),.3);
+      put(X,y, S.empty === 'shade' ? '░' : S.empty === 'dot' ? '·' : S.empty === 'square' ? '■' : ' ', S.empty === 'square' ? dark(hex(P.ui),.55) : e);
+    }
+  }
+  text(x+21,y,`${v}/${m}`,P.text);
+}
+
+// ---- the scene ----
+const prox = d => { const t = Math.max(0,Math.min(1,(d-2)/16)); return t < .5 ? mix(hex(P.hot),hex(P.violet),t*2) : mix(hex(P.violet),hex(P.blue),(t-.5)*2); };
+const TRACE = [2,3,3,5,8,12,15,19,22,24,23,21,18,16,13,11,9,8,6,5,4,4,3,2,2,1,1,0,0,0];
+
+function scene(){
+  clear();
+  const VW = 70, VH = 21;
+  // map: a street crossing with buildings, the runner, a ganger and a drone
+  for (let y=0;y<VH;y++) for (let x=0;x<VW;x++) put(x,y,'·',dark(hex(P.street),.0),P.streetbg);
+  const bld = (x0,y0,w,h,neon) => { for (let y=y0;y<y0+h;y++) for (let x=x0;x<x0+w;x++){ const edgeC = x===x0||y===y0||x===x0+w-1||y===y0+h-1;
+      put(x,y, edgeC?'▓':'.', edgeC?P.wall:P.floor, edgeC?P.wallbg:P.floorbg); }
+    if (neon) for (let x=x0+2;x<x0+w-2;x++) put(x,y0,'▓',neon,'#2a1030'); };
+  bld(2,1,20,8,P.hot); bld(27,1,14,8,P.neon); bld(46,1,21,8,null); bld(2,13,16,8,P.lime); bld(23,13,20,8,null); bld(48,13,19,8,P.violet);
+  put(12,8,'▣',P.amber,P.floorbg); put(34,8,'□',P.amber,P.floorbg); put(55,13,'▣',P.amber,P.floorbg); put(30,13,'▣',P.amber,P.floorbg);
+  for (let x=0;x<VW;x+=2) put(x,10,'─',hex('#6f7380'),P.streetbg);
+  for (let y=0;y<VH;y+=2){ if (cells[y*COLS+24].ch === '·') put(24,y,'│','#7a6a22',P.streetbg); }  // only on street cells
+  put(36,15,'≡',P.lime,P.floorbg); put(26,4,'≡',P.lime,P.floorbg);
+  put(31,10,'@',P.neon,P.streetbg); put(40,11,'♟',P.hot,P.streetbg); put(18,10,'Ж',hex('#8fb4ff'),P.streetbg);
+  // sidebar
+  const SX = 70, SW = 34;
+  let t = box(0,SX,0,SW,10,'RUNNER');
+  bar(SX+2,1+t,'HP',11,17,P.violet,P.hot); bar(SX+2,2+t,'PWR',12,12,P.neon,P.lime); bar(SX+2,3+t,'STA',14,18,P.blue,P.neon,2); bar(SX+2,4+t,'FAT',30,30,P.hot,P.violet);
+  text(SX+2,5+t,'Credits',P.text); text(SX+14,5+t,'50¢',P.neon); text(SX+2,6+t,'Street Cred',P.text); text(SX+14,6+t,'0',P.neon);
+  if (!t){ text(SX+2,7,'Day 1 · Turn 31',P.dim); text(SX+21,7,'weapon out',P.amber); text(SX+2,8,'BOD',P.ui); text(SX+6,8,'4',P.text); text(SX+9,8,'MND',P.ui); text(SX+13,8,'5',P.text); text(SX+16,8,'PRE',P.ui); text(SX+20,8,'3',P.text); }
+  t = box(1,SX,10,SW,6,'JOB');
+  text(SX+2,11+t,'Lift data, 2 terminals',P.text); text(SX+2,12+t,'Kade · 180¢ · 0/2',P.dim);
+  if (S.graph !== 'off'){
+    text(SX+2,13+t,'trace',P.ui);
+    const gx = SX+8, gw = 23, max = 24;
+    for (let i=0;i<gw;i++){ const v = TRACE[Math.floor(i*TRACE.length/gw)], c = mix(hex(P.blue),hex(P.hot),v/max);
+      if (S.graph === 'blocks'){ const lv = Math.round(v/max*8); put(gx+i,13+t, ' ▁▂▃▄▅▆▇█'[lv], c); }
+      else { const lv = Math.round(v/max*4); put(gx+i,13+t, ['⠀','⣀','⣤','⣶','⣿'][lv], c); } }
+  }
+  t = box(2,SX,16,SW,8,'SURROUNDINGS');
+  text(SX+2,17+t,'Ash Street & Vesper Avenue',P.text);
+  const arrow = (x,y,a,d) => put(x,y,a, S.arrows === 'prox' ? prox(d) : hex('#4f7f9a'));
+  arrow(SX+2,18+t,'↑',3); text(SX+4,18+t,'Kiln Avenue,',hex('#4f7f9a')); arrow(SX+17,18+t,'→',14); text(SX+19,18+t,'Old Mercer St',hex('#4f7f9a'));
+  put(SX+2,20+t,'♟',P.hot); text(SX+4,20+t,'ganger 9',P.text); text(SX+13,20+t,'hostile',hex(P.red));
+  put(SX+2,21+t,'Ж',hex('#8fb4ff')); text(SX+4,21+t,'drone 12',P.text); text(SX+13,21+t,'calm',P.dim);
+  if (!t){ arrow(SX+2,22,'↖',5); text(SX+4,22,'Moon Noodles',hex('#a8875a')); }
+  t = box(3,SX,24,SW,5,'ROLL');
+  text(SX+2,25+t,'ganger',P.neon); text(SX+2,26+t,'Brawl  BOD 4 + 2 = 6',P.text); if (!t) text(SX+2,27,'55% to hit, 1d6+1',P.lime);
+  // COMMS
+  t = box(4,0,21,70,8,'COMMS   H: history');
+  const old = dark(hex(P.text),.4);
+  text(2,22+t,'You draw your pipe.',old); text(2,23+t,'The ganger is sizing you up.',dark(hex(P.amber),.4));
+  text(2,24+t,'The drone deploys a taser.',dark(hex(P.amber),.4));
+  const last = 'An alarm trips. The ICE caught your data overflow: Monolith Corpsec has your signature.';
+  const cut = last.lastIndexOf(' ', 66), l1 = last.slice(0,cut), l2 = last.slice(cut+1);
+  if (S.comms === 'grad'){ grad(2,25+t,l1,P.red,P.hot); grad(2,26+t,l2.trim(),P.hot,P.violet); } else { text(2,25+t,l1,P.red); text(2,26+t,l2.trim(),P.red); }
+  // key bar
+  const y = 29, items = [['C','har'],['I','nv'],['O','pts'],['M','ap'],['H','ist']], KB = [hex('#2a1745'),hex('#10283d')];
+  let x = 0;
+  if (S.keybar === 'brackets'){ x = 1; for (const [k,r] of items){ text(x,y,'[',P.ui); put(x+1,y,k,P.neon); text(x+2,y,']',P.ui); text(x+3,y,r,P.text); x += 5+r.length; } text(COLS-1-17,y,'v0.16.28 · 14d0a4e',P.ui); }
+  else if (S.keybar === 'tabs'){ x = 1; const c = hex(P.ui); for (const [k,r] of items){ put(x,y,'┐',dark(c,.2)); put(x+1,y,k,P.neon); text(x+2,y,r,P.text); put(x+2+r.length,y,'┌',dark(c,.2)); x += 4+r.length; } grad(COLS-19,y,'v0.16.28 · 14d0a4e',light(hex(P.ui),.2),dark(hex(P.neon),.3)); }
+  else {
+    items.forEach(([k,r],i) => { const bg = mix(KB[0],KB[1],i/4); if (i>0){ put(x,y,'WEDGE_R',[0,0,0],bg); x++; }
+      put(x,y,' ',P.text,bg); put(x+1,y,k,P.neon,bg); text(x+2,y,r+' ',P.text,bg); x += 3+r.length; put(x,y,'WEDGE_R',bg,[0,0,0]); x++; });
+    const tag = ' v0.16.28 · 14d0a4e ', r = COLS-tag.length; grad(r,y,tag,light(hex(P.ui),.2),dark(hex(P.neon),.3),KB[1]); put(r-1,y,'WEDGE_L',KB[1],[0,0,0]);
+  }
+}
+
+// ---- painting: box and block glyphs drawn as shapes so they join exactly; letters from the font ----
+const LINES = { // up, right, down, left: 0 none, 1 light, 2 heavy, 3 double
+  '─':[0,1,0,1],'│':[1,0,1,0],'┌':[0,1,1,0],'┐':[0,0,1,1],'└':[1,1,0,0],'┘':[1,0,0,1],'├':[1,1,1,0],'┤':[1,0,1,1],
+  '━':[0,2,0,2],'┃':[2,0,2,0],'┏':[0,2,2,0],'┓':[0,0,2,2],'┗':[2,2,0,0],'┛':[2,0,0,2],'┣':[2,2,2,0],'┫':[2,0,2,2],
+  '═':[0,3,0,3],'║':[3,0,3,0],'╔':[0,3,3,0],'╗':[0,0,3,3],'╚':[3,3,0,0],'╝':[3,0,0,3],'╞':[1,3,1,0],'╡':[1,0,1,3] };
+const ROUND = { '╭':[0,1,1,0], '╮':[0,0,1,1], '╰':[1,1,0,0], '╯':[1,0,0,1] };
+function paint(){
+  const s = cv.width / (COLS*CW), cw = CW*s, ch = CH*s, lw = Math.max(1, Math.round(1.6*s));
+  g.fillStyle = '#000'; g.fillRect(0,0,cv.width,cv.height);
+  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = `${Math.round(ch*0.78)}px "${S.font}", "DejaVu Sans Mono", monospace`;
+  for (let y=0;y<ROWS;y++) for (let x=0;x<COLS;x++){
+    const c = cells[y*COLS+x], px = x*cw, py = y*ch, cx = px+cw/2, cy = py+ch/2;
+    g.fillStyle = rgb(c.bg); g.fillRect(px,py,cw+.5,ch+.5);
+    g.fillStyle = g.strokeStyle = rgb(c.fg);
+    const L = LINES[c.ch], R = ROUND[c.ch];
+    if (L){
+      const seg = (dx,dy,kind) => { const ex = cx+dx*cw/2, ey = cy+dy*ch/2;
+        if (kind === 3){ const o = lw*1.4; g.lineWidth = lw*.8; g.beginPath();
+          if (dx){ g.moveTo(cx,cy-o); g.lineTo(ex,cy-o); g.moveTo(cx,cy+o); g.lineTo(ex,cy+o); } else { g.moveTo(cx-o,cy); g.lineTo(cx-o,ey); g.moveTo(cx+o,cy); g.lineTo(cx+o,ey); } g.stroke(); return; }
+        g.lineWidth = kind === 2 ? lw*2 : lw; g.beginPath(); g.moveTo(cx - (dx? 0:0), cy); g.moveTo(cx,cy); g.lineTo(ex,ey); g.stroke(); };
+      g.lineCap = 'square'; [[0,-1],[1,0],[0,1],[-1,0]].forEach(([dx,dy],i) => { if (L[i]) seg(dx,dy,L[i]); });
+      continue;
+    }
+    if (R){ g.lineWidth = lw; g.lineCap = 'butt'; const r = Math.min(cw,ch)/2; g.beginPath();
+      const hx = R[1] ? 1 : -1, vy = R[2] ? 1 : -1; // where the strokes go
+      g.moveTo(cx + hx*cw/2, cy); g.lineTo(cx + hx*r, cy); g.arcTo(cx, cy, cx, cy + vy*r, r); g.lineTo(cx, cy + vy*ch/2); g.stroke(); continue; }
+    if (c.ch === 'WEDGE_R' || c.ch === 'WEDGE_L'){ g.beginPath(); if (c.ch === 'WEDGE_R'){ g.moveTo(px,py); g.lineTo(px+cw,cy); g.lineTo(px,py+ch); } else { g.moveTo(px+cw,py); g.lineTo(px,cy); g.lineTo(px+cw,py+ch); } g.fill(); continue; }
+    if (c.ch === '█'){ g.fillRect(px,py,cw+.5,ch+.5); continue; }
+    if (c.ch === '▓' || c.ch === '░'){ const a = c.ch === '▓' ? .75 : .3; g.globalAlpha = a; g.fillRect(px,py,cw+.5,ch+.5); g.globalAlpha = 1; continue; }
+    const B = ' ▁▂▃▄▅▆▇'.indexOf(c.ch); if (B > 0){ const h = ch*B/8; g.fillRect(px,py+ch-h,cw+.5,h); continue; }
+    if (c.ch === '■'){ const m = cw*.12; g.fillRect(px+m,cy-cw*.38,cw-2*m,cw*.76); continue; }
+    if (c.ch === '▬'){ g.fillRect(px,cy-ch*.12,cw+.5,ch*.24); continue; }
+    if (c.ch === '⣿' || c.ch === '⣶' || c.ch === '⣤' || c.ch === '⣀' || c.ch === '⠀'){ // braille drawn as dots, rows filled from the bottom
+      const rows = { '⠀':0,'⣀':1,'⣤':2,'⣶':3,'⣿':4 }[c.ch], d = Math.max(1.2, cw*.13);
+      for (let r=0;r<rows;r++) for (const col of [0,1]){ g.beginPath(); g.arc(px+cw*(.3+.4*col), py+ch*(.86-.22*r), d, 0, 7); g.fill(); } continue; }
+    if (c.ch !== ' ') g.fillText(c.ch, cx, cy + ch*.04);
+  }
+}
+function draw(){ scene(); paint(); }
+
+document.getElementById('copy').onclick = () => { const t = document.getElementById('code'), m = document.getElementById('msg');
+  navigator.clipboard.writeText(t.value).then(() => m.textContent = 'Copied. Paste it to Claude.', () => { t.select(); m.textContent = 'Selected: press Ctrl+C.'; }); };
+document.getElementById('reset').onclick = () => { S = { ...DEFAULTS }; save(); buildKnobs(); draw(); document.getElementById('msg').textContent = 'Back to 0.16.28.'; };
+
+buildKnobs(); save(); draw();
+document.fonts && document.fonts.ready.then(draw);
+</script>
