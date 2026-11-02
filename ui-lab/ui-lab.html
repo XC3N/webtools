@@ -29,6 +29,9 @@ canvas{display:block;width:100%;height:auto;cursor:pointer}
 .els button.mod::after{content:" •";color:var(--hot)}
 .els button[aria-pressed="true"]{border-color:var(--hot);color:#fff;background:#2a0f22}
 fieldset{margin:0;border:1px solid var(--edge);border-radius:6px;padding:6px 10px 9px;background:var(--panel);min-width:0;display:grid;gap:6px}
+legend{cursor:pointer;user-select:none}legend::before{content:'▾ ';color:var(--faint)}fieldset.shut legend::before{content:'▸ '}
+fieldset.shut>:not(legend){display:none}fieldset.shut{padding-bottom:4px}legend .sum{color:var(--neon);letter-spacing:0;text-transform:none;font-family:var(--mono);margin-left:6px}
+.folds{display:flex;gap:6px}.folds button{font:11px var(--mono);color:var(--muted);background:none;border:1px solid var(--edge);border-radius:4px;padding:2px 8px;cursor:pointer}
 legend{padding:0 6px;font:500 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 legend .ov{color:var(--hot);letter-spacing:0;text-transform:none;font-family:var(--mono);cursor:pointer;margin-left:6px}
 .seg{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start}
@@ -77,6 +80,7 @@ textarea{font:11px/1.35 var(--mono);color:var(--lime);background:#05060c;border:
     </div>
     <div class="panel">
       <div class="els" id="els" role="group" aria-label="Element to edit"></div>
+      <div class="folds"><button type="button" id="foldAll">Fold all</button><button type="button" id="openAll">Unfold all</button></div>
       <div id="knobs" style="display:grid;gap:10px"></div>
       <div class="out">
         <textarea id="code" readonly aria-label="Settings line to send to Claude"></textarea>
@@ -185,6 +189,20 @@ function buildEls(){
     const k = id.replace(' bar', ''); if ((S.boxes[id] && Object.keys(S.boxes[id]).length) || (S.bars[k] && Object.keys(S.bars[k]).length)) b.classList.add('mod');
     b.onclick = () => { SEL = id; buildEls(); buildKnobs(); draw(); }; $('els').append(b); }
 }
+// Every group folds: click its name. Folded, it shows its current value beside the name. Remembered per name.
+let shut = {}; try { shut = JSON.parse(localStorage.getItem('uiLabShut') || '{}'); } catch (e) {}
+const saveShut = () => { try { localStorage.setItem('uiLabShut', JSON.stringify(shut)); } catch (e) {} };
+const nameOf = fs => fs.querySelector('legend').firstChild.textContent.replace(/^(Bars|Every box): /, '').trim();
+function foldable(){
+  for (const fs of document.querySelectorAll('#knobs fieldset')){
+    const n = nameOf(fs), lg = fs.querySelector('legend');
+    const on = fs.querySelector('.seg button[aria-pressed="true"]'), out = fs.querySelector('output'), sel = fs.querySelector('select');
+    const sum = on ? on.textContent : out ? out.textContent : sel ? sel.selectedOptions[0].textContent : '';
+    if (sum){ const sp = document.createElement('span'); sp.className = 'sum'; sp.textContent = sum; lg.append(sp); }
+    fs.classList.toggle('shut', !!shut[n]);
+    lg.onclick = e => { if (e.target.closest('.ov')) return; shut[n] = !shut[n]; if (!shut[n]) delete shut[n]; saveShut(); fs.classList.toggle('shut', !!shut[n]); };
+  }
+}
 function buildKnobs(){
   buildEls();
   const K = $('knobs'); K.innerHTML = '';
@@ -249,6 +267,7 @@ function buildKnobs(){
     K.append(colors('Street background', [['', () => g.mapbg, set('mapbg')]]));
   }
 }
+const _bk = buildKnobs; buildKnobs = function(){ _bk(); foldable(); };
 function save(){ try { localStorage.setItem('uiLab2', JSON.stringify(S)); } catch (e) {}
   const lean = JSON.parse(JSON.stringify(S)); for (const k of ['boxes','bars']) for (const id in lean[k]) if (!Object.keys(lean[k][id]).length) delete lean[k][id];
   $('code').value = 'UI-LAB ' + JSON.stringify(lean); }
@@ -544,6 +563,8 @@ cv.addEventListener('click', e => {
   SEL = hit; $('hint').textContent = hit === 'Global' ? 'Editing everything (Global).' : `Editing ${hit}. Click outside the boxes for Global.`;
   buildKnobs(); draw();
 });
+$('foldAll').onclick = () => { document.querySelectorAll('#knobs fieldset').forEach(fs => shut[nameOf(fs)] = true); saveShut(); buildKnobs(); };
+$('openAll').onclick = () => { shut = {}; saveShut(); buildKnobs(); };
 $('copy').onclick = () => { const t = $('code'), m = $('msg');
   navigator.clipboard.writeText(t.value).then(() => m.textContent = 'Copied. Paste it to Claude.', () => { t.select(); m.textContent = 'Selected: press Ctrl+C.'; }); };
 $('reset').onclick = () => { S = fresh(); SEL = 'Global'; save(); buildKnobs(); draw(); $('msg').textContent = 'Back to 0.16.28.'; };
