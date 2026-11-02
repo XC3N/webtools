@@ -433,13 +433,13 @@ const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringif
 document.getElementById('foldAll').addEventListener('click', () => {   // Sprawler TW-057: fold in levels too, the mirror of Unfold all, Done one level ahead
   // 1st click from all open: groups fold and Done shuts; 2nd: the sections shut
   const secs = [...document.querySelectorAll('#list section[data-sec]')], keysOf = sec => [...sec.querySelectorAll('h3.sub')].map(h => h.dataset.k);
-  const level = sec => closed[sec.dataset.sec] ? 0 : keysOf(sec).some(k => closedSub[k]) ? 1 : 2;
+  const level = sec => closed[sec.dataset.sec] ? 0 : keysOf(sec).every(k => closedSub[k]) ? 1 : 2;   // Sprawler BG-019: one group still open counts as open, so a click folds groups before sections
   const set = (sec, L) => { const id = sec.dataset.sec; if (L === 0){ closed[id] = true; return; } delete closed[id]; keysOf(sec).forEach(k => { if (L === 1) closedSub[k] = true; else delete closedSub[k]; }); };
   const others = secs.filter(x => x.dataset.sec !== 'done'), done = secs.find(x => x.dataset.sec === 'done');
   const full = others.filter(x => keysOf(x).length), L = full.length ? Math.max(...full.map(level)) : 0;
   const T = Math.max(0, L - 1);
-  others.forEach(x => set(x, keysOf(x).length ? T : 0));   // a section showing no groups (Queued under Yours) folds shut (Sprawler TW-053)
-  if (done) set(done, Math.max(0, T - 1));
+  others.forEach(x => set(x, keysOf(x).length ? Math.min(level(x), T) : 0));   // folding never opens a section   // a section showing no groups (Queued under Yours) folds shut (Sprawler TW-053)
+  if (done) set(done, Math.min(level(done), Math.max(0, T - 1)));
   saveFolds(); render(); scrollTo(0, 0); });   // Sprawler BG-019: start from the top, not where you were before
 document.getElementById('openAll').addEventListener('click', () => {   // Sprawler TW-057: unfold in levels, every section alike, Done one level behind
   // level 0: section shut · 1: section open, its groups folded · 2: everything open
