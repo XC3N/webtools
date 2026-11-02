@@ -25,6 +25,7 @@ Both started here and moved out on October 30, 2026; their history up to then is
 ## What else is here
 
 - **`common/`**: code shared between tools (settings storage, the slider / dropdown behaviour standard, theming, the MP4 muxer). Tools in this repo include it directly; VJif and Bad MOPHO build with a pinned copy and take updates with their `sync-common.js`. Shared code is changed here first. See [common/README.md](common/README.md).
+- **`compendium/`**: the Compendium, where Sprawler's name pools are edited (a claude.ai artifact with a shared database; Claude copies it into the game with each PR). See [compendium/README.md](compendium/README.md).
 - **`bench/`**: the test bench page. Every project's bench (VJif, Sprawler) is a claude.ai artifact running this one page, with what differs per project in `benches.json`. See [bench/README.md](bench/README.md).
 
 ## Layout
