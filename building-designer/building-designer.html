@@ -1,0 +1,413 @@
+<title>Sprawler Building Designer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a drafting table. Saved designs on the left, the building's grid in the middle drawn
+   with the game's own glyphs and colours, the tile palette and checks on the right. One dark look
+   on purpose: the grid has to read like the game. */
+:root{
+  --bg:#0b0c14; --panel:#12141f; --panel2:#181b29; --ink:#d9dcec; --muted:#7f86a3; --line:#252a3d;
+  --accent:#29f0ff; --hot:#ff2fa8; --good:#b6ff3b; --warn:#ffb627; --bad:#ff5d5d;
+  --display:"Chakra Petch",ui-monospace,system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"Noto Sans Mono","DejaVu Sans Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font:14px/1.45 var(--body)}
+.wrap{max-width:1500px;margin:0 auto;padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px}
+h1{margin:0;font:600 24px/1.1 var(--display);letter-spacing:.03em}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;flex-basis:100%;max-width:80ch;margin:0}
+.who{margin-left:auto;font:400 12px var(--mono);color:var(--muted)}
+.main{display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:14px;align-items:start}
+@media (max-width:1100px){ .main{grid-template-columns:minmax(0,1fr) 270px} .side-l{grid-column:1/-1} }
+@media (max-width:720px){ .main{grid-template-columns:minmax(0,1fr)} }
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;display:grid;gap:10px;min-width:0}
+h2{margin:0;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+button,select,input,textarea{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:4px}
+button{padding:5px 10px;cursor:pointer}button:hover{border-color:var(--muted)}
+button.on{border-color:var(--accent);color:var(--accent)}
+button.go{background:var(--accent);border-color:var(--accent);color:#051318;font-weight:600}
+button.go:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.armed{border-color:var(--bad)!important;color:var(--bad)!important}
+select,input{padding:5px 8px}textarea{padding:6px 8px;width:100%;resize:vertical;font:12px/1.4 var(--mono)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:52vh;overflow:auto}
+.list button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:0 8px;width:100%;padding:6px 8px;border-radius:4px;cursor:pointer}
+.list button:hover{background:var(--panel2)}.list button.on{background:#0d2a33;color:var(--accent)}
+.list .k{font-size:12px;color:var(--muted)}.list .s{font:400 11px var(--mono);color:var(--muted);text-align:right}
+.empty{color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:4px;padding:12px;text-align:center}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;font-size:13px}
+.meta label{color:var(--muted)}
+.stage{display:grid;gap:8px;min-width:0}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bar .sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
+.dirty{font:400 12px var(--mono);color:var(--warn)}.saved{font:400 12px var(--mono);color:var(--good)}
+.canvas-wrap{overflow:auto;background:#000;border:1px solid var(--line);border-radius:6px;padding:12px;max-height:72vh}
+canvas{display:block;image-rendering:pixelated;cursor:crosshair;touch-action:none}
+.status{font:400 12px var(--mono);color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;min-height:1.4em}
+.pal{display:grid;gap:8px}
+.pal h3{margin:0;font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(36px,1fr));gap:4px}
+.tiles button{padding:0;height:40px;font:18px/1 var(--mono);display:grid;place-items:center;position:relative}
+.tiles button .c{position:absolute;right:2px;bottom:1px;font:9px var(--mono);color:var(--muted)}
+.tiles button.on{outline:2px solid var(--accent);outline-offset:1px}
+.tiles button.alt{box-shadow:inset 0 -3px 0 var(--hot)}
+.cur{font-size:12px;color:var(--muted)}.cur b{color:var(--ink);font-weight:500}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:12px}
+.checks li{display:flex;gap:6px}.checks .ok{color:var(--good)}.checks .no{color:var(--bad)}.checks .w{color:var(--warn)}
+.counts{font:400 11px var(--mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.msg{font-size:12px;color:var(--warn);min-height:1.2em}.msg.ok{color:var(--good)}
+.sizes{font-size:12px;color:var(--muted)}
+.sizes table{border-collapse:collapse;width:100%}.sizes td{padding:2px 4px;border-top:1px solid var(--line);vertical-align:top}
+.sizes td:first-child{font-family:var(--mono);color:var(--ink);white-space:nowrap}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:min(560px,92vw);padding:16px}
+dialog::backdrop{background:#000a}
+kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Sprawler <span>Building Designer</span></h1>
+    <span class="who" id="who"></span>
+    <p class="sub">Draw buildings, the hotel and parks on the game's grid, with its tiles and colours. Designs are saved here for everyone on the project; Claude reads them to work out the rules mapgen uses to make more.</p>
+  </header>
+  <div class="main">
+    <aside class="side-l box">
+      <h2>Designs</h2>
+      <div class="row"><button type="button" class="go" id="new">New design</button></div>
+      <ul class="list" id="list"><li class="empty">Loading designs…</li></ul>
+      <details class="sizes"><summary>Building sizes</summary>
+        <p>Outer size with the walls. Heights are the city's block heights; widths are even so a building fills whole map-screen characters (2 columns each).</p>
+        <table id="sizetab"></table>
+      </details>
+    </aside>
+
+    <section class="stage" aria-label="Editor">
+      <div class="box">
+        <div class="meta">
+          <label for="name">Name</label><input id="name" type="text" placeholder="e.g. Corner noodle bar" autocomplete="off">
+          <label for="kind">Kind</label><select id="kind"></select>
+          <label for="notes">Notes</label><textarea id="notes" rows="2" placeholder="What it's for, what you'd like the generator to learn from it"></textarea>
+        </div>
+        <div class="bar">
+          <button type="button" class="go" id="save" disabled>Save</button><span id="state" class="saved"></span>
+          <span class="sep"></span>
+          <button type="button" id="undo" title="Undo (Ctrl+Z)">Undo</button><button type="button" id="redo" title="Redo (Ctrl+Y)">Redo</button>
+          <span class="sep"></span>
+          <button type="button" id="dup">Duplicate</button><button type="button" id="del">Delete</button>
+          <button type="button" id="exp">Export</button><button type="button" id="imp">Import</button>
+          <span class="sep"></span>
+          <label class="cur" for="zoom">Zoom</label><input id="zoom" type="range" min="1" max="4" step="0.25" value="2" style="width:90px">
+        </div>
+      </div>
+      <div class="bar" id="tools" role="toolbar" aria-label="Tools"></div>
+      <div class="canvas-wrap"><canvas id="cv" tabindex="0" aria-label="Building grid"></canvas></div>
+      <div class="status" id="status">&nbsp;</div>
+    </section>
+
+    <aside class="box">
+      <h2>Tiles</h2>
+      <p class="cur">Left click: <b id="curA"></b> · right click: <b id="curB"></b></p>
+      <div class="pal" id="pal"></div>
+      <h2>Checks</h2>
+      <ul class="checks" id="checks"></ul>
+      <div class="counts" id="counts"></div>
+    </aside>
+  </div>
+</div>
+
+<dialog id="dlg"></dialog>
+
+<script>
+// The game's tiles (core/sprawl_map.gd DEFS, core/hotel.gd LEGEND): one character per tile in the
+// saved rows, the glyph and colours the game draws it with. "mark" tiles are floor plus a marker.
+const T = [
+  // group, char, name, glyph, fg, bg, walk
+  ['Structure', ' ', 'outside (street)', '·', '#3a3f58', '#000000', 1],
+  ['Structure', '#', 'wall', '▓', '#2b2f45', '#14162a', 0],
+  ['Structure', '.', 'floor', '.', '#4d5a66', '#0d0f14', 1],
+  ['Structure', '+', 'door', '▣', '#d6a243', '#0d0f14', 1],
+  ['Structure', 'N', 'neon sign', '█', '#ff2fa8', '#14162a', 0],
+  ['Structure', 'G', 'sealed gate', '▣', '#a04a5a', '#14162a', 0],
+  ['Terminals', 'T', 'terminal (cash)', 'Ω', '#29f0ff', '#0d0f14', 0],
+  ['Terminals', 'X', 'data terminal spot', 'Ω', '#ff2fa8', '#2a0d20', 0],
+  ['Terminals', 'K', "clerk's terminal", '≡', '#5a7fa0', '#0d0f14', 0],
+  ['Terminals', 'J', 'job board', '≡', '#b6ff3b', '#0d0f14', 0],
+  ['Terminals', 'R', 'recharge station', '≈', '#b6ff3b', '#0d0f14', 0],
+  ['Furniture', 'x', 'crates', '■', '#7a5a3a', '#0d0f14', 0],
+  ['Furniture', 't', 'table', 'π', '#8a7a6a', '#0d0f14', 0],
+  ['Furniture', 's', 'shelves', '╫', '#6a5a4a', '#0d0f14', 0],
+  ['Furniture', 'm', 'machine', '◘', '#6a7a8a', '#0d0f14', 0],
+  ['Furniture', 'B', 'bed', '▬', '#4a5a7a', '#0d0f14', 0],
+  ['Furniture', 'a', 'arcade cabinet', '▌', '#9d5cff', '#0d0f14', 0],
+  ['Furniture', 'c', 'counter side', '│', '#8a76b8', '#0d0f14', 0],
+  ['Furniture', '{', 'desk, left end', 'desk', '#8a76b8', '#0d0f14', 1],
+  ['Furniture', '_', 'desk', 'desk', '#8a76b8', '#0d0f14', 1],
+  ['Furniture', '}', 'desk, right end', 'desk', '#8a76b8', '#0d0f14', 1],
+  ['Plants & park', 'v', 'potted plant', '♠', '#3f9a5a', '#0d0f14', 0],
+  ['Plants & park', 'Y', 'tree', '♣', '#3fa04a', '#030a05', 0],
+  ['Plants & park', ',', 'grass', ',', '#1f4a2a', '#030a05', 1],
+  ['Plants & park', 'F', 'fountain', '≈', '#29c8ff', '#06223a', 0],
+  ['Plants & park', 'A', 'statue', 'Φ', '#9aa4b8', '#030a05', 0],
+  ['Plants & park', 'h', 'bench', 'π', '#8a6a4a', '#030a05', 0],
+  ['Hotel', 'E', 'street exit', '⌂', '#ffb627', '#0d0f14', 1],
+  ['Hotel', 'P', 'guest room door (locked)', '■', '#3c4466', '#0d0f14', 1],
+  ['Hotel', 'p', 'your pod', '■', '#29f0ff', '#0d0f14', 0],
+  ['Hotel', 'b', "a guest's bed", '■', '#1f6f78', '#0d0f14', 0],
+  ['Hotel', 'g', "a guest's terminal", '≡', '#4f6a2a', '#0d0f14', 0],
+  ['Markers', '@', 'someone stands here (clerk, shopkeeper)', '@', '#9d5cff', '#0d0f14', 1],
+  ['Markers', 'S', 'where you wake up / come in', 'S', '#7a809f', '#0d0f14', 1],
+];
+const TILE = Object.fromEntries(T.map(([g, ch, name, glyph, fg, bg, walk]) => [ch, { g, ch, name, glyph, fg, bg, walk: !!walk }]));
+const SOLID_EDGE = new Set(['#', 'N', '+', 'G', 'E', 'P']);   // what a building's outline may be made of
+const DOORS = new Set(['+', 'E']);
+// The sizes mapgen can fit (outer, walls included): block heights 9 and 12; even widths.
+const SIZES = [
+  ['6 × 9', 6, 9, 'pawn shop, fixer\'s den, a narrow noodle bar'],
+  ['8 × 9', 8, 9, 'noodle bar, laundromat'],
+  ['10 × 9', 10, 9, 'laundromat, clinic, arcade'],
+  ['12 × 9', 12, 9, 'clinic, arcade, a small corp annex'],
+  ['8 × 12', 8, 12, 'apartments (narrow), pawn shop with a back room'],
+  ['10 × 12', 10, 12, 'clinic with wards, arcade'],
+  ['12 × 12', 12, 12, 'apartments, warehouse'],
+  ['16 × 12', 16, 12, 'warehouse, corp annex'],
+  ['18 × 12', 18, 12, 'a whole block: MegaBuilding, park'],
+  ['21 × 9', 21, 9, 'the capsule hotel (fixed size)'],
+];
+const KINDS = ['noodle bar', 'laundromat', 'clinic', 'pawn shop', 'arcade', 'warehouse', 'apartments', 'corp annex', "fixer's den", 'capsule hotel', 'park', 'MegaBuilding', 'Corpsec HQ', 'other'];
+// The game's lobby today (core/hotel.gd LAYOUT), to start a hotel from.
+const HOTEL = ['#####NNNNNNN#########', '#pSJ##b.g##b.g##b.g##', '##+####P####P####P###', '#v.................v#', '#.......{__}........E', '#...T...c@Kc...R...v#', '##P####P####P####P###', '#b.g##b.g##b.g##b.g##', '#####################'];
+const TOOLS = [['pen', 'Pencil', 'P'], ['line', 'Line', 'L'], ['box', 'Box', 'B'], ['rect', 'Filled box', 'R'], ['fill', 'Fill', 'F'], ['pick', 'Pick', 'I']];
+
+let db = null, user = null, me = null, canWrite = true;
+let designs = {}, cur = null, grid = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
+let tool = 'pen', tileA = '#', tileB = '.', mirror = false, zoom = 2, hover = null, drag = null, preview = null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CW = 12, CH = 24;   // the game's cell at 1x
+
+// ---------- grid helpers
+const blank = (w, h, kind) => {
+  const park = kind === 'park';
+  return Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) =>
+    park ? ((x === 0 || y === 0 || x === w - 1 || y === h - 1) ? ((x + y) % 3 ? 'Y' : ',') : ',')
+         : (x === 0 || y === 0 || x === w - 1 || y === h - 1) ? '#' : '.'));
+};
+const fromRows = rows => { const h = rows.length, w = Math.max(...rows.map(r => r.length)); return rows.map(r => Array.from({ length: w }, (_, x) => TILE[r[x]] ? r[x] : (r[x] === undefined ? ' ' : '.'))); };
+const toRows = () => grid.map(r => r.join(''));
+const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+function snapshot(){ undo.push(toRows()); if (undo.length > 200) undo.shift(); redo = []; }
+function setCell(x, y, ch, out = grid){ if (!inb(x, y)) return; out[y][x] = ch; if (mirror){ const mx = W - 1 - x; out[y][mx] = mirrorChar(ch); } }
+const mirrorChar = ch => ch === '{' ? '}' : ch === '}' ? '{' : ch;
+function lineCells(a, b){ const out = []; let x = a.x, y = a.y; const dx = Math.abs(b.x - x), dy = -Math.abs(b.y - y), sx = x < b.x ? 1 : -1, sy = y < b.y ? 1 : -1; let e = dx + dy;
+  for (;;){ out.push([x, y]); if (x === b.x && y === b.y) break; const e2 = 2 * e; if (e2 >= dy){ e += dy; x += sx; } if (e2 <= dx){ e += dx; y += sy; } } return out; }
+function boxCells(a, b, filled){ const out = [], x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (filled || x === x0 || x === x1 || y === y0 || y === y1) out.push([x, y]); return out; }
+function flood(x, y, ch){ const from = grid[y][x]; if (from === ch) return; const st = [[x, y]];
+  while (st.length){ const [cx, cy] = st.pop(); if (!inb(cx, cy) || grid[cy][cx] !== from) continue; setCell(cx, cy, ch); st.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]); } }
+
+// ---------- drawing
+const cv = $('#cv'), cx = cv.getContext('2d');
+function resize(){ const dpr = window.devicePixelRatio || 1; const cw = CW * zoom, ch = CH * zoom;
+  cv.style.width = W * cw + 'px'; cv.style.height = H * ch + 'px'; cv.width = Math.round(W * cw * dpr); cv.height = Math.round(H * ch * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(); }
+function drawCell(x, y, ch, ghost){
+  const t = TILE[ch] || TILE['.'], cw = CW * zoom, chh = CH * zoom, px = x * cw, py = y * chh;
+  cx.globalAlpha = ghost ? 0.7 : 1;
+  cx.fillStyle = t.bg; cx.fillRect(px, py, cw, chh);
+  cx.fillStyle = t.fg;
+  if (t.glyph === 'desk'){ const th = Math.max(2, Math.round(2 * zoom)); const x0 = ch === '{' ? px + cw * 0.3 : px, x1 = ch === '}' ? px + cw * 0.7 : px + cw;
+    cx.fillRect(x0, py + chh - th - 2 * zoom, x1 - x0, th); if (ch !== '_') cx.fillRect(ch === '{' ? x0 : x1 - th, py + chh * 0.55, th, chh * 0.45 - 2 * zoom); }
+  else if (t.glyph === '▓' || t.glyph === '█'){ if (t.glyph === '█') cx.fillRect(px, py, cw, chh); else { cx.globalAlpha = ghost ? 0.6 : 0.85; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ghost ? 0.7 : 1; } }
+  else { cx.font = `${Math.round(chh * 0.7)}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(t.glyph, px + cw / 2, py + chh * 0.54); }
+  cx.globalAlpha = 1;
+}
+function draw(){
+  cx.clearRect(0, 0, cv.width, cv.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) drawCell(x, y, grid[y][x]);
+  if (preview) for (const [x, y, ch] of preview) if (inb(x, y)) drawCell(x, y, ch, true);
+  const cw = CW * zoom, ch = CH * zoom;
+  // the map-screen character grid (2 × 3 cells) as faint guides
+  cx.strokeStyle = 'rgba(41,240,255,0.10)'; cx.lineWidth = 1; cx.beginPath();
+  for (let x = 2; x < W; x += 2){ cx.moveTo(x * cw + .5, 0); cx.lineTo(x * cw + .5, H * ch); }
+  for (let y = 3; y < H; y += 3){ cx.moveTo(0, y * ch + .5); cx.lineTo(W * cw, y * ch + .5); }
+  cx.stroke();
+  if (mirror){ cx.strokeStyle = 'rgba(255,47,168,0.5)'; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(W * cw / 2, 0); cx.lineTo(W * cw / 2, H * ch); cx.stroke(); cx.setLineDash([]); }
+  if (hover && inb(hover.x, hover.y)){ cx.strokeStyle = '#29f0ff'; cx.lineWidth = 2; cx.strokeRect(hover.x * cw + 1, hover.y * ch + 1, cw - 2, ch - 2); }
+}
+
+// ---------- checks (what mapgen will need from a design)
+function checks(){
+  const kind = $('#kind').value, out = [], park = kind === 'park';
+  const count = {}; for (const r of grid) for (const c of r) count[c] = (count[c] || 0) + 1;
+  const edge = []; for (let x = 0; x < W; x++){ edge.push([x, 0], [x, H - 1]); } for (let y = 1; y < H - 1; y++){ edge.push([0, y], [W - 1, y]); }
+  const fits = SIZES.some(s => s[1] === W && s[2] === H);
+  out.push([fits ? 'ok' : 'w', fits ? `${W} × ${H} is one of the sizes mapgen fits` : `${W} × ${H} isn't one of the listed sizes`]);
+  const doorsOnEdge = edge.filter(([x, y]) => DOORS.has(grid[y][x]));
+  if (!park){
+    const leaks = edge.filter(([x, y]) => !SOLID_EDGE.has(grid[y][x]));
+    out.push([leaks.length ? 'no' : 'ok', leaks.length ? `The outline has ${leaks.length} gap${leaks.length > 1 ? 's' : ''} (walls, neon, doors or gates only)` : 'The outline is closed']);
+    out.push([doorsOnEdge.length ? 'ok' : 'no', doorsOnEdge.length ? `${doorsOnEdge.length} door${doorsOnEdge.length > 1 ? 's' : ''} to the street` : 'No door in the outline']);
+  }
+  // reachable: from the doors (or a park's edge) over walkable tiles
+  const seen = new Set(), st = park ? edge.filter(([x, y]) => TILE[grid[y][x]].walk) : doorsOnEdge.slice();
+  while (st.length){ const [x, y] = st.pop(), k = x + ',' + y; if (!inb(x, y) || seen.has(k) || !TILE[grid[y][x]].walk) continue; seen.add(k); st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1], [x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]); }
+  let walk = 0, lost = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (TILE[grid[y][x]].walk && grid[y][x] !== ' '){ walk++; if (!seen.has(x + ',' + y)) lost++; }
+  out.push([lost ? 'no' : 'ok', lost ? `${lost} floor cell${lost > 1 ? 's' : ''} can't be reached from a door` : 'Every floor cell can be reached']);
+  if (!park && kind !== 'capsule hotel'){ const term = (count.T || 0) + (count.X || 0); out.push([term ? 'ok' : 'w', term ? `${term} terminal${term > 1 ? 's' : ''}` : 'No terminal: jobs need one somewhere']); }
+  if (count[' ']) out.push(['w', `${count[' ']} outside cell${count[' '] > 1 ? 's' : ''} inside the footprint (fine for a notch, an L shape)`]);
+  $('#checks').innerHTML = out.map(([c, t]) => `<li class="${c}"><span aria-hidden="true">${c === 'ok' ? '✓' : c === 'no' ? '✕' : '!'}</span><span>${esc(t)}</span></li>`).join('');
+  $('#counts').innerHTML = Object.entries(count).filter(([c]) => !'#. '.includes(c)).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<span title="${esc(TILE[c]?.name)}">${esc(TILE[c]?.name)} ${n}</span>`).join('') + `<span>walkable ${walk}</span>`;
+}
+
+// ---------- UI
+function renderPal(){
+  const groups = [...new Set(T.map(t => t[0]))];
+  $('#pal').innerHTML = groups.map(g => `<div><h3>${esc(g)}</h3><div class="tiles">${T.filter(t => t[0] === g).map(([, ch, name, glyph, fg, bg]) =>
+    `<button type="button" data-tile="${esc(ch)}" class="${ch === tileA ? 'on' : ''}${ch === tileB ? ' alt' : ''}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})" aria-label="${esc(name)}" style="background:${bg};color:${fg}">${glyph === 'desk' ? (ch === '_' ? '▁' : ch === '{' ? '└' : '┘') : esc(glyph)}<span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`).join('')}</div></div>`).join('');
+  $('#curA').textContent = TILE[tileA].name; $('#curB').textContent = TILE[tileB].name;
+}
+function renderTools(){
+  $('#tools').innerHTML = TOOLS.map(([id, name, key]) => `<button type="button" data-tool="${id}" class="${tool === id ? 'on' : ''}" title="${name} (${key})">${name} <kbd>${key}</kbd></button>`).join('') +
+    `<span class="sep"></span><button type="button" id="mirror" class="${mirror ? 'on' : ''}" title="Mirror left and right (M)">Mirror <kbd>M</kbd></button>
+     <button type="button" id="resize">Resize…</button>`;
+}
+function renderList(){
+  const L = Object.entries(designs).sort((a, b) => (b[1].edited || '').localeCompare(a[1].edited || ''));
+  $('#list').innerHTML = L.length ? L.map(([id, d]) => `<li><button type="button" data-open="${esc(id)}" class="${cur === id ? 'on' : ''}"><span>${esc(d.name || 'Untitled')}</span><span class="s">${d.w}×${d.h}</span><span class="k">${esc(d.kind || '')}</span><span class="s" data-by="${esc(d.editedBy || d.author || '')}"></span></button></li>`).join('')
+    : `<li class="empty">No designs yet. Start one with New design.</li>`;
+  names();
+}
+async function names(){ if (!user?.profiles) return; const ids = [...new Set([...document.querySelectorAll('[data-by]')].map(e => e.dataset.by).filter(Boolean))]; if (!ids.length) return;
+  try { const ps = await user.profiles(ids); document.querySelectorAll('[data-by]').forEach(e => { const p = ps[e.dataset.by]; e.textContent = e.dataset.by === 'claude' ? 'Claude' : (p && p.name) || ''; }); } catch (err){} }
+function setDirty(v){ dirty = v; $('#save').disabled = !v || !canWrite || !db; $('#state').className = v ? 'dirty' : 'saved'; $('#state').textContent = v ? 'unsaved' : (cur ? 'saved' : ''); }
+function load(id){ const d = designs[id]; if (!d) return; cur = id; grid = fromRows(d.rows || []); H = grid.length; W = grid[0]?.length || 0;
+  $('#name').value = d.name || ''; $('#kind').value = KINDS.includes(d.kind) ? d.kind : 'other'; $('#notes').value = d.notes || '';
+  undo = []; redo = []; setDirty(false); resize(); checks(); renderList(); }
+function startNew(name, kind, w, h, rows){ cur = null; grid = rows ? fromRows(rows) : blank(w, h, kind); H = grid.length; W = grid[0].length;
+  $('#name').value = name; $('#kind').value = kind; $('#notes').value = ''; undo = []; redo = []; setDirty(true); resize(); checks(); renderList(); }
+
+async function save(){
+  if (!db || !canWrite) return; const now = new Date().toISOString();
+  const data = { name: $('#name').value.trim() || 'Untitled', kind: $('#kind').value, w: W, h: H, rows: toRows(), notes: $('#notes').value, edited: now, editedBy: me || '' };
+  try {
+    if (cur){ await db.doc('designs/' + cur).update(data); }
+    else { const ref = await db.collection('designs').add({ ...data, created: now, author: me || '' }); cur = ref.id; }
+    setDirty(false); msg('Saved.', true);
+  } catch (e){ if (/not_granted|permission/.test(String(e?.code || e?.message))){ canWrite = false; setDirty(dirty); } msg('Could not save. Reload and try again.'); }
+}
+function msg(t, ok){ $('#status').innerHTML = `<span class="msg${ok ? ' ok' : ''}">${esc(t)}</span>`; }
+
+// ---------- dialogs (built into the page: no browser prompts here)
+function dialog(html, onSubmit){ const d = $('#dlg'); d.innerHTML = `<form method="dialog" style="display:grid;gap:12px">${html}<div class="row" style="justify-content:flex-end"><button type="button" value="cancel" id="dlgx">Cancel</button><button class="go" value="ok">OK</button></div></form>`;
+  d.querySelector('#dlgx').onclick = () => d.close(); d.querySelector('form').onsubmit = e => { e.preventDefault(); if (onSubmit(d) !== false) d.close(); }; d.showModal(); }
+function newDialog(){
+  dialog(`<h2>New design</h2>
+    <div class="meta"><label for="nk">Kind</label><select id="nk">${KINDS.map(k => `<option>${esc(k)}</option>`).join('')}</select>
+    <label for="ns">Size</label><select id="ns">${SIZES.map((s, i) => `<option value="${i}">${s[0]}: ${esc(s[3])}</option>`).join('')}<option value="c">Custom…</option></select>
+    <label for="nw">Custom</label><span class="row"><input id="nw" type="number" min="5" max="40" value="14" style="width:70px"> × <input id="nh" type="number" min="5" max="24" value="9" style="width:70px"></span>
+    <label for="nn">Name</label><input id="nn" type="text" placeholder="Untitled"></div>
+    <p class="cur">A capsule hotel starts from the game's lobby; a park starts as grass ringed with trees.</p>`, d => {
+    const k = d.querySelector('#nk').value, s = d.querySelector('#ns').value, n = d.querySelector('#nn').value.trim();
+    let w, h; if (s === 'c'){ w = +d.querySelector('#nw').value; h = +d.querySelector('#nh').value; } else { w = SIZES[s][1]; h = SIZES[s][2]; }
+    w = Math.max(3, Math.min(40, w || 0)); h = Math.max(3, Math.min(24, h || 0));
+    if (k === 'capsule hotel') startNew(n || 'Capsule hotel', k, 21, 9, HOTEL); else startNew(n || `New ${k}`, k, w, h);
+  });
+  const nk = $('#nk'), ns = $('#ns'); nk.onchange = () => { if (nk.value === 'capsule hotel') ns.value = String(SIZES.length - 1); else if (nk.value === 'park' || nk.value === 'MegaBuilding') ns.value = '8'; };
+}
+function resizeDialog(){
+  dialog(`<h2>Resize</h2><div class="meta"><label for="rw">Width</label><input id="rw" type="number" min="3" max="40" value="${W}"><label for="rh">Height</label><input id="rh" type="number" min="3" max="24" value="${H}"></div><p class="cur">Keeps the top-left; new cells are floor.</p>`, d => {
+    const w = Math.max(3, Math.min(40, +d.querySelector('#rw').value || W)), h = Math.max(3, Math.min(24, +d.querySelector('#rh').value || H));
+    snapshot(); grid = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (grid[y] && grid[y][x] !== undefined) ? grid[y][x] : '.')); W = w; H = h; setDirty(true); resize(); checks(); });
+}
+function exportDialog(){ const txt = JSON.stringify({ name: $('#name').value, kind: $('#kind').value, w: W, h: H, rows: toRows() }, null, 1);
+  dialog(`<h2>Export</h2><p class="cur">One character per tile, as the game's hand-made layouts use (core/hotel.gd).</p><textarea id="ex" rows="14" readonly>${esc(txt)}</textarea><div class="row"><button type="button" id="cp">Copy</button><span id="cpm" class="cur"></span></div>`, () => {});
+  $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('#cpm').textContent = 'Copied'; } catch (e){ $('#ex').select(); $('#cpm').textContent = 'Selected: press Ctrl+C'; } }; }
+function importDialog(){
+  dialog(`<h2>Import</h2><p class="cur">Paste rows of tile characters (or an exported design). It replaces the grid; Undo brings it back.</p><textarea id="im" rows="12" placeholder="#####NNN####&#10;#..........#"></textarea><p class="msg" id="imm"></p>`, d => {
+    let t = d.querySelector('#im').value, rows; try { const j = JSON.parse(t); rows = j.rows; if (j.name) $('#name').value = j.name; if (KINDS.includes(j.kind)) $('#kind').value = j.kind; } catch (e){ rows = t.replace(/\r/g, '').split('\n').filter(r => r.length); }
+    if (!Array.isArray(rows) || !rows.length){ d.querySelector('#imm').textContent = 'Nothing to import.'; return false; }
+    snapshot(); grid = fromRows(rows.map(String).slice(0, 24).map(r => r.slice(0, 40))); H = grid.length; W = grid[0].length; setDirty(true); resize(); checks(); });
+}
+
+// ---------- input
+function cellAt(e){ const r = cv.getBoundingClientRect(); return { x: Math.floor((e.clientX - r.left) / (CW * zoom)), y: Math.floor((e.clientY - r.top) / (CH * zoom)) }; }
+function shape(a, b, ch){ const cells = tool === 'line' ? lineCells(a, b) : boxCells(a, b, tool === 'rect'); const out = [];
+  for (const [x, y] of cells){ out.push([x, y, ch]); if (mirror) out.push([W - 1 - x, y, mirrorChar(ch)]); } return out; }
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerdown', e => {
+  const p = cellAt(e); if (!inb(p.x, p.y)) return; cv.setPointerCapture(e.pointerId); cv.focus();
+  const ch = e.button === 2 ? tileB : tileA;
+  if (tool === 'pick'){ if (e.button === 2) tileB = grid[p.y][p.x]; else tileA = grid[p.y][p.x]; renderPal(); return; }
+  snapshot();
+  if (tool === 'fill'){ flood(p.x, p.y, ch); afterEdit(); return; }
+  drag = { a: p, ch };
+  if (tool === 'pen'){ setCell(p.x, p.y, ch); draw(); } else { preview = shape(p, p, ch); draw(); }
+});
+cv.addEventListener('pointermove', e => {
+  const p = cellAt(e); hover = p;
+  if (inb(p.x, p.y)){ const t = TILE[grid[p.y][p.x]]; $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}</span><span>${W} × ${H}</span>`; }
+  if (drag){ if (tool === 'pen'){ for (const [x, y] of lineCells(drag.last || drag.a, p)) setCell(x, y, drag.ch); drag.last = p; } else preview = shape(drag.a, p, drag.ch); }
+  draw();
+});
+cv.addEventListener('pointerup', e => { if (!drag) return; if (preview){ for (const [x, y, ch] of preview) if (inb(x, y)) grid[y][x] = ch; preview = null; } drag = null; afterEdit(); });
+cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
+function afterEdit(){ setDirty(true); draw(); checks(); }
+function doUndo(){ if (!undo.length) return; redo.push(toRows()); grid = fromRows(undo.pop()); H = grid.length; W = grid[0].length; setDirty(true); resize(); checks(); }
+function doRedo(){ if (!redo.length) return; undo.push(toRows()); grid = fromRows(redo.pop()); H = grid.length; W = grid[0].length; setDirty(true); resize(); checks(); }
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select,dialog')) { if ((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); save(); } return; }
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === 'z'){ e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 'y'){ e.preventDefault(); doRedo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 's'){ e.preventDefault(); save(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = TOOLS.find(x => x[2].toLowerCase() === k); if (t){ tool = t[0]; renderTools(); return; }
+  if (k === 'm'){ mirror = !mirror; renderTools(); draw(); }
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tile !== undefined){ tileA = b.dataset.tile; renderPal(); return; }
+  if (b.dataset.tool){ tool = b.dataset.tool; renderTools(); return; }
+  if (b.dataset.open){ if (dirty && b.dataset.open !== cur && !b.classList.contains('armed')){ b.classList.add('armed'); msg('Unsaved changes: click again to open it anyway.'); setTimeout(() => b.classList.remove('armed'), 3000); return; } load(b.dataset.open); return; }
+  switch (b.id){
+    case 'new': newDialog(); break;
+    case 'save': save(); break;
+    case 'undo': doUndo(); break;
+    case 'redo': doRedo(); break;
+    case 'mirror': mirror = !mirror; renderTools(); draw(); break;
+    case 'resize': resizeDialog(); break;
+    case 'exp': exportDialog(); break;
+    case 'imp': importDialog(); break;
+    case 'dup': startNew(($('#name').value || 'Untitled') + ' (copy)', $('#kind').value, W, H, toRows()); msg('A copy: Save to keep it.', true); break;
+    case 'del': if (!cur){ msg('Not saved yet: nothing to delete.'); break; }
+      if (!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Delete it?'; setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Delete'; }, 3000); break; }
+      try { await db.doc('designs/' + cur).delete(); b.classList.remove('armed'); b.textContent = 'Delete'; cur = null; msg('Deleted.', true); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false); } catch (err){ msg('Could not delete.'); } break;
+  }
+});
+// right click on a palette tile sets the right-click tile
+document.addEventListener('contextmenu', e => { const b = e.target.closest('[data-tile]'); if (!b) return; e.preventDefault(); tileB = b.dataset.tile; renderPal(); });
+['#name', '#notes'].forEach(s => $(s).addEventListener('input', () => setDirty(true)));
+$('#kind').addEventListener('change', () => { setDirty(true); checks(); });
+$('#zoom').addEventListener('input', e => { zoom = +e.target.value; resize(); });
+
+// ---------- start
+$('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
+$('#sizetab').innerHTML = SIZES.map(s => `<tr><td>${s[0]}</td><td>${esc(s[3])}</td></tr>`).join('');
+zoom = window.innerWidth < 720 ? 1.25 : 2; $('#zoom').value = zoom;
+renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false);
+(async () => {
+  db = await (window.claude?.use ? claude.use('db') : null);
+  user = await (window.claude?.use ? claude.use('user') : null);
+  if (user){ try { me = await user.id(); const p = await user.me(); $('#who').textContent = p && p.name ? p.name : ''; } catch (e){} const w = await user.can?.('data.write'); if (w === false) canWrite = false; }
+  if (!db){ $('#list').innerHTML = '<li class="empty">Saved designs need claude.ai: open the page signed in. You can still draw and export.</li>'; return; }
+  const timer = setTimeout(() => { if (!Object.keys(designs).length) $('#list').innerHTML = '<li class="empty">The designs are slow to load. Reload the page.</li>'; }, 10000);
+  db.collection('designs').onSnapshot(snap => { clearTimeout(timer); const next = {}; snap.docs.forEach(d => next[d.id] = d.data()); designs = next;
+    if (cur && designs[cur] && !dirty && designs[cur].rows.join('\n') !== toRows().join('\n')) load(cur); else renderList(); setDirty(dirty); },
+    () => { $('#list').innerHTML = '<li class="empty">The designs stopped updating. Reload the page.</li>'; });
+})();
+</script>
