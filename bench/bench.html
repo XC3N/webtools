@@ -440,7 +440,7 @@ document.getElementById('foldAll').addEventListener('click', () => {   // Sprawl
   const T = Math.max(0, L - 1);
   others.forEach(x => set(x, keysOf(x).length ? T : 0));   // a section showing no groups (Queued under Yours) folds shut (Sprawler TW-053)
   if (done) set(done, Math.max(0, T - 1));
-  saveFolds(); render(); });
+  saveFolds(); render(); scrollTo(0, 0); });   // Sprawler BG-019: start from the top, not where you were before
 document.getElementById('openAll').addEventListener('click', () => {   // Sprawler TW-057: unfold in levels, every section alike, Done one level behind
   // level 0: section shut · 1: section open, its groups folded · 2: everything open
   const secs = [...document.querySelectorAll('#list section[data-sec]')], keysOf = sec => [...sec.querySelectorAll('h3.sub')].map(h => h.dataset.k);
@@ -450,5 +450,5 @@ document.getElementById('openAll').addEventListener('click', () => {   // Sprawl
   const full = others.filter(x => keysOf(x).length), L = full.length ? Math.min(...full.map(level)) : 2;   // an empty section (e.g. Queued under Yours) doesn't hold the others back
   if (L < 2){ others.forEach(x => set(x, keysOf(x).length ? L + 1 : 2)); if (done) set(done, L); }   // the others go up a level; Done follows one behind
   else if (done) set(done, Math.min(2, level(done) + 1));
-  saveFolds(); render(); });
+  saveFolds(); render(); scrollTo(0, 0); });   // Sprawler BG-019
 </script>
