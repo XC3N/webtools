@@ -128,7 +128,7 @@ const TITLES = [
 const CORNERS = [['square','┌ square'],['round','╭ rounded'],['heavy','┏ heavy'],['double','╔ double'],['mixed','╓ dbl sides'],['dashed','┄ dashed'],['blocky','▛ blocks'],['ascii','+ ascii'],['open','  corners only'],['nob','  no box']];
 const BOX_DEF = { corners:'round', title:'tab', pos:'left', tcase:'upper', frame:'diag', pal:'auto', c1:'#ff2fa8', c2:'#9d5cff', stops:null, dim:35, titleCol:'grad', bg:'none', pad:1 };
 const BAR_DEF = { shape:'block', fill:'across', empty:'shade', c1:'', c2:'', width:16, label:'left' };
-const KEY_DEF = { style:'chevron', k1:'#2a1745', k2:'#10283d', key:'#29f0ff', ver:'segment' };
+const KEY_DEF = { anim:'off', split:'off', seed:7, style:'chevron', k1:'#2a1745', k2:'#10283d', key:'#29f0ff', ver:'segment' };
 const GLOBAL_DEF = { stops:['#ff2fa8','#9d5cff','#29f0ff'], font:'Share Tech Mono', palette:'sprawl', arrows:'prox', graph:'off', comms:'solid', glow:0, scan:0, mapbg:'#07070d', zoom:100 };
 const fresh = () => ({ g:{ ...GLOBAL_DEF }, box:{ ...BOX_DEF }, bar:{ ...BAR_DEF }, key:{ ...KEY_DEF }, boxes:{}, bars:{} });
 let S = fresh();
@@ -229,7 +229,10 @@ function buildKnobs(){
   }
   if (SEL === 'Global' || SEL === 'Key bar'){
     const k = S.key, set = n => v => k[n] = v;
-    K.append(seg('Key bar style', [['brackets','[C]har'],['chevron','▶ segments'],['tabs','┐C┌ tabs'],['pills','▐C▌ pills'],['underline','C̲har underline'],['boxed','│C│har'],['plain','C·har plain'],['slant','◢C◣ slant']], () => k.style, set('style')));
+    K.append(seg('Key bar style', [['brackets','[C]har'],['chevron','▶ segments'],['tabs','┐C┌ tabs'],['pills','▐C▌ pills'],['underline','C̲har underline'],['boxed','│C│har'],['plain','C·har plain'],['slant','◢C◣ slant'],['glitch','▚ glitch'],['torn','▓▒░ torn'],['slice','▀▄ sliced'],['static','░ static'],['corrupt','█▌ corrupt']], () => k.style, set('style')));
+    K.append(seg('Glitch', [['off','still'],['flicker','flickers now and then'],['live','always moving']], () => k.anim, set('anim')));
+    K.append(seg('Colour split on letters', [['off','off'],['keys','key letters'],['all','whole bar']], () => k.split, set('split')));
+    K.append(range('Glitch seed', 1, 99, () => k.seed, v => k.seed = v, ''));
     K.append(seg('Version', [['segment','own segment'],['plain','plain text'],['hidden','hidden']], () => k.ver, set('ver')));
     K.append(colors('Key bar colours', [['from', () => k.k1, set('k1')], ['to', () => k.k2, set('k2')], ['key letter', () => k.key, set('key')]]));
   }
@@ -400,12 +403,36 @@ function scene(){
   if (S.g.comms === 'glow') for (const yy of [25+t,26+t]) for (let x=2;x<68;x++) cells[yy*COLS+x].glow = true;
   keybar();
 }
+// a small seeded random source, so a glitch looks the same until the seed (or the animation tick) changes
+function rng(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let glitchTick = 0;
+setInterval(() => { const a = S.key.anim; if (a === 'off') return;
+  if (a === 'live' || Math.random() < .12){ glitchTick++; draw(); if (a === 'flicker') setTimeout(() => { glitchTick = 0; draw(); }, 140); } }, 180);
 function keybar(){
   const y = 29, items = [['C','har'],['I','nv'],['O','pts'],['M','ap'],['H','ist']], k = S.key, K0 = C(k.k1), K1 = C(k.k2), KL = C(k.key);
   RECTS['Key bar'] = [0,29,COLS,1];
   let x = 0; const bgAt = i => mix(K0,K1,i/4);
   const st = k.style;
   if (st === 'chevron') items.forEach(([c,r],i) => { const bg = bgAt(i); if (i>0){ put(x,y,'WEDGE_R',[0,0,0],bg); x++; } put(x,y,' ',P.text,bg); put(x+1,y,c,KL,bg); text(x+2,y,r+' ',P.text,bg); x += 3+r.length; put(x,y,'WEDGE_R',bg,[0,0,0]); x++; });
+  else if (['glitch','torn','slice','static','corrupt'].includes(st)){
+    // ANSI-art endings instead of powerline arrows (seeded, so a still glitch stays put)
+    const R = rng(k.seed * 977 + (k.anim === 'off' ? 0 : glitchTick));
+    items.forEach(([c,r],i) => { const bg = bgAt(i), nb = i < 4 ? bgAt(i+1) : [0,0,0], hot = light(bg,.5);
+      if (st === 'slice' && i > 0){ put(x,y,'▄',bg,[0,0,0]); x++; }
+      const start = x;
+      put(x,y,' ',P.text,bg); put(x+1,y,c,KL,bg); text(x+2,y,r+' ',P.text,bg); x += 3+r.length;
+      if (k.split !== 'off') for (let q = start; q < x; q++) if (k.split === 'all' || q === start+1) cells[y*COLS+q].split = true;
+      if (st === 'torn'){ put(x,y,'▓',light(bg,.15),bg); put(x+1,y,'▒',light(bg,.25)); put(x+2,y,'░',light(bg,.35)); x += 3; }
+      else if (st === 'slice'){ put(x,y,'▀',bg,[0,0,0]); x++; }
+      else if (st === 'static'){ const n = 2 + Math.floor(R()*2); for (let q=0;q<n;q++){ put(x+q,y,'░▒░·'[Math.floor(R()*4)], mix(bg,hot,R())); } x += n; }
+      else if (st === 'corrupt'){ put(x,y,'▌',bg,[0,0,0]); put(x+1,y,R() < .5 ? '▐' : '▌', hot); x += 2; if (R() < .4){ put(x,y,'█',dark(hot,.3)); x++; } }
+      else { // glitch: a torn edge, one cell knocked off by half a row, now and then a stray block
+        put(x,y, R() < .5 ? '▚' : '▞', bg, nb); put(x+1,y, R() < .5 ? '▀' : '▄', hot); x += 2;
+        if (R() < .35){ put(x,y,'▒', mix(hex(P.hot),bg,.5)); x++; } }
+      x++;
+    });
+    if (k.anim !== 'off' && R() < (k.anim === 'live' ? .9 : .5)){ const gx = Math.floor(R()*x); for (let q=0;q<1+Math.floor(R()*4);q++){ const cc = cells[y*COLS+gx+q]; if (cc){ cc.split = true; cc.shift = R() < .5 ? -1 : 1; } } }
+  }
   else if (st === 'slant') items.forEach(([c,r],i) => { const bg = bgAt(i); put(x,y,'◢',bg); put(x+1,y,c,KL,bg); text(x+2,y,r,P.text,bg); put(x+2+r.length,y,'◣',bg); x += 4+r.length; });
   else if (st === 'pills') items.forEach(([c,r],i) => { const bg = bgAt(i); put(x,y,'▐',bg); put(x+1,y,c,KL,bg); text(x+2,y,r,P.text,bg); put(x+2+r.length,y,'▌',bg); x += 4+r.length; });
   else if (st === 'tabs'){ x = 1; items.forEach(([c,r],i) => { const e = light(bgAt(i),.25); put(x,y,'┐',e); put(x+1,y,c,KL); text(x+2,y,r,P.text); put(x+2+r.length,y,'┌',e); x += 4+r.length; }); }
@@ -452,7 +479,11 @@ function paint(){
     if (Q){ const hw = cw/2, hh = ch/2; Q.forEach((on,i) => { if (on) g.fillRect(px + (i%2)*hw, py + (i>>1)*hh, hw+.5, hh+.5); }); continue; }
     if (c.ch === 'WEDGE_R' || c.ch === 'WEDGE_L'){ g.beginPath(); if (c.ch === 'WEDGE_R'){ g.moveTo(px,py); g.lineTo(px+cw,cy); g.lineTo(px,py+ch); } else { g.moveTo(px+cw,py); g.lineTo(px,cy); g.lineTo(px+cw,py+ch); } g.fill(); continue; }
     if (c.ch === '◢' || c.ch === '◣'){ g.beginPath(); if (c.ch === '◢'){ g.moveTo(px+cw,py); g.lineTo(px+cw,py+ch); g.lineTo(px,py+ch); } else { g.moveTo(px,py); g.lineTo(px+cw,py+ch); g.lineTo(px,py+ch); } g.fill(); continue; }
-    if (c.ch === '▓' || c.ch === '░'){ g.globalAlpha = c.ch === '▓' ? .75 : .3; g.fillRect(px,py,cw+.5,ch+.5); g.globalAlpha = 1; continue; }
+    if (c.ch === '▓' || c.ch === '░' || c.ch === '▒'){ // shades as dither patterns, like the font draws them
+      const dens = c.ch === '▓' ? .75 : c.ch === '▒' ? .5 : .25, step = Math.max(2, Math.round(2*s));
+      for (let yy = 0; yy < ch; yy += step) for (let xx = ((yy/step) % 2) * step * (dens < .5 ? 1 : .5); xx < cw; xx += step / Math.max(.5, dens*2)) g.fillRect(px+xx, py+yy, step*.9, step*.9);
+      continue; }
+    if (c.ch === '▚' || c.ch === '▞'){ const hw = cw/2, hh = ch/2; if (c.ch === '▚'){ g.fillRect(px,py,hw+.5,hh+.5); g.fillRect(px+hw,py+hh,hw+.5,hh+.5); } else { g.fillRect(px+hw,py,hw+.5,hh+.5); g.fillRect(px,py+hh,hw+.5,hh+.5); } continue; }
     const B = ' ▁▂▃'.indexOf(c.ch); if (B > 0){ const h = ch*B/8; g.fillRect(px,py+ch-h,cw+.5,h); continue; }
     const B2 = '▅▆▇'.indexOf(c.ch);
     if (c.ch === '▂'){ g.fillRect(px,py+ch*.75,cw+.5,ch*.25); continue; } if (B2 >= 0){ const h = ch*(B2+5)/8; g.fillRect(px,py+ch-h,cw+.5,h); continue; }
@@ -465,6 +496,10 @@ function paint(){
     if (c.ch === '▰' || c.ch === '▱'){ const h2 = ch*.5, k2 = cw*.3; g.beginPath(); g.moveTo(px+k2,cy-h2/2); g.lineTo(px+cw,cy-h2/2); g.lineTo(px+cw-k2,cy+h2/2); g.lineTo(px,cy+h2/2); g.closePath(); g.lineWidth = lw; c.ch === '▰' ? g.fill() : g.stroke(); continue; }
     if (c.ch === '◆' || c.ch === '◇'){ const r2 = cw*.42; g.beginPath(); g.moveTo(cx,cy-r2); g.lineTo(cx+r2,cy); g.lineTo(cx,cy+r2); g.lineTo(cx-r2,cy); g.closePath(); g.lineWidth = lw; c.ch === '◆' ? g.fill() : g.stroke(); continue; }
     if (c.ch === '□' || c.ch === '▪' || c.ch === '▫'){ const m = c.ch === '□' ? cw*.12 : cw*.28, h2 = cw - 2*m; g.lineWidth = lw; c.ch === '▫' || c.ch === '□' ? g.strokeRect(px+m,cy-h2/2,h2,h2) : g.fillRect(px+m,cy-h2/2,h2,h2); continue; }
+    if (c.split){ // colour split: a red and a cyan ghost either side of the letter
+      const o = cw*.14 + (c.shift ? cw*.25*c.shift : 0), sb = g.shadowBlur; g.shadowBlur = 0; g.globalCompositeOperation = 'lighter';
+      g.fillStyle = 'rgba(255,40,90,.85)'; g.fillText(c.ch, cx - o, cy + ch*.04); g.fillStyle = 'rgba(40,240,255,.85)'; g.fillText(c.ch, cx + o, cy + ch*.04);
+      g.globalCompositeOperation = 'source-over'; g.shadowBlur = sb; g.fillStyle = rgb(c.fg); if (c.shift){ g.fillText(c.ch, cx + c.shift*cw*.2, cy + ch*.04); continue; } }
     g.fillText(c.ch, cx, cy + ch*.04);
     if (c.under) g.fillRect(px+cw*.1, py+ch*.86, cw*.8, Math.max(1,lw*.8));
   }
