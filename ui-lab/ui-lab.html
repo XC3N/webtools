@@ -1,0 +1,682 @@
+<title>Sprawler UI Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nova+Mono&family=Intel+One+Mono:wght@400;600&family=JetBrains+Mono:wght@400;600&family=VT323&family=Chakra+Petch:wght@500;700&display=swap">
+<style>
+/* Layout: the game screen on the left, sticky, as wide as it can be; the controls in a scrolling column on the right.
+   Narrow screens: the screen sticks to the top and the controls scroll under it. */
+:root{
+  --bg:#07070d; --panel:#0e1020; --edge:#22264a; --ink:#c8cbe0; --muted:#7a80a8; --faint:#4a5070;
+  --neon:#29f0ff; --hot:#ff2fa8; --lime:#b6ff3b;
+  --display:"Chakra Petch",ui-sans-serif,system-ui,sans-serif; --mono:"Share Tech Mono",ui-monospace,"DejaVu Sans Mono",monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--ink);height:100%}
+body{font:14px/1.45 var(--mono)}
+.wrap{max-width:1680px;margin:0 auto;padding-block:14px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:12px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px}
+h1{margin:0;font:700 20px/1.1 var(--display);letter-spacing:.04em;text-transform:uppercase}
+h1 b{background:linear-gradient(90deg,var(--hot),#9d5cff 50%,var(--neon));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:0;color:var(--muted);font-size:12px;flex:1 1 300px;min-width:0}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:14px;align-items:start}
+.stage{position:sticky;top:env(safe-area-inset-top,0px);display:grid;gap:8px;min-width:0}
+.screen{background:#000;border:1px solid var(--edge);border-radius:6px;padding:6px;min-width:0}
+canvas{display:block;width:100%;height:auto;cursor:pointer}
+.hint{font-size:12px;color:var(--faint)}
+.legend{display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline;font-size:15px}.legend span{display:inline-flex;flex-direction:column;align-items:center;line-height:1.1}.legend i{font-style:normal;font-size:9px;color:var(--faint)}.legend .lt{font-size:11px;color:var(--muted);flex-direction:row;margin-right:4px}
+.panel{display:grid;gap:10px;max-height:calc(100vh - 90px);overflow-y:auto;padding-right:4px;min-width:0;scrollbar-width:thin;scrollbar-color:var(--edge) transparent}
+.els{display:flex;flex-wrap:wrap;gap:4px;position:sticky;top:0;background:var(--bg);padding-bottom:6px;z-index:2}
+.els button{font:12px var(--mono);color:var(--muted);background:#0a0b16;border:1px solid var(--edge);border-radius:12px;padding:3px 9px;cursor:pointer}
+.els button.mod{color:var(--ink)}
+.els button.mod::after{content:" •";color:var(--hot)}
+.els button[aria-pressed="true"]{border-color:var(--hot);color:#fff;background:#2a0f22}
+fieldset{margin:0;border:1px solid var(--edge);border-radius:6px;padding:6px 10px 9px;background:var(--panel);min-width:0;display:grid;gap:6px}
+legend{cursor:pointer;user-select:none}legend::before{content:'▾ ';color:var(--faint)}fieldset.shut legend::before{content:'▸ '}
+fieldset.shut>:not(legend){display:none}fieldset.shut{padding-bottom:4px}legend .sum{color:var(--neon);letter-spacing:0;text-transform:none;font-family:var(--mono);margin-left:6px}
+.folds{display:flex;gap:6px}.folds button{font:11px var(--mono);color:var(--muted);background:none;border:1px solid var(--edge);border-radius:4px;padding:2px 8px;cursor:pointer}
+legend{padding:0 6px;font:500 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+legend .ov{color:var(--hot);letter-spacing:0;text-transform:none;font-family:var(--mono);cursor:pointer;margin-left:6px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start}
+.seg button{font:13px var(--mono);color:var(--ink);background:#0a0b16;border:1px solid var(--edge);border-radius:4px;padding:3px 7px;cursor:pointer;white-space:pre}
+.seg button:hover{border-color:var(--muted)}
+.seg button[aria-pressed="true"]{border-color:var(--neon);color:var(--neon);background:#0b2230}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--neon);outline-offset:1px}
+label.row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+input[type=range]{flex:1;min-width:0;accent-color:var(--hot)}
+/* colours are swatches; a click opens VJif's colour picker (cpick.js, from VJif) */
+input[type=color]{-webkit-appearance:none;appearance:none;width:30px;height:22px;padding:0;border:1px solid var(--edge);border-radius:4px;background:none;cursor:pointer}
+input[type=color]::-webkit-color-swatch-wrapper{padding:2px}input[type=color]::-webkit-color-swatch{border:0;border-radius:2px}input[type=color]::-moz-color-swatch{border:0;border-radius:2px}
+#cpk{position:fixed;z-index:200;width:220px;padding:8px;background:var(--panel);border:1px solid var(--muted);border-radius:6px;box-shadow:0 6px 24px #0008;font-size:12px}
+#cpk .cpkTop{display:flex;gap:6px;margin-bottom:6px}#cpk .cpkSw{flex:1;border:1px solid var(--edge);border-radius:4px;height:24px}
+#cpk .cpkSV,#cpk .cpkH{display:block;width:100%;border-radius:2px;cursor:crosshair;margin-bottom:5px;touch-action:none}#cpk .cpkH{height:12px;margin-bottom:7px}#cpk .cpkSV{height:104px}
+#cpk .cpkHex{width:84px;font:12px var(--mono);text-transform:lowercase;color:var(--ink);background:#0a0b16;border:1px solid var(--edge);border-radius:4px;padding:2px 6px}
+#cpk .field{display:grid;grid-template-columns:44px minmax(0,1fr) 40px;align-items:center;gap:6px;margin-bottom:4px}#cpk .field label{color:var(--muted)}#cpk .field output{font-size:11px}
+input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
+output{font-variant-numeric:tabular-nums;color:var(--ink);min-width:4ch;text-align:right}
+select{font:13px var(--mono);color:var(--ink);background:#0a0b16;border:1px solid var(--edge);border-radius:4px;padding:3px 6px;max-width:100%}
+.swatch{height:8px;border-radius:2px}
+.out{display:grid;gap:6px}
+textarea{font:11px/1.35 var(--mono);color:var(--lime);background:#05060c;border:1px solid var(--edge);border-radius:6px;padding:6px;min-height:52px;resize:vertical;width:100%;box-sizing:border-box}
+.acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.act{font:500 12px var(--display);letter-spacing:.06em;text-transform:uppercase;color:#000;background:var(--neon);border:0;border-radius:4px;padding:6px 12px;cursor:pointer}
+.act.alt{background:transparent;color:var(--ink);border:1px solid var(--edge)}
+#msg{font-size:12px;color:var(--lime)}
+@media (max-width:900px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .stage{z-index:3;background:var(--bg);padding-bottom:6px}
+  .panel{max-height:none;overflow:visible}
+  .els{top:0;position:static}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><b>Sprawler</b> UI Lab</h1>
+    <p>The game's 104 × 30 screen. Pick an element (or click it on the screen), change it, and watch it here. Global sets every box; a box's own changes win over Global (marked •).</p>
+  </header>
+  <div class="main">
+    <div class="stage">
+      <div class="screen"><canvas id="cv" width="1248" height="720" aria-label="Preview of the game screen with the chosen UI settings"></canvas></div>
+      <div class="legend" id="legend" aria-label="Arrow colour by distance"></div>
+      <div class="hint" id="hint">Click a box, a bar or the key bar to select it.</div>
+    </div>
+    <div class="panel">
+      <div class="els" id="els" role="group" aria-label="Element to edit"></div>
+      <div class="folds"><button type="button" id="foldAll">Fold all</button><button type="button" id="openAll">Unfold all</button></div>
+      <div id="knobs" style="display:grid;gap:10px"></div>
+      <div class="out">
+        <textarea id="code" readonly aria-label="Settings line to send to Claude"></textarea>
+        <div class="acts"><button class="act" id="copy" type="button">Copy settings</button><button class="act alt" id="reset" type="button">Back to the game's look</button><span id="msg"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- palette: the game's own colours (render/level_view.gd) ----
+const P = { hot:'#ff2fa8', neon:'#29f0ff', lime:'#b6ff3b', amber:'#ffb627', violet:'#9d5cff', blue:'#2f7bff', red:'#ff5d5d',
+  ui:'#5b6390', text:'#c8cbe0', dim:'#4a5070', wall:'#2b2f45', wallbg:'#14162a', street:'#3a3f58', streetbg:'#07070d', floor:'#4d5a66', floorbg:'#0d0f14' };
+const PALETTES = {
+  sprawl:  { name:'Sprawl (current)', pairs:[[P.hot,P.violet],[P.amber,P.hot],[P.neon,P.violet],[P.lime,P.neon],[P.violet,P.neon]] },
+  neon:    { name:'One neon chain', chain:[P.hot,P.violet,P.blue,P.neon,P.lime,P.amber] },
+  cristal: { name:'cristal', all:['#bdfff3','#4ac29a'] },
+  teen:    { name:'teen', all:['#77a1d3','#79cbca','#e684ae'] },
+  mind:    { name:'mind', all:['#473b7b','#3584a7','#30d2be'] },
+  morning: { name:'morning', all:['#ff5f6d','#ffc371'] },
+  vice:    { name:'vice', all:['#5ee7df','#b490ca'] },
+  passion: { name:'passion', all:['#f43b47','#453a94'] },
+  fruit:   { name:'fruit', all:['#ff4e50','#f9d423'] },
+  instagram:{ name:'instagram', all:['#833ab4','#fd1d1d','#fcb045'] },
+  atlas:   { name:'atlas', all:['#feac5e','#c779d0','#4bc0c8'] },
+  retro:   { name:'retro', all:['#3f51b1','#5a55ae','#7b5fac','#8f6aae','#a86aa4','#cc6b8e','#f18271','#f3a469','#f7c978'] },
+  summer:  { name:'summer', all:['#fdbb2d','#22c1c3'] },
+  pastel:  { name:'pastel', all:['#74ebd5','#74ecd5'.replace('74ecd5','acb6e5')] },
+  rainbow: { name:'rainbow', all:['#ff0000','#ff00ff','#0000ff','#00ffff','#00ff00','#ffff00','#ff0000'] },
+  mono:    { name:'Mono cyan', all:[P.neon,P.neon] },
+  custom:  { name:'★ My gradient (edit below)', all:null },
+  ice:     { name:'Corpsec ice', all:['#2f7bff','#29f0ff','#e8f6ff'] },
+  ember:   { name:'Ember', all:['#ff2fa8','#ff5d5d','#ffb627'] },
+};
+const BOXES = ['RUNNER','JOB','SURROUNDINGS','ROLL','COMMS'];
+const BARS = ['HP','PWR','STA','FAT'];
+const BAR_COLS = { HP:[P.violet,P.hot], PWR:[P.neon,P.lime], STA:[P.blue,P.neon], FAT:[P.hot,P.violet] };
+
+// Title styles: [label, kind, left cap, right cap]. Caps are glyphs that end the frame line before the title.
+const TITLES = [
+  ['tab','┐TAB┌','line','┐','┌'], ['bracket','┤BRACKET├','line','┤','├'], ['half','╴HALF╶','line','╴','╶'], ['gap','─ GAP ─','line',' ',' '],
+  ['tight','─TIGHT─','line','',''], ['heavy','┫HEAVY┣','line','┫','┣'], ['double','╡DOUBLE╞','line','╡','╞'], ['taper','╼TAPER╾','line','╼','╾'],
+  ['square','[SQUARE]','line','[',']'], ['round','(ROUND)','line','(',')'], ['angle','‹ANGLE›','line','‹','›'], ['guill','«GUILL»','line','«','»'],
+  ['dot','● DOT','pre','● ',''], ['sq','■ SQUARE','pre','■ ',''], ['small','▪ SMALL','pre','▪ ',''], ['diamond','◆ DIAMOND','pre','◆ ',''],
+  ['ring','○ RING','pre','○ ',''], ['arrow','▸ ARROW','pre','▸ ',''], ['bullet','• BULLET','pre','• ',''], ['slash','// SLASH','pre','// ',''],
+  ['hash','# HASH','pre','# ',''], ['num','¹NUMBER','num','',''], ['block','█BLOCK█','fill',' ',' '], ['pill','▐PILL▌','pill','▐','▌'],
+  ['wedge','◀WEDGE▶','wedge','',''], ['under','UNDER (inside)','under','',''], ['none','no title','none','',''],
+];
+const CORNERS = [['square','┌ square'],['round','╭ rounded'],['heavy','┏ heavy'],['double','╔ double'],['mixed','╓ dbl sides'],['dashed','┄ dashed'],['blocky','▛ blocks'],['ascii','+ ascii'],['open','  corners only'],['nob','  no box']];
+const BOX_DEF = { corners:'round', title:'slash', pos:'right', tcase:'upper', frame:'vert', pal:'auto', tpick:'#e8eaf6', bgpick:'#000000', bgstops:['#1c0b2e','#061a24'], bgamt:2, bgdir:'diag', c1:'#ff2fa8', c2:'#9d5cff', stops:null, dim:18, titleCol:'grad', bg:'none', pad:1 };
+const BAR_DEF = { stress:'#ff0000', shape:'para', fill:'fill', empty:'ghost', c1:'', c2:'', width:20, label:'left' };
+const KEY_DEF = { anim:'off', split:'off', seed:1, style:'dissolve', k1:'#191843', k2:'#10283d', key:'#29f0ff', ver:'plain' };
+const GLOBAL_DEF = { prox:['#ff00ff','#00ffff'], proxNear:2, proxFar:18, stops:['#0055aa','#0079ab'], font:'Share Tech Mono', palette:'custom', arrows:'prox', graph:'braille', comms:'fade', glow:2, scan:5, mapbg:'#000000', zoom:100 };
+const fresh = () => ({ g:{ ...GLOBAL_DEF }, box:{ ...BOX_DEF }, bar:{ ...BAR_DEF }, key:{ ...KEY_DEF }, boxes:{}, bars:{} });
+let S = fresh();
+try { const v = JSON.parse(localStorage.getItem('uiLab2') || 'null'); if (v && v.g) S = { ...fresh(), ...v, g:{ ...GLOBAL_DEF, ...v.g }, box:{ ...BOX_DEF, ...v.box }, bar:{ ...BAR_DEF, ...v.bar }, key:{ ...KEY_DEF, ...v.key } }; } catch (e) {}
+for (const o of [S.box, ...Object.values(S.boxes)]) if (['white','accent','c1'].includes(o.titleCol)){ o.tpick = o.titleCol === 'accent' ? '#29f0ff' : '#e8eaf6'; o.titleCol = 'pick'; }   // older settings
+for (const o of [S.box, ...Object.values(S.boxes)]) if (o.bg === 'panel'){ o.bg = 'pick'; o.bgpick = '#0a0b14'; }
+let SEL = 'Global';
+const boxOf = id => ({ ...S.box, ...(S.boxes[id] || {}) });
+const barOf = id => ({ ...S.bar, ...(S.bars[id] || {}) });
+
+// ---- the controls ----
+const $ = id => document.getElementById(id);
+function seg(label, opts, get, set, isOv, clearOv){
+  const fs = document.createElement('fieldset');
+  fs.innerHTML = `<legend>${label}${isOv ? ' <span class="ov" title="Use Global again">• own ×</span>' : ''}</legend>`;
+  if (isOv) fs.querySelector('.ov').onclick = clearOv;
+  const s = document.createElement('div'); s.className = 'seg';
+  for (const [v, t] of opts){ const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.setAttribute('aria-pressed', get() === v);
+    b.onclick = () => { set(v); changed(); }; s.append(b); }
+  fs.append(s); return fs;
+}
+function range(label, min, max, get, set, unit, isOv, clearOv){
+  const fs = document.createElement('fieldset'); fs.innerHTML = `<legend>${label}${isOv ? ' <span class="ov">• own ×</span>' : ''}</legend>`;
+  if (isOv) fs.querySelector('.ov').onclick = clearOv;
+  const r = document.createElement('label'); r.className = 'row'; r.innerHTML = `<input type="range" min="${min}" max="${max}" value="${get()}"><output>${get()}${unit}</output>`;
+  r.querySelector('input').oninput = e => { set(+e.target.value); r.querySelector('output').textContent = e.target.value + unit; save(); draw(); };
+  fs.append(r); return fs;
+}
+function colors(label, pairs, isOv, clearOv){
+  const fs = document.createElement('fieldset'); fs.innerHTML = `<legend>${label}${isOv ? ' <span class="ov">• own ×</span>' : ''}</legend>`;
+  if (isOv) fs.querySelector('.ov').onclick = clearOv;
+  const r = document.createElement('div'); r.className = 'acts';
+  for (const [t, get, set] of pairs){ const l = document.createElement('label'); l.className = 'row'; l.textContent = t;
+    const i = document.createElement('input'); i.type = 'color'; i.value = get(); i.oninput = e => { set(e.target.value); save(); draw(); }; l.append(i); r.append(l); }
+  fs.append(r); return fs;
+}
+function changed(){ save(); buildKnobs(); draw(); }
+// A gradient made of 2 to 8 colour stops: pick each, add one, take the last off, flip the order.
+function stopsEditor(label, get, set, isOv, clearOv){
+  const fs = document.createElement('fieldset'); fs.innerHTML = `<legend>${label}${isOv ? ' <span class="ov">• own ×</span>' : ''}</legend>`;
+  if (isOv) fs.querySelector('.ov').onclick = clearOv;
+  const st = get().slice(), sw = document.createElement('div'); sw.className = 'swatch'; const paintSw = () => sw.style.background = `linear-gradient(90deg,${st.join(',')})`; paintSw();
+  const row = document.createElement('div'); row.className = 'acts';
+  st.forEach((c, i) => { const inp = document.createElement('input'); inp.type = 'color'; inp.value = c; inp.setAttribute('aria-label', 'Stop ' + (i+1));
+    inp.oninput = e => { st[i] = e.target.value; set(st.slice()); paintSw(); save(); draw(); }; row.append(inp); });
+  const btn = (t, f, dis) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'act alt'; b.textContent = t; b.disabled = dis; b.onclick = () => { f(); set(st.slice()); changed(); }; row.append(b); };
+  btn('+', () => st.push(st[st.length-1]), st.length >= 8); btn('−', () => st.pop(), st.length <= 2); btn('⇄', () => st.reverse(), false);
+  fs.append(sw, row); return fs;
+}
+
+function buildEls(){
+  const all = ['Global', ...BOXES, ...BARS.map(b => b + ' bar'), 'Key bar'];
+  $('els').innerHTML = '';
+  for (const id of all){ const b = document.createElement('button'); b.type = 'button'; b.textContent = id; b.setAttribute('aria-pressed', SEL === id);
+    const k = id.replace(' bar', ''); if ((S.boxes[id] && Object.keys(S.boxes[id]).length) || (S.bars[k] && Object.keys(S.bars[k]).length)) b.classList.add('mod');
+    b.onclick = () => { SEL = id; buildEls(); buildKnobs(); draw(); }; $('els').append(b); }
+}
+// Every group folds: click its name. Folded, it shows its current value beside the name. Remembered per name.
+let shut = {}; try { shut = JSON.parse(localStorage.getItem('uiLabShut') || '{}'); } catch (e) {}
+const saveShut = () => { try { localStorage.setItem('uiLabShut', JSON.stringify(shut)); } catch (e) {} };
+const nameOf = fs => fs.querySelector('legend').firstChild.textContent.replace(/^(Bars|Every box): /, '').trim();
+function foldable(){
+  for (const fs of document.querySelectorAll('#knobs fieldset')){
+    const n = nameOf(fs), lg = fs.querySelector('legend');
+    const on = fs.querySelector('.seg button[aria-pressed="true"]'), out = fs.querySelector('output'), sel = fs.querySelector('select');
+    const sum = on ? on.textContent : out ? out.textContent : sel ? sel.selectedOptions[0].textContent : '';
+    if (sum){ const sp = document.createElement('span'); sp.className = 'sum'; sp.textContent = sum; lg.append(sp); }
+    fs.classList.toggle('shut', !!shut[n]);
+    lg.onclick = e => { if (e.target.closest('.ov')) return; shut[n] = !shut[n]; if (!shut[n]) delete shut[n]; saveShut(); fs.classList.toggle('shut', !!shut[n]); };
+  }
+}
+function buildKnobs(){
+  buildEls();
+  const K = $('knobs'); K.innerHTML = '';
+  const barId = SEL.replace(' bar', ''), isBox = BOXES.includes(SEL), isBar = BARS.includes(barId) && SEL.endsWith(' bar');
+  if (SEL === 'Global' || isBox){
+    // box knobs: Global edits the shared set, a box edits its own overrides
+    const own = isBox ? (S.boxes[SEL] = S.boxes[SEL] || {}) : null;
+    const get = k => isBox ? boxOf(SEL)[k] : S.box[k];
+    const set = k => v => { if (isBox) own[k] = v; else S.box[k] = v; };
+    const ov = k => isBox && k in own, clr = k => () => { delete own[k]; changed(); };
+    if (SEL === 'Global'){
+      const fs = document.createElement('fieldset'); fs.innerHTML = '<legend>Palette (auto box colours)</legend>';
+      const sel = document.createElement('select'); sel.setAttribute('aria-label','Palette');
+      for (const [k, p] of Object.entries(PALETTES)){ const o = document.createElement('option'); o.value = k; o.textContent = p.name; o.selected = S.g.palette === k; sel.append(o); }
+      sel.onchange = e => { S.g.palette = e.target.value; changed(); };
+      const sw = document.createElement('div'); sw.className = 'swatch'; const st = PALETTES[S.g.palette]; sw.style.background = `linear-gradient(90deg,${(S.g.palette === 'custom' ? S.g.stops : st.all || st.chain || st.pairs.flat()).join(',')})`;
+      fs.append(sel, sw); K.append(fs);
+      if (S.g.palette === 'custom') K.append(stopsEditor('My gradient (all boxes)', () => S.g.stops, v => S.g.stops = v));
+    }
+    K.append(seg('Title style', TITLES.map(t => [t[0], t[1]]), () => get('title'), set('title'), ov('title'), clr('title')));
+    K.append(seg('Title position', [['left','left'],['center','centre'],['right','right']], () => get('pos'), set('pos'), ov('pos'), clr('pos')));
+    K.append(seg('Title case', [['upper','UPPER'],['lower','lower'],['cap','Title'],['spaced','S P A C E D']], () => get('tcase'), set('tcase'), ov('tcase'), clr('tcase')));
+    K.append(seg('Title colour', [['grad','gradient'],['frame','like the frame'],['pick','my colour'],['inverse','inverse']], () => get('titleCol'), set('titleCol'), ov('titleCol'), clr('titleCol')));
+    if (get('titleCol') === 'pick') K.append(colors('Title colour', [['', () => get('tpick'), set('tpick')]], ov('tpick'), clr('tpick')));
+    K.append(seg('Corners and lines', CORNERS, () => get('corners'), set('corners'), ov('corners'), clr('corners')));
+    K.append(seg('Frame colour', [['flat','flat grey'],['solid','one colour'],['diag','gradient ↘'],['horiz','gradient →'],['vert','gradient ↓'],['ring','around the box'],['glowtop','bright top only']], () => get('frame'), set('frame'), ov('frame'), clr('frame')));
+    K.append(range('Frame dim', 0, 85, () => get('dim'), v => set('dim')(v), '%', ov('dim'), clr('dim')));
+    K.append(seg('Colours from', [['auto','palette'],['custom','my own gradient']], () => get('pal'), set('pal'), ov('pal'), clr('pal')));
+    if (get('pal') === 'custom') K.append(stopsEditor(isBox ? SEL + ' gradient' : 'Every box: my gradient', () => get('stops') || [get('c1'), get('c2')], set('stops'), ov('stops'), clr('stops')));
+    K.append(seg('Box background', [['none','black'],['pick','my colour'],['tint','frame colours, dim'],['gradbg','frame gradient, dim'],['mygrad','my gradient'],['stripe','top band'],['band2','top & bottom bands'],['scan','striped rows']], () => get('bg'), set('bg'), ov('bg'), clr('bg')));
+    const bgk = get('bg');
+    if (bgk === 'pick' || bgk === 'stripe' || bgk === 'band2' || bgk === 'scan') K.append(colors('Background colour', [['', () => get('bgpick'), set('bgpick')]], ov('bgpick'), clr('bgpick')));
+    if (bgk === 'mygrad') K.append(stopsEditor('Background gradient', () => get('bgstops'), set('bgstops'), ov('bgstops'), clr('bgstops')));
+    if (['tint','gradbg','stripe','band2','scan'].includes(bgk)) K.append(range('Background strength', 2, 40, () => get('bgamt'), v => set('bgamt')(v), '%', ov('bgamt'), clr('bgamt')));
+    if (bgk === 'gradbg' || bgk === 'mygrad') K.append(seg('Background direction', [['diag','↘'],['horiz','→'],['vert','↓'],['radial','from the middle']], () => get('bgdir'), set('bgdir'), ov('bgdir'), clr('bgdir')));
+  }
+  if (SEL === 'Global' || isBar){
+    const own = isBar ? (S.bars[barId] = S.bars[barId] || {}) : null;
+    const get = k => isBar ? barOf(barId)[k] : S.bar[k];
+    const set = k => v => { if (isBar) own[k] = v; else S.bar[k] = v; };
+    const ov = k => isBar && k in own, clr = k => () => { delete own[k]; changed(); };
+    const t = SEL === 'Global' ? 'Bars: ' : '';
+    K.append(seg(t + 'Shape', [['block','█ block'],['half','▄ half'],['low','▂ low'],['tall','▆ tall'],['left','▌ rods'],['vbar','▮ cells'],['para','▰ slants'],['meter','■ meter'],['small','▪ small'],['thin','▬ thin'],['line','━ line'],['heavy','┃ ticks'],['seg','█▏ groups of 4'],['dots','⣿ dots'],['pips','● pips'],['diamond','◆ diamonds'],['shade','▓ shade'],['chev','› chevrons'],['slash','/ slashes']], () => get('shape'), set('shape'), ov('shape'), clr('shape')));
+    K.append(seg(t + 'Colour', [['solid','solid'],['across','gradient across'],['fill','gradient over fill'],['level','by level (red when low)'],['pulse','bright tip']], () => get('fill'), set('fill'), ov('fill'), clr('fill')));
+    K.append(seg(t + 'Empty part', [['shade','░'],['dot','·'],['square','■ dim'],['line','─'],['low','▁'],['ghost','ghost of the colour'],['outline','outline (▯ ▱ ○ ◇ □)'],['dissolve','dissolving'],['none','none']], () => get('empty'), set('empty'), ov('empty'), clr('empty')));
+    K.append(range(t + 'Width', 8, 20, () => get('width'), v => set('width')(v), '', ov('width'), clr('width')));
+    K.append(seg(t + 'Numbers', [['left','label, bar, 11/17'],['pct','label, bar, 65%'],['inside','numbers on the bar'],['none','no numbers']], () => get('label'), set('label'), ov('label'), clr('label')));
+    if (SEL === 'Global' || barId === 'STA') K.append(colors('Stress colour (STA)', [['', () => get('stress'), set('stress')]], ov('stress'), clr('stress')));
+    if (isBar){ const c = BAR_COLS[barId]; K.append(stopsEditor(barId + ' gradient', () => own.stops || [own.c1 || c[0], own.c2 || c[1]], v => own.stops = v, 'stops' in own, () => { delete own.stops; changed(); })); }
+  }
+  if (SEL === 'Global' || SEL === 'Key bar'){
+    const k = S.key, set = n => v => k[n] = v;
+    K.append(seg('Key bar style', [['brackets','[C]har'],['chevron','▶ segments'],['tabs','┐C┌ tabs'],['pills','▐C▌ pills'],['underline','C̲har underline'],['boxed','│C│har'],['plain','C·har plain'],['slant','◢C◣ slant'],['dissolve','⣿⡂ dissolve'],['dissolve2','⡂⣿⡂ fade in & out'],['dissgrid','⣿ pixel grid'],['glitch','▚ glitch'],['torn','▓▒░ torn'],['slice','▀▄ sliced'],['static','░ static'],['corrupt','█▌ corrupt']], () => k.style, set('style')));
+    K.append(seg('Glitch', [['off','still'],['flicker','flickers now and then'],['live','always moving']], () => k.anim, set('anim')));
+    K.append(seg('Colour split on letters', [['off','off'],['keys','key letters'],['all','whole bar']], () => k.split, set('split')));
+    K.append(range('Glitch seed', 1, 99, () => k.seed, v => k.seed = v, ''));
+    K.append(seg('Version', [['segment','own segment'],['plain','plain text'],['hidden','hidden']], () => k.ver, set('ver')));
+    K.append(colors('Key bar colours', [['from', () => k.k1, set('k1')], ['to', () => k.k2, set('k2')], ['key letter', () => k.key, set('key')]]));
+  }
+  if (SEL === 'Global'){
+    const g = S.g, set = n => v => g[n] = v;
+    K.append(seg('Font', [['Share Tech Mono','Share Tech'],['Nova Mono','Nova'],['Intel One Mono','Intel One'],['JetBrains Mono','JetBrains'],['VT323','VT323']], () => g.font, set('font')));
+    K.append(seg('Newest message', [['solid','solid'],['grad','gradient'],['fade','older lines fade'],['glow','glowing']], () => g.comms, set('comms')));
+    K.append(seg('Arrows in SURROUNDINGS', [['plain','plain'],['prox','by distance']], () => g.arrows, set('arrows')));
+    K.append(stopsEditor('Distance gradient (near → far)', () => g.prox, v => g.prox = v));
+    K.append(range('Nearest colour up to', 0, 10, () => g.proxNear, v => g.proxNear = v, ' cells'));
+    K.append(range('Farthest colour from', 4, 40, () => g.proxFar, v => g.proxFar = v, ' cells'));
+    K.append(seg('Trace graph (JOB)', [['off','off'],['blocks','▁▃▅ blocks'],['braille','⣀⣤ braille'],['dots','· dots'],['line','╱╲ line']], () => g.graph, set('graph')));
+    K.append(range('Neon glow', 0, 12, () => g.glow, v => g.glow = v, ''));
+    K.append(range('Scanlines', 0, 60, () => g.scan, v => g.scan = v, '%'));
+    K.append(colors('Street background', [['', () => g.mapbg, set('mapbg')]]));
+  }
+}
+const _bk = buildKnobs; buildKnobs = function(){ _bk(); foldable(); };
+function save(){ try { localStorage.setItem('uiLab2', JSON.stringify(S)); } catch (e) {}
+  const lean = JSON.parse(JSON.stringify(S)); for (const k of ['boxes','bars']) for (const id in lean[k]) if (!Object.keys(lean[k][id]).length) delete lean[k][id];
+  $('code').value = 'UI-LAB ' + JSON.stringify(lean); }
+
+// ---- colour helpers ----
+const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+const rgb = a => `rgb(${a.map(v => Math.round(Math.max(0,Math.min(255,v)))).join(',')})`;
+const mix = (a,b,t) => a.map((v,i) => v + (b[i]-v)*t);
+const dark = (a,k) => a.map(v => v*(1-k));
+const light = (a,k) => a.map(v => v + (255-v)*k);
+const C = c => typeof c === 'string' ? hex(c) : c;
+function along(stops, t){ const c = stops.map(C); if (c.length === 1) return c[0];
+  const f = Math.max(0,Math.min(1,t)) * (c.length-1), i = Math.min(c.length-2, Math.floor(f)); return mix(c[i], c[i+1], f-i); }
+function boxStops(i, b){ if (b.pal === 'custom') return b.stops && b.stops.length > 1 ? b.stops : [b.c1, b.c2];
+  if (S.g.palette === 'custom') return S.g.stops;
+  const p = PALETTES[S.g.palette]; if (p.pairs) return p.pairs[i]; if (p.chain){ const n = p.chain.length; return [p.chain[i % n], p.chain[(i+1) % n]]; } return p.all; }
+
+// ---- the cell grid ----
+const COLS = 104, ROWS = 30, CW = 12, CH = 24;
+const cv = $('cv'), g = cv.getContext('2d');
+const cells = []; const RECTS = {};
+function clear(){ cells.length = 0; for (let i = 0; i < COLS*ROWS; i++) cells.push({ ch:' ', fg:[255,255,255], bg:[0,0,0] }); }
+function put(x,y,ch,fg,bg){ if (x<0||y<0||x>=COLS||y>=ROWS) return; const c = cells[y*COLS+x]; c.ch = ch; c.fg = C(fg); if (bg) c.bg = C(bg); }
+function text(x,y,s,fg,bg){ [...s].forEach((ch,k) => put(x+k,y,ch,fg,bg)); }
+function grad(x,y,s,c1,c2,bg){ const a = [...s]; a.forEach((ch,k) => put(x+k,y,ch,mix(C(c1),C(c2),k/Math.max(1,a.length-1)),bg)); }
+function fillBg(x0,y0,w,h,bgf){ for (let y=y0;y<y0+h;y++) for (let x=x0;x<x0+w;x++){ const c = cells[y*COLS+x]; if (c) c.bg = C(bgf(x,y)); } }
+
+const SETS = {
+  square:{h:'─',v:'│',tl:'┌',tr:'┐',bl:'└',br:'┘'}, round:{h:'─',v:'│',tl:'╭',tr:'╮',bl:'╰',br:'╯'},
+  heavy:{h:'━',v:'┃',tl:'┏',tr:'┓',bl:'┗',br:'┛'}, double:{h:'═',v:'║',tl:'╔',tr:'╗',bl:'╚',br:'╝'},
+  mixed:{h:'─',v:'║',tl:'╓',tr:'╖',bl:'╙',br:'╜'}, dashed:{h:'┄',v:'┆',tl:'╭',tr:'╮',bl:'╰',br:'╯'},
+  blocky:{h:'▀',v:'▌',vr:'▐',hb:'▄',tl:'▛',tr:'▜',bl:'▙',br:'▟'}, ascii:{h:'-',v:'|',tl:'+',tr:'+',bl:'+',br:'+'},
+  open:{h:' ',v:' ',tl:'╭',tr:'╮',bl:'╰',br:'╯'}, nob:{h:' ',v:' ',tl:' ',tr:' ',bl:' ',br:' '} };
+function caseOf(t, m){ return m === 'lower' ? t.toLowerCase() : m === 'cap' ? t[0] + t.slice(1).toLowerCase().replace(/ (\w)/g,(a,b)=>' '+b.toUpperCase()) : m === 'spaced' ? [...t].join(' ') : t; }
+
+function box(i, id, x0, y0, w, h, title, extra){
+  const b = boxOf(id), st = boxStops(i, b), x1 = x0+w-1, y1 = y0+h-1, span = (x1-x0)+(y1-y0), Z = SETS[b.corners], dim = b.dim/100;
+  RECTS[id] = [x0,y0,w,h];
+  const per = 2*(w+h-2);
+  const ringT = (x,y) => y===y0 ? (x-x0)/per : x===x1 ? (w-1+(y-y0))/per : y===y1 ? (w-1+h-1+(x1-x))/per : (2*(w-1)+h-1+(y1-y))/per;
+  const raw = (x,y) => b.frame === 'flat' ? hex(P.ui) : b.frame === 'solid' ? C(st[0]) : b.frame === 'ring' ? along([...st, st[0]], ringT(x,y)) :
+    b.frame === 'glowtop' ? (y === y0 ? along(st,(x-x0)/(x1-x0)) : dark(along(st,.5), .45)) :
+    along(st, b.frame === 'horiz' ? (x-x0)/(x1-x0) : b.frame === 'vert' ? (y-y0)/(y1-y0) : ((x-x0)+(y-y0))/span);
+  const edge = (x,y) => b.frame === 'flat' ? raw(x,y) : dark(raw(x,y), b.frame === 'glowtop' && y === y0 ? dim*.4 : dim);
+  if (b.bg !== 'none'){
+    const amt = b.bgamt/100, base = C(b.bgpick);
+    const dirT = (x,y) => b.bgdir === 'horiz' ? (x-x0)/w : b.bgdir === 'vert' ? (y-y0)/h :
+      b.bgdir === 'radial' ? Math.min(1, Math.hypot((x-x0-w/2)/(w/2), (y-y0-h/2)/(h/2))) : ((x-x0)/w + (y-y0)/h)/2;
+    fillBg(x0+1, y0+1, w-2, h-2, (x,y) => {
+      switch (b.bg){
+        case 'pick': return base;
+        case 'tint': return dark(along(st,.5), 1-amt);
+        case 'gradbg': return dark(along(st, dirT(x,y)), 1-amt);
+        case 'mygrad': return along(b.bgstops, dirT(x,y));
+        case 'stripe': return y === y0+1 ? dark(along(st,(x-x0)/w), 1-amt*2.2) : base;
+        case 'band2': return y === y0+1 || y === y1-1 ? dark(along(st,(x-x0)/w), 1-amt*2.2) : base;
+        case 'scan': return (y - y0) % 2 ? mix(base, along(st,(x-x0)/w), amt) : base;
+      } return [0,0,0]; });
+  }
+  const H = (x,y) => b.corners === 'blocky' && y === y1 ? Z.hb : Z.h, V = (x,y) => b.corners === 'blocky' && x === x1 ? Z.vr : Z.v;
+  for (let x=x0+1;x<x1;x++){ put(x,y0,H(x,y0),edge(x,y0)); put(x,y1,H(x,y1),edge(x,y1)); }
+  for (let y=y0+1;y<y1;y++){ put(x0,y,V(x0,y),edge(x0,y)); put(x1,y,V(x1,y),edge(x1,y)); }
+  put(x0,y0,Z.tl,edge(x0,y0)); put(x1,y0,Z.tr,edge(x1,y0)); put(x0,y1,Z.bl,edge(x0,y1)); put(x1,y1,Z.br,edge(x1,y1));
+  // title (and extra tabs)
+  const T = TITLES.find(t => t[0] === b.title) || TITLES[0];
+  if (T[2] === 'none') return 0;
+  const parts = [caseOf(title, b.tcase), ...(extra || [])];
+  const L = T[3], R = T[4];
+  const widthOf = p => T[2] === 'pre' ? [...L.trim()].length + p.length + 2 : T[2] === 'num' ? p.length + 3 : T[2] === 'fill' ? p.length + 2 : p.length + [...L].length + [...R].length;
+  const total = parts.reduce((a,p) => a + widthOf(p) + 1, -1);
+  let x = b.pos === 'center' ? x0 + Math.floor((w - total)/2) : b.pos === 'right' ? x1 - 1 - total : x0 + 2;
+  const ty = T[2] === 'under' ? y0+1 : y0;
+  parts.forEach((p, n) => {
+    const t0 = (x-x0)/(x1-x0), t1 = (x+p.length-x0)/(x1-x0);
+    const tcol = t => b.titleCol === 'pick' ? C(b.tpick) : b.titleCol === 'frame' ? edge(x0 + Math.round(t*(x1-x0)), y0) : b.titleCol === 'inverse' ? hex('#000000') : light(b.frame === 'flat' ? hex(P.neon) : along(st, t), .15);
+    const sub = n > 0;
+    const c1 = sub ? dark(tcol(t0), .25) : tcol(t0), c2 = sub ? dark(tcol(t1), .25) : tcol(t1);
+    const ibg = b.titleCol === 'inverse' || ['fill','pill','wedge'].includes(T[2]) ? dark(along(st, t0), b.titleCol === 'inverse' ? .05 : .5) : null;
+    const tc1 = b.titleCol === 'inverse' ? hex('#000') : c1, tc2 = b.titleCol === 'inverse' ? hex('#000') : c2;
+    if (T[2] === 'line'){ [...L].forEach((ch,k) => put(x+k,y0,ch,edge(x+k,y0))); x += [...L].length; grad(x,ty,p,tc1,tc2,ibg); x += p.length; [...R].forEach((ch,k) => put(x+k,y0,ch,edge(x+k,y0))); x += [...R].length; }
+    else if (T[2] === 'pre'){ const mk = L.trim(); grad(x,ty,mk,c1,c1); x += [...mk].length; put(x,y0,' ',[0,0,0]); x++; grad(x,ty,p,tc1,tc2,ibg); x += p.length; put(x,y0,' ',[0,0,0]); x++; }   // the mark sits on the line: ─// TITLE ─
+    else if (T[2] === 'num'){ put(x,y0,' ',[0,0,0]); put(x+1,y0,'¹²³⁴⁵⁶'[i] || '¹', light(c1,.3)); grad(x+2,ty,p,tc1,tc2); x += p.length + 2; put(x,y0,' ',[0,0,0]); x++; }
+    else if (T[2] === 'fill'){ grad(x,ty,' '+p+' ',tc1,tc2,ibg || dark(along(st,t0),.5)); x += p.length+2; }
+    else if (T[2] === 'pill'){ const bg = ibg || dark(along(st,t0),.5); put(x,y0,'▐',bg); grad(x+1,ty,p,tc1,tc2,bg); put(x+1+p.length,y0,'▌',bg); x += p.length+2; }
+    else if (T[2] === 'wedge'){ const bg = ibg || dark(along(st,t0),.5); put(x,y0,'WEDGE_L',bg,edge(x,y0)); grad(x+1,ty,p,tc1,tc2,bg); put(x+1+p.length,y0,'WEDGE_R',bg); x += p.length+2; }
+    else if (T[2] === 'under'){ grad(x,ty,p,tc1,tc2); x += p.length; }
+    x += 1;
+  });
+  return T[2] === 'under' ? 1 : 0;
+}
+
+function bar(x,y,id,v,m,lock){
+  const b = barOf(id), stops = (S.bars[id] && S.bars[id].stops) || BAR_COLS[id], c1 = C(stops[0]), c2 = C(stops[stops.length-1]), W = b.width;
+  const at = t => along(stops, t);
+  RECTS[id + ' bar'] = [x,y,26,1];
+  text(x,y,id,P.text); const f = Math.round(W*v/m), lk = Math.round(W*(lock||0)/m), frac = v/m;
+  const G = { block:'█', half:'▄', low:'▂', tall:'▆', left:'▌', vbar:'▮', para:'▰', meter:'■', small:'▪', thin:'▬', line:'━', heavy:'┃', seg:'█', dots:'⣿', pips:'●', diamond:'◆', shade:'▓', chev:'›', slash:'/' }[b.shape];
+  const OUT = { vbar:'▯', para:'▱', pips:'○', diamond:'◇', meter:'□', small:'▫' }[b.shape];
+  const nums = b.label === 'pct' ? Math.round(frac*100)+'%' : `${v}/${m}`;
+  for (let i=0;i<W;i++){
+    const X = x+4+i;
+    if (i >= W-lk){ put(X,y, b.shape === 'block' ? '▓' : b.shape === 'seg' && i % 4 === 3 ? '▌' : G, b.stress); continue; }   // stress: the same shape, in amber
+    if (i < f){
+      let c = b.fill === 'solid' ? c2 : b.fill === 'fill' ? at(i/Math.max(1,f-1)) : b.fill === 'level' ? along(['#ff3b3b','#ffb627',rgbToHex(c2)], frac) :
+        b.fill === 'pulse' ? (i === f-1 ? light(c2,.5) : dark(c2,.25)) : at(i/(W-1));
+      put(X,y, b.shape === 'seg' && i % 4 === 3 ? '▌' : G, c);
+    } else {
+      const ghost = dark(at(i/(W-1)), .78), e = dark(hex(P.ui),.3);
+      if (b.empty === 'dissolve'){ const k2 = i - f; put(X,y,'DISS', at(i/(W-1))); Object.assign(cells[y*COLS+X], { d0: Math.max(0,.7 - k2*.3), d1: Math.max(0,.7 - (k2+1)*.3), ds: X*13+y*7 }); continue; }
+      const ch = { shade:'░', dot:'·', square:'■', line:'─', low:'▁', ghost:G, outline:OUT || '░', none:' ' }[b.empty];
+      put(X,y,ch, b.empty === 'ghost' ? ghost : b.empty === 'square' ? dark(hex(P.ui),.55) : e);
+    }
+  }
+  if (b.label === 'inside'){ const s = nums, sx = x+4+Math.floor((W-s.length)/2); [...s].forEach((ch,k) => { const c = cells[y*COLS+sx+k]; const on = sx+k < x+4+f; put(sx+k,y,ch, on ? '#05050a' : P.text, on ? c.fg : [0,0,0]); }); }
+  else if (b.label !== 'none') text(x+W+5,y,nums,P.text);
+}
+const rgbToHex = a => '#' + a.map(v => Math.round(v).toString(16).padStart(2,'0')).join('');
+
+// ---- the scene ----
+// arrow colour by distance (TW-046/073): the distance gradient's stops from 'near' (and closer) to 'far' (and further)
+const prox = d => along(S.g.prox, (d - S.g.proxNear) / Math.max(1, S.g.proxFar - S.g.proxNear));
+function legend(){ // the arrow colours, 1 to 24 cells away
+  const el = $('legend'); if (!el) return; let h = '<span class="lt">distance</span>';
+  for (let d = 1; d <= 24; d++) h += `<span title="${d} cells away" style="color:${rgb(prox(d))}">↗<i>${d}</i></span>`;
+  el.innerHTML = h; }
+const TRACE = [2,3,3,5,8,12,15,19,22,24,23,21,18,16,13,11,9,8,6,5,4,4,3,2,2,1,1,0,0,0];
+function scene(){
+  clear(); for (const k in RECTS) delete RECTS[k];
+  const VW = 70, VH = 21, sb = C(S.g.mapbg);
+  for (let y=0;y<VH;y++) for (let x=0;x<VW;x++) put(x,y,'·',hex(P.street),sb);
+  const bld = (x0,y0,w,h,neon) => { for (let y=y0;y<y0+h;y++) for (let x=x0;x<x0+w;x++){ const e = x===x0||y===y0||x===x0+w-1||y===y0+h-1;
+      put(x,y, e?'▓':'.', e?P.wall:P.floor, e?P.wallbg:P.floorbg); }
+    if (neon) for (let x=x0+2;x<x0+w-2;x++) put(x,y0,'▓',neon,'#2a1030'); };
+  bld(2,1,20,8,P.hot); bld(27,1,14,8,P.neon); bld(46,1,21,8,null); bld(2,13,16,8,P.lime); bld(23,13,20,8,null); bld(48,13,19,8,P.violet);
+  put(12,8,'▣',P.amber,P.floorbg); put(34,8,'□',P.amber,P.floorbg); put(55,13,'▣',P.amber,P.floorbg); put(30,13,'▣',P.amber,P.floorbg);
+  for (let x=0;x<VW;x+=2) put(x,10,'─',hex('#6f7380'),sb);
+  for (let y=0;y<VH;y+=2){ if (cells[y*COLS+24].ch === '·') put(24,y,'│','#7a6a22',sb); }
+  put(36,15,'≡',P.lime,P.floorbg); put(26,4,'≡',P.lime,P.floorbg);
+  put(31,10,'@',P.neon,sb); put(40,11,'♟',P.hot,sb); put(18,10,'Ж',hex('#8fb4ff'),sb);
+  const SX = 70, SW = 34;
+  let t = box(0,'RUNNER',SX,0,SW,10,'RUNNER');
+  bar(SX+2,1+t,'HP',11,17); bar(SX+2,2+t,'PWR',12,12); bar(SX+2,3+t,'STA',14,18,2); bar(SX+2,4+t,'FAT',30,30);
+  text(SX+2,5+t,'Credits',P.text); text(SX+14,5+t,'50¢',P.neon); text(SX+2,6+t,'Street Cred',P.text); text(SX+14,6+t,'0',P.neon);
+  text(SX+2,7+t,'Day 1 · Turn 31',P.dim); text(SX+21,7+t,'weapon out',P.amber);
+  if (!t){ text(SX+2,8,'BOD',P.ui); text(SX+6,8,'4',P.text); text(SX+9,8,'MND',P.ui); text(SX+13,8,'5',P.text); text(SX+16,8,'PRE',P.ui); text(SX+20,8,'3',P.text); }
+  t = box(1,'JOB',SX,10,SW,6,'JOB');
+  text(SX+2,11+t,'Lift data, 2 terminals',P.text); text(SX+2,12+t,'Kade · 180¢ · 0/2',P.dim);
+  if (S.g.graph !== 'off'){
+    text(SX+2,13+t,'trace',P.ui); const gx = SX+8, gw = 23, max = 24;
+    for (let i=0;i<gw;i++){ const v = TRACE[Math.floor(i*TRACE.length/gw)], nx = TRACE[Math.floor((i+1)*TRACE.length/gw)] ?? v, c = mix(hex(P.blue),hex(P.hot),v/max);
+      if (S.g.graph === 'blocks') put(gx+i,13+t,' ▁▂▃▄▅▆▇█'[Math.round(v/max*8)],c);
+      else if (S.g.graph === 'braille') put(gx+i,13+t,['⠀','⣀','⣤','⣶','⣿'][Math.round(v/max*4)],c);
+      else if (S.g.graph === 'dots') put(gx+i,13+t, v/max > .66 ? '•' : v/max > .33 ? '·' : '.', c);
+      else put(gx+i,13+t, nx > v ? '╱' : nx < v ? '╲' : '─', c); }
+  }
+  t = box(2,'SURROUNDINGS',SX,16,SW,8,'SURROUNDINGS');
+  text(SX+2,17+t,'Ash Street & Vesper Avenue',P.text);
+  const arrow = (x,y,a,d) => put(x,y,a, S.g.arrows === 'prox' ? prox(d) : hex('#4f7f9a'));
+  arrow(SX+2,18+t,'↑',3); text(SX+4,18+t,'Kiln Avenue,',hex('#4f7f9a')); arrow(SX+17,18+t,'→',14); text(SX+19,18+t,'Old Mercer St',hex('#4f7f9a'));
+  put(SX+2,20+t,'♟',P.hot); text(SX+4,20+t,'ganger 9',P.text); text(SX+13,20+t,'hostile',hex(P.red));
+  put(SX+2,21+t,'Ж',hex('#8fb4ff')); text(SX+4,21+t,'drone 12',P.text); text(SX+13,21+t,'calm',P.dim);
+  if (!t){ arrow(SX+2,22,'↖',5); text(SX+4,22,'Moon Noodles',hex('#a8875a')); }
+  t = box(3,'ROLL',SX,24,SW,5,'ROLL');
+  text(SX+2,25+t,'ganger',P.neon); text(SX+2,26+t,'Brawl  BOD 4 + 2 = 6',P.text); if (!t) text(SX+2,27,'55% to hit, 1d6+1',P.lime);
+  t = box(4,'COMMS',0,21,70,8,'COMMS',['H: history']);
+  const fade = S.g.comms === 'fade';
+  text(2,22+t,'You draw your pipe.',dark(hex(P.text), fade ? .7 : .4)); text(2,23+t,'The ganger is sizing you up.',dark(hex(P.amber), fade ? .6 : .4));
+  text(2,24+t,'The drone deploys a taser.',dark(hex(P.amber), fade ? .45 : .4));
+  const last = 'An alarm trips. The ICE caught your data overflow: Monolith Corpsec has your signature.';
+  const cut = last.lastIndexOf(' ', 66), l1 = last.slice(0,cut), l2 = last.slice(cut+1);
+  if (S.g.comms === 'grad' || S.g.comms === 'glow'){ grad(2,25+t,l1,P.red,P.hot); grad(2,26+t,l2,P.hot,P.violet); } else { text(2,25+t,l1,P.red); text(2,26+t,l2,P.red); }
+  if (S.g.comms === 'glow') for (const yy of [25+t,26+t]) for (let x=2;x<68;x++) cells[yy*COLS+x].glow = true;
+  keybar();
+}
+// a small seeded random source, so a glitch looks the same until the seed (or the animation tick) changes
+function rng(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let glitchTick = 0;
+setInterval(() => { const a = S.key.anim; if (a === 'off') return;
+  if (a === 'live' || Math.random() < .12){ glitchTick++; draw(); if (a === 'flicker') setTimeout(() => { glitchTick = 0; draw(); }, 140); } }, 180);
+function keybar(){
+  const y = 29, items = [['C','har'],['I','nv'],['O','pts'],['M','ap'],['H','ist']], k = S.key, K0 = C(k.k1), K1 = C(k.k2), KL = C(k.key);
+  RECTS['Key bar'] = [0,29,COLS,1];
+  let x = 0; const bgAt = i => mix(K0,K1,i/4);
+  const st = k.style;
+  if (st === 'chevron') items.forEach(([c,r],i) => { const bg = bgAt(i); if (i>0){ put(x,y,'WEDGE_R',[0,0,0],bg); x++; } put(x,y,' ',P.text,bg); put(x+1,y,c,KL,bg); text(x+2,y,r+' ',P.text,bg); x += 3+r.length; put(x,y,'WEDGE_R',bg,[0,0,0]); x++; });
+  else if (st.startsWith('diss')){
+    // each segment breaks up into scattered pixels at its end (and its start, for fade in & out): a few cells of
+    // sub-cell squares whose density falls off, like a dither dissolving
+    const tail = 3, both = st === 'dissolve2', grid = st === 'dissgrid';
+    items.forEach(([c,r],i) => { const bg = bgAt(i);
+      if (both){ for (let q=0;q<2;q++) put(x+q,y,'DISS',bg); for (let q=0;q<2;q++) Object.assign(cells[y*COLS+x+q], { d0:q/2, d1:(q+1)/2, ds:k.seed*31+i*7+q }); x += 2; }
+      const start = x; put(x,y,' ',P.text,bg); put(x+1,y,c,KL,bg); text(x+2,y,r+' ',P.text,bg); x += 3+r.length;
+      if (grid) for (let q=start; q<x; q++){ const cc = cells[y*COLS+q]; cc.pix = true; }
+      if (k.split !== 'off') for (let q = start; q < x; q++) if (k.split === 'all' || q === start+1) cells[y*COLS+q].split = true;
+      for (let q=0;q<tail;q++){ put(x+q,y,'DISS',bg); Object.assign(cells[y*COLS+x+q], { d0:1-q/tail, d1:1-(q+1)/tail, ds:k.seed*53+i*11+q + (k.anim === 'off' ? 0 : glitchTick*101) }); }
+      x += tail + (both ? 0 : 1);
+    });
+  }
+  else if (['glitch','torn','slice','static','corrupt'].includes(st)){
+    // ANSI-art endings instead of powerline arrows (seeded, so a still glitch stays put)
+    const R = rng(k.seed * 977 + (k.anim === 'off' ? 0 : glitchTick));
+    items.forEach(([c,r],i) => { const bg = bgAt(i), nb = i < 4 ? bgAt(i+1) : [0,0,0], hot = light(bg,.5);
+      if (st === 'slice' && i > 0){ put(x,y,'▄',bg,[0,0,0]); x++; }
+      const start = x;
+      put(x,y,' ',P.text,bg); put(x+1,y,c,KL,bg); text(x+2,y,r+' ',P.text,bg); x += 3+r.length;
+      if (k.split !== 'off') for (let q = start; q < x; q++) if (k.split === 'all' || q === start+1) cells[y*COLS+q].split = true;
+      if (st === 'torn'){ put(x,y,'▓',light(bg,.15),bg); put(x+1,y,'▒',light(bg,.25)); put(x+2,y,'░',light(bg,.35)); x += 3; }
+      else if (st === 'slice'){ put(x,y,'▀',bg,[0,0,0]); x++; }
+      else if (st === 'static'){ const n = 2 + Math.floor(R()*2); for (let q=0;q<n;q++){ put(x+q,y,'░▒░·'[Math.floor(R()*4)], mix(bg,hot,R())); } x += n; }
+      else if (st === 'corrupt'){ put(x,y,'▌',bg,[0,0,0]); put(x+1,y,R() < .5 ? '▐' : '▌', hot); x += 2; if (R() < .4){ put(x,y,'█',dark(hot,.3)); x++; } }
+      else { // glitch: a torn edge, one cell knocked off by half a row, now and then a stray block
+        put(x,y, R() < .5 ? '▚' : '▞', bg, nb); put(x+1,y, R() < .5 ? '▀' : '▄', hot); x += 2;
+        if (R() < .35){ put(x,y,'▒', mix(hex(P.hot),bg,.5)); x++; } }
+      x++;
+    });
+    if (k.anim !== 'off' && R() < (k.anim === 'live' ? .9 : .5)){ const gx = Math.floor(R()*x); for (let q=0;q<1+Math.floor(R()*4);q++){ const cc = cells[y*COLS+gx+q]; if (cc){ cc.split = true; cc.shift = R() < .5 ? -1 : 1; } } }
+  }
+  else if (st === 'slant') items.forEach(([c,r],i) => { const bg = bgAt(i); put(x,y,'◢',bg); put(x+1,y,c,KL,bg); text(x+2,y,r,P.text,bg); put(x+2+r.length,y,'◣',bg); x += 4+r.length; });
+  else if (st === 'pills') items.forEach(([c,r],i) => { const bg = bgAt(i); put(x,y,'▐',bg); put(x+1,y,c,KL,bg); text(x+2,y,r,P.text,bg); put(x+2+r.length,y,'▌',bg); x += 4+r.length; });
+  else if (st === 'tabs'){ x = 1; items.forEach(([c,r],i) => { const e = light(bgAt(i),.25); put(x,y,'┐',e); put(x+1,y,c,KL); text(x+2,y,r,P.text); put(x+2+r.length,y,'┌',e); x += 4+r.length; }); }
+  else if (st === 'boxed'){ x = 1; items.forEach(([c,r],i) => { const e = light(bgAt(i),.3); put(x,y,'│',e); put(x+1,y,c,KL,bgAt(i)); put(x+2,y,'│',e); text(x+3,y,r,P.text); x += 4+r.length; }); }
+  else if (st === 'underline'){ x = 1; items.forEach(([c,r]) => { put(x,y,c,KL); cells[y*COLS+x].under = true; text(x+1,y,r,P.text); x += 2+r.length; }); }
+  else if (st === 'plain'){ x = 1; items.forEach(([c,r]) => { put(x,y,c,KL); put(x+1,y,'·',P.dim); text(x+2,y,r,P.text); x += 3+r.length; }); }
+  else { x = 1; items.forEach(([c,r]) => { text(x,y,'[',P.ui); put(x+1,y,c,KL); text(x+2,y,']',P.ui); text(x+3,y,r,P.text); x += 5+r.length; }); }
+  const tag = ' v0.16.28 · 14d0a4e ';
+  if (k.ver === 'segment'){ const r = COLS-tag.length; grad(r,y,tag,light(hex(P.ui),.2),dark(hex(P.neon),.3),K1); put(r-1,y,'WEDGE_L',K1,[0,0,0]); }
+  else if (k.ver === 'plain') text(COLS-tag.length,y,tag,P.ui);
+}
+
+// ---- painting: line and block glyphs drawn as shapes so they join exactly; letters from the font ----
+const LINES = { // up, right, down, left: 1 light, 2 heavy, 3 double, 4 dashed
+  '─':[0,1,0,1],'│':[1,0,1,0],'┌':[0,1,1,0],'┐':[0,0,1,1],'└':[1,1,0,0],'┘':[1,0,0,1],'├':[1,1,1,0],'┤':[1,0,1,1],'╴':[0,0,0,1],'╶':[0,1,0,0],
+  '━':[0,2,0,2],'┃':[2,0,2,0],'┏':[0,2,2,0],'┓':[0,0,2,2],'┗':[2,2,0,0],'┛':[2,0,0,2],'┣':[1,2,1,0],'┫':[1,0,1,2],'╼':[0,2,0,1],'╾':[0,1,0,2],
+  '═':[0,3,0,3],'║':[3,0,3,0],'╔':[0,3,3,0],'╗':[0,0,3,3],'╚':[3,3,0,0],'╝':[3,0,0,3],'╞':[1,3,1,0],'╡':[1,0,1,3],
+  '╓':[0,1,3,0],'╖':[0,0,3,1],'╙':[3,1,0,0],'╜':[3,0,0,1],'┄':[0,4,0,4],'┆':[4,0,4,0] };
+const ROUND = { '╭':[0,1,1,0], '╮':[0,0,1,1], '╰':[1,1,0,0], '╯':[1,0,0,1] };
+const QUAD = { '▀':[1,1,0,0],'▄':[0,0,1,1],'▌':[1,0,1,0],'▐':[0,1,0,1],'▛':[1,1,1,0],'▜':[1,1,0,1],'▙':[1,0,1,1],'▟':[0,1,1,1],'█':[1,1,1,1] }; // tl, tr, bl, br
+function paint(){
+  const s = cv.width / (COLS*CW), cw = CW*s, ch = CH*s, lw = Math.max(1, Math.round(1.6*s)), glow = S.g.glow;
+  g.fillStyle = '#000'; g.fillRect(0,0,cv.width,cv.height);
+  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = `${Math.round(ch*(S.g.font === 'VT323' ? .95 : .78))}px "${S.g.font}", "DejaVu Sans Mono", monospace`;
+  for (let pass = 0; pass < 2; pass++) for (let y=0;y<ROWS;y++) for (let x=0;x<COLS;x++){
+    const c = cells[y*COLS+x], px = x*cw, py = y*ch, cx = px+cw/2, cy = py+ch/2;
+    if (pass === 0){ g.fillStyle = rgb(c.bg);
+      if (c.pix){ const pw = cw/4, ph = ch/8; for (let j=0;j<8;j++) for (let i2=0;i2<4;i2++) g.fillRect(px+i2*pw+pw*.12, py+j*ph+ph*.12, pw*.76, ph*.76); }
+      else g.fillRect(px,py,cw+.5,ch+.5); continue; }
+    if (c.ch === ' ') continue;
+    g.fillStyle = g.strokeStyle = rgb(c.fg);
+    const bright = Math.max(...c.fg) > 150;
+    g.shadowBlur = glow && bright ? glow*s*(c.glow ? 2 : 1) : (c.glow ? 8*s : 0); g.shadowColor = rgb(c.fg);
+    const L = LINES[c.ch], R = ROUND[c.ch], Q = QUAD[c.ch];
+    if (L){
+      g.lineCap = 'square';
+      [[0,-1],[1,0],[0,1],[-1,0]].forEach(([dx,dy],i) => { const kind = L[i]; if (!kind) return; const ex = cx+dx*cw/2, ey = cy+dy*ch/2;
+        if (kind === 3){ const o = lw*1.3; g.lineWidth = lw*.8; g.beginPath();
+          if (dx){ g.moveTo(cx,cy-o); g.lineTo(ex,cy-o); g.moveTo(cx,cy+o); g.lineTo(ex,cy+o); } else { g.moveTo(cx-o,cy); g.lineTo(cx-o,ey); g.moveTo(cx+o,cy); g.lineTo(cx+o,ey); } g.stroke(); return; }
+        g.lineWidth = kind === 2 ? lw*2.2 : lw; if (kind === 4) g.setLineDash([lw*2, lw*2]);
+        g.beginPath(); g.moveTo(cx,cy); g.lineTo(ex,ey); g.stroke(); g.setLineDash([]); });
+      continue;
+    }
+    if (R){ g.lineWidth = lw; g.lineCap = 'butt'; const r = Math.min(cw,ch)/2, hx = R[1] ? 1 : -1, vy = R[2] ? 1 : -1;
+      g.beginPath(); g.moveTo(cx + hx*cw/2, cy); g.lineTo(cx + hx*r, cy); g.arcTo(cx, cy, cx, cy + vy*r, r); g.lineTo(cx, cy + vy*ch/2); g.stroke(); continue; }
+    if (Q){ const hw = cw/2, hh = ch/2; Q.forEach((on,i) => { if (on) g.fillRect(px + (i%2)*hw, py + (i>>1)*hh, hw+.5, hh+.5); }); continue; }
+    if (c.ch === 'WEDGE_R' || c.ch === 'WEDGE_L'){ g.beginPath(); if (c.ch === 'WEDGE_R'){ g.moveTo(px,py); g.lineTo(px+cw,cy); g.lineTo(px,py+ch); } else { g.moveTo(px+cw,py); g.lineTo(px,cy); g.lineTo(px+cw,py+ch); } g.fill(); continue; }
+    if (c.ch === '◢' || c.ch === '◣'){ g.beginPath(); if (c.ch === '◢'){ g.moveTo(px+cw,py); g.lineTo(px+cw,py+ch); g.lineTo(px,py+ch); } else { g.moveTo(px,py); g.lineTo(px+cw,py+ch); g.lineTo(px,py+ch); } g.fill(); continue; }
+    if (c.ch === '▓' || c.ch === '░' || c.ch === '▒'){ // shades as dither patterns, like the font draws them
+      const dens = c.ch === '▓' ? .75 : c.ch === '▒' ? .5 : .25, step = Math.max(2, Math.round(2*s));
+      for (let yy = 0; yy < ch; yy += step) for (let xx = ((yy/step) % 2) * step * (dens < .5 ? 1 : .5); xx < cw; xx += step / Math.max(.5, dens*2)) g.fillRect(px+xx, py+yy, step*.9, step*.9);
+      continue; }
+    if (c.ch === 'DISS'){ // sub-cell squares, 4 across and 8 down, kept with a chance falling from d0 (left) to d1 (right)
+      const R = rng(c.ds * 7919 + 1), nx = 4, ny = 8, pw = cw/nx, ph = ch/ny;
+      for (let j=0;j<ny;j++) for (let i2=0;i2<nx;i2++){ const t = (i2+.5)/nx, d = c.d0 + (c.d1-c.d0)*t, pr = d*d*(3-2*d);
+        if (R() < pr) g.fillRect(px+i2*pw+pw*.12, py+j*ph+ph*.12, pw*.76, ph*.76); }
+      continue; }
+    if (c.ch === '▚' || c.ch === '▞'){ const hw = cw/2, hh = ch/2; if (c.ch === '▚'){ g.fillRect(px,py,hw+.5,hh+.5); g.fillRect(px+hw,py+hh,hw+.5,hh+.5); } else { g.fillRect(px+hw,py,hw+.5,hh+.5); g.fillRect(px,py+hh,hw+.5,hh+.5); } continue; }
+    const B = ' ▁▂▃'.indexOf(c.ch); if (B > 0){ const h = ch*B/8; g.fillRect(px,py+ch-h,cw+.5,h); continue; }
+    const B2 = '▅▆▇'.indexOf(c.ch);
+    if (c.ch === '▂'){ g.fillRect(px,py+ch*.75,cw+.5,ch*.25); continue; } if (B2 >= 0){ const h = ch*(B2+5)/8; g.fillRect(px,py+ch-h,cw+.5,h); continue; }
+    if (c.ch === '■'){ const m = cw*.12; g.fillRect(px+m,cy-cw*.38,cw-2*m,cw*.76); continue; }
+    if (c.ch === '▬'){ g.fillRect(px,cy-ch*.12,cw+.5,ch*.24); continue; }
+    if ('⠀⣀⣤⣶⣿'.includes(c.ch)){ const rows = '⠀⣀⣤⣶⣿'.indexOf(c.ch), d = Math.max(1.2, cw*.13);
+      for (let r=0;r<rows;r++) for (const col of [0,1]){ g.beginPath(); g.arc(px+cw*(.3+.4*col), py+ch*(.86-.22*r), d, 0, 7); g.fill(); } continue; }
+    if (c.ch === '●' || c.ch === '○'){ g.beginPath(); g.arc(cx,cy,cw*.32,0,7); g.lineWidth = lw; c.ch === '●' ? g.fill() : g.stroke(); continue; }
+    if (c.ch === '▮' || c.ch === '▯'){ const w2 = cw*.56, h2 = ch*.62; g.lineWidth = lw; c.ch === '▮' ? g.fillRect(cx-w2/2,cy-h2/2,w2,h2) : g.strokeRect(cx-w2/2,cy-h2/2,w2,h2); continue; }
+    if (c.ch === '▰' || c.ch === '▱'){ const h2 = ch*.5, k2 = cw*.3; g.beginPath(); g.moveTo(px+k2,cy-h2/2); g.lineTo(px+cw,cy-h2/2); g.lineTo(px+cw-k2,cy+h2/2); g.lineTo(px,cy+h2/2); g.closePath(); g.lineWidth = lw; c.ch === '▰' ? g.fill() : g.stroke(); continue; }
+    if (c.ch === '◆' || c.ch === '◇'){ const r2 = cw*.42; g.beginPath(); g.moveTo(cx,cy-r2); g.lineTo(cx+r2,cy); g.lineTo(cx,cy+r2); g.lineTo(cx-r2,cy); g.closePath(); g.lineWidth = lw; c.ch === '◆' ? g.fill() : g.stroke(); continue; }
+    if (c.ch === '□' || c.ch === '▪' || c.ch === '▫'){ const m = c.ch === '□' ? cw*.12 : cw*.28, h2 = cw - 2*m; g.lineWidth = lw; c.ch === '▫' || c.ch === '□' ? g.strokeRect(px+m,cy-h2/2,h2,h2) : g.fillRect(px+m,cy-h2/2,h2,h2); continue; }
+    if (c.split){ // colour split: a red and a cyan ghost either side of the letter
+      const o = cw*.14 + (c.shift ? cw*.25*c.shift : 0), sb = g.shadowBlur; g.shadowBlur = 0; g.globalCompositeOperation = 'lighter';
+      g.fillStyle = 'rgba(255,40,90,.85)'; g.fillText(c.ch, cx - o, cy + ch*.04); g.fillStyle = 'rgba(40,240,255,.85)'; g.fillText(c.ch, cx + o, cy + ch*.04);
+      g.globalCompositeOperation = 'source-over'; g.shadowBlur = sb; g.fillStyle = rgb(c.fg); if (c.shift){ g.fillText(c.ch, cx + c.shift*cw*.2, cy + ch*.04); continue; } }
+    g.fillText(c.ch, cx, cy + ch*.04);
+    if (c.under) g.fillRect(px+cw*.1, py+ch*.86, cw*.8, Math.max(1,lw*.8));
+  }
+  g.shadowBlur = 0;
+  if (S.g.scan){ g.fillStyle = `rgba(0,0,0,${S.g.scan/100})`; for (let y=0;y<cv.height;y+=Math.max(2,Math.round(3*s))) g.fillRect(0,y,cv.width,Math.max(1,Math.round(s))); }
+  const r = RECTS[SEL] || RECTS[SEL.replace(' bar','') + ' bar'];
+  if (r){ g.save(); g.strokeStyle = 'rgba(255,255,255,.75)'; g.setLineDash([6*s,4*s]); g.lineWidth = 1.5*s; g.strokeRect(r[0]*cw-2*s, r[1]*ch-2*s, r[2]*cw+4*s, r[3]*ch+4*s); g.restore(); }
+}
+// The canvas is drawn at the size it's shown (times the screen's pixel ratio), so curves and lines are
+// antialiased once at the real size instead of being drawn small and stretched.
+function fit(){ const w = Math.max(300, Math.round(cv.clientWidth * (window.devicePixelRatio || 1)));
+  if (cv.width !== w){ cv.width = w; cv.height = Math.round(w * ROWS*CH / (COLS*CW)); } }
+function draw(){ fit(); scene(); paint(); legend(); }
+new ResizeObserver(() => draw()).observe(cv);
+
+cv.addEventListener('click', e => {
+  const b = cv.getBoundingClientRect(), x = Math.floor((e.clientX-b.left)/b.width*COLS), y = Math.floor((e.clientY-b.top)/b.height*ROWS);
+  let hit = 'Global';
+  for (const [id, r] of Object.entries(RECTS)) if (x>=r[0] && x<r[0]+r[2] && y>=r[1] && y<r[1]+r[3]){ hit = id; if (id.endsWith(' bar')) break; }
+  SEL = hit; $('hint').textContent = hit === 'Global' ? 'Editing everything (Global).' : `Editing ${hit}. Click outside the boxes for Global.`;
+  buildKnobs(); draw();
+});
+$('foldAll').onclick = () => { document.querySelectorAll('#knobs fieldset').forEach(fs => shut[nameOf(fs)] = true); saveShut(); buildKnobs(); };
+$('openAll').onclick = () => { shut = {}; saveShut(); buildKnobs(); };
+$('copy').onclick = () => { const t = $('code'), m = $('msg');
+  navigator.clipboard.writeText(t.value).then(() => m.textContent = 'Copied. Paste it to Claude.', () => { t.select(); m.textContent = 'Selected: press Ctrl+C.'; }); };
+$('reset').onclick = () => { S = fresh(); SEL = 'Global'; save(); buildKnobs(); draw(); $('msg').textContent = 'Back to the game (0.16.35).'; };
+
+// helpers the picker uses (as in VJif)
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rgb2hex = a => '#' + a.map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+// ---------- VJif's colour picker (copied from VJif's cpick.js) ----------
+const cpk = (() => {
+  const el = document.createElement('div'); el.id = 'cpk'; el.hidden = true;
+  const F = [['h', 'Hue', 360, '°'], ['s', 'Sat', 100, '%'], ['v', 'Bright', 100, '%'], ['r', 'R', 255, ''], ['g', 'G', 255, ''], ['b', 'B', 255, '']];
+  el.innerHTML = `<div class="cpkTop"><i class="cpkSw"></i><input class="cpkHex" type="text" maxlength="7" spellcheck="false" title="Hex colour: type it, Enter applies"></div>` +
+    `<canvas class="cpkSV" width="204" height="104" title="Click or drag: saturation (across) and brightness (up)"></canvas><canvas class="cpkH" width="204" height="12" title="Click or drag: hue"></canvas>` +
+    F.map(([k, n, m, u]) => `<div class="field"><label>${n}</label><input type="range" data-k="${k}" min="0" max="${m}" step="1"><output></output></div>`).join('');
+  document.body.appendChild(el);
+  let tgt = null, hsv = [0, 0, 0], changed = false;
+  const rgb2hsv = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+    const h = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h * 60, mx ? d / mx * 100 : 0, mx * 100]; };
+  const hsv2rgb = ([h, s, v]) => { s /= 100; v /= 100; const f = n => { const k = (n + h / 60) % 6; return (v - v * s * Math.max(0, Math.min(k, 4 - k, 1))) * 255; }; return [f(5), f(3), f(1)]; };
+  const sl = k => el.querySelector(`[data-k="${k}"]`);
+  function show(rgb, keepHsv){
+    if (!keepHsv) { const n = rgb2hsv(rgb); hsv = [n[1] && n[2] ? n[0] : hsv[0], n[2] ? n[1] : hsv[1], n[2]]; }   // grey / black keep the hue (and black the sat) you had
+    const V = { h: hsv[0], s: hsv[1], v: hsv[2], r: rgb[0], g: rgb[1], b: rgb[2] };
+    F.forEach(([k, , , u]) => { const s = sl(k); s.value = Math.round(V[k]); s.nextElementSibling.textContent = Math.round(V[k]) + u; });
+    drawMaps();
+    const hx = rgb2hex(rgb); el.querySelector('.cpkSw').style.background = hx; if (document.activeElement !== el.querySelector('.cpkHex')) el.querySelector('.cpkHex').value = hx;
+  }
+  // the colour field (saturation × brightness for the hue) and the hue strip, with a mark where the colour is
+  const sv = el.querySelector('.cpkSV'), hs = el.querySelector('.cpkH'), svx = sv.getContext('2d'), hsx = hs.getContext('2d');
+  function drawMaps(){
+    const w = sv.width, h = sv.height; svx.fillStyle = rgb2hex(hsv2rgb([hsv[0], 100, 100])); svx.fillRect(0, 0, w, h);
+    let g = svx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); svx.fillStyle = g; svx.fillRect(0, 0, w, h);
+    g = svx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); svx.fillStyle = g; svx.fillRect(0, 0, w, h);
+    const x = hsv[1] / 100 * w, y = (1 - hsv[2] / 100) * h; svx.lineWidth = 2; svx.strokeStyle = hsv[2] > 55 ? '#000' : '#fff'; svx.beginPath(); svx.arc(x, y, 5, 0, 7); svx.stroke();
+    const hw = hs.width; g = hsx.createLinearGradient(0, 0, hw, 0); for (let k = 0; k <= 6; k++) g.addColorStop(k / 6, rgb2hex(hsv2rgb([k * 60, 100, 100]))); hsx.fillStyle = g; hsx.fillRect(0, 0, hw, hs.height);
+    const hx = hsv[0] / 360 * hw; hsx.fillStyle = '#fff'; hsx.fillRect(hx - 1.5, 0, 3, hs.height); hsx.fillStyle = '#000'; hsx.fillRect(hx - 0.5, 0, 1, hs.height);
+  }
+  const mapDrag = (cv, fn) => { const at = e => { const r = cv.getBoundingClientRect(); fn(clamp((e.clientX - r.left) / r.width, 0, 1), clamp((e.clientY - r.top) / r.height, 0, 1)); };
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); at(e); cv._d = true; });
+    cv.addEventListener('pointermove', e => { if (cv._d) at(e); }); cv.addEventListener('pointerup', () => cv._d = false); cv.addEventListener('pointercancel', () => cv._d = false); };
+  mapDrag(sv, (fx, fy) => { hsv[1] = fx * 100; hsv[2] = (1 - fy) * 100; put(hsv2rgb(hsv), true); });
+  mapDrag(hs, fx => { hsv[0] = Math.min(359.9, fx * 360); put(hsv2rgb(hsv), true); });
+  function put(rgb, keepHsv){
+    if (!tgt) return; const hx = rgb2hex(rgb); show(rgb, keepHsv);
+    if (tgt.value !== hx){ tgt.value = hx; changed = true; tgt.dispatchEvent(new Event('input', { bubbles: true })); }
+  }
+  el.addEventListener('input', e => {
+    const k = e.target.dataset.k; if (!k) return; const v = +e.target.value;
+    if ('hsv'.includes(k)){ hsv['hsv'.indexOf(k)] = v; put(hsv2rgb(hsv), true); }
+    else { const c = hex2rgb(tgt.value); c['rgb'.indexOf(k)] = v; put(c); }
+  });
+  const hexIn = el.querySelector('.cpkHex');
+  const hexApply = () => { let t = hexIn.value.trim().replace(/^#?/, '#'); if (/^#[0-9a-f]{3}$/i.test(t)) t = '#' + [...t.slice(1)].map(c => c + c).join('');
+    if (/^#[0-9a-f]{6}$/i.test(t)) put(hex2rgb(t.toLowerCase())); else hexIn.value = tgt.value; };
+  hexIn.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter'){ hexApply(); hexIn.blur(); } if (e.key === 'Escape'){ hexIn.value = tgt.value; hexIn.blur(); } });
+  hexIn.addEventListener('blur', hexApply);
+  function open(input){
+    if (tgt === input) return close();
+    close(); tgt = input; changed = false; el.hidden = false; show(hex2rgb(input.value));
+    const r = input.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;   // under the swatch, kept on screen
+    el.style.left = clamp(r.left, 6, innerWidth - w - 6) + 'px'; el.style.top = (r.bottom + h + 6 > innerHeight ? Math.max(6, r.top - h - 6) : r.bottom + 6) + 'px';
+    input.classList.add('cpkOn');
+  }
+  function close(){
+    if (!tgt) return; const t = tgt; tgt = null; el.hidden = true; t.classList.remove('cpkOn');
+    if (changed) t.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  let skipT = 0;                                   // a press on another colour while one is open: the picker moves to it (its click doesn't toggle it again)
+  const colourAt = t => t.closest && (t.closest('input[type=color]') || (t.closest('label') && t.closest('label').querySelector('input[type=color]')));
+  document.addEventListener('click', e => {   // the browser's picker never opens: ours does
+    const i = e.target.closest && e.target.closest('input[type=color]'); if (!i || i.disabled) return; e.preventDefault(); if (performance.now() - skipT < 800){ skipT = 0; return; } open(i); }, true);
+  document.addEventListener('pointerdown', e => { if (tgt && !el.contains(e.target) && e.target !== tgt && !(e.target.closest && e.target.closest('label') && e.target.closest('label').contains(tgt))){ const o = colourAt(e.target), host = o && o.closest('[id]'), sel = o && o.dataset.i != null ? `input[type=color][data-i="${o.dataset.i}"]` : null;   // (where it is, read before closing: closing can rebuild its list)
+    close();
+    if (o && !o.disabled){ skipT = performance.now();   // another colour: the picker moves over to it (tweak several in a row; 0.89: also after a change, which rebuilt the list and lost it)
+      requestAnimationFrame(() => { const n = o.isConnected ? o : (host && sel && host.querySelector(sel)); if (n && !n.disabled) open(n); }); } } }, true);
+  addEventListener('keydown', e => { if (tgt && e.key === 'Escape' && document.activeElement !== hexIn){ e.stopPropagation(); close(); } }, true);
+  return { el, open, close, get target(){ return tgt; } };
+})();
+// a mouse wheel over a picker slider moves it, like in VJif
+cpk.el.addEventListener('wheel', e => { const r = e.target.closest('input[type=range]'); if (!r) return; e.preventDefault(); r.value = +r.value + (e.deltaY < 0 ? 1 : -1); r.dispatchEvent(new Event('input', { bubbles: true })); }, { passive: false });
+
+buildKnobs(); save(); draw();
+document.fonts && document.fonts.ready.then(draw);
+</script>
