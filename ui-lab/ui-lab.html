@@ -38,7 +38,15 @@ legend .ov{color:var(--hot);letter-spacing:0;text-transform:none;font-family:var
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--neon);outline-offset:1px}
 label.row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 input[type=range]{flex:1;min-width:0;accent-color:var(--hot)}
-input[type=color]{width:38px;height:24px;padding:0;border:1px solid var(--edge);border-radius:4px;background:none;cursor:pointer}
+/* colours are swatches; a click opens VJif's colour picker (cpick.js, from VJif) */
+input[type=color]{-webkit-appearance:none;appearance:none;width:30px;height:22px;padding:0;border:1px solid var(--edge);border-radius:4px;background:none;cursor:pointer}
+input[type=color]::-webkit-color-swatch-wrapper{padding:2px}input[type=color]::-webkit-color-swatch{border:0;border-radius:2px}input[type=color]::-moz-color-swatch{border:0;border-radius:2px}
+#cpk{position:fixed;z-index:200;width:220px;padding:8px;background:var(--panel);border:1px solid var(--muted);border-radius:6px;box-shadow:0 6px 24px #0008;font-size:12px}
+#cpk .cpkTop{display:flex;gap:6px;margin-bottom:6px}#cpk .cpkSw{flex:1;border:1px solid var(--edge);border-radius:4px;height:24px}
+#cpk .cpkSV,#cpk .cpkH{display:block;width:100%;border-radius:2px;cursor:crosshair;margin-bottom:5px;touch-action:none}#cpk .cpkH{height:12px;margin-bottom:7px}#cpk .cpkSV{height:104px}
+#cpk .cpkHex{width:84px;font:12px var(--mono);text-transform:lowercase;color:var(--ink);background:#0a0b16;border:1px solid var(--edge);border-radius:4px;padding:2px 6px}
+#cpk .field{display:grid;grid-template-columns:44px minmax(0,1fr) 40px;align-items:center;gap:6px;margin-bottom:4px}#cpk .field label{color:var(--muted)}#cpk .field output{font-size:11px}
+input[type=color].cpkOn{outline:1px solid var(--ink);outline-offset:1px}
 output{font-variant-numeric:tabular-nums;color:var(--ink);min-width:4ch;text-align:right}
 select{font:13px var(--mono);color:var(--ink);background:#0a0b16;border:1px solid var(--edge);border-radius:4px;padding:3px 6px;max-width:100%}
 .swatch{height:8px;border-radius:2px}
@@ -291,7 +299,7 @@ function box(i, id, x0, y0, w, h, title, extra){
   if (T[2] === 'none') return 0;
   const parts = [caseOf(title, b.tcase), ...(extra || [])];
   const L = T[3], R = T[4];
-  const widthOf = p => T[2] === 'pre' ? [...L].length + p.length + 2 : T[2] === 'num' ? p.length + 3 : T[2] === 'fill' ? p.length + 2 : p.length + [...L].length + [...R].length;
+  const widthOf = p => T[2] === 'pre' ? [...L.trim()].length + p.length + 2 : T[2] === 'num' ? p.length + 3 : T[2] === 'fill' ? p.length + 2 : p.length + [...L].length + [...R].length;
   const total = parts.reduce((a,p) => a + widthOf(p) + 1, -1);
   let x = b.pos === 'center' ? x0 + Math.floor((w - total)/2) : b.pos === 'right' ? x1 - 1 - total : x0 + 2;
   const ty = T[2] === 'under' ? y0+1 : y0;
@@ -304,7 +312,7 @@ function box(i, id, x0, y0, w, h, title, extra){
     const ibg = b.titleCol === 'inverse' || ['fill','pill','wedge'].includes(T[2]) ? dark(along(st, t0), b.titleCol === 'inverse' ? .05 : .5) : null;
     const tc1 = b.titleCol === 'inverse' ? hex('#000') : c1, tc2 = b.titleCol === 'inverse' ? hex('#000') : c2;
     if (T[2] === 'line'){ [...L].forEach((ch,k) => put(x+k,y0,ch,edge(x+k,y0))); x += [...L].length; grad(x,ty,p,tc1,tc2,ibg); x += p.length; [...R].forEach((ch,k) => put(x+k,y0,ch,edge(x+k,y0))); x += [...R].length; }
-    else if (T[2] === 'pre'){ put(x,y0,' ',[0,0,0]); x++; grad(x,ty,L.trim(),c1,c1); x += [...L].length; grad(x,ty,p,tc1,tc2,ibg); x += p.length; put(x,y0,' ',[0,0,0]); x++; }
+    else if (T[2] === 'pre'){ const mk = L.trim(); grad(x,ty,mk,c1,c1); x += [...mk].length; put(x,y0,' ',[0,0,0]); x++; grad(x,ty,p,tc1,tc2,ibg); x += p.length; put(x,y0,' ',[0,0,0]); x++; }   // the mark sits on the line: ─// TITLE ─
     else if (T[2] === 'num'){ put(x,y0,' ',[0,0,0]); put(x+1,y0,'¹²³⁴⁵⁶'[i] || '¹', light(c1,.3)); grad(x+2,ty,p,tc1,tc2); x += p.length + 2; put(x,y0,' ',[0,0,0]); x++; }
     else if (T[2] === 'fill'){ grad(x,ty,' '+p+' ',tc1,tc2,ibg || dark(along(st,t0),.5)); x += p.length+2; }
     else if (T[2] === 'pill'){ const bg = ibg || dark(along(st,t0),.5); put(x,y0,'▐',bg); grad(x+1,ty,p,tc1,tc2,bg); put(x+1+p.length,y0,'▌',bg); x += p.length+2; }
@@ -325,7 +333,7 @@ function bar(x,y,id,v,m,lock){
   const nums = b.label === 'pct' ? Math.round(frac*100)+'%' : `${v}/${m}`;
   for (let i=0;i<W;i++){
     const X = x+4+i;
-    if (i >= W-lk){ put(X,y,'▓',P.amber); continue; }
+    if (i >= W-lk){ put(X,y, b.shape === 'block' ? '▓' : b.shape === 'seg' && i % 4 === 3 ? '▌' : G, P.amber); continue; }   // stress: the same shape, in amber
     if (i < f){
       let c = b.fill === 'solid' ? c2 : b.fill === 'fill' ? at(i/Math.max(1,f-1)) : b.fill === 'level' ? along(['#ff3b3b','#ffb627',rgbToHex(c2)], frac) :
         b.fill === 'pulse' ? (i === f-1 ? light(c2,.5) : dark(c2,.25)) : at(i/(W-1));
@@ -482,6 +490,84 @@ cv.addEventListener('click', e => {
 $('copy').onclick = () => { const t = $('code'), m = $('msg');
   navigator.clipboard.writeText(t.value).then(() => m.textContent = 'Copied. Paste it to Claude.', () => { t.select(); m.textContent = 'Selected: press Ctrl+C.'; }); };
 $('reset').onclick = () => { S = fresh(); SEL = 'Global'; save(); buildKnobs(); draw(); $('msg').textContent = 'Back to 0.16.28.'; };
+
+// helpers the picker uses (as in VJif)
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rgb2hex = a => '#' + a.map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+// ---------- VJif's colour picker (copied from VJif's cpick.js) ----------
+const cpk = (() => {
+  const el = document.createElement('div'); el.id = 'cpk'; el.hidden = true;
+  const F = [['h', 'Hue', 360, '°'], ['s', 'Sat', 100, '%'], ['v', 'Bright', 100, '%'], ['r', 'R', 255, ''], ['g', 'G', 255, ''], ['b', 'B', 255, '']];
+  el.innerHTML = `<div class="cpkTop"><i class="cpkSw"></i><input class="cpkHex" type="text" maxlength="7" spellcheck="false" title="Hex colour: type it, Enter applies"></div>` +
+    `<canvas class="cpkSV" width="204" height="104" title="Click or drag: saturation (across) and brightness (up)"></canvas><canvas class="cpkH" width="204" height="12" title="Click or drag: hue"></canvas>` +
+    F.map(([k, n, m, u]) => `<div class="field"><label>${n}</label><input type="range" data-k="${k}" min="0" max="${m}" step="1"><output></output></div>`).join('');
+  document.body.appendChild(el);
+  let tgt = null, hsv = [0, 0, 0], changed = false;
+  const rgb2hsv = ([r, g, b]) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+    const h = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h * 60, mx ? d / mx * 100 : 0, mx * 100]; };
+  const hsv2rgb = ([h, s, v]) => { s /= 100; v /= 100; const f = n => { const k = (n + h / 60) % 6; return (v - v * s * Math.max(0, Math.min(k, 4 - k, 1))) * 255; }; return [f(5), f(3), f(1)]; };
+  const sl = k => el.querySelector(`[data-k="${k}"]`);
+  function show(rgb, keepHsv){
+    if (!keepHsv) { const n = rgb2hsv(rgb); hsv = [n[1] && n[2] ? n[0] : hsv[0], n[2] ? n[1] : hsv[1], n[2]]; }   // grey / black keep the hue (and black the sat) you had
+    const V = { h: hsv[0], s: hsv[1], v: hsv[2], r: rgb[0], g: rgb[1], b: rgb[2] };
+    F.forEach(([k, , , u]) => { const s = sl(k); s.value = Math.round(V[k]); s.nextElementSibling.textContent = Math.round(V[k]) + u; });
+    drawMaps();
+    const hx = rgb2hex(rgb); el.querySelector('.cpkSw').style.background = hx; if (document.activeElement !== el.querySelector('.cpkHex')) el.querySelector('.cpkHex').value = hx;
+  }
+  // the colour field (saturation × brightness for the hue) and the hue strip, with a mark where the colour is
+  const sv = el.querySelector('.cpkSV'), hs = el.querySelector('.cpkH'), svx = sv.getContext('2d'), hsx = hs.getContext('2d');
+  function drawMaps(){
+    const w = sv.width, h = sv.height; svx.fillStyle = rgb2hex(hsv2rgb([hsv[0], 100, 100])); svx.fillRect(0, 0, w, h);
+    let g = svx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); svx.fillStyle = g; svx.fillRect(0, 0, w, h);
+    g = svx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); svx.fillStyle = g; svx.fillRect(0, 0, w, h);
+    const x = hsv[1] / 100 * w, y = (1 - hsv[2] / 100) * h; svx.lineWidth = 2; svx.strokeStyle = hsv[2] > 55 ? '#000' : '#fff'; svx.beginPath(); svx.arc(x, y, 5, 0, 7); svx.stroke();
+    const hw = hs.width; g = hsx.createLinearGradient(0, 0, hw, 0); for (let k = 0; k <= 6; k++) g.addColorStop(k / 6, rgb2hex(hsv2rgb([k * 60, 100, 100]))); hsx.fillStyle = g; hsx.fillRect(0, 0, hw, hs.height);
+    const hx = hsv[0] / 360 * hw; hsx.fillStyle = '#fff'; hsx.fillRect(hx - 1.5, 0, 3, hs.height); hsx.fillStyle = '#000'; hsx.fillRect(hx - 0.5, 0, 1, hs.height);
+  }
+  const mapDrag = (cv, fn) => { const at = e => { const r = cv.getBoundingClientRect(); fn(clamp((e.clientX - r.left) / r.width, 0, 1), clamp((e.clientY - r.top) / r.height, 0, 1)); };
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); at(e); cv._d = true; });
+    cv.addEventListener('pointermove', e => { if (cv._d) at(e); }); cv.addEventListener('pointerup', () => cv._d = false); cv.addEventListener('pointercancel', () => cv._d = false); };
+  mapDrag(sv, (fx, fy) => { hsv[1] = fx * 100; hsv[2] = (1 - fy) * 100; put(hsv2rgb(hsv), true); });
+  mapDrag(hs, fx => { hsv[0] = Math.min(359.9, fx * 360); put(hsv2rgb(hsv), true); });
+  function put(rgb, keepHsv){
+    if (!tgt) return; const hx = rgb2hex(rgb); show(rgb, keepHsv);
+    if (tgt.value !== hx){ tgt.value = hx; changed = true; tgt.dispatchEvent(new Event('input', { bubbles: true })); }
+  }
+  el.addEventListener('input', e => {
+    const k = e.target.dataset.k; if (!k) return; const v = +e.target.value;
+    if ('hsv'.includes(k)){ hsv['hsv'.indexOf(k)] = v; put(hsv2rgb(hsv), true); }
+    else { const c = hex2rgb(tgt.value); c['rgb'.indexOf(k)] = v; put(c); }
+  });
+  const hexIn = el.querySelector('.cpkHex');
+  const hexApply = () => { let t = hexIn.value.trim().replace(/^#?/, '#'); if (/^#[0-9a-f]{3}$/i.test(t)) t = '#' + [...t.slice(1)].map(c => c + c).join('');
+    if (/^#[0-9a-f]{6}$/i.test(t)) put(hex2rgb(t.toLowerCase())); else hexIn.value = tgt.value; };
+  hexIn.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter'){ hexApply(); hexIn.blur(); } if (e.key === 'Escape'){ hexIn.value = tgt.value; hexIn.blur(); } });
+  hexIn.addEventListener('blur', hexApply);
+  function open(input){
+    if (tgt === input) return close();
+    close(); tgt = input; changed = false; el.hidden = false; show(hex2rgb(input.value));
+    const r = input.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;   // under the swatch, kept on screen
+    el.style.left = clamp(r.left, 6, innerWidth - w - 6) + 'px'; el.style.top = (r.bottom + h + 6 > innerHeight ? Math.max(6, r.top - h - 6) : r.bottom + 6) + 'px';
+    input.classList.add('cpkOn');
+  }
+  function close(){
+    if (!tgt) return; const t = tgt; tgt = null; el.hidden = true; t.classList.remove('cpkOn');
+    if (changed) t.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  let skipT = 0;                                   // a press on another colour while one is open: the picker moves to it (its click doesn't toggle it again)
+  const colourAt = t => t.closest && (t.closest('input[type=color]') || (t.closest('label') && t.closest('label').querySelector('input[type=color]')));
+  document.addEventListener('click', e => {   // the browser's picker never opens: ours does
+    const i = e.target.closest && e.target.closest('input[type=color]'); if (!i || i.disabled) return; e.preventDefault(); if (performance.now() - skipT < 800){ skipT = 0; return; } open(i); }, true);
+  document.addEventListener('pointerdown', e => { if (tgt && !el.contains(e.target) && e.target !== tgt && !(e.target.closest && e.target.closest('label') && e.target.closest('label').contains(tgt))){ const o = colourAt(e.target), host = o && o.closest('[id]'), sel = o && o.dataset.i != null ? `input[type=color][data-i="${o.dataset.i}"]` : null;   // (where it is, read before closing: closing can rebuild its list)
+    close();
+    if (o && !o.disabled){ skipT = performance.now();   // another colour: the picker moves over to it (tweak several in a row; 0.89: also after a change, which rebuilt the list and lost it)
+      requestAnimationFrame(() => { const n = o.isConnected ? o : (host && sel && host.querySelector(sel)); if (n && !n.disabled) open(n); }); } } }, true);
+  addEventListener('keydown', e => { if (tgt && e.key === 'Escape' && document.activeElement !== hexIn){ e.stopPropagation(); close(); } }, true);
+  return { el, open, close, get target(){ return tgt; } };
+})();
+// a mouse wheel over a picker slider moves it, like in VJif
+cpk.el.addEventListener('wheel', e => { const r = e.target.closest('input[type=range]'); if (!r) return; e.preventDefault(); r.value = +r.value + (e.deltaY < 0 ? 1 : -1); r.dispatchEvent(new Event('input', { bubbles: true })); }, { passive: false });
 
 buildKnobs(); save(); draw();
 document.fonts && document.fonts.ready.then(draw);
