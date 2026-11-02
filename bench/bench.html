@@ -101,6 +101,17 @@ li.shut.more>.t>b::after{content:" \2026";color:var(--faint);font-weight:400}
 .stats .sf{cursor:pointer;border-radius:3px;padding:0 2px}.stats .sf:hover{color:var(--ink)}.stats .sf.on{background:var(--sig-soft);color:var(--sig)}.stats .sf.on b{color:var(--sig)}
 .tools button.on{background:var(--sig-soft);color:var(--sig);border-color:var(--sig);position:relative}
 .who{align-self:center}.who button{padding:3px 10px;font-size:12px;color:var(--faint);background:var(--bg)}.who button:hover{color:var(--ink)}.who button.on,.who button.on:hover{background:var(--sig);border-color:var(--sig);color:var(--bg);position:relative;z-index:1}
+/* the Board (ID-047): wider page, sections as columns that scroll sideways on a narrow screen */
+body.boarded .wrap{max-width:1400px}.wrap,.pin,.tools{grid-template-columns:minmax(0,1fr)}.wrap>*,#list{min-width:0}#filter{flex:1 1 0;min-width:0;width:0}body.boarded #foldAll,body.boarded #openAll,body.boarded .gb{display:none}
+.board{display:grid;grid-template-columns:repeat(4,minmax(230px,1fr));gap:12px;overflow-x:auto;align-items:start;padding-bottom:6px}
+.board .col{display:grid;gap:6px;background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:10px;min-width:0}
+.board .col h2{margin:0 0 4px;display:flex;align-items:baseline;gap:8px;font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.board .col h2 .n{margin-left:auto;color:var(--faint);letter-spacing:0}
+.board .card{all:unset;box-sizing:border-box;display:grid;gap:4px;padding:8px 9px;border:1px solid var(--edge);border-radius:5px;background:var(--bg);cursor:pointer;min-width:0}
+.board .card:hover{border-color:var(--sig)}.board .card:focus-visible{outline:2px solid var(--sig);outline-offset:1px}
+.board .card .ch{display:flex;flex-wrap:wrap;gap:4px;align-items:center}.board .card .ca{font:400 11px var(--mono);color:var(--faint);margin-left:auto}
+.board .card .ct{font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.board .card.cdone .ct{color:var(--muted)}.board .state{font-size:12px;color:var(--faint)}
 @media (prefers-reduced-motion: reduce){ section h2 .chev{transition:none} }
 @media (prefers-reduced-motion: reduce){ .bar i{transition:none} }
 </style>
@@ -119,7 +130,7 @@ li.shut.more>.t>b::after{content:" \2026";color:var(--faint);font-weight:400}
     <textarea id="addText" rows="1" autocomplete="off" aria-label="New item" title="Enter adds, Shift+Enter: new line"></textarea>
     <button class="go" type="submit">Add</button>
   </form>
-  <div class="tools"><div class="frow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter items" autocomplete="off"><button id="yours" type="button" title="Only the items waiting for you: open, sorted, with Claude's note last (or a test nobody has written on yet)">Yours</button><button id="titles" type="button" title="Show only the titles. Click a title or its chips to open or close one item">Titles</button></div><div class="brow"><span id="status"></span><button id="foldAll" type="button" title="Fold every group, and close Done">Fold all</button><button id="openAll" type="button" title="Unfold one level: sections, then their groups; Done follows one click behind">Unfold all</button><label class="gb" title="How each section is grouped">Group <select id="groupBy" aria-label="Group by"><option value="area">by area</option><option value="ver">by version</option><option value="cat">by category</option><option value="author">by author</option><option value="pr" hidden disabled>by PR</option></select></label></div></div>
+  <div class="tools"><div class="frow"><input id="filter" type="search" placeholder="Filter" aria-label="Filter items" autocomplete="off"><button id="yours" type="button" title="Only the items waiting for you: open, sorted, with Claude's note last (or a test nobody has written on yet)">Yours</button><button id="titles" type="button" title="Show only the titles. Click a title or its chips to open or close one item">Titles</button><button id="board" type="button" title="Board: the sections side by side as columns of cards (view only). Click a card to open it in the list">Board</button></div><div class="brow"><span id="status"></span><button id="foldAll" type="button" title="Fold one level: groups (and Done), then the sections">Fold all</button><button id="openAll" type="button" title="Unfold one level: sections, then their groups; Done follows one click behind">Unfold all</button><label class="gb" title="How each section is grouped">Group <select id="groupBy" aria-label="Group by"><option value="area">by area</option><option value="ver">by version</option><option value="cat">by category</option><option value="author">by author</option><option value="pr" hidden disabled>by PR</option></select></label></div></div>
   </div>
 
   <div id="list"><div class="state">Loading the checklist…</div></div>
@@ -156,12 +167,13 @@ const ownerOf = i => { const T = threadOf(i); for (let k = T.length - 1; k >= 0;
 function syncWho(){ $('#who').hidden = SOLO; if (SOLO) return; $('#who').innerHTML = PEOPLE.map(p => `<button type="button" data-v="${esc(p)}" class="${p === me ? 'on' : ''}" aria-pressed="${p === me}">${esc(p)}</button>`).join(''); }
 let groupBy = 'area'; try { groupBy = localStorage.getItem('benchGroup') || (localStorage.getItem('benchByVer') === '1' ? 'ver' : 'area'); } catch (e) {}   // area / ver / cat / author
 if (SOLO){ document.querySelector('#groupBy option[value="author"]').remove(); if (groupBy === 'author') groupBy = 'area'; }   // one person: grouping by author says nothing
-let titlesOnly = false, flip = new Set();   // Titles: every item shows only its title; flip: items clicked open / shut against that
-try { const v = JSON.parse(localStorage.getItem('benchView') || '{}'); titlesOnly = !!v.t; flip = new Set(v.f || []); } catch (e) {}
-const saveView = () => { try { localStorage.setItem('benchView', JSON.stringify({ t: titlesOnly, f: [...flip] })); } catch (e) {} };
+let titlesOnly = false, flip = new Set(), boardView = false;   // Titles: every item shows only its title; flip: items clicked open / shut against that; Board: columns of cards (ID-047)
+try { const v = JSON.parse(localStorage.getItem('benchView') || '{}'); titlesOnly = !!v.t; flip = new Set(v.f || []); boardView = !!v.b; } catch (e) {}
+const saveView = () => { try { localStorage.setItem('benchView', JSON.stringify({ t: titlesOnly, f: [...flip], b: boardView })); } catch (e) {} };
 const isShut = i => titlesOnly !== flip.has(i.id);
 const setShut = (id, v) => { if ((titlesOnly !== flip.has(id)) !== v){ flip.has(id) ? flip.delete(id) : flip.add(id); } };
-const syncTools = () => { $('#groupBy').value = groupBy; $('#list').classList.toggle('gv', groupBy !== 'area'); $('#list').classList.toggle('tm', titlesOnly); $('#titles').classList.toggle('on', titlesOnly); $('#titles').setAttribute('aria-pressed', titlesOnly); $('#yours').classList.toggle('on', yoursOnly); $('#yours').setAttribute('aria-pressed', yoursOnly); };
+const syncTools = () => { $('#groupBy').value = groupBy; $('#list').classList.toggle('gv', groupBy !== 'area'); $('#list').classList.toggle('tm', titlesOnly); $('#titles').classList.toggle('on', titlesOnly); $('#titles').setAttribute('aria-pressed', titlesOnly); $('#yours').classList.toggle('on', yoursOnly); $('#yours').setAttribute('aria-pressed', yoursOnly);
+  $('#board').classList.toggle('on', boardView); $('#board').setAttribute('aria-pressed', boardView); document.body.classList.toggle('boarded', boardView); };
 let closedSub = {}; try { closedSub = JSON.parse(localStorage.getItem('closedSubs') || '{}'); } catch (e) {}
 let closed = { done: true }; try { closed = JSON.parse(localStorage.getItem('closedSecs2') || '{"done":true}'); } catch (e) {}
 const noteLabel = i => isQ(i) ? 'Answer' : 'Feedback';
@@ -183,6 +195,7 @@ const catOf = i => i.kind === 'bug' ? 'BG' : i.kind === 'tweak' ? 'TW' : CATS.so
 const waitsForYou = i => { if (i.done || !i.ref || i.sec === 'planned' || i.sec === 'doing') return false;   // v54 (grdc): planned items wait for Claude's release, not for you
   if (i.sec === 'backlog' && !i.needs) return false;   // a backlog item is yours only while Claude has marked it 'needs input' (Sprawler ID-055)
   if (i.needs){ const T = threadOf(i); return !T.length || T[T.length - 1].by === 'claude'; }   // marked: yours until you answer, whoever opened it
+  if (!/^TS-/.test(i.ref) && items.some(k => k.parent === i.id && /^TS-/.test(k.ref || '') && waitsForYou(k))) return true;   // an open test under it waits for you, so the item does too (Sprawler TW-077)
   const T = threadOf(i); return T.length ? T[T.length - 1].by === 'claude' && (ownerOf(i) || me) === me : /^TS-/.test(i.ref); };
 let yoursOnly = false; try { yoursOnly = localStorage.getItem('benchYours') === '1'; } catch (e) {}
 // a click on a count in the stats line shows only those items (again: all)
@@ -267,6 +280,7 @@ function renderList(){
   const kids = p => items.filter(i => i.parent === p.id && nests(i) && (matches(i) || filterQ && !yoursOnly && !statF && matches(p))).sort(byOrder);   // a text match shows its sub-items too; Yours and the counts show only items that are that themselves
   const childrenOf = p => items.filter(x => x.parent === p.id).sort((a, b) => String(a.ref || '').localeCompare(String(b.ref || ''), undefined, { numeric: true }));   // every sub-item, wherever it is (a chip each)
   const ownNew = i => i.idea && !threadOf(i).length && !i.tag && i.sec === 'backlog' && (i.author || PEOPLE[0]) === me;   // yours, and nobody has answered yet
+  if (boardView){ list.innerHTML = board(secs, byOrder, areaIx); return; }
   const nedBox = i => `<div class="ned${editing.edit ? ' inplace' : ''}"><textarea aria-label="Note">${esc(editing.draft)}</textarea><div><button class="nc" title="Esc">Cancel</button><button class="go ns" title="Enter (Shift+Enter: new line)">${editing.edit ? 'Save' : 'Add'}</button></div></div>`;
   const li = (i, alone) => `<li class="${/^TS-/.test(i.ref || '') ? 'ts ' : ''}${i.done ? 'done' : ''}${isShut(i) && !(editing && editing.id === i.id) ? ' shut' : ''}${i.detail || threadOf(i).length || kids(i).length ? ' more' : ''}" data-id="${esc(i.id)}"><input type="checkbox" id="c-${esc(i.id)}"${i.done ? ' checked' : ''}${canWrite ? '' : ' disabled'} aria-label="Done">
         <span class="t"><span class="tl">${i.ref ? `<span class="tag ref" title="${esc(refKind(i.ref))}">${esc(i.ref)}</span>` : ''}${i.kind === 'bug' ? '<span class="tag bug">bug</span>' : i.kind === 'tweak' ? '<span class="tag tweak" title="A change to something that already works">tweak</span>' : !i.area && secOf(i) !== 'done' ? '<span class="tag new" title="New: Claude hasn\'t sorted it yet">new</span>' : i.idea ? '<span class="tag idea" title="Your idea">idea</span>' : ''}${i.author && !SOLO ? `<span class="tag ref" title="Added by ${esc(i.author)}">${esc(i.author)}</span>` : ''}${i.needs && !i.done ? '<span class="tag need" title="Claude asked you something here: it counts in Yours until you answer">needs input</span>' : ''}${i.tag ? `<span class="tag">${esc(i.tag)}</span>` : ''}${i.pr && BENCH.prLink ? `<a class="tag ref pr" href="${esc(BENCH.prLink + i.pr)}" target="_blank" rel="noopener" title="Pull request #${esc(i.pr)}: the branch to pull to test this">PR #${esc(i.pr)}</a>` : ''}${i.plan && !i.done ? `<span class="tag plan" title="Queued for this release">→ v${esc(i.plan)}</span>` : ''}${i.parent && (alone === true || !nests(i)) && items.find(x => x.id === i.parent) ? `<span class="tag ref goto" data-goto="${esc(i.parent)}" title="Part of: click to go there">↳ ${esc(items.find(x => x.id === i.parent).ref || '')}</span>` : ''}${childrenOf(i).map(k => `<span class="tag ref goto kid${k.done ? ' kdone' : ''}" data-goto="${esc(k.id)}" title="${esc((k.text || '') + (k.done ? ' (done)' : ''))} · click to go there">↓ ${esc(k.ref || 'new')}</span>`).join('')}</span>${editing && editing.title && editing.id === i.id ? `<span class="ned inplace"><textarea aria-label="Title">${esc(editing.draft)}</textarea><span><button class="nc" title="Esc">Cancel</button><button class="go ns" title="Enter (Shift+Enter: new line)">Save</button></span></span>` : `<b class="${canWrite && ownNew(i) ? 'et' : ''}"${canWrite && ownNew(i) ? ' title="Click to edit"' : ''}>${esc(i.text)}</b>`}${i.detail ? `<span class="d">${esc(i.detail)}</span>` : ''}</span>
@@ -275,7 +289,7 @@ function renderList(){
         ${editing && editing.id === i.id && !editing.edit && !editing.title ? nedBox(i) : ''}${kids(i).length ? `<ul class="kids">${kids(i).map(k => li(k)).join('')}</ul>` : ''}</li>`;
   list.innerHTML = secs.map(sec => {
     const grouped = true, its = items.filter(i => secOf(i) === sec && matches(i) && !nests(i)).sort(grouped ? (a, b) => areaIx(a) - areaIx(b) || byOrder(a, b) : byOrder);
-    if (!its.length && sec !== 'planned') return '';
+    if (!its.length && (sec !== 'planned' || filterQ || yoursOnly || statF)) return '';   // Queued shows empty only when nothing is filtered (Sprawler TW-076)
     if (!its.length) return `<section data-sec="planned" class="${closed[sec] ? 'closed' : ''}"><h2><button class="fold" aria-expanded="${!closed[sec]}"><span class="chev">▾</span>${esc(secName(sec))}<span class="n">0</span></button></h2><div class="state">Nothing queued.</div></section>`;   // v55: Queued always shows, even empty
     const why = '';                                   // (no description lines: FYR doesn't need them)
     let body;
@@ -296,6 +310,17 @@ function renderList(){
   keepDraft();
   const ta = list.querySelector('.ned textarea'); if (ta && editing && (editing.focus || hadFocus)){ ta.focus(); const at = caret >= 0 ? caret : ta.value.length; ta.setSelectionRange(at, at); editing.focus = false; }
 }
+
+// The Board (ID-047, view only): each section a column of cards, filtered like the list (Filter, Yours, the counts).
+// Sub-items are cards of their own. Done shows its newest cards only. A card click opens that item in the list.
+const DONE_CARDS = 40;
+function board(secs, byOrder, areaIx){
+  const card = i => `<button type="button" class="card${i.done ? ' cdone' : ''}" data-card="${esc(i.id)}" title="Open in the list"><span class="ch">${i.ref ? `<span class="tag ref">${esc(i.ref)}</span>` : '<span class="tag new">new</span>'}${i.kind === 'bug' ? '<span class="tag bug">bug</span>' : i.kind === 'tweak' ? '<span class="tag tweak">tweak</span>' : ''}${i.needs && !i.done ? '<span class="tag need">needs input</span>' : ''}${i.tag ? `<span class="tag">${esc(i.tag)}</span>` : i.plan ? `<span class="tag plan">→ v${esc(i.plan)}</span>` : ''}${i.area ? `<span class="ca">${esc(i.area)}</span>` : ''}</span><span class="ct">${esc(i.text)}</span></button>`;
+  return `<div class="board">${secs.map(sec => { let its = items.filter(i => secOf(i) === sec && matches(i));
+    if (!its.length && sec !== 'planned' && !SECTIONS.some(s => s[0] === sec)) return '';
+    const n = its.length, older = sec === 'done' ? Math.max(0, n - DONE_CARDS) : 0;
+    its = sec === 'done' ? its.sort((a, b) => String(b.created || '').localeCompare(String(a.created || ''))).slice(0, DONE_CARDS) : its.sort((a, b) => areaIx(a) - areaIx(b) || byOrder(a, b));
+    return `<div class="col"><h2>${esc(secName(sec))}<span class="n">${n}</span></h2>${its.map(card).join('') || '<div class="state">Nothing here.</div>'}${older ? `<div class="state">+${older} older</div>` : ''}</div>`; }).join('')}</div>`; }
 
 const status = t => { $('#status').textContent = t; };
 // Ctrl+Z / Ctrl+Shift+Z (Ctrl+Y): undo / redo this page's own changes (not while typing). Each step keeps the whole item before and after
@@ -325,6 +350,9 @@ $('#list').addEventListener('change', e => {
   upd(id, { done: e.target.checked }, e.target.checked ? 'ticked' : 'unticked');
 });
 $('#list').addEventListener('click', e => {
+  const cd = e.target.closest('.card'); if (cd){ boardView = false; saveView(); render(); const id = cd.dataset.card;   // a Board card: back to the list, at that item
+    let t = document.querySelector('#list li[data-id="' + CSS.escape(id) + '"]') || revealItem(id); if (!t){ status('That item is not on this page.'); return; }
+    t.scrollIntoView({ block: 'center' }); t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash'); return; }
   const go = e.target.closest('.goto'); if (go){ let t = document.querySelector('#list li[data-id="' + CSS.escape(go.dataset.goto) + '"]');   // a sub-item's parent chip: go to the parent
     if (!t){ t = revealItem(go.dataset.goto); if (!t){ status('Its parent is not on this page.'); return; } }   // hidden: undo whatever hides it, one thing at a time
     t.scrollIntoView({ block: 'center' }); t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash'); return; }
@@ -399,9 +427,20 @@ $('#yours').addEventListener('click', () => { yoursOnly = !yoursOnly; try { loca
   const el = touched && Date.now() - touched.at < 15 * 60e3 && document.querySelector('#list li[data-id="' + CSS.escape(touched.id) + '"]');
   if (el){ scrollBy(0, el.getBoundingClientRect().top - touched.top); touch(el); } });
 $('#titles').addEventListener('click', () => { titlesOnly = !titlesOnly; flip.clear(); saveView(); render(); });
+$('#board').addEventListener('click', () => { boardView = !boardView; saveView(); render(); });
 // fold / unfold everything: every group heading in the open sections, or every section and group
 const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringify(closedSub)); localStorage.setItem('closedSecs2', JSON.stringify(closed)); } catch (e) {} };
-document.getElementById('foldAll').addEventListener('click', () => { document.querySelectorAll('h3.sub').forEach(h => closedSub[h.dataset.k] = true); closed.done = true; if (!document.querySelector('section[data-sec="planned"] h3.sub')) closed.planned = true;   /* Queued folds its groups like Backlog and Review; when it shows none (empty, or everything filtered out by Yours or the filter), the section folds (Sprawler TW-053) */ saveFolds(); render(); });   // Done folds shut as well
+document.getElementById('foldAll').addEventListener('click', () => {   // Sprawler TW-057: fold in levels too, the mirror of Unfold all, Done one level ahead
+  // 1st click from all open: groups fold and Done shuts; 2nd: the sections shut
+  const secs = [...document.querySelectorAll('#list section[data-sec]')], keysOf = sec => [...sec.querySelectorAll('h3.sub')].map(h => h.dataset.k);
+  const level = sec => closed[sec.dataset.sec] ? 0 : keysOf(sec).some(k => closedSub[k]) ? 1 : 2;
+  const set = (sec, L) => { const id = sec.dataset.sec; if (L === 0){ closed[id] = true; return; } delete closed[id]; keysOf(sec).forEach(k => { if (L === 1) closedSub[k] = true; else delete closedSub[k]; }); };
+  const others = secs.filter(x => x.dataset.sec !== 'done'), done = secs.find(x => x.dataset.sec === 'done');
+  const full = others.filter(x => keysOf(x).length), L = full.length ? Math.max(...full.map(level)) : 0;
+  const T = Math.max(0, L - 1);
+  others.forEach(x => set(x, keysOf(x).length ? T : 0));   // a section showing no groups (Queued under Yours) folds shut (Sprawler TW-053)
+  if (done) set(done, Math.max(0, T - 1));
+  saveFolds(); render(); scrollTo(0, 0); });   // Sprawler BG-019: start from the top, not where you were before
 document.getElementById('openAll').addEventListener('click', () => {   // Sprawler TW-057: unfold in levels, every section alike, Done one level behind
   // level 0: section shut · 1: section open, its groups folded · 2: everything open
   const secs = [...document.querySelectorAll('#list section[data-sec]')], keysOf = sec => [...sec.querySelectorAll('h3.sub')].map(h => h.dataset.k);
@@ -411,5 +450,5 @@ document.getElementById('openAll').addEventListener('click', () => {   // Sprawl
   const full = others.filter(x => keysOf(x).length), L = full.length ? Math.min(...full.map(level)) : 2;   // an empty section (e.g. Queued under Yours) doesn't hold the others back
   if (L < 2){ others.forEach(x => set(x, keysOf(x).length ? L + 1 : 2)); if (done) set(done, L); }   // the others go up a level; Done follows one behind
   else if (done) set(done, Math.min(2, level(done) + 1));
-  saveFolds(); render(); });
+  saveFolds(); render(); scrollTo(0, 0); });   // Sprawler BG-019
 </script>
