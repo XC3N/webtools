@@ -66,6 +66,23 @@ canvas{display:block;image-rendering:pixelated;cursor:crosshair;touch-action:non
 .sizes td:first-child{font-family:var(--mono);color:var(--ink);white-space:nowrap}
 dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:min(560px,92vw);padding:16px}
 dialog::backdrop{background:#000a}
+.seg{display:flex;gap:0}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:4px 0 0 4px;margin-left:0}.seg button:last-child{border-radius:0 4px 4px 0}
+.seg button.on{background:#0d2a33;position:relative;z-index:1}
+.pickwrap{position:relative;min-width:0}
+.pickbtn{display:flex;gap:8px;align-items:center;justify-content:space-between;min-width:220px;max-width:100%;text-align:left}
+.pickbtn span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pop{position:absolute;z-index:20;top:calc(100% + 4px);left:0;width:min(420px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;display:grid;gap:8px;box-shadow:0 12px 32px #000a}
+#pop[hidden]{display:none}
+#pop .list{max-height:46vh}
+.tiles button.rt::after{content:"↻";position:absolute;left:2px;top:0;font:9px var(--mono);color:var(--muted)}
+.sw{display:block;width:22px;height:30px;border:1px solid var(--line)}
+.pcs{display:grid;gap:6px}.pcs .prow{display:flex;gap:6px;align-items:center}.pcs .prow>span{width:54px;font:11px var(--mono);color:var(--muted)}
+.pcs button{height:44px;width:44px;padding:0;display:grid;place-items:center;position:relative}
+.pcs button.on{outline:2px solid var(--accent);outline-offset:1px}
+.st{display:grid;gap:6px}.st button{text-align:left}
+.insp{display:grid;gap:6px;font-size:12px}.insp .ln{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.insp .k{color:var(--muted);width:54px}
+.insp button{padding:1px 7px;font-size:12px}.insp .sw{width:14px;height:20px}
+.keys{font-size:12px;color:var(--muted)}.keys summary{cursor:pointer}.keys p{margin:6px 0}
 kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:var(--muted)}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
@@ -74,20 +91,28 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
   <header>
     <h1>Sprawler <span>Building Designer</span></h1>
     <span class="who" id="who"></span>
-    <p class="sub">Draw buildings, the hotel and parks on the game's grid, with its tiles and colours. Designs are saved here for everyone on the project; Claude reads them to work out the rules mapgen uses to make more.</p>
+    <p class="sub">Draw buildings, the hotel and parks on the game's grid, with its tiles and colours. A cell has layers: a tile (which can face a direction), half-block pieces on top of it, and a walkable status. Designs are saved here for everyone on the project; Claude reads them to work out the rules mapgen uses to make more.</p>
   </header>
   <div class="main">
     <aside class="side-l box">
       <h2>Designs</h2>
       <div class="row"><button type="button" class="go" id="new">New design</button></div>
-      <ul class="list" id="list"><li class="empty">Loading designs…</li></ul>
-      <details class="sizes"><summary>Building sizes</summary>
+      <p class="cur" id="count">Loading designs…</p>
+      <details class="sizes" open><summary>Building sizes</summary>
         <p>Outer size with the walls. Heights are the city's block heights; widths are even so a building fills whole map-screen characters (2 columns each).</p>
         <table id="sizetab"></table>
       </details>
     </aside>
 
     <section class="stage" aria-label="Editor">
+      <div class="pickwrap">
+        <button type="button" class="pickbtn" id="pickbtn" aria-haspopup="listbox" aria-expanded="false"><span id="picklabel">Open a design…</span><span aria-hidden="true">▾</span></button>
+        <div id="pop" hidden>
+          <input id="q" type="search" placeholder="Search name, kind or notes" autocomplete="off" aria-label="Search designs">
+          <select id="kf" aria-label="Filter by kind"></select>
+          <ul class="list" id="list" role="listbox"><li class="empty">Loading designs…</li></ul>
+        </div>
+      </div>
       <div class="box">
         <div class="meta">
           <label for="name">Name</label><input id="name" type="text" placeholder="e.g. Corner noodle bar" autocomplete="off">
@@ -106,17 +131,27 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
         </div>
       </div>
       <div class="bar" id="tools" role="toolbar" aria-label="Tools"></div>
+      <div class="bar"><span class="cur">View</span><div class="seg" id="views" role="group" aria-label="View"></div></div>
       <div class="canvas-wrap"><canvas id="cv" tabindex="0" aria-label="Building grid"></canvas></div>
       <div class="status" id="status">&nbsp;</div>
     </section>
 
     <aside class="box">
-      <h2>Tiles</h2>
+      <h2>Layer</h2>
+      <div class="seg" id="modes" role="group" aria-label="Layer to paint"></div>
       <p class="cur">Left click: <b id="curA"></b> · right click: <b id="curB"></b></p>
+      <div class="row"><span class="cur">Facing</span><button type="button" id="rotL" title="Rotate the brush counter-clockwise (Q)">⟲</button><button type="button" id="rotR" title="Rotate the brush clockwise (E)">⟳</button><b class="cur" id="rotName"></b></div>
       <div class="pal" id="pal"></div>
+      <h2>Cell</h2>
+      <div class="insp" id="insp"><span class="cur">Pick a cell with the Pick tool (I) to see and edit its layers.</span></div>
       <h2>Checks</h2>
       <ul class="checks" id="checks"></ul>
       <div class="counts" id="counts"></div>
+      <details class="keys"><summary>Keys</summary>
+        <p><kbd>P</kbd> pencil · <kbd>L</kbd> line · <kbd>B</kbd> box · <kbd>R</kbd> filled box · <kbd>F</kbd> fill · <kbd>I</kbd> pick · <kbd>T</kbd> rotate a cell · <kbd>M</kbd> mirror</p>
+        <p><kbd>Q</kbd> <kbd>E</kbd> turn the brush · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> tiles / pieces / status · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</p>
+        <p>Right click: second tile in the Tiles layer; clears the layer in Pieces and Status.</p>
+      </details>
     </aside>
   </div>
 </div>
@@ -125,47 +160,66 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
 
 <script>
 // The game's tiles (core/sprawl_map.gd DEFS, core/hotel.gd LEGEND): one character per tile in the
-// saved rows, the glyph and colours the game draws it with. "mark" tiles are floor plus a marker.
+// saved rows, the glyph and colours the game draws it with.
+// flags: r = can face a direction, s = the preview turns the glyph with it.
 const T = [
-  // group, char, name, glyph, fg, bg, walk
-  ['Structure', ' ', 'outside (street)', '·', '#3a3f58', '#000000', 1],
-  ['Structure', '#', 'wall', '▓', '#2b2f45', '#14162a', 0],
-  ['Structure', '.', 'floor', '.', '#4d5a66', '#0d0f14', 1],
-  ['Structure', '+', 'door', '▣', '#d6a243', '#0d0f14', 1],
-  ['Structure', 'N', 'neon sign', '█', '#ff2fa8', '#14162a', 0],
-  ['Structure', 'G', 'sealed gate', '▣', '#a04a5a', '#14162a', 0],
-  ['Terminals', 'T', 'terminal (cash)', 'Ω', '#29f0ff', '#0d0f14', 0],
-  ['Terminals', 'X', 'data terminal spot', 'Ω', '#ff2fa8', '#2a0d20', 0],
-  ['Terminals', 'K', "clerk's terminal", '≡', '#5a7fa0', '#0d0f14', 0],
-  ['Terminals', 'J', 'job board', '≡', '#b6ff3b', '#0d0f14', 0],
-  ['Terminals', 'R', 'recharge station', '≈', '#b6ff3b', '#0d0f14', 0],
-  ['Furniture', 'x', 'crates', '■', '#7a5a3a', '#0d0f14', 0],
-  ['Furniture', 't', 'table', 'π', '#8a7a6a', '#0d0f14', 0],
-  ['Furniture', 's', 'shelves', '╫', '#6a5a4a', '#0d0f14', 0],
-  ['Furniture', 'm', 'machine', '◘', '#6a7a8a', '#0d0f14', 0],
-  ['Furniture', 'B', 'bed', '▬', '#4a5a7a', '#0d0f14', 0],
-  ['Furniture', 'a', 'arcade cabinet', '▌', '#9d5cff', '#0d0f14', 0],
-  ['Furniture', 'c', 'counter side', '│', '#8a76b8', '#0d0f14', 0],
-  ['Furniture', '{', 'desk, left end', 'desk', '#8a76b8', '#0d0f14', 1],
-  ['Furniture', '_', 'desk', 'desk', '#8a76b8', '#0d0f14', 1],
-  ['Furniture', '}', 'desk, right end', 'desk', '#8a76b8', '#0d0f14', 1],
-  ['Plants & park', 'v', 'potted plant', '♠', '#3f9a5a', '#0d0f14', 0],
-  ['Plants & park', 'Y', 'tree', '♣', '#3fa04a', '#030a05', 0],
-  ['Plants & park', ',', 'grass', ',', '#1f4a2a', '#030a05', 1],
-  ['Plants & park', 'F', 'fountain', '≈', '#29c8ff', '#06223a', 0],
-  ['Plants & park', 'A', 'statue', 'Φ', '#9aa4b8', '#030a05', 0],
-  ['Plants & park', 'h', 'bench', 'π', '#8a6a4a', '#030a05', 0],
-  ['Hotel', 'E', 'street exit', '⌂', '#ffb627', '#0d0f14', 1],
-  ['Hotel', 'P', 'guest room door (locked)', '■', '#3c4466', '#0d0f14', 1],
-  ['Hotel', 'p', 'your pod', '■', '#29f0ff', '#0d0f14', 0],
-  ['Hotel', 'b', "a guest's bed", '■', '#1f6f78', '#0d0f14', 0],
-  ['Hotel', 'g', "a guest's terminal", '≡', '#4f6a2a', '#0d0f14', 0],
-  ['Markers', '@', 'someone stands here (clerk, shopkeeper)', '@', '#9d5cff', '#0d0f14', 1],
-  ['Markers', 'S', 'where you wake up / come in', 'S', '#7a809f', '#0d0f14', 1],
+  // group, char, name, glyph, fg, bg, walk, flags
+  ['Structure', ' ', 'outside (street)', '·', '#3a3f58', '#000000', 1, ''],
+  ['Structure', '#', 'wall', '▓', '#2b2f45', '#14162a', 0, ''],
+  ['Structure', '.', 'floor', '.', '#4d5a66', '#0d0f14', 1, ''],
+  ['Structure', '+', 'entry door (front, to the street)', '▣', '#d6a243', '#0d0f14', 1, ''],
+  ['Structure', 'd', 'exit door (back, to the alley)', '▣', '#4fd6c4', '#0d0f14', 1, ''],
+  ['Structure', 'N', 'neon sign (whole wall cell)', '█', '#ff2fa8', '#14162a', 0, ''],
+  ['Structure', 'G', 'sealed gate', '▣', '#a04a5a', '#14162a', 0, ''],
+  ['Levels', '<', 'stairs up', '▲', '#e6e9f5', '#0d0f14', 1, 'r'],
+  ['Levels', '>', 'stairs down', '▼', '#e6e9f5', '#0d0f14', 1, 'r'],
+  ['Levels', 'L', 'elevator', '↕', '#9fe0ff', '#0d0f14', 1, 'r'],
+  ['Terminals', 'T', 'terminal (cash)', 'Ω', '#29f0ff', '#0d0f14', 0, 'r'],
+  ['Terminals', 'X', 'data terminal spot', 'Ω', '#ff2fa8', '#2a0d20', 0, 'r'],
+  ['Terminals', 'K', "clerk's terminal", '≡', '#5a7fa0', '#0d0f14', 0, 'r'],
+  ['Terminals', 'J', 'job board', '≡', '#b6ff3b', '#0d0f14', 0, 'r'],
+  ['Terminals', 'R', 'recharge station', '≈', '#b6ff3b', '#0d0f14', 0, 'r'],
+  ['Furniture', 'x', 'crates', '■', '#7a5a3a', '#0d0f14', 0, ''],
+  ['Furniture', 't', 'table', 'π', '#8a7a6a', '#0d0f14', 0, ''],
+  ['Furniture', 's', 'shelves', '╫', '#6a5a4a', '#0d0f14', 0, 'r'],
+  ['Furniture', 'm', 'machine', '◘', '#6a7a8a', '#0d0f14', 0, 'r'],
+  ['Furniture', 'B', 'bed', '▬', '#4a5a7a', '#0d0f14', 0, 'rs'],
+  ['Furniture', 'a', 'arcade cabinet', '▌', '#9d5cff', '#0d0f14', 0, 'r'],
+  ['Furniture', 'c', 'counter side', '│', '#8a76b8', '#0d0f14', 0, 'rs'],
+  ['Furniture', 'C', 'chair (you can stand on it)', '⌐', '#a08e6a', '#0d0f14', 1, 'rs'],
+  ['Furniture', '{', 'desk, left end', 'desk', '#8a76b8', '#0d0f14', 1, ''],
+  ['Furniture', '_', 'desk', 'desk', '#8a76b8', '#0d0f14', 1, ''],
+  ['Furniture', '}', 'desk, right end', 'desk', '#8a76b8', '#0d0f14', 1, ''],
+  ['Plants & park', 'v', 'potted plant', '♠', '#3f9a5a', '#0d0f14', 0, ''],
+  ['Plants & park', 'Y', 'tree', '♣', '#3fa04a', '#030a05', 0, ''],
+  ['Plants & park', ',', 'grass', ',', '#1f4a2a', '#030a05', 1, ''],
+  ['Plants & park', 'F', 'fountain', '≈', '#29c8ff', '#06223a', 0, ''],
+  ['Plants & park', 'A', 'statue', 'Φ', '#9aa4b8', '#030a05', 0, ''],
+  ['Plants & park', 'h', 'bench', 'π', '#8a6a4a', '#030a05', 0, 'r'],
+  ['Hotel', 'E', 'street exit', '⌂', '#ffb627', '#0d0f14', 1, ''],
+  ['Hotel', 'P', 'guest room door (locked)', '■', '#3c4466', '#0d0f14', 1, ''],
+  ['Hotel', 'p', 'your pod', '■', '#29f0ff', '#0d0f14', 0, 'r'],
+  ['Hotel', 'b', "a guest's bed", '■', '#1f6f78', '#0d0f14', 0, 'r'],
+  ['Hotel', 'g', "a guest's terminal", '≡', '#4f6a2a', '#0d0f14', 0, 'r'],
+  ['Markers', '@', 'someone stands here (clerk, shopkeeper)', '@', '#9d5cff', '#0d0f14', 1, ''],
+  ['Markers', 'S', 'where you wake up / come in', 'S', '#7a809f', '#0d0f14', 1, ''],
 ];
-const TILE = Object.fromEntries(T.map(([g, ch, name, glyph, fg, bg, walk]) => [ch, { g, ch, name, glyph, fg, bg, walk: !!walk }]));
-const SOLID_EDGE = new Set(['#', 'N', '+', 'G', 'E', 'P']);   // what a building's outline may be made of
-const DOORS = new Set(['+', 'E']);
+const TILE = Object.fromEntries(T.map(([g, ch, name, glyph, fg, bg, walk, fl]) => [ch, { g, ch, name, glyph, fg, bg, walk: !!walk, rot: fl.includes('r'), spin: fl.includes('s') }]));
+const SOLID_EDGE = new Set(['#', 'N', '+', 'd', 'G', 'E', 'P']);   // what a building's outline may be made of
+const ENTRY = new Set(['+', 'E']), EXIT = new Set(['d']);
+// Pieces: a material in a half or a quarter of a cell, drawn over the tile (the game's under glyph:
+// ▄ ▌ ▀ ▐ for halves, ▗ ▖ ▘ ▝ for quarters). block = it stops walking.
+const MATS = {
+  wall:  { name: 'wall',   col: '#5a6088', block: 1 },
+  neon:  { name: 'neon',   col: '#ff2fa8', block: 1, glow: 1 },
+  glass: { name: 'window', col: '#4fd6ff', block: 1, alpha: 0.6 },
+  desk:  { name: 'desk',   col: '#8a76b8', block: 0 },
+  curb:  { name: 'curb',   col: '#6b7885', block: 0 },
+  hedge: { name: 'hedge',  col: '#2f7a3a', block: 1 },
+};
+const FACE = ['south', 'west', 'north', 'east'];                    // 0..3, clockwise
+const CORNER = ['south-east', 'south-west', 'north-west', 'north-east'];
+const STATUS = [[null, 'auto (from the tile and pieces)'], [0, 'blocked'], [1, 'walkable']];
 // The sizes mapgen can fit (outer, walls included): block heights 9 and 12; even widths.
 const SIZES = [
   ['6 × 9', 6, 9, 'pawn shop, fixer\'s den, a narrow noodle bar'],
@@ -182,54 +236,110 @@ const SIZES = [
 const KINDS = ['noodle bar', 'laundromat', 'clinic', 'pawn shop', 'arcade', 'warehouse', 'apartments', 'corp annex', "fixer's den", 'capsule hotel', 'park', 'MegaBuilding', 'Corpsec HQ', 'other'];
 // The game's lobby today (core/hotel.gd LAYOUT), to start a hotel from.
 const HOTEL = ['#####NNNNNNN#########', '#pSJ##b.g##b.g##b.g##', '##+####P####P####P###', '#v.................v#', '#.......{__}........E', '#...T...c@Kc...R...v#', '##P####P####P####P###', '#b.g##b.g##b.g##b.g##', '#####################'];
-const TOOLS = [['pen', 'Pencil', 'P'], ['line', 'Line', 'L'], ['box', 'Box', 'B'], ['rect', 'Filled box', 'R'], ['fill', 'Fill', 'F'], ['pick', 'Pick', 'I']];
+const TOOLS = [['pen', 'Pencil', 'P'], ['line', 'Line', 'L'], ['box', 'Box', 'B'], ['rect', 'Filled box', 'R'], ['fill', 'Fill', 'F'], ['pick', 'Pick', 'I'], ['turn', 'Rotate a cell', 'T']];
+const MODES = [['tile', 'Tiles', '1'], ['piece', 'Pieces', '2'], ['status', 'Status', '3']];
+const VIEWS = [['look', 'Look'], ['tiles', 'Tiles only'], ['pieces', 'Pieces only'], ['walk', 'Walkable']];
 
 let db = null, user = null, me = null, canWrite = true;
-let designs = {}, cur = null, grid = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
-let tool = 'pen', tileA = '#', tileB = '.', mirror = false, zoom = 2, hover = null, drag = null, preview = null;
+// A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
+let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
+let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
+let mirror = false, zoom = 2, hover = null, drag = null, preview = null, sel = null;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CW = 12, CH = 24;   // the game's cell at 1x
 
-// ---------- grid helpers
-const blank = (w, h, kind) => {
-  const park = kind === 'park';
-  return Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) =>
-    park ? ((x === 0 || y === 0 || x === w - 1 || y === h - 1) ? ((x + y) % 3 ? 'Y' : ',') : ',')
-         : (x === 0 || y === 0 || x === w - 1 || y === h - 1) ? '#' : '.'));
-};
-const fromRows = rows => { const h = rows.length, w = Math.max(...rows.map(r => r.length)); return rows.map(r => Array.from({ length: w }, (_, x) => TILE[r[x]] ? r[x] : (r[x] === undefined ? ' ' : '.'))); };
-const toRows = () => grid.map(r => r.join(''));
+// ---------- cells
+const mk = c => ({ c, r: 0, p: [], w: null });
+const cl = c => ({ c: c.c, r: c.r, p: c.p.map(a => a.slice()), w: c.w });
 const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
-function snapshot(){ undo.push(toRows()); if (undo.length > 200) undo.shift(); redo = []; }
-function setCell(x, y, ch, out = grid){ if (!inb(x, y)) return; out[y][x] = ch; if (mirror){ const mx = W - 1 - x; out[y][mx] = mirrorChar(ch); } }
+const mirR = r => r === 1 ? 3 : r === 3 ? 1 : r;
 const mirrorChar = ch => ch === '{' ? '}' : ch === '}' ? '{' : ch;
+const mirPiece = (s, r) => s === 'half' ? mirR(r) : r ^ 1;
+const pname = (m, s, r) => `${MATS[m].name} ${s} (${(s === 'half' ? FACE : CORNER)[r]})`;
+function blank(w, h, kind){
+  const park = kind === 'park';
+  return Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => mk(park ? ((x === 0 || y === 0 || x === w - 1 || y === h - 1) ? ((x + y) % 3 ? 'Y' : ',') : ',')
+    : (x === 0 || y === 0 || x === w - 1 || y === h - 1) ? '#' : '.')));
+}
+function build(rows, ex){
+  if (!rows.length) rows = ['.']; const w = Math.max(...rows.map(r => r.length)); ex = ex || {};
+  return rows.map((r, y) => Array.from({ length: w }, (_, x) => {
+    const c = mk(TILE[r[x]] ? r[x] : (r[x] === undefined ? ' ' : '.')), e = ex[x + ',' + y];
+    if (e){ if (TILE[c.c].rot && e.r >= 0 && e.r < 4) c.r = e.r | 0; if (Array.isArray(e.p)) c.p = e.p.filter(a => MATS[a[0]] && (a[1] === 'half' || a[1] === 'quarter')).map(a => [a[0], a[1], (a[2] | 0) & 3]); if (e.w === 0 || e.w === 1) c.w = e.w; }
+    return c; }));
+}
+const rowsOf = cs => cs.map(r => r.map(c => c.c).join(''));
+const exportRows = () => rowsOf(cells);
+const exportEx = () => exOf(cells);
+function exOf(cs){ const ex = {}; cs.forEach((row, y) => row.forEach((c, x) => { const e = {}; if (c.r) e.r = c.r; if (c.p.length) e.p = c.p.map(a => a.slice()); if (c.w !== null) e.w = c.w; if (Object.keys(e).length) ex[x + ',' + y] = e; })); return ex; }
+const walkable = (x, y) => { const c = cells[y][x]; if (c.w === 0) return false; if (c.w === 1) return true; return TILE[c.c].walk && !c.p.some(p => MATS[p[0]].block); };
+const walkRows = () => cells.map((r, y) => r.map((c, x) => c.c === ' ' ? '.' : walkable(x, y) ? '1' : '0').join(''));
+const snap = () => JSON.stringify({ rows: exportRows(), ex: exportEx() });
+const sigOf = d => { const cs = build(d.rows || [], d.ex); return JSON.stringify({ rows: rowsOf(cs), ex: exOf(cs) }); };
+function snapshot(){ undo.push(snap()); if (undo.length > 200) undo.shift(); redo = []; }
+function restore(str){ const d = JSON.parse(str); cells = build(d.rows, d.ex); H = cells.length; W = cells[0].length; }
+
+// ---------- brushes
+function brushFor(btn){
+  if (mode === 'tile') return { k: 'tile', ch: btn === 2 ? tileB : tileA, r: rot };
+  if (mode === 'piece') return btn === 2 ? { k: 'clearp' } : { k: 'piece', m: pieceSel.m, s: pieceSel.s, r: rot };
+  return { k: 'status', w: btn === 2 ? null : statusSel };
+}
+const mirrorBrush = b => b.k === 'tile' ? { ...b, ch: mirrorChar(b.ch), r: mirR(b.r) } : b.k === 'piece' ? { ...b, r: mirPiece(b.s, b.r) } : b;
+function applyTo(cell, b){
+  const c = cl(cell);
+  if (b.k === 'tile'){ c.c = b.ch; c.r = TILE[b.ch].rot ? b.r : 0; }
+  else if (b.k === 'piece'){ if (!c.p.some(p => p[0] === b.m && p[1] === b.s && p[2] === b.r)) c.p.push([b.m, b.s, b.r]); }
+  else if (b.k === 'clearp') c.p = [];
+  else c.w = b.w;
+  return c;
+}
+function setCell(x, y, b){ if (!inb(x, y)) return; cells[y][x] = applyTo(cells[y][x], b); if (mirror){ const mx = W - 1 - x; if (mx !== x) cells[y][mx] = applyTo(cells[y][mx], mirrorBrush(b)); } }
 function lineCells(a, b){ const out = []; let x = a.x, y = a.y; const dx = Math.abs(b.x - x), dy = -Math.abs(b.y - y), sx = x < b.x ? 1 : -1, sy = y < b.y ? 1 : -1; let e = dx + dy;
   for (;;){ out.push([x, y]); if (x === b.x && y === b.y) break; const e2 = 2 * e; if (e2 >= dy){ e += dy; x += sx; } if (e2 <= dx){ e += dx; y += sy; } } return out; }
 function boxCells(a, b, filled){ const out = [], x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (filled || x === x0 || x === x1 || y === y0 || y === y1) out.push([x, y]); return out; }
-function flood(x, y, ch){ const from = grid[y][x]; if (from === ch) return; const st = [[x, y]];
-  while (st.length){ const [cx, cy] = st.pop(); if (!inb(cx, cy) || grid[cy][cx] !== from) continue; setCell(cx, cy, ch); st.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]); } }
+const regionKey = c => mode === 'tile' ? c.c : mode === 'piece' ? c.c + '|' + JSON.stringify(c.p) : c.c + '|' + c.w;
+function flood(x, y, b){ const from = regionKey(cells[y][x]), seen = new Set(), st = [[x, y]], hit = [];
+  while (st.length){ const [px, py] = st.pop(), k = px + ',' + py; if (!inb(px, py) || seen.has(k) || regionKey(cells[py][px]) !== from) continue; seen.add(k); hit.push([px, py]); st.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]); }
+  for (const [px, py] of hit) setCell(px, py, b); }
 
 // ---------- drawing
 const cv = $('#cv'), cx = cv.getContext('2d');
+const MONO = () => getComputedStyle(document.body).getPropertyValue('--mono');
 function resize(){ const dpr = window.devicePixelRatio || 1; const cw = CW * zoom, ch = CH * zoom;
   cv.style.width = W * cw + 'px'; cv.style.height = H * ch + 'px'; cv.width = Math.round(W * cw * dpr); cv.height = Math.round(H * ch * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(); }
-function drawCell(x, y, ch, ghost){
-  const t = TILE[ch] || TILE['.'], cw = CW * zoom, chh = CH * zoom, px = x * cw, py = y * chh;
-  cx.globalAlpha = ghost ? 0.7 : 1;
-  cx.fillStyle = t.bg; cx.fillRect(px, py, cw, chh);
-  cx.fillStyle = t.fg;
-  if (t.glyph === 'desk'){ const th = Math.max(2, Math.round(2 * zoom)); const x0 = ch === '{' ? px + cw * 0.3 : px, x1 = ch === '}' ? px + cw * 0.7 : px + cw;
-    cx.fillRect(x0, py + chh - th - 2 * zoom, x1 - x0, th); if (ch !== '_') cx.fillRect(ch === '{' ? x0 : x1 - th, py + chh * 0.55, th, chh * 0.45 - 2 * zoom); }
-  else if (t.glyph === '▓' || t.glyph === '█'){ if (t.glyph === '█') cx.fillRect(px, py, cw, chh); else { cx.globalAlpha = ghost ? 0.6 : 0.85; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ghost ? 0.7 : 1; } }
-  else { cx.font = `${Math.round(chh * 0.7)}px ${getComputedStyle(document.body).getPropertyValue('--mono')}`; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(t.glyph, px + cw / 2, py + chh * 0.54); }
+function pieceRect(s, r, px, py, cw, ch){
+  if (s === 'half') return r === 0 ? [px, py + ch / 2, cw, ch / 2] : r === 1 ? [px, py, cw / 2, ch] : r === 2 ? [px, py, cw, ch / 2] : [px + cw / 2, py, cw / 2, ch];
+  return r === 0 ? [px + cw / 2, py + ch / 2, cw / 2, ch / 2] : r === 1 ? [px, py + ch / 2, cw / 2, ch / 2] : r === 2 ? [px, py, cw / 2, ch / 2] : [px + cw / 2, py, cw / 2, ch / 2];
+}
+function drawCell(x, y, c, ghost){
+  const t = TILE[c.c] || TILE['.'], cw = CW * zoom, chh = CH * zoom, px = x * cw, py = y * chh, ga = ghost ? 0.7 : 1;
+  cx.globalAlpha = ga; cx.fillStyle = t.bg; cx.fillRect(px, py, cw, chh);
+  if (view !== 'pieces'){
+    cx.fillStyle = t.fg;
+    if (t.glyph === 'desk'){ const th = Math.max(2, Math.round(2 * zoom)); const x0 = c.c === '{' ? px + cw * 0.3 : px, x1 = c.c === '}' ? px + cw * 0.7 : px + cw;
+      cx.fillRect(x0, py + chh - th - 2 * zoom, x1 - x0, th); if (c.c !== '_') cx.fillRect(c.c === '{' ? x0 : x1 - th, py + chh * 0.55, th, chh * 0.45 - 2 * zoom); }
+    else if (t.glyph === '█') cx.fillRect(px, py, cw, chh);
+    else if (t.glyph === '▓'){ cx.globalAlpha = ghost ? 0.6 : 0.85; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ga; }
+    else { cx.save(); cx.translate(px + cw / 2, py + chh * 0.54); if (t.spin && c.r) cx.rotate(c.r * Math.PI / 2);
+      cx.font = `${Math.round(chh * 0.7)}px ${MONO()}`; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(t.glyph, 0, 0); cx.restore(); }
+    if (t.rot && c.r){ const tk = Math.max(2, Math.round(zoom * 1.5)); cx.fillStyle = 'rgba(255,255,255,0.7)';
+      const r = c.r; if (r === 0) cx.fillRect(px + cw * 0.3, py + chh - tk, cw * 0.4, tk); else if (r === 1) cx.fillRect(px, py + chh * 0.35, tk, chh * 0.3);
+      else if (r === 2) cx.fillRect(px + cw * 0.3, py, cw * 0.4, tk); else cx.fillRect(px + cw - tk, py + chh * 0.35, tk, chh * 0.3); }
+  }
+  if (view !== 'tiles') for (const [m, s, r] of c.p){ const M = MATS[m], [rx, ry, rw, rh] = pieceRect(s, r, px, py, cw, chh);
+    cx.globalAlpha = ga * (M.alpha || 1); cx.fillStyle = M.col; if (M.glow){ cx.shadowColor = M.col; cx.shadowBlur = 6 * zoom / 2; } cx.fillRect(rx, ry, rw, rh); cx.shadowBlur = 0; cx.globalAlpha = ga; }
+  if (view === 'walk' && c.c !== ' '){ const ok = walkableCell(c); cx.globalAlpha = ok ? 0.22 : 0.38; cx.fillStyle = ok ? '#b6ff3b' : '#ff3b3b'; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ga; }
+  if (c.w !== null && (view === 'walk' || mode === 'status')){ cx.fillStyle = c.w ? '#b6ff3b' : '#ff3b3b'; cx.beginPath(); cx.moveTo(px + 1, py + 1); cx.lineTo(px + 1 + 7 * zoom / 2, py + 1); cx.lineTo(px + 1, py + 1 + 7 * zoom / 2); cx.fill(); }
   cx.globalAlpha = 1;
 }
+const walkableCell = c => c.w === 0 ? false : c.w === 1 ? true : TILE[c.c].walk && !c.p.some(p => MATS[p[0]].block);
 function draw(){
   cx.clearRect(0, 0, cv.width, cv.height);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) drawCell(x, y, grid[y][x]);
-  if (preview) for (const [x, y, ch] of preview) if (inb(x, y)) drawCell(x, y, ch, true);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) drawCell(x, y, cells[y][x]);
+  if (preview) for (const [x, y, b] of preview) if (inb(x, y)) drawCell(x, y, applyTo(cells[y][x], b), true);
   const cw = CW * zoom, ch = CH * zoom;
   // the map-screen character grid (2 × 3 cells) as faint guides
   cx.strokeStyle = 'rgba(41,240,255,0.10)'; cx.lineWidth = 1; cx.beginPath();
@@ -237,65 +347,111 @@ function draw(){
   for (let y = 3; y < H; y += 3){ cx.moveTo(0, y * ch + .5); cx.lineTo(W * cw, y * ch + .5); }
   cx.stroke();
   if (mirror){ cx.strokeStyle = 'rgba(255,47,168,0.5)'; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(W * cw / 2, 0); cx.lineTo(W * cw / 2, H * ch); cx.stroke(); cx.setLineDash([]); }
+  if (sel && inb(sel.x, sel.y)){ cx.strokeStyle = '#ffb627'; cx.lineWidth = 2; cx.strokeRect(sel.x * cw + 1, sel.y * ch + 1, cw - 2, ch - 2); }
   if (hover && inb(hover.x, hover.y)){ cx.strokeStyle = '#29f0ff'; cx.lineWidth = 2; cx.strokeRect(hover.x * cw + 1, hover.y * ch + 1, cw - 2, ch - 2); }
 }
 
 // ---------- checks (what mapgen will need from a design)
+const sideOf = (x, y) => y === 0 ? 'north' : y === H - 1 ? 'south' : x === 0 ? 'west' : x === W - 1 ? 'east' : null;
+const OPP = { north: 'south', south: 'north', east: 'west', west: 'east' };
 function checks(){
   const kind = $('#kind').value, out = [], park = kind === 'park';
-  const count = {}; for (const r of grid) for (const c of r) count[c] = (count[c] || 0) + 1;
+  const count = {}; for (const r of cells) for (const c of r) count[c.c] = (count[c.c] || 0) + 1;
   const edge = []; for (let x = 0; x < W; x++){ edge.push([x, 0], [x, H - 1]); } for (let y = 1; y < H - 1; y++){ edge.push([0, y], [W - 1, y]); }
   const fits = SIZES.some(s => s[1] === W && s[2] === H);
   out.push([fits ? 'ok' : 'w', fits ? `${W} × ${H} is one of the sizes mapgen fits` : `${W} × ${H} isn't one of the listed sizes`]);
-  const doorsOnEdge = edge.filter(([x, y]) => DOORS.has(grid[y][x]));
+  const onEdge = set => edge.filter(([x, y]) => set.has(cells[y][x].c));
+  const entries = onEdge(ENTRY), exits = onEdge(EXIT), doorsOnEdge = entries.concat(exits);
   if (!park){
-    const leaks = edge.filter(([x, y]) => !SOLID_EDGE.has(grid[y][x]));
+    const leaks = edge.filter(([x, y]) => !SOLID_EDGE.has(cells[y][x].c) && walkable(x, y));
     out.push([leaks.length ? 'no' : 'ok', leaks.length ? `The outline has ${leaks.length} gap${leaks.length > 1 ? 's' : ''} (walls, neon, doors or gates only)` : 'The outline is closed']);
-    out.push([doorsOnEdge.length ? 'ok' : 'no', doorsOnEdge.length ? `${doorsOnEdge.length} door${doorsOnEdge.length > 1 ? 's' : ''} to the street` : 'No door in the outline']);
+    out.push([entries.length ? 'ok' : 'no', entries.length ? `${entries.length} entry door${entries.length > 1 ? 's' : ''}` : 'No entry door (the front door, to the street)']);
+    const es = [...new Set(entries.map(([x, y]) => sideOf(x, y)).filter(Boolean))], xs = [...new Set(exits.map(([x, y]) => sideOf(x, y)).filter(Boolean))];
+    if (entries.length && !exits.length && !['capsule hotel', 'MegaBuilding', 'Corpsec HQ'].includes(kind)) out.push(['w', 'No exit door: mark the back door to the alley with the exit door tile']);
+    else if (exits.length){
+      const bad = xs.filter(s => es.includes(s)), opp = xs.filter(s => es.some(e => OPP[e] === s)), good = xs.filter(s => !es.includes(s) && !es.some(e => OPP[e] === s));
+      out.push([good.length && !bad.length ? 'ok' : 'w', `Entry on the ${es.join(' + ') || '?'} side, exit on the ${xs.join(' + ') || '?'} side` + (bad.length ? ': the exit is on the entry side, so it would face the street' : opp.length && !good.length ? ': opposite the entry, so it would face the street at the other end of the block' : ': the exit faces the alley')]);
+    }
   }
-  // reachable: from the doors (or a park's edge) over walkable tiles
-  const seen = new Set(), st = park ? edge.filter(([x, y]) => TILE[grid[y][x]].walk) : doorsOnEdge.slice();
-  while (st.length){ const [x, y] = st.pop(), k = x + ',' + y; if (!inb(x, y) || seen.has(k) || !TILE[grid[y][x]].walk) continue; seen.add(k); st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1], [x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]); }
-  let walk = 0, lost = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (TILE[grid[y][x]].walk && grid[y][x] !== ' '){ walk++; if (!seen.has(x + ',' + y)) lost++; }
-  out.push([lost ? 'no' : 'ok', lost ? `${lost} floor cell${lost > 1 ? 's' : ''} can't be reached from a door` : 'Every floor cell can be reached']);
+  // reachable: from the doors (or a park's edge) over walkable cells
+  const seen = new Set(), st = park ? edge.filter(([x, y]) => walkable(x, y)) : doorsOnEdge.slice();
+  while (st.length){ const [x, y] = st.pop(), k = x + ',' + y; if (!inb(x, y) || seen.has(k) || !walkable(x, y)) continue; seen.add(k); st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1], [x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]); }
+  let walk = 0, lost = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (walkable(x, y) && cells[y][x].c !== ' '){ walk++; if (!seen.has(x + ',' + y)) lost++; }
+  out.push([lost ? 'no' : 'ok', lost ? `${lost} walkable cell${lost > 1 ? 's' : ''} can't be reached from a door` : 'Every walkable cell can be reached']);
   if (!park && kind !== 'capsule hotel'){ const term = (count.T || 0) + (count.X || 0); out.push([term ? 'ok' : 'w', term ? `${term} terminal${term > 1 ? 's' : ''}` : 'No terminal: jobs need one somewhere']); }
+  const lv = (count['<'] || 0) + (count['>'] || 0) + (count.L || 0);
+  if (lv) out.push(['ok', `${lv} way${lv > 1 ? 's' : ''} to another level (${[count['<'] ? count['<'] + ' up' : '', count['>'] ? count['>'] + ' down' : '', count.L ? count.L + ' elevator' : ''].filter(Boolean).join(', ')}): a multi-level building`]);
   if (count[' ']) out.push(['w', `${count[' ']} outside cell${count[' '] > 1 ? 's' : ''} inside the footprint (fine for a notch, an L shape)`]);
   $('#checks').innerHTML = out.map(([c, t]) => `<li class="${c}"><span aria-hidden="true">${c === 'ok' ? '✓' : c === 'no' ? '✕' : '!'}</span><span>${esc(t)}</span></li>`).join('');
-  $('#counts').innerHTML = Object.entries(count).filter(([c]) => !'#. '.includes(c)).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<span title="${esc(TILE[c]?.name)}">${esc(TILE[c]?.name)} ${n}</span>`).join('') + `<span>walkable ${walk}</span>`;
+  const pc = {}; let overrides = 0; for (const r of cells) for (const c of r){ for (const p of c.p){ const k = MATS[p[0]].name + ' ' + p[1]; pc[k] = (pc[k] || 0) + 1; } if (c.w !== null) overrides++; }
+  $('#counts').innerHTML = Object.entries(count).filter(([c]) => !'#. '.includes(c)).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<span title="${esc(TILE[c]?.name)}">${esc(TILE[c]?.name)} ${n}</span>`).join('') +
+    Object.entries(pc).map(([k, n]) => `<span>${esc(k)} ${n}</span>`).join('') + (overrides ? `<span>status set ${overrides}</span>` : '') + `<span>walkable ${walk}</span>`;
+  renderInsp();
 }
 
 // ---------- UI
+const tileSw = ([, ch, name, glyph, fg, bg]) => `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB ? ' alt' : '') + (TILE[ch].rot ? ' rt' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${TILE[ch].rot ? ' · can face a direction' : ''}" aria-label="${esc(name)}" style="background:${bg};color:${fg}">${glyph === 'desk' ? (ch === '_' ? '▁' : ch === '{' ? '└' : '┘') : esc(glyph)}<span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`;
+function swatch(m, s, r){ const col = MATS[m].col; let bg;
+  if (s === 'half') bg = `linear-gradient(${['to top', 'to right', 'to bottom', 'to left'][r]},${col} 50%,transparent 50%)`;
+  else bg = `linear-gradient(${col},${col}) ${['right bottom', 'left bottom', 'left top', 'right top'][r]}/50% 50% no-repeat`;
+  return `<span class="sw" style="background:${bg}"></span>`; }
 function renderPal(){
-  const groups = [...new Set(T.map(t => t[0]))];
-  $('#pal').innerHTML = groups.map(g => `<div><h3>${esc(g)}</h3><div class="tiles">${T.filter(t => t[0] === g).map(([, ch, name, glyph, fg, bg]) =>
-    `<button type="button" data-tile="${esc(ch)}" class="${ch === tileA ? 'on' : ''}${ch === tileB ? ' alt' : ''}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})" aria-label="${esc(name)}" style="background:${bg};color:${fg}">${glyph === 'desk' ? (ch === '_' ? '▁' : ch === '{' ? '└' : '┘') : esc(glyph)}<span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`).join('')}</div></div>`).join('');
-  $('#curA').textContent = TILE[tileA].name; $('#curB').textContent = TILE[tileB].name;
+  if (mode === 'tile'){
+    const groups = [...new Set(T.map(t => t[0]))];
+    $('#pal').innerHTML = groups.map(g => `<div><h3>${esc(g)}</h3><div class="tiles">${T.filter(t => t[0] === g).map(tileSw).join('')}</div></div>`).join('');
+    $('#curA').textContent = TILE[tileA].name; $('#curB').textContent = TILE[tileB].name;
+  } else if (mode === 'piece'){
+    $('#pal').innerHTML = `<p class="cur">Pieces sit on top of the tile, so a cell can be a desk front, half a wall or a half-width neon sign. Turn the brush with Q / E.</p><div class="pcs">` +
+      Object.entries(MATS).map(([m, M]) => `<div class="prow"><span>${esc(M.name)}</span>${['half', 'quarter'].map(s => `<button type="button" data-piece="${m}.${s}" class="${pieceSel.m === m && pieceSel.s === s ? 'on' : ''}" title="${esc(pname(m, s, rot))}${M.block ? ' · blocks walking' : ''}" aria-label="${esc(pname(m, s, rot))}" style="background:#0d0f14">${swatch(m, s, rot)}</button>`).join('')}<span>${M.block ? 'blocks' : 'walk on'}</span></div>`).join('') + `</div>`;
+    $('#curA').textContent = 'add ' + pname(pieceSel.m, pieceSel.s, rot); $('#curB').textContent = 'clear the cell\'s pieces';
+  } else {
+    $('#pal').innerHTML = `<p class="cur">Status overrides what the tile and pieces say about walking: use it for a chair you can't cross, a rail you can step over. Red / green triangles mark overrides.</p><div class="st">` +
+      STATUS.map(([v, n]) => `<button type="button" data-status="${v === null ? 'auto' : v}" class="${statusSel === v ? 'on' : ''}">${esc(n)}</button>`).join('') + `</div>`;
+    $('#curA').textContent = STATUS.find(s => s[0] === statusSel)[1]; $('#curB').textContent = 'back to auto';
+  }
+  $('#rotName').textContent = mode === 'piece' && pieceSel.s === 'quarter' ? CORNER[rot] : FACE[rot];
+  $('#modes').innerHTML = MODES.map(([id, n, k]) => `<button type="button" data-mode="${id}" class="${mode === id ? 'on' : ''}" title="${n} (${k})">${n} <kbd>${k}</kbd></button>`).join('');
 }
 function renderTools(){
   $('#tools').innerHTML = TOOLS.map(([id, name, key]) => `<button type="button" data-tool="${id}" class="${tool === id ? 'on' : ''}" title="${name} (${key})">${name} <kbd>${key}</kbd></button>`).join('') +
     `<span class="sep"></span><button type="button" id="mirror" class="${mirror ? 'on' : ''}" title="Mirror left and right (M)">Mirror <kbd>M</kbd></button>
      <button type="button" id="resize">Resize…</button>`;
+  $('#views').innerHTML = VIEWS.map(([id, n]) => `<button type="button" data-view="${id}" class="${view === id ? 'on' : ''}">${n}</button>`).join('');
+}
+function renderInsp(){
+  if (!sel || !inb(sel.x, sel.y)){ $('#insp').innerHTML = '<span class="cur">Pick a cell with the Pick tool (I) to see and edit its layers.</span>'; return; }
+  const c = cells[sel.y][sel.x], t = TILE[c.c];
+  $('#insp').innerHTML = `<div class="ln"><b>x ${sel.x} · y ${sel.y}</b><span class="cur">${walkable(sel.x, sel.y) ? 'walkable' : 'blocked'}</span></div>
+    <div class="ln"><span class="k">Tile</span><span>${esc(t.name)}</span>${t.rot ? `<span class="cur">facing ${FACE[c.r]}${c.r ? '' : ' (default)'}</span><button type="button" data-act="trot">⟳</button>` : ''}</div>
+    <div class="ln"><span class="k">Pieces</span>${c.p.length ? c.p.map((p, i) => `<span>${swatch(p[0], p[1], p[2])}</span><span>${esc(pname(...p))}</span><button type="button" data-act="prot" data-i="${i}" title="Turn it">⟳</button><button type="button" data-act="pdel" data-i="${i}" title="Remove it">×</button>`).join('') : '<span class="cur">none</span>'}</div>
+    <div class="ln"><span class="k">Status</span><select id="iw" aria-label="Walk status">${STATUS.map(([v, n]) => `<option value="${v === null ? 'auto' : v}" ${c.w === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
 }
 function renderList(){
-  const L = Object.entries(designs).sort((a, b) => (b[1].edited || '').localeCompare(a[1].edited || ''));
-  $('#list').innerHTML = L.length ? L.map(([id, d]) => `<li><button type="button" data-open="${esc(id)}" class="${cur === id ? 'on' : ''}"><span>${esc(d.name || 'Untitled')}</span><span class="s">${d.w}×${d.h}</span><span class="k">${esc(d.kind || '')}</span><span class="s" data-by="${esc(d.editedBy || d.author || '')}"></span></button></li>`).join('')
-    : `<li class="empty">No designs yet. Start one with New design.</li>`;
+  const q = $('#q').value.trim().toLowerCase(), kf = $('#kf').value;
+  const all = Object.entries(designs);
+  const L = all.filter(([, d]) => (!kf || d.kind === kf) && (!q || [d.name, d.kind, d.notes].some(v => String(v || '').toLowerCase().includes(q)))).sort((a, b) => (b[1].edited || '').localeCompare(a[1].edited || ''));
+  $('#list').innerHTML = L.length ? L.map(([id, d]) => `<li><button type="button" role="option" aria-selected="${cur === id}" data-open="${esc(id)}" class="${cur === id ? 'on' : ''}"><span>${esc(d.name || 'Untitled')}</span><span class="s">${d.w}×${d.h}</span><span class="k">${esc(d.kind || '')}</span><span class="s" data-by="${esc(d.editedBy || d.author || '')}"></span></button></li>`).join('')
+    : `<li class="empty">${all.length ? 'Nothing matches.' : 'No designs yet. Start one with New design.'}</li>`;
+  const kinds = [...new Set(all.map(([, d]) => d.kind).filter(Boolean))].sort();
+  $('#kf').innerHTML = '<option value="">All kinds</option>' + kinds.map(k => `<option ${k === kf ? 'selected' : ''}>${esc(k)}</option>`).join('');
+  $('#count').textContent = all.length ? `${all.length} saved design${all.length > 1 ? 's' : ''}` : 'No saved designs yet';
+  $('#picklabel').textContent = cur && designs[cur] ? designs[cur].name || 'Untitled' : ($('#name').value ? $('#name').value + ' (not saved)' : 'Open a design…');
   names();
 }
 async function names(){ if (!user?.profiles) return; const ids = [...new Set([...document.querySelectorAll('[data-by]')].map(e => e.dataset.by).filter(Boolean))]; if (!ids.length) return;
   try { const ps = await user.profiles(ids); document.querySelectorAll('[data-by]').forEach(e => { const p = ps[e.dataset.by]; e.textContent = e.dataset.by === 'claude' ? 'Claude' : (p && p.name) || ''; }); } catch (err){} }
 function setDirty(v){ dirty = v; $('#save').disabled = !v || !canWrite || !db; $('#state').className = v ? 'dirty' : 'saved'; $('#state').textContent = v ? 'unsaved' : (cur ? 'saved' : ''); }
-function load(id){ const d = designs[id]; if (!d) return; cur = id; grid = fromRows(d.rows || []); H = grid.length; W = grid[0]?.length || 0;
+function load(id){ const d = designs[id]; if (!d) return; cur = id; cells = build(d.rows || [], d.ex); H = cells.length; W = cells[0]?.length || 0; sel = null;
   $('#name').value = d.name || ''; $('#kind').value = KINDS.includes(d.kind) ? d.kind : 'other'; $('#notes').value = d.notes || '';
   undo = []; redo = []; setDirty(false); resize(); checks(); renderList(); }
-function startNew(name, kind, w, h, rows){ cur = null; grid = rows ? fromRows(rows) : blank(w, h, kind); H = grid.length; W = grid[0].length;
+function startNew(name, kind, w, h, data){ cur = null; sel = null; cells = data ? build(data.rows, data.ex) : blank(w, h, kind); H = cells.length; W = cells[0].length;
   $('#name').value = name; $('#kind').value = kind; $('#notes').value = ''; undo = []; redo = []; setDirty(true); resize(); checks(); renderList(); }
 
 async function save(){
   if (!db || !canWrite) return; const now = new Date().toISOString();
-  const data = { name: $('#name').value.trim() || 'Untitled', kind: $('#kind').value, w: W, h: H, rows: toRows(), notes: $('#notes').value, edited: now, editedBy: me || '' };
+  const data = { v: 2, name: $('#name').value.trim() || 'Untitled', kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows(), notes: $('#notes').value, edited: now, editedBy: me || '' };
   try {
-    if (cur){ await db.doc('designs/' + cur).update(data); }
+    if (cur){ await db.doc('designs/' + cur).set({ ...(designs[cur] || {}), ...data }); }   // set, so cleared layers don't linger in the stored copy
     else { const ref = await db.collection('designs').add({ ...data, created: now, author: me || '' }); cur = ref.id; }
     setDirty(false); msg('Saved.', true);
   } catch (e){ if (/not_granted|permission/.test(String(e?.code || e?.message))){ canWrite = false; setDirty(dirty); } msg('Could not save. Reload and try again.'); }
@@ -315,51 +471,68 @@ function newDialog(){
     const k = d.querySelector('#nk').value, s = d.querySelector('#ns').value, n = d.querySelector('#nn').value.trim();
     let w, h; if (s === 'c'){ w = +d.querySelector('#nw').value; h = +d.querySelector('#nh').value; } else { w = SIZES[s][1]; h = SIZES[s][2]; }
     w = Math.max(3, Math.min(40, w || 0)); h = Math.max(3, Math.min(24, h || 0));
-    if (k === 'capsule hotel') startNew(n || 'Capsule hotel', k, 21, 9, HOTEL); else startNew(n || `New ${k}`, k, w, h);
+    if (k === 'capsule hotel') startNew(n || 'Capsule hotel', k, 21, 9, { rows: HOTEL }); else startNew(n || `New ${k}`, k, w, h);
   });
   const nk = $('#nk'), ns = $('#ns'); nk.onchange = () => { if (nk.value === 'capsule hotel') ns.value = String(SIZES.length - 1); else if (nk.value === 'park' || nk.value === 'MegaBuilding') ns.value = '8'; };
 }
 function resizeDialog(){
   dialog(`<h2>Resize</h2><div class="meta"><label for="rw">Width</label><input id="rw" type="number" min="3" max="40" value="${W}"><label for="rh">Height</label><input id="rh" type="number" min="3" max="24" value="${H}"></div><p class="cur">Keeps the top-left; new cells are floor.</p>`, d => {
     const w = Math.max(3, Math.min(40, +d.querySelector('#rw').value || W)), h = Math.max(3, Math.min(24, +d.querySelector('#rh').value || H));
-    snapshot(); grid = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (grid[y] && grid[y][x] !== undefined) ? grid[y][x] : '.')); W = w; H = h; setDirty(true); resize(); checks(); });
+    snapshot(); cells = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (cells[y] && cells[y][x]) ? cells[y][x] : mk('.'))); W = w; H = h; sel = null; setDirty(true); resize(); checks(); });
 }
-function exportDialog(){ const txt = JSON.stringify({ name: $('#name').value, kind: $('#kind').value, w: W, h: H, rows: toRows() }, null, 1);
-  dialog(`<h2>Export</h2><p class="cur">One character per tile, as the game's hand-made layouts use (core/hotel.gd).</p><textarea id="ex" rows="14" readonly>${esc(txt)}</textarea><div class="row"><button type="button" id="cp">Copy</button><span id="cpm" class="cur"></span></div>`, () => {});
+function exportDialog(){ const txt = JSON.stringify({ v: 2, name: $('#name').value, kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows() }, null, 1);
+  dialog(`<h2>Export</h2><p class="cur">Rows are one character per tile, as the game's hand-made layouts use (core/hotel.gd). <code>ex</code> holds the facing, pieces and walk status of the cells that have any; <code>walk</code> is the resulting walkable map (1 walkable, 0 blocked).</p><textarea id="ex" rows="14" readonly>${esc(txt)}</textarea><div class="row"><button type="button" id="cp">Copy</button><span id="cpm" class="cur"></span></div>`, () => {});
   $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('#cpm').textContent = 'Copied'; } catch (e){ $('#ex').select(); $('#cpm').textContent = 'Selected: press Ctrl+C'; } }; }
 function importDialog(){
   dialog(`<h2>Import</h2><p class="cur">Paste rows of tile characters (or an exported design). It replaces the grid; Undo brings it back.</p><textarea id="im" rows="12" placeholder="#####NNN####&#10;#..........#"></textarea><p class="msg" id="imm"></p>`, d => {
-    let t = d.querySelector('#im').value, rows; try { const j = JSON.parse(t); rows = j.rows; if (j.name) $('#name').value = j.name; if (KINDS.includes(j.kind)) $('#kind').value = j.kind; } catch (e){ rows = t.replace(/\r/g, '').split('\n').filter(r => r.length); }
+    let t = d.querySelector('#im').value, rows, ex; try { const j = JSON.parse(t); rows = j.rows; ex = j.ex; if (j.name) $('#name').value = j.name; if (KINDS.includes(j.kind)) $('#kind').value = j.kind; } catch (e){ rows = t.replace(/\r/g, '').split('\n').filter(r => r.length); }
     if (!Array.isArray(rows) || !rows.length){ d.querySelector('#imm').textContent = 'Nothing to import.'; return false; }
-    snapshot(); grid = fromRows(rows.map(String).slice(0, 24).map(r => r.slice(0, 40))); H = grid.length; W = grid[0].length; setDirty(true); resize(); checks(); });
+    snapshot(); cells = build(rows.map(String).slice(0, 24).map(r => r.slice(0, 40)), ex); H = cells.length; W = cells[0].length; sel = null; setDirty(true); resize(); checks(); });
 }
 
 // ---------- input
 function cellAt(e){ const r = cv.getBoundingClientRect(); return { x: Math.floor((e.clientX - r.left) / (CW * zoom)), y: Math.floor((e.clientY - r.top) / (CH * zoom)) }; }
-function shape(a, b, ch){ const cells = tool === 'line' ? lineCells(a, b) : boxCells(a, b, tool === 'rect'); const out = [];
-  for (const [x, y] of cells){ out.push([x, y, ch]); if (mirror) out.push([W - 1 - x, y, mirrorChar(ch)]); } return out; }
+function shape(a, b, br){ const cs = tool === 'line' ? lineCells(a, b) : boxCells(a, b, tool === 'rect'); const out = [];
+  for (const [x, y] of cs){ out.push([x, y, br]); if (mirror && W - 1 - x !== x) out.push([W - 1 - x, y, mirrorBrush(br)]); } return out; }
+function pickCell(p, btn){
+  const c = cells[p.y][p.x]; sel = { x: p.x, y: p.y };
+  if (mode === 'tile'){ if (btn === 2) tileB = c.c; else { tileA = c.c; if (TILE[c.c].rot) rot = c.r; } }
+  else if (mode === 'piece'){ if (c.p.length){ pieceSel = { m: c.p[0][0], s: c.p[0][1] }; rot = c.p[0][2]; } }
+  else if (c.w !== null) statusSel = c.w;
+  renderPal(); renderInsp(); draw();
+}
+function turnCell(p, dir){ const c = cells[p.y][p.x]; snapshot();
+  if (mode === 'tile'){ if (!TILE[c.c].rot){ undo.pop(); return false; } c.r = (c.r + dir + 4) & 3; }
+  else if (mode === 'piece'){ if (!c.p.length){ undo.pop(); return false; } c.p = c.p.map(([m, s, r]) => [m, s, (r + dir + 4) & 3]); }
+  else { undo.pop(); return false; }
+  return true; }
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => {
   const p = cellAt(e); if (!inb(p.x, p.y)) return; cv.setPointerCapture(e.pointerId); cv.focus();
-  const ch = e.button === 2 ? tileB : tileA;
-  if (tool === 'pick'){ if (e.button === 2) tileB = grid[p.y][p.x]; else tileA = grid[p.y][p.x]; renderPal(); return; }
+  if (tool === 'pick'){ pickCell(p, e.button); return; }
+  if (tool === 'turn'){ if (turnCell(p, e.button === 2 ? -1 : 1)){ sel = { x: p.x, y: p.y }; afterEdit(); } return; }
+  const br = brushFor(e.button === 2 ? 2 : 0);
   snapshot();
-  if (tool === 'fill'){ flood(p.x, p.y, ch); afterEdit(); return; }
-  drag = { a: p, ch };
-  if (tool === 'pen'){ setCell(p.x, p.y, ch); draw(); } else { preview = shape(p, p, ch); draw(); }
+  if (tool === 'fill'){ flood(p.x, p.y, br); afterEdit(); return; }
+  drag = { a: p, br };
+  if (tool === 'pen'){ setCell(p.x, p.y, br); draw(); } else { preview = shape(p, p, br); draw(); }
 });
 cv.addEventListener('pointermove', e => {
   const p = cellAt(e); hover = p;
-  if (inb(p.x, p.y)){ const t = TILE[grid[p.y][p.x]]; $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}</span><span>${W} × ${H}</span>`; }
-  if (drag){ if (tool === 'pen'){ for (const [x, y] of lineCells(drag.last || drag.a, p)) setCell(x, y, drag.ch); drag.last = p; } else preview = shape(drag.a, p, drag.ch); }
+  if (inb(p.x, p.y)){ const c = cells[p.y][p.x], t = TILE[c.c];
+    $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' facing ' + FACE[c.r] : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
+  if (drag){ if (tool === 'pen'){ for (const [x, y] of lineCells(drag.last || drag.a, p)) setCell(x, y, drag.br); drag.last = p; } else preview = shape(drag.a, p, drag.br); }
   draw();
 });
-cv.addEventListener('pointerup', e => { if (!drag) return; if (preview){ for (const [x, y, ch] of preview) if (inb(x, y)) grid[y][x] = ch; preview = null; } drag = null; afterEdit(); });
+cv.addEventListener('pointerup', e => { if (!drag) return; if (preview){ for (const [x, y, br] of preview) setCell(x, y, br); preview = null; } drag = null; afterEdit(); });
 cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
 function afterEdit(){ setDirty(true); draw(); checks(); }
-function doUndo(){ if (!undo.length) return; redo.push(toRows()); grid = fromRows(undo.pop()); H = grid.length; W = grid[0].length; setDirty(true); resize(); checks(); }
-function doRedo(){ if (!redo.length) return; undo.push(toRows()); grid = fromRows(redo.pop()); H = grid.length; W = grid[0].length; setDirty(true); resize(); checks(); }
+function doUndo(){ if (!undo.length) return; redo.push(snap()); restore(undo.pop()); setDirty(true); resize(); checks(); }
+function doRedo(){ if (!redo.length) return; undo.push(snap()); restore(redo.pop()); setDirty(true); resize(); checks(); }
+function turnBrush(d){ rot = (rot + d + 4) & 3; renderPal(); }
+function setMode(m){ mode = m; renderPal(); draw(); }
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('#pop').hidden){ closePop(); return; }
   if (e.target.closest('input,textarea,select,dialog')) { if ((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); save(); } return; }
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z'){ e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
@@ -367,33 +540,52 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && k === 's'){ e.preventDefault(); save(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const t = TOOLS.find(x => x[2].toLowerCase() === k); if (t){ tool = t[0]; renderTools(); return; }
-  if (k === 'm'){ mirror = !mirror; renderTools(); draw(); }
+  if (k === 'm'){ mirror = !mirror; renderTools(); draw(); return; }
+  if (k === 'q'){ turnBrush(-1); return; } if (k === 'e'){ turnBrush(1); return; }
+  const md = MODES.find(x => x[2] === k); if (md) setMode(md[0]);
 });
+function openPop(){ $('#pop').hidden = false; $('#pickbtn').setAttribute('aria-expanded', 'true'); renderList(); $('#q').focus(); }
+function closePop(){ $('#pop').hidden = true; $('#pickbtn').setAttribute('aria-expanded', 'false'); }
 document.addEventListener('click', async e => {
+  if (!e.target.closest('.pickwrap')) closePop();
   const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'pickbtn'){ $('#pop').hidden ? openPop() : closePop(); return; }
   if (b.dataset.tile !== undefined){ tileA = b.dataset.tile; renderPal(); return; }
+  if (b.dataset.piece){ const [m, s] = b.dataset.piece.split('.'); pieceSel = { m, s }; renderPal(); return; }
+  if (b.dataset.status){ statusSel = b.dataset.status === 'auto' ? null : +b.dataset.status; renderPal(); return; }
+  if (b.dataset.mode){ setMode(b.dataset.mode); return; }
+  if (b.dataset.view){ view = b.dataset.view; renderTools(); draw(); return; }
   if (b.dataset.tool){ tool = b.dataset.tool; renderTools(); return; }
-  if (b.dataset.open){ if (dirty && b.dataset.open !== cur && !b.classList.contains('armed')){ b.classList.add('armed'); msg('Unsaved changes: click again to open it anyway.'); setTimeout(() => b.classList.remove('armed'), 3000); return; } load(b.dataset.open); return; }
+  if (b.dataset.act && sel){ const c = cells[sel.y][sel.x]; snapshot();
+    if (b.dataset.act === 'trot') c.r = (c.r + 1) & 3;
+    else if (b.dataset.act === 'prot'){ const p = c.p[+b.dataset.i]; if (p) p[2] = (p[2] + 1) & 3; }
+    else if (b.dataset.act === 'pdel') c.p.splice(+b.dataset.i, 1);
+    afterEdit(); return; }
+  if (b.dataset.open){ if (dirty && b.dataset.open !== cur && !b.classList.contains('armed')){ b.classList.add('armed'); msg('Unsaved changes: click again to open it anyway.'); setTimeout(() => b.classList.remove('armed'), 3000); return; } closePop(); load(b.dataset.open); return; }
   switch (b.id){
     case 'new': newDialog(); break;
     case 'save': save(); break;
     case 'undo': doUndo(); break;
     case 'redo': doRedo(); break;
+    case 'rotL': turnBrush(-1); break;
+    case 'rotR': turnBrush(1); break;
     case 'mirror': mirror = !mirror; renderTools(); draw(); break;
     case 'resize': resizeDialog(); break;
     case 'exp': exportDialog(); break;
     case 'imp': importDialog(); break;
-    case 'dup': startNew(($('#name').value || 'Untitled') + ' (copy)', $('#kind').value, W, H, toRows()); msg('A copy: Save to keep it.', true); break;
+    case 'dup': startNew(($('#name').value || 'Untitled') + ' (copy)', $('#kind').value, W, H, { rows: exportRows(), ex: exportEx() }); msg('A copy: Save to keep it.', true); break;
     case 'del': if (!cur){ msg('Not saved yet: nothing to delete.'); break; }
       if (!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Delete it?'; setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Delete'; }, 3000); break; }
       try { await db.doc('designs/' + cur).delete(); b.classList.remove('armed'); b.textContent = 'Delete'; cur = null; msg('Deleted.', true); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false); } catch (err){ msg('Could not delete.'); } break;
   }
 });
+document.addEventListener('change', e => { if (e.target.id === 'iw' && sel){ snapshot(); const v = e.target.value; cells[sel.y][sel.x].w = v === 'auto' ? null : +v; afterEdit(); } });
 // right click on a palette tile sets the right-click tile
 document.addEventListener('contextmenu', e => { const b = e.target.closest('[data-tile]'); if (!b) return; e.preventDefault(); tileB = b.dataset.tile; renderPal(); });
-['#name', '#notes'].forEach(s => $(s).addEventListener('input', () => setDirty(true)));
+['#name', '#notes'].forEach(s => $(s).addEventListener('input', () => { setDirty(true); if (s === '#name') $('#picklabel').textContent = ($('#name').value || 'Untitled') + (cur ? '' : ' (not saved)'); }));
 $('#kind').addEventListener('change', () => { setDirty(true); checks(); });
 $('#zoom').addEventListener('input', e => { zoom = +e.target.value; resize(); });
+$('#q').addEventListener('input', renderList); $('#kf').addEventListener('change', renderList);
 
 // ---------- start
 $('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
@@ -404,10 +596,10 @@ renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(f
   db = await (window.claude?.use ? claude.use('db') : null);
   user = await (window.claude?.use ? claude.use('user') : null);
   if (user){ try { me = await user.id(); const p = await user.me(); $('#who').textContent = p && p.name ? p.name : ''; } catch (e){} const w = await user.can?.('data.write'); if (w === false) canWrite = false; }
-  if (!db){ $('#list').innerHTML = '<li class="empty">Saved designs need claude.ai: open the page signed in. You can still draw and export.</li>'; return; }
-  const timer = setTimeout(() => { if (!Object.keys(designs).length) $('#list').innerHTML = '<li class="empty">The designs are slow to load. Reload the page.</li>'; }, 10000);
-  db.collection('designs').onSnapshot(snap => { clearTimeout(timer); const next = {}; snap.docs.forEach(d => next[d.id] = d.data()); designs = next;
-    if (cur && designs[cur] && !dirty && designs[cur].rows.join('\n') !== toRows().join('\n')) load(cur); else renderList(); setDirty(dirty); },
+  if (!db){ $('#list').innerHTML = '<li class="empty">Saved designs need claude.ai: open the page signed in. You can still draw and export.</li>'; $('#count').textContent = 'Not signed in'; return; }
+  const timer = setTimeout(() => { if (!Object.keys(designs).length){ $('#list').innerHTML = '<li class="empty">The designs are slow to load. Reload the page.</li>'; $('#count').textContent = 'Designs are slow to load'; } }, 10000);
+  db.collection('designs').onSnapshot(snapshotDocs => { clearTimeout(timer); const next = {}; snapshotDocs.docs.forEach(d => next[d.id] = d.data()); designs = next;
+    if (cur && designs[cur] && !dirty && sigOf(designs[cur]) !== snap()) load(cur); else renderList(); setDirty(dirty); },
     () => { $('#list').innerHTML = '<li class="empty">The designs stopped updating. Reload the page.</li>'; });
 })();
 </script>
