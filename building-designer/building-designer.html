@@ -149,6 +149,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
       <div class="counts" id="counts"></div>
       <details class="keys"><summary>Keys</summary>
         <p><kbd>P</kbd> pencil · <kbd>L</kbd> line · <kbd>B</kbd> box · <kbd>R</kbd> filled box · <kbd>F</kbd> fill · <kbd>I</kbd> pick · <kbd>T</kbd> rotate a cell · <kbd>M</kbd> mirror</p>
+        <p>Desk front tiles are a line on one side of the cell: turn them with <kbd>Q</kbd> <kbd>E</kbd> or the rotate tool. Status → edge adds a line to any cell.</p>
         <p><kbd>Q</kbd> <kbd>E</kbd> turn the brush · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> tiles / pieces / status · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</p>
         <p>Right click: second tile in the Tiles layer; clears the layer in Pieces and Status.</p>
       </details>
@@ -185,11 +186,11 @@ const T = [
   ['Furniture', 'm', 'machine', '◘', '#6a7a8a', '#0d0f14', 0, 'r'],
   ['Furniture', 'B', 'bed', '▬', '#4a5a7a', '#0d0f14', 0, 'rs'],
   ['Furniture', 'a', 'arcade cabinet', '▌', '#9d5cff', '#0d0f14', 0, 'r'],
-  ['Furniture', 'c', 'counter side', '│', '#8a76b8', '#0d0f14', 0, 'rs'],
+  ['Furniture', 'c', 'counter side (solid)', '│', '#8a76b8', '#0d0f14', 0, ''],
   ['Furniture', 'C', 'chair (you can stand on it)', '⌐', '#a08e6a', '#0d0f14', 1, 'rs'],
-  ['Furniture', '{', 'desk, left end', 'desk', '#8a76b8', '#0d0f14', 1, ''],
-  ['Furniture', '_', 'desk', 'desk', '#8a76b8', '#0d0f14', 1, ''],
-  ['Furniture', '}', 'desk, right end', 'desk', '#8a76b8', '#0d0f14', 1, ''],
+  ['Furniture', '{', 'desk front, first end (left / top)', 'desk', '#8a76b8', '#0d0f14', 1, 're'],
+  ['Furniture', '_', 'desk front', 'desk', '#8a76b8', '#0d0f14', 1, 're'],
+  ['Furniture', '}', 'desk front, last end (right / bottom)', 'desk', '#8a76b8', '#0d0f14', 1, 're'],
   ['Plants & park', 'v', 'potted plant', '♠', '#3f9a5a', '#0d0f14', 0, ''],
   ['Plants & park', 'Y', 'tree', '♣', '#3fa04a', '#030a05', 0, ''],
   ['Plants & park', ',', 'grass', ',', '#1f4a2a', '#030a05', 1, ''],
@@ -204,7 +205,7 @@ const T = [
   ['Markers', '@', 'someone stands here (clerk, shopkeeper)', '@', '#9d5cff', '#0d0f14', 1, ''],
   ['Markers', 'S', 'where you wake up / come in', 'S', '#7a809f', '#0d0f14', 1, ''],
 ];
-const TILE = Object.fromEntries(T.map(([g, ch, name, glyph, fg, bg, walk, fl]) => [ch, { g, ch, name, glyph, fg, bg, walk: !!walk, rot: fl.includes('r'), spin: fl.includes('s') }]));
+const TILE = Object.fromEntries(T.map(([g, ch, name, glyph, fg, bg, walk, fl]) => [ch, { g, ch, name, glyph, fg, bg, walk: !!walk, rot: fl.includes('r'), spin: fl.includes('s'), edge: fl.includes('e') }]));
 const SOLID_EDGE = new Set(['#', 'N', '+', 'd', 'G', 'E', 'P']);   // what a building's outline may be made of
 const ENTRY = new Set(['+', 'E']), EXIT = new Set(['d']);
 // Pieces: a material in a half or a quarter of a cell, drawn over the tile (the game's under glyph:
@@ -213,13 +214,15 @@ const MATS = {
   wall:  { name: 'wall',   col: '#5a6088', block: 1 },
   neon:  { name: 'neon',   col: '#ff2fa8', block: 1, glow: 1 },
   glass: { name: 'window', col: '#4fd6ff', block: 1, alpha: 0.6 },
-  desk:  { name: 'desk',   col: '#8a76b8', block: 0 },
+  desk:  { name: 'desk',   col: '#8a76b8', block: 0, edge: 1 },   // edge: a half piece is a line you walk along, not across
   curb:  { name: 'curb',   col: '#6b7885', block: 0 },
   hedge: { name: 'hedge',  col: '#2f7a3a', block: 1 },
 };
 const FACE = ['south', 'west', 'north', 'east'];                    // 0..3, clockwise
 const CORNER = ['south-east', 'south-west', 'north-west', 'north-east'];
 const STATUS = [[null, 'auto (from the tile and pieces)'], [0, 'blocked'], [1, 'walkable']];
+const SIDE = [[0, 1], [-1, 0], [0, -1], [1, 0]];                   // the way side 0..3 faces (south, west, north, east)
+const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]];
 // The sizes mapgen can fit (outer, walls included): block heights 9 and 12; even widths.
 const SIZES = [
   ['6 × 9', 6, 9, 'pawn shop, fixer\'s den, a narrow noodle bar'],
@@ -244,17 +247,17 @@ let db = null, user = null, me = null, canWrite = true;
 // A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
 let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
 let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
-let mirror = false, zoom = 2, hover = null, drag = null, preview = null, sel = null;
+let edgeSide = 0, mirror = false, zoom = 2, hover = null, drag = null, preview = null, sel = null;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CW = 12, CH = 24;   // the game's cell at 1x
 
 // ---------- cells
-const mk = c => ({ c, r: 0, p: [], w: null });
-const cl = c => ({ c: c.c, r: c.r, p: c.p.map(a => a.slice()), w: c.w });
+const mk = c => ({ c, r: 0, p: [], w: null, e: [] });
+const cl = c => ({ c: c.c, r: c.r, p: c.p.map(a => a.slice()), w: c.w, e: c.e.slice() });
 const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
 const mirR = r => r === 1 ? 3 : r === 3 ? 1 : r;
-const mirrorChar = ch => ch === '{' ? '}' : ch === '}' ? '{' : ch;
+const mirrorChar = (ch, r) => (r & 1) ? ch : ch === '{' ? '}' : ch === '}' ? '{' : ch;   // a desk run turned sideways keeps its top end on top
 const mirPiece = (s, r) => s === 'half' ? mirR(r) : r ^ 1;
 const pname = (m, s, r) => `${MATS[m].name} ${s} (${(s === 'half' ? FACE : CORNER)[r]})`;
 function blank(w, h, kind){
@@ -262,21 +265,41 @@ function blank(w, h, kind){
   return Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => mk(park ? ((x === 0 || y === 0 || x === w - 1 || y === h - 1) ? ((x + y) % 3 ? 'Y' : ',') : ',')
     : (x === 0 || y === 0 || x === w - 1 || y === h - 1) ? '#' : '.')));
 }
-function build(rows, ex){
+function build(rows, ex, legacy){
   if (!rows.length) rows = ['.']; const w = Math.max(...rows.map(r => r.length)); ex = ex || {};
-  return rows.map((r, y) => Array.from({ length: w }, (_, x) => {
+  const grid = rows.map((r, y) => Array.from({ length: w }, (_, x) => {
     const c = mk(TILE[r[x]] ? r[x] : (r[x] === undefined ? ' ' : '.')), e = ex[x + ',' + y];
-    if (e){ if (TILE[c.c].rot && e.r >= 0 && e.r < 4) c.r = e.r | 0; if (Array.isArray(e.p)) c.p = e.p.filter(a => MATS[a[0]] && (a[1] === 'half' || a[1] === 'quarter')).map(a => [a[0], a[1], (a[2] | 0) & 3]); if (e.w === 0 || e.w === 1) c.w = e.w; }
+    if (e){ if (TILE[c.c].rot && e.r >= 0 && e.r < 4) c.r = e.r | 0; if (Array.isArray(e.p)) c.p = e.p.filter(a => MATS[a[0]] && (a[1] === 'half' || a[1] === 'quarter')).map(a => [a[0], a[1], (a[2] | 0) & 3]); if (e.w === 0 || e.w === 1) c.w = e.w; if (Array.isArray(e.e)) c.e = [...new Set(e.e.map(v => v | 0).filter(v => v >= 0 && v < 4))].sort(); }
     return c; }));
+  migrated = legacy ? migrateDesks(grid) : 0;
+  return grid;
 }
 const rowsOf = cs => cs.map(r => r.map(c => c.c).join(''));
 const exportRows = () => rowsOf(cells);
 const exportEx = () => exOf(cells);
-function exOf(cs){ const ex = {}; cs.forEach((row, y) => row.forEach((c, x) => { const e = {}; if (c.r) e.r = c.r; if (c.p.length) e.p = c.p.map(a => a.slice()); if (c.w !== null) e.w = c.w; if (Object.keys(e).length) ex[x + ',' + y] = e; })); return ex; }
+function exOf(cs){ const ex = {}; cs.forEach((row, y) => row.forEach((c, x) => { const e = {}; if (c.r) e.r = c.r; if (c.p.length) e.p = c.p.map(a => a.slice()); if (c.w !== null) e.w = c.w; if (c.e.length) e.e = c.e.slice(); if (Object.keys(e).length) ex[x + ',' + y] = e; })); return ex; }
+let migrated = 0;
+// Designs saved before v3 drew a desk run with { _ } always facing south. A run that goes up and down
+// (next to a counter or desk, not a desk to its left or right) is turned to put its line on the side
+// of the clerk's spot (@) if there is one, else the west.
+function migrateDesks(cs){ let n = 0; const get = (x, y) => cs[y]?.[x]?.c, run = ch => ch !== undefined && 'c{_}K'.includes(ch), desk = ch => ch !== undefined && '{_}'.includes(ch);
+  cs.forEach((row, y) => row.forEach((c, x) => { if (!desk(c.c) || c.r) return;
+    if (desk(get(x - 1, y)) || desk(get(x + 1, y)) || !(run(get(x, y - 1)) || run(get(x, y + 1)))) return;
+    let a = y, b = y; while (run(get(x, a - 1))) a--; while (run(get(x, b + 1))) b++;
+    let west = false, east = false; for (let k = a; k <= b; k++){ for (const d of [1, 2]){ if (get(x - d, k) === '@') west = true; if (get(x + d, k) === '@') east = true; } }
+    c.r = east && !west ? 3 : 1; n++; }));
+  return n; }
+// Edge barriers: a desk front is a line on one side of its cell. You can stand on the cell and walk along
+// the line, never across it (the game's World.desk_blocks). Tiles, half desk pieces and the status layer add them.
+function edgesOf(c){ const s = new Set(c.e); if (TILE[c.c].edge) s.add(c.r); for (const [m, sh, r] of c.p) if (MATS[m].edge && sh === 'half') s.add(r); return s; }
+function canMove(x, y, dx, dy){ const nx = x + dx, ny = y + dy; if (!inb(nx, ny) || !walkable(nx, ny)) return false;
+  for (const k of edgesOf(cells[y][x])) if (dx * SIDE[k][0] + dy * SIDE[k][1] > 0) return false;
+  for (const k of edgesOf(cells[ny][nx])) if (dx * SIDE[k][0] + dy * SIDE[k][1] < 0) return false; return true; }
+const edgeMap = () => { const m = {}; cells.forEach((row, y) => row.forEach((c, x) => { const s = [...edgesOf(c)].sort(); if (s.length) m[x + ',' + y] = s; })); return m; };
 const walkable = (x, y) => { const c = cells[y][x]; if (c.w === 0) return false; if (c.w === 1) return true; return TILE[c.c].walk && !c.p.some(p => MATS[p[0]].block); };
 const walkRows = () => cells.map((r, y) => r.map((c, x) => c.c === ' ' ? '.' : walkable(x, y) ? '1' : '0').join(''));
 const snap = () => JSON.stringify({ rows: exportRows(), ex: exportEx() });
-const sigOf = d => { const cs = build(d.rows || [], d.ex); return JSON.stringify({ rows: rowsOf(cs), ex: exOf(cs) }); };
+const sigOf = d => { const cs = build(d.rows || [], d.ex, d.v !== 3); return JSON.stringify({ rows: rowsOf(cs), ex: exOf(cs) }); };
 function snapshot(){ undo.push(snap()); if (undo.length > 200) undo.shift(); redo = []; }
 function restore(str){ const d = JSON.parse(str); cells = build(d.rows, d.ex); H = cells.length; W = cells[0].length; }
 
@@ -284,14 +307,16 @@ function restore(str){ const d = JSON.parse(str); cells = build(d.rows, d.ex); H
 function brushFor(btn){
   if (mode === 'tile') return { k: 'tile', ch: btn === 2 ? tileB : tileA, r: rot };
   if (mode === 'piece') return btn === 2 ? { k: 'clearp' } : { k: 'piece', m: pieceSel.m, s: pieceSel.s, r: rot };
+  if (statusSel === 'edge') return { k: 'edge', s: edgeSide, on: btn !== 2 };
   return { k: 'status', w: btn === 2 ? null : statusSel };
 }
-const mirrorBrush = b => b.k === 'tile' ? { ...b, ch: mirrorChar(b.ch), r: mirR(b.r) } : b.k === 'piece' ? { ...b, r: mirPiece(b.s, b.r) } : b;
+const mirrorBrush = b => b.k === 'tile' ? { ...b, ch: mirrorChar(b.ch, b.r), r: mirR(b.r) } : b.k === 'piece' ? { ...b, r: mirPiece(b.s, b.r) } : b.k === 'edge' ? { ...b, s: mirR(b.s) } : b;
 function applyTo(cell, b){
   const c = cl(cell);
   if (b.k === 'tile'){ c.c = b.ch; c.r = TILE[b.ch].rot ? b.r : 0; }
   else if (b.k === 'piece'){ if (!c.p.some(p => p[0] === b.m && p[1] === b.s && p[2] === b.r)) c.p.push([b.m, b.s, b.r]); }
   else if (b.k === 'clearp') c.p = [];
+  else if (b.k === 'edge') c.e = b.on ? [...new Set([...c.e, b.s])].sort() : c.e.filter(v => v !== b.s);
   else c.w = b.w;
   return c;
 }
@@ -300,7 +325,7 @@ function lineCells(a, b){ const out = []; let x = a.x, y = a.y; const dx = Math.
   for (;;){ out.push([x, y]); if (x === b.x && y === b.y) break; const e2 = 2 * e; if (e2 >= dy){ e += dy; x += sx; } if (e2 <= dx){ e += dx; y += sy; } } return out; }
 function boxCells(a, b, filled){ const out = [], x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (filled || x === x0 || x === x1 || y === y0 || y === y1) out.push([x, y]); return out; }
-const regionKey = c => mode === 'tile' ? c.c : mode === 'piece' ? c.c + '|' + JSON.stringify(c.p) : c.c + '|' + c.w;
+const regionKey = c => mode === 'tile' ? c.c : mode === 'piece' ? c.c + '|' + JSON.stringify(c.p) : c.c + '|' + c.w + '|' + c.e.join();
 function flood(x, y, b){ const from = regionKey(cells[y][x]), seen = new Set(), st = [[x, y]], hit = [];
   while (st.length){ const [px, py] = st.pop(), k = px + ',' + py; if (!inb(px, py) || seen.has(k) || regionKey(cells[py][px]) !== from) continue; seen.add(k); hit.push([px, py]); st.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]); }
   for (const [px, py] of hit) setCell(px, py, b); }
@@ -314,24 +339,31 @@ function pieceRect(s, r, px, py, cw, ch){
   if (s === 'half') return r === 0 ? [px, py + ch / 2, cw, ch / 2] : r === 1 ? [px, py, cw / 2, ch] : r === 2 ? [px, py, cw, ch / 2] : [px + cw / 2, py, cw / 2, ch];
   return r === 0 ? [px + cw / 2, py + ch / 2, cw / 2, ch / 2] : r === 1 ? [px, py + ch / 2, cw / 2, ch / 2] : r === 2 ? [px, py, cw / 2, ch / 2] : [px + cw / 2, py, cw / 2, ch / 2];
 }
+// A desk line along one side of a cell, like the game's edge glyphs: kind 1 is the first end (left, or top
+// when the line runs down a side), 2 the last, 0 the middle. The ends stop at the centre of the cell.
+function edgeBar(px, py, cw, chh, side, kind, th = Math.max(2, Math.round(2 * zoom))){
+  let x0, y0, w, h;
+  if (side === 0 || side === 2){ y0 = side === 0 ? py + chh - th : py; x0 = kind === 1 ? px + cw / 2 - th / 2 : px; w = (kind === 2 ? px + cw / 2 + th / 2 : px + cw) - x0; h = th; }
+  else { x0 = side === 1 ? px : px + cw - th; y0 = kind === 1 ? py + chh / 2 - th / 2 : py; w = th; h = (kind === 2 ? py + chh / 2 + th / 2 : py + chh) - y0; }
+  cx.fillRect(x0, y0, w, h); }
 function drawCell(x, y, c, ghost){
   const t = TILE[c.c] || TILE['.'], cw = CW * zoom, chh = CH * zoom, px = x * cw, py = y * chh, ga = ghost ? 0.7 : 1;
   cx.globalAlpha = ga; cx.fillStyle = t.bg; cx.fillRect(px, py, cw, chh);
   if (view !== 'pieces'){
     cx.fillStyle = t.fg;
-    if (t.glyph === 'desk'){ const th = Math.max(2, Math.round(2 * zoom)); const x0 = c.c === '{' ? px + cw * 0.3 : px, x1 = c.c === '}' ? px + cw * 0.7 : px + cw;
-      cx.fillRect(x0, py + chh - th - 2 * zoom, x1 - x0, th); if (c.c !== '_') cx.fillRect(c.c === '{' ? x0 : x1 - th, py + chh * 0.55, th, chh * 0.45 - 2 * zoom); }
+    if (t.glyph === 'desk') edgeBar(px, py, cw, chh, c.r, c.c === '{' ? 1 : c.c === '}' ? 2 : 0);
     else if (t.glyph === '█') cx.fillRect(px, py, cw, chh);
     else if (t.glyph === '▓'){ cx.globalAlpha = ghost ? 0.6 : 0.85; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ga; }
     else { cx.save(); cx.translate(px + cw / 2, py + chh * 0.54); if (t.spin && c.r) cx.rotate(c.r * Math.PI / 2);
       cx.font = `${Math.round(chh * 0.7)}px ${MONO()}`; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(t.glyph, 0, 0); cx.restore(); }
-    if (t.rot && c.r){ const tk = Math.max(2, Math.round(zoom * 1.5)); cx.fillStyle = 'rgba(255,255,255,0.7)';
+    if (t.rot && !t.edge && c.r){ const tk = Math.max(2, Math.round(zoom * 1.5)); cx.fillStyle = 'rgba(255,255,255,0.7)';
       const r = c.r; if (r === 0) cx.fillRect(px + cw * 0.3, py + chh - tk, cw * 0.4, tk); else if (r === 1) cx.fillRect(px, py + chh * 0.35, tk, chh * 0.3);
       else if (r === 2) cx.fillRect(px + cw * 0.3, py, cw * 0.4, tk); else cx.fillRect(px + cw - tk, py + chh * 0.35, tk, chh * 0.3); }
   }
   if (view !== 'tiles') for (const [m, s, r] of c.p){ const M = MATS[m], [rx, ry, rw, rh] = pieceRect(s, r, px, py, cw, chh);
     cx.globalAlpha = ga * (M.alpha || 1); cx.fillStyle = M.col; if (M.glow){ cx.shadowColor = M.col; cx.shadowBlur = 6 * zoom / 2; } cx.fillRect(rx, ry, rw, rh); cx.shadowBlur = 0; cx.globalAlpha = ga; }
   if (view === 'walk' && c.c !== ' '){ const ok = walkableCell(c); cx.globalAlpha = ok ? 0.22 : 0.38; cx.fillStyle = ok ? '#b6ff3b' : '#ff3b3b'; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ga; }
+  if (view === 'walk' || mode === 'status'){ const es = edgesOf(c); if (es.size){ cx.fillStyle = '#ffb627'; for (const k of es) edgeBar(px, py, cw, chh, k, 0, Math.max(2, Math.round(1.6 * zoom))); } }
   if (c.w !== null && (view === 'walk' || mode === 'status')){ cx.fillStyle = c.w ? '#b6ff3b' : '#ff3b3b'; cx.beginPath(); cx.moveTo(px + 1, py + 1); cx.lineTo(px + 1 + 7 * zoom / 2, py + 1); cx.lineTo(px + 1, py + 1 + 7 * zoom / 2); cx.fill(); }
   cx.globalAlpha = 1;
 }
@@ -348,6 +380,7 @@ function draw(){
   cx.stroke();
   if (mirror){ cx.strokeStyle = 'rgba(255,47,168,0.5)'; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(W * cw / 2, 0); cx.lineTo(W * cw / 2, H * ch); cx.stroke(); cx.setLineDash([]); }
   if (sel && inb(sel.x, sel.y)){ cx.strokeStyle = '#ffb627'; cx.lineWidth = 2; cx.strokeRect(sel.x * cw + 1, sel.y * ch + 1, cw - 2, ch - 2); }
+  if (hover && inb(hover.x, hover.y) && mode === 'status' && statusSel === 'edge'){ cx.fillStyle = '#29f0ff'; edgeBar(hover.x * cw, hover.y * ch, cw, ch, hover.side, 0, Math.max(3, Math.round(2.5 * zoom))); }
   if (hover && inb(hover.x, hover.y)){ cx.strokeStyle = '#29f0ff'; cx.lineWidth = 2; cx.strokeRect(hover.x * cw + 1, hover.y * ch + 1, cw - 2, ch - 2); }
 }
 
@@ -375,9 +408,10 @@ function checks(){
   }
   // reachable: from the doors (or a park's edge) over walkable cells
   const seen = new Set(), st = park ? edge.filter(([x, y]) => walkable(x, y)) : doorsOnEdge.slice();
-  while (st.length){ const [x, y] = st.pop(), k = x + ',' + y; if (!inb(x, y) || seen.has(k) || !walkable(x, y)) continue; seen.add(k); st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1], [x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]); }
-  let walk = 0, lost = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (walkable(x, y) && cells[y][x].c !== ' '){ walk++; if (!seen.has(x + ',' + y)) lost++; }
+  while (st.length){ const [x, y] = st.pop(), k = x + ',' + y; if (!inb(x, y) || seen.has(k) || !walkable(x, y)) continue; seen.add(k); for (const [dx, dy] of D8) if (canMove(x, y, dx, dy)) st.push([x + dx, y + dy]); }
+  let walk = 0, lost = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (walkable(x, y) && cells[y][x].c !== ' '){ walk++; if (!seen.has(x + ',' + y) && cells[y][x].c !== '@') lost++; }   // '@' is a staff spot behind a desk: nobody needs to walk there
   out.push([lost ? 'no' : 'ok', lost ? `${lost} walkable cell${lost > 1 ? 's' : ''} can't be reached from a door` : 'Every walkable cell can be reached']);
+  const nEdge = Object.keys(edgeMap()).length; if (nEdge) out.push(['ok', `${nEdge} cell${nEdge > 1 ? 's' : ''} with an edge you can walk along but not cross (desk fronts, desk pieces, edges set by hand)`]);
   if (!park && kind !== 'capsule hotel'){ const term = (count.T || 0) + (count.X || 0); out.push([term ? 'ok' : 'w', term ? `${term} terminal${term > 1 ? 's' : ''}` : 'No terminal: jobs need one somewhere']); }
   const lv = (count['<'] || 0) + (count['>'] || 0) + (count.L || 0);
   if (lv) out.push(['ok', `${lv} way${lv > 1 ? 's' : ''} to another level (${[count['<'] ? count['<'] + ' up' : '', count['>'] ? count['>'] + ' down' : '', count.L ? count.L + ' elevator' : ''].filter(Boolean).join(', ')}): a multi-level building`]);
@@ -405,9 +439,9 @@ function renderPal(){
       Object.entries(MATS).map(([m, M]) => `<div class="prow"><span>${esc(M.name)}</span>${['half', 'quarter'].map(s => `<button type="button" data-piece="${m}.${s}" class="${pieceSel.m === m && pieceSel.s === s ? 'on' : ''}" title="${esc(pname(m, s, rot))}${M.block ? ' · blocks walking' : ''}" aria-label="${esc(pname(m, s, rot))}" style="background:#0d0f14">${swatch(m, s, rot)}</button>`).join('')}<span>${M.block ? 'blocks' : 'walk on'}</span></div>`).join('') + `</div>`;
     $('#curA').textContent = 'add ' + pname(pieceSel.m, pieceSel.s, rot); $('#curB').textContent = 'clear the cell\'s pieces';
   } else {
-    $('#pal').innerHTML = `<p class="cur">Status overrides what the tile and pieces say about walking: use it for a chair you can't cross, a rail you can step over. Red / green triangles mark overrides.</p><div class="st">` +
-      STATUS.map(([v, n]) => `<button type="button" data-status="${v === null ? 'auto' : v}" class="${statusSel === v ? 'on' : ''}">${esc(n)}</button>`).join('') + `</div>`;
-    $('#curA').textContent = STATUS.find(s => s[0] === statusSel)[1]; $('#curB').textContent = 'back to auto';
+    $('#pal').innerHTML = `<p class="cur">Status overrides what the tile and pieces say about walking: a chair you can't cross, a rail you can step over. An edge is a line on one side of a cell you can walk along but not cross, like a desk front. Red / green triangles mark cell overrides, orange lines the edges.</p><div class="st">` +
+      STATUS.map(([v, n]) => `<button type="button" data-status="${v === null ? 'auto' : v}" class="${statusSel === v ? 'on' : ''}">${esc(n)}</button>`).join('') + `<button type="button" data-status="edge" class="${statusSel === 'edge' ? 'on' : ''}">edge you can't cross (click near a side of a cell)</button></div>`;
+    $('#curA').textContent = statusSel === 'edge' ? 'add an edge barrier on the nearest side' : STATUS.find(s => s[0] === statusSel)[1]; $('#curB').textContent = statusSel === 'edge' ? 'remove the nearest edge barrier' : 'back to auto';
   }
   $('#rotName').textContent = mode === 'piece' && pieceSel.s === 'quarter' ? CORNER[rot] : FACE[rot];
   $('#modes').innerHTML = MODES.map(([id, n, k]) => `<button type="button" data-mode="${id}" class="${mode === id ? 'on' : ''}" title="${n} (${k})">${n} <kbd>${k}</kbd></button>`).join('');
@@ -422,8 +456,9 @@ function renderInsp(){
   if (!sel || !inb(sel.x, sel.y)){ $('#insp').innerHTML = '<span class="cur">Pick a cell with the Pick tool (I) to see and edit its layers.</span>'; return; }
   const c = cells[sel.y][sel.x], t = TILE[c.c];
   $('#insp').innerHTML = `<div class="ln"><b>x ${sel.x} · y ${sel.y}</b><span class="cur">${walkable(sel.x, sel.y) ? 'walkable' : 'blocked'}</span></div>
-    <div class="ln"><span class="k">Tile</span><span>${esc(t.name)}</span>${t.rot ? `<span class="cur">facing ${FACE[c.r]}${c.r ? '' : ' (default)'}</span><button type="button" data-act="trot">⟳</button>` : ''}</div>
+    <div class="ln"><span class="k">Tile</span><span>${esc(t.name)}</span>${t.rot ? `<span class="cur">${t.edge ? 'line on the ' + FACE[c.r] + ' side' : 'facing ' + FACE[c.r]}${c.r ? '' : ' (default)'}</span><button type="button" data-act="trot">⟳</button>` : ''}</div>
     <div class="ln"><span class="k">Pieces</span>${c.p.length ? c.p.map((p, i) => `<span>${swatch(p[0], p[1], p[2])}</span><span>${esc(pname(...p))}</span><button type="button" data-act="prot" data-i="${i}" title="Turn it">⟳</button><button type="button" data-act="pdel" data-i="${i}" title="Remove it">×</button>`).join('') : '<span class="cur">none</span>'}</div>
+    <div class="ln"><span class="k">Edges</span>${(() => { const es = [...edgesOf(c)].sort(); return es.length ? es.map(k => `<span>${FACE[k]}${c.e.includes(k) ? '' : ' <span class="cur">(' + (t.edge && k === c.r ? 'desk front' : 'piece') + ')</span>'}</span>${c.e.includes(k) ? `<button type="button" data-act="edel" data-i="${k}" title="Remove this edge">×</button>` : ''}`).join('') : '<span class="cur">none: walkable across every side</span>'; })()}</div>
     <div class="ln"><span class="k">Status</span><select id="iw" aria-label="Walk status">${STATUS.map(([v, n]) => `<option value="${v === null ? 'auto' : v}" ${c.w === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
 }
 function renderList(){
@@ -441,15 +476,16 @@ function renderList(){
 async function names(){ if (!user?.profiles) return; const ids = [...new Set([...document.querySelectorAll('[data-by]')].map(e => e.dataset.by).filter(Boolean))]; if (!ids.length) return;
   try { const ps = await user.profiles(ids); document.querySelectorAll('[data-by]').forEach(e => { const p = ps[e.dataset.by]; e.textContent = e.dataset.by === 'claude' ? 'Claude' : (p && p.name) || ''; }); } catch (err){} }
 function setDirty(v){ dirty = v; $('#save').disabled = !v || !canWrite || !db; $('#state').className = v ? 'dirty' : 'saved'; $('#state').textContent = v ? 'unsaved' : (cur ? 'saved' : ''); }
-function load(id){ const d = designs[id]; if (!d) return; cur = id; cells = build(d.rows || [], d.ex); H = cells.length; W = cells[0]?.length || 0; sel = null;
+function load(id){ const d = designs[id]; if (!d) return; cur = id; cells = build(d.rows || [], d.ex, d.v !== 3); const mig = migrated; H = cells.length; W = cells[0]?.length || 0; sel = null;
   $('#name').value = d.name || ''; $('#kind').value = KINDS.includes(d.kind) ? d.kind : 'other'; $('#notes').value = d.notes || '';
-  undo = []; redo = []; setDirty(false); resize(); checks(); renderList(); }
-function startNew(name, kind, w, h, data){ cur = null; sel = null; cells = data ? build(data.rows, data.ex) : blank(w, h, kind); H = cells.length; W = cells[0].length;
+  undo = []; redo = []; setDirty(mig > 0); resize(); checks(); renderList();
+  if (mig) msg(`${mig} desk cell${mig > 1 ? 's' : ''} in an up-and-down run turned to face the clerk's side. Check them, then Save.`); }
+function startNew(name, kind, w, h, data){ cur = null; sel = null; cells = data ? build(data.rows, data.ex, data.v !== 3) : blank(w, h, kind); H = cells.length; W = cells[0].length;
   $('#name').value = name; $('#kind').value = kind; $('#notes').value = ''; undo = []; redo = []; setDirty(true); resize(); checks(); renderList(); }
 
 async function save(){
   if (!db || !canWrite) return; const now = new Date().toISOString();
-  const data = { v: 2, name: $('#name').value.trim() || 'Untitled', kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows(), notes: $('#notes').value, edited: now, editedBy: me || '' };
+  const data = { v: 3, name: $('#name').value.trim() || 'Untitled', kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows(), edges: edgeMap(), notes: $('#notes').value, edited: now, editedBy: me || '' };
   try {
     if (cur){ await db.doc('designs/' + cur).set({ ...(designs[cur] || {}), ...data }); }   // set, so cleared layers don't linger in the stored copy
     else { const ref = await db.collection('designs').add({ ...data, created: now, author: me || '' }); cur = ref.id; }
@@ -480,17 +516,19 @@ function resizeDialog(){
     const w = Math.max(3, Math.min(40, +d.querySelector('#rw').value || W)), h = Math.max(3, Math.min(24, +d.querySelector('#rh').value || H));
     snapshot(); cells = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (cells[y] && cells[y][x]) ? cells[y][x] : mk('.'))); W = w; H = h; sel = null; setDirty(true); resize(); checks(); });
 }
-function exportDialog(){ const txt = JSON.stringify({ v: 2, name: $('#name').value, kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows() }, null, 1);
-  dialog(`<h2>Export</h2><p class="cur">Rows are one character per tile, as the game's hand-made layouts use (core/hotel.gd). <code>ex</code> holds the facing, pieces and walk status of the cells that have any; <code>walk</code> is the resulting walkable map (1 walkable, 0 blocked).</p><textarea id="ex" rows="14" readonly>${esc(txt)}</textarea><div class="row"><button type="button" id="cp">Copy</button><span id="cpm" class="cur"></span></div>`, () => {});
+function exportDialog(){ const txt = JSON.stringify({ v: 3, name: $('#name').value, kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows(), edges: edgeMap() }, null, 1);
+  dialog(`<h2>Export</h2><p class="cur">Rows are one character per tile, as the game's hand-made layouts use (core/hotel.gd). <code>ex</code> holds the facing, pieces and walk status of the cells that have any; <code>walk</code> is the resulting walkable map (1 walkable, 0 blocked) and <code>edges</code> lists the sides of each cell you can't cross (0 south, 1 west, 2 north, 3 east): desk fronts, desk pieces and edges set by hand.</p><textarea id="ex" rows="14" readonly>${esc(txt)}</textarea><div class="row"><button type="button" id="cp">Copy</button><span id="cpm" class="cur"></span></div>`, () => {});
   $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('#cpm').textContent = 'Copied'; } catch (e){ $('#ex').select(); $('#cpm').textContent = 'Selected: press Ctrl+C'; } }; }
 function importDialog(){
   dialog(`<h2>Import</h2><p class="cur">Paste rows of tile characters (or an exported design). It replaces the grid; Undo brings it back.</p><textarea id="im" rows="12" placeholder="#####NNN####&#10;#..........#"></textarea><p class="msg" id="imm"></p>`, d => {
-    let t = d.querySelector('#im').value, rows, ex; try { const j = JSON.parse(t); rows = j.rows; ex = j.ex; if (j.name) $('#name').value = j.name; if (KINDS.includes(j.kind)) $('#kind').value = j.kind; } catch (e){ rows = t.replace(/\r/g, '').split('\n').filter(r => r.length); }
+    let t = d.querySelector('#im').value, rows, ex, v; try { const j = JSON.parse(t); rows = j.rows; ex = j.ex; v = j.v; if (j.name) $('#name').value = j.name; if (KINDS.includes(j.kind)) $('#kind').value = j.kind; } catch (e){ rows = t.replace(/\r/g, '').split('\n').filter(r => r.length); }
     if (!Array.isArray(rows) || !rows.length){ d.querySelector('#imm').textContent = 'Nothing to import.'; return false; }
-    snapshot(); cells = build(rows.map(String).slice(0, 24).map(r => r.slice(0, 40)), ex); H = cells.length; W = cells[0].length; sel = null; setDirty(true); resize(); checks(); });
+    snapshot(); cells = build(rows.map(String).slice(0, 24).map(r => r.slice(0, 40)), ex, v !== 3); H = cells.length; W = cells[0].length; sel = null; setDirty(true); resize(); checks(); });
 }
 
 // ---------- input
+function sideAt(e){ const r = cv.getBoundingClientRect(), cw = CW * zoom, ch = CH * zoom, fx = (e.clientX - r.left) % cw, fy = (e.clientY - r.top) % ch;
+  const d = [ch - fy, fx, fy, cw - fx]; return d.indexOf(Math.min(...d)); }   // the nearest side: 0 south, 1 west, 2 north, 3 east
 function cellAt(e){ const r = cv.getBoundingClientRect(); return { x: Math.floor((e.clientX - r.left) / (CW * zoom)), y: Math.floor((e.clientY - r.top) / (CH * zoom)) }; }
 function shape(a, b, br){ const cs = tool === 'line' ? lineCells(a, b) : boxCells(a, b, tool === 'rect'); const out = [];
   for (const [x, y] of cs){ out.push([x, y, br]); if (mirror && W - 1 - x !== x) out.push([W - 1 - x, y, mirrorBrush(br)]); } return out; }
@@ -498,7 +536,7 @@ function pickCell(p, btn){
   const c = cells[p.y][p.x]; sel = { x: p.x, y: p.y };
   if (mode === 'tile'){ if (btn === 2) tileB = c.c; else { tileA = c.c; if (TILE[c.c].rot) rot = c.r; } }
   else if (mode === 'piece'){ if (c.p.length){ pieceSel = { m: c.p[0][0], s: c.p[0][1] }; rot = c.p[0][2]; } }
-  else if (c.w !== null) statusSel = c.w;
+  else if (c.w !== null && statusSel !== 'edge') statusSel = c.w;
   renderPal(); renderInsp(); draw();
 }
 function turnCell(p, dir){ const c = cells[p.y][p.x]; snapshot();
@@ -511,6 +549,7 @@ cv.addEventListener('pointerdown', e => {
   const p = cellAt(e); if (!inb(p.x, p.y)) return; cv.setPointerCapture(e.pointerId); cv.focus();
   if (tool === 'pick'){ pickCell(p, e.button); return; }
   if (tool === 'turn'){ if (turnCell(p, e.button === 2 ? -1 : 1)){ sel = { x: p.x, y: p.y }; afterEdit(); } return; }
+  edgeSide = sideAt(e);
   const br = brushFor(e.button === 2 ? 2 : 0);
   snapshot();
   if (tool === 'fill'){ flood(p.x, p.y, br); afterEdit(); return; }
@@ -518,7 +557,7 @@ cv.addEventListener('pointerdown', e => {
   if (tool === 'pen'){ setCell(p.x, p.y, br); draw(); } else { preview = shape(p, p, br); draw(); }
 });
 cv.addEventListener('pointermove', e => {
-  const p = cellAt(e); hover = p;
+  const p = cellAt(e); hover = p; hover.side = sideAt(e);
   if (inb(p.x, p.y)){ const c = cells[p.y][p.x], t = TILE[c.c];
     $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' facing ' + FACE[c.r] : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
   if (drag){ if (tool === 'pen'){ for (const [x, y] of lineCells(drag.last || drag.a, p)) setCell(x, y, drag.br); drag.last = p; } else preview = shape(drag.a, p, drag.br); }
@@ -552,7 +591,7 @@ document.addEventListener('click', async e => {
   if (b.id === 'pickbtn'){ $('#pop').hidden ? openPop() : closePop(); return; }
   if (b.dataset.tile !== undefined){ tileA = b.dataset.tile; renderPal(); return; }
   if (b.dataset.piece){ const [m, s] = b.dataset.piece.split('.'); pieceSel = { m, s }; renderPal(); return; }
-  if (b.dataset.status){ statusSel = b.dataset.status === 'auto' ? null : +b.dataset.status; renderPal(); return; }
+  if (b.dataset.status){ statusSel = b.dataset.status === 'auto' ? null : b.dataset.status === 'edge' ? 'edge' : +b.dataset.status; renderPal(); return; }
   if (b.dataset.mode){ setMode(b.dataset.mode); return; }
   if (b.dataset.view){ view = b.dataset.view; renderTools(); draw(); return; }
   if (b.dataset.tool){ tool = b.dataset.tool; renderTools(); return; }
@@ -560,6 +599,7 @@ document.addEventListener('click', async e => {
     if (b.dataset.act === 'trot') c.r = (c.r + 1) & 3;
     else if (b.dataset.act === 'prot'){ const p = c.p[+b.dataset.i]; if (p) p[2] = (p[2] + 1) & 3; }
     else if (b.dataset.act === 'pdel') c.p.splice(+b.dataset.i, 1);
+    else if (b.dataset.act === 'edel') c.e = c.e.filter(v => v !== +b.dataset.i);
     afterEdit(); return; }
   if (b.dataset.open){ if (dirty && b.dataset.open !== cur && !b.classList.contains('armed')){ b.classList.add('armed'); msg('Unsaved changes: click again to open it anyway.'); setTimeout(() => b.classList.remove('armed'), 3000); return; } closePop(); load(b.dataset.open); return; }
   switch (b.id){
@@ -573,7 +613,7 @@ document.addEventListener('click', async e => {
     case 'resize': resizeDialog(); break;
     case 'exp': exportDialog(); break;
     case 'imp': importDialog(); break;
-    case 'dup': startNew(($('#name').value || 'Untitled') + ' (copy)', $('#kind').value, W, H, { rows: exportRows(), ex: exportEx() }); msg('A copy: Save to keep it.', true); break;
+    case 'dup': startNew(($('#name').value || 'Untitled') + ' (copy)', $('#kind').value, W, H, { v: 3, rows: exportRows(), ex: exportEx() }); msg('A copy: Save to keep it.', true); break;
     case 'del': if (!cur){ msg('Not saved yet: nothing to delete.'); break; }
       if (!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Delete it?'; setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Delete'; }, 3000); break; }
       try { await db.doc('designs/' + cur).delete(); b.classList.remove('armed'); b.textContent = 'Delete'; cur = null; msg('Deleted.', true); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false); } catch (err){ msg('Could not delete.'); } break;
