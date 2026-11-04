@@ -77,13 +77,13 @@ dialog::backdrop{background:#000a}
 .gs{height:32px;width:auto;image-rendering:pixelated;pointer-events:none}
 .tiles button.only::before{content:"◇";position:absolute;left:2px;bottom:0;font:9px var(--mono);color:var(--warn)}
 .tiles button.rt::after{content:"↻";position:absolute;left:2px;top:0;font:9px var(--mono);color:var(--muted)}
-.sw{display:block;width:22px;height:30px;border:1px solid var(--line)}
+.sw{display:block;width:26px;height:26px;border:1px solid var(--line)}
 .pcs{display:grid;gap:6px}.pcs .prow{display:flex;gap:6px;align-items:center}.pcs .prow>span{width:54px;font:11px var(--mono);color:var(--muted)}
 .pcs button{height:44px;width:44px;padding:0;display:grid;place-items:center;position:relative}
 .pcs button.on{outline:2px solid var(--accent);outline-offset:1px}
 .st{display:grid;gap:6px}.st button{text-align:left}
 .insp{display:grid;gap:6px;font-size:12px}.insp .ln{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.insp .k{color:var(--muted);width:54px}
-.insp button{padding:1px 7px;font-size:12px}.insp .sw{width:14px;height:20px}
+.insp button{padding:1px 7px;font-size:12px}.insp .sw{width:16px;height:16px}
 .keys{font-size:12px;color:var(--muted)}.keys summary{cursor:pointer}.keys p{margin:6px 0}
 kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:var(--muted)}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
@@ -101,7 +101,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
       <div class="row"><button type="button" class="go" id="new">New design</button></div>
       <p class="cur" id="count">Loading designs…</p>
       <details class="sizes" open><summary>Building sizes</summary>
-        <p>Outer size with the walls. Heights are the city's block heights; widths are even so a building fills whole map-screen characters (2 columns each).</p>
+        <p>Outer size with the walls. Heights are the city's block heights; widths are even, as mapgen's lots are.</p>
         <table id="sizetab"></table>
       </details>
     </aside>
@@ -129,7 +129,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
           <button type="button" id="dup">Duplicate</button><button type="button" id="del">Delete</button>
           <button type="button" id="exp">Export</button><button type="button" id="imp">Import</button>
           <span class="sep"></span>
-          <label class="cur" for="zoom">Zoom</label><input id="zoom" type="range" min="1" max="4" step="0.25" value="2" style="width:90px">
+          <label class="cur" for="zoom">Zoom</label><input id="zoom" type="range" min="1" max="6" step="1" value="3" style="width:90px">
         </div>
       </div>
       <div class="bar" id="tools" role="toolbar" aria-label="Tools"></div>
@@ -215,18 +215,16 @@ const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
   const own = ex.glyph !== undefined, dk = GAME.desk.chars[ch];
-  const gt = own ? null : GAME.tiles[dk !== undefined ? GAME.desk.tiles.south[dk] : GAME.legend[ch]];
+  const key = own ? null : (dk !== undefined ? GAME.desk.tiles.south[dk] : GAME.legend[ch]), gt = own ? null : GAME.tiles[key];
   if (!own && !gt) throw new Error('no game tile for ' + ch);
-  TILE[ch] = { g, ch, name, cp: own ? ex.glyph.codePointAt(0) : gt.glyph, fg: ex.fg || gt.fg, bg: ex.bg || gt.bg, walk: ex.walk !== undefined ? !!ex.walk : !gt.blocks,
+  TILE[ch] = { g, ch, name, key, cp: own ? ex.glyph.codePointAt(0) : gt.glyph, fg: ex.fg || gt.fg, bg: ex.bg || gt.bg, walk: ex.walk !== undefined ? !!ex.walk : !gt.blocks,
     rot: fl.includes('r'), spin: fl.includes('s'), edge: fl.includes('e'), only: !!ex.only, marker: !!ex.marker, desk: dk };
 }
-const deskGlyph = c => GAME.tiles[GAME.desk.tiles[SIDE_NAME[c.r & 3]][TILE[c.c].desk]].glyph;   // a desk front's glyph for its side
+const deskKey = c => GAME.desk.tiles[SIDE_NAME[c.r & 3]][TILE[c.c].desk];   // a desk front's tile for its side
 const SOLID_EDGE = new Set(['#', 'N', '+', 'd', 'G', 'E', 'P']);   // what a building's outline may be made of
 const ENTRY = new Set(['+', 'E']), EXIT = new Set(['d']);
-// Pieces: a material in a half or a quarter of a cell, drawn over the tile with the game's block glyphs
-// (▄ ▌ ▀ ▐ for halves, ▗ ▖ ▘ ▝ for quarters), in the game's colours. block = it stops walking.
-// only = no such colour or tile in the game yet.
-const PIECE_CP = { half: [0x2584, 0x258C, 0x2580, 0x2590], quarter: [0x2597, 0x2596, 0x2598, 0x259D] };
+// Pieces: a material in a half or a quarter of a cell, drawn over the tile as a filled half or quarter of
+// the square, in the game's colours. block = it stops walking. only = no such colour or tile in the game yet.
 const MATS = {
   wall:  { name: 'wall',   col: GAME.tiles.WALL.fg, block: 1 },
   neon:  { name: 'neon',   col: GAME.tiles.NEON.fg, block: 1 },
@@ -264,10 +262,10 @@ let db = null, user = null, me = null, canWrite = true;
 // A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
 let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
 let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
-let edgeSide = 0, mirror = false, zoom = 2, hover = null, drag = null, preview = null, sel = null;
+let edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const CW = 12, CH = 24;   // the game's cell at 1x
+const CW = 8, CH = 8;   // a map tile is square: the sheet's 8 px at zoom 1
 
 // ---------- cells
 const mk = c => ({ c, r: 0, p: [], w: null, e: [] });
@@ -363,35 +361,40 @@ function edgeBar(px, py, cw, chh, side, kind, th = Math.max(2, Math.round(2 * zo
   if (side === 0 || side === 2){ y0 = side === 0 ? py + chh - th : py; x0 = kind === 1 ? px + cw / 2 - th / 2 : px; w = (kind === 2 ? px + cw / 2 + th / 2 : px + cw) - x0; h = th; }
   else { x0 = side === 1 ? px : px + cw - th; y0 = kind === 1 ? py + chh / 2 - th / 2 : py; w = th; h = (kind === 2 ? py + chh / 2 + th / 2 : py + chh) - y0; }
   cx.fillRect(x0, y0, w, h); }
-// The game's atlas: its glyphs, tinted per colour, drawn into the cell like the game's shader does.
-const ATLAS_SRC = '{{ATLAS}}';
-const INDEX = new Map(); GAME.atlas.codepoints.forEach((cp, i) => { if (!INDEX.has(cp)) INDEX.set(cp, i); });
-const atlasImg = new Image(); let atlasReady = false; const tints = new Map();
-atlasImg.onload = () => { atlasReady = true; tints.clear(); swUrls.clear(); renderPal(); draw(); };
-atlasImg.src = ATLAS_SRC;
-function tinted(cp, color){
-  const i = INDEX.has(cp) ? INDEX.get(cp) : 63, k = i + color; let c = tints.get(k); if (c) return c;
-  const aw = GAME.cell.w * GAME.atlas.zoom, ah = GAME.cell.h * GAME.atlas.zoom; c = document.createElement('canvas'); c.width = aw; c.height = ah;
-  const g = c.getContext('2d'); g.drawImage(atlasImg, (i % GAME.atlas.cols) * aw, Math.floor(i / GAME.atlas.cols) * ah, aw, ah, 0, 0, aw, ah);
-  g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, aw, ah); tints.set(k, c); return c; }
-function drawGlyph(cp, color, px, py, cw, chh, turn){
-  if (!atlasReady) return; const im = tinted(cp, color); cx.imageSmoothingEnabled = zoom !== 2;
+// The game's tile sheet (unscii mcr): square 8 px tiles, 16 a row, white on transparent. Tinted per colour and
+// drawn into the cell without smoothing, so the pixels stay sharp. Glyphs only the designer uses come as bitmaps.
+const SHEET_SRC = '{{ATLAS}}';
+const SHEET = GAME.sheet, INDEX = new Map(SHEET.names.map((n, i) => [n, i]));
+const sheetImg = new Image(); let sheetReady = false; const tints = new Map();
+sheetImg.onload = () => { sheetReady = true; tints.clear(); swUrls.clear(); renderPal(); draw(); };
+sheetImg.src = SHEET_SRC;
+const HAND = { 0x2310: '0000FC0404040000' };   // ⌐ the chair: not in the font
+const bitmap = cp => GAME.glyphs[cp] || HAND[cp] || GAME.glyphs[63];
+// A tile as an 8 x 8 canvas in one colour: by sheet name (a game tile) or by codepoint (a designer-only glyph).
+function tinted(key, cp, color){
+  const k = (key || '#' + cp) + color; let c = tints.get(k); if (c) return c;
+  const n = SHEET.size; c = document.createElement('canvas'); c.width = n; c.height = n; const g = c.getContext('2d');
+  if (key !== null && INDEX.has(key)){ const i = INDEX.get(key); g.drawImage(sheetImg, (i % SHEET.cols) * n, Math.floor(i / SHEET.cols) * n, n, n, 0, 0, n, n); }
+  else { const bits = bitmap(cp); g.fillStyle = '#fff'; for (let y = 0; y < 8; y++){ const row = parseInt(bits.substr(y * 2, 2), 16); for (let x = 0; x < 8; x++) if (row & (0x80 >> x)) g.fillRect(x, y, 1, 1); } }
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, n, n); tints.set(k, c); return c; }
+function drawGlyph(key, cp, color, px, py, cw, chh, turn){
+  if (!sheetReady) return; const im = tinted(key, cp, color); cx.imageSmoothingEnabled = false;
   if (turn){ cx.save(); cx.translate(px + cw / 2, py + chh / 2); cx.rotate(turn * Math.PI / 2); cx.drawImage(im, -cw / 2, -chh / 2, cw, chh); cx.restore(); }
   else cx.drawImage(im, px, py, cw, chh); }
 const swUrls = new Map();
-function glyphUrl(cp, fg, bg){ if (!atlasReady) return ''; const k = cp + fg + bg; let u = swUrls.get(k); if (u) return u;
-  const c = document.createElement('canvas'); c.width = GAME.cell.w * GAME.atlas.zoom; c.height = GAME.cell.h * GAME.atlas.zoom; const g = c.getContext('2d');
-  g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.drawImage(tinted(cp, fg), 0, 0); u = c.toDataURL(); swUrls.set(k, u); return u; }
+function glyphUrl(key, cp, fg, bg){ if (!sheetReady) return ''; const k = (key || '#' + cp) + fg + bg; let u = swUrls.get(k); if (u) return u;
+  const c = document.createElement('canvas'); c.width = SHEET.size; c.height = SHEET.size; const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.drawImage(tinted(key, cp, fg), 0, 0); u = c.toDataURL(); swUrls.set(k, u); return u; }
 function drawCell(x, y, c, ghost){
   const t = TILE[c.c] || TILE['.'], cw = CW * zoom, chh = CH * zoom, px = x * cw, py = y * chh, ga = ghost ? 0.7 : 1;
   cx.globalAlpha = ga; cx.fillStyle = t.bg; cx.fillRect(px, py, cw, chh);
   if (view !== 'pieces'){
-    drawGlyph(t.desk !== undefined ? deskGlyph(c) : t.cp, t.fg, px, py, cw, chh, t.spin ? c.r : 0);
+    drawGlyph(t.desk !== undefined ? deskKey(c) : t.key, t.cp, t.fg, px, py, cw, chh, t.spin ? c.r : 0);
     if (t.rot && !t.edge && c.r){ const tk = Math.max(2, Math.round(zoom * 1.5)); cx.fillStyle = 'rgba(255,255,255,0.7)';
       const r = c.r; if (r === 0) cx.fillRect(px + cw * 0.3, py + chh - tk, cw * 0.4, tk); else if (r === 1) cx.fillRect(px, py + chh * 0.35, tk, chh * 0.3);
       else if (r === 2) cx.fillRect(px + cw * 0.3, py, cw * 0.4, tk); else cx.fillRect(px + cw - tk, py + chh * 0.35, tk, chh * 0.3); }
   }
-  if (view !== 'tiles') for (const [m, s, r] of c.p){ const M = MATS[m]; cx.globalAlpha = ga * (M.alpha || 1); drawGlyph(PIECE_CP[s][r], M.col, px, py, cw, chh, 0); cx.globalAlpha = ga; }
+  if (view !== 'tiles') for (const [m, s, r] of c.p){ const M = MATS[m]; cx.globalAlpha = ga * (M.alpha || 1); cx.fillStyle = M.col; cx.fillRect(...pieceRect(s, r, px, py, cw, chh)); cx.globalAlpha = ga; }
   if (view === 'walk' && c.c !== ' '){ const ok = walkableCell(c); cx.globalAlpha = ok ? 0.22 : 0.38; cx.fillStyle = ok ? '#b6ff3b' : '#ff3b3b'; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ga; }
   if (view === 'walk' || mode === 'status'){ const es = edgesOf(c); if (es.size){ cx.fillStyle = '#ffb627'; for (const k of es) edgeBar(px, py, cw, chh, k, 0, Math.max(2, Math.round(1.6 * zoom))); } }
   if (c.w !== null && (view === 'walk' || mode === 'status')){ cx.fillStyle = c.w ? '#b6ff3b' : '#ff3b3b'; cx.beginPath(); cx.moveTo(px + 1, py + 1); cx.lineTo(px + 1 + 7 * zoom / 2, py + 1); cx.lineTo(px + 1, py + 1 + 7 * zoom / 2); cx.fill(); }
@@ -403,11 +406,6 @@ function draw(){
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) drawCell(x, y, cells[y][x]);
   if (preview) for (const [x, y, b] of preview) if (inb(x, y)) drawCell(x, y, applyTo(cells[y][x], b), true);
   const cw = CW * zoom, ch = CH * zoom;
-  // the map-screen character grid (2 × 3 cells) as faint guides
-  cx.strokeStyle = 'rgba(41,240,255,0.10)'; cx.lineWidth = 1; cx.beginPath();
-  for (let x = 2; x < W; x += 2){ cx.moveTo(x * cw + .5, 0); cx.lineTo(x * cw + .5, H * ch); }
-  for (let y = 3; y < H; y += 3){ cx.moveTo(0, y * ch + .5); cx.lineTo(W * cw, y * ch + .5); }
-  cx.stroke();
   if (mirror){ cx.strokeStyle = 'rgba(255,47,168,0.5)'; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(W * cw / 2, 0); cx.lineTo(W * cw / 2, H * ch); cx.stroke(); cx.setLineDash([]); }
   if (sel && inb(sel.x, sel.y)){ cx.strokeStyle = '#ffb627'; cx.lineWidth = 2; cx.strokeRect(sel.x * cw + 1, sel.y * ch + 1, cw - 2, ch - 2); }
   if (hover && inb(hover.x, hover.y) && mode === 'status' && statusSel === 'edge'){ cx.fillStyle = '#29f0ff'; edgeBar(hover.x * cw, hover.y * ch, cw, ch, hover.side, 0, Math.max(3, Math.round(2.5 * zoom))); }
@@ -463,8 +461,8 @@ function checks(){
 }
 
 // ---------- UI
-const tileSw = ([, ch, name]) => { const t = TILE[ch], cp = t.desk !== undefined ? GAME.tiles[GAME.desk.tiles[SIDE_NAME[rot & 3]][t.desk]].glyph : t.cp;
-  return `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB ? ' alt' : '') + (t.rot ? ' rt' : '') + (t.only ? ' only' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${t.rot ? ' · can face a direction' : ''}${t.only ? ' · not in the game yet: it loads as floor' : ''}${t.marker ? ' · a marker: the game puts floor here' : ''}" aria-label="${esc(name)}" style="background:${t.bg}"><img class="gs" alt="" src="${glyphUrl(cp, t.fg, t.bg)}"><span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`; };
+const tileSw = ([, ch, name]) => { const t = TILE[ch], key = t.desk !== undefined ? GAME.desk.tiles[SIDE_NAME[rot & 3]][t.desk] : t.key;
+  return `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB ? ' alt' : '') + (t.rot ? ' rt' : '') + (t.only ? ' only' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${t.rot ? ' · can face a direction' : ''}${t.only ? ' · not in the game yet: it loads as floor' : ''}${t.marker ? ' · a marker: the game puts floor here' : ''}" aria-label="${esc(name)}" style="background:${t.bg}"><img class="gs" alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}"><span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`; };
 function swatch(m, s, r){ const col = MATS[m].col; let bg;
   if (s === 'half') bg = `linear-gradient(${['to top', 'to right', 'to bottom', 'to left'][r]},${col} 50%,transparent 50%)`;
   else bg = `linear-gradient(${col},${col}) ${['right bottom', 'left bottom', 'left top', 'right top'][r]}/50% 50% no-repeat`;
@@ -670,7 +668,7 @@ $('#q').addEventListener('input', renderList); $('#kf').addEventListener('change
 // ---------- start
 $('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
 $('#sizetab').innerHTML = SIZES.map(s => `<tr><td>${s[0]}</td><td>${esc(s[3])}</td></tr>`).join('');
-zoom = window.innerWidth < 720 ? 1.25 : 2; $('#zoom').value = zoom;
+zoom = window.innerWidth < 720 ? 2 : 3; $('#zoom').value = zoom;
 $('.sub').insertAdjacentHTML('beforeend', ` Tiles, colours and glyphs are the game's (v${esc(GAME.version)}, ${esc(GAME.commit)}). ◇ marks what the game doesn't have yet.`);
 renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false);
 (async () => {

@@ -4,8 +4,8 @@ A claude.ai artifact (a page with a shared database of designs) for drawing buil
 
 | File | What it is |
 |---|---|
-| `src.html` | the page, with two placeholders: `/*{{GAME}}*/null` and `{{ATLAS}}` |
-| `game/tiles.json`, `game/atlas.png` | **generated** by the game's `tools/export_designer.py` (tile glyphs, colours, blocking, the desk tiles, the legend, the atlas). Never edit them by hand. |
+| `src.html` | the page, with two placeholders: `/*{{GAME}}*/null` and `{{ATLAS}}` (the tile sheet) |
+| `game/tiles.json`, `game/tiles.png` | **generated** by the game's `tools/export_designer.py` (tile colours, blocking, the desk tiles, the legend, the unscii mcr tile sheet and the sheet's tile names). Never edit them by hand. |
 | `build.js` | `node building-designer/build.js` embeds both into `out/building-designer.html` (not committed) and stops if the script doesn't parse |
 
 ## When the game changes a tile
