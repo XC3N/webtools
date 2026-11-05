@@ -70,6 +70,9 @@ form.addrow{display:flex;gap:8px;flex-wrap:wrap}form.addrow input{flex:1 1 240px
 .found h3{margin:0;font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .found p{margin:0;font-size:14px}.found p button{all:unset;cursor:pointer;color:var(--accent);font-weight:600}.found p button:hover{text-decoration:underline}
 .state{color:var(--muted);font:400 14px var(--mono);border:1px dashed var(--line);border-radius:6px;padding:24px;text-align:center}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.tabs button{padding:4px 10px;font-size:12px}.tabs button.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:600}
+.tabs button .n{font:400 11px var(--mono);color:var(--count);margin-left:5px}.tabs .lv{margin-left:auto;display:flex;gap:4px}
 .armed{border-color:var(--warn)!important;color:var(--warn)!important}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
@@ -78,7 +81,7 @@ form.addrow{display:flex;gap:8px;flex-wrap:wrap}form.addrow input{flex:1 1 240px
   <header>
     <h1>Sprawler <span>Compendium</span></h1>
     <span class="sync" id="sync">connecting…</span>
-    <p class="sub">Every name the game draws from: streets, hotels, buildings by kind, MegaBuildings, people. Edit here; Claude copies the Compendium into the game's <code>data/compendium.json</code> in the next pull request, so changes land when it's merged.</p>
+    <p class="sub">Every name the game draws from: streets, hotels, buildings by kind, MegaBuildings, people, items. Edit here; Claude copies the Compendium into the game's <code>data/compendium.json</code> in the next pull request, so changes land when it's merged.</p>
   </header>
   <div class="bar">
     <input id="q" type="search" placeholder="Find a name in every pool" aria-label="Find a name" autocomplete="off">
@@ -107,13 +110,22 @@ const GROUPS = [
     ['npc-first', 'First names', 'Not used by the game yet: people will be named from these (ID-056).'],
     ['npc-middle', 'Middle names', 'Not used yet.'], ['npc-last', 'Last names', 'Not used yet.'], ['npc-titles', 'Titles', 'Not used yet: "Doc", "Old", "Sister"…']] },
   { id: 'adj', title: 'People: adjectives', open: 'Adjective category', note: k => `Words for someone who reads as "${k}". Not used by the game yet.` },
+  { id: 'item', title: 'Items', open: 'Item category', note: k => `Names for a ${k}, by level (ID-075, TW-069). A name is either one of the level's own names, or made up: company + prefix + suffix + the level's version ("Cred+" + "En" + "Vault" + "MK II" = Cred+ EnVault MK II, a level 2). Versions are in level order: the first is level 1.` },
 ];
+// An item category holds several lists (fields); every other pool holds one (entries).
+const PARTS = [['company', 'Companies'], ['prefix', 'Prefixes'], ['suffix', 'Suffixes'], ['versions', 'Versions']];
+let sub = {};   // item pool id -> the list open in it
+const levels = P => Math.max(1, (P.versions || []).length, ...Object.keys(P).filter(k => /^level\d+$/.test(k)).map(k => +k.slice(5)));
+const fields = id => { const P = pools[id] || {}; return P.group !== 'item' ? ['entries'] : [...PARTS.map(x => x[0]), ...Array.from({ length: levels(P) }, (_, i) => 'level' + (i + 1))]; };
+const cur = id => { const F = fields(id); return F.includes(sub[id]) ? sub[id] : F[0]; };
+const fieldTitle = f => f.startsWith('level') ? `Level ${f.slice(5)} names` : (PARTS.find(x => x[0] === f) || [f, f])[1];
+const count = id => fields(id).reduce((a, f) => a + list(id, f).length, 0);
 let pools = {}, meta = {}, db = null, canWrite = true, sel = null, q = '', editing = null, rolled = null, note = null;   // note: the last message, {id, text, ok}, kept across redraws
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
-const docId = (group, key) => group === 'kind' || group === 'mega' || group === 'adj' ? group + '-' + slug(key) : key;
-const list = id => (pools[id] && Array.isArray(pools[id].entries)) ? pools[id].entries : [];
+const docId = (group, key) => group === 'kind' || group === 'mega' || group === 'adj' || group === 'item' ? group + '-' + slug(key) : key;
+const list = (id, f = 'entries') => (pools[id] && Array.isArray(pools[id][f])) ? pools[id][f] : [];
 // every pool on screen, in index order
 function order(){ const out = [];
   for (const g of GROUPS){
@@ -127,34 +139,37 @@ const buildingIds = () => order().filter(p => p.group === 'kind' || p.group === 
 function render(){
   const all = order(); if (!sel || !all.some(p => p.id === sel)) sel = all[0] && all[0].id;
   $('#nav').innerHTML = GROUPS.map(g => { const ps = all.filter(p => p.group === g.id);
-    return `<div><h2>${esc(g.title)}</h2><ul>${ps.map(p => `<li><button type="button" data-sel="${esc(p.id)}" class="${p.id === sel && !q ? 'on' : ''}">${esc(p.title)}<span class="n${list(p.id).length ? '' : ' zero'}">${list(p.id).length}</span></button></li>`).join('')}${g.open && canWrite && db ? `<li><button type="button" class="add" data-newcat="${g.id}">+ ${esc(g.open)}</button></li>` : ''}</ul></div>`; }).join('');
+    return `<div><h2>${esc(g.title)}</h2><ul>${ps.map(p => `<li><button type="button" data-sel="${esc(p.id)}" class="${p.id === sel && !q ? 'on' : ''}">${esc(p.title)}<span class="n${count(p.id) ? '' : ' zero'}">${count(p.id)}</span></button></li>`).join('')}${g.open && canWrite && db ? `<li><button type="button" class="add" data-newcat="${g.id}">+ ${esc(g.open)}</button></li>` : ''}</ul></div>`; }).join('');
   // on a phone the index is a picker (the same lists, and the "+ new list" entries)
-  $('#pick').innerHTML = GROUPS.map(g => `<optgroup label="${esc(g.title)}">${all.filter(p => p.group === g.id).map(p => `<option value="${esc(p.id)}"${p.id === sel ? ' selected' : ''}>${esc(p.title)} (${list(p.id).length})</option>`).join('')}${g.open && canWrite && db ? `<option value="+${g.id}">+ ${esc(g.open)}…</option>` : ''}</optgroup>`).join('');
+  $('#pick').innerHTML = GROUPS.map(g => `<optgroup label="${esc(g.title)}">${all.filter(p => p.group === g.id).map(p => `<option value="${esc(p.id)}"${p.id === sel ? ' selected' : ''}>${esc(p.title)} (${count(p.id)})</option>`).join('')}${g.open && canWrite && db ? `<option value="+${g.id}">+ ${esc(g.open)}…</option>` : ''}</optgroup>`).join('');
   if (!db) return;
   if (!Object.keys(pools).length){ $('#pane').innerHTML = '<div class="state">No pools yet. Claude fills the Compendium from the game\'s data/compendium.json.</div>'; return; }
   if (q) return renderFind(all);
   const p = all.find(x => x.id === sel); if (!p) return;
-  const E = list(p.id), P = pools[p.id] || {}, low = E.map(e => e.toLowerCase());
+  const f = cur(p.id), E = list(p.id, f), P = pools[p.id] || {}, low = E.map(e => e.toLowerCase()), isItem = p.group === 'item';
+  const tabs = isItem ? `<div class="tabs" role="tablist">${fields(p.id).map(x => `<button type="button" role="tab" data-sub="${x}" class="${x === f ? 'on' : ''}" aria-selected="${x === f}">${esc(fieldTitle(x))}<span class="n">${list(p.id, x).length}</span></button>`).join('')}${canWrite ? `<span class="lv"><button type="button" id="addlv" title="Add a level">+ level</button></span>` : ''}</div>` : '';
   $('#pane').innerHTML = `<section class="pool" aria-label="${esc(p.title)}">
-    <div class="ph"><h3>${esc(p.title)}</h3><span class="n">${E.length} name${E.length === 1 ? '' : 's'}</span><span class="acts">
+    <div class="ph"><h3>${esc(p.title)}</h3><span class="n">${isItem ? count(p.id) + ' in all' : `${E.length} name${E.length === 1 ? '' : 's'}`}</span><span class="acts">
       <button type="button" id="roll" title="Pick some at random, the way the game does">Roll</button>
-      ${canWrite ? `<button type="button" id="sort" title="Sort A to Z">Sort A–Z</button>` : ''}
+      ${canWrite && f !== 'versions' ? `<button type="button" id="sort" title="Sort A to Z">Sort A–Z</button>` : ''}
       ${canWrite && p.open ? `<button type="button" id="delcat" title="Delete this whole list">Delete list</button>` : ''}</span></div>
-    <p class="note">${esc(p.note)}</p>
+    <p class="note">${esc(p.note)}</p>${tabs}
+    ${isItem ? `<div class="meta"><label>Shown as <input type="text" id="label" value="${esc(P.label || p.title)}" ${canWrite ? '' : 'disabled'} aria-label="Label shown in game"></label>
+      <span>${f === 'versions' ? 'In level order: the first is level 1. To reorder, edit them in place.' : f.startsWith('level') ? `Whole names for a level ${f.slice(5)} ${esc(p.title)}; the game picks one of these half the time when there are any.` : `Part of a made-up name.${f === 'prefix' ? ' Glued to the suffix: "En" + "Vault" = EnVault.' : ''}`}</span></div>` : ''}
     ${p.group === 'kind' ? `<div class="meta"><label>Shown as <input type="text" id="label" value="${esc(P.label || p.title)}" ${canWrite ? '' : 'disabled'} aria-label="Label shown in game"></label>
       <label><input type="checkbox" id="plain" ${P.plain ? 'checked' : ''} ${canWrite ? '' : 'disabled'}> plain: the sign has to be read (a Notice check) or the building entered</label></div>` : ''}
     ${E.length ? `<ul class="entries">${E.map((e, k) => editing && editing.id === p.id && editing.k === k
       ? `<li class="edit"><input id="edit" type="text" value="${esc(e)}" aria-label="Edit name"></li>`
       : `<li class="${low.indexOf(e.toLowerCase()) !== k ? 'dup' : ''}"><button type="button" class="e" data-k="${k}" title="${canWrite ? 'Click to edit' : ''}">${esc(e)}</button>${canWrite ? `<button type="button" class="x" data-x="${k}" aria-label="Remove ${esc(e)}">×</button>` : ''}</li>`).join('')}</ul>`
       : `<div class="empty">Nothing here yet.${canWrite ? ' Add the first name below.' : ''}</div>`}
-    ${canWrite ? `<form class="addrow" id="addf"><input id="add" type="text" placeholder="Add a name (several: separate with commas or new lines)" aria-label="Add a name" autocomplete="off"><button class="go" type="submit">Add</button></form>` : ''}
+    ${canWrite ? `<form class="addrow" id="addf"><input id="add" type="text" placeholder="${isItem ? `Add to ${esc(fieldTitle(f).toLowerCase())}` : 'Add a name'} (several: separate with commas or new lines)" aria-label="Add a name" autocomplete="off"><button class="go" type="submit">Add</button></form>` : ''}
     <div class="msg${note && note.id === p.id && note.ok ? ' ok' : ''}" id="msg" role="status">${note && note.id === p.id ? esc(note.text) : ''}</div>
     ${rolled && rolled.id === p.id ? `<div class="roll"><h4>Rolled</h4><ol>${rolled.items.map(r => `<li>${esc(r)}</li>`).join('')}</ol></div>` : ''}
   </section>`;
   const ed = $('#edit'); if (ed){ ed.focus(); ed.select(); }
 }
 function renderFind(all){
-  const T = q.toLowerCase(), hits = all.map(p => ({ p, E: list(p.id).filter(e => e.toLowerCase().includes(T)) })).filter(h => h.E.length);
+  const T = q.toLowerCase(), hits = all.map(p => ({ p, E: fields(p.id).flatMap(f => list(p.id, f)).filter(e => e.toLowerCase().includes(T)) })).filter(h => h.E.length);
   $('#pane').innerHTML = `<section class="pool found"><h3>${hits.reduce((a, h) => a + h.E.length, 0)} match${hits.length ? 'es' : ''} for “${esc(q)}”</h3>
     ${hits.map(h => `<p><button type="button" data-sel="${esc(h.p.id)}">${esc(h.p.title)}</button>: ${h.E.map(esc).join(', ')}</p>`).join('') || '<p>Nothing matches.</p>'}</section>`;
 }
@@ -168,21 +183,30 @@ async function save(id, fields){
 }
 function addNames(text){
   const p = order().find(x => x.id === sel); if (!p) return;
-  const E = [...list(p.id)], have = new Set(E.map(e => e.toLowerCase())), added = [], skipped = [], elsewhere = [];
+  const f = cur(p.id), E = [...list(p.id, f)], have = new Set(E.map(e => e.toLowerCase())), added = [], skipped = [], elsewhere = [];
   for (const raw of text.split(/[\n,]+/)){ const v = raw.trim().replace(/\s+/g, ' '); if (!v) continue;
     if (have.has(v.toLowerCase())){ skipped.push(v); continue; }
     if (p.group === 'kind' || p.group === 'mega' || p.id === 'hq'){ const o = [...buildingIds(), 'hq'].find(b => b !== p.id && list(b).some(e => e.toLowerCase() === v.toLowerCase())); if (o) elsewhere.push(`${v} (also in ${order().find(x => x.id === o).title})`); }
     have.add(v.toLowerCase()); E.push(v); added.push(v); }
-  if (added.length) save(p.id, { entries: E });
+  if (added.length) save(p.id, { [f]: E });
   say([added.length ? `Added ${added.length}.` : '', skipped.length ? `Already here: ${skipped.join(', ')}.` : '', elsewhere.length ? `Building names should be unique: ${elsewhere.join(', ')}.` : ''].filter(Boolean).join(' '), added.length && !skipped.length && !elsewhere.length);
 }
 function roll(){
-  const p = order().find(x => x.id === sel); if (!p) return; const E = list(p.id); if (!E.length){ say('Nothing to roll yet.'); return; }
+  const p = order().find(x => x.id === sel); if (!p) return; const E = p.group === 'item' ? fields(p.id).flatMap(f => list(p.id, f)) : list(p.id); if (!E.length){ say('Nothing to roll yet.'); return; }
   const pick = A => A[Math.floor(Math.random() * A.length)], items = [];
+  if (p.group === 'item'){ for (let lv = 1; lv <= levels(pools[p.id]); lv++) for (let i = 0; i < 3; i++) items.push(`L${lv}: ${itemName(pools[p.id], lv, Math.random)}`); rolled = { id: p.id, items }; render(); return; }
   if (p.group === 'npc'){ const F = list('npc-first'), M = list('npc-middle'), L = list('npc-last'), T = list('npc-titles');   // a whole person, from whatever lists have names
     for (let i = 0; i < 8; i++) items.push([T.length && Math.random() < 0.3 ? pick(T) : '', F.length ? pick(F) : '', M.length && Math.random() < 0.3 ? pick(M) : '', L.length ? pick(L) : ''].filter(Boolean).join(' ') || pick(E)); }
   else { const B = [...E].sort(() => Math.random() - 0.5).slice(0, 8); B.forEach((n, i) => items.push(p.id === 'streets' ? `${n} ${i % 2 ? 'Avenue' : 'Street'}` : p.id === 'looks' ? `a ${n} building` : n)); }
   rolled = { id: p.id, items }; render();
+}
+// An item's name for a level, the way the game makes it (core/items.gd): half the time one of the
+// level's own names if it has any, otherwise company + prefix+suffix + the level's version.
+function itemName(P, lv, rnd){
+  const pick = A => A[Math.floor(rnd() * A.length)], own = P['level' + lv] || [], C = P.company || [], Pr = P.prefix || [], S = P.suffix || [], V = P.versions || [];
+  if (own.length && (rnd() < 0.5 || !(C.length || S.length))) return pick(own);
+  const v = V.length ? V[Math.min(lv, V.length) - 1] : '';
+  return [C.length ? pick(C) : '', (Pr.length ? pick(Pr) : '') + (S.length ? pick(S) : ''), v].filter(Boolean).join(' ') || '(nothing to make a name from)';
 }
 // the game's file, rebuilt from the pools (what Claude copies into the repo)
 function asGameJson(){
@@ -191,6 +215,8 @@ function asGameJson(){
   by('kind').forEach(p => out.kinds[pools[p.id].key] = { label: pools[p.id].label || pools[p.id].key, plain: !!pools[p.id].plain, names: list(p.id) });
   by('mega').forEach(p => out.megas[pools[p.id].key] = list(p.id));
   by('adj').forEach(p => out.npc.adjectives[pools[p.id].key] = list(p.id));
+  out.items = {}; by('item').forEach(p => { const P = pools[p.id]; out.items[P.key] = { label: P.label || P.key, company: list(p.id, 'company'), prefix: list(p.id, 'prefix'), suffix: list(p.id, 'suffix'), versions: list(p.id, 'versions'),
+    named: Array.from({ length: levels(P) }, (_, i) => list(p.id, 'level' + (i + 1))) }; });
   return JSON.stringify(out, null, 1);
 }
 
@@ -199,10 +225,12 @@ document.addEventListener('click', async e => {
   const nc = e.target.closest('[data-newcat]'); if (nc){ const g = GROUPS.find(x => x.id === nc.dataset.newcat); const li = nc.closest('li');
     li.innerHTML = `<form class="addrow" data-catform="${g.id}"><input id="newcat" type="text" placeholder="${esc(g.open)}" aria-label="${esc(g.open)}" autocomplete="off"><button type="submit">Add</button></form>`; $('#newcat').focus(); return; }
   if (e.target.closest('#roll')){ roll(); return; }
-  if (e.target.closest('#sort')){ const E = [...list(sel)].sort((a, b) => a.localeCompare(b)); save(sel, { entries: E }); return; }
+  const sb = e.target.closest('[data-sub]'); if (sb){ sub[sel] = sb.dataset.sub; editing = null; render(); return; }
+  if (e.target.closest('#addlv')){ const n = levels(pools[sel] || {}) + 1; save(sel, { ['level' + n]: [] }); sub[sel] = 'level' + n; return; }
+  if (e.target.closest('#sort')){ const f = cur(sel), E = [...list(sel, f)].sort((a, b) => a.localeCompare(b)); save(sel, { [f]: E }); return; }
   const dc = e.target.closest('#delcat'); if (dc){ if (!dc.classList.contains('armed')){ dc.classList.add('armed'); dc.textContent = 'Delete it?'; setTimeout(() => { if (dc.isConnected){ dc.classList.remove('armed'); dc.textContent = 'Delete list'; } }, 3000); return; }
     try { await db.doc('pools/' + sel).delete(); sel = null; } catch (err){ say('Could not delete. Reload and try again.'); } return; }
-  const x = e.target.closest('[data-x]'); if (x){ const E = [...list(sel)], k = +x.dataset.x, gone = E.splice(k, 1)[0]; save(sel, { entries: E }); say(`Removed ${gone}.`, true); return; }
+  const x = e.target.closest('[data-x]'); if (x){ const f = cur(sel), E = [...list(sel, f)], k = +x.dataset.x, gone = E.splice(k, 1)[0]; save(sel, { [f]: E }); say(`Removed ${gone}.`, true); return; }
   const en = e.target.closest('.e'); if (en && canWrite){ editing = { id: sel, k: +en.dataset.k }; render(); return; }
   if (e.target.closest('#copy')){ const t = asGameJson(); try { await navigator.clipboard.writeText(t); $('#copy').textContent = 'Copied'; setTimeout(() => $('#copy').textContent = 'Copy JSON', 1500); } catch (err){ $('#pane').insertAdjacentHTML('afterbegin', `<textarea readonly style="width:100%;height:12em;font:12px var(--mono)" aria-label="Compendium JSON">${esc(t)}</textarea>`); } return; }
 });
@@ -211,15 +239,16 @@ document.addEventListener('submit', e => { e.preventDefault();
   const cf = e.target.dataset.catform; if (cf){ const key = $('#newcat').value.trim().toLowerCase(); if (!key) { render(); return; }
     const id = docId(cf, key); if (pools[id]){ sel = id; render(); return; }
     const d = { group: cf, key, entries: [], order: Date.now(), edited: new Date().toISOString() }; if (cf === 'kind'){ d.label = key; d.plain = false; }
+    if (cf === 'item'){ delete d.entries; Object.assign(d, { label: key, company: [], prefix: [], suffix: [], versions: [], level1: [] }); }
     db.doc('pools/' + id).set(d).then(() => { sel = id; }).catch(() => render()); }
 });
 document.addEventListener('keydown', e => { if (e.target.id !== 'edit') return;
   if (e.key === 'Escape'){ editing = null; render(); return; }
   if (e.key !== 'Enter') return; e.preventDefault(); commitEdit(); });
 document.addEventListener('focusout', e => { if (e.target.id === 'edit') commitEdit(); });
-function commitEdit(){ if (!editing) return; const v = $('#edit').value.trim().replace(/\s+/g, ' '), E = [...list(editing.id)], k = editing.k; editing = null;
-  if (v && v !== E[k]){ if (E.some((x, i) => i !== k && x.toLowerCase() === v.toLowerCase())){ render(); say(`${v} is already in this list.`); return; } E[k] = v; save(sel, { entries: E }); }
-  else if (!v){ E.splice(k, 1); save(sel, { entries: E }); }
+function commitEdit(){ if (!editing) return; const f = cur(editing.id), v = $('#edit').value.trim().replace(/\s+/g, ' '), E = [...list(editing.id, f)], k = editing.k; editing = null;
+  if (v && v !== E[k]){ if (E.some((x, i) => i !== k && x.toLowerCase() === v.toLowerCase())){ render(); say(`${v} is already in this list.`); return; } E[k] = v; save(sel, { [f]: E }); }
+  else if (!v){ E.splice(k, 1); save(sel, { [f]: E }); }
   render(); }
 document.addEventListener('change', e => {
   if (e.target.id === 'plain') save(sel, { plain: e.target.checked });
