@@ -1,3 +1,4 @@
+<!-- Bench page version: bench v1 (the #benchVer label in the header). Bump it with every change to this file. -->
 <!-- The shared test bench page. One source for every bench: bench/benches.json holds what differs per project, and
      node bench/build.js writes bench/out/<id>.html for each. See bench/README.md. -->
 <title>{{TITLE}}</title>
@@ -120,6 +121,7 @@ body.boarded .wrap{max-width:1400px}.wrap,.pin,.tools{grid-template-columns:minm
   <div class="pin">
   <header>
     <h1>{{NAME_A}}<span>{{NAME_B}}</span> test bench</h1>
+    <span class="meta" id="benchVer" title="The version of this bench page (the same page runs every bench). It goes up with every change to bench/bench.html in XC3N/webtools.">bench v1</span>
     <a class="meta" id="ver" href="{{LINK}}" target="_blank" rel="noopener" title="The version {{NAME}} is at · click: {{LINK_LABEL}}">v—</a>
     <span class="kind who" id="who" role="group" aria-label="Who is using the bench" title="Who is using the bench on this device. Notes and new items are signed with this name; Yours shows what waits on them."></span>
     <span class="total" id="total"><b>0</b> open</span>

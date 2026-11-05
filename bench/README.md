@@ -12,7 +12,7 @@ This folder is not part of the GitHub Pages build (`build.js` only builds `tools
 
 ## Changing the bench
 
-1. Edit `bench.html`. A change made for one project reaches every bench, so keep project-specific wording out of it; that goes in `benches.json`.
+1. Edit `bench.html`, and bump the page version in the header label (`#benchVer`, "bench vN") and the comment at the top, so you can tell which page a bench is running. A change made for one project reaches every bench, so keep project-specific wording out of it; that goes in `benches.json`.
 2. `node bench/build.js`. It stops if a built page's script doesn't parse.
 3. Publish each `bench/out/<id>.html` to its `url` with the Artifact tool. Read the artifact first. Leave `capabilities` out so each bench keeps its `db` and `user` declaration.
 4. Commit `bench.html` / `benches.json` with the change.
