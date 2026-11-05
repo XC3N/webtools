@@ -14,12 +14,22 @@ A claude.ai artifact (a page with a shared database of designs) for drawing buil
 2. Here: `node building-designer/build.js`, then publish `out/building-designer.html` to the artifact's URL (read it first; leave `capabilities` out so `db` + `user` carry forward).
 3. Commit `game/` and any `src.html` change.
 
-What is only in the designer (pieces, the status layer, edges set by hand, stairs/elevator/chair tiles, window and hedge materials) is marked ◇ or reported by the checks as "not in the game yet".
+The designer offers only what the game has. Pieces, the status layer and edges set by hand are designer-side (the game ignores them for now). Older designs may still hold stairs, elevator, chair, window or hedge: they open, the checks list them, and they are no longer in the palette.
 
 ## Counters
 
-A counter is a **counter front** (`{ _ }`, the walkable cells customers stand on, with a line on the side the staff are on) and a **staff row** behind it: a solid counter block `c` at each end, `@` where the clerk stands, `K` the clerk's terminal, as in the hotel (`{__}` over `c@Kc`). The **Counter** tool (`C`) lays all of it in one drag: drag along the customer side, the brush facing (`Q` / `E`) says which side the staff stand on, and the Staff row button turns the row behind it off. Needs 3 cells or more for the staff row.
+There is no Counter tool: lay the counter front (`{ _ }`, walkable cells with a line on the staff side) with the pencil and Shift+click, turn it with Select + Q / E, and close the staff row behind it with counter blocks `c`, the staff spot `@` (Actors & spawns) and the clerk's terminal `K` (Devices).
 
 ## Saved design format (v3)
 
 `rows` (one character per tile, like the game's `core/hotel.gd`), `ex` (sparse `"x,y"` → `{r?, p?, w?, e?}`: facing 0 south 1 west 2 north 3 east, pieces, walk status, edges), `walk` (derived walkable rows), `edges` (derived: sides you can't cross, per cell), `v: 3`. The game turns `rows` + `ex` into tiles with `Designs.to_tiles()`.
+
+## Versions
+
+The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
+
+- v8: the description block under the title is gone.
+- v7: layout (type + building dropdowns and New on one line, no side panel); toolbar of icons with only Pencil (Shift+click a straight line, Shift+right click picks) and Select (Q / E turn the selected tile); Counter, line, box, fill, pick and rotate tools gone; Resize beside Zoom; every palette group collapsible and regrouped by what things are; stairs, elevator, chair, window and hedge no longer offered; a cell can't be painted past what the game can draw; unreachable cells are an info line.
+- v6: the Building sizes panel and its size check are gone (mapgen's lot sizes are being redone).
+- v5: unscii mcr square tiles (ID-087), the Counter tool and folded Counter parts (TW-091).
+- v4: drawn from the game's tile data and atlas (TW-090).
