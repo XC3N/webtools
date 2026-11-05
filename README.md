@@ -8,7 +8,7 @@ The shared toolbox behind XC3N's projects: small single-file browser tools, the 
 
 | Tool | What it does |
 |---|---|
-| **[Glyph Viewer](tools/glyph-viewer/)** | Browse and filter every character the Sprawler game's font can draw, see which are already in the game's glyph atlas, and copy their code points. |
+| **[Glyph Viewer](tools/glyph-viewer/)** | Browse and filter every glyph of unscii-8 mcr (the font the Sprawler game's square map tiles come from), the game's tile sheet in slot order, and DejaVu Sans Mono; see which are already used by a tile or in the glyph atlas, and copy their code points or tile names. |
 | **[Logo Lab](tools/logo-lab/)** | Design wordmarks: mix a typeface, a treatment and an accent colour, preview them in context, manage the Google Fonts in the lab and download one for offline use. |
 
 Each tool is one self-contained HTML file: open it on the site, or download it (or build it, below) and open it offline in Chrome.
