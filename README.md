@@ -8,7 +8,6 @@ The shared toolbox behind XC3N's projects: small single-file browser tools, the 
 
 | Tool | What it does |
 |---|---|
-| **[Glyph Viewer](tools/glyph-viewer/)** | Browse and filter every glyph of unscii-8 mcr (the font the Sprawler game's square map tiles come from) and the game's tile sheet in slot order; see which glyphs a tile already uses, and copy code points or tile names. |
 | **[Logo Lab](tools/logo-lab/)** | Design wordmarks: mix a typeface, a treatment and an accent colour, preview them in context, manage the Google Fonts in the lab and download one for offline use. |
 
 Each tool is one self-contained HTML file: open it on the site, or download it (or build it, below) and open it offline in Chrome.
@@ -26,6 +25,7 @@ Both started here and moved out on October 30, 2026; their history up to then is
 
 - **`common/`**: code shared between tools (settings storage, the slider / dropdown behaviour standard, theming, the MP4 muxer). Tools in this repo include it directly; VJif and Bad MOPHO build with a pinned copy and take updates with their `sync-common.js`. Shared code is changed here first. See [common/README.md](common/README.md).
 - **`compendium/`**: the Compendium, where Sprawler's name pools are edited (a claude.ai artifact with a shared database; Claude copies it into the game with each PR). See [compendium/README.md](compendium/README.md).
+- **`glyph-viewer/`**: the Glyph Viewer, where the unscii-8 mcr glyphs and the Sprawler tile sheet are browsed and a tile's glyph can be swapped (a claude.ai artifact with a shared database; Claude copies the swaps into the game). See [glyph-viewer/README.md](glyph-viewer/README.md).
 - **`bench/`**: the test bench page. Every project's bench (VJif, Sprawler) is a claude.ai artifact running this one page, with what differs per project in `benches.json`. See [bench/README.md](bench/README.md).
 
 ## Layout
