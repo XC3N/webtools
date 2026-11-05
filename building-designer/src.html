@@ -84,7 +84,6 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
   <header>
     <h1>Sprawler <span>Building Designer</span> <small id="ver"></small></h1>
     <span class="who" id="who"></span>
-    <p class="sub">Draw buildings, the hotel and parks on the game's grid, with its tiles and colours. A cell has layers: a tile (which can face a direction), half-block pieces on top of it, and a walkable status. Only what the game has is on offer. Designs are saved here for everyone on the project; Claude reads them to work out the rules mapgen uses to make more.</p>
   </header>
   <div class="main">
     <section class="stage" aria-label="Editor">
@@ -192,7 +191,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '7';
+const DESIGNER_VERSION = '8';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -656,7 +655,6 @@ $('#pal').addEventListener('toggle', e => { const g = e.target.dataset && e.targ
 // ---------- start
 $('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
 zoom = window.innerWidth < 720 ? 2 : 3; $('#zoom').value = zoom;
-$('.sub').insertAdjacentHTML('beforeend', ` Tiles, colours and glyphs are the game's (v${esc(GAME.version)}, ${esc(GAME.commit)}).`);
 renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false);
 (async () => {
   db = await (window.claude?.use ? claude.use('db') : null);
