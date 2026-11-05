@@ -19,6 +19,7 @@ body{font:14px/1.45 var(--body)}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px}
 h1{margin:0;font:600 24px/1.1 var(--display);letter-spacing:.03em}
 h1 span{color:var(--accent)}
+h1 small{font:400 12px var(--mono);color:var(--muted);letter-spacing:0;margin-left:6px;vertical-align:middle}
 .sub{color:var(--muted);font-size:13px;flex-basis:100%;max-width:80ch;margin:0}
 .who{margin-left:auto;font:400 12px var(--mono);color:var(--muted)}
 .main{display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:14px;align-items:start}
@@ -92,7 +93,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
 
 <div class="wrap">
   <header>
-    <h1>Sprawler <span>Building Designer</span></h1>
+    <h1>Sprawler <span>Building Designer</span> <small id="ver"></small></h1>
     <span class="who" id="who"></span>
     <p class="sub">Draw buildings, the hotel and parks on the game's grid, with its tiles and colours. A cell has layers: a tile (which can face a direction), half-block pieces on top of it, and a walkable status. Designs are saved here for everyone on the project; Claude reads them to work out the rules mapgen uses to make more.</p>
   </header>
@@ -214,6 +215,8 @@ const T = [
   ['Hotel', 'g', "a guest's terminal", 'r'],
   ['Markers', 'S', 'where you wake up / come in', '', { marker: 1, glyph: 'S', fg: '#7a809f', bg: '#0d0f14', walk: 1 }],
 ];
+// The designer's own version: bump it with every push (README: Versions).
+const DESIGNER_VERSION = '5';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -261,6 +264,7 @@ const TOOLS = [['pen', 'Pencil', 'P'], ['line', 'Line', 'L'], ['box', 'Box', 'B'
 const MODES = [['tile', 'Tiles', '1'], ['piece', 'Pieces', '2'], ['status', 'Status', '3']];
 const VIEWS = [['look', 'Look'], ['tiles', 'Tiles only'], ['pieces', 'Pieces only'], ['walk', 'Walkable']];
 
+{ const v = document.querySelector('#ver'); v.textContent = 'v' + DESIGNER_VERSION; v.title = 'Building Designer v' + DESIGNER_VERSION + ' · tiles from game ' + GAME.version; }
 let db = null, user = null, me = null, canWrite = true;
 // A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
 let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];

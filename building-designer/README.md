@@ -23,3 +23,10 @@ A counter is a **counter front** (`{ _ }`, the walkable cells customers stand on
 ## Saved design format (v3)
 
 `rows` (one character per tile, like the game's `core/hotel.gd`), `ex` (sparse `"x,y"` → `{r?, p?, w?, e?}`: facing 0 south 1 west 2 north 3 east, pieces, walk status, edges), `walk` (derived walkable rows), `edges` (derived: sides you can't cross, per cell), `v: 3`. The game turns `rows` + `ex` into tiles with `Designs.to_tiles()`.
+
+## Versions
+
+The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
+
+- v5: unscii mcr square tiles (ID-087), the Counter tool and folded Counter parts (TW-091).
+- v4: drawn from the game's tile data and atlas (TW-090).
