@@ -10,6 +10,5 @@ The code is written for these tools rather than copied from other projects, apar
 
 ## Typefaces
 
-- Glyph Viewer: draws the glyphs of DejaVu Sans Mono (Bitstream Vera / DejaVu fonts licence, free to use and redistribute) as a sprite sheet baked from the Sprawler game's own font.
-- Glyph Viewer: also draws the glyphs of unscii-8 mcr by Viznut ([unscii](https://github.com/viznut/unscii), public domain / CC0; none of its Unifont-derived files are used) as a sprite sheet, and shows the Sprawler game's tile sheet, which is drawn from them.
+- Glyph Viewer: draws the glyphs of unscii-8 mcr by Viznut ([unscii](https://github.com/viznut/unscii), public domain / CC0; none of its Unifont-derived files are used) as a sprite sheet, and shows the Sprawler game's tile sheet, which is drawn from them.
 - Interface: Instrument Sans and JetBrains Mono (JetBrains), from Google Fonts (SIL Open Font License).

@@ -1,2 +1,2 @@
 { "name": "Glyph Viewer", "entry": "glyph-viewer.html", "output": "glyph-viewer.html",
-  "description": "Browse and filter every glyph of unscii-8 mcr (the font the Sprawler game's square map tiles come from), the game's tile sheet in slot order, and DejaVu Sans Mono; see which are used by a tile or in the glyph atlas, and copy their code points or tile names." }
+  "description": "Browse and filter every glyph of unscii-8 mcr (the font the Sprawler game's square map tiles come from) and the game's tile sheet in slot order; see which glyphs a tile already uses, and copy code points or tile names." }
