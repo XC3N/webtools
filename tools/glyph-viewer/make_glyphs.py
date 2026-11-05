@@ -4,18 +4,15 @@
 Usage: python3 make_glyphs.py /path/to/Sprawler
 Reads  assets/fonts/unscii-8-mcr.hex          the 8 x 8 font the square map tiles are drawn from,
        assets/tiles/unscii_mcr.png + tiles.json   the game's tile sheet and its slot names,
-       tools/make_tiles.py, core/sprawl_map.gd, core/entity.gd   how each tile's picture is chosen, and its colours,
-       assets/fonts/DejaVuSansMono.ttf + core/cp437.gd   the glyph font and its atlas's code points.
-Writes glyph-data.js next to this script: three sets, each with a sprite sheet (PNG, base64) and its list of items:
+       tools/make_tiles.py, core/sprawl_map.gd, core/entity.gd   how each tile's picture is chosen, and its colours.
+Writes glyph-data.js next to this script: two sets, each with a sprite sheet (PNG, base64) and its list of items:
   unscii  every glyph in unscii-8 mcr: [code point, name, block, tile-sheet slot or -1, [[slot, tile name], ...]]
   tiles   the tile sheet itself, in slot order: [slot, name, code point it was drawn from or -1, how, fg, bg, wanted code point]
-  dejavu  every drawable character of DejaVu Sans Mono: [code point, name, block, atlas slot or -1]
-Blocks are the Unicode blocks the set's characters actually fall in (fontTools.unicodedata), so none is ever empty.
-Rerun it whenever the game's fonts, atlas or tile sheet change.
+Blocks are the Unicode blocks the glyphs actually fall in (fontTools.unicodedata), so none is ever empty.
+Rerun it whenever the game's tile sheet or tile table changes.
 """
 import sys, re, json, base64, io, pathlib, unicodedata
-from PIL import Image, ImageDraw, ImageFont
-from fontTools.ttLib import TTFont
+from PIL import Image
 from fontTools import unicodedata as ftu
 
 game = pathlib.Path(sys.argv[1])
@@ -51,46 +48,6 @@ def b64png(img):
     img.save(buf, "PNG", optimize=True)
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
-
-# ---- DejaVu Sans Mono: the glyph font, drawn at the game's atlas size ----
-font_path = game / "assets/fonts/DejaVuSansMono.ttf"
-size = 20  # the game's atlas size (tools/make_atlas.py)
-cols = 64
-
-gd = (game / "core/cp437.gd").read_text()
-atlas = [int(x) for x in re.search(r"CODEPOINTS := \[([^\]]*)\]", gd).group(1).split(",")]
-slot_of = {}
-for slot, cp in enumerate(atlas):
-    slot_of.setdefault(cp, slot)
-
-cmap = TTFont(str(font_path)).getBestCmap()
-cps = []
-for cp in sorted(cmap):
-    cat = unicodedata.category(chr(cp))
-    if cat[0] in "MC" or cat in ("Zs", "Zl", "Zp") and cp != 0x20:
-        continue
-    cps.append(cp)
-for cp in atlas:  # the atlas always shows, even blanks
-    if cp not in cps and cp in cmap:
-        cps.append(cp)
-cps = sorted(set(cps))
-
-font = ImageFont.truetype(str(font_path), size)
-asc, desc = font.getmetrics()
-cw, ch = round(font.getlength("M")), asc + desc
-rows = (len(cps) + cols - 1) // cols
-sheet = Image.new("RGBA", (cw * cols, ch * rows), (255, 255, 255, 0))
-for i, cp in enumerate(cps):
-    cell = Image.new("L", (cw, ch), 0)
-    ImageDraw.Draw(cell).text((0, 0), chr(cp), fill=255, font=font)
-    white = Image.new("RGBA", (cw, ch), (255, 255, 255, 255))
-    white.putalpha(cell)
-    sheet.paste(white, ((i % cols) * cw, (i // cols) * ch))
-dj_blocks, dj_block_of = blocks_of(cps)
-dejavu = dict(
-    id="dejavu", name="DejaVu Sans Mono", kind="glyphs", cell=[cw, ch], cols=cols, scale=2, zoom=[.75, 2.2, .75],
-    crisp=False, blocks=dj_blocks, sheet=b64png(sheet),
-    items=[[cp, name_of(cp), dj_block_of[i], slot_of.get(cp, -1)] for i, cp in enumerate(cps)])
 
 # ---- the tile sheet: which glyph (or hand drawing, or edge line) each slot's template was made from ----
 names = json.loads((game / "assets/tiles/tiles.json").read_text())["names"]
@@ -148,9 +105,8 @@ unscii_set = dict(
     items=[[cp, name_of(cp), un_block_of[i], used[cp][0][0] if cp in used else -1, used.get(cp, [])] for i, cp in enumerate(ucps)])
 
 out = pathlib.Path(__file__).with_name("glyph-data.js")
-out.write_text("const GLYPH_DATA = " + json.dumps({"sets": [unscii_set, tiles, dejavu]}, ensure_ascii=False,
+out.write_text("const GLYPH_DATA = " + json.dumps({"sets": [unscii_set, tiles]}, ensure_ascii=False,
                                                   separators=(",", ":")) + ";\n")
 print(f"unscii-8 mcr: {len(ucps)} glyphs in {len(un_blocks)} blocks, {len(used)} used by the tile sheet")
 print(f"tile sheet: {len(names)} slots at {ts} px")
-print(f"DejaVu Sans Mono: {len(cps)} glyphs in {len(dj_blocks)} blocks, {len(atlas)} in the atlas")
 print(round(out.stat().st_size / 1024), "KB")
