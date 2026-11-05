@@ -81,6 +81,7 @@ dialog::backdrop{background:#000a}
 .pcs{display:grid;gap:6px}.pcs .prow{display:flex;gap:6px;align-items:center}.pcs .prow>span{width:54px;font:11px var(--mono);color:var(--muted)}
 .pcs button{height:44px;width:44px;padding:0;display:grid;place-items:center;position:relative}
 .pcs button.on{outline:2px solid var(--accent);outline-offset:1px}
+.how{display:grid;gap:4px;margin:4px 0 8px}.how p{margin:4px 0 0}.demo{display:flex}.demo img{height:32px;width:32px}
 .st{display:grid;gap:6px}.st button{text-align:left}
 .insp{display:grid;gap:6px;font-size:12px}.insp .ln{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.insp .k{color:var(--muted);width:54px}
 .insp button{padding:1px 7px;font-size:12px}.insp .sw{width:16px;height:16px}
@@ -151,7 +152,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
       <div class="counts" id="counts"></div>
       <details class="keys"><summary>Keys</summary>
         <p><kbd>P</kbd> pencil · <kbd>L</kbd> line · <kbd>B</kbd> box · <kbd>R</kbd> filled box · <kbd>F</kbd> fill · <kbd>I</kbd> pick · <kbd>T</kbd> rotate a cell · <kbd>M</kbd> mirror</p>
-        <p>Desk front tiles are a line on one side of the cell: turn them with <kbd>Q</kbd> <kbd>E</kbd> or the rotate tool. Status → edge adds a line to any cell.</p>
+        <p>Counter front tiles are a line on one side of the cell: turn them with <kbd>Q</kbd> <kbd>E</kbd> or the rotate tool. The Counter tool (<kbd>C</kbd>) drags a whole counter. Status → edge adds a line to any cell.</p>
         <p><kbd>Q</kbd> <kbd>E</kbd> turn the brush · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> tiles / pieces / status · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</p>
         <p>Right click: second tile in the Tiles layer; clears the layer in Pieces and Status.</p>
       </details>
@@ -183,20 +184,23 @@ const T = [
   ['Levels', 'L', 'elevator', 'r', { only: 1, glyph: '↕', fg: '#9fe0ff', bg: '#0d0f14', walk: 1 }],
   ['Terminals', 'T', 'terminal (cash)', 'r'],
   ['Terminals', 'X', 'data terminal spot', 'r'],
-  ['Terminals', 'K', "clerk's terminal", 'r'],
-  ['Terminals', 'J', 'job board', 'r'],
+  ['Terminals', 'J', 'job board (the hotel only: it opens the job board)', 'r'],
   ['Terminals', 'R', 'recharge station', 'r'],
+  // The counter: customers stand on the counter front cells (walkable), the line is on the staff's side; behind it
+  // the staff row: solid blocks close the ends, @ is where the clerk stands, K the clerk's terminal.
+  ['Counter', '{', 'counter front: first end (left, or top)', 're'],
+  ['Counter', '_', 'counter front: middle', 're'],
+  ['Counter', '}', 'counter front: last end (right, or bottom)', 're'],
+  ['Counter', 'c', 'counter block (solid: closes the end of a staff row)', ''],
+  ['Counter', '@', 'staff spot: where the clerk or shopkeeper stands', '', { marker: 1, glyph: '@', fg: '#9d5cff', bg: '#0d0f14', walk: 1 }],
+  ['Counter', 'K', "clerk's terminal (staff side)", 'r'],
   ['Furniture', 'x', 'crates', ''],
   ['Furniture', 't', 'table', ''],
   ['Furniture', 's', 'shelves', 'r'],
   ['Furniture', 'm', 'machine', 'r'],
   ['Furniture', 'B', 'bed', 'rs'],
   ['Furniture', 'a', 'arcade cabinet', 'r'],
-  ['Furniture', 'c', 'counter side (solid)', ''],
   ['Furniture', 'C', 'chair (you can stand on it)', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
-  ['Furniture', '{', 'desk front, first end (left / top)', 're'],
-  ['Furniture', '_', 'desk front', 're'],
-  ['Furniture', '}', 'desk front, last end (right / bottom)', 're'],
   ['Plants & park', 'v', 'potted plant', ''],
   ['Plants & park', 'Y', 'tree', ''],
   ['Plants & park', ',', 'grass', ''],
@@ -208,7 +212,6 @@ const T = [
   ['Hotel', 'p', 'your pod', 'r'],
   ['Hotel', 'b', "a guest's bed", 'r'],
   ['Hotel', 'g', "a guest's terminal", 'r'],
-  ['Markers', '@', 'someone stands here (clerk, shopkeeper)', '', { marker: 1, glyph: '@', fg: '#9d5cff', bg: '#0d0f14', walk: 1 }],
   ['Markers', 'S', 'where you wake up / come in', '', { marker: 1, glyph: 'S', fg: '#7a809f', bg: '#0d0f14', walk: 1 }],
 ];
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
@@ -254,7 +257,7 @@ const SIZES = [
 const KINDS = ['noodle bar', 'laundromat', 'clinic', 'pawn shop', 'arcade', 'warehouse', 'apartments', 'corp annex', "fixer's den", 'capsule hotel', 'park', 'MegaBuilding', 'Corpsec HQ', 'other'];
 // The game's lobby today (core/hotel.gd LAYOUT), to start a hotel from.
 const HOTEL = ['#####NNNNNNN#########', '#pSJ##b.g##b.g##b.g##', '##+####P####P####P###', '#v.................v#', '#.......{__}........E', '#...T...c@Kc...R...v#', '##P####P####P####P###', '#b.g##b.g##b.g##b.g##', '#####################'];
-const TOOLS = [['pen', 'Pencil', 'P'], ['line', 'Line', 'L'], ['box', 'Box', 'B'], ['rect', 'Filled box', 'R'], ['fill', 'Fill', 'F'], ['pick', 'Pick', 'I'], ['turn', 'Rotate a cell', 'T']];
+const TOOLS = [['pen', 'Pencil', 'P'], ['line', 'Line', 'L'], ['box', 'Box', 'B'], ['rect', 'Filled box', 'R'], ['fill', 'Fill', 'F'], ['pick', 'Pick', 'I'], ['turn', 'Rotate a cell', 'T'], ['counter', 'Counter', 'C']];
 const MODES = [['tile', 'Tiles', '1'], ['piece', 'Pieces', '2'], ['status', 'Status', '3']];
 const VIEWS = [['look', 'Look'], ['tiles', 'Tiles only'], ['pieces', 'Pieces only'], ['walk', 'Walkable']];
 
@@ -262,7 +265,7 @@ let db = null, user = null, me = null, canWrite = true;
 // A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
 let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
 let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
-let edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null;
+let counterStaff = true, edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CW = 8, CH = 8;   // a map tile is square: the sheet's 8 px at zoom 1
@@ -467,10 +470,18 @@ function swatch(m, s, r){ const col = MATS[m].col; let bg;
   if (s === 'half') bg = `linear-gradient(${['to top', 'to right', 'to bottom', 'to left'][r]},${col} 50%,transparent 50%)`;
   else bg = `linear-gradient(${col},${col}) ${['right bottom', 'left bottom', 'left top', 'right top'][r]}/50% 50% no-repeat`;
   return `<span class="sw" style="background:${bg}"></span>`; }
+// A counter drawn with the game's own tiles, and what each part is for.
+function counterHowTo(){
+  const cell = ch => { const t = TILE[ch], key = t.desk !== undefined ? GAME.desk.tiles.south[t.desk] : t.key;
+    return `<img class="gs" alt="${esc(t.name)}" title="${esc(t.name)} (${esc(ch)})" src="${glyphUrl(key, t.cp, t.fg, t.bg)}" style="background:${t.bg}">`; };
+  const row = s => `<div class="demo">${[...s].map(cell).join('')}</div>`;
+  return `<div class="how"><div class="cur">customers stand here</div>${row('.{__}.')}${row('.c@Kc.')}<div class="cur">staff stand here</div>
+    <p class="cur">The top row is walkable: you can walk along the line under it, never across it. The line is on the side the staff are on, so turn it with <kbd>Q</kbd> <kbd>E</kbd>. The row behind has a solid <b>c</b> block at each end, <b>@</b> where the clerk stands and <b>K</b> his terminal. The <b>Counter</b> tool (<kbd>C</kbd>) lays all of it in one drag.</p></div>`;
+}
 function renderPal(){
   if (mode === 'tile'){
     const groups = [...new Set(T.map(t => t[0]))];
-    $('#pal').innerHTML = groups.map(g => `<div><h3>${esc(g)}</h3><div class="tiles">${T.filter(t => t[0] === g).map(tileSw).join('')}</div></div>`).join('');
+    $('#pal').innerHTML = groups.map(g => `<div><h3>${esc(g)}</h3>${g === 'Counter' ? counterHowTo() : ''}<div class="tiles">${T.filter(t => t[0] === g).map(tileSw).join('')}</div></div>`).join('');
     $('#curA').textContent = TILE[tileA].name; $('#curB').textContent = TILE[tileB].name;
   } else if (mode === 'piece'){
     $('#pal').innerHTML = `<p class="cur">Pieces sit on top of the tile, so a cell can be a desk front, half a wall or a half-width neon sign. Turn the brush with Q / E.</p><div class="pcs">` +
@@ -487,7 +498,9 @@ function renderPal(){
 function renderTools(){
   $('#tools').innerHTML = TOOLS.map(([id, name, key]) => `<button type="button" data-tool="${id}" class="${tool === id ? 'on' : ''}" title="${name} (${key})">${name} <kbd>${key}</kbd></button>`).join('') +
     `<span class="sep"></span><button type="button" id="mirror" class="${mirror ? 'on' : ''}" title="Mirror left and right (M)">Mirror <kbd>M</kbd></button>
-     <button type="button" id="resize">Resize…</button>`;
+     <button type="button" id="resize">Resize…</button>` +
+    (tool === 'counter' ? `<span class="sep"></span><button type="button" id="cstaff" class="${counterStaff ? 'on' : ''}" title="Also lay the staff row behind the counter (3 cells or more): counter blocks at the ends, @ and the clerk's terminal">Staff row</button>
+     <span class="cur">Drag along the customer side. The staff stand on the <b>${FACE[rot]}</b> side: Q / E turns it.</span>` : '');
   $('#views').innerHTML = VIEWS.map(([id, n]) => `<button type="button" data-view="${id}" class="${view === id ? 'on' : ''}">${n}</button>`).join('');
 }
 function renderInsp(){
@@ -582,11 +595,30 @@ function turnCell(p, dir){ const c = cells[p.y][p.x]; snapshot();
   else if (mode === 'piece'){ if (!c.p.length){ undo.pop(); return false; } c.p = c.p.map(([m, s, r]) => [m, s, (r + dir + 4) & 3]); }
   else { undo.pop(); return false; }
   return true; }
+// The Counter tool: drag along the customer side. The brush facing says which side the staff stand on, so the run
+// always goes across it (south or north: left to right; west or east: top to bottom). It lays the counter front
+// ({ _ } with its line on the staff's side) and, with Staff row on and at least 3 cells, the row behind it: a
+// counter block at each end, then @ and the clerk's terminal K, as in the hotel (core/hotel.gd: {__} over c@Kc).
+function counterBrushes(a, b){
+  const horiz = !(rot & 1), n = (horiz ? Math.abs(b.x - a.x) : Math.abs(b.y - a.y)) + 1, lo = horiz ? Math.min(a.x, b.x) : Math.min(a.y, b.y), out = [];
+  for (let i = 0; i < n; i++){
+    const x = horiz ? lo + i : a.x, y = horiz ? a.y : lo + i;
+    out.push([x, y, { k: 'tile', ch: n === 1 ? '_' : i === 0 ? '{' : i === n - 1 ? '}' : '_', r: rot }]);
+    if (counterStaff && n >= 3){
+      const ch = i === 0 || i === n - 1 ? 'c' : i === 1 ? '@' : i === 2 ? 'K' : '.';
+      out.push([x + SIDE[rot][0], y + SIDE[rot][1], { k: 'tile', ch, r: ch === 'K' ? (rot + 2) & 3 : 0 }]);   // the terminal faces the customers
+    }
+  }
+  return out;
+}
+function counterShape(a, b){ const out = [];
+  for (const [x, y, br] of counterBrushes(a, b)){ out.push([x, y, br]); if (mirror && W - 1 - x !== x) out.push([W - 1 - x, y, mirrorBrush(br)]); } return out; }
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => {
   const p = cellAt(e); if (!inb(p.x, p.y)) return; cv.setPointerCapture(e.pointerId); cv.focus();
   if (tool === 'pick'){ pickCell(p, e.button); return; }
   if (tool === 'turn'){ if (turnCell(p, e.button === 2 ? -1 : 1)){ sel = { x: p.x, y: p.y }; afterEdit(); } return; }
+  if (tool === 'counter'){ if (mode !== 'tile') setMode('tile'); snapshot(); drag = { a: p, br: null }; preview = counterShape(p, p); draw(); return; }
   edgeSide = sideAt(e);
   const br = brushFor(e.button === 2 ? 2 : 0);
   snapshot();
@@ -598,7 +630,7 @@ cv.addEventListener('pointermove', e => {
   const p = cellAt(e); hover = p; hover.side = sideAt(e);
   if (inb(p.x, p.y)){ const c = cells[p.y][p.x], t = TILE[c.c];
     $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' facing ' + FACE[c.r] : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
-  if (drag){ if (tool === 'pen'){ for (const [x, y] of lineCells(drag.last || drag.a, p)) setCell(x, y, drag.br); drag.last = p; } else preview = shape(drag.a, p, drag.br); }
+  if (drag){ if (tool === 'pen'){ for (const [x, y] of lineCells(drag.last || drag.a, p)) setCell(x, y, drag.br); drag.last = p; } else preview = tool === 'counter' ? counterShape(drag.a, p) : shape(drag.a, p, drag.br); }
   draw();
 });
 cv.addEventListener('pointerup', e => { if (!drag) return; if (preview){ for (const [x, y, br] of preview) setCell(x, y, br); preview = null; } drag = null; afterEdit(); });
@@ -606,7 +638,7 @@ cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
 function afterEdit(){ setDirty(true); draw(); checks(); }
 function doUndo(){ if (!undo.length) return; redo.push(snap()); restore(undo.pop()); setDirty(true); resize(); checks(); }
 function doRedo(){ if (!redo.length) return; undo.push(snap()); restore(redo.pop()); setDirty(true); resize(); checks(); }
-function turnBrush(d){ rot = (rot + d + 4) & 3; renderPal(); }
+function turnBrush(d){ rot = (rot + d + 4) & 3; renderPal(); if (tool === 'counter') renderTools(); }
 function setMode(m){ mode = m; renderPal(); draw(); }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#pop').hidden){ closePop(); return; }
@@ -648,6 +680,7 @@ document.addEventListener('click', async e => {
     case 'rotL': turnBrush(-1); break;
     case 'rotR': turnBrush(1); break;
     case 'mirror': mirror = !mirror; renderTools(); draw(); break;
+    case 'cstaff': counterStaff = !counterStaff; renderTools(); break;
     case 'resize': resizeDialog(); break;
     case 'exp': exportDialog(); break;
     case 'imp': importDialog(); break;

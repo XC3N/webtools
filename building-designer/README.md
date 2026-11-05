@@ -16,6 +16,10 @@ A claude.ai artifact (a page with a shared database of designs) for drawing buil
 
 What is only in the designer (pieces, the status layer, edges set by hand, stairs/elevator/chair tiles, window and hedge materials) is marked ◇ or reported by the checks as "not in the game yet".
 
+## Counters
+
+A counter is a **counter front** (`{ _ }`, the walkable cells customers stand on, with a line on the side the staff are on) and a **staff row** behind it: a solid counter block `c` at each end, `@` where the clerk stands, `K` the clerk's terminal, as in the hotel (`{__}` over `c@Kc`). The **Counter** tool (`C`) lays all of it in one drag: drag along the customer side, the brush facing (`Q` / `E`) says which side the staff stand on, and the Staff row button turns the row behind it off. Needs 3 cells or more for the staff row.
+
 ## Saved design format (v3)
 
 `rows` (one character per tile, like the game's `core/hotel.gd`), `ex` (sparse `"x,y"` → `{r?, p?, w?, e?}`: facing 0 south 1 west 2 north 3 east, pieces, walk status, edges), `walk` (derived walkable rows), `edges` (derived: sides you can't cross, per cell), `v: 3`. The game turns `rows` + `ex` into tiles with `Designs.to_tiles()`.
