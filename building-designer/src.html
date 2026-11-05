@@ -62,9 +62,6 @@ canvas{display:block;image-rendering:pixelated;cursor:crosshair;touch-action:non
 .checks li{display:flex;gap:6px}.checks .ok{color:var(--good)}.checks .no{color:var(--bad)}.checks .w{color:var(--warn)}
 .counts{font:400 11px var(--mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
 .msg{font-size:12px;color:var(--warn);min-height:1.2em}.msg.ok{color:var(--good)}
-.sizes{font-size:12px;color:var(--muted)}
-.sizes table{border-collapse:collapse;width:100%}.sizes td{padding:2px 4px;border-top:1px solid var(--line);vertical-align:top}
-.sizes td:first-child{font-family:var(--mono);color:var(--ink);white-space:nowrap}
 dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:min(560px,92vw);padding:16px}
 dialog::backdrop{background:#000a}
 .seg{display:flex;gap:0}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:4px 0 0 4px;margin-left:0}.seg button:last-child{border-radius:0 4px 4px 0}
@@ -102,10 +99,6 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
       <h2>Designs</h2>
       <div class="row"><button type="button" class="go" id="new">New design</button></div>
       <p class="cur" id="count">Loading designs…</p>
-      <details class="sizes" open><summary>Building sizes</summary>
-        <p>Outer size with the walls. Heights are the city's block heights; widths are even, as mapgen's lots are.</p>
-        <table id="sizetab"></table>
-      </details>
     </aside>
 
     <section class="stage" aria-label="Editor">
@@ -216,7 +209,7 @@ const T = [
   ['Markers', 'S', 'where you wake up / come in', '', { marker: 1, glyph: 'S', fg: '#7a809f', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '5';
+const DESIGNER_VERSION = '6';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -426,8 +419,6 @@ function checks(){
   const kind = $('#kind').value, out = [], park = kind === 'park';
   const count = {}; for (const r of cells) for (const c of r) count[c.c] = (count[c.c] || 0) + 1;
   const edge = []; for (let x = 0; x < W; x++){ edge.push([x, 0], [x, H - 1]); } for (let y = 1; y < H - 1; y++){ edge.push([0, y], [W - 1, y]); }
-  const fits = SIZES.some(s => s[1] === W && s[2] === H);
-  out.push([fits ? 'ok' : 'w', fits ? `${W} × ${H} is one of the sizes mapgen fits` : `${W} × ${H} isn't one of the listed sizes`]);
   const onEdge = set => edge.filter(([x, y]) => set.has(cells[y][x].c));
   const entries = onEdge(ENTRY), exits = onEdge(EXIT), doorsOnEdge = entries.concat(exits);
   if (!park){
@@ -699,7 +690,6 @@ $('#q').addEventListener('input', renderList); $('#kf').addEventListener('change
 
 // ---------- start
 $('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
-$('#sizetab').innerHTML = SIZES.map(s => `<tr><td>${s[0]}</td><td>${esc(s[3])}</td></tr>`).join('');
 zoom = window.innerWidth < 720 ? 2 : 3; $('#zoom').value = zoom;
 $('.sub').insertAdjacentHTML('beforeend', ` Tiles, colours and glyphs are the game's (v${esc(GAME.version)}, ${esc(GAME.commit)}). ◇ marks what the game doesn't have yet.`);
 renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false);

@@ -28,5 +28,6 @@ A counter is a **counter front** (`{ _ }`, the walkable cells customers stand on
 
 The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
 
+- v6: the Building sizes panel and its size check are gone (mapgen's lot sizes are being redone).
 - v5: unscii mcr square tiles (ID-087), the Counter tool and folded Counter parts (TW-091).
 - v4: drawn from the game's tile data and atlas (TW-090).
