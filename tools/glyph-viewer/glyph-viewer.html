@@ -23,7 +23,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);pa
 main{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
 h1{font:900 clamp(28px,4vw,40px)/1.05 var(--sans);margin:0;letter-spacing:-.01em}
 h1 span{color:var(--amber)}
-.lede{margin:8px 0 0;color:var(--muted);max-width:72ch;min-height:6em}
 .panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--edge);border-radius:12px;padding:16px}
 .bar{display:flex;gap:12px;flex-wrap:nowrap;align-items:center}
 @media (max-width:1100px){.bar{flex-wrap:wrap}}
@@ -37,9 +36,9 @@ select{flex:0 1 240px;min-width:0}
 .count{color:var(--muted);font:13px var(--mono);margin-left:auto;flex:none;min-width:13ch;text-align:right}
 .work{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
 @media (max-width:900px){.work{grid-template-columns:1fr}}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;max-height:70vh;overflow:auto;padding:2px}
-.cell{height:56px;display:flex;align-items:center;justify-content:center;background:#0f0f12;border:1px solid var(--edge);border-radius:6px;cursor:pointer;position:relative}
-.sq .cell{height:40px}
+.grid{max-height:70vh;overflow:auto;padding:2px}
+.rows{display:grid;grid-template-columns:repeat(var(--cols,1),1fr);gap:4px}
+.cell{height:40px;display:flex;align-items:center;justify-content:center;background:#0f0f12;border:1px solid var(--edge);border-radius:6px;cursor:pointer;position:relative}
 .cell:hover{border-color:var(--edge-2)}
 .cell[aria-selected=true]{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
 .cell.in::after{content:"";position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--ok)}
@@ -64,10 +63,7 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
 </head>
 <body>
 <main>
-  <div>
-    <h1>Glyph <span>Viewer</span></h1>
-    <p class="lede" id="lede"></p>
-  </div>
+  <h1>Glyph <span>Viewer</span></h1>
   <div class="panel bar">
     <div class="seg" id="set" role="group" aria-label="Set"></div>
     <input type="search" id="q" aria-label="Search">
@@ -102,10 +98,8 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     ? { i, slot: it[0], name: it[1], cp: it[2], how: it[3], fg: it[4], bg: it[5], want: it[6] }
     : { i, cp: it[0], name: it[1], block: it[2], slot: it[3], tiles: it[4] || [], ch: String.fromCodePoint(it[0]) }) }));
   const TEXT = {
-    unscii: { q: 'Search name, glyph or code', in: 'On the sheet', out: 'Not on it',
-      lede: 'Every glyph of unscii-8 mcr (public domain), the 8 × 8 pixel font the game\'s square map tiles are drawn from. A green dot marks the glyphs a tile on the tile sheet already uses; click one to see which. Anything else needs a tile that uses it (<code>core/sprawl_map.gd</code>), then <code>tools/make_tiles.py --template</code>.' },
-    tiles: { q: 'Search tile name or slot',
-      lede: 'The game\'s tile sheet, <code>assets/tiles/unscii_mcr.png</code>, in slot order, in the colours the tile table gives each tile. This is the sheet itself, so hand edits show here; each tile is cut into a left and a right half for the two text cells it covers.' },
+    unscii: { q: 'Search name, glyph or code', in: 'On the sheet', out: 'Not on it' },
+    tiles: { q: 'Search tile name or slot' },
   };
   const state = { set: 0, q: '', block: -1, atlas: 'all', sel: -1 };
   const gstyle = document.createElement('style');
@@ -117,11 +111,9 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     gstyle.textContent = `.g{width:${cw * k}px;height:${ch * k}px;-webkit-mask-image:url(${url});mask-image:url(${url});
       -webkit-mask-size:${cw * s.cols * k}px auto;mask-size:${cw * s.cols * k}px auto;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat${s.crisp ? ';image-rendering:pixelated' : ''}}`;
     const t = TEXT[s.id], tiles = s.kind === 'tiles';
-    $('lede').innerHTML = t.lede;
     $('q').placeholder = t.q;
     $('block').hidden = tiles; $('atlas').hidden = tiles;
     if (!tiles){ const b = $('atlas').querySelectorAll('button'); b[1].textContent = t.in; b[2].textContent = t.out; }
-    $('grid').classList.toggle('sq', !!s.crisp);
     $('set').querySelectorAll('button').forEach((b, i) => b.setAttribute('aria-pressed', i === state.set));
     state.q = ''; state.block = -1; state.atlas = 'all'; state.sel = -1; $('q').value = '';
     $('atlas').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'all'));
@@ -161,26 +153,44 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     s.blocks.forEach((b, i) => { if (n.has(i)) add(i, `${b} (${n.get(i)})`); });
     sel.replaceChildren(frag); sel.value = state.block;
   }
-  function render(){
-    const s = S(), tiles = s.kind === 'tiles', g = $('grid');
-    const pool = s.items.filter(matchRest);
-    if (!tiles) blockOptions(pool);
-    const list = !tiles && state.block >= 0 ? pool.filter(it => it.block === state.block) : pool;
-    g.replaceChildren();
-    const frag = document.createDocumentFragment();
-    for (const it of list){
+  // the grid keeps only the rows near the view in the DOM (about 25 rows), not all 3,000 glyphs. It is rebuilt only when
+  // the view leaves the rows already drawn, so ordinary scrolling just moves cells that are already there.
+  const GAP = 4, MINW = 34, ROWH = 40 + GAP, BUFFER = 8;
+  let list = [], at = { cols: 0, first: 0, last: 0 };
+  function paint(force){
+    const g = $('grid'), tiles = S().kind === 'tiles';
+    const cols = Math.max(1, Math.floor((g.clientWidth - 4 + GAP) / (MINW + GAP)));
+    const total = Math.ceil(list.length / cols);
+    const seen0 = Math.floor(g.scrollTop / ROWH), seen1 = Math.ceil((g.scrollTop + g.clientHeight) / ROWH);
+    if (!force && cols === at.cols && seen0 >= at.first && seen1 <= at.last) return;
+    const first = Math.max(0, seen0 - BUFFER), last = Math.min(total, seen1 + BUFFER);
+    at = { cols, first, last };
+    if (!list.length){ g.innerHTML = '<div class="empty">Nothing matches.</div>'; return; }
+    const rows = document.createElement('div'); rows.className = 'rows';
+    rows.style.cssText = `--cols:${cols};padding-top:${first * ROWH}px;padding-bottom:${Math.max(0, total - last) * ROWH}px`;
+    for (const it of list.slice(first * cols, last * cols)){
       const c = document.createElement('div');
       c.className = 'cell' + (!tiles && it.slot >= 0 ? ' in' : '');
       c.dataset.i = it.i;
       c.title = tiles ? `${it.slot} ${it.name}` : `U+${hex(it.cp)} ${it.name}`;
       c.setAttribute('role', 'option'); c.setAttribute('aria-selected', it.i === state.sel);
       if (tiles) c.style.background = it.bg;
-      c.appendChild(glyph(it, 0, tiles ? it.fg : '')); frag.appendChild(c);
+      c.appendChild(glyph(it, 0, tiles ? it.fg : '')); rows.appendChild(c);
     }
-    g.appendChild(frag);
-    if (!list.length) g.innerHTML = '<div class="empty">Nothing matches.</div>';
+    g.replaceChildren(rows);
+  }
+  function render(){
+    const s = S(), tiles = s.kind === 'tiles';
+    const pool = s.items.filter(matchRest);
+    if (!tiles) blockOptions(pool);
+    list = !tiles && state.block >= 0 ? pool.filter(it => it.block === state.block) : pool;
+    $('grid').scrollTop = 0;
+    paint(true);
     $('count').textContent = `${list.length} of ${s.items.length}`;
   }
+  let frame = 0;
+  $('grid').addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; paint(); }); });
+  new ResizeObserver(() => paint()).observe($('grid'));
 
   const HOW = {
     glyph: it => `Template drawn from the unscii-8 mcr glyph U+${hex(it.cp)}.`,
