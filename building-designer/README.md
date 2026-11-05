@@ -18,7 +18,7 @@ What is only in the designer (pieces, the status layer, edges set by hand, stair
 
 ## Counters
 
-A counter is a **counter front** (`{ _ }`, the walkable cells customers stand on, with a line on the side the staff are on) and a **staff row** behind it: a solid counter block `c` at each end, `@` where the clerk stands, `K` the clerk's terminal, as in the hotel (`{__}` over `c@Kc`). The **Counter** tool (`C`) lays all of it in one drag: drag along the customer side, the brush facing (`Q` / `E`) says which side the staff stand on, and the Staff row button turns the row behind it off. Needs 3 cells or more for the staff row.
+A counter is a **counter front** (`{ _ }`, the walkable cells customers stand on, with a line on the side the staff are on) and a **staff row** behind it: a solid counter block `c` at each end, `@` where the clerk stands, `K` the clerk's terminal, as in the hotel (`{__}` over `c@Kc`). The **Counter** tool (`C`) lays all of it in one drag (the loose pieces are folded under Counter parts in the palette): drag along the customer side, the brush facing (`Q` / `E`) says which side the staff stand on, and the Staff row button turns the row behind it off. Needs 3 cells or more for the staff row.
 
 ## Saved design format (v3)
 
