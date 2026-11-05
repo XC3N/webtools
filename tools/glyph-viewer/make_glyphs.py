@@ -1,44 +1,61 @@
 #!/usr/bin/env python3
-"""Build glyph-data.js for the Glyph Viewer from the Sprawler game's own font and atlas.
+"""Build glyph-data.js for the Glyph Viewer from the Sprawler game's own fonts and tile sheet.
 
 Usage: python3 make_glyphs.py /path/to/Sprawler
-Reads  assets/fonts/DejaVuSansMono.ttf and core/cp437.gd (the atlas's code points).
-Writes glyph-data.js next to this script: a sprite sheet (PNG, base64) with every drawable
-character in the font at the game's cell size, and a list of [code point, name, block, atlas slot].
-Rerun it whenever the game's font or atlas changes.
+Reads  assets/fonts/unscii-8-mcr.hex          the 8 x 8 font the square map tiles are drawn from,
+       assets/tiles/unscii_mcr.png + tiles.json   the game's tile sheet and its slot names,
+       tools/make_tiles.py, core/sprawl_map.gd, core/entity.gd   how each tile's picture is chosen, and its colours,
+       assets/fonts/DejaVuSansMono.ttf + core/cp437.gd   the glyph font and its atlas's code points.
+Writes glyph-data.js next to this script: three sets, each with a sprite sheet (PNG, base64) and its list of items:
+  unscii  every glyph in unscii-8 mcr: [code point, name, block, tile-sheet slot or -1, [[slot, tile name], ...]]
+  tiles   the tile sheet itself, in slot order: [slot, name, code point it was drawn from or -1, how, fg, bg, wanted code point]
+  dejavu  every drawable character of DejaVu Sans Mono: [code point, name, block, atlas slot or -1]
+Blocks are the Unicode blocks the set's characters actually fall in (fontTools.unicodedata), so none is ever empty.
+Rerun it whenever the game's fonts, atlas or tile sheet change.
 """
 import sys, re, json, base64, io, pathlib, unicodedata
 from PIL import Image, ImageDraw, ImageFont
 from fontTools.ttLib import TTFont
+from fontTools import unicodedata as ftu
 
 game = pathlib.Path(sys.argv[1])
+sys.dont_write_bytecode = True  # importing make_tiles must not leave a __pycache__ in the game's repo
+sys.path.insert(0, str(game / "tools"))
+import make_tiles as mt  # the game's own tile baker: its tables say which glyph each tile is drawn from
+
+
+def name_of(cp):
+    try:
+        return unicodedata.name(chr(cp)).title()
+    except ValueError:
+        if cp < 0x20 or 0x7F <= cp < 0xA0:
+            return "Control %02X" % cp
+        if 0xE000 <= cp <= 0xF8FF:
+            return "Private Use %04X" % cp
+        return "(no name)"
+
+
+def blocks_of(cps):
+    """Unicode block names in code point order, and each character's index into them."""
+    named = [ftu.block(cp) for cp in cps]
+    first = {}
+    for cp, b in zip(cps, named):
+        first.setdefault(b, cp)
+    blocks = sorted(first, key=first.get)
+    index = {b: i for i, b in enumerate(blocks)}
+    return blocks, [index[b] for b in named]
+
+
+def b64png(img):
+    buf = io.BytesIO()
+    img.save(buf, "PNG", optimize=True)
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+# ---- DejaVu Sans Mono: the glyph font, drawn at the game's atlas size ----
 font_path = game / "assets/fonts/DejaVuSansMono.ttf"
 size = 20  # the game's atlas size (tools/make_atlas.py)
 cols = 64
-
-BLOCKS = [
-    ("Basic Latin", 0x20, 0x7F), ("Latin-1 Supplement", 0x80, 0xFF), ("Latin Extended", 0x100, 0x24F),
-    ("IPA and Modifiers", 0x250, 0x36F), ("Greek", 0x370, 0x3FF), ("Cyrillic", 0x400, 0x52F),
-    ("Hebrew", 0x590, 0x5FF), ("Punctuation", 0x2000, 0x206F), ("Super/Subscripts", 0x2070, 0x209F),
-    ("Currency", 0x20A0, 0x20CF), ("Letterlike", 0x2100, 0x214F), ("Number Forms", 0x2150, 0x218F),
-    ("Arrows", 0x2190, 0x21FF), ("Math Operators", 0x2200, 0x22FF), ("Technical", 0x2300, 0x23FF),
-    ("Control Pictures", 0x2400, 0x243F), ("Enclosed Alphanumerics", 0x2460, 0x24FF),
-    ("Box Drawing", 0x2500, 0x257F), ("Block Elements", 0x2580, 0x259F), ("Geometric Shapes", 0x25A0, 0x25FF),
-    ("Misc Symbols", 0x2600, 0x26FF), ("Dingbats", 0x2700, 0x27BF), ("Misc Math A", 0x27C0, 0x27EF),
-    ("Supp Arrows A", 0x27F0, 0x27FF), ("Braille", 0x2800, 0x28FF), ("Supp Arrows B", 0x2900, 0x297F),
-    ("Misc Math B", 0x2980, 0x29FF), ("Supp Math Operators", 0x2A00, 0x2AFF), ("Misc Symbols and Arrows", 0x2B00, 0x2BFF),
-    ("Latin Extended Additional", 0x1E00, 0x1EFF), ("Greek Extended", 0x1F00, 0x1FFF),
-    ("Latin Extended C-E", 0x2C60, 0xA7FF), ("Alphabetic Presentation", 0xFB00, 0xFB4F),
-    ("Specials and Misc", 0xFE00, 0x1FFFF),
-]
-
-
-def block_of(cp):
-    for i, (_, a, b) in enumerate(BLOCKS):
-        if a <= cp <= b:
-            return i
-    return len(BLOCKS) - 1
-
 
 gd = (game / "core/cp437.gd").read_text()
 atlas = [int(x) for x in re.search(r"CODEPOINTS := \[([^\]]*)\]", gd).group(1).split(",")]
@@ -49,8 +66,7 @@ for slot, cp in enumerate(atlas):
 cmap = TTFont(str(font_path)).getBestCmap()
 cps = []
 for cp in sorted(cmap):
-    ch = chr(cp)
-    cat = unicodedata.category(ch)
+    cat = unicodedata.category(chr(cp))
     if cat[0] in "MC" or cat in ("Zs", "Zl", "Zp") and cp != 0x20:
         continue
     cps.append(cp)
@@ -70,20 +86,71 @@ for i, cp in enumerate(cps):
     white = Image.new("RGBA", (cw, ch), (255, 255, 255, 255))
     white.putalpha(cell)
     sheet.paste(white, ((i % cols) * cw, (i // cols) * ch))
-buf = io.BytesIO()
-sheet.save(buf, "PNG", optimize=True)
+dj_blocks, dj_block_of = blocks_of(cps)
+dejavu = dict(
+    id="dejavu", name="DejaVu Sans Mono", kind="glyphs", cell=[cw, ch], cols=cols, scale=2, zoom=[.75, 2.2, .75],
+    crisp=False, blocks=dj_blocks, sheet=b64png(sheet),
+    items=[[cp, name_of(cp), dj_block_of[i], slot_of.get(cp, -1)] for i, cp in enumerate(cps)])
 
-items = []
-for cp in cps:
-    try:
-        name = unicodedata.name(chr(cp))
-    except ValueError:
-        name = "(no name)"
-    items.append([cp, name.title(), block_of(cp), slot_of.get(cp, -1)])
+# ---- the tile sheet: which glyph (or hand drawing, or edge line) each slot's template was made from ----
+names = json.loads((game / "assets/tiles/tiles.json").read_text())["names"]
+wanted = mt.game_tiles() + [(n, g) for n, g, _ in mt.actors()] + [("HEARD", ord("?"))]
+glyph_of = dict(wanted)
+plain = {n: p for n, _, p in mt.actors()}
+unscii = mt.load_hex(game / "assets/fonts/unscii-8-mcr.hex")
+
+src = (game / "core/sprawl_map.gd").read_text()
+colours = dict((n, (fg, bg)) for n, fg, bg in re.findall(r'Tile\.(\w+): \{[^}]*?"fg": "(#\w+)", "bg": "(#\w+)"', src))
+ent = (game / "core/entity.gd").read_text()
+for kind, body in re.findall(r'^\t"(\w+)": \{(.*?)\n\t\}', ent, re.S | re.M):
+    c = re.search(r'"color": "(#\w+)"', body)
+    if c:
+        colours["actor:" + kind] = (c.group(1), "#0d0f14")
+colours["HEARD"] = ("#ffb627", "#0d0f14")
+
+used = {}  # code point -> [[slot, tile name], ...]
+tile_items = []
+for slot, n in enumerate(names):
+    if n in mt.DESK:
+        cp, how, want = -1, "edge", -1
+    else:
+        want = plain[n] if n in mt.PLAIN else glyph_of.get(n, ord("?"))
+        if want in mt.HAND:
+            cp, how = want, "hand"
+        elif want in unscii:
+            cp, how = want, "glyph"
+        else:
+            cp, how = mt.FALLBACK.get(want, plain.get(n, ord("?"))), "fallback"
+    if how in ("glyph", "fallback"):
+        used.setdefault(cp, []).append([slot, n])
+    fg, bg = colours.get(n, ("#c8cbe0", "#0d0f14"))
+    tile_items.append([slot, n, cp, how, fg, bg, want])
+
+tile_png = (game / "assets/tiles/unscii_mcr.png").read_bytes()  # the sheet itself, as the game bakes it
+ts = Image.open(io.BytesIO(tile_png)).width // mt.COLS
+tiles = dict(
+    id="tiles", name="Tile sheet", kind="tiles", cell=[ts, ts], cols=mt.COLS, scale=max(1, round(32 / ts)), zoom=[1, 4, .75],
+    crisp=True, items=tile_items, sheet="data:image/png;base64," + base64.b64encode(tile_png).decode())
+
+# ---- unscii-8 mcr: every glyph, 8 x 8 pixels, white on transparent ----
+ucps = sorted(unscii)
+ucols = 64
+urows = (len(ucps) + ucols - 1) // ucols
+usheet = Image.new("RGBA", (8 * ucols, 8 * urows), (255, 255, 255, 0))
+for i, cp in enumerate(ucps):
+    white = Image.new("RGBA", (8, 8), (255, 255, 255, 255))
+    white.putalpha(mt.hex_tile(unscii, cp))
+    usheet.paste(white, ((i % ucols) * 8, (i // ucols) * 8))
+un_blocks, un_block_of = blocks_of(ucps)
+unscii_set = dict(
+    id="unscii", name="unscii-8 mcr", kind="glyphs", cell=[8, 8], cols=ucols, scale=4, zoom=[1, 4, .75],
+    crisp=True, blocks=un_blocks, sheet=b64png(usheet),
+    items=[[cp, name_of(cp), un_block_of[i], used[cp][0][0] if cp in used else -1, used.get(cp, [])] for i, cp in enumerate(ucps)])
 
 out = pathlib.Path(__file__).with_name("glyph-data.js")
-out.write_text("const GLYPH_DATA = " + json.dumps({
-    "cell": [cw, ch], "cols": cols, "blocks": [b[0] for b in BLOCKS], "items": items,
-    "sheet": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode(),
-}, ensure_ascii=False, separators=(",", ":")) + ";\n")
-print(len(cps), "glyphs,", len(atlas), "in the atlas,", round(out.stat().st_size / 1024), "KB")
+out.write_text("const GLYPH_DATA = " + json.dumps({"sets": [unscii_set, tiles, dejavu]}, ensure_ascii=False,
+                                                  separators=(",", ":")) + ";\n")
+print(f"unscii-8 mcr: {len(ucps)} glyphs in {len(un_blocks)} blocks, {len(used)} used by the tile sheet")
+print(f"tile sheet: {len(names)} slots at {ts} px")
+print(f"DejaVu Sans Mono: {len(cps)} glyphs in {len(dj_blocks)} blocks, {len(atlas)} in the atlas")
+print(round(out.stat().st_size / 1024), "KB")
