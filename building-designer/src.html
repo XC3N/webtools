@@ -1,0 +1,717 @@
+<title>Sprawler Building Designer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a drafting table. Saved designs on the left, the building's grid in the middle drawn
+   with the game's own glyphs and colours, the tile palette and checks on the right. One dark look
+   on purpose: the grid has to read like the game. */
+:root{
+  --bg:#0b0c14; --panel:#12141f; --panel2:#181b29; --ink:#d9dcec; --muted:#7f86a3; --line:#252a3d;
+  --accent:#29f0ff; --hot:#ff2fa8; --good:#b6ff3b; --warn:#ffb627; --bad:#ff5d5d;
+  --display:"Chakra Petch",ui-monospace,system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"Noto Sans Mono","DejaVu Sans Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font:14px/1.45 var(--body)}
+.wrap{max-width:1500px;margin:0 auto;padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px}
+h1{margin:0;font:600 24px/1.1 var(--display);letter-spacing:.03em}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;flex-basis:100%;max-width:80ch;margin:0}
+.who{margin-left:auto;font:400 12px var(--mono);color:var(--muted)}
+.main{display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:14px;align-items:start}
+@media (max-width:1100px){ .main{grid-template-columns:minmax(0,1fr) 270px} .side-l{grid-column:1/-1} }
+@media (max-width:720px){ .main{grid-template-columns:minmax(0,1fr)} }
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;display:grid;gap:10px;min-width:0}
+h2{margin:0;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+button,select,input,textarea{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:4px}
+button{padding:5px 10px;cursor:pointer}button:hover{border-color:var(--muted)}
+button.on{border-color:var(--accent);color:var(--accent)}
+button.go{background:var(--accent);border-color:var(--accent);color:#051318;font-weight:600}
+button.go:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.armed{border-color:var(--bad)!important;color:var(--bad)!important}
+select,input{padding:5px 8px}textarea{padding:6px 8px;width:100%;resize:vertical;font:12px/1.4 var(--mono)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:52vh;overflow:auto}
+.list button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:0 8px;width:100%;padding:6px 8px;border-radius:4px;cursor:pointer}
+.list button:hover{background:var(--panel2)}.list button.on{background:#0d2a33;color:var(--accent)}
+.list .k{font-size:12px;color:var(--muted)}.list .s{font:400 11px var(--mono);color:var(--muted);text-align:right}
+.empty{color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:4px;padding:12px;text-align:center}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;font-size:13px}
+.meta label{color:var(--muted)}
+.stage{display:grid;gap:8px;min-width:0}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bar .sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
+.dirty{font:400 12px var(--mono);color:var(--warn)}.saved{font:400 12px var(--mono);color:var(--good)}
+.canvas-wrap{overflow:auto;background:#000;border:1px solid var(--line);border-radius:6px;padding:12px;max-height:72vh}
+canvas{display:block;image-rendering:pixelated;cursor:crosshair;touch-action:none}
+.status{font:400 12px var(--mono);color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;min-height:1.4em}
+.pal{display:grid;gap:8px}
+.pal h3{margin:0;font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(36px,1fr));gap:4px}
+.tiles button{padding:0;height:40px;font:18px/1 var(--mono);display:grid;place-items:center;position:relative}
+.tiles button .c{position:absolute;right:2px;bottom:1px;font:9px var(--mono);color:var(--muted)}
+.tiles button.on{outline:2px solid var(--accent);outline-offset:1px}
+.tiles button.alt{box-shadow:inset 0 -3px 0 var(--hot)}
+.cur{font-size:12px;color:var(--muted)}.cur b{color:var(--ink);font-weight:500}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:12px}
+.checks li{display:flex;gap:6px}.checks .ok{color:var(--good)}.checks .no{color:var(--bad)}.checks .w{color:var(--warn)}
+.counts{font:400 11px var(--mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.msg{font-size:12px;color:var(--warn);min-height:1.2em}.msg.ok{color:var(--good)}
+.sizes{font-size:12px;color:var(--muted)}
+.sizes table{border-collapse:collapse;width:100%}.sizes td{padding:2px 4px;border-top:1px solid var(--line);vertical-align:top}
+.sizes td:first-child{font-family:var(--mono);color:var(--ink);white-space:nowrap}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:min(560px,92vw);padding:16px}
+dialog::backdrop{background:#000a}
+.seg{display:flex;gap:0}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:4px 0 0 4px;margin-left:0}.seg button:last-child{border-radius:0 4px 4px 0}
+.seg button.on{background:#0d2a33;position:relative;z-index:1}
+.pickwrap{position:relative;min-width:0}
+.pickbtn{display:flex;gap:8px;align-items:center;justify-content:space-between;min-width:220px;max-width:100%;text-align:left}
+.pickbtn span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pop{position:absolute;z-index:20;top:calc(100% + 4px);left:0;width:min(420px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;display:grid;gap:8px;box-shadow:0 12px 32px #000a}
+#pop[hidden]{display:none}
+#pop .list{max-height:46vh}
+.gs{height:32px;width:auto;image-rendering:pixelated;pointer-events:none}
+.tiles button.only::before{content:"◇";position:absolute;left:2px;bottom:0;font:9px var(--mono);color:var(--warn)}
+.tiles button.rt::after{content:"↻";position:absolute;left:2px;top:0;font:9px var(--mono);color:var(--muted)}
+.sw{display:block;width:26px;height:26px;border:1px solid var(--line)}
+.pcs{display:grid;gap:6px}.pcs .prow{display:flex;gap:6px;align-items:center}.pcs .prow>span{width:54px;font:11px var(--mono);color:var(--muted)}
+.pcs button{height:44px;width:44px;padding:0;display:grid;place-items:center;position:relative}
+.pcs button.on{outline:2px solid var(--accent);outline-offset:1px}
+.how{display:grid;gap:4px;margin:4px 0 8px}.how p{margin:4px 0 0}.demo{display:flex}.demo img{height:32px;width:32px}
+.st{display:grid;gap:6px}.st button{text-align:left}
+.insp{display:grid;gap:6px;font-size:12px}.insp .ln{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.insp .k{color:var(--muted);width:54px}
+.insp button{padding:1px 7px;font-size:12px}.insp .sw{width:16px;height:16px}
+.keys{font-size:12px;color:var(--muted)}.keys summary{cursor:pointer}.keys p{margin:6px 0}
+kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Sprawler <span>Building Designer</span></h1>
+    <span class="who" id="who"></span>
+    <p class="sub">Draw buildings, the hotel and parks on the game's grid, with its tiles and colours. A cell has layers: a tile (which can face a direction), half-block pieces on top of it, and a walkable status. Designs are saved here for everyone on the project; Claude reads them to work out the rules mapgen uses to make more.</p>
+  </header>
+  <div class="main">
+    <aside class="side-l box">
+      <h2>Designs</h2>
+      <div class="row"><button type="button" class="go" id="new">New design</button></div>
+      <p class="cur" id="count">Loading designs…</p>
+      <details class="sizes" open><summary>Building sizes</summary>
+        <p>Outer size with the walls. Heights are the city's block heights; widths are even, as mapgen's lots are.</p>
+        <table id="sizetab"></table>
+      </details>
+    </aside>
+
+    <section class="stage" aria-label="Editor">
+      <div class="pickwrap">
+        <button type="button" class="pickbtn" id="pickbtn" aria-haspopup="listbox" aria-expanded="false"><span id="picklabel">Open a design…</span><span aria-hidden="true">▾</span></button>
+        <div id="pop" hidden>
+          <input id="q" type="search" placeholder="Search name, kind or notes" autocomplete="off" aria-label="Search designs">
+          <select id="kf" aria-label="Filter by kind"></select>
+          <ul class="list" id="list" role="listbox"><li class="empty">Loading designs…</li></ul>
+        </div>
+      </div>
+      <div class="box">
+        <div class="meta">
+          <label for="name">Name</label><input id="name" type="text" placeholder="e.g. Corner noodle bar" autocomplete="off">
+          <label for="kind">Kind</label><select id="kind"></select>
+          <label for="notes">Notes</label><textarea id="notes" rows="2" placeholder="What it's for, what you'd like the generator to learn from it"></textarea>
+        </div>
+        <div class="bar">
+          <button type="button" class="go" id="save" disabled>Save</button><span id="state" class="saved"></span>
+          <span class="sep"></span>
+          <button type="button" id="undo" title="Undo (Ctrl+Z)">Undo</button><button type="button" id="redo" title="Redo (Ctrl+Y)">Redo</button>
+          <span class="sep"></span>
+          <button type="button" id="dup">Duplicate</button><button type="button" id="del">Delete</button>
+          <button type="button" id="exp">Export</button><button type="button" id="imp">Import</button>
+          <span class="sep"></span>
+          <label class="cur" for="zoom">Zoom</label><input id="zoom" type="range" min="1" max="6" step="1" value="3" style="width:90px">
+        </div>
+      </div>
+      <div class="bar" id="tools" role="toolbar" aria-label="Tools"></div>
+      <div class="bar"><span class="cur">View</span><div class="seg" id="views" role="group" aria-label="View"></div></div>
+      <div class="canvas-wrap"><canvas id="cv" tabindex="0" aria-label="Building grid"></canvas></div>
+      <div class="status" id="status">&nbsp;</div>
+    </section>
+
+    <aside class="box">
+      <h2>Layer</h2>
+      <div class="seg" id="modes" role="group" aria-label="Layer to paint"></div>
+      <p class="cur">Left click: <b id="curA"></b> · right click: <b id="curB"></b></p>
+      <div class="row"><span class="cur">Facing</span><button type="button" id="rotL" title="Rotate the brush counter-clockwise (Q)">⟲</button><button type="button" id="rotR" title="Rotate the brush clockwise (E)">⟳</button><b class="cur" id="rotName"></b></div>
+      <div class="pal" id="pal"></div>
+      <h2>Cell</h2>
+      <div class="insp" id="insp"><span class="cur">Pick a cell with the Pick tool (I) to see and edit its layers.</span></div>
+      <h2>Checks</h2>
+      <ul class="checks" id="checks"></ul>
+      <div class="counts" id="counts"></div>
+      <details class="keys"><summary>Keys</summary>
+        <p><kbd>P</kbd> pencil · <kbd>L</kbd> line · <kbd>B</kbd> box · <kbd>R</kbd> filled box · <kbd>F</kbd> fill · <kbd>I</kbd> pick · <kbd>T</kbd> rotate a cell · <kbd>M</kbd> mirror</p>
+        <p>Counter front tiles are a line on one side of the cell: turn them with <kbd>Q</kbd> <kbd>E</kbd> or the rotate tool. The Counter tool (<kbd>C</kbd>) drags a whole counter. Status → edge adds a line to any cell.</p>
+        <p><kbd>Q</kbd> <kbd>E</kbd> turn the brush · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> tiles / pieces / status · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</p>
+        <p>Right click: second tile in the Tiles layer; clears the layer in Pieces and Status.</p>
+      </details>
+    </aside>
+  </div>
+</div>
+
+<dialog id="dlg"></dialog>
+
+<script>
+// The game's tiles (core/sprawl_map.gd DEFS, core/hotel.gd LEGEND): one character per tile in the
+// saved rows, the glyph and colours the game draws it with.
+const GAME = /*{{GAME}}*/null;   // the game's tile table, written by the game's tools/export_designer.py
+// The tiles. Glyph, colours and whether it blocks come from the game (GAME.tiles, through GAME.legend),
+// so what you draw looks like the game. extra: {only: true, glyph, fg, bg, walk} for a tile the game doesn't
+// have yet (it loads as floor); {fg} or {walk} overrides one thing; markers are drawn by the designer.
+// flags: r = can face a direction, s = the preview turns the glyph with it, e = a desk front line.
+const T = [
+  // group, char, name, flags, extra
+  ['Structure', ' ', 'outside (street)', ''],
+  ['Structure', '#', 'wall', ''],
+  ['Structure', '.', 'floor', ''],
+  ['Structure', '+', 'entry door (front, to the street)', ''],
+  ['Structure', 'd', 'exit door (back, to the alley)', '', { fg: '#4fd6c4' }],
+  ['Structure', 'N', 'neon sign (whole wall cell)', ''],
+  ['Structure', 'G', 'sealed gate', ''],
+  ['Levels', '<', 'stairs up', 'r', { only: 1, glyph: '▲', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
+  ['Levels', '>', 'stairs down', 'r', { only: 1, glyph: '▼', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
+  ['Levels', 'L', 'elevator', 'r', { only: 1, glyph: '↕', fg: '#9fe0ff', bg: '#0d0f14', walk: 1 }],
+  ['Terminals', 'T', 'terminal (cash)', 'r'],
+  ['Terminals', 'X', 'data terminal spot', 'r'],
+  ['Terminals', 'J', 'job board (the hotel only: it opens the job board)', 'r'],
+  ['Terminals', 'R', 'recharge station', 'r'],
+  // The counter: customers stand on the counter front cells (walkable), the line is on the staff's side; behind it
+  // the staff row: solid blocks close the ends, @ is where the clerk stands, K the clerk's terminal.
+  ['Counter', '{', 'counter front: first end (left, or top)', 're'],
+  ['Counter', '_', 'counter front: middle', 're'],
+  ['Counter', '}', 'counter front: last end (right, or bottom)', 're'],
+  ['Counter', 'c', 'counter block (solid: closes the end of a staff row)', ''],
+  ['Counter', '@', 'staff spot: where the clerk or shopkeeper stands', '', { marker: 1, glyph: '@', fg: '#9d5cff', bg: '#0d0f14', walk: 1 }],
+  ['Counter', 'K', "clerk's terminal (staff side)", 'r'],
+  ['Furniture', 'x', 'crates', ''],
+  ['Furniture', 't', 'table', ''],
+  ['Furniture', 's', 'shelves', 'r'],
+  ['Furniture', 'm', 'machine', 'r'],
+  ['Furniture', 'B', 'bed', 'rs'],
+  ['Furniture', 'a', 'arcade cabinet', 'r'],
+  ['Furniture', 'C', 'chair (you can stand on it)', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
+  ['Plants & park', 'v', 'potted plant', ''],
+  ['Plants & park', 'Y', 'tree', ''],
+  ['Plants & park', ',', 'grass', ''],
+  ['Plants & park', 'F', 'fountain', ''],
+  ['Plants & park', 'A', 'statue', ''],
+  ['Plants & park', 'h', 'bench', 'r'],
+  ['Hotel', 'E', 'street exit', ''],
+  ['Hotel', 'P', 'guest room door (locked)', '', { walk: 1 }],   // the game blocks it; for a design the room behind it counts as reachable
+  ['Hotel', 'p', 'your pod', 'r'],
+  ['Hotel', 'b', "a guest's bed", 'r'],
+  ['Hotel', 'g', "a guest's terminal", 'r'],
+  ['Markers', 'S', 'where you wake up / come in', '', { marker: 1, glyph: 'S', fg: '#7a809f', bg: '#0d0f14', walk: 1 }],
+];
+const SIDE_NAME = ['south', 'west', 'north', 'east'];
+const TILE = {};
+for (const [g, ch, name, fl, ex = {}] of T){
+  const own = ex.glyph !== undefined, dk = GAME.desk.chars[ch];
+  const key = own ? null : (dk !== undefined ? GAME.desk.tiles.south[dk] : GAME.legend[ch]), gt = own ? null : GAME.tiles[key];
+  if (!own && !gt) throw new Error('no game tile for ' + ch);
+  TILE[ch] = { g, ch, name, key, cp: own ? ex.glyph.codePointAt(0) : gt.glyph, fg: ex.fg || gt.fg, bg: ex.bg || gt.bg, walk: ex.walk !== undefined ? !!ex.walk : !gt.blocks,
+    rot: fl.includes('r'), spin: fl.includes('s'), edge: fl.includes('e'), only: !!ex.only, marker: !!ex.marker, desk: dk };
+}
+const deskKey = c => GAME.desk.tiles[SIDE_NAME[c.r & 3]][TILE[c.c].desk];   // a desk front's tile for its side
+const SOLID_EDGE = new Set(['#', 'N', '+', 'd', 'G', 'E', 'P']);   // what a building's outline may be made of
+const ENTRY = new Set(['+', 'E']), EXIT = new Set(['d']);
+// Pieces: a material in a half or a quarter of a cell, drawn over the tile as a filled half or quarter of
+// the square, in the game's colours. block = it stops walking. only = no such colour or tile in the game yet.
+const MATS = {
+  wall:  { name: 'wall',   col: GAME.tiles.WALL.fg, block: 1 },
+  neon:  { name: 'neon',   col: GAME.tiles.NEON.fg, block: 1 },
+  glass: { name: 'window', col: '#4fd6ff', block: 1, alpha: 0.6, only: 1 },
+  desk:  { name: 'desk',   col: GAME.tiles.DESK.fg, block: 0, edge: 1 },   // edge: a half piece is a line you walk along, not across
+  curb:  { name: 'curb',   col: GAME.curb, block: 0 },
+  hedge: { name: 'hedge',  col: '#2f7a3a', block: 1, only: 1 },
+};
+const FACE = ['south', 'west', 'north', 'east'];                    // 0..3, clockwise
+const CORNER = ['south-east', 'south-west', 'north-west', 'north-east'];
+const STATUS = [[null, 'auto (from the tile and pieces)'], [0, 'blocked'], [1, 'walkable']];
+const SIDE = [[0, 1], [-1, 0], [0, -1], [1, 0]];                   // the way side 0..3 faces (south, west, north, east)
+const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]];
+// The sizes mapgen can fit (outer, walls included): block heights 9 and 12; even widths.
+const SIZES = [
+  ['6 × 9', 6, 9, 'pawn shop, fixer\'s den, a narrow noodle bar'],
+  ['8 × 9', 8, 9, 'noodle bar, laundromat'],
+  ['10 × 9', 10, 9, 'laundromat, clinic, arcade'],
+  ['12 × 9', 12, 9, 'clinic, arcade, a small corp annex'],
+  ['8 × 12', 8, 12, 'apartments (narrow), pawn shop with a back room'],
+  ['10 × 12', 10, 12, 'clinic with wards, arcade'],
+  ['12 × 12', 12, 12, 'apartments, warehouse'],
+  ['16 × 12', 16, 12, 'warehouse, corp annex'],
+  ['18 × 12', 18, 12, 'a whole block: MegaBuilding, park'],
+  ['21 × 9', 21, 9, 'the capsule hotel (fixed size)'],
+];
+const KINDS = ['noodle bar', 'laundromat', 'clinic', 'pawn shop', 'arcade', 'warehouse', 'apartments', 'corp annex', "fixer's den", 'capsule hotel', 'park', 'MegaBuilding', 'Corpsec HQ', 'other'];
+// The game's lobby today (core/hotel.gd LAYOUT), to start a hotel from.
+const HOTEL = ['#####NNNNNNN#########', '#pSJ##b.g##b.g##b.g##', '##+####P####P####P###', '#v.................v#', '#.......{__}........E', '#...T...c@Kc...R...v#', '##P####P####P####P###', '#b.g##b.g##b.g##b.g##', '#####################'];
+const TOOLS = [['pen', 'Pencil', 'P'], ['line', 'Line', 'L'], ['box', 'Box', 'B'], ['rect', 'Filled box', 'R'], ['fill', 'Fill', 'F'], ['pick', 'Pick', 'I'], ['turn', 'Rotate a cell', 'T'], ['counter', 'Counter', 'C']];
+const MODES = [['tile', 'Tiles', '1'], ['piece', 'Pieces', '2'], ['status', 'Status', '3']];
+const VIEWS = [['look', 'Look'], ['tiles', 'Tiles only'], ['pieces', 'Pieces only'], ['walk', 'Walkable']];
+
+let db = null, user = null, me = null, canWrite = true;
+// A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
+let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
+let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
+let counterStaff = true, edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CW = 8, CH = 8;   // a map tile is square: the sheet's 8 px at zoom 1
+
+// ---------- cells
+const mk = c => ({ c, r: 0, p: [], w: null, e: [] });
+const cl = c => ({ c: c.c, r: c.r, p: c.p.map(a => a.slice()), w: c.w, e: c.e.slice() });
+const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+const mirR = r => r === 1 ? 3 : r === 3 ? 1 : r;
+const mirrorChar = (ch, r) => (r & 1) ? ch : ch === '{' ? '}' : ch === '}' ? '{' : ch;   // a desk run turned sideways keeps its top end on top
+const mirPiece = (s, r) => s === 'half' ? mirR(r) : r ^ 1;
+const pname = (m, s, r) => `${MATS[m].name} ${s} (${(s === 'half' ? FACE : CORNER)[r]})`;
+function blank(w, h, kind){
+  const park = kind === 'park';
+  return Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => mk(park ? ((x === 0 || y === 0 || x === w - 1 || y === h - 1) ? ((x + y) % 3 ? 'Y' : ',') : ',')
+    : (x === 0 || y === 0 || x === w - 1 || y === h - 1) ? '#' : '.')));
+}
+function build(rows, ex, legacy){
+  if (!rows.length) rows = ['.']; const w = Math.max(...rows.map(r => r.length)); ex = ex || {};
+  const grid = rows.map((r, y) => Array.from({ length: w }, (_, x) => {
+    const c = mk(TILE[r[x]] ? r[x] : (r[x] === undefined ? ' ' : '.')), e = ex[x + ',' + y];
+    if (e){ if (TILE[c.c].rot && e.r >= 0 && e.r < 4) c.r = e.r | 0; if (Array.isArray(e.p)) c.p = e.p.filter(a => MATS[a[0]] && (a[1] === 'half' || a[1] === 'quarter')).map(a => [a[0], a[1], (a[2] | 0) & 3]); if (e.w === 0 || e.w === 1) c.w = e.w; if (Array.isArray(e.e)) c.e = [...new Set(e.e.map(v => v | 0).filter(v => v >= 0 && v < 4))].sort(); }
+    return c; }));
+  migrated = legacy ? migrateDesks(grid) : 0;
+  return grid;
+}
+const rowsOf = cs => cs.map(r => r.map(c => c.c).join(''));
+const exportRows = () => rowsOf(cells);
+const exportEx = () => exOf(cells);
+function exOf(cs){ const ex = {}; cs.forEach((row, y) => row.forEach((c, x) => { const e = {}; if (c.r) e.r = c.r; if (c.p.length) e.p = c.p.map(a => a.slice()); if (c.w !== null) e.w = c.w; if (c.e.length) e.e = c.e.slice(); if (Object.keys(e).length) ex[x + ',' + y] = e; })); return ex; }
+let migrated = 0;
+// Designs saved before v3 drew a desk run with { _ } always facing south. A run that goes up and down
+// (next to a counter or desk, not a desk to its left or right) is turned to put its line on the side
+// of the clerk's spot (@) if there is one, else the west.
+function migrateDesks(cs){ let n = 0; const get = (x, y) => cs[y]?.[x]?.c, run = ch => ch !== undefined && 'c{_}K'.includes(ch), desk = ch => ch !== undefined && '{_}'.includes(ch);
+  cs.forEach((row, y) => row.forEach((c, x) => { if (!desk(c.c) || c.r) return;
+    if (desk(get(x - 1, y)) || desk(get(x + 1, y)) || !(run(get(x, y - 1)) || run(get(x, y + 1)))) return;
+    let a = y, b = y; while (run(get(x, a - 1))) a--; while (run(get(x, b + 1))) b++;
+    let west = false, east = false; for (let k = a; k <= b; k++){ for (const d of [1, 2]){ if (get(x - d, k) === '@') west = true; if (get(x + d, k) === '@') east = true; } }
+    c.r = east && !west ? 3 : 1; n++; }));
+  return n; }
+// Edge barriers: a desk front is a line on one side of its cell. You can stand on the cell and walk along
+// the line, never across it (the game's World.desk_blocks). Tiles, half desk pieces and the status layer add them.
+function edgesOf(c){ const s = new Set(c.e); if (TILE[c.c].edge) s.add(c.r); for (const [m, sh, r] of c.p) if (MATS[m].edge && sh === 'half') s.add(r); return s; }
+function canMove(x, y, dx, dy){ const nx = x + dx, ny = y + dy; if (!inb(nx, ny) || !walkable(nx, ny)) return false;
+  for (const k of edgesOf(cells[y][x])) if (dx * SIDE[k][0] + dy * SIDE[k][1] > 0) return false;
+  for (const k of edgesOf(cells[ny][nx])) if (dx * SIDE[k][0] + dy * SIDE[k][1] < 0) return false; return true; }
+const edgeMap = () => { const m = {}; cells.forEach((row, y) => row.forEach((c, x) => { const s = [...edgesOf(c)].sort(); if (s.length) m[x + ',' + y] = s; })); return m; };
+const walkable = (x, y) => { const c = cells[y][x]; if (c.w === 0) return false; if (c.w === 1) return true; return TILE[c.c].walk && !c.p.some(p => MATS[p[0]].block); };
+const walkRows = () => cells.map((r, y) => r.map((c, x) => c.c === ' ' ? '.' : walkable(x, y) ? '1' : '0').join(''));
+const snap = () => JSON.stringify({ rows: exportRows(), ex: exportEx() });
+const sigOf = d => { const cs = build(d.rows || [], d.ex, d.v !== 3); return JSON.stringify({ rows: rowsOf(cs), ex: exOf(cs) }); };
+function snapshot(){ undo.push(snap()); if (undo.length > 200) undo.shift(); redo = []; }
+function restore(str){ const d = JSON.parse(str); cells = build(d.rows, d.ex); H = cells.length; W = cells[0].length; }
+
+// ---------- brushes
+function brushFor(btn){
+  if (mode === 'tile') return { k: 'tile', ch: btn === 2 ? tileB : tileA, r: rot };
+  if (mode === 'piece') return btn === 2 ? { k: 'clearp' } : { k: 'piece', m: pieceSel.m, s: pieceSel.s, r: rot };
+  if (statusSel === 'edge') return { k: 'edge', s: edgeSide, on: btn !== 2 };
+  return { k: 'status', w: btn === 2 ? null : statusSel };
+}
+const mirrorBrush = b => b.k === 'tile' ? { ...b, ch: mirrorChar(b.ch, b.r), r: mirR(b.r) } : b.k === 'piece' ? { ...b, r: mirPiece(b.s, b.r) } : b.k === 'edge' ? { ...b, s: mirR(b.s) } : b;
+function applyTo(cell, b){
+  const c = cl(cell);
+  if (b.k === 'tile'){ c.c = b.ch; c.r = TILE[b.ch].rot ? b.r : 0; }
+  else if (b.k === 'piece'){ if (!c.p.some(p => p[0] === b.m && p[1] === b.s && p[2] === b.r)) c.p.push([b.m, b.s, b.r]); }
+  else if (b.k === 'clearp') c.p = [];
+  else if (b.k === 'edge') c.e = b.on ? [...new Set([...c.e, b.s])].sort() : c.e.filter(v => v !== b.s);
+  else c.w = b.w;
+  return c;
+}
+function setCell(x, y, b){ if (!inb(x, y)) return; cells[y][x] = applyTo(cells[y][x], b); if (mirror){ const mx = W - 1 - x; if (mx !== x) cells[y][mx] = applyTo(cells[y][mx], mirrorBrush(b)); } }
+function lineCells(a, b){ const out = []; let x = a.x, y = a.y; const dx = Math.abs(b.x - x), dy = -Math.abs(b.y - y), sx = x < b.x ? 1 : -1, sy = y < b.y ? 1 : -1; let e = dx + dy;
+  for (;;){ out.push([x, y]); if (x === b.x && y === b.y) break; const e2 = 2 * e; if (e2 >= dy){ e += dy; x += sx; } if (e2 <= dx){ e += dx; y += sy; } } return out; }
+function boxCells(a, b, filled){ const out = [], x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (filled || x === x0 || x === x1 || y === y0 || y === y1) out.push([x, y]); return out; }
+const regionKey = c => mode === 'tile' ? c.c : mode === 'piece' ? c.c + '|' + JSON.stringify(c.p) : c.c + '|' + c.w + '|' + c.e.join();
+function flood(x, y, b){ const from = regionKey(cells[y][x]), seen = new Set(), st = [[x, y]], hit = [];
+  while (st.length){ const [px, py] = st.pop(), k = px + ',' + py; if (!inb(px, py) || seen.has(k) || regionKey(cells[py][px]) !== from) continue; seen.add(k); hit.push([px, py]); st.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]); }
+  for (const [px, py] of hit) setCell(px, py, b); }
+
+// ---------- drawing
+const cv = $('#cv'), cx = cv.getContext('2d');
+const MONO = () => getComputedStyle(document.body).getPropertyValue('--mono');
+function resize(){ const dpr = window.devicePixelRatio || 1; const cw = CW * zoom, ch = CH * zoom;
+  cv.style.width = W * cw + 'px'; cv.style.height = H * ch + 'px'; cv.width = Math.round(W * cw * dpr); cv.height = Math.round(H * ch * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(); }
+function pieceRect(s, r, px, py, cw, ch){
+  if (s === 'half') return r === 0 ? [px, py + ch / 2, cw, ch / 2] : r === 1 ? [px, py, cw / 2, ch] : r === 2 ? [px, py, cw, ch / 2] : [px + cw / 2, py, cw / 2, ch];
+  return r === 0 ? [px + cw / 2, py + ch / 2, cw / 2, ch / 2] : r === 1 ? [px, py + ch / 2, cw / 2, ch / 2] : r === 2 ? [px, py, cw / 2, ch / 2] : [px + cw / 2, py, cw / 2, ch / 2];
+}
+// A desk line along one side of a cell, like the game's edge glyphs: kind 1 is the first end (left, or top
+// when the line runs down a side), 2 the last, 0 the middle. The ends stop at the centre of the cell.
+function edgeBar(px, py, cw, chh, side, kind, th = Math.max(2, Math.round(2 * zoom))){
+  let x0, y0, w, h;
+  if (side === 0 || side === 2){ y0 = side === 0 ? py + chh - th : py; x0 = kind === 1 ? px + cw / 2 - th / 2 : px; w = (kind === 2 ? px + cw / 2 + th / 2 : px + cw) - x0; h = th; }
+  else { x0 = side === 1 ? px : px + cw - th; y0 = kind === 1 ? py + chh / 2 - th / 2 : py; w = th; h = (kind === 2 ? py + chh / 2 + th / 2 : py + chh) - y0; }
+  cx.fillRect(x0, y0, w, h); }
+// The game's tile sheet (unscii mcr): square 8 px tiles, 16 a row, white on transparent. Tinted per colour and
+// drawn into the cell without smoothing, so the pixels stay sharp. Glyphs only the designer uses come as bitmaps.
+const SHEET_SRC = '{{ATLAS}}';
+const SHEET = GAME.sheet, INDEX = new Map(SHEET.names.map((n, i) => [n, i]));
+const sheetImg = new Image(); let sheetReady = false; const tints = new Map();
+sheetImg.onload = () => { sheetReady = true; tints.clear(); swUrls.clear(); renderPal(); draw(); };
+sheetImg.src = SHEET_SRC;
+const HAND = { 0x2310: '0000FC0404040000' };   // ⌐ the chair: not in the font
+const bitmap = cp => GAME.glyphs[cp] || HAND[cp] || GAME.glyphs[63];
+// A tile as an 8 x 8 canvas in one colour: by sheet name (a game tile) or by codepoint (a designer-only glyph).
+function tinted(key, cp, color){
+  const k = (key || '#' + cp) + color; let c = tints.get(k); if (c) return c;
+  const n = SHEET.size; c = document.createElement('canvas'); c.width = n; c.height = n; const g = c.getContext('2d');
+  if (key !== null && INDEX.has(key)){ const i = INDEX.get(key); g.drawImage(sheetImg, (i % SHEET.cols) * n, Math.floor(i / SHEET.cols) * n, n, n, 0, 0, n, n); }
+  else { const bits = bitmap(cp); g.fillStyle = '#fff'; for (let y = 0; y < 8; y++){ const row = parseInt(bits.substr(y * 2, 2), 16); for (let x = 0; x < 8; x++) if (row & (0x80 >> x)) g.fillRect(x, y, 1, 1); } }
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = color; g.fillRect(0, 0, n, n); tints.set(k, c); return c; }
+function drawGlyph(key, cp, color, px, py, cw, chh, turn){
+  if (!sheetReady) return; const im = tinted(key, cp, color); cx.imageSmoothingEnabled = false;
+  if (turn){ cx.save(); cx.translate(px + cw / 2, py + chh / 2); cx.rotate(turn * Math.PI / 2); cx.drawImage(im, -cw / 2, -chh / 2, cw, chh); cx.restore(); }
+  else cx.drawImage(im, px, py, cw, chh); }
+const swUrls = new Map();
+function glyphUrl(key, cp, fg, bg){ if (!sheetReady) return ''; const k = (key || '#' + cp) + fg + bg; let u = swUrls.get(k); if (u) return u;
+  const c = document.createElement('canvas'); c.width = SHEET.size; c.height = SHEET.size; const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.drawImage(tinted(key, cp, fg), 0, 0); u = c.toDataURL(); swUrls.set(k, u); return u; }
+function drawCell(x, y, c, ghost){
+  const t = TILE[c.c] || TILE['.'], cw = CW * zoom, chh = CH * zoom, px = x * cw, py = y * chh, ga = ghost ? 0.7 : 1;
+  cx.globalAlpha = ga; cx.fillStyle = t.bg; cx.fillRect(px, py, cw, chh);
+  if (view !== 'pieces'){
+    drawGlyph(t.desk !== undefined ? deskKey(c) : t.key, t.cp, t.fg, px, py, cw, chh, t.spin ? c.r : 0);
+    if (t.rot && !t.edge && c.r){ const tk = Math.max(2, Math.round(zoom * 1.5)); cx.fillStyle = 'rgba(255,255,255,0.7)';
+      const r = c.r; if (r === 0) cx.fillRect(px + cw * 0.3, py + chh - tk, cw * 0.4, tk); else if (r === 1) cx.fillRect(px, py + chh * 0.35, tk, chh * 0.3);
+      else if (r === 2) cx.fillRect(px + cw * 0.3, py, cw * 0.4, tk); else cx.fillRect(px + cw - tk, py + chh * 0.35, tk, chh * 0.3); }
+  }
+  if (view !== 'tiles') for (const [m, s, r] of c.p){ const M = MATS[m]; cx.globalAlpha = ga * (M.alpha || 1); cx.fillStyle = M.col; cx.fillRect(...pieceRect(s, r, px, py, cw, chh)); cx.globalAlpha = ga; }
+  if (view === 'walk' && c.c !== ' '){ const ok = walkableCell(c); cx.globalAlpha = ok ? 0.22 : 0.38; cx.fillStyle = ok ? '#b6ff3b' : '#ff3b3b'; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ga; }
+  if (view === 'walk' || mode === 'status'){ const es = edgesOf(c); if (es.size){ cx.fillStyle = '#ffb627'; for (const k of es) edgeBar(px, py, cw, chh, k, 0, Math.max(2, Math.round(1.6 * zoom))); } }
+  if (c.w !== null && (view === 'walk' || mode === 'status')){ cx.fillStyle = c.w ? '#b6ff3b' : '#ff3b3b'; cx.beginPath(); cx.moveTo(px + 1, py + 1); cx.lineTo(px + 1 + 7 * zoom / 2, py + 1); cx.lineTo(px + 1, py + 1 + 7 * zoom / 2); cx.fill(); }
+  cx.globalAlpha = 1;
+}
+const walkableCell = c => c.w === 0 ? false : c.w === 1 ? true : TILE[c.c].walk && !c.p.some(p => MATS[p[0]].block);
+function draw(){
+  cx.clearRect(0, 0, cv.width, cv.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) drawCell(x, y, cells[y][x]);
+  if (preview) for (const [x, y, b] of preview) if (inb(x, y)) drawCell(x, y, applyTo(cells[y][x], b), true);
+  const cw = CW * zoom, ch = CH * zoom;
+  if (mirror){ cx.strokeStyle = 'rgba(255,47,168,0.5)'; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(W * cw / 2, 0); cx.lineTo(W * cw / 2, H * ch); cx.stroke(); cx.setLineDash([]); }
+  if (sel && inb(sel.x, sel.y)){ cx.strokeStyle = '#ffb627'; cx.lineWidth = 2; cx.strokeRect(sel.x * cw + 1, sel.y * ch + 1, cw - 2, ch - 2); }
+  if (hover && inb(hover.x, hover.y) && mode === 'status' && statusSel === 'edge'){ cx.fillStyle = '#29f0ff'; edgeBar(hover.x * cw, hover.y * ch, cw, ch, hover.side, 0, Math.max(3, Math.round(2.5 * zoom))); }
+  if (hover && inb(hover.x, hover.y)){ cx.strokeStyle = '#29f0ff'; cx.lineWidth = 2; cx.strokeRect(hover.x * cw + 1, hover.y * ch + 1, cw - 2, ch - 2); }
+}
+
+// ---------- checks (what mapgen will need from a design)
+const sideOf = (x, y) => y === 0 ? 'north' : y === H - 1 ? 'south' : x === 0 ? 'west' : x === W - 1 ? 'east' : null;
+const OPP = { north: 'south', south: 'north', east: 'west', west: 'east' };
+function checks(){
+  const kind = $('#kind').value, out = [], park = kind === 'park';
+  const count = {}; for (const r of cells) for (const c of r) count[c.c] = (count[c.c] || 0) + 1;
+  const edge = []; for (let x = 0; x < W; x++){ edge.push([x, 0], [x, H - 1]); } for (let y = 1; y < H - 1; y++){ edge.push([0, y], [W - 1, y]); }
+  const fits = SIZES.some(s => s[1] === W && s[2] === H);
+  out.push([fits ? 'ok' : 'w', fits ? `${W} × ${H} is one of the sizes mapgen fits` : `${W} × ${H} isn't one of the listed sizes`]);
+  const onEdge = set => edge.filter(([x, y]) => set.has(cells[y][x].c));
+  const entries = onEdge(ENTRY), exits = onEdge(EXIT), doorsOnEdge = entries.concat(exits);
+  if (!park){
+    const leaks = edge.filter(([x, y]) => !SOLID_EDGE.has(cells[y][x].c) && walkable(x, y));
+    out.push([leaks.length ? 'no' : 'ok', leaks.length ? `The outline has ${leaks.length} gap${leaks.length > 1 ? 's' : ''} (walls, neon, doors or gates only)` : 'The outline is closed']);
+    out.push([entries.length ? 'ok' : 'no', entries.length ? `${entries.length} entry door${entries.length > 1 ? 's' : ''}` : 'No entry door (the front door, to the street)']);
+    const es = [...new Set(entries.map(([x, y]) => sideOf(x, y)).filter(Boolean))], xs = [...new Set(exits.map(([x, y]) => sideOf(x, y)).filter(Boolean))];
+    if (entries.length && !exits.length && !['capsule hotel', 'MegaBuilding', 'Corpsec HQ'].includes(kind)) out.push(['w', 'No exit door: mark the back door to the alley with the exit door tile']);
+    else if (exits.length){
+      const bad = xs.filter(s => es.includes(s)), opp = xs.filter(s => es.some(e => OPP[e] === s)), good = xs.filter(s => !es.includes(s) && !es.some(e => OPP[e] === s));
+      out.push([good.length && !bad.length ? 'ok' : 'w', `Entry on the ${es.join(' + ') || '?'} side, exit on the ${xs.join(' + ') || '?'} side` + (bad.length ? ': the exit is on the entry side, so it would face the street' : opp.length && !good.length ? ': opposite the entry, so it would face the street at the other end of the block' : ': the exit faces the alley')]);
+    }
+  }
+  // reachable: from the doors (or a park's edge) over walkable cells
+  const seen = new Set(), st = park ? edge.filter(([x, y]) => walkable(x, y)) : doorsOnEdge.slice();
+  while (st.length){ const [x, y] = st.pop(), k = x + ',' + y; if (!inb(x, y) || seen.has(k) || !walkable(x, y)) continue; seen.add(k); for (const [dx, dy] of D8) if (canMove(x, y, dx, dy)) st.push([x + dx, y + dy]); }
+  let walk = 0, lost = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (walkable(x, y) && cells[y][x].c !== ' '){ walk++; if (!seen.has(x + ',' + y) && cells[y][x].c !== '@') lost++; }   // '@' is a staff spot behind a desk: nobody needs to walk there
+  out.push([lost ? 'no' : 'ok', lost ? `${lost} walkable cell${lost > 1 ? 's' : ''} can't be reached from a door` : 'Every walkable cell can be reached']);
+  // what the game can't show or use yet
+  let only = {}, over = 0, mats = 0, hand = 0; for (const r of cells) for (const c of r){ const t = TILE[c.c]; if (t.only) only[t.name] = (only[t.name] || 0) + 1;
+    if (c.p.length) { mats += c.p.filter(q => MATS[q[0]].only).length; if (c.p.length + (t.marker || t.desk !== undefined || ' .'.includes(c.c) ? 0 : 1) > 2) over++; }
+    if (c.w !== null || c.e.length || c.p.length) hand++; }
+  const onlyN = Object.values(only).reduce((a, b) => a + b, 0);
+  if (onlyN) out.push(['w', `${onlyN} cell${onlyN > 1 ? 's' : ''} use tiles the game doesn't have yet (${Object.entries(only).map(([k, n]) => n + ' ' + k).join(', ')}): they load as floor`]);
+  if (mats) out.push(['w', `${mats} piece${mats > 1 ? 's' : ''} made of a material the game doesn't have (window, hedge)`]);
+  if (over) out.push(['w', `${over} cell${over > 1 ? 's' : ''} with more than the game can draw: a cell has a background, one under glyph and one main glyph`]);
+  if (hand) out.push(['ok', `${hand} cell${hand > 1 ? 's' : ''} with pieces, a walk status or edges: the game ignores those for now; the saved design keeps them`]);
+  const nEdge = Object.keys(edgeMap()).length; if (nEdge) out.push(['ok', `${nEdge} cell${nEdge > 1 ? 's' : ''} with an edge you can walk along but not cross (desk fronts, desk pieces, edges set by hand)`]);
+  if (!park && kind !== 'capsule hotel'){ const term = (count.T || 0) + (count.X || 0); out.push([term ? 'ok' : 'w', term ? `${term} terminal${term > 1 ? 's' : ''}` : 'No terminal: jobs need one somewhere']); }
+  const lv = (count['<'] || 0) + (count['>'] || 0) + (count.L || 0);
+  if (lv) out.push(['ok', `${lv} way${lv > 1 ? 's' : ''} to another level (${[count['<'] ? count['<'] + ' up' : '', count['>'] ? count['>'] + ' down' : '', count.L ? count.L + ' elevator' : ''].filter(Boolean).join(', ')}): a multi-level building`]);
+  if (count[' ']) out.push(['w', `${count[' ']} outside cell${count[' '] > 1 ? 's' : ''} inside the footprint (fine for a notch, an L shape)`]);
+  $('#checks').innerHTML = out.map(([c, t]) => `<li class="${c}"><span aria-hidden="true">${c === 'ok' ? '✓' : c === 'no' ? '✕' : '!'}</span><span>${esc(t)}</span></li>`).join('');
+  const pc = {}; let overrides = 0; for (const r of cells) for (const c of r){ for (const p of c.p){ const k = MATS[p[0]].name + ' ' + p[1]; pc[k] = (pc[k] || 0) + 1; } if (c.w !== null) overrides++; }
+  $('#counts').innerHTML = Object.entries(count).filter(([c]) => !'#. '.includes(c)).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<span title="${esc(TILE[c]?.name)}">${esc(TILE[c]?.name)} ${n}</span>`).join('') +
+    Object.entries(pc).map(([k, n]) => `<span>${esc(k)} ${n}</span>`).join('') + (overrides ? `<span>status set ${overrides}</span>` : '') + `<span>walkable ${walk}</span>`;
+  renderInsp();
+}
+
+// ---------- UI
+const tileSw = ([, ch, name]) => { const t = TILE[ch], key = t.desk !== undefined ? GAME.desk.tiles[SIDE_NAME[rot & 3]][t.desk] : t.key;
+  return `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB ? ' alt' : '') + (t.rot ? ' rt' : '') + (t.only ? ' only' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${t.rot ? ' · can face a direction' : ''}${t.only ? ' · not in the game yet: it loads as floor' : ''}${t.marker ? ' · a marker: the game puts floor here' : ''}" aria-label="${esc(name)}" style="background:${t.bg}"><img class="gs" alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}"><span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`; };
+function swatch(m, s, r){ const col = MATS[m].col; let bg;
+  if (s === 'half') bg = `linear-gradient(${['to top', 'to right', 'to bottom', 'to left'][r]},${col} 50%,transparent 50%)`;
+  else bg = `linear-gradient(${col},${col}) ${['right bottom', 'left bottom', 'left top', 'right top'][r]}/50% 50% no-repeat`;
+  return `<span class="sw" style="background:${bg}"></span>`; }
+// A counter drawn with the game's own tiles, and what each part is for.
+function counterHowTo(){
+  const cell = ch => { const t = TILE[ch], key = t.desk !== undefined ? GAME.desk.tiles.south[t.desk] : t.key;
+    return `<img class="gs" alt="${esc(t.name)}" title="${esc(t.name)} (${esc(ch)})" src="${glyphUrl(key, t.cp, t.fg, t.bg)}" style="background:${t.bg}">`; };
+  const row = s => `<div class="demo">${[...s].map(cell).join('')}</div>`;
+  return `<div class="how"><div class="cur">customers stand here</div>${row('.{__}.')}${row('.c@Kc.')}<div class="cur">staff stand here</div>
+    <p class="cur">The top row is walkable: you can walk along the line under it, never across it. The line is on the side the staff are on, so turn it with <kbd>Q</kbd> <kbd>E</kbd>. The row behind has a solid <b>c</b> block at each end, <b>@</b> where the clerk stands and <b>K</b> his terminal. The <b>Counter</b> tool (<kbd>C</kbd>) lays all of it in one drag.</p></div>`;
+}
+function renderPal(){
+  if (mode === 'tile'){
+    const groups = [...new Set(T.map(t => t[0]))];
+    $('#pal').innerHTML = groups.map(g => `<div><h3>${esc(g)}</h3>${g === 'Counter' ? counterHowTo() : ''}<div class="tiles">${T.filter(t => t[0] === g).map(tileSw).join('')}</div></div>`).join('');
+    $('#curA').textContent = TILE[tileA].name; $('#curB').textContent = TILE[tileB].name;
+  } else if (mode === 'piece'){
+    $('#pal').innerHTML = `<p class="cur">Pieces sit on top of the tile, so a cell can be a desk front, half a wall or a half-width neon sign. Turn the brush with Q / E.</p><div class="pcs">` +
+      Object.entries(MATS).map(([m, M]) => `<div class="prow"><span>${esc(M.name)}${M.only ? ' ◇' : ''}</span>${['half', 'quarter'].map(s => `<button type="button" data-piece="${m}.${s}" class="${pieceSel.m === m && pieceSel.s === s ? 'on' : ''}" title="${esc(pname(m, s, rot))}${M.block ? ' · blocks walking' : ''}" aria-label="${esc(pname(m, s, rot))}" style="background:#0d0f14">${swatch(m, s, rot)}</button>`).join('')}<span>${M.block ? 'blocks' : 'walk on'}</span></div>`).join('') + `</div>`;
+    $('#curA').textContent = 'add ' + pname(pieceSel.m, pieceSel.s, rot); $('#curB').textContent = 'clear the cell\'s pieces';
+  } else {
+    $('#pal').innerHTML = `<p class="cur">Status overrides what the tile and pieces say about walking: a chair you can't cross, a rail you can step over. An edge is a line on one side of a cell you can walk along but not cross, like a desk front. Red / green triangles mark cell overrides, orange lines the edges.</p><div class="st">` +
+      STATUS.map(([v, n]) => `<button type="button" data-status="${v === null ? 'auto' : v}" class="${statusSel === v ? 'on' : ''}">${esc(n)}</button>`).join('') + `<button type="button" data-status="edge" class="${statusSel === 'edge' ? 'on' : ''}">edge you can't cross (click near a side of a cell)</button></div>`;
+    $('#curA').textContent = statusSel === 'edge' ? 'add an edge barrier on the nearest side' : STATUS.find(s => s[0] === statusSel)[1]; $('#curB').textContent = statusSel === 'edge' ? 'remove the nearest edge barrier' : 'back to auto';
+  }
+  $('#rotName').textContent = mode === 'piece' && pieceSel.s === 'quarter' ? CORNER[rot] : FACE[rot];
+  $('#modes').innerHTML = MODES.map(([id, n, k]) => `<button type="button" data-mode="${id}" class="${mode === id ? 'on' : ''}" title="${n} (${k})">${n} <kbd>${k}</kbd></button>`).join('');
+}
+function renderTools(){
+  $('#tools').innerHTML = TOOLS.map(([id, name, key]) => `<button type="button" data-tool="${id}" class="${tool === id ? 'on' : ''}" title="${name} (${key})">${name} <kbd>${key}</kbd></button>`).join('') +
+    `<span class="sep"></span><button type="button" id="mirror" class="${mirror ? 'on' : ''}" title="Mirror left and right (M)">Mirror <kbd>M</kbd></button>
+     <button type="button" id="resize">Resize…</button>` +
+    (tool === 'counter' ? `<span class="sep"></span><button type="button" id="cstaff" class="${counterStaff ? 'on' : ''}" title="Also lay the staff row behind the counter (3 cells or more): counter blocks at the ends, @ and the clerk's terminal">Staff row</button>
+     <span class="cur">Drag along the customer side. The staff stand on the <b>${FACE[rot]}</b> side: Q / E turns it.</span>` : '');
+  $('#views').innerHTML = VIEWS.map(([id, n]) => `<button type="button" data-view="${id}" class="${view === id ? 'on' : ''}">${n}</button>`).join('');
+}
+function renderInsp(){
+  if (!sel || !inb(sel.x, sel.y)){ $('#insp').innerHTML = '<span class="cur">Pick a cell with the Pick tool (I) to see and edit its layers.</span>'; return; }
+  const c = cells[sel.y][sel.x], t = TILE[c.c];
+  $('#insp').innerHTML = `<div class="ln"><b>x ${sel.x} · y ${sel.y}</b><span class="cur">${walkable(sel.x, sel.y) ? 'walkable' : 'blocked'}</span></div>
+    <div class="ln"><span class="k">Tile</span><span>${esc(t.name)}</span>${t.rot ? `<span class="cur">${t.edge ? 'line on the ' + FACE[c.r] + ' side' : 'facing ' + FACE[c.r]}${c.r ? '' : ' (default)'}</span><button type="button" data-act="trot">⟳</button>` : ''}</div>
+    <div class="ln"><span class="k">Pieces</span>${c.p.length ? c.p.map((p, i) => `<span>${swatch(p[0], p[1], p[2])}</span><span>${esc(pname(...p))}</span><button type="button" data-act="prot" data-i="${i}" title="Turn it">⟳</button><button type="button" data-act="pdel" data-i="${i}" title="Remove it">×</button>`).join('') : '<span class="cur">none</span>'}</div>
+    <div class="ln"><span class="k">Edges</span>${(() => { const es = [...edgesOf(c)].sort(); return es.length ? es.map(k => `<span>${FACE[k]}${c.e.includes(k) ? '' : ' <span class="cur">(' + (t.edge && k === c.r ? 'desk front' : 'piece') + ')</span>'}</span>${c.e.includes(k) ? `<button type="button" data-act="edel" data-i="${k}" title="Remove this edge">×</button>` : ''}`).join('') : '<span class="cur">none: walkable across every side</span>'; })()}</div>
+    <div class="ln"><span class="k">Status</span><select id="iw" aria-label="Walk status">${STATUS.map(([v, n]) => `<option value="${v === null ? 'auto' : v}" ${c.w === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
+}
+function renderList(){
+  const q = $('#q').value.trim().toLowerCase(), kf = $('#kf').value;
+  const all = Object.entries(designs);
+  const L = all.filter(([, d]) => (!kf || d.kind === kf) && (!q || [d.name, d.kind, d.notes].some(v => String(v || '').toLowerCase().includes(q)))).sort((a, b) => (b[1].edited || '').localeCompare(a[1].edited || ''));
+  $('#list').innerHTML = L.length ? L.map(([id, d]) => `<li><button type="button" role="option" aria-selected="${cur === id}" data-open="${esc(id)}" class="${cur === id ? 'on' : ''}"><span>${esc(d.name || 'Untitled')}</span><span class="s">${d.w}×${d.h}</span><span class="k">${esc(d.kind || '')}</span><span class="s" data-by="${esc(d.editedBy || d.author || '')}"></span></button></li>`).join('')
+    : `<li class="empty">${all.length ? 'Nothing matches.' : 'No designs yet. Start one with New design.'}</li>`;
+  const kinds = [...new Set(all.map(([, d]) => d.kind).filter(Boolean))].sort();
+  $('#kf').innerHTML = '<option value="">All kinds</option>' + kinds.map(k => `<option ${k === kf ? 'selected' : ''}>${esc(k)}</option>`).join('');
+  $('#count').textContent = all.length ? `${all.length} saved design${all.length > 1 ? 's' : ''}` : 'No saved designs yet';
+  $('#picklabel').textContent = cur && designs[cur] ? designs[cur].name || 'Untitled' : ($('#name').value ? $('#name').value + ' (not saved)' : 'Open a design…');
+  names();
+}
+async function names(){ if (!user?.profiles) return; const ids = [...new Set([...document.querySelectorAll('[data-by]')].map(e => e.dataset.by).filter(Boolean))]; if (!ids.length) return;
+  try { const ps = await user.profiles(ids); document.querySelectorAll('[data-by]').forEach(e => { const p = ps[e.dataset.by]; e.textContent = e.dataset.by === 'claude' ? 'Claude' : (p && p.name) || ''; }); } catch (err){} }
+function setDirty(v){ dirty = v; $('#save').disabled = !v || !canWrite || !db; $('#state').className = v ? 'dirty' : 'saved'; $('#state').textContent = v ? 'unsaved' : (cur ? 'saved' : ''); }
+function load(id){ const d = designs[id]; if (!d) return; cur = id; cells = build(d.rows || [], d.ex, d.v !== 3); const mig = migrated; H = cells.length; W = cells[0]?.length || 0; sel = null;
+  $('#name').value = d.name || ''; $('#kind').value = KINDS.includes(d.kind) ? d.kind : 'other'; $('#notes').value = d.notes || '';
+  undo = []; redo = []; setDirty(mig > 0); resize(); checks(); renderList();
+  if (mig) msg(`${mig} desk cell${mig > 1 ? 's' : ''} in an up-and-down run turned to face the clerk's side. Check them, then Save.`); }
+function startNew(name, kind, w, h, data){ cur = null; sel = null; cells = data ? build(data.rows, data.ex, data.v !== 3) : blank(w, h, kind); H = cells.length; W = cells[0].length;
+  $('#name').value = name; $('#kind').value = kind; $('#notes').value = ''; undo = []; redo = []; setDirty(true); resize(); checks(); renderList(); }
+
+async function save(){
+  if (!db || !canWrite) return; const now = new Date().toISOString();
+  const data = { v: 3, name: $('#name').value.trim() || 'Untitled', kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows(), edges: edgeMap(), notes: $('#notes').value, edited: now, editedBy: me || '' };
+  try {
+    if (cur){ await db.doc('designs/' + cur).set({ ...(designs[cur] || {}), ...data }); }   // set, so cleared layers don't linger in the stored copy
+    else { const ref = await db.collection('designs').add({ ...data, created: now, author: me || '' }); cur = ref.id; }
+    setDirty(false); msg('Saved.', true);
+  } catch (e){ if (/not_granted|permission/.test(String(e?.code || e?.message))){ canWrite = false; setDirty(dirty); } msg('Could not save. Reload and try again.'); }
+}
+function msg(t, ok){ $('#status').innerHTML = `<span class="msg${ok ? ' ok' : ''}">${esc(t)}</span>`; }
+
+// ---------- dialogs (built into the page: no browser prompts here)
+function dialog(html, onSubmit){ const d = $('#dlg'); d.innerHTML = `<form method="dialog" style="display:grid;gap:12px">${html}<div class="row" style="justify-content:flex-end"><button type="button" value="cancel" id="dlgx">Cancel</button><button class="go" value="ok">OK</button></div></form>`;
+  d.querySelector('#dlgx').onclick = () => d.close(); d.querySelector('form').onsubmit = e => { e.preventDefault(); if (onSubmit(d) !== false) d.close(); }; d.showModal(); }
+function newDialog(){
+  dialog(`<h2>New design</h2>
+    <div class="meta"><label for="nk">Kind</label><select id="nk">${KINDS.map(k => `<option>${esc(k)}</option>`).join('')}</select>
+    <label for="ns">Size</label><select id="ns">${SIZES.map((s, i) => `<option value="${i}">${s[0]}: ${esc(s[3])}</option>`).join('')}<option value="c">Custom…</option></select>
+    <label for="nw">Custom</label><span class="row"><input id="nw" type="number" min="5" max="40" value="14" style="width:70px"> × <input id="nh" type="number" min="5" max="24" value="9" style="width:70px"></span>
+    <label for="nn">Name</label><input id="nn" type="text" placeholder="Untitled"></div>
+    <p class="cur">A capsule hotel starts from the game's lobby; a park starts as grass ringed with trees.</p>`, d => {
+    const k = d.querySelector('#nk').value, s = d.querySelector('#ns').value, n = d.querySelector('#nn').value.trim();
+    let w, h; if (s === 'c'){ w = +d.querySelector('#nw').value; h = +d.querySelector('#nh').value; } else { w = SIZES[s][1]; h = SIZES[s][2]; }
+    w = Math.max(3, Math.min(40, w || 0)); h = Math.max(3, Math.min(24, h || 0));
+    if (k === 'capsule hotel') startNew(n || 'Capsule hotel', k, 21, 9, { rows: HOTEL }); else startNew(n || `New ${k}`, k, w, h);
+  });
+  const nk = $('#nk'), ns = $('#ns'); nk.onchange = () => { if (nk.value === 'capsule hotel') ns.value = String(SIZES.length - 1); else if (nk.value === 'park' || nk.value === 'MegaBuilding') ns.value = '8'; };
+}
+function resizeDialog(){
+  dialog(`<h2>Resize</h2><div class="meta"><label for="rw">Width</label><input id="rw" type="number" min="3" max="40" value="${W}"><label for="rh">Height</label><input id="rh" type="number" min="3" max="24" value="${H}"></div><p class="cur">Keeps the top-left; new cells are floor.</p>`, d => {
+    const w = Math.max(3, Math.min(40, +d.querySelector('#rw').value || W)), h = Math.max(3, Math.min(24, +d.querySelector('#rh').value || H));
+    snapshot(); cells = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (cells[y] && cells[y][x]) ? cells[y][x] : mk('.'))); W = w; H = h; sel = null; setDirty(true); resize(); checks(); });
+}
+function exportDialog(){ const txt = JSON.stringify({ v: 3, name: $('#name').value, kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows(), edges: edgeMap() }, null, 1);
+  dialog(`<h2>Export</h2><p class="cur">Rows are one character per tile, as the game's hand-made layouts use (core/hotel.gd). <code>ex</code> holds the facing, pieces and walk status of the cells that have any; <code>walk</code> is the resulting walkable map (1 walkable, 0 blocked) and <code>edges</code> lists the sides of each cell you can't cross (0 south, 1 west, 2 north, 3 east): desk fronts, desk pieces and edges set by hand.</p><textarea id="ex" rows="14" readonly>${esc(txt)}</textarea><div class="row"><button type="button" id="cp">Copy</button><span id="cpm" class="cur"></span></div>`, () => {});
+  $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(txt); $('#cpm').textContent = 'Copied'; } catch (e){ $('#ex').select(); $('#cpm').textContent = 'Selected: press Ctrl+C'; } }; }
+function importDialog(){
+  dialog(`<h2>Import</h2><p class="cur">Paste rows of tile characters (or an exported design). It replaces the grid; Undo brings it back.</p><textarea id="im" rows="12" placeholder="#####NNN####&#10;#..........#"></textarea><p class="msg" id="imm"></p>`, d => {
+    let t = d.querySelector('#im').value, rows, ex, v; try { const j = JSON.parse(t); rows = j.rows; ex = j.ex; v = j.v; if (j.name) $('#name').value = j.name; if (KINDS.includes(j.kind)) $('#kind').value = j.kind; } catch (e){ rows = t.replace(/\r/g, '').split('\n').filter(r => r.length); }
+    if (!Array.isArray(rows) || !rows.length){ d.querySelector('#imm').textContent = 'Nothing to import.'; return false; }
+    snapshot(); cells = build(rows.map(String).slice(0, 24).map(r => r.slice(0, 40)), ex, v !== 3); H = cells.length; W = cells[0].length; sel = null; setDirty(true); resize(); checks(); });
+}
+
+// ---------- input
+function sideAt(e){ const r = cv.getBoundingClientRect(), cw = CW * zoom, ch = CH * zoom, fx = (e.clientX - r.left) % cw, fy = (e.clientY - r.top) % ch;
+  const d = [ch - fy, fx, fy, cw - fx]; return d.indexOf(Math.min(...d)); }   // the nearest side: 0 south, 1 west, 2 north, 3 east
+function cellAt(e){ const r = cv.getBoundingClientRect(); return { x: Math.floor((e.clientX - r.left) / (CW * zoom)), y: Math.floor((e.clientY - r.top) / (CH * zoom)) }; }
+function shape(a, b, br){ const cs = tool === 'line' ? lineCells(a, b) : boxCells(a, b, tool === 'rect'); const out = [];
+  for (const [x, y] of cs){ out.push([x, y, br]); if (mirror && W - 1 - x !== x) out.push([W - 1 - x, y, mirrorBrush(br)]); } return out; }
+function pickCell(p, btn){
+  const c = cells[p.y][p.x]; sel = { x: p.x, y: p.y };
+  if (mode === 'tile'){ if (btn === 2) tileB = c.c; else { tileA = c.c; if (TILE[c.c].rot) rot = c.r; } }
+  else if (mode === 'piece'){ if (c.p.length){ pieceSel = { m: c.p[0][0], s: c.p[0][1] }; rot = c.p[0][2]; } }
+  else if (c.w !== null && statusSel !== 'edge') statusSel = c.w;
+  renderPal(); renderInsp(); draw();
+}
+function turnCell(p, dir){ const c = cells[p.y][p.x]; snapshot();
+  if (mode === 'tile'){ if (!TILE[c.c].rot){ undo.pop(); return false; } c.r = (c.r + dir + 4) & 3; }
+  else if (mode === 'piece'){ if (!c.p.length){ undo.pop(); return false; } c.p = c.p.map(([m, s, r]) => [m, s, (r + dir + 4) & 3]); }
+  else { undo.pop(); return false; }
+  return true; }
+// The Counter tool: drag along the customer side. The brush facing says which side the staff stand on, so the run
+// always goes across it (south or north: left to right; west or east: top to bottom). It lays the counter front
+// ({ _ } with its line on the staff's side) and, with Staff row on and at least 3 cells, the row behind it: a
+// counter block at each end, then @ and the clerk's terminal K, as in the hotel (core/hotel.gd: {__} over c@Kc).
+function counterBrushes(a, b){
+  const horiz = !(rot & 1), n = (horiz ? Math.abs(b.x - a.x) : Math.abs(b.y - a.y)) + 1, lo = horiz ? Math.min(a.x, b.x) : Math.min(a.y, b.y), out = [];
+  for (let i = 0; i < n; i++){
+    const x = horiz ? lo + i : a.x, y = horiz ? a.y : lo + i;
+    out.push([x, y, { k: 'tile', ch: n === 1 ? '_' : i === 0 ? '{' : i === n - 1 ? '}' : '_', r: rot }]);
+    if (counterStaff && n >= 3){
+      const ch = i === 0 || i === n - 1 ? 'c' : i === 1 ? '@' : i === 2 ? 'K' : '.';
+      out.push([x + SIDE[rot][0], y + SIDE[rot][1], { k: 'tile', ch, r: ch === 'K' ? (rot + 2) & 3 : 0 }]);   // the terminal faces the customers
+    }
+  }
+  return out;
+}
+function counterShape(a, b){ const out = [];
+  for (const [x, y, br] of counterBrushes(a, b)){ out.push([x, y, br]); if (mirror && W - 1 - x !== x) out.push([W - 1 - x, y, mirrorBrush(br)]); } return out; }
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerdown', e => {
+  const p = cellAt(e); if (!inb(p.x, p.y)) return; cv.setPointerCapture(e.pointerId); cv.focus();
+  if (tool === 'pick'){ pickCell(p, e.button); return; }
+  if (tool === 'turn'){ if (turnCell(p, e.button === 2 ? -1 : 1)){ sel = { x: p.x, y: p.y }; afterEdit(); } return; }
+  if (tool === 'counter'){ if (mode !== 'tile') setMode('tile'); snapshot(); drag = { a: p, br: null }; preview = counterShape(p, p); draw(); return; }
+  edgeSide = sideAt(e);
+  const br = brushFor(e.button === 2 ? 2 : 0);
+  snapshot();
+  if (tool === 'fill'){ flood(p.x, p.y, br); afterEdit(); return; }
+  drag = { a: p, br };
+  if (tool === 'pen'){ setCell(p.x, p.y, br); draw(); } else { preview = shape(p, p, br); draw(); }
+});
+cv.addEventListener('pointermove', e => {
+  const p = cellAt(e); hover = p; hover.side = sideAt(e);
+  if (inb(p.x, p.y)){ const c = cells[p.y][p.x], t = TILE[c.c];
+    $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' facing ' + FACE[c.r] : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
+  if (drag){ if (tool === 'pen'){ for (const [x, y] of lineCells(drag.last || drag.a, p)) setCell(x, y, drag.br); drag.last = p; } else preview = tool === 'counter' ? counterShape(drag.a, p) : shape(drag.a, p, drag.br); }
+  draw();
+});
+cv.addEventListener('pointerup', e => { if (!drag) return; if (preview){ for (const [x, y, br] of preview) setCell(x, y, br); preview = null; } drag = null; afterEdit(); });
+cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
+function afterEdit(){ setDirty(true); draw(); checks(); }
+function doUndo(){ if (!undo.length) return; redo.push(snap()); restore(undo.pop()); setDirty(true); resize(); checks(); }
+function doRedo(){ if (!redo.length) return; undo.push(snap()); restore(redo.pop()); setDirty(true); resize(); checks(); }
+function turnBrush(d){ rot = (rot + d + 4) & 3; renderPal(); if (tool === 'counter') renderTools(); }
+function setMode(m){ mode = m; renderPal(); draw(); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('#pop').hidden){ closePop(); return; }
+  if (e.target.closest('input,textarea,select,dialog')) { if ((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); save(); } return; }
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === 'z'){ e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 'y'){ e.preventDefault(); doRedo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 's'){ e.preventDefault(); save(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = TOOLS.find(x => x[2].toLowerCase() === k); if (t){ tool = t[0]; renderTools(); return; }
+  if (k === 'm'){ mirror = !mirror; renderTools(); draw(); return; }
+  if (k === 'q'){ turnBrush(-1); return; } if (k === 'e'){ turnBrush(1); return; }
+  const md = MODES.find(x => x[2] === k); if (md) setMode(md[0]);
+});
+function openPop(){ $('#pop').hidden = false; $('#pickbtn').setAttribute('aria-expanded', 'true'); renderList(); $('#q').focus(); }
+function closePop(){ $('#pop').hidden = true; $('#pickbtn').setAttribute('aria-expanded', 'false'); }
+document.addEventListener('click', async e => {
+  if (!e.target.closest('.pickwrap')) closePop();
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'pickbtn'){ $('#pop').hidden ? openPop() : closePop(); return; }
+  if (b.dataset.tile !== undefined){ tileA = b.dataset.tile; renderPal(); return; }
+  if (b.dataset.piece){ const [m, s] = b.dataset.piece.split('.'); pieceSel = { m, s }; renderPal(); return; }
+  if (b.dataset.status){ statusSel = b.dataset.status === 'auto' ? null : b.dataset.status === 'edge' ? 'edge' : +b.dataset.status; renderPal(); return; }
+  if (b.dataset.mode){ setMode(b.dataset.mode); return; }
+  if (b.dataset.view){ view = b.dataset.view; renderTools(); draw(); return; }
+  if (b.dataset.tool){ tool = b.dataset.tool; renderTools(); return; }
+  if (b.dataset.act && sel){ const c = cells[sel.y][sel.x]; snapshot();
+    if (b.dataset.act === 'trot') c.r = (c.r + 1) & 3;
+    else if (b.dataset.act === 'prot'){ const p = c.p[+b.dataset.i]; if (p) p[2] = (p[2] + 1) & 3; }
+    else if (b.dataset.act === 'pdel') c.p.splice(+b.dataset.i, 1);
+    else if (b.dataset.act === 'edel') c.e = c.e.filter(v => v !== +b.dataset.i);
+    afterEdit(); return; }
+  if (b.dataset.open){ if (dirty && b.dataset.open !== cur && !b.classList.contains('armed')){ b.classList.add('armed'); msg('Unsaved changes: click again to open it anyway.'); setTimeout(() => b.classList.remove('armed'), 3000); return; } closePop(); load(b.dataset.open); return; }
+  switch (b.id){
+    case 'new': newDialog(); break;
+    case 'save': save(); break;
+    case 'undo': doUndo(); break;
+    case 'redo': doRedo(); break;
+    case 'rotL': turnBrush(-1); break;
+    case 'rotR': turnBrush(1); break;
+    case 'mirror': mirror = !mirror; renderTools(); draw(); break;
+    case 'cstaff': counterStaff = !counterStaff; renderTools(); break;
+    case 'resize': resizeDialog(); break;
+    case 'exp': exportDialog(); break;
+    case 'imp': importDialog(); break;
+    case 'dup': startNew(($('#name').value || 'Untitled') + ' (copy)', $('#kind').value, W, H, { v: 3, rows: exportRows(), ex: exportEx() }); msg('A copy: Save to keep it.', true); break;
+    case 'del': if (!cur){ msg('Not saved yet: nothing to delete.'); break; }
+      if (!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent = 'Delete it?'; setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Delete'; }, 3000); break; }
+      try { await db.doc('designs/' + cur).delete(); b.classList.remove('armed'); b.textContent = 'Delete'; cur = null; msg('Deleted.', true); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false); } catch (err){ msg('Could not delete.'); } break;
+  }
+});
+document.addEventListener('change', e => { if (e.target.id === 'iw' && sel){ snapshot(); const v = e.target.value; cells[sel.y][sel.x].w = v === 'auto' ? null : +v; afterEdit(); } });
+// right click on a palette tile sets the right-click tile
+document.addEventListener('contextmenu', e => { const b = e.target.closest('[data-tile]'); if (!b) return; e.preventDefault(); tileB = b.dataset.tile; renderPal(); });
+['#name', '#notes'].forEach(s => $(s).addEventListener('input', () => { setDirty(true); if (s === '#name') $('#picklabel').textContent = ($('#name').value || 'Untitled') + (cur ? '' : ' (not saved)'); }));
+$('#kind').addEventListener('change', () => { setDirty(true); checks(); });
+$('#zoom').addEventListener('input', e => { zoom = +e.target.value; resize(); });
+$('#q').addEventListener('input', renderList); $('#kf').addEventListener('change', renderList);
+
+// ---------- start
+$('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
+$('#sizetab').innerHTML = SIZES.map(s => `<tr><td>${s[0]}</td><td>${esc(s[3])}</td></tr>`).join('');
+zoom = window.innerWidth < 720 ? 2 : 3; $('#zoom').value = zoom;
+$('.sub').insertAdjacentHTML('beforeend', ` Tiles, colours and glyphs are the game's (v${esc(GAME.version)}, ${esc(GAME.commit)}). ◇ marks what the game doesn't have yet.`);
+renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false);
+(async () => {
+  db = await (window.claude?.use ? claude.use('db') : null);
+  user = await (window.claude?.use ? claude.use('user') : null);
+  if (user){ try { me = await user.id(); const p = await user.me(); $('#who').textContent = p && p.name ? p.name : ''; } catch (e){} const w = await user.can?.('data.write'); if (w === false) canWrite = false; }
+  if (!db){ $('#list').innerHTML = '<li class="empty">Saved designs need claude.ai: open the page signed in. You can still draw and export.</li>'; $('#count').textContent = 'Not signed in'; return; }
+  const timer = setTimeout(() => { if (!Object.keys(designs).length){ $('#list').innerHTML = '<li class="empty">The designs are slow to load. Reload the page.</li>'; $('#count').textContent = 'Designs are slow to load'; } }, 10000);
+  db.collection('designs').onSnapshot(snapshotDocs => { clearTimeout(timer); const next = {}; snapshotDocs.docs.forEach(d => next[d.id] = d.data()); designs = next;
+    if (cur && designs[cur] && !dirty && sigOf(designs[cur]) !== snap()) load(cur); else renderList(); setDirty(dirty); },
+    () => { $('#list').innerHTML = '<li class="empty">The designs stopped updating. Reload the page.</li>'; });
+})();
+</script>

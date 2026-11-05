@@ -1,0 +1,629 @@
+{
+ "version": "0.17.22",
+ "commit": "653eb4c",
+ "sheet": {
+  "cols": 16,
+  "size": 8,
+  "names": [
+   "STREET",
+   "FLOOR",
+   "WALL",
+   "DOOR",
+   "TERMINAL",
+   "TERMINAL_SPENT",
+   "NEON",
+   "POD",
+   "MY_POD",
+   "JOB_BOARD",
+   "EXIT",
+   "COUNTER",
+   "TERMINAL_TARGET",
+   "DOOR_OPEN",
+   "GATE",
+   "ROAD_LINE",
+   "ROAD_LINE_V",
+   "PORTAL",
+   "LIMIT",
+   "CHARGER",
+   "DESK",
+   "DESK_L",
+   "DESK_R",
+   "GUEST_BED",
+   "GUEST_TERM",
+   "LANE_LINE",
+   "LANE_LINE_V",
+   "CLERK_TERM",
+   "PARK",
+   "TREE",
+   "PLANT",
+   "FOUNTAIN",
+   "STATUE",
+   "BENCH",
+   "CRATE",
+   "TABLE",
+   "SHELF",
+   "MACHINE",
+   "BED",
+   "CABINET",
+   "DESK_N",
+   "DESK_N_L",
+   "DESK_N_R",
+   "DESK_W",
+   "DESK_W_T",
+   "DESK_W_B",
+   "DESK_E",
+   "DESK_E_T",
+   "DESK_E_B",
+   "actor:runner",
+   "actor:drone",
+   "actor:ganger",
+   "actor:deluge",
+   "actor:clerk",
+   "HEARD"
+  ]
+ },
+ "glyphs": {
+  "64": "FEC6DEDEDEC0FE00",
+  "83": "FEC0FE06E6E6FE00",
+  "8597": "183C7E18187E3C18",
+  "9650": "18183C3C7E7EFFFF",
+  "9660": "FFFF7E7E3C3C1818"
+ },
+ "tiles": {
+  "STREET": {
+   "glyph": 183,
+   "fg": "#3a3f58",
+   "bg": "#000000",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "street"
+  },
+  "FLOOR": {
+   "glyph": 46,
+   "fg": "#4d5a66",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "floor"
+  },
+  "WALL": {
+   "glyph": 9619,
+   "fg": "#2b2f45",
+   "bg": "#14162a",
+   "blocks": true,
+   "height": 2,
+   "under": false,
+   "name": "wall"
+  },
+  "DOOR": {
+   "glyph": 9635,
+   "fg": "#d6a243",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 2,
+   "under": false,
+   "name": "door"
+  },
+  "DOOR_OPEN": {
+   "glyph": 9633,
+   "fg": "#d6a243",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "open door"
+  },
+  "ROAD_LINE_V": {
+   "glyph": 9474,
+   "fg": "#7a6a22",
+   "bg": "#000000",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "street"
+  },
+  "ROAD_LINE": {
+   "glyph": 9472,
+   "fg": "#7a6a22",
+   "bg": "#000000",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "street"
+  },
+  "LANE_LINE_V": {
+   "glyph": 9474,
+   "fg": "#6f7380",
+   "bg": "#000000",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "street"
+  },
+  "LANE_LINE": {
+   "glyph": 9472,
+   "fg": "#6f7380",
+   "bg": "#000000",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "street"
+  },
+  "PORTAL": {
+   "glyph": 920,
+   "fg": "#3fe0b0",
+   "bg": "#000000",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "alley mouth"
+  },
+  "CHARGER": {
+   "glyph": 8776,
+   "fg": "#b6ff3b",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "recharge station"
+  },
+  "LIMIT": {
+   "glyph": 9618,
+   "fg": "#262a40",
+   "bg": "#0a0b14",
+   "blocks": true,
+   "height": 2,
+   "under": false,
+   "name": "the density of the Sprawl"
+  },
+  "GATE": {
+   "glyph": 9635,
+   "fg": "#a04a5a",
+   "bg": "#14162a",
+   "blocks": true,
+   "height": 2,
+   "under": false,
+   "name": "sealed MegaBuilding gate"
+  },
+  "TERMINAL": {
+   "glyph": 937,
+   "fg": "#29f0ff",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "terminal"
+  },
+  "TERMINAL_SPENT": {
+   "glyph": 937,
+   "fg": "#33505a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "burned-out terminal"
+  },
+  "NEON": {
+   "glyph": 9608,
+   "fg": "#ff2fa8",
+   "bg": "#14162a",
+   "blocks": true,
+   "height": 2,
+   "under": false,
+   "name": "neon sign"
+  },
+  "POD": {
+   "glyph": 9632,
+   "fg": "#3c4466",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 2,
+   "under": false,
+   "name": "capsule pod"
+  },
+  "MY_POD": {
+   "glyph": 9632,
+   "fg": "#29f0ff",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "your pod"
+  },
+  "GUEST_BED": {
+   "glyph": 9632,
+   "fg": "#1f6f78",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "a guest's bed"
+  },
+  "GUEST_TERM": {
+   "glyph": 8801,
+   "fg": "#4f6a2a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "a guest's terminal"
+  },
+  "CLERK_TERM": {
+   "glyph": 8801,
+   "fg": "#5a7fa0",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "the clerk's terminal"
+  },
+  "PARK": {
+   "glyph": 44,
+   "fg": "#1f4a2a",
+   "bg": "#030a05",
+   "blocks": false,
+   "height": 0,
+   "under": false,
+   "name": "park"
+  },
+  "TREE": {
+   "glyph": 9827,
+   "fg": "#3fa04a",
+   "bg": "#030a05",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "tree"
+  },
+  "PLANT": {
+   "glyph": 9824,
+   "fg": "#3f9a5a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "plant"
+  },
+  "FOUNTAIN": {
+   "glyph": 8776,
+   "fg": "#29c8ff",
+   "bg": "#06223a",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "fountain"
+  },
+  "STATUE": {
+   "glyph": 934,
+   "fg": "#9aa4b8",
+   "bg": "#030a05",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "statue"
+  },
+  "BENCH": {
+   "glyph": 960,
+   "fg": "#8a6a4a",
+   "bg": "#030a05",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "bench"
+  },
+  "CRATE": {
+   "glyph": 9632,
+   "fg": "#7a5a3a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "crates"
+  },
+  "TABLE": {
+   "glyph": 960,
+   "fg": "#8a7a6a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "table"
+  },
+  "SHELF": {
+   "glyph": 9579,
+   "fg": "#6a5a4a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "shelves"
+  },
+  "MACHINE": {
+   "glyph": 9688,
+   "fg": "#6a7a8a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "machine"
+  },
+  "BED": {
+   "glyph": 9644,
+   "fg": "#4a5a7a",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "bed"
+  },
+  "CABINET": {
+   "glyph": 9612,
+   "fg": "#9d5cff",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "arcade cabinet"
+  },
+  "JOB_BOARD": {
+   "glyph": 8801,
+   "fg": "#b6ff3b",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "job board"
+  },
+  "EXIT": {
+   "glyph": 8962,
+   "fg": "#ffb627",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 2,
+   "under": false,
+   "name": "exit"
+  },
+  "TERMINAL_TARGET": {
+   "glyph": 937,
+   "fg": "#ff2fa8",
+   "bg": "#2a0d20",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "data terminal"
+  },
+  "COUNTER": {
+   "glyph": 9474,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "counter"
+  },
+  "DESK": {
+   "glyph": 57345,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_L": {
+   "glyph": 57344,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_R": {
+   "glyph": 57346,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_N": {
+   "glyph": 57393,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_N_L": {
+   "glyph": 57392,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_N_R": {
+   "glyph": 57394,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_W": {
+   "glyph": 57396,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_W_T": {
+   "glyph": 57395,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_W_B": {
+   "glyph": 57397,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_E": {
+   "glyph": 57399,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_E_T": {
+   "glyph": 57398,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  },
+  "DESK_E_B": {
+   "glyph": 57400,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": false,
+   "height": 1,
+   "under": true,
+   "name": "front desk"
+  }
+ },
+ "legend": {
+  " ": "STREET",
+  "#": "WALL",
+  ".": "FLOOR",
+  "+": "DOOR",
+  "d": "DOOR",
+  "N": "NEON",
+  "G": "GATE",
+  "T": "TERMINAL",
+  "X": "TERMINAL_TARGET",
+  "K": "CLERK_TERM",
+  "J": "JOB_BOARD",
+  "R": "CHARGER",
+  "x": "CRATE",
+  "t": "TABLE",
+  "s": "SHELF",
+  "m": "MACHINE",
+  "B": "BED",
+  "a": "CABINET",
+  "c": "COUNTER",
+  "v": "PLANT",
+  "Y": "TREE",
+  ",": "PARK",
+  "F": "FOUNTAIN",
+  "A": "STATUE",
+  "h": "BENCH",
+  "E": "EXIT",
+  "P": "POD",
+  "p": "MY_POD",
+  "b": "GUEST_BED",
+  "g": "GUEST_TERM",
+  "@": "FLOOR",
+  "S": "FLOOR"
+ },
+ "desk": {
+  "chars": {
+   "_": 0,
+   "{": 1,
+   "}": 2
+  },
+  "tiles": {
+   "north": [
+    "DESK_N",
+    "DESK_N_L",
+    "DESK_N_R"
+   ],
+   "west": [
+    "DESK_W",
+    "DESK_W_T",
+    "DESK_W_B"
+   ],
+   "east": [
+    "DESK_E",
+    "DESK_E_T",
+    "DESK_E_B"
+   ],
+   "south": [
+    "DESK",
+    "DESK_L",
+    "DESK_R"
+   ]
+  },
+  "sides": {
+   "DESK": [
+    0,
+    1
+   ],
+   "DESK_L": [
+    0,
+    1
+   ],
+   "DESK_R": [
+    0,
+    1
+   ],
+   "DESK_N": [
+    0,
+    -1
+   ],
+   "DESK_N_L": [
+    0,
+    -1
+   ],
+   "DESK_N_R": [
+    0,
+    -1
+   ],
+   "DESK_W": [
+    -1,
+    0
+   ],
+   "DESK_W_T": [
+    -1,
+    0
+   ],
+   "DESK_W_B": [
+    -1,
+    0
+   ],
+   "DESK_E": [
+    1,
+    0
+   ],
+   "DESK_E_T": [
+    1,
+    0
+   ],
+   "DESK_E_B": [
+    1,
+    0
+   ]
+  }
+ },
+ "curb": "#1b1f30"
+}

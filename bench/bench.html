@@ -17,11 +17,11 @@
   --sig:#5fc7b0; --sig-soft:#1d3a34; --warn:#e08a5c; color-scheme:dark }
 *{box-sizing:border-box}
 html{overflow-y:scroll;scrollbar-gutter:stable;scrollbar-color:var(--faint) var(--bg);scrollbar-width:thin}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--display)}
-.wrap{max-width:760px;margin:0 auto;padding-block:28px 60px;padding-inline:16px;display:grid;gap:22px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--display)}
+.wrap{max-width:760px;margin:0 auto;padding-block:0 60px;padding-inline:16px;display:grid;gap:22px}
 header{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap}header>h1,header>.meta,header>.total{white-space:nowrap}
 /* the add bar and the filter stay in view while scrolling */
-.pin{position:sticky;top:0;z-index:5;background:var(--bg);display:grid;gap:10px;padding:10px 0;margin:-10px 0;border-bottom:1px solid var(--edge)}
+.pin{position:sticky;top:0;z-index:5;background:var(--bg);display:grid;gap:10px;padding:26px 0 10px;border-bottom:1px solid var(--edge)}   /* the same space above the header scrolled or not (BG-020): it used to sit 28px lower at the top of the page than when stuck, so it jumped when a toggle changed the page height */
 h1{margin:0;font:800 22px/1.1 var(--display);letter-spacing:-.01em}
 h1 span{color:var(--sig)}
 .meta{font:400 12px var(--mono);color:var(--muted)}
@@ -433,13 +433,13 @@ const saveFolds = () => { try { localStorage.setItem('closedSubs', JSON.stringif
 document.getElementById('foldAll').addEventListener('click', () => {   // Sprawler TW-057: fold in levels too, the mirror of Unfold all, Done one level ahead
   // 1st click from all open: groups fold and Done shuts; 2nd: the sections shut
   const secs = [...document.querySelectorAll('#list section[data-sec]')], keysOf = sec => [...sec.querySelectorAll('h3.sub')].map(h => h.dataset.k);
-  const level = sec => closed[sec.dataset.sec] ? 0 : keysOf(sec).some(k => closedSub[k]) ? 1 : 2;
+  const level = sec => closed[sec.dataset.sec] ? 0 : keysOf(sec).every(k => closedSub[k]) ? 1 : 2;   // Sprawler BG-019: one group still open counts as open, so a click folds groups before sections
   const set = (sec, L) => { const id = sec.dataset.sec; if (L === 0){ closed[id] = true; return; } delete closed[id]; keysOf(sec).forEach(k => { if (L === 1) closedSub[k] = true; else delete closedSub[k]; }); };
   const others = secs.filter(x => x.dataset.sec !== 'done'), done = secs.find(x => x.dataset.sec === 'done');
   const full = others.filter(x => keysOf(x).length), L = full.length ? Math.max(...full.map(level)) : 0;
   const T = Math.max(0, L - 1);
-  others.forEach(x => set(x, keysOf(x).length ? T : 0));   // a section showing no groups (Queued under Yours) folds shut (Sprawler TW-053)
-  if (done) set(done, Math.max(0, T - 1));
+  others.forEach(x => set(x, keysOf(x).length ? Math.min(level(x), T) : 0));   // folding never opens a section   // a section showing no groups (Queued under Yours) folds shut (Sprawler TW-053)
+  if (done) set(done, Math.min(level(done), Math.max(0, T - 1)));
   saveFolds(); render(); scrollTo(0, 0); });   // Sprawler BG-019: start from the top, not where you were before
 document.getElementById('openAll').addEventListener('click', () => {   // Sprawler TW-057: unfold in levels, every section alike, Done one level behind
   // level 0: section shut · 1: section open, its groups folded · 2: everything open
