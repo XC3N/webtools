@@ -1,6 +1,6 @@
 {
- "version": "0.17.22",
- "commit": "653eb4c",
+ "version": "0.17.30",
+ "commit": "4fc754c",
  "sheet": {
   "cols": 16,
   "size": 8,
@@ -59,7 +59,11 @@
    "actor:ganger",
    "actor:deluge",
    "actor:clerk",
-   "HEARD"
+   "HEARD",
+   "actor:runner:walk0",
+   "actor:runner:walk1",
+   "COUNTER_H",
+   "DUMPSTER"
   ]
  },
  "glyphs": {
@@ -403,6 +407,24 @@
    "under": false,
    "name": "counter"
   },
+  "COUNTER_H": {
+   "glyph": 9472,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "counter"
+  },
+  "DUMPSTER": {
+   "glyph": 9604,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
   "DESK": {
    "glyph": 57345,
    "fg": "#8a76b8",
@@ -532,6 +554,7 @@
   "B": "BED",
   "a": "CABINET",
   "c": "COUNTER",
+  "D": "DUMPSTER",
   "v": "PLANT",
   "Y": "TREE",
   ",": "PARK",

@@ -18,7 +18,7 @@ The designer offers only what the game has. Pieces, the status layer and edges s
 
 ## Counters
 
-There is no Counter tool: lay the counter front (`{ _ }`, walkable cells with a line on the staff side) with the pencil and Shift+click, turn it with Select + Q / E, and close the staff row behind it with counter blocks `c`, the staff spot `@` (Actors & spawns) and the clerk's terminal `K` (Devices).
+There is no Counter tool: lay the counter (`{ _ }` cells you can stand on, with a line on the clerk's side) with the pencil and Shift+click, turn it with Select + Q / E, and close the row behind it with solid counter blocks `c`, the clerk's spot `@` (Actors & spawns) and the clerk's terminal `K` (Devices).
 
 ## Saved design format (v3)
 
@@ -28,6 +28,7 @@ There is no Counter tool: lay the counter front (`{ _ }`, walkable cells with a 
 
 The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
 
+- v9: game 0.17.30 tiles (dumpster `D`); "Building Blocks" heading; two boxes show the glyph each mouse button holds; counter tiles renamed (no "counter block" / "staff row"); an empty floor cell on the outline that no inside floor touches counts as open ground, not a gap.
 - v8: the description block under the title is gone.
 - v7: layout (type + building dropdowns and New on one line, no side panel); toolbar of icons with only Pencil (Shift+click a straight line, Shift+right click picks) and Select (Q / E turn the selected tile); Counter, line, box, fill, pick and rotate tools gone; Resize beside Zoom; every palette group collapsible and regrouped by what things are; stairs, elevator, chair, window and hedge no longer offered; a cell can't be painted past what the game can draw; unreachable cells are an info line.
 - v6: the Building sizes panel and its size check are gone (mapgen's lot sizes are being redone).

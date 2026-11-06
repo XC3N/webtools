@@ -74,6 +74,8 @@ dialog::backdrop{background:#000a}
 button.ic{width:34px;height:34px;padding:0;display:grid;place-items:center}button.ic svg{width:18px;height:18px}
 .picker select{min-width:0}.picker #bsel{flex:1 1 220px;max-width:460px}.picker #tsel{flex:0 1 150px}
 .dim{font:400 12px var(--mono);color:var(--muted)}
+.brushes{display:flex;gap:10px}.bb{display:flex;flex-direction:column;align-items:center;gap:3px;font:400 10px var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.bb .box1{width:48px;height:48px;border:1px solid var(--line);border-radius:4px;display:grid;place-items:center;background:#0d0f14;font:600 11px var(--mono);color:var(--ink);text-align:center;line-height:1.1;text-transform:none;letter-spacing:0}.bb .box1 img{height:36px;width:auto;image-rendering:pixelated}.bb .box1 .sw{width:34px;height:34px}
 #note{min-height:1.2em}
 .keys{font-size:12px;color:var(--muted)}.keys summary{cursor:pointer}.keys p{margin:6px 0}
 kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:var(--muted)}
@@ -116,9 +118,9 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
     </section>
 
     <aside class="box">
-      <h2>Layer</h2>
+      <h2>Building Blocks</h2>
       <div class="seg" id="modes" role="group" aria-label="Layer to paint"></div>
-      <p class="cur">Left click: <b id="curA"></b> · right click: <b id="curB"></b></p>
+      <div class="brushes" aria-label="What each mouse button paints"><div class="bb" id="boxA"></div><div class="bb" id="boxB"></div></div>
       <div class="row"><span class="cur">Facing</span><button type="button" id="rotL" title="Rotate the brush counter-clockwise (Q)">⟲</button><button type="button" id="rotR" title="Rotate the brush clockwise (E)">⟳</button><b class="cur" id="rotName"></b></div>
       <div class="pal" id="pal"></div>
       <h2>Cell</h2>
@@ -157,16 +159,16 @@ const T = [
   ['Doors', 'd', 'exit door (back, to the alley)', '', { fg: '#4fd6c4' }],
   ['Doors', 'E', 'street exit', ''],
   ['Doors', 'P', 'guest room door (locked)', '', { walk: 1 }],   // the game blocks it; for a design the room behind it counts as reachable
-  // The counter: customers stand on the counter front cells (walkable), the line is on the staff's side.
-  ['Counters', '{', 'counter front: first end (left, or top)', 're'],
-  ['Counters', '_', 'counter front: middle', 're'],
-  ['Counters', '}', 'counter front: last end (right, or bottom)', 're'],
-  ['Counters', 'c', 'counter block (solid: closes the end of a staff row)', ''],
+  // The counter: you stand on the walkable counter cells, the line is on the clerk's side.
+  ['Counters', '{', 'counter, first end (left, or top)', 're'],
+  ['Counters', '_', 'counter, middle', 're'],
+  ['Counters', '}', 'counter, last end (right, or bottom)', 're'],
+  ['Counters', 'c', 'counter, solid block', ''],
   ['Devices', 'T', 'terminal (cash)', 'r'],
   ['Devices', 'X', 'data terminal spot', 'r'],
   ['Devices', 'J', 'job board (the hotel only: it opens the job board)', 'r'],
   ['Devices', 'R', 'recharge station', 'r'],
-  ['Devices', 'K', "clerk's terminal (staff side)", 'r'],
+  ['Devices', 'K', "clerk's terminal (behind the counter)", 'r'],
   ['Devices', 'g', "a guest's terminal", 'r'],
   ['Devices', 'm', 'machine', 'r'],
   ['Devices', 'a', 'arcade cabinet', 'r'],
@@ -177,12 +179,13 @@ const T = [
   ['Furniture', 'b', "a guest's bed", 'r'],
   ['Furniture', 'p', 'your pod', 'r'],
   ['Furniture', 'h', 'bench', 'r'],
+  ['Furniture', 'D', 'dumpster', ''],
   ['Plants & park', 'v', 'potted plant', ''],
   ['Plants & park', 'Y', 'tree', ''],
   ['Plants & park', ',', 'grass', ''],
   ['Plants & park', 'F', 'fountain', ''],
   ['Plants & park', 'A', 'statue', ''],
-  ['Actors & spawns', '@', 'staff spot: where the clerk or shopkeeper stands', '', { marker: 1, glyph: '@', fg: '#9d5cff', bg: '#0d0f14', walk: 1 }],
+  ['Actors & spawns', '@', "clerk's spot: where the clerk or shopkeeper stands", '', { marker: 1, glyph: '@', fg: '#9d5cff', bg: '#0d0f14', walk: 1 }],
   ['Actors & spawns', 'S', 'where you wake up / come in', '', { marker: 1, glyph: 'S', fg: '#7a809f', bg: '#0d0f14', walk: 1 }],
   // Not in the game: only here so designs drawn earlier still open. Never offered in the palette.
   ['Legacy', '<', 'stairs up', 'r', { only: 1, glyph: '▲', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
@@ -191,7 +194,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '8';
+const DESIGNER_VERSION = '9';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -410,8 +413,13 @@ function checks(){
   const onEdge = set => edge.filter(([x, y]) => set.has(cells[y][x].c));
   const entries = onEdge(ENTRY), exits = onEdge(EXIT), doorsOnEdge = entries.concat(exits);
   if (!park){
-    const leaks = edge.filter(([x, y]) => !SOLID_EDGE.has(cells[y][x].c) && walkable(x, y));
+    // An empty floor cell on the outline that no inside floor touches is open ground (the street shows there), not a gap.
+    const inner = (x, y) => x > 0 && y > 0 && x < W - 1 && y < H - 1 && walkable(x, y);
+    const open = edge.filter(([x, y]) => cells[y][x].c === '.' && !inner(x - 1, y) && !inner(x + 1, y) && !inner(x, y - 1) && !inner(x, y + 1));
+    const openSet = new Set(open.map(([x, y]) => x + ',' + y));
+    const leaks = edge.filter(([x, y]) => !SOLID_EDGE.has(cells[y][x].c) && walkable(x, y) && !openSet.has(x + ',' + y));
     out.push([leaks.length ? 'no' : 'ok', leaks.length ? `The outline has ${leaks.length} gap${leaks.length > 1 ? 's' : ''} (walls, neon, doors or gates only)` : 'The outline is closed']);
+    if (open.length) out.push(['ok', `${open.length} open-ground cell${open.length > 1 ? 's' : ''} on the outline (the street shows there)`]);
     out.push([entries.length ? 'ok' : 'no', entries.length ? `${entries.length} entry door${entries.length > 1 ? 's' : ''}` : 'No entry door (the front door, to the street)']);
     const es = [...new Set(entries.map(([x, y]) => sideOf(x, y)).filter(Boolean))], xs = [...new Set(exits.map(([x, y]) => sideOf(x, y)).filter(Boolean))];
     if (entries.length && !exits.length && !['capsule hotel', 'MegaBuilding', 'Corpsec HQ'].includes(kind)) out.push(['w', 'No exit door: mark the back door to the alley with the exit door tile']);
@@ -453,19 +461,23 @@ function swatch(m, s, r){ const col = MATS[m].col; let bg;
   if (s === 'half') bg = `linear-gradient(${['to top', 'to right', 'to bottom', 'to left'][r]},${col} 50%,transparent 50%)`;
   else bg = `linear-gradient(${col},${col}) ${['right bottom', 'left bottom', 'left top', 'right top'][r]}/50% 50% no-repeat`;
   return `<span class="sw" style="background:${bg}"></span>`; }
+const tileImg = ch => { const t = TILE[ch], key = t.desk !== undefined ? GAME.desk.tiles[SIDE_NAME[rot & 3]][t.desk] : t.key; return `<img alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}">`; };
+// The two boxes under Building Blocks: what the left and the right mouse button hold right now.
+function brushBoxes(a, b){ const box = (id, label, [html, title]) => { $(id).innerHTML = `<span>${label}</span><span class="box1" title="${esc(title)}">${html}</span>`; $(id).setAttribute('aria-label', label + ': ' + title); }; box('#boxA', 'Left', a); box('#boxB', 'Right', b); }
 function renderPal(){
   if (mode === 'tile'){
     const groups = [...new Set(T.filter(t => !(t[4] && t[4].only)).map(t => t[0]))];
     $('#pal').innerHTML = groups.map(g => `<details data-g="${esc(g)}"${closedGroups.has(g) ? '' : ' open'}><summary><h3>${esc(g)}</h3></summary><div class="tiles">${T.filter(t => t[0] === g).map(tileSw).join('')}</div></details>`).join('');
-    $('#curA').textContent = TILE[tileA].name; $('#curB').textContent = TILE[tileB].name;
+    brushBoxes([tileImg(tileA), TILE[tileA].name], [tileImg(tileB), TILE[tileB].name]);
   } else if (mode === 'piece'){
     $('#pal').innerHTML = `<p class="cur">Pieces sit on top of the tile, so a cell can be a desk front, half a wall or a half-width neon sign. Turn the brush with Q / E.</p><div class="pcs">` +
       Object.entries(MATS).filter(([, M]) => !M.only).map(([m, M]) => `<div class="prow"><span>${esc(M.name)}</span>${['half', 'quarter'].map(s => `<button type="button" data-piece="${m}.${s}" class="${pieceSel.m === m && pieceSel.s === s ? 'on' : ''}" title="${esc(pname(m, s, rot))}${M.block ? ' · blocks walking' : ''}" aria-label="${esc(pname(m, s, rot))}" style="background:#0d0f14">${swatch(m, s, rot)}</button>`).join('')}<span>${M.block ? 'blocks' : 'walk on'}</span></div>`).join('') + `</div>`;
-    $('#curA').textContent = 'add ' + pname(pieceSel.m, pieceSel.s, rot); $('#curB').textContent = 'clear the cell\'s pieces';
+    brushBoxes([swatch(pieceSel.m, pieceSel.s, rot), 'add ' + pname(pieceSel.m, pieceSel.s, rot)], ['clear', "clear the cell's pieces"]);
   } else {
     $('#pal').innerHTML = `<p class="cur">Status overrides what the tile and pieces say about walking: a chair you can't cross, a rail you can step over. An edge is a line on one side of a cell you can walk along but not cross, like a desk front. Red / green triangles mark cell overrides, orange lines the edges.</p><div class="st">` +
       STATUS.map(([v, n]) => `<button type="button" data-status="${v === null ? 'auto' : v}" class="${statusSel === v ? 'on' : ''}">${esc(n)}</button>`).join('') + `<button type="button" data-status="edge" class="${statusSel === 'edge' ? 'on' : ''}">edge you can't cross (click near a side of a cell)</button></div>`;
-    $('#curA').textContent = statusSel === 'edge' ? 'add an edge barrier on the nearest side' : STATUS.find(s => s[0] === statusSel)[1]; $('#curB').textContent = statusSel === 'edge' ? 'remove the nearest edge barrier' : 'back to auto';
+    const st = statusSel === 'edge' ? ['edge', 'add an edge barrier on the nearest side'] : (v => [v === null ? 'auto' : v ? 'walk' : 'block', STATUS.find(x => x[0] === v)[1]])(statusSel);
+    brushBoxes(st, statusSel === 'edge' ? ['no edge', 'remove the nearest edge barrier'] : ['auto', 'back to auto']);
   }
   $('#rotName').textContent = mode === 'piece' && pieceSel.s === 'quarter' ? CORNER[rot] : FACE[rot];
   $('#modes').innerHTML = MODES.map(([id, n, k]) => `<button type="button" data-mode="${id}" class="${mode === id ? 'on' : ''}" title="${n} (${k})">${n} <kbd>${k}</kbd></button>`).join('');
