@@ -18,7 +18,7 @@ It runs as a claude.ai artifact with a shared database (`db` and `user` capabili
 - `swaps/slot-<n>-<trad|ext>`: `{slot, mode, name, cp, was, at}`: the tile, which identity, the unscii code point it now uses, the game's own code point for that identity (-1: none), and when (ISO time). Deleting the doc resets that identity.
 - `meta/info`: `{syncedAt, syncedVersion}`: when the swaps were last copied into the game, and the game version that has them. A swap with `at` later than `syncedAt` shows as not in the game yet.
 - `cats/names`: `{<id>: name}`; ids are `b<n>` for Unicode block n (a rename) and `c<x>` for a category made on the page; an empty name removes it. `cats/assign`: `{c<HEX>: <id>}`, the category a glyph was moved to (a glyph with no entry is in its block).
-- `glyph_swaps.json` (in the game): `{"version": 2, "swaps": [{"slot", "name", "mode": "trad"|"ext", "cp", "glyph": "U+XXXX", "was"}]}`. The baker (`tools/make_tiles.py`) is meant to draw each listed slot and mode from `cp` instead of its glyph in `core/sprawl_map.gd` / `core/entity.gd`.
+- `glyph_swaps.json` (in the game): `{"version": 2, "swaps": [{"tile", "name", "mode": "trad"|"ext", "cp", "glyph": "U+XXXX", "was"}]}`. `tile` is the tile's index in `assets/tiles/tiles.json` (not a sheet slot); `name` is what the baker keys on; `was` is the game's own code point for that identity (-1: none), kept for Reset. The file lists every swap in force; an empty list clears them. The baker (`tools/make_tiles.py`) draws each listed tile from `cp` instead of its glyph in `core/sprawl_map.gd`; telling the two modes apart is a baker change.
 
 ## Changing the page
 

@@ -139,7 +139,7 @@ h2{margin:0;font:700 13px var(--mono);letter-spacing:.06em;text-transform:upperc
   const MODES = { trad: 'Traditional', ext: 'Extended' }, SHORT = { trad: 'trad.', ext: 'ext.' };
   const TEXT = {
     unscii: { q: 'Search name, glyph, code or category', in: 'On the sheet', out: 'Not on it' },
-    tiles: { q: 'Search tile name or slot', in: 'Swapped', out: 'Not swapped' },
+    tiles: { q: 'Search tile name or number', in: 'Swapped', out: 'Not swapped' },
   };
   const state = { set: 0, q: '', cat: '', atlas: 'all', sel: -1, mode: 'trad' };
   // swaps: 'slot:mode' -> {slot, mode, name, cp, was, at}; meta: {syncedAt, syncedVersion}; armed: {slot, mode} being re-pointed; cand: the glyph picked for it
@@ -291,13 +291,13 @@ h2{margin:0;font:700 13px var(--mono);letter-spacing:.06em;text-transform:upperc
     $('nm').textContent = it.name;
     let copy;
     if (tiles){
-      $('info').innerHTML = `<dt>Slot</dt><dd>${it.slot}</dd><dt>Colours</dt><dd>${it.fg} on ${it.bg}</dd>`
+      $('info').innerHTML = `<dt>Tile no.</dt><dd>${it.slot}</dd><dt>Colours</dt><dd>${it.fg} on ${it.bg}</dd>`
         + (it.how === 'edge' ? '' : `<dt>Traditional</dt><dd>${identText(it, 'trad')}</dd><dt>Extended</dt><dd>${identText(it, 'ext')}</dd><dt>Sheet</dt><dd>drawn from ${U(it.cp)}</dd>`);
       $('note').textContent = HOW[it.how](it);
-      copy = [['Copy name', it.name], ['Copy slot', String(it.slot)]];
+      copy = [['Copy name', it.name], ['Copy number', String(it.slot)]];
     } else {
       const into = allSwaps().filter(x => x[2].cp === it.cp).map(([t, m]) => `<span class="tag sw" title="swapped to this glyph">${esc(t.name)} · ${SHORT[m]}</span>`).join('');
-      const where = it.tiles.length ? it.tiles.map(t => `<span class="tag yes" title="tile sheet slot ${t[0]}">${esc(t[1])} · ${t[0]}</span>`).join('') : '';
+      const where = it.tiles.length ? it.tiles.map(t => `<span class="tag yes" title="tile ${t[0]}">${esc(t[1])} · ${t[0]}</span>`).join('') : '';
       $('info').innerHTML = `<dt>Code</dt><dd>${U(it.cp)}</dd><dt>Decimal</dt><dd>${it.cp}</dd><dt>GDScript</dt><dd>0x${hex(it.cp)}</dd>`
         + `<dt>Category</dt><dd>${esc(catName(catId(it)))}</dd><dt>Block</dt><dd>${esc(blocks[it.block])}</dd><dt>Tiles</dt><dd>${where + into || '<span class="tag no">no tile</span>'}</dd>`;
       $('note').textContent = it.tiles.length ? 'Drawn by the tile sheet: tile name and slot above.' : 'No tile draws this yet. Swap one onto it from the tile sheet, or give a tile this glyph in core/sprawl_map.gd and run tools/make_tiles.py --template.';
@@ -381,7 +381,7 @@ h2{margin:0;font:700 13px var(--mono);letter-spacing:.06em;text-transform:upperc
     }
   });
   function swapsJson(){
-    const rows = allSwaps().map(([t, m, w]) => ({ slot: t.slot, name: t.name, mode: m, cp: w.cp, glyph: U(w.cp), was: own(t, m) }));
+    const rows = allSwaps().map(([t, m, w]) => ({ tile: t.slot, name: t.name, mode: m, cp: w.cp, glyph: U(w.cp), was: own(t, m) }));
     return JSON.stringify({ version: 2, swaps: rows }, null, 2) + '\n';
   }
   function syncLine(){
