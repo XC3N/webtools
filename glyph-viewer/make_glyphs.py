@@ -7,7 +7,8 @@ Reads  assets/fonts/unscii-8-mcr.hex          the 8 x 8 font the square map tile
        tools/make_tiles.py, core/sprawl_map.gd, core/entity.gd   how each tile's picture is chosen, and its colours.
 Writes glyph-data.js next to this script: two sets, each with a sprite sheet (PNG, base64) and its list of items:
   unscii  every glyph in unscii-8 mcr: [code point, name, block, tile-sheet slot or -1, [[slot, tile name], ...]]
-  tiles   the tile sheet itself, in slot order: [slot, name, code point it was drawn from or -1, how, fg, bg, wanted code point]
+  tiles   the tile sheet itself, in slot order: [slot, name, code point it was drawn from or -1, how, fg, bg, wanted code point,
+          traditional code point or -1, extended code point or -1]
 Blocks are the Unicode blocks the glyphs actually fall in (fontTools.unicodedata), so none is ever empty.
 Rerun it whenever the game's tile sheet or tile table changes.
 """
@@ -81,7 +82,10 @@ for slot, n in enumerate(names):
     if how in ("glyph", "fallback"):
         used.setdefault(cp, []).append([slot, n])
     fg, bg = colours.get(n, ("#c8cbe0", "#0d0f14"))
-    tile_items.append([slot, n, cp, how, fg, bg, want])
+    # the two identities the game gives a tile: traditional (plain) and extended (Settings > Extended chars); -1 = none
+    trad = -1 if how == "edge" else plain.get(n, glyph_of.get(n, ord("?")))
+    ext = glyph_of[n] if n in glyph_of and n in plain and glyph_of[n] != plain[n] else -1
+    tile_items.append([slot, n, cp, how, fg, bg, want, trad, ext])
 
 tile_png = (game / "assets/tiles/unscii_mcr.png").read_bytes()  # the sheet itself, as the game bakes it
 ts = Image.open(io.BytesIO(tile_png)).width // mt.COLS

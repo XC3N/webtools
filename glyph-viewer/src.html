@@ -40,22 +40,34 @@ select{flex:0 1 240px;min-width:0}
 .cell.sw::after{background:var(--cyan)}
 .cell.sw.pend::after{background:var(--amber)}
 .g{display:block;background:var(--ink);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;image-rendering:pixelated}
-.side{position:sticky;top:16px;display:flex;flex-direction:column;gap:12px}
-@media (max-width:900px){.side{position:static}}
+.side{position:sticky;top:16px;display:flex;flex-direction:column;gap:16px;max-height:calc(100vh - 32px);overflow:auto}
+.pnl{display:flex;flex-direction:column;gap:12px}
+@media (max-width:900px){.side{position:static;max-height:none;overflow:visible}}
 .big{display:flex;gap:10px;align-items:center;justify-content:center;background:var(--well-2);border:1px solid var(--edge);border-radius:10px;height:150px}
 .big .g{background:var(--cyan)}
 .big .small .g{background:var(--ink)}
 dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:14px}
 dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere}
 .name{font-weight:700;overflow-wrap:anywhere}
-.copy,.swapbox,.foot{display:flex;gap:8px;flex-wrap:wrap}
-.swapbox{flex-direction:column;align-items:stretch}
-.swapbox .row{display:flex;gap:8px;flex-wrap:wrap}
+.copy,.foot,.row{display:flex;gap:8px;flex-wrap:wrap}
+.row{align-items:center}
+h2{margin:0;font:700 13px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ident{display:flex;flex-direction:column;gap:10px}
+.idr{display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--well);border:1px solid var(--edge);border-radius:8px}
+.idr .lab{font-weight:700;font-size:14px}
+.mini{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;border:1px solid var(--edge)}
+.swl{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow:auto}
+.swl button{text-align:left;font:12px var(--mono)!important}
+.swl .dot,.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:var(--cyan)}
+.dot.pend{background:var(--amber)}
+.side input[type=text],.side select{background:var(--well);color:var(--ink);border:1px solid var(--edge-2);border-radius:8px;padding:6px 8px;font:inherit;min-width:0}
+.side input[type=text]{flex:1 1 120px}
 .side button{background:var(--well);color:var(--ink);border:1px solid var(--edge-2);border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer}
 .side button:hover{border-color:var(--amber)}
 .side button.primary{border-color:var(--amber);color:var(--amber)}
 .side button:disabled{opacity:.5;cursor:default}
 .foot{align-items:center;justify-content:space-between;border-top:1px solid var(--edge);padding-top:10px}
+.cell.sw::after{background:var(--cyan)}
 .tag{display:inline-block;padding:1px 8px;border-radius:99px;font:12px var(--mono);margin:0 4px 2px 0}
 .tag.yes{background:rgba(182,255,59,.14);color:var(--ok)}
 .tag.sw{background:rgba(41,240,255,.12);color:var(--cyan)}
@@ -70,7 +82,11 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
   <div class="panel bar">
     <div class="seg" id="set" role="group" aria-label="Set"></div>
     <input type="search" id="q" aria-label="Search">
-    <select id="block" aria-label="Unicode block"></select>
+    <select id="cat" aria-label="Category"></select>
+    <div class="seg" id="mode" role="group" aria-label="Character set">
+      <button data-v="trad" aria-pressed="true">Traditional</button>
+      <button data-v="ext" aria-pressed="false">Extended</button>
+    </div>
     <div class="seg" id="atlas" role="group" aria-label="Filter">
       <button data-v="all" aria-pressed="true">All</button>
       <button data-v="in" aria-pressed="false"></button>
@@ -80,14 +96,28 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
   </div>
   <div class="work">
     <div class="panel"><div class="grid" id="grid" role="listbox" aria-label="Characters"></div></div>
-    <div class="panel side" id="side">
-      <div class="big" id="big"></div>
-      <div class="name" id="nm"></div>
-      <dl id="info"></dl>
-      <div class="copy" id="copy" hidden></div>
-      <div class="swapbox" id="swap" hidden></div>
-      <div class="hint" id="note"></div>
-      <div class="foot" id="foot"><span class="hint" id="sync"></span><button id="json" hidden>Copy swaps JSON</button></div>
+    <div class="side">
+      <div class="panel pnl" id="inspect">
+        <div class="big" id="big"></div>
+        <div class="name" id="nm"></div>
+        <dl id="info"></dl>
+        <div class="copy" id="copy" hidden></div>
+        <div class="hint" id="note"></div>
+      </div>
+      <div class="panel pnl" id="swp">
+        <h2>Swaps</h2>
+        <div class="ident" id="ident"></div>
+        <div class="swl" id="swl"></div>
+        <div class="foot" id="foot"><span class="hint" id="sync"></span><button id="json" hidden>Copy swaps JSON</button></div>
+      </div>
+      <div class="panel pnl" id="catpanel" hidden>
+        <h2>Categories</h2>
+        <div class="row" id="catren" hidden><input type="text" id="catname" maxlength="60" aria-label="Category name"><button id="renbtn">Rename</button><button id="delbtn"></button></div>
+        <div class="hint" id="movehint"></div>
+        <div class="row"><select id="catto" aria-label="Move to"></select><input type="text" id="catnew" maxlength="60" placeholder="New category name" aria-label="New category name" hidden></div>
+        <div class="row"><button id="mvone" class="primary"></button><button id="mvall"></button></div>
+        <div class="hint" id="catnote"></div>
+      </div>
     </div>
   </div>
 </main>
@@ -97,25 +127,40 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
   'use strict';
   const $ = id => document.getElementById(id);
   const hex = cp => cp.toString(16).toUpperCase().padStart(4, '0');
+  const U = cp => 'U+' + hex(cp);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // glyph sets get their characters, tile sets their slot; both read the same way afterwards
   const sets = GLYPH_DATA.sets.map(s => ({ ...s, items: s.items.map((it, i) => s.kind === 'tiles'
-    ? { i, slot: it[0], name: it[1], cp: it[2], how: it[3], fg: it[4], bg: it[5], want: it[6] }
+    ? { i, slot: it[0], name: it[1], cp: it[2], how: it[3], fg: it[4], bg: it[5], want: it[6], trad: it[7], ext: it[8] }
     : { i, cp: it[0], name: it[1], block: it[2], slot: it[3], tiles: it[4] || [], ch: String.fromCodePoint(it[0]) }) }));
   const UNI = sets.findIndex(s => s.kind !== 'tiles'), TIL = sets.findIndex(s => s.kind === 'tiles');
   const uIndex = new Map(sets[UNI].items.map(it => [it.cp, it.i]));
   const tBySlot = new Map(sets[TIL].items.map(it => [it.slot, it]));
+  const MODES = { trad: 'Traditional', ext: 'Extended' }, SHORT = { trad: 'trad.', ext: 'ext.' };
   const TEXT = {
-    unscii: { q: 'Search name, glyph or code', in: 'On the sheet', out: 'Not on it' },
-    tiles: { q: 'Search tile name or slot', in: 'Swapped', out: 'Not swapped' },
+    unscii: { q: 'Search name, glyph, code or category', in: 'On the sheet', out: 'Not on it' },
+    tiles: { q: 'Search tile name or number', in: 'Swapped', out: 'Not swapped' },
   };
-  const state = { set: 0, q: '', block: -1, atlas: 'all', sel: -1 };
-  // swaps: slot -> {slot, name, cp, was, at}; meta: {syncedAt, syncedVersion}; armed: the slot being re-pointed; cand: the glyph picked for it
-  let db = null, canWrite = true, swaps = {}, meta = {}, armed = null, cand = null, busy = false;
+  const state = { set: 0, q: '', cat: '', atlas: 'all', sel: -1, mode: 'trad' };
+  // swaps: 'slot:mode' -> {slot, mode, name, cp, was, at}; meta: {syncedAt, syncedVersion}; armed: {slot, mode} being re-pointed; cand: the glyph picked for it
+  // names: category id -> name ('' = removed); assign: 'c<HEX>' -> category id. Category ids: b<n> a Unicode block, c<x> one made on the page
+  let db = null, canWrite = true, swaps = {}, meta = {}, names = {}, assign = {}, armed = null, cand = null, busy = false;
+  const have = { names: true, assign: true };
   const S = () => sets[state.set];
-  const swapOf = t => { const w = t && swaps[t.slot]; return w && w.cp !== t.cp && uIndex.has(w.cp) ? w : null; };
-  const curCp = t => swapOf(t)?.cp ?? t.cp;
+  const blocks = sets[UNI].blocks;
+
+  // ---- tile identities: each tile has a traditional glyph and maybe an extended one (the game's Extended chars setting) ----
+  const own = (t, m) => m === 'trad' ? t.trad : t.ext;                       // what the game gives it; -1 = none
+  const swapAt = (t, m) => { const w = swaps[t.slot + ':' + m]; return w && w.cp !== own(t, m) && uIndex.has(w.cp) ? w : null; };
+  const cpOf = (t, m) => swapAt(t, m)?.cp ?? (m === 'ext' && t.ext < 0 ? cpOf(t, 'trad') : own(t, m));   // no extended glyph: it uses the traditional one
+  const swappedAny = t => !!(swapAt(t, 'trad') || swapAt(t, 'ext'));
   const pending = w => !meta.syncedAt || (w.at || '') > meta.syncedAt;
+  const allSwaps = () => [...tBySlot.values()].flatMap(t => ['trad', 'ext'].map(m => [t, m, swapAt(t, m)]).filter(x => x[2]));
+
+  // ---- categories: a glyph is in the category it was moved to, else in its Unicode block ----
+  const catId = it => { const a = assign['c' + hex(it.cp)]; return a && catName(a) ? a : 'b' + it.block; };
+  const catName = id => names[id] || (id[0] === 'b' ? blocks[+id.slice(1)] || '' : '');
+  const allCats = () => [...blocks.map((_, i) => 'b' + i), ...Object.keys(names).filter(k => k[0] === 'c' && names[k]).sort((a, b) => names[a].localeCompare(names[b]))];
 
   // one rule per sheet; a tile that has been swapped is drawn from the unscii sheet instead of the tile sheet
   const gstyle = document.createElement('style');
@@ -123,25 +168,6 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     return `.${s.kind === 'tiles' ? 'gs' : 'gu'}{width:${cw * k}px;height:${ch * k}px;-webkit-mask-image:url(${url});mask-image:url(${url});-webkit-mask-size:${cw * s.cols * k}px auto;mask-size:${cw * s.cols * k}px auto}`; }).join('\n');
   document.head.appendChild(gstyle);
 
-  function idle(){
-    const tiles = S().kind === 'tiles';
-    state.sel = -1; cand = null;
-    $('big').replaceChildren(); $('big').style.background = '';
-    $('nm').textContent = armed != null ? `Pick a glyph for ${tBySlot.get(armed).name}` : 'Click ' + (tiles ? 'a tile' : 'a character');
-    $('info').replaceChildren(); $('note').textContent = ''; $('copy').hidden = true;
-    renderSwap();
-  }
-  function applySet(){
-    const s = S(), t = TEXT[s.id], tiles = s.kind === 'tiles';
-    $('q').placeholder = t.q;
-    $('block').hidden = tiles;
-    const b = $('atlas').querySelectorAll('button'); b[1].textContent = t.in; b[2].textContent = t.out;
-    $('set').querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', i === state.set));
-    state.q = ''; state.block = -1; state.atlas = 'all'; $('q').value = '';
-    $('atlas').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'all'));
-    idle();
-    try { history.replaceState(null, '', '#' + s.id); } catch (_) {}
-  }
   // kind 'u' draws unscii glyph n, 's' draws tile-sheet slot n
   const glyph = (kind, n, zoom, fg) => {
     const s = sets[kind === 'u' ? UNI : TIL], [cw, ch] = s.cell, k = s.scale;
@@ -150,13 +176,36 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     e.style.cssText = `-webkit-mask-position:-${x}px -${y}px;mask-position:-${x}px -${y}px` + (z !== 1 ? `;zoom:${z}` : '') + (fg ? `;background:${fg}` : '');
     return e;
   };
-  const tileGlyph = (t, zoom) => { const w = swapOf(t); return w ? glyph('u', uIndex.get(w.cp), zoom, t.fg) : glyph('s', t.slot, zoom, t.fg); };
+  // a glyph the font has is drawn from it; one it lacks (the hand-drawn exit, desk lines) comes from the baked tile sheet
+  const drawCp = (t, cp, zoom) => uIndex.has(cp) ? glyph('u', uIndex.get(cp), zoom, t.fg) : glyph('s', t.slot, zoom, t.fg);
+  const tileGlyph = (t, zoom, m = state.mode) => drawCp(t, cpOf(t, m), zoom);
+
+  function idle(){
+    const tiles = S().kind === 'tiles';
+    state.sel = -1; cand = null;
+    $('big').replaceChildren(); $('big').style.background = '';
+    $('nm').textContent = armed ? `Pick a glyph for ${tBySlot.get(armed.slot).name}` : 'Click ' + (tiles ? 'a tile' : 'a character');
+    $('info').replaceChildren(); $('note').textContent = ''; $('copy').hidden = true;
+    renderSwaps(); renderCats();
+  }
+  function applySet(){
+    const s = S(), t = TEXT[s.id], tiles = s.kind === 'tiles';
+    $('q').placeholder = t.q;
+    $('cat').hidden = tiles; $('mode').hidden = !tiles;
+    const b = $('atlas').querySelectorAll('button'); b[1].textContent = t.in; b[2].textContent = t.out;
+    $('set').querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', i === state.set));
+    $('mode').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === state.mode));
+    state.q = ''; state.cat = ''; state.atlas = 'all'; $('q').value = '';
+    $('atlas').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'all'));
+    idle();
+    try { history.replaceState(null, '', '#' + s.id); } catch (_) {}
+  }
 
   function matchRest(it){
     const s = S(), q = state.q.trim().toLowerCase();
     if (s.kind === 'tiles'){
-      if (state.atlas === 'in' && !swapOf(it)) return false;
-      if (state.atlas === 'out' && swapOf(it)) return false;
+      if (state.atlas === 'in' && !swappedAny(it)) return false;
+      if (state.atlas === 'out' && swappedAny(it)) return false;
     } else {
       if (state.atlas === 'in' && it.slot < 0) return false;
       if (state.atlas === 'out' && it.slot >= 0) return false;
@@ -166,40 +215,41 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     if ([...q].length === 1 && it.ch === state.q.trim()) return true;
     const h = q.replace(/^(u\+|0x)/, '');
     if (/^[0-9a-f]{2,6}$/.test(h) && hex(it.cp).toLowerCase().includes(h)) return true;
-    return q.split(/\s+/).every(w => it.name.toLowerCase().includes(w) || it.tiles?.some(t => t[1].toLowerCase().includes(w)));
+    const cn = catName(catId(it)).toLowerCase();
+    return q.split(/\s+/).every(w => it.name.toLowerCase().includes(w) || cn.includes(w) || it.tiles?.some(t => t[1].toLowerCase().includes(w)));
   }
-  // the block list offers only blocks that have a match under the current search and filter, with their counts
-  function blockOptions(pool){
-    const s = S(), n = new Map();
-    for (const it of pool) n.set(it.block, (n.get(it.block) || 0) + 1);
-    if (!n.has(state.block)) state.block = -1;
-    const sel = $('block'), frag = document.createDocumentFragment();
+  // the category list offers only categories that have a match under the current search and filter, with their counts
+  function catOptions(pool){
+    const n = new Map();
+    for (const it of pool){ const c = catId(it); n.set(c, (n.get(c) || 0) + 1); }
+    if (!n.has(state.cat)) state.cat = '';
+    const sel = $('cat'), frag = document.createDocumentFragment();
     const add = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; frag.appendChild(o); };
-    add(-1, `All blocks (${pool.length})`);
-    s.blocks.forEach((b, i) => { if (n.has(i)) add(i, `${b} (${n.get(i)})`); });
-    sel.replaceChildren(frag); sel.value = state.block;
+    add('', `All categories (${pool.length})`);
+    allCats().forEach(c => { if (n.has(c)) add(c, `${catName(c)} (${n.get(c)})`); });
+    sel.replaceChildren(frag); sel.value = state.cat;
   }
   // the grid keeps only the rows near the view in the DOM (about 25 rows), not all 3,000 glyphs. It is rebuilt only when
   // the view leaves the rows already drawn, so ordinary scrolling just moves cells that are already there.
   const GAP = 4, MINW = 34, ROWH = 40 + GAP, BUFFER = 8;
-  let list = [], at = { cols: 0, first: 0, last: 0 };
+  let list = [], view = { cols: 0, first: 0, last: 0 };
   const colsOf = () => Math.max(1, Math.floor(($('grid').clientWidth - 4 + GAP) / (MINW + GAP)));
   function paint(force){
     const g = $('grid'), tiles = S().kind === 'tiles';
     const cols = colsOf();
     const total = Math.ceil(list.length / cols);
     const seen0 = Math.floor(g.scrollTop / ROWH), seen1 = Math.ceil((g.scrollTop + g.clientHeight) / ROWH);
-    if (!force && cols === at.cols && seen0 >= at.first && seen1 <= at.last) return;
+    if (!force && cols === view.cols && seen0 >= view.first && seen1 <= view.last) return;
     const first = Math.max(0, seen0 - BUFFER), last = Math.min(total, seen1 + BUFFER);
-    at = { cols, first, last };
+    view = { cols, first, last };
     if (!list.length){ g.innerHTML = '<div class="empty">Nothing matches.</div>'; return; }
     const rows = document.createElement('div'); rows.className = 'rows';
     rows.style.cssText = `--cols:${cols};padding-top:${first * ROWH}px;padding-bottom:${Math.max(0, total - last) * ROWH}px`;
     for (const it of list.slice(first * cols, last * cols)){
-      const c = document.createElement('div'), w = tiles ? swapOf(it) : null;
-      c.className = 'cell' + (!tiles && it.slot >= 0 ? ' in' : '') + (w ? ' sw' + (pending(w) ? ' pend' : '') : '');
+      const c = document.createElement('div'), sw = tiles ? allSwaps().filter(x => x[0] === it) : [];
+      c.className = 'cell' + (!tiles && it.slot >= 0 ? ' in' : '') + (sw.length ? ' sw' + (sw.some(x => pending(x[2])) ? ' pend' : '') : '');
       c.dataset.i = it.i;
-      c.title = tiles ? `${it.slot} ${it.name}` + (w ? ` · swapped to U+${hex(w.cp)}` : '') : `U+${hex(it.cp)} ${it.name}`;
+      c.title = tiles ? `${it.slot} ${it.name}` + sw.map(x => ` · ${MODES[x[1]].toLowerCase()} swapped to ${U(x[2].cp)}`).join('') : `${U(it.cp)} ${it.name}`;
       c.setAttribute('role', 'option'); c.setAttribute('aria-selected', it.i === state.sel);
       if (tiles){ c.style.background = it.bg; c.appendChild(tileGlyph(it, 0)); }
       else c.appendChild(glyph('u', it.i, 0, ''));
@@ -210,27 +260,29 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
   function refilter(){
     const s = S(), tiles = s.kind === 'tiles';
     const pool = s.items.filter(matchRest);
-    if (!tiles) blockOptions(pool);
-    list = !tiles && state.block >= 0 ? pool.filter(it => it.block === state.block) : pool;
+    if (!tiles) catOptions(pool);
+    list = !tiles && state.cat ? pool.filter(it => catId(it) === state.cat) : pool;
     $('count').textContent = `${list.length} of ${s.items.length}`;
   }
-  function render(){ refilter(); $('grid').scrollTop = 0; paint(true); }
+  function render(){ refilter(); $('grid').scrollTop = 0; paint(true); renderCats(); }
   let frame = 0;
   $('grid').addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; paint(); }); });
   new ResizeObserver(() => paint()).observe($('grid'));
 
   const HOW = {
-    glyph: it => `Template drawn from the unscii-8 mcr glyph U+${hex(it.cp)}.`,
-    fallback: it => `The game's glyph U+${hex(it.want)} isn't in unscii-8 mcr, so the template uses U+${hex(it.cp)} instead.`,
-    hand: it => `unscii-8 mcr has no U+${hex(it.cp)}, so make_tiles.py draws this one by hand.`,
+    glyph: it => `Template drawn from the unscii-8 mcr glyph ${U(it.cp)}.`,
+    fallback: it => `The game's glyph ${U(it.want)} isn't in unscii-8 mcr, so the template uses ${U(it.cp)} instead.`,
+    hand: it => `unscii-8 mcr has no ${U(it.cp)}, so make_tiles.py draws this one by hand.`,
     edge: () => 'A desk front: one line along an edge of a walkable tile, drawn by make_tiles.py.',
   };
+  const identText = (t, m) => { const w = swapAt(t, m), o = own(t, m);
+    return w ? `${U(w.cp)} (was ${o >= 0 ? U(o) : 'none'})` : o >= 0 ? U(o) : 'none: uses traditional'; };
   function show(i){
     const s = S(), tiles = s.kind === 'tiles', it = s.items[i];
     state.sel = i;
     document.querySelectorAll('.cell[aria-selected=true]').forEach(c => c.setAttribute('aria-selected', 'false'));
     const cell = document.querySelector(`.cell[data-i="${i}"]`); if (cell) cell.setAttribute('aria-selected', 'true');
-    const big = $('big'), tgt = armed != null ? tBySlot.get(armed) : null;
+    const big = $('big'), tgt = armed ? tBySlot.get(armed.slot) : null;
     // while a tile is waiting for its new glyph, the picked glyph is previewed on that tile's colours
     const prev = zoom => tgt ? glyph('u', it.i, zoom, tgt.fg) : tiles ? tileGlyph(it, zoom) : glyph('u', it.i, zoom, '');
     big.style.background = tgt ? tgt.bg : tiles ? it.bg : '';
@@ -239,51 +291,65 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     $('nm').textContent = it.name;
     let copy;
     if (tiles){
-      const w = swapOf(it);
-      $('info').innerHTML = `<dt>Slot</dt><dd>${it.slot}</dd><dt>Colours</dt><dd>${it.fg} on ${it.bg}</dd>`
-        + (it.how === 'edge' ? '' : `<dt>Drawn from</dt><dd>U+${hex(it.cp)}</dd>`)
-        + (w ? `<dt>Swapped to</dt><dd>U+${hex(w.cp)}</dd>` : '');
+      $('info').innerHTML = `<dt>Tile no.</dt><dd>${it.slot}</dd><dt>Colours</dt><dd>${it.fg} on ${it.bg}</dd>`
+        + (it.how === 'edge' ? '' : `<dt>Traditional</dt><dd>${identText(it, 'trad')}</dd><dt>Extended</dt><dd>${identText(it, 'ext')}</dd><dt>Sheet</dt><dd>drawn from ${U(it.cp)}</dd>`);
       $('note').textContent = HOW[it.how](it);
-      copy = [['Copy name', it.name], ['Copy slot', String(it.slot)]];
+      copy = [['Copy name', it.name], ['Copy number', String(it.slot)]];
     } else {
-      const into = Object.values(swaps).filter(w => w.cp === it.cp && swapOf(tBySlot.get(w.slot))).map(w => `<span class="tag sw" title="swapped to this glyph">${esc(tBySlot.get(w.slot).name)} · ${w.slot}</span>`).join('');
-      const where = it.tiles.length ? it.tiles.map(t => `<span class="tag yes" title="tile sheet slot ${t[0]}">${esc(t[1])} · ${t[0]}</span>`).join('') : '';
-      $('info').innerHTML = `<dt>Code</dt><dd>U+${hex(it.cp)}</dd><dt>Decimal</dt><dd>${it.cp}</dd><dt>GDScript</dt><dd>0x${hex(it.cp)}</dd>`
-        + `<dt>Block</dt><dd>${esc(s.blocks[it.block])}</dd><dt>Tiles</dt><dd>${where + into || '<span class="tag no">no tile</span>'}</dd>`;
+      const into = allSwaps().filter(x => x[2].cp === it.cp).map(([t, m]) => `<span class="tag sw" title="swapped to this glyph">${esc(t.name)} · ${SHORT[m]}</span>`).join('');
+      const where = it.tiles.length ? it.tiles.map(t => `<span class="tag yes" title="tile ${t[0]}">${esc(t[1])} · ${t[0]}</span>`).join('') : '';
+      $('info').innerHTML = `<dt>Code</dt><dd>${U(it.cp)}</dd><dt>Decimal</dt><dd>${it.cp}</dd><dt>GDScript</dt><dd>0x${hex(it.cp)}</dd>`
+        + `<dt>Category</dt><dd>${esc(catName(catId(it)))}</dd><dt>Block</dt><dd>${esc(blocks[it.block])}</dd><dt>Tiles</dt><dd>${where + into || '<span class="tag no">no tile</span>'}</dd>`;
       $('note').textContent = it.tiles.length ? 'Drawn by the tile sheet: tile name and slot above.' : 'No tile draws this yet. Swap one onto it from the tile sheet, or give a tile this glyph in core/sprawl_map.gd and run tools/make_tiles.py --template.';
-      copy = [['Copy character', it.ch], ['Copy 0x… (GDScript)', '0x' + hex(it.cp)], ['Copy U+…', 'U+' + hex(it.cp)]];
+      copy = [['Copy character', it.ch], ['Copy 0x… (GDScript)', '0x' + hex(it.cp)], ['Copy U+…', U(it.cp)]];
     }
-    if (armed != null && !tiles) cand = it.cp;
+    if (armed && !tiles) cand = it.cp;
     const bar = $('copy'); bar.replaceChildren(); bar.hidden = false;
     for (const [label, text] of copy){
       const b = document.createElement('button'); b.textContent = label; b.dataset.t = text; bar.appendChild(b);
     }
-    renderSwap();
+    renderSwaps(); renderCats();
   }
 
-  // the swap controls in the side panel: arm a tile, pick a glyph, confirm or cancel, reset
-  function renderSwap(){
-    const box = $('swap'), tiles = S().kind === 'tiles'; box.replaceChildren();
-    const msg = t => { const p = document.createElement('div'); p.className = 'hint'; p.textContent = t; box.appendChild(p); };
-    const row = [], btn = (label, act, cls) => { const b = document.createElement('button'); b.textContent = label; b.dataset.act = act; b.disabled = busy; if (cls) b.className = cls; row.push(b); };
-    if (armed != null){
-      const t = tBySlot.get(armed);
-      if (cand == null) msg(`Click a glyph in the list to try it on ${t.name}.`);
-      else if (cand === curCp(t)) msg(`U+${hex(cand)} is already this tile's glyph.`);
-      else { msg(`${t.name}: U+${hex(curCp(t))} → U+${hex(cand)}`); btn(cand === t.cp ? 'Back to original' : 'Confirm swap', 'confirm', 'primary'); }
-      btn('Cancel', 'cancel');
-    } else if (tiles && db && state.sel >= 0){
-      const t = S().items[state.sel], w = swapOf(t);
+  // ---- the Swaps panel (its own card): the selected tile's two identities, every swap made, and the copy button ----
+  const mini = (t, cp) => { const s = document.createElement('span'); s.className = 'mini'; s.style.background = t.bg; s.appendChild(drawCp(t, cp, 2)); return s; };
+  function renderSwaps(){
+    const box = $('ident'), tiles = S().kind === 'tiles'; box.replaceChildren();
+    const msg = (t, to = box) => { const p = document.createElement('div'); p.className = 'hint'; p.textContent = t; to.appendChild(p); };
+    const btn = (to, label, act, m, cls) => { const b = document.createElement('button'); b.textContent = label; b.dataset.act = act; if (m) b.dataset.m = m; b.disabled = busy; if (cls) b.className = cls; to.appendChild(b); };
+    if (!db) msg('Swaps are off: open this signed in to claude.ai.');
+    else if (armed){
+      const t = tBySlot.get(armed.slot), cur = cpOf(t, armed.mode), r = document.createElement('div'); r.className = 'idr'; box.appendChild(r);
+      msg(`${t.name} · ${MODES[armed.mode]}`, r);
+      if (cand == null) msg('Click a glyph in the list to try it on this tile.', r);
+      else if (cand === cur) msg(`${U(cand)} is already its ${MODES[armed.mode].toLowerCase()} glyph.`, r);
+      else msg(`${U(cur)} → ${U(cand)}`, r);
+      const row = document.createElement('div'); row.className = 'row'; r.appendChild(row);
+      if (cand != null && cand !== cur) btn(row, cand === own(t, armed.mode) ? 'Back to original' : 'Confirm swap', 'confirm', '', 'primary');
+      btn(row, 'Cancel', 'cancel');
+    } else if (tiles && state.sel >= 0){
+      const t = S().items[state.sel];
       if (t.how === 'edge') msg("Desk fronts are lines the baker draws, so they can't be swapped.");
-      else {
-        if (w) msg(`Swapped from U+${hex(t.cp)} to U+${hex(w.cp)} · ${pending(w) ? 'not in the game yet' : 'in the game'}`);
-        if (!canWrite) msg(w ? 'View only: you can\'t change swaps.' : 'View only: you can\'t swap glyphs.');
-        else { btn(w ? 'Swap again…' : 'Swap glyph…', 'arm', w ? '' : 'primary'); if (w) btn(`Reset to U+${hex(t.cp)}`, 'reset'); }
+      else for (const m of ['trad', 'ext']){
+        const w = swapAt(t, m), r = document.createElement('div'); r.className = 'idr'; box.appendChild(r);
+        const top = document.createElement('div'); top.className = 'row'; r.appendChild(top);
+        top.appendChild(mini(t, cpOf(t, m)));
+        const lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = MODES[m]; top.appendChild(lab);
+        const tx = document.createElement('span'); tx.className = 'hint'; tx.textContent = identText(t, m); top.appendChild(tx);
+        if (w) msg(pending(w) ? 'Swapped, not in the game yet' : 'Swapped, in the game', r);
+        if (canWrite){ const row = document.createElement('div'); row.className = 'row'; r.appendChild(row);
+          btn(row, w ? 'Swap again…' : 'Swap glyph…', 'arm', m, w ? '' : 'primary'); if (w) btn(row, 'Reset', 'reset', m); }
+        else if (!w) msg("View only: you can't swap glyphs.", r);
       }
+    } else msg(tiles ? 'Select a tile to swap its glyphs.' : 'Select a tile on the Tile sheet, then swap it here.');
+    const l = $('swl'); l.replaceChildren();
+    for (const [t, m, w] of allSwaps()){
+      const b = document.createElement('button'); b.dataset.act = 'goto'; b.dataset.slot = t.slot; b.dataset.m = m;
+      b.innerHTML = `<span class="dot${pending(w) ? ' pend' : ''}"></span>${esc(t.name)} · ${SHORT[m]} ${own(t, m) >= 0 ? U(own(t, m)) : 'none'} → ${U(w.cp)}`;
+      l.appendChild(b);
     }
-    if (row.length){ const r = document.createElement('div'); r.className = 'row'; row.forEach(b => r.appendChild(b)); box.appendChild(r); }
-    box.hidden = !box.childNodes.length;
   }
+  const docOf = (slot, m) => 'swaps/' + (swaps[slot + ':' + m]?.id || `slot-${slot}-${m}`);   // an older swap keeps its own doc id (slot-N)
   function say(t){ $('note').textContent = t; }
   function switchSet(i){ state.set = i; applySet(); render(); }
   function reveal(slot){
@@ -291,47 +357,95 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
     const pos = list.indexOf(t); if (pos < 0) return;
     $('grid').scrollTop = Math.max(0, Math.floor(pos / colsOf()) * ROWH - 40); paint(true); show(t.i);
   }
-  async function writeSwap(slot, cp){
-    const t = tBySlot.get(slot), ref = db.doc('swaps/slot-' + slot);
-    busy = true; renderSwap();
+  async function writeSwap(a, cp){
+    const t = tBySlot.get(a.slot), ref = db.doc(docOf(a.slot, a.mode));
+    busy = true; renderSwaps();
     try {
-      if (cp === t.cp) await ref.delete();
-      else await ref.set({ slot, name: t.name, cp, was: t.cp, at: new Date().toISOString() });
-      busy = false; armed = null; cand = null;
-      if (state.set !== TIL) switchSet(TIL);
-      reveal(slot);
-    } catch (_) { busy = false; renderSwap(); say('Could not save the swap. Try again.'); }
+      if (cp === own(t, a.mode)) await ref.delete();
+      else await ref.set({ slot: a.slot, mode: a.mode, name: t.name, cp, was: own(t, a.mode), at: new Date().toISOString() });
+      busy = false; armed = null; cand = null; state.mode = a.mode;
+      switchSet(TIL); reveal(a.slot);
+    } catch (_) { busy = false; renderSwaps(); say('Could not save the swap. Try again.'); }
   }
-  $('swap').addEventListener('click', async e => {
-    const b = e.target.closest('button'); if (!b || busy || !db) return;
-    const act = b.dataset.act;
-    if (act === 'arm'){ armed = S().items[state.sel].slot; switchSet(UNI); }
-    else if (act === 'cancel'){ const slot = armed; armed = null; switchSet(TIL); reveal(slot); }
-    else if (act === 'confirm' && armed != null && cand != null) await writeSwap(armed, cand);
+  $('swp').addEventListener('click', async e => {
+    const b = e.target.closest('button[data-act]'); if (!b || busy || !db) return;
+    const act = b.dataset.act, m = b.dataset.m;
+    if (act === 'arm'){ armed = { slot: S().items[state.sel].slot, mode: m }; switchSet(UNI); }
+    else if (act === 'cancel'){ const a = armed; armed = null; state.mode = a.mode; switchSet(TIL); reveal(a.slot); }
+    else if (act === 'confirm' && armed && cand != null) await writeSwap(armed, cand);
+    else if (act === 'goto'){ armed = null; state.mode = m; switchSet(TIL); reveal(+b.dataset.slot); }
     else if (act === 'reset'){
-      const t = S().items[state.sel]; busy = true; renderSwap();
-      try { await db.doc('swaps/slot-' + t.slot).delete(); } catch (_) { say('Could not reset the swap. Try again.'); }
-      busy = false; renderSwap();
+      const t = S().items[state.sel]; busy = true; renderSwaps();
+      try { await db.doc(docOf(t.slot, m)).delete(); } catch (_) { say('Could not reset the swap. Try again.'); }
+      busy = false; renderSwaps();
     }
   });
-
   function swapsJson(){
-    const rows = [...tBySlot.values()].map(t => [t, swapOf(t)]).filter(x => x[1]).map(([t, w]) => ({ slot: t.slot, name: t.name, cp: w.cp, glyph: 'U+' + hex(w.cp), was: t.cp }));
-    return JSON.stringify({ version: 1, swaps: rows }, null, 2) + '\n';
+    const rows = allSwaps().map(([t, m, w]) => ({ tile: t.slot, name: t.name, mode: m, cp: w.cp, glyph: U(w.cp), was: own(t, m) }));
+    return JSON.stringify({ version: 2, swaps: rows }, null, 2) + '\n';
   }
   function syncLine(){
-    const live = [...tBySlot.values()].map(swapOf).filter(Boolean), n = live.filter(pending).length;
+    const live = allSwaps(), n = live.filter(x => pending(x[2])).length;
     $('json').hidden = !db || !live.length;
-    $('sync').textContent = !db ? 'Swaps are off: open this signed in to claude.ai.'
+    $('sync').textContent = !db ? ''
       : !live.length ? 'No swaps yet.'
       : n ? `${n} swap${n === 1 ? '' : 's'} not in the game yet · ${live.length} in all`
       : `All ${live.length} swap${live.length === 1 ? '' : 's'} in the game (v${meta.syncedVersion || '?'})`;
   }
+
+  // ---- the Categories panel (its own card, unscii set only): rename a category, move glyphs between categories ----
+  const merge = async (path, fields, k) => { const ref = db.doc(path); if (have[k]) await ref.update(fields); else await ref.set(fields); have[k] = true; };
+  function renderCats(){
+    const p = $('catpanel'), uni = S().kind !== 'tiles';
+    p.hidden = !uni || !db || !canWrite; if (p.hidden) return;
+    const id = state.cat, ren = $('catren'); ren.hidden = !id;
+    if (id){ if (document.activeElement !== $('catname')) $('catname').value = catName(id);
+      $('delbtn').textContent = id[0] === 'c' ? 'Delete' : 'Reset name'; $('delbtn').hidden = id[0] === 'b' && !names[id]; }
+    const to = $('catto'), keep = to.value, frag = document.createDocumentFragment();
+    const add = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; frag.appendChild(o); };
+    add('', 'Move to…'); allCats().forEach(c => add(c, catName(c))); add('__new', 'New category…');
+    to.replaceChildren(frag); to.value = [...to.options].some(o => o.value === keep) ? keep : '';
+    $('catnew').hidden = to.value !== '__new';
+    const one = state.sel >= 0 ? S().items[state.sel] : null, ready = to.value && (to.value !== '__new' || $('catnew').value.trim());
+    $('movehint').textContent = one ? `Selected: ${U(one.cp)} in ${catName(catId(one))}.` : 'Select a glyph to move it, or move everything shown.';
+    $('mvone').hidden = !one; $('mvone').textContent = one ? `Move ${U(one.cp)}` : '';
+    $('mvall').textContent = `Move the ${list.length} shown`; $('mvall').hidden = !list.length;
+    $('mvone').disabled = $('mvall').disabled = busy || !ready;
+  }
+  async function moveTo(items){
+    const to = $('catto').value; if (!to || busy) return;
+    busy = true; renderCats();
+    try {
+      let target = to;
+      if (to === '__new'){
+        const nm = $('catnew').value.trim().slice(0, 60); if (!nm){ busy = false; renderCats(); return; }
+        target = 'c' + Date.now().toString(36); await merge('cats/names', { [target]: nm }, 'names'); $('catnew').value = ''; $('catto').value = target;
+      }
+      const f = {}; for (const it of items) f['c' + hex(it.cp)] = target === 'b' + it.block ? '' : target;
+      await merge('cats/assign', f, 'assign');
+      if (to === '__new') state.cat = target;
+      $('catnote').textContent = '';
+    } catch (_) { $('catnote').textContent = 'Could not save the move. Try again.'; }
+    busy = false; changed();
+  }
+  $('catto').addEventListener('change', renderCats);
+  $('catnew').addEventListener('input', renderCats);
+  $('mvone').addEventListener('click', () => { if (state.sel >= 0) moveTo([S().items[state.sel]]); });
+  $('mvall').addEventListener('click', () => moveTo(list.slice()));
+  $('renbtn').addEventListener('click', async () => {
+    const id = state.cat, nm = $('catname').value.trim().slice(0, 60); if (!id || !nm || busy) return;
+    busy = true; try { await merge('cats/names', { [id]: nm }, 'names'); $('catnote').textContent = ''; } catch (_) { $('catnote').textContent = 'Could not rename. Try again.'; } busy = false; changed();
+  });
+  $('delbtn').addEventListener('click', async () => {
+    const id = state.cat; if (!id || busy) return;
+    busy = true; try { await merge('cats/names', { [id]: '' }, 'names'); if (id[0] === 'c') state.cat = ''; $('catnote').textContent = ''; } catch (_) { $('catnote').textContent = 'Could not save. Try again.'; } busy = false; changed();
+  });
+
   // after the database changes: redraw what is on screen without losing the scroll position or the selection
   function changed(){
     syncLine();
-    if (state.set === TIL){ const keep = $('grid').scrollTop; refilter(); paint(true); $('grid').scrollTop = keep; if (state.sel >= 0) show(state.sel); }
-    else if (state.sel >= 0) show(state.sel); else renderSwap();
+    const keep = $('grid').scrollTop; refilter(); paint(true); $('grid').scrollTop = keep;
+    if (state.sel >= 0) show(state.sel); else { renderSwaps(); renderCats(); }
   }
 
   function copyText(text, b, done){
@@ -343,12 +457,18 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
   $('copy').addEventListener('click', e => { const b = e.target.closest('button'); if (b) copyText(b.dataset.t, b, 'Copied ' + b.dataset.t); });
   $('json').addEventListener('click', e => copyText(swapsJson(), e.currentTarget, 'Copied'));
   $('q').addEventListener('input', e => { state.q = e.target.value; render(); });
-  $('block').addEventListener('change', e => { state.block = +e.target.value; render(); });
+  $('cat').addEventListener('change', e => { state.cat = e.target.value; render(); });
   $('atlas').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     state.atlas = b.dataset.v;
     $('atlas').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
     render();
+  });
+  $('mode').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.mode = b.dataset.v;
+    $('mode').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    paint(true); if (state.sel >= 0) show(state.sel);
   });
   sets.forEach((s, i) => {
     const b = document.createElement('button'); b.textContent = s.name; b.setAttribute('aria-pressed', 'false');
@@ -360,17 +480,20 @@ dt{color:var(--faint)}dd{margin:0;font-family:var(--mono);overflow-wrap:anywhere
   applySet(); render(); syncLine();
 
   // the database lights up when it resolves; until then (or without it) the page is a plain viewer
+  const plain = d => { const o = {}; if (d.exists) for (const [k, v] of Object.entries(d.data() || {})) if (typeof v === 'string') o[k] = v; return o; };
   (async () => {
     db = await (window.claude?.use ? claude.use('db') : null);
-    if (!db){ syncLine(); renderSwap(); return; }
+    if (!db){ syncLine(); renderSwaps(); return; }
     try { const user = await claude.use('user'); const w = user ? await user.can('data.write') : null; if (w === false) canWrite = false; } catch (_) {}
     db.doc('meta/info').onSnapshot(d => { meta = d.exists ? d.data() : {}; changed(); }, () => {});
+    db.doc('cats/names').onSnapshot(d => { have.names = d.exists; names = plain(d); changed(); }, () => {});
+    db.doc('cats/assign').onSnapshot(d => { have.assign = d.exists; assign = plain(d); changed(); }, () => {});
     db.collection('swaps').onSnapshot(snap => {
       const next = {};
-      snap.docs.forEach(d => { const w = d.data(); if (w && Number.isInteger(w.slot) && Number.isInteger(w.cp)) next[w.slot] = w; });
+      snap.docs.forEach(d => { const w = d.data(); if (w && Number.isInteger(w.slot) && Number.isInteger(w.cp)){ const m = w.mode === 'ext' ? 'ext' : 'trad'; next[w.slot + ':' + m] = { ...w, mode: m, id: d.id }; } });
       swaps = next; changed();
     }, () => { $('sync').textContent = 'Swaps stopped updating. Reload the page.'; });
-    syncLine(); renderSwap();
+    syncLine(); renderSwaps(); renderCats();
   })();
 })();
 </script>
