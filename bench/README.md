@@ -24,6 +24,6 @@ Publish `bench/out/<id>.html` once without a `url` (with `capabilities: {db: {},
 ## Data, per bench
 
 - `meta/info`: `{ version }`, shown at the top.
-- `items/<id>`: `{ ref, text, detail?, area, sec: backlog|planned|review|done, done, tag?, plan?, parent?, kind?: bug|tweak, idea?, author?, pr?, order?, created, thread: [{ by: you|claude, who?, text, at, edited? }] }`.
+- `items/<id>`: `{ ref, text, detail?, area, sec: backlog|planned|review|done, done, tag?, plan?, parent?, kind?: bug|tweak, idea?, author?, pr?, order?, created, seen?, thread: [{ by: you|claude, who?, text, at, edited? }] }`. `seen`: the `at` of the Claude note FYR marked read with GOT IT; a Queued item whose last note is Claude's and newer than `seen` counts in Yours.
 - `pr`: the pull request number an item ships in. It shows as a "PR #n" chip linking to `prLink` + n (set `prLink` in `benches.json`, e.g. `https://github.com/OWNER/REPO/pull/`), and a "by PR" grouping appears once any item has one.
 - `people` in `benches.json`: with two or more names, a switch in the header picks who is using the page on that browser. Notes get `who`, new items get `author`, and "Yours" shows only what waits on that person. With one name the switch is hidden and the page reads as before.
