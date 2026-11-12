@@ -200,6 +200,7 @@ const waitsForYou = i => { if (unseenQ(i)) return true; if (i.done || !i.ref || 
   if (i.sec === 'backlog' && !i.needs) return false;   // a backlog item is yours only while Claude has marked it 'needs input' (Sprawler ID-055)
   if (i.needs){ const T = threadOf(i); return !T.length || T[T.length - 1].by === 'claude'; }   // marked: yours until you answer, whoever opened it
   if (!/^TS-/.test(i.ref) && items.some(k => k.parent === i.id && /^TS-/.test(k.ref || '') && waitsForYou(k))) return true;   // an open test under it waits for you, so the item does too (Sprawler TW-077)
+  { const ts = items.filter(k => k.parent === i.id && /^TS-/.test(k.ref || '')); if (!/^TS-/.test(i.ref) && ts.length && ts.every(k => k.done)) return true; }   // every test under it is closed but the item itself is still open: it stays yours (to tick) instead of vanishing the moment its last test is closed
   const T = threadOf(i); return T.length ? T[T.length - 1].by === 'claude' && (ownerOf(i) || me) === me : /^TS-/.test(i.ref); };
 let yoursOnly = false; try { yoursOnly = localStorage.getItem('benchYours') === '1'; } catch (e) {}
 // a click on a count in the stats line shows only those items (again: all)
