@@ -22,6 +22,7 @@ header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
 h1{margin:0;font:600 26px/1.1 var(--display);letter-spacing:.02em;text-wrap:balance}
 h1 span{color:var(--accent)}
 .sub{color:var(--muted);font-size:13px;flex-basis:100%;max-width:70ch}
+.ver{font:500 12px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 6px}
 .sync{margin-left:auto;font:500 12px var(--mono);color:var(--muted)}.sync b{color:var(--count);font-weight:500}.sync.dirty b{color:var(--warn)}
 .bar{display:flex;gap:8px;flex-wrap:wrap}
 input[type=search],input[type=text]{font:inherit;font-size:14px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:7px 10px;min-width:0}
@@ -80,6 +81,7 @@ form.addrow{display:flex;gap:8px;flex-wrap:wrap}form.addrow input{flex:1 1 240px
 <div class="wrap">
   <header>
     <h1>Sprawler <span>Compendium</span></h1>
+    <span class="ver" id="ver" title="The page's version: bumped with every publish"></span>
     <span class="sync" id="sync">connecting…</span>
     <p class="sub">Every name the game draws from: streets, hotels, buildings by kind, MegaBuildings, people, items. Edit here; Claude copies the Compendium into the game's <code>data/compendium.json</code> in the next pull request, so changes land when it's merged.</p>
   </header>
@@ -121,7 +123,9 @@ const cur = id => { const F = fields(id); return F.includes(sub[id]) ? sub[id] :
 const fieldTitle = f => f.startsWith('level') ? `Level ${f.slice(5)} names` : (PARTS.find(x => x[0] === f) || [f, f])[1];
 const count = id => fields(id).reduce((a, f) => a + list(id, f).length, 0);
 let pools = {}, meta = {}, db = null, canWrite = true, sel = null, q = '', editing = null, rolled = null, note = null;   // note: the last message, {id, text, ok}, kept across redraws
+const PAGE_VERSION = 4;   // bump with every publish of this page
 const $ = s => document.querySelector(s);
+$('#ver').textContent = 'v' + PAGE_VERSION;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
 const docId = (group, key) => group === 'kind' || group === 'mega' || group === 'adj' || group === 'item' ? group + '-' + slug(key) : key;
