@@ -1,0 +1,37 @@
+{
+ "version": 2,
+ "swaps": [
+  {
+   "tile": 10,
+   "name": "EXIT",
+   "mode": "trad",
+   "cp": 128726,
+   "glyph": "U+1F6D6",
+   "was": 8962
+  },
+  {
+   "tile": 34,
+   "name": "CRATE",
+   "mode": "trad",
+   "cp": 59503,
+   "glyph": "U+E86F",
+   "was": 9632
+  },
+  {
+   "tile": 38,
+   "name": "BED",
+   "mode": "trad",
+   "cp": 19947,
+   "glyph": "U+4DEB",
+   "was": 9644
+  },
+  {
+   "tile": 50,
+   "name": "actor:drone",
+   "mode": "ext",
+   "cp": 60467,
+   "glyph": "U+EC33",
+   "was": 64372
+  }
+ ]
+}
