@@ -153,6 +153,7 @@ const T = [
   ['Walls & floor', ' ', 'outside (street)', ''],
   ['Walls & floor', '#', 'wall', ''],
   ['Walls & floor', '.', 'floor', ''],
+  ['Walls & floor', 'W', 'window (in a wall; see-through)', ''],
   ['Walls & floor', 'N', 'neon sign (whole wall cell)', ''],
   ['Walls & floor', 'G', 'sealed gate', ''],
   ['Doors', '+', 'entry door (front, to the street)', ''],
@@ -185,16 +186,18 @@ const T = [
   ['Plants & park', ',', 'grass', ''],
   ['Plants & park', 'F', 'fountain', ''],
   ['Plants & park', 'A', 'statue', ''],
+  // Ways between levels: designer-only for now (the game has one level), drawn with the designer's own glyphs. The facing says which way they go.
+  ['Stairs & lifts', '<', 'stairs up (not in the game yet)', '', { glyph: '▲', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
+  ['Stairs & lifts', '>', 'stairs down (not in the game yet)', '', { glyph: '▼', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
+  ['Stairs & lifts', 'L', 'elevator (not in the game yet)', '', { glyph: '↕', fg: '#9fe0ff', bg: '#0d0f14', walk: 1 }],
+  ['Stairs & lifts', 'Z', 'escalator: its facing is the way up (not in the game yet)', '', { glyph: '≡', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
   ['Actors & spawns', '@', "clerk's spot: where the clerk or shopkeeper stands", '', { marker: 1, glyph: '@', fg: '#9d5cff', bg: '#0d0f14', walk: 1 }],
   ['Actors & spawns', 'S', 'where you wake up / come in', '', { marker: 1, glyph: 'S', fg: '#7a809f', bg: '#0d0f14', walk: 1 }],
   // Not in the game: only here so designs drawn earlier still open. Never offered in the palette.
-  ['Legacy', '<', 'stairs up', 'r', { only: 1, glyph: '▲', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
-  ['Legacy', '>', 'stairs down', 'r', { only: 1, glyph: '▼', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
-  ['Legacy', 'L', 'elevator', 'r', { only: 1, glyph: '↕', fg: '#9fe0ff', bg: '#0d0f14', walk: 1 }],
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '9';
+const DESIGNER_VERSION = '10';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -202,7 +205,7 @@ for (const [g, ch, name, fl, ex = {}] of T){
   const key = own ? null : (dk !== undefined ? GAME.desk.tiles.south[dk] : GAME.legend[ch]), gt = own ? null : GAME.tiles[key];
   if (!own && !gt) throw new Error('no game tile for ' + ch);
   TILE[ch] = { g, ch, name, key, cp: own ? ex.glyph.codePointAt(0) : gt.glyph, fg: ex.fg || gt.fg, bg: ex.bg || gt.bg, walk: ex.walk !== undefined ? !!ex.walk : !gt.blocks,
-    rot: fl.includes('r'), spin: fl.includes('s'), edge: fl.includes('e'), only: !!ex.only, marker: !!ex.marker, desk: dk };
+    rot: true, spin: fl.includes('s'), edge: fl.includes('e'), only: !!ex.only, marker: !!ex.marker, desk: dk };
 }
 const deskKey = c => GAME.desk.tiles[SIDE_NAME[c.r & 3]][TILE[c.c].desk];   // a desk front's tile for its side
 const SOLID_EDGE = new Set(['#', 'N', '+', 'd', 'G', 'E', 'P']);   // what a building's outline may be made of

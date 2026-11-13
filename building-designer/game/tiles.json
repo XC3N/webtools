@@ -1,6 +1,6 @@
 {
- "version": "0.17.30",
- "commit": "4fc754c",
+ "version": "0.18.5",
+ "commit": "3f19021",
  "sheet": {
   "cols": 16,
   "size": 8,
@@ -63,7 +63,16 @@
    "actor:runner:walk0",
    "actor:runner:walk1",
    "COUNTER_H",
-   "DUMPSTER"
+   "DUMPSTER",
+   "RAIN0",
+   "RAIN1",
+   "RAIN2",
+   "DUMPSTER_N",
+   "DUMPSTER_W",
+   "DUMPSTER_E",
+   "LOOK",
+   "actor:citizen",
+   "WINDOW"
   ]
  },
  "glyphs": {
@@ -71,7 +80,8 @@
   "83": "FEC0FE06E6E6FE00",
   "8597": "183C7E18187E3C18",
   "9650": "18183C3C7E7EFFFF",
-  "9660": "FFFF7E7E3C3C1818"
+  "9660": "FFFF7E7E3C3C1818",
+  "8801": "007E007E007E0000"
  },
  "tiles": {
   "STREET": {
@@ -425,6 +435,42 @@
    "under": false,
    "name": "dumpster"
   },
+  "DUMPSTER_N": {
+   "glyph": 9600,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
+  "DUMPSTER_W": {
+   "glyph": 9612,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
+  "DUMPSTER_E": {
+   "glyph": 9616,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
+  "WINDOW": {
+   "glyph": 9707,
+   "fg": "#4fd6ff",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "window"
+  },
   "DESK": {
    "glyph": 57345,
    "fg": "#8a76b8",
@@ -561,6 +607,7 @@
   "F": "FOUNTAIN",
   "A": "STATUE",
   "h": "BENCH",
+  "W": "WINDOW",
   "E": "EXIT",
   "P": "POD",
   "p": "MY_POD",
@@ -648,5 +695,5 @@
    ]
   }
  },
- "curb": "#1b1f30"
+ "curb": "#8e94a6"
 }
