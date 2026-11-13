@@ -181,6 +181,7 @@ const T = [
   ['Furniture', 'p', 'your pod', 'r'],
   ['Furniture', 'h', 'bench', 'r'],
   ['Furniture', 'D', 'dumpster', ''],
+  ['Furniture', 'U', 'toilet (not in the game yet)', '', { glyph: '\u{1F68D}', fg: '#cfd6e6', bg: '#0d0f14', walk: 0 }],
   ['Plants & park', 'v', 'potted plant', ''],
   ['Plants & park', 'Y', 'tree', ''],
   ['Plants & park', ',', 'grass', ''],
@@ -197,7 +198,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '10';
+const DESIGNER_VERSION = '11';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){

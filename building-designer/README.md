@@ -29,6 +29,8 @@ There is no Counter tool: lay the counter (`{ _ }` cells you can stand on, with 
 The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
 
 - v9: game 0.17.30 tiles (dumpster `D`); "Building Blocks" heading; two boxes show the glyph each mouse button holds; counter tiles renamed (no "counter block" / "staff row"); an empty floor cell on the outline that no inside floor touches counts as open ground, not a gap.
+- v11: toilet (U+1F68D) in Furniture, designer-only for now (ID-106).
+- v10: every tile can face a direction; window W (the game's Tile.WINDOW), stairs up/down, elevator and a new escalator back in the palette (ID-100).
 - v8: the description block under the title is gone.
 - v7: layout (type + building dropdowns and New on one line, no side panel); toolbar of icons with only Pencil (Shift+click a straight line, Shift+right click picks) and Select (Q / E turn the selected tile); Counter, line, box, fill, pick and rotate tools gone; Resize beside Zoom; every palette group collapsible and regrouped by what things are; stairs, elevator, chair, window and hedge no longer offered; a cell can't be painted past what the game can draw; unreachable cells are an info line.
 - v6: the Building sizes panel and its size check are gone (mapgen's lot sizes are being redone).
