@@ -29,6 +29,7 @@ There is no Counter tool: lay the counter (`{ _ }` cells you can stand on, with 
 The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
 
 - v9: game 0.17.30 tiles (dumpster `D`); "Building Blocks" heading; two boxes show the glyph each mouse button holds; counter tiles renamed (no "counter block" / "staff row"); an empty floor cell on the outline that no inside floor touches counts as open ground, not a gap.
+- v13: street exit removed from the palette (legacy only); the popup asks Save yes/no before opening another design; Pieces folded into the Tiles palette as "Half & quarter tiles" (modes are now Tiles and Status); wider Building Blocks panel.
 - v12: tiles re-exported from game 0.18.6 main (glyph swaps, empty floor and street, locked door); the dumpster and counters draw the game's own tile for their side or run; only half tiles (counter fronts, the dumpster) and pieces have a side; Save as; the Select tool drags a cell to move it (overwrites, Ctrl+Z undoes); a click-and-drag size grid in New and Resize (up to 40 × 32), the old preset sizes are gone.
 - v11: toilet (U+1F68D) in Furniture, designer-only for now (ID-106).
 - v10: every tile can face a direction; window W (the game's Tile.WINDOW), stairs up/down, elevator and a new escalator back in the palette (ID-100).
