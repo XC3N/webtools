@@ -29,6 +29,7 @@ There is no Counter tool: lay the counter (`{ _ }` cells you can stand on, with 
 The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
 
 - v9: game 0.17.30 tiles (dumpster `D`); "Building Blocks" heading; two boxes show the glyph each mouse button holds; counter tiles renamed (no "counter block" / "staff row"); an empty floor cell on the outline that no inside floor touches counts as open ground, not a gap.
+- v16: drag the bar beside the Building Blocks panel to resize it (double click resets; the width is remembered in the browser).
 - v15: the Building Blocks panel is wider (560 px) with the categories in columns; the left/right boxes are small and sit at the top right.
 - v14: the Building Blocks panel scrolls on its own and stays in view; the page no longer scrolls with it.
 - v13: street exit removed from the palette (legacy only); the popup asks Save yes/no before opening another design; Pieces folded into the Tiles palette as "Half & quarter tiles" (modes are now Tiles and Status); wider Building Blocks panel.
