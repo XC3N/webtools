@@ -1,4 +1,4 @@
-<!-- Bench page version: bench v3 (the #benchVer label in the header). Bump it with every change to this file. -->
+<!-- Bench page version: bench v4 (the #benchVer label in the header). Bump it with every change to this file. -->
 <!-- The shared test bench page. One source for every bench: bench/benches.json holds what differs per project, and
      node bench/build.js writes bench/out/<id>.html for each. See bench/README.md. -->
 <title>{{TITLE}}</title>
@@ -122,7 +122,7 @@ body.boarded .wrap{max-width:1400px}.wrap,.pin,.tools{grid-template-columns:minm
   <div class="pin">
   <header>
     <h1>{{NAME_A}}<span>{{NAME_B}}</span> test bench</h1>
-    <span class="meta" id="benchVer" title="The version of this bench page (the same page runs every bench). It goes up with every change to bench/bench.html in XC3N/webtools.">bench v3</span>
+    <span class="meta" id="benchVer" title="The version of this bench page (the same page runs every bench). It goes up with every change to bench/bench.html in XC3N/webtools.">bench v4</span>
     <a class="meta" id="ver" href="{{LINK}}" target="_blank" rel="noopener" title="The version {{NAME}} is at · click: {{LINK_LABEL}}">v—</a>
     <span class="kind who" id="who" role="group" aria-label="Who is using the bench" title="Who is using the bench on this device. Notes and new items are signed with this name; Yours shows what waits on them."></span>
     <span class="total" id="total"><b>0</b> open</span>
@@ -195,12 +195,12 @@ const histCut = i => { const n = threadOf(i).length; return n > 3 ? n - 2 : 0; }
 const CATS = [['BG', 'Bugs'], ['TS', 'Tests'], ['QA', 'Questions'], ['ID', 'Ideas'], ['TW', 'Tweaks'], ['CR', 'Code review'], ['', 'New']];
 const catOf = i => i.kind === 'bug' ? 'BG' : i.kind === 'tweak' ? 'TW' : CATS.some(c => c[0] && String(i.ref || '').startsWith(c[0])) ? String(i.ref).slice(0, 2) : '';
 // waiting for you: open, sorted, and Claude has the last word (or nobody has written yet on a test)
-const unseenQ = i => { if (i.done || !i.ref || !(i.sec === 'planned' || i.sec === 'doing')) return false; const T = threadOf(i), n = T[T.length - 1]; return !!n && n.by === 'claude' && (n.at || '') > (i.seen || ''); };   // bench v2: a Claude note on a Queued item ("queued for ...") is yours until you read it (GOT IT) or reply
+const unseenQ = i => { if (i.done || !i.ref || !(i.sec === 'planned' || i.sec === 'doing')) return false; const T = threadOf(i), n = T[T.length - 1]; return !!n && n.by === 'claude' && (n.at || '') > (i.seen || ''); };   // bench v3: a Claude note on a Queued item ("queued for ...") is yours until you read it (GOT IT) or reply
 const waitsForYou = i => { if (unseenQ(i)) return true; if (i.done || !i.ref || i.sec === 'planned' || i.sec === 'doing') return false;   // v54 (grdc): otherwise planned items wait for Claude's release, not for you
   if (i.sec === 'backlog' && !i.needs) return false;   // a backlog item is yours only while Claude has marked it 'needs input' (Sprawler ID-055)
   if (i.needs){ const T = threadOf(i); return !T.length || T[T.length - 1].by === 'claude'; }   // marked: yours until you answer, whoever opened it
   if (!/^TS-/.test(i.ref) && items.some(k => k.parent === i.id && /^TS-/.test(k.ref || '') && waitsForYou(k))) return true;   // an open test under it waits for you, so the item does too (Sprawler TW-077)
-  { const ts = items.filter(k => k.parent === i.id && /^TS-/.test(k.ref || '')); if (!/^TS-/.test(i.ref) && ts.length && ts.every(k => k.done)) return true; }   // every test under it is closed but the item itself is still open: it stays yours (to tick) instead of vanishing the moment its last test is closed
+  { const ts = items.filter(k => k.parent === i.id && /^TS-/.test(k.ref || '')); if (!/^TS-/.test(i.ref) && ts.length && ts.every(k => k.done) && !threadOf(i).length) return true; }   // every test under it is closed but the item itself is still open: it stays yours (to tick) instead of vanishing the moment its last test is closed; once you have written on it, it is answered (TW-124)
   const T = threadOf(i); return T.length ? T[T.length - 1].by === 'claude' && (ownerOf(i) || me) === me : /^TS-/.test(i.ref); };
 let yoursOnly = false; try { yoursOnly = localStorage.getItem('benchYours') === '1'; } catch (e) {}
 // a click on a count in the stats line shows only those items (again: all)
