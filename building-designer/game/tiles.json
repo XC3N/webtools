@@ -1,6 +1,6 @@
 {
- "version": "0.18.5",
- "commit": "642d0e2",
+ "version": "0.18.6",
+ "commit": "b690cbd",
  "sheet": {
   "cols": 16,
   "size": 8,
@@ -72,7 +72,9 @@
    "DUMPSTER_E",
    "LOOK",
    "actor:citizen",
-   "WINDOW"
+   "actor:drone:ext",
+   "WINDOW",
+   "LOCKED_DOOR"
   ]
  },
  "glyphs": {
@@ -201,6 +203,15 @@
    "height": 2,
    "under": false,
    "name": "sealed MegaBuilding gate"
+  },
+  "LOCKED_DOOR": {
+   "glyph": 9635,
+   "fg": "#a04a5a",
+   "bg": "#14162a",
+   "blocks": true,
+   "height": 2,
+   "under": false,
+   "name": "a locked door"
   },
   "TERMINAL": {
    "glyph": 937,

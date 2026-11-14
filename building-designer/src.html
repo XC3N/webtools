@@ -78,6 +78,9 @@ button.ic{width:34px;height:34px;padding:0;display:grid;place-items:center}butto
 .bb .box1{width:48px;height:48px;border:1px solid var(--line);border-radius:4px;display:grid;place-items:center;background:#0d0f14;font:600 11px var(--mono);color:var(--ink);text-align:center;line-height:1.1;text-transform:none;letter-spacing:0}.bb .box1 img{height:36px;width:auto;image-rendering:pixelated}.bb .box1 .sw{width:34px;height:34px}
 #note{min-height:1.2em}
 .keys{font-size:12px;color:var(--muted)}.keys summary{cursor:pointer}.keys p{margin:6px 0}
+dialog{max-width:min(600px,94vw)}
+.szp{display:grid;gap:8px;min-width:0}.szg{position:relative;max-width:100%;overflow:hidden;cursor:crosshair;touch-action:none;border:1px solid var(--line);background-color:#0d0f14;background-image:linear-gradient(to right,var(--line) 1px,transparent 1px),linear-gradient(to bottom,var(--line) 1px,transparent 1px)}
+#szs,#szh{position:absolute;left:0;top:0;pointer-events:none}#szs{background:rgba(41,240,255,.28);outline:1px solid var(--accent)}#szh{outline:1px dashed var(--ink)}
 kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:var(--muted)}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
@@ -102,7 +105,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
           <label for="notes">Notes</label><textarea id="notes" rows="2" placeholder="What it's for, what you'd like the generator to learn from it"></textarea>
         </div>
         <div class="bar">
-          <button type="button" class="go" id="save" disabled>Save</button><span id="state" class="saved"></span>
+          <button type="button" class="go" id="save" disabled>Save</button><button type="button" id="saveas" title="Save this as a new design, under another name">Save as…</button><span id="state" class="saved"></span>
           <span class="sep"></span>
           <button type="button" id="dup">Duplicate</button><button type="button" id="del">Delete</button>
           <button type="button" id="exp">Export</button><button type="button" id="imp">Import</button>
@@ -121,7 +124,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
       <h2>Building Blocks</h2>
       <div class="seg" id="modes" role="group" aria-label="Layer to paint"></div>
       <div class="brushes" aria-label="What each mouse button paints"><div class="bb" id="boxA"></div><div class="bb" id="boxB"></div></div>
-      <div class="row"><span class="cur">Facing</span><button type="button" id="rotL" title="Rotate the brush counter-clockwise (Q)">⟲</button><button type="button" id="rotR" title="Rotate the brush clockwise (E)">⟳</button><b class="cur" id="rotName"></b></div>
+      <div class="row" id="rotRow"><span class="cur">Side</span><button type="button" id="rotL" title="Rotate the brush counter-clockwise (Q)">⟲</button><button type="button" id="rotR" title="Rotate the brush clockwise (E)">⟳</button><b class="cur" id="rotName"></b></div>
       <div class="pal" id="pal"></div>
       <h2>Cell</h2>
       <div class="insp" id="insp"><span class="cur">Select a cell with the Select tool (V) to see and edit its layers.</span></div>
@@ -131,7 +134,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
       <details class="keys"><summary>Keys</summary>
         <p><kbd>P</kbd> pencil · <kbd>V</kbd> select · <kbd>M</kbd> mirror · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> tiles / pieces / status</p>
         <p>Pencil: click or drag to paint · <kbd>Shift</kbd>+click draws a straight line from the last cell you painted · <kbd>Shift</kbd>+right click picks the tile, piece or status under the pointer.</p>
-        <p>Select: click a cell to see its layers; <kbd>Q</kbd> <kbd>E</kbd> turn the selected tile (or its pieces, in Pieces). With the pencil, <kbd>Q</kbd> <kbd>E</kbd> turn the brush.</p>
+        <p>Select: click a cell to see its layers, drag it to move it (what is there is overwritten; <kbd>Ctrl</kbd>+<kbd>Z</kbd> brings it back). Only half tiles (counter fronts, the dumpster) and pieces have a side: <kbd>Q</kbd> <kbd>E</kbd> turn the selected one, or the brush with the pencil.</p>
         <p>Right click: second tile in Tiles; clears the layer in Pieces and Status · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</p>
       </details>
     </aside>
@@ -147,7 +150,7 @@ const GAME = /*{{GAME}}*/null;   // the game's tile table, written by the game's
 // The tiles. Glyph, colours and whether it blocks come from the game (GAME.tiles, through GAME.legend),
 // so what you draw looks like the game. extra: {only: true, glyph, fg, bg, walk} for a tile the game doesn't
 // have yet (it loads as floor); {fg} or {walk} overrides one thing; markers are drawn by the designer.
-// flags: r = can face a direction, s = the preview turns the glyph with it, e = a desk front line.
+// flags: e = a desk front line, h = a half tile with one game tile per side (the dumpster). Only those face a direction.
 const T = [
   // group, char, name, flags, extra
   ['Walls & floor', ' ', 'outside (street)', ''],
@@ -155,7 +158,7 @@ const T = [
   ['Walls & floor', '.', 'floor', ''],
   ['Walls & floor', 'W', 'window (in a wall; see-through)', ''],
   ['Walls & floor', 'N', 'neon sign (whole wall cell)', ''],
-  ['Walls & floor', 'G', 'sealed gate', ''],
+  ['Doors', 'G', "locked door (a home's; a sealed gate on a MegaBuilding)", ''],
   ['Doors', '+', 'entry door (front, to the street)', ''],
   ['Doors', 'd', 'exit door (back, to the alley)', '', { fg: '#4fd6c4' }],
   ['Doors', 'E', 'street exit', ''],
@@ -180,7 +183,7 @@ const T = [
   ['Furniture', 'b', "a guest's bed", 'r'],
   ['Furniture', 'p', 'your pod', 'r'],
   ['Furniture', 'h', 'bench', 'r'],
-  ['Furniture', 'D', 'dumpster', ''],
+  ['Furniture', 'D', 'dumpster (half a cell: against the wall on the side it faces)', 'h'],
   ['Furniture', 'U', 'toilet (not in the game yet)', '', { glyph: '\u{1F68D}', fg: '#cfd6e6', bg: '#0d0f14', walk: 0 }],
   ['Plants & park', 'v', 'potted plant', ''],
   ['Plants & park', 'Y', 'tree', ''],
@@ -191,14 +194,14 @@ const T = [
   ['Stairs & lifts', '<', 'stairs up (not in the game yet)', '', { glyph: '▲', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
   ['Stairs & lifts', '>', 'stairs down (not in the game yet)', '', { glyph: '▼', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
   ['Stairs & lifts', 'L', 'elevator (not in the game yet)', '', { glyph: '↕', fg: '#9fe0ff', bg: '#0d0f14', walk: 1 }],
-  ['Stairs & lifts', 'Z', 'escalator: its facing is the way up (not in the game yet)', '', { glyph: '≡', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
+  ['Stairs & lifts', 'Z', 'escalator (not in the game yet)', '', { glyph: '≡', fg: '#e6e9f5', bg: '#0d0f14', walk: 1 }],
   ['Actors & spawns', '@', "clerk's spot: where the clerk or shopkeeper stands", '', { marker: 1, glyph: '@', fg: '#9d5cff', bg: '#0d0f14', walk: 1 }],
   ['Actors & spawns', 'S', 'where you wake up / come in', '', { marker: 1, glyph: 'S', fg: '#7a809f', bg: '#0d0f14', walk: 1 }],
   // Not in the game: only here so designs drawn earlier still open. Never offered in the palette.
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '11';
+const DESIGNER_VERSION = '12';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -206,8 +209,14 @@ for (const [g, ch, name, fl, ex = {}] of T){
   const key = own ? null : (dk !== undefined ? GAME.desk.tiles.south[dk] : GAME.legend[ch]), gt = own ? null : GAME.tiles[key];
   if (!own && !gt) throw new Error('no game tile for ' + ch);
   TILE[ch] = { g, ch, name, key, cp: own ? ex.glyph.codePointAt(0) : gt.glyph, fg: ex.fg || gt.fg, bg: ex.bg || gt.bg, walk: ex.walk !== undefined ? !!ex.walk : !gt.blocks,
-    rot: true, spin: fl.includes('s'), edge: fl.includes('e'), only: !!ex.only, marker: !!ex.marker, desk: dk };
+    rot: fl.includes('e') || fl.includes('h'), spin: fl.includes('s'), edge: fl.includes('e'), only: !!ex.only, marker: !!ex.marker, desk: dk };
 }
+const DUMP = ['DUMPSTER', 'DUMPSTER_W', 'DUMPSTER_N', 'DUMPSTER_E'];   // by facing: against the wall to the south, west, north, east
+// The game tile a cell is drawn with: a desk front and a dumpster by their side, a counter by the way its run goes (Designs._derive).
+function keyOf(c, x, y){ const t = TILE[c.c]; if (t.desk !== undefined) return deskKey(c); if (c.c === 'D') return DUMP[c.r & 3];
+  if (c.c === 'c' && x !== undefined){ const is = (xx, yy) => cells[yy]?.[xx]?.c === 'c'; const across = is(x - 1, y) || is(x + 1, y), along = is(x, y - 1) || is(x, y + 1); if (across && !along) return 'COUNTER_H'; }
+  return t.key; }
+const brushKey = ch => { const t = TILE[ch]; return t.desk !== undefined ? GAME.desk.tiles[SIDE_NAME[rot & 3]][t.desk] : ch === 'D' ? DUMP[rot & 3] : t.key; };
 const deskKey = c => GAME.desk.tiles[SIDE_NAME[c.r & 3]][TILE[c.c].desk];   // a desk front's tile for its side
 const SOLID_EDGE = new Set(['#', 'N', '+', 'd', 'G', 'E', 'P']);   // what a building's outline may be made of
 const ENTRY = new Set(['+', 'E']), EXIT = new Set(['d']);
@@ -226,23 +235,10 @@ const CORNER = ['south-east', 'south-west', 'north-west', 'north-east'];
 const STATUS = [[null, 'auto (from the tile and pieces)'], [0, 'blocked'], [1, 'walkable']];
 const SIDE = [[0, 1], [-1, 0], [0, -1], [1, 0]];                   // the way side 0..3 faces (south, west, north, east)
 const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]];
-// The sizes mapgen can fit (outer, walls included): block heights 9 and 12; even widths.
-const SIZES = [
-  ['6 × 9', 6, 9, 'pawn shop, fixer\'s den, a narrow noodle bar'],
-  ['8 × 9', 8, 9, 'noodle bar, laundromat'],
-  ['10 × 9', 10, 9, 'laundromat, clinic, arcade'],
-  ['12 × 9', 12, 9, 'clinic, arcade, a small corp annex'],
-  ['8 × 12', 8, 12, 'apartments (narrow), pawn shop with a back room'],
-  ['10 × 12', 10, 12, 'clinic with wards, arcade'],
-  ['12 × 12', 12, 12, 'apartments, warehouse'],
-  ['16 × 12', 16, 12, 'warehouse, corp annex'],
-  ['18 × 12', 18, 12, 'a whole block: MegaBuilding, park'],
-  ['21 × 9', 21, 9, 'the capsule hotel (fixed size)'],
-];
 const KINDS = ['noodle bar', 'laundromat', 'clinic', 'pawn shop', 'arcade', 'warehouse', 'apartments', 'corp annex', "fixer's den", 'capsule hotel', 'park', 'MegaBuilding', 'Corpsec HQ', 'other'];
 // The game's lobby today (core/hotel.gd LAYOUT), to start a hotel from.
 const HOTEL = ['#####NNNNNNN#########', '#pSJ##b.g##b.g##b.g##', '##+####P####P####P###', '#v.................v#', '#.......{__}........E', '#...T...c@Kc...R...v#', '##P####P####P####P###', '#b.g##b.g##b.g##b.g##', '#####################'];
-const TOOLS = [['pen', 'Pencil (P): click or drag; Shift+click a straight line; Shift+right click picks', 'P'], ['select', 'Select (V): click a cell; Q / E turn it', 'V']];
+const TOOLS = [['pen', 'Pencil (P): click or drag; Shift+click a straight line; Shift+right click picks', 'P'], ['select', 'Select (V): click a cell, drag it to move it; Q / E turn a half tile', 'V']];
 const IC = {
   pen: 'M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z M14 7l3 3',
   select: 'M5 3l14 7-6 2-2 6z',
@@ -259,7 +255,7 @@ let db = null, user = null, me = null, canWrite = true;
 // A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
 let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
 let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
-let edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null, lastCell = null, refused = 0, typeFilter = '', armedOpen = null;
+let move = null, edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null, lastCell = null, refused = 0, typeFilter = '', armedOpen = null;
 const closedGroups = new Set();
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -333,6 +329,7 @@ function applyTo(cell, b){
   else if (b.k === 'piece'){ if (!c.p.some(p => p[0] === b.m && p[1] === b.s && p[2] === b.r)){ c.p.push([b.m, b.s, b.r]); if (cost(c) > 2){ refused++; return cell; } } }
   else if (b.k === 'clearp') c.p = [];
   else if (b.k === 'edge') c.e = b.on ? [...new Set([...c.e, b.s])].sort() : c.e.filter(v => v !== b.s);
+  else if (b.k === 'cell') return cl(b.cell);
   else c.w = b.w;
   return c;
 }
@@ -384,10 +381,7 @@ function drawCell(x, y, c, ghost){
   const t = TILE[c.c] || TILE['.'], cw = CW * zoom, chh = CH * zoom, px = x * cw, py = y * chh, ga = ghost ? 0.7 : 1;
   cx.globalAlpha = ga; cx.fillStyle = t.bg; cx.fillRect(px, py, cw, chh);
   if (view !== 'pieces'){
-    drawGlyph(t.desk !== undefined ? deskKey(c) : t.key, t.cp, t.fg, px, py, cw, chh, t.spin ? c.r : 0);
-    if (t.rot && !t.edge && c.r){ const tk = Math.max(2, Math.round(zoom * 1.5)); cx.fillStyle = 'rgba(255,255,255,0.7)';
-      const r = c.r; if (r === 0) cx.fillRect(px + cw * 0.3, py + chh - tk, cw * 0.4, tk); else if (r === 1) cx.fillRect(px, py + chh * 0.35, tk, chh * 0.3);
-      else if (r === 2) cx.fillRect(px + cw * 0.3, py, cw * 0.4, tk); else cx.fillRect(px + cw - tk, py + chh * 0.35, tk, chh * 0.3); }
+    drawGlyph(keyOf(c, x, y), t.cp, t.fg, px, py, cw, chh, 0);
   }
   if (view !== 'tiles') for (const [m, s, r] of c.p){ const M = MATS[m]; cx.globalAlpha = ga * (M.alpha || 1); cx.fillStyle = M.col; cx.fillRect(...pieceRect(s, r, px, py, cw, chh)); cx.globalAlpha = ga; }
   if (view === 'walk' && c.c !== ' '){ const ok = walkableCell(c); cx.globalAlpha = ok ? 0.22 : 0.38; cx.fillStyle = ok ? '#b6ff3b' : '#ff3b3b'; cx.fillRect(px, py, cw, chh); cx.globalAlpha = ga; }
@@ -459,13 +453,13 @@ function checks(){
 }
 
 // ---------- UI
-const tileSw = ([, ch, name]) => { const t = TILE[ch], key = t.desk !== undefined ? GAME.desk.tiles[SIDE_NAME[rot & 3]][t.desk] : t.key;
-  return `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB ? ' alt' : '') + (t.rot ? ' rt' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${t.rot ? ' · can face a direction' : ''}${t.marker ? ' · a marker: the game puts floor here' : ''}" aria-label="${esc(name)}" style="background:${t.bg}"><img class="gs" alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}"><span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`; };
+const tileSw = ([, ch, name]) => { const t = TILE[ch], key = brushKey(ch);
+  return `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB ? ' alt' : '') + (t.rot ? ' rt' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${t.rot ? ' · a half tile: Q / E turn it' : ''}${t.marker ? ' · a marker: the game puts floor here' : ''}" aria-label="${esc(name)}" style="background:${t.bg}"><img class="gs" alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}"><span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`; };
 function swatch(m, s, r){ const col = MATS[m].col; let bg;
   if (s === 'half') bg = `linear-gradient(${['to top', 'to right', 'to bottom', 'to left'][r]},${col} 50%,transparent 50%)`;
   else bg = `linear-gradient(${col},${col}) ${['right bottom', 'left bottom', 'left top', 'right top'][r]}/50% 50% no-repeat`;
   return `<span class="sw" style="background:${bg}"></span>`; }
-const tileImg = ch => { const t = TILE[ch], key = t.desk !== undefined ? GAME.desk.tiles[SIDE_NAME[rot & 3]][t.desk] : t.key; return `<img alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}">`; };
+const tileImg = ch => { const t = TILE[ch], key = brushKey(ch); return `<img alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}">`; };
 // The two boxes under Building Blocks: what the left and the right mouse button hold right now.
 function brushBoxes(a, b){ const box = (id, label, [html, title]) => { $(id).innerHTML = `<span>${label}</span><span class="box1" title="${esc(title)}">${html}</span>`; $(id).setAttribute('aria-label', label + ': ' + title); }; box('#boxA', 'Left', a); box('#boxB', 'Right', b); }
 function renderPal(){
@@ -483,6 +477,7 @@ function renderPal(){
     const st = statusSel === 'edge' ? ['edge', 'add an edge barrier on the nearest side'] : (v => [v === null ? 'auto' : v ? 'walk' : 'block', STATUS.find(x => x[0] === v)[1]])(statusSel);
     brushBoxes(st, statusSel === 'edge' ? ['no edge', 'remove the nearest edge barrier'] : ['auto', 'back to auto']);
   }
+  $('#rotRow').style.visibility = mode === 'piece' || (mode === 'tile' && (TILE[tileA].rot || TILE[tileB].rot)) ? '' : 'hidden';
   $('#rotName').textContent = mode === 'piece' && pieceSel.s === 'quarter' ? CORNER[rot] : FACE[rot];
   $('#modes').innerHTML = MODES.map(([id, n, k]) => `<button type="button" data-mode="${id}" class="${mode === id ? 'on' : ''}" title="${n} (${k})">${n} <kbd>${k}</kbd></button>`).join('');
 }
@@ -497,7 +492,7 @@ function renderInsp(){
   if (!sel || !inb(sel.x, sel.y)){ $('#insp').innerHTML = '<span class="cur">Select a cell with the Select tool (V) to see and edit its layers.</span>'; return; }
   const c = cells[sel.y][sel.x], t = TILE[c.c];
   $('#insp').innerHTML = `<div class="ln"><b>x ${sel.x} · y ${sel.y}</b><span class="cur">${walkable(sel.x, sel.y) ? 'walkable' : 'blocked'}</span></div>
-    <div class="ln"><span class="k">Tile</span><span>${esc(t.name)}</span>${t.rot ? `<span class="cur">${t.edge ? 'line on the ' + FACE[c.r] + ' side' : 'facing ' + FACE[c.r]}${c.r ? '' : ' (default)'}</span><button type="button" data-act="trot">⟳</button>` : ''}</div>
+    <div class="ln"><span class="k">Tile</span><span>${esc(t.name)}</span>${t.rot ? `<span class="cur">${t.edge ? 'line on the ' + FACE[c.r] + ' side' : 'against the ' + FACE[c.r] + ' side'}</span><button type="button" data-act="trot">⟳</button>` : ''}</div>
     <div class="ln"><span class="k">Pieces</span>${c.p.length ? c.p.map((p, i) => `<span>${swatch(p[0], p[1], p[2])}</span><span>${esc(pname(...p))}</span><button type="button" data-act="prot" data-i="${i}" title="Turn it">⟳</button><button type="button" data-act="pdel" data-i="${i}" title="Remove it">×</button>`).join('') : '<span class="cur">none</span>'}</div>
     <div class="ln"><span class="k">Edges</span>${(() => { const es = [...edgesOf(c)].sort(); return es.length ? es.map(k => `<span>${FACE[k]}${c.e.includes(k) ? '' : ' <span class="cur">(' + (t.edge && k === c.r ? 'desk front' : 'piece') + ')</span>'}</span>${c.e.includes(k) ? `<button type="button" data-act="edel" data-i="${k}" title="Remove this edge">×</button>` : ''}`).join('') : '<span class="cur">none: walkable across every side</span>'; })()}</div>
     <div class="ln"><span class="k">Status</span><select id="iw" aria-label="Walk status">${STATUS.map(([v, n]) => `<option value="${v === null ? 'auto' : v}" ${c.w === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
@@ -530,29 +525,50 @@ async function save(){
     setDirty(false); msg('Saved.', true);
   } catch (e){ if (/not_granted|permission/.test(String(e?.code || e?.message))){ canWrite = false; setDirty(dirty); } msg('Could not save. Reload and try again.'); }
 }
+function saveAsDialog(){
+  if (!db || !canWrite){ msg('Saving needs claude.ai and edit access.'); return; }
+  const base = $('#name').value.trim() || 'Untitled';
+  dialog(`<h2>Save as</h2><div class="meta"><label for="san">Name</label><input id="san" type="text" value="${esc(cur ? base + ' (copy)' : base)}"></div><p class="cur">Saves what is on the grid as a new design. ${cur ? 'The one you opened stays as it was last saved.' : ''}</p>`, d => {
+    const n = d.querySelector('#san').value.trim(); if (!n) return false; $('#name').value = n; cur = null; save().then(renderList); });
+  const i = $('#san'); i.focus(); i.select();
+}
 function msg(t, ok){ $('#status').innerHTML = `<span class="msg${ok ? ' ok' : ''}">${esc(t)}</span>`; }
 
 // ---------- dialogs (built into the page: no browser prompts here)
 function dialog(html, onSubmit){ const d = $('#dlg'); d.innerHTML = `<form method="dialog" style="display:grid;gap:12px">${html}<div class="row" style="justify-content:flex-end"><button type="button" value="cancel" id="dlgx">Cancel</button><button class="go" value="ok">OK</button></div></form>`;
   d.querySelector('#dlgx').onclick = () => d.close(); d.querySelector('form').onsubmit = e => { e.preventDefault(); if (onSubmit(d) !== false) d.close(); }; d.showModal(); }
+// The size picker: a grid you click or drag on (one square per tile), with the two numbers beside it.
+const MAXW = 40, MAXH = 32, PK = 9;
+const sizePicker = (w, h) => `<div class="szp"><div class="szg" id="szg" style="width:${MAXW * PK}px;height:${MAXH * PK}px;background-size:${PK}px ${PK}px" role="img" aria-label="Size grid: click or drag to set the size"><div id="szs"></div><div id="szh"></div></div>
+  <div class="row"><input id="szw" type="number" min="3" max="${MAXW}" value="${w}" style="width:64px" aria-label="Width"> × <input id="szhh" type="number" min="3" max="${MAXH}" value="${h}" style="width:64px" aria-label="Height"><b class="cur" id="szl"></b></div></div>`;
+function wireSize(d, cur0){
+  const g = d.querySelector('#szg'), iw = d.querySelector('#szw'), ih = d.querySelector('#szhh'), cl2 = (v, a, b) => Math.max(a, Math.min(b, Math.round(v) || a));
+  const get = () => [cl2(+iw.value, 3, MAXW), cl2(+ih.value, 3, MAXH)];
+  const show = (hw, hh) => { const [w, h] = get(); const s = d.querySelector('#szs'), o = d.querySelector('#szh'); s.style.width = w * PK + 'px'; s.style.height = h * PK + 'px';
+    o.style.display = hw ? '' : 'none'; if (hw){ o.style.width = hw * PK + 'px'; o.style.height = hh * PK + 'px'; }
+    d.querySelector('#szl').textContent = (hw ? `${hw} × ${hh}` : `${w} × ${h}`) + (cur0 ? ` (now ${cur0[0]} × ${cur0[1]})` : ''); };
+  const at = e => { const r = g.getBoundingClientRect(); return [cl2(Math.ceil((e.clientX - r.left) / PK), 3, MAXW), cl2(Math.ceil((e.clientY - r.top) / PK), 3, MAXH)]; };
+  let down = false; const set = e => { const [w, h] = at(e); iw.value = w; ih.value = h; show(); };
+  g.onpointerdown = e => { down = true; g.setPointerCapture(e.pointerId); set(e); }; g.onpointermove = e => { if (down) set(e); else show(...at(e)); };
+  g.onpointerup = () => { down = false; }; g.onpointerleave = () => { if (!down) show(); };
+  iw.oninput = ih.oninput = () => show(); show(); return { get, set: (w, h) => { iw.value = w; ih.value = h; show(); } };
+}
 function newDialog(){
   dialog(`<h2>New design</h2>
     <div class="meta"><label for="nk">Kind</label><select id="nk">${KINDS.map(k => `<option>${esc(k)}</option>`).join('')}</select>
-    <label for="ns">Size</label><select id="ns">${SIZES.map((s, i) => `<option value="${i}">${s[0]}: ${esc(s[3])}</option>`).join('')}<option value="c">Custom…</option></select>
-    <label for="nw">Custom</label><span class="row"><input id="nw" type="number" min="5" max="40" value="14" style="width:70px"> × <input id="nh" type="number" min="5" max="24" value="9" style="width:70px"></span>
+    <label>Size</label>${sizePicker(8, 9)}
     <label for="nn">Name</label><input id="nn" type="text" placeholder="Untitled"></div>
     <p class="cur">A capsule hotel starts from the game's lobby; a park starts as grass ringed with trees.</p>`, d => {
-    const k = d.querySelector('#nk').value, s = d.querySelector('#ns').value, n = d.querySelector('#nn').value.trim();
-    let w, h; if (s === 'c'){ w = +d.querySelector('#nw').value; h = +d.querySelector('#nh').value; } else { w = SIZES[s][1]; h = SIZES[s][2]; }
-    w = Math.max(3, Math.min(40, w || 0)); h = Math.max(3, Math.min(24, h || 0));
+    const k = d.querySelector('#nk').value, n = d.querySelector('#nn').value.trim(), [w, h] = sz.get();
     if (k === 'capsule hotel') startNew(n || 'Capsule hotel', k, 21, 9, { rows: HOTEL }); else startNew(n || `New ${k}`, k, w, h);
   });
-  const nk = $('#nk'), ns = $('#ns'); nk.onchange = () => { if (nk.value === 'capsule hotel') ns.value = String(SIZES.length - 1); else if (nk.value === 'park' || nk.value === 'MegaBuilding') ns.value = '8'; };
+  const sz = wireSize($('#dlg')), nk = $('#nk'); nk.onchange = () => { if (nk.value === 'capsule hotel') sz.set(21, 9); else if (nk.value === 'park') sz.set(12, 12); };
 }
 function resizeDialog(){
-  dialog(`<h2>Resize</h2><div class="meta"><label for="rw">Width</label><input id="rw" type="number" min="3" max="40" value="${W}"><label for="rh">Height</label><input id="rh" type="number" min="3" max="24" value="${H}"></div><p class="cur">Keeps the top-left; new cells are floor.</p>`, d => {
-    const w = Math.max(3, Math.min(40, +d.querySelector('#rw').value || W)), h = Math.max(3, Math.min(24, +d.querySelector('#rh').value || H));
+  dialog(`<h2>Resize</h2>${sizePicker(W, H)}<p class="cur">Keeps the top-left; new cells are floor.</p>`, d => {
+    const [w, h] = sz.get();
     snapshot(); cells = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => (cells[y] && cells[y][x]) ? cells[y][x] : mk('.'))); W = w; H = h; sel = null; lastCell = null; setDirty(true); resize(); checks(); });
+  const sz = wireSize($('#dlg'), [W, H]);
 }
 function exportDialog(){ const txt = JSON.stringify({ v: 3, name: $('#name').value, kind: $('#kind').value, w: W, h: H, rows: exportRows(), ex: exportEx(), walk: walkRows(), edges: edgeMap() }, null, 1);
   dialog(`<h2>Export</h2><p class="cur">Rows are one character per tile, as the game's hand-made layouts use (core/hotel.gd). <code>ex</code> holds the facing, pieces and walk status of the cells that have any; <code>walk</code> is the resulting walkable map (1 walkable, 0 blocked) and <code>edges</code> lists the sides of each cell you can't cross (0 south, 1 west, 2 north, 3 east): desk fronts, desk pieces and edges set by hand.</p><textarea id="ex" rows="14" readonly>${esc(txt)}</textarea><div class="row"><button type="button" id="cp">Copy</button><span id="cpm" class="cur"></span></div>`, () => {});
@@ -561,7 +577,7 @@ function importDialog(){
   dialog(`<h2>Import</h2><p class="cur">Paste rows of tile characters (or an exported design). It replaces the grid; Undo brings it back.</p><textarea id="im" rows="12" placeholder="#####NNN####&#10;#..........#"></textarea><p class="msg" id="imm"></p>`, d => {
     let t = d.querySelector('#im').value, rows, ex, v; try { const j = JSON.parse(t); rows = j.rows; ex = j.ex; v = j.v; if (j.name) $('#name').value = j.name; if (KINDS.includes(j.kind)) $('#kind').value = j.kind; } catch (e){ rows = t.replace(/\r/g, '').split('\n').filter(r => r.length); }
     if (!Array.isArray(rows) || !rows.length){ d.querySelector('#imm').textContent = 'Nothing to import.'; return false; }
-    snapshot(); cells = build(rows.map(String).slice(0, 24).map(r => r.slice(0, 40)), ex, v !== 3); H = cells.length; W = cells[0].length; sel = null; lastCell = null; setDirty(true); resize(); checks(); });
+    snapshot(); cells = build(rows.map(String).slice(0, MAXH).map(r => r.slice(0, MAXW)), ex, v !== 3); H = cells.length; W = cells[0].length; sel = null; lastCell = null; setDirty(true); resize(); checks(); });
 }
 
 // ---------- input
@@ -589,7 +605,7 @@ cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => {
   const p = cellAt(e); if (!inb(p.x, p.y)) return; cv.setPointerCapture(e.pointerId); cv.focus();
   if (e.shiftKey && e.button === 2){ pickCell(p); return; }
-  if (tool === 'select'){ sel = e.button === 2 ? null : { x: p.x, y: p.y }; renderInsp(); draw(); return; }
+  if (tool === 'select'){ sel = e.button === 2 ? null : { x: p.x, y: p.y }; move = sel ? { from: p, to: p } : null; renderInsp(); draw(); return; }
   edgeSide = sideAt(e);
   const br = brushFor(e.button === 2 ? 2 : 0);
   snapshot(); refused = 0; preview = null;
@@ -599,13 +615,19 @@ cv.addEventListener('pointerdown', e => {
 cv.addEventListener('pointermove', e => {
   const p = cellAt(e); hover = p; hover.side = sideAt(e);
   if (inb(p.x, p.y)){ const c = cells[p.y][p.x], t = TILE[c.c];
-    $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' facing ' + FACE[c.r] : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
-  if (drag){ for (const [x, y] of lineCells(drag.last, p)) setCell(x, y, drag.br); drag.last = p; lastCell = p; }
+    $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' (' + FACE[c.r] + ' side)' : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
+  if (move){ move.to = p; preview = inb(p.x, p.y) && (p.x !== move.from.x || p.y !== move.from.y) ? [[move.from.x, move.from.y, { k: 'cell', cell: mk('.') }], [p.x, p.y, { k: 'cell', cell: cells[move.from.y][move.from.x] }]] : null; }
+  else if (drag){ for (const [x, y] of lineCells(drag.last, p)) setCell(x, y, drag.br); drag.last = p; lastCell = p; }
   else linePreview(e.shiftKey);
   draw();
 });
-cv.addEventListener('pointerup', e => { if (!drag) return; drag = null; afterEdit(); tooMuch(); });
-cv.addEventListener('pointerleave', () => { hover = null; if (!drag) draw(); });
+cv.addEventListener('pointerup', e => {
+  if (move){ const { from, to } = move; move = null; preview = null;
+    if (inb(to.x, to.y) && (to.x !== from.x || to.y !== from.y)){ snapshot(); cells[to.y][to.x] = cl(cells[from.y][from.x]); cells[from.y][from.x] = mk('.'); sel = { x: to.x, y: to.y }; lastCell = null; afterEdit(); msg('Moved. Ctrl+Z puts it back.', true); } else draw();
+    return; }
+  if (!drag) return; drag = null; afterEdit(); tooMuch(); });
+cv.addEventListener('pointerleave', () => { hover = null; if (!drag && !move) draw(); });
+cv.addEventListener('pointercancel', () => { move = null; drag = null; preview = null; draw(); });
 function afterEdit(){ setDirty(true); draw(); checks(); }
 function doUndo(){ if (!undo.length) return; redo.push(snap()); restore(undo.pop()); setDirty(true); resize(); checks(); }
 function doRedo(){ if (!redo.length) return; undo.push(snap()); restore(redo.pop()); setDirty(true); resize(); checks(); }
@@ -642,6 +664,7 @@ document.addEventListener('click', async e => {
   switch (b.id){
     case 'new': newDialog(); break;
     case 'save': save(); break;
+    case 'saveas': saveAsDialog(); break;
     case 'undo': doUndo(); break;
     case 'redo': doRedo(); break;
     case 'rotL': turnBrush(-1); break;
