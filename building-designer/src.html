@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '21';
+const DESIGNER_VERSION = '22';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -610,9 +610,9 @@ const tooMuch = () => { if (refused) msg('A cell holds two layers at most (the t
 function linePreview(shift){ preview = shift && tool === 'pen' && !drag && lastCell && hover && inb(hover.x, hover.y) && inb(lastCell.x, lastCell.y) ? lineShape(lastCell, hover, brushFor(0)) : null; }
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => {
-  if (e.button === 1) e.preventDefault(); const p = cellAt(e); if (!inb(p.x, p.y) && !(e.button === 1 || (e.button === 2 && tool === 'select'))) return; cv.setPointerCapture(e.pointerId); cv.focus();
+  if (e.button === 1) e.preventDefault(); const p = cellAt(e); if (!inb(p.x, p.y) && !(e.button === 1 || e.button === 2)) return; cv.setPointerCapture(e.pointerId); cv.focus();
   if (e.shiftKey && e.button === 2){ pickCell(p); return; }
-  if (e.button === 1 || (e.button === 2 && tool === 'select')){ e.preventDefault(); const w = document.querySelector('.canvas-wrap'); pan = { x: e.clientX, y: e.clientY, l: w.scrollLeft, t: w.scrollTop, w }; cv.style.cursor = 'grabbing'; return; }
+  if (e.button === 1 || e.button === 2){ e.preventDefault(); const w = document.querySelector('.canvas-wrap'); pan = { x: e.clientX, y: e.clientY, l: w.scrollLeft, t: w.scrollTop, w, moved: false, button: e.button, p, side: sideAt(e) }; return; }
   if (tool === 'select'){ sel = e.button === 2 ? null : { x: p.x, y: p.y }; move = sel ? { from: p, to: p } : null; renderInsp(); draw(); return; }
   edgeSide = sideAt(e);
   const br = brushFor(e.button === 2 ? 2 : 0);
@@ -621,7 +621,7 @@ cv.addEventListener('pointerdown', e => {
   drag = { a: p, br, last: p }; lastCell = p; setCell(p.x, p.y, br); draw();
 });
 cv.addEventListener('pointermove', e => {
-  if (pan){ pan.w.scrollLeft = pan.l - (e.clientX - pan.x); pan.w.scrollTop = pan.t - (e.clientY - pan.y); return; }
+  if (pan){ if (!pan.moved && Math.hypot(e.clientX - pan.x, e.clientY - pan.y) < 5) return; pan.moved = true; cv.style.cursor = 'grabbing'; pan.w.scrollLeft = pan.l - (e.clientX - pan.x); pan.w.scrollTop = pan.t - (e.clientY - pan.y); return; }
   const p = cellAt(e); hover = p; hover.side = sideAt(e);
   if (inb(p.x, p.y)){ const c = cells[p.y][p.x], t = TILE[c.c];
     $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' (' + FACE[c.r] + ' side)' : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
@@ -631,7 +631,11 @@ cv.addEventListener('pointermove', e => {
   draw();
 });
 cv.addEventListener('pointerup', e => {
-  if (pan){ pan = null; cv.style.cursor = ''; return; }
+  if (pan){ const k = pan; pan = null; cv.style.cursor = '';
+    if (!k.moved && k.button === 2 && inb(k.p.x, k.p.y)){   // a right click that did not drag keeps its old job
+      if (tool === 'select'){ sel = null; renderInsp(); draw(); }
+      else { edgeSide = k.side; snapshot(); refused = 0; setCell(k.p.x, k.p.y, brushFor(2)); lastCell = k.p; afterEdit(); tooMuch(); } }
+    return; }
   if (move){ const { from, to } = move; move = null; preview = null;
     if (inb(to.x, to.y) && (to.x !== from.x || to.y !== from.y)){ snapshot(); cells[to.y][to.x] = cl(cells[from.y][from.x]); cells[from.y][from.x] = mk('.'); sel = { x: to.x, y: to.y }; lastCell = null; afterEdit(); msg('Moved. Ctrl+Z puts it back.', true); } else draw();
     return; }
