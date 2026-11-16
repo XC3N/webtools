@@ -43,7 +43,7 @@ select,input{padding:5px 8px}textarea{padding:6px 8px;width:100%;resize:vertical
 .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .bar .sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
 .dirty{font:400 12px var(--mono);color:var(--warn)}.saved{font:400 12px var(--mono);color:var(--good)}
-.canvas-wrap{overflow:auto;background:#000;border:1px solid var(--line);border-radius:6px;padding:12px;max-height:72vh}
+.canvas-wrap{overflow:auto;background:#000;border:1px solid var(--line);border-radius:6px;padding:12px}
 canvas{display:block;image-rendering:pixelated;cursor:crosshair;touch-action:none}
 .status{font:400 12px var(--mono);color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;min-height:1.4em}
 .pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:2px 14px;align-items:start}
@@ -112,7 +112,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
           <button type="button" id="dup">Duplicate</button><button type="button" id="del">Delete</button>
           <button type="button" id="exp">Export</button><button type="button" id="imp">Import</button>
           <span class="sep"></span>
-          <label class="cur" for="zoom">Zoom</label><input id="zoom" type="range" min="1" max="6" step="1" value="3" style="width:90px">
+          <label class="cur" for="zoom">Zoom</label><label class="cur" title="Pick a zoom that shows the whole building without scrolling"><input id="zfit" type="checkbox" checked> Fit</label><input id="zoom" type="range" min="1" max="8" step="1" value="3" style="width:90px">
           <button type="button" id="resize" title="Resize the grid"><span id="dims"></span> ⤢</button>
         </div>
       </div>
@@ -203,7 +203,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '16';
+const DESIGNER_VERSION = '17';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -342,7 +342,12 @@ function lineCells(a, b){ const out = []; let x = a.x, y = a.y; const dx = Math.
 // ---------- drawing
 const cv = $('#cv'), cx = cv.getContext('2d');
 const MONO = () => getComputedStyle(document.body).getPropertyValue('--mono');
-function resize(){ const dpr = window.devicePixelRatio || 1; const cw = CW * zoom, ch = CH * zoom;
+// Fit: the biggest whole-number zoom at which the whole building shows in the window, with no scroll bar.
+let fit = true;
+function fitZoom(){ const wrap = document.querySelector('.canvas-wrap'); if (!wrap) return zoom;
+  const r = wrap.getBoundingClientRect(), top = r.top + window.scrollY, availW = wrap.parentElement.clientWidth - 26, availH = window.innerHeight - top - 62;
+  return Math.max(1, Math.min(8, Math.floor(Math.min(availW / (W * CW), availH / (H * CH))) || 1)); }
+function resize(){ if (fit){ zoom = fitZoom(); $('#zoom').value = zoom; } const dpr = window.devicePixelRatio || 1; const cw = CW * zoom, ch = CH * zoom;
   cv.style.width = W * cw + 'px'; cv.style.height = H * ch + 'px'; cv.width = Math.round(W * cw * dpr); cv.height = Math.round(H * ch * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0); $('#dims').textContent = W + ' × ' + H; draw(); }
 function pieceRect(s, r, px, py, cw, ch){
   if (s === 'half') return r === 0 ? [px, py + ch / 2, cw, ch / 2] : r === 1 ? [px, py, cw / 2, ch] : r === 2 ? [px, py, cw, ch / 2] : [px + cw / 2, py, cw / 2, ch];
@@ -685,7 +690,9 @@ document.addEventListener('change', e => { if (e.target.id === 'iw' && sel){ sna
 document.addEventListener('contextmenu', e => { const b = e.target.closest('[data-tile]'); if (!b) return; e.preventDefault(); tileB = b.dataset.tile; renderPal(); });
 ['#name', '#notes'].forEach(s => $(s).addEventListener('input', () => { setDirty(true); if (s === '#name' && !cur) renderList(); }));
 $('#kind').addEventListener('change', () => { setDirty(true); checks(); });
-$('#zoom').addEventListener('input', e => { zoom = +e.target.value; resize(); });
+$('#zoom').addEventListener('input', e => { fit = false; $('#zfit').checked = false; zoom = +e.target.value; resize(); });
+$('#zfit').addEventListener('change', e => { fit = e.target.checked; resize(); });
+window.addEventListener('resize', () => { if (fit) resize(); });
 $('#tsel').addEventListener('change', e => { typeFilter = e.target.value; renderList(); });
 $('#bsel').addEventListener('change', e => { const id = e.target.value; if (!id) return;
   if (!dirty || id === cur){ load(id); return; }
@@ -712,7 +719,7 @@ $('#pal').addEventListener('toggle', e => { const g = e.target.dataset && e.targ
 
 // ---------- start
 $('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
-zoom = window.innerWidth < 720 ? 2 : 3; $('#zoom').value = zoom;
+$('#zoom').value = zoom;
 renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false);
 (async () => {
   db = await (window.claude?.use ? claude.use('db') : null);
