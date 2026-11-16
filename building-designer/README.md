@@ -29,6 +29,7 @@ There is no Counter tool: lay the counter (`{ _ }` cells you can stand on, with 
 The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
 
 - v9: game 0.17.30 tiles (dumpster `D`); "Building Blocks" heading; two boxes show the glyph each mouse button holds; counter tiles renamed (no "counter block" / "staff row"); an empty floor cell on the outline that no inside floor touches counts as open ground, not a gap.
+- v20: drag the view to pan it when it is bigger than the window (zoom Fit off): the middle button anywhere, or the right button with the Select tool; with the pencil the right button still paints the second tile.
 - v19: a Clear button empties the grid back to a plain outline of the same size (undoable).
 - v18: the left side holds only the design view; the design picker, name, save, tools and view buttons moved into the right panel (the zoom Fit follows the panel width).
 - v17: the design view fits the whole building in the window with no scroll bar: a Fit box picks the biggest whole-number zoom that shows it all (turn it off, or move the zoom slider, to choose yourself; zoom goes up to 8).

@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '19';
+const DESIGNER_VERSION = '20';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -258,7 +258,7 @@ let db = null, user = null, me = null, canWrite = true;
 // A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
 let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
 let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
-let move = null, edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null, lastCell = null, refused = 0, typeFilter = '';
+let pan = null, move = null, edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null, lastCell = null, refused = 0, typeFilter = '';
 const closedGroups = new Set();
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -348,7 +348,7 @@ let fit = true;
 function fitZoom(){ const wrap = document.querySelector('.canvas-wrap'); if (!wrap) return zoom;
   const r = wrap.getBoundingClientRect(), top = r.top + window.scrollY, availW = wrap.parentElement.clientWidth - 26, availH = window.innerHeight - top - 42;
   return Math.max(1, Math.min(8, Math.floor(Math.min(availW / (W * CW), availH / (H * CH))) || 1)); }
-function resize(){ if (fit){ zoom = fitZoom(); $('#zoom').value = zoom; } const dpr = window.devicePixelRatio || 1; const cw = CW * zoom, ch = CH * zoom;
+function resize(){ if (fit){ zoom = fitZoom(); $('#zoom').value = zoom; } document.querySelector('.canvas-wrap').style.maxHeight = fit ? '' : 'calc(100vh - 34px)'; const dpr = window.devicePixelRatio || 1; const cw = CW * zoom, ch = CH * zoom;
   cv.style.width = W * cw + 'px'; cv.style.height = H * ch + 'px'; cv.width = Math.round(W * cw * dpr); cv.height = Math.round(H * ch * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0); $('#dims').textContent = W + ' × ' + H; draw(); }
 function pieceRect(s, r, px, py, cw, ch){
   if (s === 'half') return r === 0 ? [px, py + ch / 2, cw, ch / 2] : r === 1 ? [px, py, cw / 2, ch] : r === 2 ? [px, py, cw, ch / 2] : [px + cw / 2, py, cw / 2, ch];
@@ -610,8 +610,9 @@ const tooMuch = () => { if (refused) msg('A cell holds two layers at most (the t
 function linePreview(shift){ preview = shift && tool === 'pen' && !drag && lastCell && hover && inb(hover.x, hover.y) && inb(lastCell.x, lastCell.y) ? lineShape(lastCell, hover, brushFor(0)) : null; }
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => {
-  const p = cellAt(e); if (!inb(p.x, p.y)) return; cv.setPointerCapture(e.pointerId); cv.focus();
+  if (e.button === 1) e.preventDefault(); const p = cellAt(e); if (!inb(p.x, p.y) && !(e.button === 1 || (e.button === 2 && tool === 'select'))) return; cv.setPointerCapture(e.pointerId); cv.focus();
   if (e.shiftKey && e.button === 2){ pickCell(p); return; }
+  if (e.button === 1 || (e.button === 2 && tool === 'select')){ e.preventDefault(); const w = document.querySelector('.canvas-wrap'); pan = { x: e.clientX, y: e.clientY, l: w.scrollLeft, t: w.scrollTop, w }; cv.style.cursor = 'grabbing'; return; }
   if (tool === 'select'){ sel = e.button === 2 ? null : { x: p.x, y: p.y }; move = sel ? { from: p, to: p } : null; renderInsp(); draw(); return; }
   edgeSide = sideAt(e);
   const br = brushFor(e.button === 2 ? 2 : 0);
@@ -620,6 +621,7 @@ cv.addEventListener('pointerdown', e => {
   drag = { a: p, br, last: p }; lastCell = p; setCell(p.x, p.y, br); draw();
 });
 cv.addEventListener('pointermove', e => {
+  if (pan){ pan.w.scrollLeft = pan.l - (e.clientX - pan.x); pan.w.scrollTop = pan.t - (e.clientY - pan.y); return; }
   const p = cellAt(e); hover = p; hover.side = sideAt(e);
   if (inb(p.x, p.y)){ const c = cells[p.y][p.x], t = TILE[c.c];
     $('#status').innerHTML = `<span>x ${p.x} · y ${p.y}</span><span>${esc(t.name)}${t.rot ? ' (' + FACE[c.r] + ' side)' : ''}</span>${c.p.length ? `<span>+ ${esc(c.p.map(q => pname(...q)).join(', '))}</span>` : ''}<span>${walkable(p.x, p.y) ? 'walkable' : 'blocked'}${c.w !== null ? ' (set by hand)' : ''}</span><span>${W} × ${H}</span>`; }
@@ -629,12 +631,13 @@ cv.addEventListener('pointermove', e => {
   draw();
 });
 cv.addEventListener('pointerup', e => {
+  if (pan){ pan = null; cv.style.cursor = ''; return; }
   if (move){ const { from, to } = move; move = null; preview = null;
     if (inb(to.x, to.y) && (to.x !== from.x || to.y !== from.y)){ snapshot(); cells[to.y][to.x] = cl(cells[from.y][from.x]); cells[from.y][from.x] = mk('.'); sel = { x: to.x, y: to.y }; lastCell = null; afterEdit(); msg('Moved. Ctrl+Z puts it back.', true); } else draw();
     return; }
   if (!drag) return; drag = null; afterEdit(); tooMuch(); });
 cv.addEventListener('pointerleave', () => { hover = null; if (!drag && !move) draw(); });
-cv.addEventListener('pointercancel', () => { move = null; drag = null; preview = null; draw(); });
+cv.addEventListener('pointercancel', () => { pan = null; cv.style.cursor = ''; move = null; drag = null; preview = null; draw(); });
 function afterEdit(){ setDirty(true); draw(); checks(); }
 function doUndo(){ if (!undo.length) return; redo.push(snap()); restore(undo.pop()); setDirty(true); resize(); checks(); }
 function doRedo(){ if (!redo.length) return; undo.push(snap()); restore(redo.pop()); setDirty(true); resize(); checks(); }
