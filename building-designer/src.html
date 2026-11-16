@@ -115,7 +115,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
         <div class="bar">
           <button type="button" class="go" id="save" disabled>Save</button><button type="button" id="saveas" title="Save this as a new design, under another name">Save as…</button><span id="state" class="saved"></span>
           <span class="sep"></span>
-          <button type="button" id="dup">Duplicate</button><button type="button" id="del">Delete</button>
+          <button type="button" id="clr" title="Empty the grid back to a plain outline (Undo brings it back)">Clear</button><button type="button" id="dup">Duplicate</button><button type="button" id="del">Delete</button>
           <button type="button" id="exp">Export</button><button type="button" id="imp">Import</button>
           <span class="sep"></span>
           <label class="cur" for="zoom">Zoom</label><label class="cur" title="Pick a zoom that shows the whole building without scrolling"><input id="zfit" type="checkbox" checked> Fit</label><input id="zoom" type="range" min="1" max="8" step="1" value="3" style="width:90px">
@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '18';
+const DESIGNER_VERSION = '19';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -672,6 +672,7 @@ document.addEventListener('click', async e => {
     case 'new': newDialog(); break;
     case 'save': save(); break;
     case 'saveas': saveAsDialog(); break;
+    case 'clr': snapshot(); cells = blank(W, H, $('#kind').value); sel = null; lastCell = null; setDirty(true); resize(); checks(); msg('Cleared. Ctrl+Z brings it back.', true); break;
     case 'undo': doUndo(); break;
     case 'redo': doRedo(); break;
     case 'rotL': turnBrush(-1); break;
