@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '24';
+const DESIGNER_VERSION = '25';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -406,7 +406,11 @@ function draw(){
   const cw = CW * zoom, ch = CH * zoom;
   if (grid){ const gw = W * cw, gh = H * ch; cx.lineWidth = 1; cx.strokeStyle = 'rgba(160,170,200,0.16)'; cx.beginPath();
     for (let x = 1; x < W; x++){ const px = Math.round(x * cw) + 0.5; cx.moveTo(px, 0); cx.lineTo(px, gh); } for (let y = 1; y < H; y++){ const py = Math.round(y * ch) + 0.5; cx.moveTo(0, py); cx.lineTo(gw, py); } cx.stroke();
-    cx.strokeStyle = 'rgba(255,170,30,0.85)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(Math.round(gw / 2), 0); cx.lineTo(Math.round(gw / 2), gh); cx.moveTo(0, Math.round(gh / 2)); cx.lineTo(gw, Math.round(gh / 2)); cx.stroke(); }
+    // The middle axes: a line between the two middle columns / rows when the count is even, the middle column / row tinted when it is odd.
+    cx.fillStyle = 'rgba(255,170,30,0.2)'; cx.strokeStyle = 'rgba(255,170,30,0.85)'; cx.lineWidth = 2; cx.beginPath();
+    if (W % 2) cx.fillRect(((W - 1) / 2) * cw, 0, cw, gh); else { cx.moveTo(Math.round(gw / 2), 0); cx.lineTo(Math.round(gw / 2), gh); }
+    if (H % 2) cx.fillRect(0, ((H - 1) / 2) * ch, gw, ch); else { cx.moveTo(0, Math.round(gh / 2)); cx.lineTo(gw, Math.round(gh / 2)); }
+    cx.stroke(); }
   if (mirror){ cx.strokeStyle = 'rgba(255,47,168,0.5)'; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(W * cw / 2, 0); cx.lineTo(W * cw / 2, H * ch); cx.stroke(); cx.setLineDash([]); }
   if (sel && inb(sel.x, sel.y)){ cx.strokeStyle = '#ffb627'; cx.lineWidth = 2; cx.strokeRect(sel.x * cw + 1, sel.y * ch + 1, cw - 2, ch - 2); }
   if (hover && inb(hover.x, hover.y) && mode === 'status' && statusSel === 'edge'){ cx.fillStyle = '#29f0ff'; edgeBar(hover.x * cw, hover.y * ch, cw, ch, hover.side, 0, Math.max(3, Math.round(2.5 * zoom))); }
