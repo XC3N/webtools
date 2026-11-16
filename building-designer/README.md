@@ -29,6 +29,7 @@ There is no Counter tool: lay the counter (`{ _ }` cells you can stand on, with 
 The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it for the game version the tiles come from. Bump it with every push.
 
 - v9: game 0.17.30 tiles (dumpster `D`); "Building Blocks" heading; two boxes show the glyph each mouse button holds; counter tiles renamed (no "counter block" / "staff row"); an empty floor cell on the outline that no inside floor touches counts as open ground, not a gap.
+- v24: a Grid button (and G) shows grid lines between cells with the middle axes in amber; the choice is remembered in the browser.
 - v23: the middle button drags the view (right-drag paints again, as before). v22 had right-drag panning, which is gone.
 - v21: the mouse wheel over the view zooms in and out around the pointer (it turns Fit off).
 - v20: drag the view to pan it when it is bigger than the window (zoom Fit off): the middle button anywhere, or the right button with the Select tool; with the pencil the right button still paints the second tile.
