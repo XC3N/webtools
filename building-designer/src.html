@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '20';
+const DESIGNER_VERSION = '21';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -696,6 +696,12 @@ document.addEventListener('contextmenu', e => { const b = e.target.closest('[dat
 ['#name', '#notes'].forEach(s => $(s).addEventListener('input', () => { setDirty(true); if (s === '#name' && !cur) renderList(); }));
 $('#kind').addEventListener('change', () => { setDirty(true); checks(); });
 $('#zoom').addEventListener('input', e => { fit = false; $('#zfit').checked = false; zoom = +e.target.value; resize(); });
+// Mouse wheel over the view zooms in and out, keeping the cell under the pointer where it is.
+document.querySelector('.canvas-wrap').addEventListener('wheel', e => { e.preventDefault();
+  const nz = Math.max(1, Math.min(8, zoom + (e.deltaY < 0 ? 1 : -1))); if (nz === zoom) return;
+  const w = e.currentTarget, r = cv.getBoundingClientRect(), fx = (e.clientX - r.left) / (CW * zoom), fy = (e.clientY - r.top) / (CH * zoom);
+  fit = false; $('#zfit').checked = false; zoom = nz; $('#zoom').value = nz; resize();
+  const r2 = cv.getBoundingClientRect(); w.scrollLeft += r2.left + fx * CW * nz - e.clientX; w.scrollTop += r2.top + fy * CH * nz - e.clientY; }, { passive: false });
 $('#zfit').addEventListener('change', e => { fit = e.target.checked; resize(); });
 window.addEventListener('resize', () => { if (fit) resize(); });
 $('#tsel').addEventListener('change', e => { typeFilter = e.target.value; renderList(); });
