@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '27';
+const DESIGNER_VERSION = '28';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -257,6 +257,7 @@ const VIEWS = [['look', 'Look'], ['tiles', 'Tiles only'], ['pieces', 'Half tiles
 let db = null, user = null, me = null, canWrite = true;
 // A cell: c = the tile character, r = which way it faces (0..3), p = pieces [[material, shape, rotation]], w = walk status (null auto, 0 blocked, 1 walkable)
 let designs = {}, cur = null, cells = [], W = 0, H = 0, dirty = false, undo = [], redo = [];
+let rightKind = 'default', pieceB = null;
 let tool = 'pen', mode = 'tile', view = 'look', tileA = '#', tileB = '.', rot = 0, pieceSel = { m: 'neon', s: 'half' }, statusSel = 1;
 let grid = false; try { grid = localStorage.getItem('designer.grid') === '1'; } catch (e){}
 let pan = null, move = null, edgeSide = 0, mirror = false, zoom = 3, hover = null, drag = null, preview = null, sel = null, lastCell = null, refused = 0, typeFilter = '';
@@ -318,8 +319,9 @@ function restore(str){ const d = JSON.parse(str); cells = build(d.rows, d.ex); H
 
 // ---------- brushes
 function brushFor(btn){
+  if (btn === 2 && rightKind === 'piece' && pieceB) return { k: 'piece', m: pieceB.m, s: pieceB.s, r: rot };
   if (mode === 'tile') return { k: 'tile', ch: btn === 2 ? tileB : tileA, r: rot };
-  if (mode === 'piece') return btn === 2 ? { k: 'clearp' } : { k: 'piece', m: pieceSel.m, s: pieceSel.s, r: rot };
+  if (mode === 'piece') return btn === 2 ? (rightKind === 'tile' ? { k: 'tile', ch: tileB, r: rot } : { k: 'clearp' }) : { k: 'piece', m: pieceSel.m, s: pieceSel.s, r: rot };
   if (statusSel === 'edge') return { k: 'edge', s: edgeSide, on: btn !== 2 };
   return { k: 'status', w: btn === 2 ? null : statusSel };
 }
@@ -470,7 +472,7 @@ function checks(){
 
 // ---------- UI
 const tileSw = ([, ch, name]) => { const t = TILE[ch], key = brushKey(ch);
-  return `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB ? ' alt' : '') + (t.rot ? ' rt' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${t.rot ? ' · a half tile: Q / E turn it' : ''}${t.marker ? ' · a marker: the game puts floor here' : ''}" aria-label="${esc(name)}" style="background:${t.bg}"><img class="gs" alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}"><span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`; };
+  return `<button type="button" data-tile="${esc(ch)}" class="${(ch === tileA ? 'on' : '') + (ch === tileB && rightKind !== 'piece' ? ' alt' : '') + (t.rot ? ' rt' : '')}" title="${esc(name)} (${ch === ' ' ? 'space' : esc(ch)})${t.rot ? ' · a half tile: Q / E turn it' : ''}${t.marker ? ' · a marker: the game puts floor here' : ''}" aria-label="${esc(name)}" style="background:${t.bg}"><img class="gs" alt="" src="${glyphUrl(key, t.cp, t.fg, t.bg)}"><span class="c">${ch === ' ' ? '␣' : esc(ch)}</span></button>`; };
 function swatch(m, s, r){ const col = MATS[m].col; let bg;
   if (s === 'half') bg = `linear-gradient(${['to top', 'to right', 'to bottom', 'to left'][r]},${col} 50%,transparent 50%)`;
   else bg = `linear-gradient(${col},${col}) ${['right bottom', 'left bottom', 'left top', 'right top'][r]}/50% 50% no-repeat`;
@@ -481,11 +483,12 @@ function brushBoxes(a, b){ const box = (id, label, [html, title]) => { $(id).inn
 function renderPal(){
   if (mode === 'tile' || mode === 'piece'){
     const groups = [...new Set(T.filter(t => !(t[4] && t[4].only)).map(t => t[0]))];
-    const pcs = Object.entries(MATS).filter(([, M]) => !M.only).map(([m, M]) => `<div class="prow"><span>${esc(M.name)}</span>${['half', 'quarter'].map(s => `<button type="button" data-piece="${m}.${s}" class="${mode === 'piece' && pieceSel.m === m && pieceSel.s === s ? 'on' : ''}" title="${esc(pname(m, s, rot))}${M.block ? ' · blocks walking' : ' · walk on'}. Sits on top of the tile; Q / E turn it." aria-label="${esc(pname(m, s, rot))}" style="background:#0d0f14">${swatch(m, s, rot)}</button>`).join('')}</div>`).join('');
+    const pcs = Object.entries(MATS).filter(([, M]) => !M.only).map(([m, M]) => `<div class="prow"><span>${esc(M.name)}</span>${['half', 'quarter'].map(s => `<button type="button" data-piece="${m}.${s}" class="${(mode === 'piece' && pieceSel.m === m && pieceSel.s === s ? 'on' : '') + (rightKind === 'piece' && pieceB && pieceB.m === m && pieceB.s === s ? ' alt' : '')}" title="${esc(pname(m, s, rot))}${M.block ? ' · blocks walking' : ' · walk on'}. Sits on top of the tile; Q / E turn it." aria-label="${esc(pname(m, s, rot))}" style="background:#0d0f14">${swatch(m, s, rot)}</button>`).join('')}</div>`).join('');
     $('#pal').innerHTML = groups.map(g => `<details data-g="${esc(g)}"${closedGroups.has(g) ? '' : ' open'}><summary><h3>${esc(g)}</h3></summary><div class="tiles">${T.filter(t => t[0] === g).map(tileSw).join('')}</div></details>`).join('') +
       `<details data-g="Half &amp; quarter tiles"${closedGroups.has('Half & quarter tiles') ? '' : ' open'}><summary><h3>Half &amp; quarter tiles</h3></summary><div class="pcs">${pcs}</div></details>`;
-    if (mode === 'piece') brushBoxes([swatch(pieceSel.m, pieceSel.s, rot), 'add ' + pname(pieceSel.m, pieceSel.s, rot)], ['clear', "clear the cell's half tiles"]);
-    else brushBoxes([tileImg(tileA), TILE[tileA].name], [tileImg(tileB), TILE[tileB].name]);
+    const L = mode === 'piece' ? [swatch(pieceSel.m, pieceSel.s, rot), 'add ' + pname(pieceSel.m, pieceSel.s, rot)] : [tileImg(tileA), TILE[tileA].name];
+    const R = rightKind === 'piece' && pieceB ? [swatch(pieceB.m, pieceB.s, rot), 'add ' + pname(pieceB.m, pieceB.s, rot)] : mode === 'piece' && rightKind !== 'tile' ? ['clear', "clear the cell's half tiles"] : [tileImg(tileB), TILE[tileB].name];
+    brushBoxes(L, R);
   } else {
     $('#pal').innerHTML = `<p class="cur">Status overrides what the tile and pieces say about walking: a chair you can't cross, a rail you can step over. An edge is a line on one side of a cell you can walk along but not cross, like a desk front. Red / green triangles mark cell overrides, orange lines the edges.</p><div class="st">` +
       STATUS.map(([v, n]) => `<button type="button" data-status="${v === null ? 'auto' : v}" class="${statusSel === v ? 'on' : ''}">${esc(n)}</button>`).join('') + `<button type="button" data-status="edge" class="${statusSel === 'edge' ? 'on' : ''}">edge you can't cross (click near a side of a cell)</button></div>`;
@@ -710,7 +713,8 @@ document.addEventListener('click', async e => {
 });
 document.addEventListener('change', e => { if (e.target.id === 'iw' && sel){ snapshot(); const v = e.target.value; cells[sel.y][sel.x].w = v === 'auto' ? null : +v; afterEdit(); } });
 // right click on a palette tile sets the right-click tile
-document.addEventListener('contextmenu', e => { const b = e.target.closest('[data-tile]'); if (!b) return; e.preventDefault(); tileB = b.dataset.tile; renderPal(); });
+document.addEventListener('contextmenu', e => { const b = e.target.closest('[data-tile],[data-piece]'); if (!b) return; e.preventDefault();
+  if (b.dataset.piece){ const [m, s] = b.dataset.piece.split('.'); pieceB = { m, s }; rightKind = 'piece'; } else { tileB = b.dataset.tile; rightKind = 'tile'; } renderPal(); });
 ['#name', '#notes'].forEach(s => $(s).addEventListener('input', () => { setDirty(true); if (s === '#name' && !cur) renderList(); }));
 $('#kind').addEventListener('change', () => { setDirty(true); checks(); });
 $('#zoom').addEventListener('input', e => { fit = false; $('#zfit').checked = false; zoom = +e.target.value; resize(); });
