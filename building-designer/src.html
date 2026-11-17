@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '26';
+const DESIGNER_VERSION = '27';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -524,7 +524,13 @@ function renderList(){
     L.map(([id, d]) => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(d.name || 'Untitled')} · ${d.w}×${d.h}</option>`).join('');
   $('#note').textContent = all.length ? `${all.length} saved` : 'No saved designs yet';
 }
-function setDirty(v){ dirty = v; $('#save').disabled = !v || !canWrite || !db; $('#state').className = v ? 'dirty' : 'saved'; $('#state').textContent = v ? 'unsaved' : (cur ? 'saved' : ''); }
+// Draft: unsaved work is kept in this browser, so a refresh or a closed tab doesn't lose it.
+function draftSave(){ try { if (!dirty) localStorage.removeItem('designer.draft'); else localStorage.setItem('designer.draft', JSON.stringify({ cur, name: $('#name').value, kind: $('#kind').value, notes: $('#notes').value, d: JSON.parse(snap()) })); } catch (e){} }
+let draft0 = null; try { draft0 = localStorage.getItem('designer.draft'); } catch (e){}
+function draftRestore(){ try { const j = draft0; if (!j) return false; const t = JSON.parse(j); if (!t.d || !t.d.rows) return false;
+  cur = t.cur || null; cells = build(t.d.rows, t.d.ex); H = cells.length; W = cells[0].length; sel = null; $('#name').value = t.name || ''; $('#kind').value = t.kind || 'other'; $('#notes').value = t.notes || '';
+  undo = []; redo = []; lastCell = null; setDirty(true); resize(); checks(); renderList(); msg('Restored your unsaved work from before the refresh.'); return true; } catch (e){ return false; } }
+function setDirty(v){ dirty = v; draftSave(); $('#save').disabled = !v || !canWrite || !db; $('#state').className = v ? 'dirty' : 'saved'; $('#state').textContent = v ? 'unsaved' : (cur ? 'saved' : ''); }
 function load(id){ const d = designs[id]; if (!d) return; cur = id; cells = build(d.rows || [], d.ex, d.v !== 3); const mig = migrated; H = cells.length; W = cells[0]?.length || 0; sel = null;
   $('#name').value = d.name || ''; $('#kind').value = KINDS.includes(d.kind) ? d.kind : 'other'; $('#notes').value = d.notes || '';
   undo = []; redo = []; lastCell = null; if (typeFilter && typeFilter !== d.kind) typeFilter = d.kind || ''; setDirty(mig > 0); resize(); checks(); renderList();
@@ -743,7 +749,7 @@ $('#pal').addEventListener('toggle', e => { const g = e.target.dataset && e.targ
 // ---------- start
 $('#kind').innerHTML = KINDS.map(k => `<option>${esc(k)}</option>`).join('');
 $('#zoom').value = zoom;
-renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false);
+renderPal(); renderTools(); startNew('Untitled', 'noodle bar', 8, 9); setDirty(false); draftRestore();
 (async () => {
   db = await (window.claude?.use ? claude.use('db') : null);
   user = await (window.claude?.use ? claude.use('user') : null);
