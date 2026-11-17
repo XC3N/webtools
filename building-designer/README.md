@@ -30,6 +30,7 @@ The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it
 
 - v9: game 0.17.30 tiles (dumpster `D`); "Building Blocks" heading; two boxes show the glyph each mouse button holds; counter tiles renamed (no "counter block" / "staff row"); an empty floor cell on the outline that no inside floor touches counts as open ground, not a gap.
 - v25: with an odd number of columns or rows the middle one is tinted instead of drawing a line.
+- v26: zoomed in past Fit the viewport grows with the building and the page scrolls, instead of a scroll bar inside the viewport.
 - v24: a Grid button (and G) shows grid lines between cells with the middle axes in amber; the choice is remembered in the browser.
 - v23: the middle button drags the view (right-drag paints again, as before). v22 had right-drag panning, which is gone.
 - v21: the mouse wheel over the view zooms in and out around the pointer (it turns Fit off).
