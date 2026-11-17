@@ -34,6 +34,7 @@ The version shows next to the title (`DESIGNER_VERSION` in `src.html`); hover it
 - v27: unsaved work is kept in the browser and restored after a refresh (cleared on Save).
 - v28: right-click works on the half and quarter tiles too: the right mouse button can hold a half tile as well as a full tile.
 - v29: the zoom level (or Fit) is remembered across refreshes.
+- v30: Ctrl+click on the map picks the tile or half tile under the pointer for the left button, Ctrl+right click for the right button (Shift+right click still picks for the left).
 - v24: a Grid button (and G) shows grid lines between cells with the middle axes in amber; the choice is remembered in the browser.
 - v23: the middle button drags the view (right-drag paints again, as before). v22 had right-drag panning, which is gone.
 - v21: the mouse wheel over the view zooms in and out around the pointer (it turns Fit off).

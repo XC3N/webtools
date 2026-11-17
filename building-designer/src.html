@@ -136,7 +136,7 @@ kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;b
       <div class="counts" id="counts"></div>
       <details class="keys"><summary>Keys</summary>
         <p><kbd>P</kbd> pencil · <kbd>V</kbd> select · <kbd>M</kbd> mirror · <kbd>1</kbd> <kbd>2</kbd> tiles / status</p>
-        <p>Pencil: click or drag to paint · <kbd>Shift</kbd>+click draws a straight line from the last cell you painted · <kbd>Shift</kbd>+right click picks the tile, piece or status under the pointer.</p>
+        <p>Pencil: click or drag to paint · <kbd>Shift</kbd>+click draws a straight line from the last cell you painted · <kbd>Ctrl</kbd>+click picks the tile or piece under the pointer for the left button, <kbd>Ctrl</kbd>+right click for the right button.</p>
         <p>Select: click a cell to see its layers, drag it to move it (what is there is overwritten; <kbd>Ctrl</kbd>+<kbd>Z</kbd> brings it back). Only half tiles (counter fronts, the dumpster) and pieces have a side: <kbd>Q</kbd> <kbd>E</kbd> turn the selected one, or the brush with the pencil.</p>
         <p>Right click: second tile; with a half tile selected it clears the cell's half tiles; in Status it resets · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · <kbd>Ctrl</kbd>+<kbd>S</kbd> save</p>
       </details>
@@ -204,7 +204,7 @@ const T = [
   ['Legacy', 'C', 'chair', 'rs', { only: 1, glyph: '⌐', fg: '#a08e6a', bg: '#0d0f14', walk: 1 }],
 ];
 // The designer's own version: bump it with every push (README: Versions).
-const DESIGNER_VERSION = '29';
+const DESIGNER_VERSION = '30';
 const SIDE_NAME = ['south', 'west', 'north', 'east'];
 const TILE = {};
 for (const [g, ch, name, fl, ex = {}] of T){
@@ -241,7 +241,7 @@ const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]
 const KINDS = ['noodle bar', 'laundromat', 'clinic', 'pawn shop', 'arcade', 'warehouse', 'apartments', 'corp annex', "fixer's den", 'capsule hotel', 'park', 'MegaBuilding', 'Corpsec HQ', 'other'];
 // The game's lobby today (core/hotel.gd LAYOUT), to start a hotel from.
 const HOTEL = ['#####NNNNNNN#########', '#pSJ##b.g##b.g##b.g##', '##+####P####P####P###', '#v.................v#', '#.......{__}........+', '#...T...c@Kc...R...v#', '##P####P####P####P###', '#b.g##b.g##b.g##b.g##', '#####################'];
-const TOOLS = [['pen', 'Pencil (P): click or drag; Shift+click a straight line; Shift+right click picks', 'P'], ['select', 'Select (V): click a cell, drag it to move it; Q / E turn a half tile', 'V']];
+const TOOLS = [['pen', 'Pencil (P): click or drag; Shift+click a straight line; Ctrl+click picks the tile under the pointer for the left button, Ctrl+right click for the right', 'P'], ['select', 'Select (V): click a cell, drag it to move it; Q / E turn a half tile', 'V']];
 const IC = {
   pen: 'M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z M14 7l3 3',
   select: 'M5 3l14 7-6 2-2 6z',
@@ -613,10 +613,10 @@ function cellAt(e){ const r = cv.getBoundingClientRect(); return { x: Math.floor
 function lineShape(a, b, br){ const out = [];
   for (const [x, y] of lineCells(a, b)){ out.push([x, y, br]); if (mirror && W - 1 - x !== x) out.push([W - 1 - x, y, mirrorBrush(br)]); } return out; }
 // Shift+right click: take the tile, piece or status under the pointer as the brush.
-function pickCell(p){
-  const c = cells[p.y][p.x]; sel = { x: p.x, y: p.y };
-  if (mode === 'tile'){ tileA = c.c; if (TILE[c.c].rot) rot = c.r; }
-  else if (mode === 'piece'){ if (c.p.length){ pieceSel = { m: c.p[0][0], s: c.p[0][1] }; rot = c.p[0][2]; } }
+function pickCell(p, btn){
+  const c = cells[p.y][p.x]; sel = { x: p.x, y: p.y }; const right = btn === 2;
+  if (mode === 'tile'){ if (right){ tileB = c.c; rightKind = 'tile'; } else tileA = c.c; if (TILE[c.c].rot) rot = c.r; }
+  else if (mode === 'piece'){ if (c.p.length){ const pc = { m: c.p[0][0], s: c.p[0][1] }; if (right){ pieceB = pc; rightKind = 'piece'; } else pieceSel = pc; rot = c.p[0][2]; } }
   else if (c.w !== null && statusSel !== 'edge') statusSel = c.w;
   renderPal(); renderInsp(); draw();
 }
@@ -630,7 +630,8 @@ function linePreview(shift){ preview = shift && tool === 'pen' && !drag && lastC
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => {
   if (e.button === 1) e.preventDefault(); const p = cellAt(e); if (!inb(p.x, p.y) && e.button !== 1) return; cv.setPointerCapture(e.pointerId); cv.focus();
-  if (e.shiftKey && e.button === 2){ pickCell(p); return; }
+  if (e.shiftKey && e.button === 2){ pickCell(p, 0); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.button === 0 || e.button === 2)){ pickCell(p, e.button); return; }
   if (e.button === 1){ e.preventDefault(); const w = document.querySelector('.canvas-wrap'); pan = { x: e.clientX, y: e.clientY, l: w.scrollLeft, t: w.scrollTop, w, moved: false, button: e.button, p, side: sideAt(e) }; return; }
   if (tool === 'select'){ sel = e.button === 2 ? null : { x: p.x, y: p.y }; move = sel ? { from: p, to: p } : null; renderInsp(); draw(); return; }
   edgeSide = sideAt(e);
