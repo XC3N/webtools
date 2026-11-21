@@ -1,6 +1,6 @@
 {
- "version": "0.17.22",
- "commit": "653eb4c",
+ "version": "0.18.6",
+ "commit": "b690cbd",
  "sheet": {
   "cols": 16,
   "size": 8,
@@ -59,7 +59,22 @@
    "actor:ganger",
    "actor:deluge",
    "actor:clerk",
-   "HEARD"
+   "HEARD",
+   "actor:runner:walk0",
+   "actor:runner:walk1",
+   "COUNTER_H",
+   "DUMPSTER",
+   "RAIN0",
+   "RAIN1",
+   "RAIN2",
+   "DUMPSTER_N",
+   "DUMPSTER_W",
+   "DUMPSTER_E",
+   "LOOK",
+   "actor:citizen",
+   "actor:drone:ext",
+   "WINDOW",
+   "LOCKED_DOOR"
   ]
  },
  "glyphs": {
@@ -67,7 +82,9 @@
   "83": "FEC0FE06E6E6FE00",
   "8597": "183C7E18187E3C18",
   "9650": "18183C3C7E7EFFFF",
-  "9660": "FFFF7E7E3C3C1818"
+  "9660": "FFFF7E7E3C3C1818",
+  "8801": "007E007E007E0000",
+  "128653": "C0C0C0FF3E1C7CDC"
  },
  "tiles": {
   "STREET": {
@@ -186,6 +203,15 @@
    "height": 2,
    "under": false,
    "name": "sealed MegaBuilding gate"
+  },
+  "LOCKED_DOOR": {
+   "glyph": 9635,
+   "fg": "#a04a5a",
+   "bg": "#14162a",
+   "blocks": true,
+   "height": 2,
+   "under": false,
+   "name": "a locked door"
   },
   "TERMINAL": {
    "glyph": 937,
@@ -403,6 +429,60 @@
    "under": false,
    "name": "counter"
   },
+  "COUNTER_H": {
+   "glyph": 9472,
+   "fg": "#8a76b8",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "counter"
+  },
+  "DUMPSTER": {
+   "glyph": 9604,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
+  "DUMPSTER_N": {
+   "glyph": 9600,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
+  "DUMPSTER_W": {
+   "glyph": 9612,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
+  "DUMPSTER_E": {
+   "glyph": 9616,
+   "fg": "#4f7a4a",
+   "bg": "#000000",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "dumpster"
+  },
+  "WINDOW": {
+   "glyph": 9707,
+   "fg": "#4fd6ff",
+   "bg": "#0d0f14",
+   "blocks": true,
+   "height": 1,
+   "under": false,
+   "name": "window"
+  },
   "DESK": {
    "glyph": 57345,
    "fg": "#8a76b8",
@@ -532,12 +612,14 @@
   "B": "BED",
   "a": "CABINET",
   "c": "COUNTER",
+  "D": "DUMPSTER",
   "v": "PLANT",
   "Y": "TREE",
   ",": "PARK",
   "F": "FOUNTAIN",
   "A": "STATUE",
   "h": "BENCH",
+  "W": "WINDOW",
   "E": "EXIT",
   "P": "POD",
   "p": "MY_POD",
@@ -625,5 +707,5 @@
    ]
   }
  },
- "curb": "#1b1f30"
+ "curb": "#8e94a6"
 }
