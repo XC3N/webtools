@@ -6,6 +6,10 @@ It runs as a claude.ai artifact with a shared database (`db` and `user` capabili
 
 **Live:** Sprawler Compendium, https://claude.ai/artifact/5WBx3GLwcQEVWSEgp63kPj
 
+## Dialog
+
+The **Dialog** section lists every line of player-facing text (log messages, barks, job text, skills, HQ and cyberspace notes) by context, editable in place. Lines are stored one per document in `lines/<id with . as __>`: `{id, ctx, src, text, orig, ph}`. The page seeds missing lines from its embedded `SEED` (the game's `data/text.json` at the last sync) and keeps edits. **Copy text.json** produces the game's file; Claude copies it into `data/text.json` with each Sprawler PR. A line that loses a `%s`/`%d` placeholder is flagged.
+
 ## Data
 
 - `pools/<id>`: one list. `{group, key, entries[], edited, order?}`; building kinds add `{label, plain}`. Fixed lists (`streets`, `hotels`, `looks`, `hq`, `npc-first`, `npc-middle`, `npc-last`, `npc-titles`) have `group: "fixed"`; open groups (`kind`, `mega`, `adj`) take new lists from the page, with ids `<group>-<slug of key>`.
