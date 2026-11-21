@@ -4,3 +4,6 @@ node_modules/
 bench/out/
 building-designer/out/
 glyph-viewer/out/
+
+# Claude Code per-machine permission settings (can contain pasted secrets)
+.claude/settings.local.json
